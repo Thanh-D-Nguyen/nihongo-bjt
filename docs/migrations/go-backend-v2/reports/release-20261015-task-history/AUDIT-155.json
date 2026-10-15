@@ -1,0 +1,345 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-155",
+  "title": "Keep Admin i18n and IAM tables inside mobile viewport",
+  "start_head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+  "preexisting_changes": {
+    "apps/admin/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/admin/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/admin/tsconfig.tsbuildinfo": "6b0c7bc84ee49d33491f829cb00b397b9e0b3723",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_iam_test.go": "aee00270d49976ed76fe616f9893de4a8ac7431c",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_postcard_test.go": "9e34e3abd9e24954f99db1fdfe688cc2f502c607",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_rbac_test.go": "996ba6a016727ad3f7cd9a5c033c569e93b9ff8e",
+    "apps/api-go/internal/httpserver/handler_admin_core.go": "adcf77bd8ea17b54d6f42d7f5896f7ae1cfa992c",
+    "apps/api-go/internal/httpserver/handler_admin_growth_campaigns.go": "d1cf6a0cd0d109b9ff59523da87e8d640db8b7b8",
+    "apps/api-go/internal/httpserver/handler_admin_growth_postcards.go": "34013e9db95374d6ef0771be9f09f251202b17ca",
+    "apps/api-go/internal/httpserver/handler_admin_growth_referrals.go": "c0b0be1c757bc3b9526a353419b666325c30c489",
+    "apps/api-go/internal/httpserver/handler_admin_growth_referrals_contract_test.go": "555404bcc2f1d41e28dfa55269555540dc9f30d6",
+    "apps/api-go/internal/httpserver/handler_admin_growth_social.go": "f301b37da4772433c6699590123f72f94dba5bc2",
+    "apps/api-go/internal/httpserver/handler_admin_growth_social_audit153_test.go": "664123c1e6f8c771ebf4bbf59f275adbd2d45d80",
+    "apps/api-go/internal/httpserver/server.go": "083ee51c8d1f15f4ed7d720f3f429009ebaee23a",
+    "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "087e3187f288aeeee524e06c12facc86bdec95e7",
+    "apps/web/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/web/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/web/tsconfig.tsbuildinfo": "91d48d855b4f16f10809b5e9d91bae8ed06c76dc"
+  },
+  "spec": {
+    "problem": "At 390px, the i18n table expanded the document to 478px and the Admin actor table to 716px, forcing page-level horizontal scroll.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "i18n and IAM admins screens at 390px have no page-level horizontal overflow; the tables remain reachable by keyboard and screen reader."
+      }
+    ],
+    "expected_behavior": "Keep wide Admin tables keyboard-scrollable inside their own region so document scrollWidth stays at 390px.",
+    "observed_behavior": "Headed Chromium at 390x844 showed document scrollWidth 478 for i18n and 716 for IAM admins; the table itself was wider than its card.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts",
+      "test": "Admin mobile table layout > keeps wide i18n and IAM tables inside the page viewport",
+      "expect": "i18n page has no horizontal overflow"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-14T23:04:50.740Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-14T23:04:51.140Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-14T23:04:51.526Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T23:09:39.380Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T23:10:00.318Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-14T23:15:24.408Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-14T23:15:35.312Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-14T23:05:58.195Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit155-admin-mobile-tables.mjs",
+      "exit_code": 0,
+      "fingerprint": "1f3b42b2807d57c3b62c021b2f450da0d48d8287f26e43e69f1ae424ab7d89b2"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-14T23:07:11.783Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts::Admin mobile table layout keeps wide i18n and IAM tables inside the page viewport",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"Admin mobile table layout keeps wide i18n and IAM tables inside the page viewport\" in apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts::Admin mobile table layout keeps wide i18n and IAM tables inside the page viewport": "i18n page has no horizontal overflow"
+      },
+      "fingerprint": "3585f84cd807c8c08b8ac647184fead2409e5effb67441ec09cb3e6b86088d13"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-14T23:07:25.026Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts::Admin mobile table layout keeps wide i18n and IAM tables inside the page viewport",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"Admin mobile table layout keeps wide i18n and IAM tables inside the page viewport\" in apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts::Admin mobile table layout > keeps wide i18n and IAM tables inside the page viewport",
+          "outcome": "FAIL",
+          "excerpt": "node:fs:440 return binding.readFileUtf8(path, stringToFlags(options.flag)); ^ Error: ENOENT: no such file or directory, open 'tmp/local-audit/audit-138-admin.json' at Object.readFileSync (node:fs:440:20) at file:///private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-yDmv0a/tree/e2e/au…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"i18n page has no horizontal overflow\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts::Admin mobile table layout keeps wide i18n and IAM tables inside the page viewport": "i18n page has no horizontal overflow",
+        "vitest:apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts::Admin mobile table layout > keeps wide i18n and IAM tables inside the page viewport": "i18n page has no horizontal overflow"
+      },
+      "fingerprint": "3585f84cd807c8c08b8ac647184fead2409e5effb67441ec09cb3e6b86088d13"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-14T23:08:41.970Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts::Admin mobile table layout keeps wide i18n and IAM tables inside the page viewport",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"Admin mobile table layout keeps wide i18n and IAM tables inside the page viewport\" in apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts::Admin mobile table layout > keeps wide i18n and IAM tables inside the page viewport",
+          "outcome": "FAIL",
+          "excerpt": "node:internal/modules/run_main:107 triggerUncaughtException( ^ locator.waitFor: Timeout 15000ms exceeded. Call log: \u001b[2m - waiting for getByRole('region').first() to be visible\u001b[22m at /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-sGc9gU/tree/e2e/audit/audit155-admin-mobile-tab…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"i18n page has no horizontal overflow\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts::Admin mobile table layout keeps wide i18n and IAM tables inside the page viewport": "i18n page has no horizontal overflow",
+        "vitest:apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts::Admin mobile table layout > keeps wide i18n and IAM tables inside the page viewport": "i18n page has no horizontal overflow"
+      },
+      "fingerprint": "ee136b27dbca6aa5e15b4a8f98684d0109e25b65ced24606904ab150c9040a7a"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-14T23:09:03.339Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts::Admin mobile table layout keeps wide i18n and IAM tables inside the page viewport",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"Admin mobile table layout keeps wide i18n and IAM tables inside the page viewport\" in apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts::Admin mobile table layout > keeps wide i18n and IAM tables inside the page viewport",
+          "outcome": "FAIL",
+          "excerpt": "node:internal/modules/run_main:107 triggerUncaughtException( ^ AssertionError [ERR_ASSERTION]: i18n page has no horizontal overflow: {\"clientWidth\":390,\"scrollWidth\":478,\"region\":{}} at file:///private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-JArnmO/tree/e2e/audit/audit155-admin-mo…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts::Admin mobile table layout keeps wide i18n and IAM tables inside the page viewport": "i18n page has no horizontal overflow",
+        "vitest:apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts::Admin mobile table layout > keeps wide i18n and IAM tables inside the page viewport": "i18n page has no horizontal overflow"
+      },
+      "fingerprint": "5cf7c1c8bcf0d745a5d47ce79beb6a0ab96a832b5f6dd150f9e61c650ee74923"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-14T23:09:39.026Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts::Admin mobile table layout > keeps wide i18n and IAM tables inside the page viewport",
+          "outcome": "FAIL",
+          "excerpt": "node:internal/modules/run_main:107 triggerUncaughtException( ^ AssertionError [ERR_ASSERTION]: i18n page has no horizontal overflow: {\"clientWidth\":390,\"scrollWidth\":478,\"region\":{}} at file:///private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-e0nWu0/tree/e2e/audit/audit155-admin-mo…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts::Admin mobile table layout > keeps wide i18n and IAM tables inside the page viewport": "i18n page has no horizontal overflow"
+      },
+      "fingerprint": "5cf7c1c8bcf0d745a5d47ce79beb6a0ab96a832b5f6dd150f9e61c650ee74923"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-14T23:09:59.958Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts::Admin mobile table layout > keeps wide i18n and IAM tables inside the page viewport",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "7db910125057479684b9cdc5c6675ce40e75d9614a60dcaa98508c83caf63768"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-14T23:10:12.848Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts::Admin mobile table layout > keeps wide i18n and IAM tables inside the page viewport",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0fd89d11ded9c08e6afe6cff1149e542ab7bed38f4c6451e8d33d417a7f7ca99"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-14T23:15:24.030Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 469,
+        "executed": 469,
+        "passed": 469,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 805,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "0fd89d11ded9c08e6afe6cff1149e542ab7bed38f4c6451e8d33d417a7f7ca99"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-14T23:15:35.292Z",
+    "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+    "fingerprint": "0fd89d11ded9c08e6afe6cff1149e542ab7bed38f4c6451e8d33d417a7f7ca99",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts": "6b931d4f1fa9271b10400fe84419715acf79703e",
+      "apps/admin/app/[locale]/i18n/i18n-admin-client.tsx": "04246da3cd9ea290b0bc0ade7e98f1863c65ee26",
+      "apps/admin/app/[locale]/iam/admins/iam-admins-client.tsx": "1672ca860e98db355a952e9ccb31de28f1dc2d53",
+      "e2e/audit/audit155-admin-mobile-tables.mjs": "e0e33b888d7dd16b6666f01ec7df2e79653cff9e"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

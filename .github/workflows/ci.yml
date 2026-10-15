@@ -2,6 +2,8 @@ name: CI
 
 on:
   pull_request:
+    # labeled/unlabeled: re-evaluate when quality:accept-partial is added or removed.
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   push:
     branches:
       - main
@@ -47,6 +49,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm prisma:generate
+      - run: python3 deploy/oci/deploy-release.test.py
       - run: pnpm prisma:validate
       - run: pnpm exec prisma migrate deploy --schema packages/database/prisma/schema.prisma
       - run: pnpm prisma:migrate:check
@@ -72,9 +75,18 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      redis:
+        image: redis:8-alpine
+        ports: ["16379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
     env:
       # Without this, ~150 auth/session/RBAC/realtime/SQL-conformance tests t.Skip
       # and `go test` still passes; check-go-test-report.mjs fails any such skip.
+      TEST_REDIS_URL: redis://127.0.0.1:16379
       TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:15432/nihongo_bjt
     steps:
       - uses: actions/checkout@v4
@@ -94,3 +106,69 @@ jobs:
         run: bash scripts/quality/provision-test-schema.sh "$TEST_DATABASE_URL"
       # gofmt · vet · go test with PostgreSQL integration + skip audit · race · ARM64 build
       - run: bash scripts/quality/verify-go.sh
+
+  # Engineering lifecycle gate (docs/engineering/ENGINEERING_POLICY.md §16).
+  # Every changed file must be owned by a CLOSED task in tasks/ whose
+  # classification covers its paths and whose evidence matches the content
+  # being merged; recorded RED/GREEN/sensitivity evidence is re-executed.
+  lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: nihongo_bjt
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 15432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d nihongo_bjt"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:8-alpine
+        ports: ["16379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+    env:
+      TEST_REDIS_URL: redis://127.0.0.1:16379
+      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:15432/nihongo_bjt
+      # Diff base. PRs are checked out as a merge commit whose first parent is
+      # exactly the base it was merged onto; pushes diff against the previous tip.
+      QUALITY_BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || github.event.before }}
+      # A task closed PARTIAL (BLOCKED gate) merges only with the PR label
+      # quality:accept-partial; on push the PR decision already applied.
+      QUALITY_ACCEPT_PARTIAL: ${{ github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'quality:accept-partial') }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: apps/api-go/go.sum
+      # Static: quality-system invariants, ownership, classification, gates, evidence identity, risk findings.
+      - name: Lifecycle check
+        run: node scripts/quality/harness/cli.mjs check --ci --base "$QUALITY_BASE" --head HEAD
+      # Harness self-test incl. the adversarial mutation suite (zero skips allowed).
+      - name: Harness self-test
+        run: bash scripts/quality/verify-harness.sh
+      - name: Provision canonical schema for replay
+        run: bash scripts/quality/provision-test-schema.sh "$TEST_DATABASE_URL"
+      # Re-executes each task's RED against base production code, GREEN on HEAD, and sensitivity mutations.
+      - name: RED/GREEN replay
+        run: node scripts/quality/harness/cli.mjs replay --ci --base "$QUALITY_BASE" --head HEAD

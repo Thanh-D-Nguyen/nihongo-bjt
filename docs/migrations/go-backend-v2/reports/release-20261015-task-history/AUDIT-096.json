@@ -1,0 +1,257 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-096",
+  "title": "Honor Daily Radar card list limit",
+  "start_head": "0d0f077efe32f9b237750dbf96fb0b8436cf64c2",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "GET /api/daily-radar/cards documents support for limit but always queries with a hard-coded 48, so callers cannot constrain the response size.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "A valid limit query constrains results for unfiltered, moduleKey, and category list variants; malformed, zero, negative, or above-maximum values fall back safely to the default limit."
+      }
+    ],
+    "expected_behavior": "Use valid limits from 1 through 100 in all public list query branches; absent, malformed, nonpositive, or above-maximum values safely use the default 48.",
+    "observed_behavior": "Visible browser request /api/daily-radar/cards?limit=2 returned 200 with 48 cards. Handler initializes limit=48 but never reads the query parameter.",
+    "rollback_plan": "Revert only the AUDIT-096 handler and regression-test changes; no data migration or persistent data changes are introduced."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DOMAIN_LOGIC"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Public API pagination behavior is broken across three parameterized SQL variants; keep default 48, constrain valid caller limits, and cover invalid values through PostgreSQL-backed handler tests."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestPublicDailyRadarCardListHonorsLimit",
+      "expect": "want 2"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-11T04:52:51.266Z",
+      "head": "0d0f077efe32f9b237750dbf96fb0b8436cf64c2"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-11T04:53:14.368Z",
+      "head": "0d0f077efe32f9b237750dbf96fb0b8436cf64c2"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T04:53:21.187Z",
+      "head": "0d0f077efe32f9b237750dbf96fb0b8436cf64c2"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T04:55:30.620Z",
+      "head": "0d0f077efe32f9b237750dbf96fb0b8436cf64c2"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T04:55:52.096Z",
+      "head": "0d0f077efe32f9b237750dbf96fb0b8436cf64c2"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-11T04:58:37.490Z",
+      "head": "0d0f077efe32f9b237750dbf96fb0b8436cf64c2"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-11T05:00:46.044Z",
+      "head": "0d0f077efe32f9b237750dbf96fb0b8436cf64c2"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-11T04:54:13.755Z",
+      "head": "0d0f077efe32f9b237750dbf96fb0b8436cf64c2",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicDailyRadarCardListHonorsLimit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicDailyRadarCardListHonorsLimit",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestPublicDailyRadarCardListHonorsLimit handler_daily_radar_card_public_test.go:115: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestPublicDailyRadarCardListHonorsLimit (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestPublicDailyRadarCardListHonorsLimit": "got 48 cards; want 2"
+      },
+      "fingerprint": "7a8ea113dfe1af3dc2b44c08f02470946c2e0a2a35f8ef3c3955177db67a06d9"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-11T04:54:42.031Z",
+      "head": "0d0f077efe32f9b237750dbf96fb0b8436cf64c2",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicDailyRadarCardListHonorsLimit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicDailyRadarCardListHonorsLimit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPublicDailyRadarCardListHonorsLimit handler_daily_radar_card_public_test.go:129: insert radar cards: ERROR: value too long for type character varying(32) (SQLSTATE 22001) --- FAIL: TestPublicDailyRadarCardListHonorsLimit (0.02s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"got 48 cards; want 2\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestPublicDailyRadarCardListHonorsLimit": "got 48 cards; want 2"
+      },
+      "fingerprint": "7a8ea113dfe1af3dc2b44c08f02470946c2e0a2a35f8ef3c3955177db67a06d9"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-11T04:55:07.684Z",
+      "head": "0d0f077efe32f9b237750dbf96fb0b8436cf64c2",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicDailyRadarCardListHonorsLimit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicDailyRadarCardListHonorsLimit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPublicDailyRadarCardListHonorsLimit === RUN TestPublicDailyRadarCardListHonorsLimit/unfiltered handler_daily_radar_card_public_test.go:165: got 3 cards; want 2 --- FAIL: TestPublicDailyRadarCardListHonorsLimit/unfiltered (0.00s) === RUN TestPublicDailyRadarCardListHonorsLimit/module hand…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"got 48 cards; want 2\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestPublicDailyRadarCardListHonorsLimit": "got 48 cards; want 2"
+      },
+      "fingerprint": "47fdb6c5407d2159037deb9037e23193b105992a0a04ae9011f8a9f6892252b9"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-11T04:55:30.466Z",
+      "head": "0d0f077efe32f9b237750dbf96fb0b8436cf64c2",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicDailyRadarCardListHonorsLimit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicDailyRadarCardListHonorsLimit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPublicDailyRadarCardListHonorsLimit === RUN TestPublicDailyRadarCardListHonorsLimit/unfiltered handler_daily_radar_card_public_test.go:165: got 3 cards; want 2 --- FAIL: TestPublicDailyRadarCardListHonorsLimit/unfiltered (0.00s) === RUN TestPublicDailyRadarCardListHonorsLimit/module hand…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestPublicDailyRadarCardListHonorsLimit": "want 2"
+      },
+      "fingerprint": "47fdb6c5407d2159037deb9037e23193b105992a0a04ae9011f8a9f6892252b9"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-11T04:55:51.899Z",
+      "head": "0d0f077efe32f9b237750dbf96fb0b8436cf64c2",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicDailyRadarCardListHonorsLimit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicDailyRadarCardListHonorsLimit",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "163fb49726306c99efeb482bea1549ca86b3e1c1248c653ea326a8f214601712"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-11T04:58:37.293Z",
+      "head": "0d0f077efe32f9b237750dbf96fb0b8436cf64c2",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 754,
+        "executed": 754,
+        "passed": 754,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "754 passed, 0 allowed skip(s)",
+      "fingerprint": "163fb49726306c99efeb482bea1549ca86b3e1c1248c653ea326a8f214601712"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-11T05:00:44.808Z",
+      "head": "0d0f077efe32f9b237750dbf96fb0b8436cf64c2",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Mendel",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "08d3e821257aa63b2cc7a2bfc056dfc2f4d2511f3768d03f169378d761686bef",
+      "attested": true,
+      "fingerprint": "163fb49726306c99efeb482bea1549ca86b3e1c1248c653ea326a8f214601712"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-11T05:00:46.024Z",
+    "head": "0d0f077efe32f9b237750dbf96fb0b8436cf64c2",
+    "fingerprint": "163fb49726306c99efeb482bea1549ca86b3e1c1248c653ea326a8f214601712",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_daily_radar_card_public_test.go": "dfd238167e994a8cc84526a6db773cb13a668de7",
+      "apps/api-go/internal/httpserver/handler_dailyradar_announcement.go": "86b3380e742c934ab68a55c8e7d2ad6ec787d018"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

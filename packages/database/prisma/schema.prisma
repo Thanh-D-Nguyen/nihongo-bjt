@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["admin", "analytics", "assessment", "auth", "authz", "battle", "billing", "career", "content", "curriculum", "daily", "exercise", "gamification", "growth", "iam", "learning", "legal", "l10n", "media", "monetization", "ops", "profile"]
+  schemas  = ["admin", "analytics", "assessment", "auth", "authz", "battle", "billing", "career", "content", "curriculum", "daily", "exercise", "gamification", "growth", "iam", "learning", "legal", "l10n", "media", "monetization", "ops", "profile", "study"]
 }
 
 model ContentImportBatch {
@@ -67,9 +67,11 @@ model ContentImportError {
   code          String             @db.VarChar(80)
   message       String
   sample        Json?
+  status        String             @default("open") @db.VarChar(24)
   createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   batch         ContentImportBatch @relation(fields: [importBatchId], references: [id], onDelete: Cascade)
   rawItem       ContentRawItem?    @relation(fields: [rawItemId], references: [id], onDelete: SetNull)
+  operationRequests ContentImportOperationRequest[]
 
   @@index([importBatchId, phase, severity], map: "idx_content_import_error_batch_phase")
   @@map("content_import_error")
@@ -88,10 +90,32 @@ model ContentImportMapping {
   createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
   batch         ContentImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  operationRequests ContentImportOperationRequest[]
 
   @@unique([sourceType, targetType, version], map: "uq_content_import_mapping_type_target_version")
   @@index([status, sourceType], map: "idx_content_import_mapping_status_source")
   @@map("content_import_mapping")
+  @@schema("content")
+}
+
+model ContentImportOperationRequest {
+  id             String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  importErrorId  String?                @map("import_error_id") @db.Uuid
+  importMappingId String?                @map("import_mapping_id") @db.Uuid
+  operation      String                 @db.VarChar(32)
+  status         String                 @default("queued") @db.VarChar(24)
+  reason         String
+  requestedBy    String                 @map("requested_by") @db.Uuid
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime               @default(now()) @map("updated_at") @db.Timestamptz(6)
+  importError    ContentImportError?    @relation(fields: [importErrorId], references: [id], onDelete: Cascade)
+  importMapping  ContentImportMapping?  @relation(fields: [importMappingId], references: [id], onDelete: Cascade)
+  actor          AdminActor             @relation(fields: [requestedBy], references: [id], onDelete: Restrict)
+
+  @@index([status, createdAt], map: "idx_content_import_operation_queue")
+  @@index([importErrorId, createdAt(sort: Desc)], map: "idx_content_import_operation_error_history")
+  @@index([importMappingId, createdAt(sort: Desc)], map: "idx_content_import_operation_mapping_history")
+  @@map("content_import_operation_request")
   @@schema("content")
 }
 
@@ -693,7 +717,7 @@ model BattleRound {
 /// only via the admin `battle/bots` surface; every change is audited via `admin.audit_log`.
 model BattleBot {
   id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  botKey           String   @unique @default(dbgenerated("'bot_'::text || replace((gen_random_uuid())::text, '-'::text, ''::text)")) @map("bot_key") @db.VarChar(64)
+  botKey           String   @unique @default(dbgenerated("('bot_'::text || replace((gen_random_uuid())::text, '-'::text, ''::text))")) @map("bot_key") @db.VarChar(64)
   name             String   @db.VarChar(80)
   difficulty       String   @db.VarChar(16)
   persona          String?
@@ -1022,19 +1046,20 @@ model WeeklyReport {
 }
 
 model AdminActor {
-  id                  String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  keycloakSubject     String?           @unique @map("keycloak_subject")
-  email               String            @unique
-  displayName         String            @map("display_name")
-  status              String            @default("active") @db.VarChar(32)
-  createdAt           DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
-  roles               AdminActorRole[]
-  auditLogs           AdminAuditLog[]
-  adminAuditEvents    AdminAuditEvent[]
-  sentUserInvitations UserInvitation[]
+  id                       String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  keycloakSubject          String?                   @unique @map("keycloak_subject")
+  email                    String                    @unique
+  displayName              String                    @map("display_name")
+  status                   String                    @default("active") @db.VarChar(32)
+  createdAt                DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  roles                    AdminActorRole[]
+  auditLogs                AdminAuditLog[]
+  adminAuditEvents         AdminAuditEvent[]
+  sentUserInvitations      UserInvitation[]
   adminPasswordCredentials AdminPasswordCredential[]
   adminSessions            AdminSession[]
+  contentImportOperationRequests ContentImportOperationRequest[]
 
   @@index([status], map: "idx_admin_actor_status")
   @@map("admin_actor")
@@ -1148,6 +1173,8 @@ model UserProfile {
   dailyGoalExercises        Int                       @default(10) @map("daily_goal_exercises")
   /// Study time target (optional; cards quota still uses dailyGoalCards in MVP).
   dailyStudyMinutes         Int?                      @map("daily_study_minutes")
+  onboardingCurrentLevel    Int?                      @map("onboarding_current_level")
+  onboardingTopics          String[]                  @default([]) @map("onboarding_topics")
   learningPurpose           String?                   @map("learning_purpose") @db.VarChar(200)
   learningPersonality       String?                   @map("learning_personality") @db.VarChar(64)
   lowPressureMode           Boolean                   @default(false) @map("low_pressure_mode")
@@ -1182,12 +1209,14 @@ model UserProfile {
   readingUserPreference     ReadingUserPreference?
   passwordCredentials       PasswordCredential[]
   sessions                  Session[]
+  bjtLessonProgress         BjtLessonProgress[]
   userInvitations           UserInvitation[]
   quotaUserOverrides        QuotaUserOverride[]
   userStreaks               UserStreak[]
   userAchievements          UserAchievement[]
   careerState               UserCareerState?
   careerSkillStats          CareerSkillStat[]
+  contextMemos              ContextMemo[]
   rankProgressionEvents     RankProgressionEvent[]
   chapterAttempts           ChapterAttempt[]
   npcRelations              NpcRelation[]
@@ -1196,6 +1225,8 @@ model UserProfile {
   studyGroupChallenges      StudyGroupChallenge[]     @relation("StudyGroupChallengeCreator")
   sentSocialConnections     UserSocialConnection[]    @relation("SocialConnectionRequester")
   receivedSocialConnections UserSocialConnection[]    @relation("SocialConnectionAddressee")
+  userReviewDecks           UserReviewDeck[]
+  exerciseReviewQueue       ExerciseReviewQueue[]
 
   @@index([status, createdAt], map: "idx_user_profile_status_created_at")
   @@index([accountType], map: "idx_user_profile_account_type")
@@ -1229,8 +1260,8 @@ model UserCareerState {
   userId          String      @id @map("user_id") @db.Uuid
   currentRankCode String      @default("R1") @map("current_rank_code") @db.VarChar(8)
   rankXp          Int         @default(0) @map("rank_xp")
-  jpWorkName      String      @default("田中 太郎") @map("jp_work_name")
-  companyTheme    String      @default("mirai-shoji") @map("company_theme") @db.VarChar(80)
+  jpWorkName      String      @default("") @map("jp_work_name")
+  companyTheme    String      @default("") @map("company_theme") @db.VarChar(80)
   hireDate        DateTime    @default(now()) @map("hire_date") @db.Date
   lastClockInAt   DateTime?   @map("last_clock_in_at") @db.Timestamptz(6)
   streakDays      Int         @default(0) @map("streak_days")
@@ -1253,6 +1284,22 @@ model CareerSkillStat {
   @@unique([userId, axisCode], map: "uq_career_skill_stat_user_axis")
   @@index([axisCode], map: "idx_career_skill_stat_axis")
   @@map("career_skill_stat")
+  @@schema("career")
+}
+
+model ContextMemo {
+  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String      @map("user_id") @db.Uuid
+  memoType  String      @map("memo_type") @db.VarChar(32)
+  payload   Json
+  feedback  String?     @db.VarChar(16)
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  readAt    DateTime?   @map("read_at") @db.Timestamptz(6)
+  updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user      UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)], map: "idx_context_memo_user_created")
+  @@map("context_memo")
   @@schema("career")
 }
 
@@ -2110,6 +2157,21 @@ model LoginEvent {
   @@schema("auth")
 }
 
+/// Short-lived durable jobs for locale-aware learner password recovery email.
+model PasswordResetRequest {
+  id          BigInt    @id @default(autoincrement())
+  email       String    @db.VarChar(320)
+  locale      String    @default("en") @db.VarChar(5)
+  attempts    Int       @default(0)
+  availableAt DateTime  @default(now()) @map("available_at") @db.Timestamptz(6)
+  claimedAt   DateTime? @map("claimed_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([availableAt, claimedAt, createdAt], map: "idx_password_reset_request_queue")
+  @@map("password_reset_request")
+  @@schema("auth")
+}
+
 /// One-time code after OAuth; exchanged for a session handoff to the web app (no token stored client-side in API).
 model AuthLinkCode {
   id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -2333,6 +2395,19 @@ model DeadLetterEntry {
   @@schema("ops")
 }
 
+model FeedbackSubmission {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String?  @db.VarChar(100)
+  email     String?  @db.VarChar(254)
+  category  String   @db.VarChar(16)
+  message   String   @db.VarChar(5000)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([createdAt], map: "idx_feedback_submission_created_at")
+  @@map("feedback_submission")
+  @@schema("ops")
+}
+
 /// Incoming billing webhook events with idempotency and replay-protection.
 /// rawPayload must only be accessed by admin actors with billing.webhook.manage permission.
 /// Stop condition: any webhook without signatureVerified = true or idempotencyKey uniqueness must be blocked.
@@ -2550,6 +2625,7 @@ model ExerciseConfig {
 /// existing content (Lexeme, GrammarPoint, Kanji, ExampleSentence) and cached.
 model Exercise {
   id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  generationKey String?          @unique(map: "uq_exercise_generation_key") @map("generation_key") @db.VarChar(160)
   /// word_order | cloze | translation | meaning_match | listening
   exerciseType  String           @map("exercise_type") @db.VarChar(32)
   /// lexeme | grammar | kanji
@@ -2570,6 +2646,7 @@ model Exercise {
   tags          String[]         @default([])
   createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
   answers       ExerciseAnswer[]
+  reviewQueueItems ExerciseReviewQueue[]
 
   @@index([exerciseType, level], map: "idx_exercise_type_level")
   @@index([sourceType, sourceId], map: "idx_exercise_source")
@@ -2581,6 +2658,7 @@ model Exercise {
 model ExerciseSession {
   id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId             String           @map("user_id") @db.Uuid
+  exerciseIds        String[]         @default([]) @map("exercise_ids") @db.Uuid
   /// practice_tab | post_review | daily_hub
   sessionType        String           @map("session_type") @db.VarChar(32)
   /// word_order | cloze | translation | meaning_match | listening | mixed
@@ -2698,6 +2776,39 @@ model ExerciseReviewState {
   @@index([userId, state], map: "idx_exercise_review_state")
   @@map("exercise_review_state")
   @@schema("exercise")
+}
+
+model UserReviewDeck {
+  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String      @map("user_id") @db.Uuid
+  title     String      @db.VarChar(200)
+  kind      String      @db.VarChar(64)
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user      UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)], map: "idx_user_review_deck_user_created")
+  @@map("user_review_deck")
+  @@schema("study")
+}
+
+model ExerciseReviewQueue {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String      @map("user_id") @db.Uuid
+  exerciseId  String      @map("exercise_id") @db.Uuid
+  dueAt       DateTime    @default(now()) @map("due_at") @db.Timestamptz(6)
+  priority    Int         @default(0)
+  completed   Boolean     @default(false)
+  completedAt DateTime?   @map("completed_at") @db.Timestamptz(6)
+  correct     Boolean?
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  user        UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  exercise    Exercise    @relation(fields: [exerciseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([userId, exerciseId], map: "uq_review_queue_user_exercise")
+  @@index([userId, completed, dueAt], map: "idx_review_queue_user_completed_due")
+  @@map("review_queue")
+  @@schema("study")
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -3197,7 +3308,8 @@ model BjtLesson {
   createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  items BjtLessonItem[]
+  items    BjtLessonItem[]
+  progress BjtLessonProgress[]
 
   @@unique([levelCode, sortOrder], map: "uq_bjt_lesson_level_order")
   @@index([levelCode, status], map: "idx_bjt_lesson_level_status")
@@ -3221,6 +3333,21 @@ model BjtLessonItem {
   @@index([lessonId, sortOrder], map: "idx_bjt_lesson_item_order")
   @@index([contentType, contentId], map: "idx_bjt_lesson_item_content")
   @@map("bjt_lesson_item")
+  @@schema("curriculum")
+}
+
+model BjtLessonProgress {
+  userId      String   @map("user_id") @db.Uuid
+  lessonId    String   @map("lesson_id") @db.Uuid
+  completedAt DateTime @default(now()) @map("completed_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user   UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson BjtLesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@id([userId, lessonId], map: "bjt_lesson_progress_pkey")
+  @@index([userId, completedAt(sort: Desc)], map: "idx_bjt_lesson_progress_user_completed")
+  @@map("bjt_lesson_progress")
   @@schema("curriculum")
 }
 
@@ -3249,6 +3376,20 @@ model NhkArticle {
 
   @@index([sourceType, publishedAt(sort: Desc)], map: "idx_nhk_article_source_published")
   @@map("nhk_article")
+  @@schema("content")
+}
+
+model NhkNewsConfig {
+  locale        String   @id @db.VarChar(8)
+  defaultType   String   @default("easy") @map("default_type") @db.VarChar(16)
+  easyEnabled   Boolean  @default(true) @map("easy_enabled")
+  easyFeedUrl   String   @default("https://www3.nhk.or.jp/news/easy/news-list.json") @map("easy_feed_url")
+  normalEnabled Boolean  @default(false) @map("normal_enabled")
+  normalFeedUrl String   @default("https://www3.nhk.or.jp/rss/news/cat0.xml") @map("normal_feed_url")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("nhk_news_config")
   @@schema("content")
 }
 
@@ -3398,6 +3539,7 @@ model ScenarioChoice {
 
   step ScenarioStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
 
+  @@unique([stepId, choiceKey], map: "uq_scenario_choice_key")
   @@index([stepId], map: "idx_scenario_choice_step")
   @@map("scenario_choice")
   @@schema("content")
@@ -3523,19 +3665,19 @@ model UserSocialConnection {
 // === M2: First-party Go auth persistence (additive) ===
 
 model PasswordCredential {
-  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId          String      @unique @map("user_id") @db.Uuid
-  algorithm       String      @db.VarChar(32)
-  algorithmVersion String?    @map("algorithm_version") @db.VarChar(16)
-  hashIterations  Int         @map("hash_iterations")
-  memoryKib       Int         @map("memory_kib")
-  parallelism     Int
-  hashLength      Int         @map("hash_length")
-  salt            Bytes
-  hashedValue     Bytes       @map("hashed_value")
-  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
-  user            UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String      @unique @map("user_id") @db.Uuid
+  algorithm        String      @db.VarChar(32)
+  algorithmVersion String?     @map("algorithm_version") @db.VarChar(16)
+  hashIterations   Int         @map("hash_iterations")
+  memoryKib        Int         @map("memory_kib")
+  parallelism      Int
+  hashLength       Int         @map("hash_length")
+  salt             Bytes
+  hashedValue      Bytes       @map("hashed_value")
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user             UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("password_credential")
   @@schema("auth")

@@ -30,6 +30,14 @@ const (
 	webhookMaxRetries = 3
 )
 
+type stripeSubscriptionObject struct {
+	ID                 string `json:"id"`
+	Status             string `json:"status"`
+	CurrentPeriodStart *int64 `json:"current_period_start"`
+	CurrentPeriodEnd   *int64 `json:"current_period_end"`
+	CancelAtPeriodEnd  *bool  `json:"cancel_at_period_end"`
+}
+
 // stripeWebhookHandler implements POST /api/webhooks/stripe.
 // This endpoint is PUBLIC — no session/auth guard. Authenticity is verified
 // by HMAC SHA256 signature verification using the Stripe webhook secret.
@@ -82,8 +90,12 @@ func stripeWebhookHandler(
 
 		// Parse the verified event to extract id and type.
 		var event struct {
-			ID   string `json:"id"`
-			Type string `json:"type"`
+			ID      string `json:"id"`
+			Type    string `json:"type"`
+			Created int64  `json:"created"`
+			Data    struct {
+				Object stripeSubscriptionObject `json:"object"`
+			} `json:"data"`
 		}
 		if err := json.Unmarshal(body, &event); err != nil {
 			writeJSONError(w, "invalid event payload", http.StatusBadRequest)
@@ -93,22 +105,47 @@ func stripeWebhookHandler(
 			writeJSONError(w, "invalid event payload", http.StatusBadRequest)
 			return
 		}
+		if !supportedStripeSubscriptionEvent(event.Type) {
+			writeJSONError(w, "unsupported stripe event", http.StatusBadRequest)
+			return
+		}
+		if event.Created <= 0 || event.Data.Object.ID == "" {
+			writeJSONError(w, "invalid subscription event payload", http.StatusBadRequest)
+			return
+		}
+		stripeStatus, ok := stripeSubscriptionStatus(event.Type, event.Data.Object.Status)
+		if !ok {
+			writeJSONError(w, "invalid subscription status", http.StatusBadRequest)
+			return
+		}
 
 		ctx := r.Context()
 
 		// Idempotent ingest: attempt insert; on unique violation return 200 (duplicate).
-		id, status, err := ingestWebhookEvent(ctx, db, event.ID, event.Type, "stripe", body, logger)
+		id, _, err := ingestWebhookEvent(ctx, db, event.ID, event.Type, "stripe", body, logger)
 		if err != nil {
 			if errors.Is(err, errDuplicateWebhook) {
-				logger.Debug("stripe-webhook: duplicate event acknowledged", "event_id", event.ID)
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusOK)
-				_ = json.NewEncoder(w).Encode(map[string]bool{"received": true})
+				id, err = stripeWebhookEventID(ctx, db, event.ID)
+				if err != nil {
+					logger.Error("stripe-webhook: duplicate lookup failed", "error", err, "event_id", event.ID)
+					writeJSONError(w, "internal error", http.StatusInternalServerError)
+					return
+				}
+				var currentStatus string
+				if err := db.QueryRow(ctx, `SELECT status FROM monetization.billing_webhook_event WHERE id=$1`, id).Scan(&currentStatus); err != nil {
+					writeJSONError(w, "internal error", http.StatusInternalServerError)
+					return
+				}
+				if currentStatus == "processed" {
+					writeWebhookReceived(w)
+					return
+				}
+				logger.Info("stripe-webhook: retrying unprocessed event", "event_id", event.ID, "status", currentStatus)
+			} else {
+				logger.Error("stripe-webhook: ingest failed", "error", err, "event_id", event.ID)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
 				return
 			}
-			logger.Error("stripe-webhook: ingest failed", "error", err, "event_id", event.ID)
-			writeJSONError(w, "internal error", http.StatusInternalServerError)
-			return
 		}
 
 		// Write audit log.
@@ -121,19 +158,109 @@ func stripeWebhookHandler(
 			// Non-fatal: event was persisted successfully.
 		}
 
-		// Mark as processed (business logic dispatch is a no-op for now;
-		// future: dispatch to subscription/entitlement handlers).
-		if err := markWebhookProcessed(ctx, db, id); err != nil {
-			logger.Error("stripe-webhook: mark processed failed", "error", err, "event_id", id)
-			// Event is persisted; will be retried by background job or admin.
+		if err := applyStripeSubscriptionEvent(ctx, db, id, event.ID, event.Type, event.Created, event.Data.Object, stripeStatus); err != nil {
+			logger.Error("stripe-webhook: subscription event failed", "error", err, "event_id", event.ID)
+			writeJSONError(w, "subscription event could not be applied", http.StatusInternalServerError)
+			return
 		}
-
-		_ = status // reserved for future dispatch result handling
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]bool{"received": true})
+		writeWebhookReceived(w)
 	}
+}
+
+func supportedStripeSubscriptionEvent(eventType string) bool {
+	switch eventType {
+	case "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted":
+		return true
+	default:
+		return false
+	}
+}
+
+func stripeSubscriptionStatus(eventType, status string) (string, bool) {
+	if eventType == "customer.subscription.deleted" {
+		return "canceled", true
+	}
+	switch status {
+	case "active", "trialing", "past_due", "canceled", "unpaid", "incomplete", "ended", "paused":
+		return status, true
+	case "incomplete_expired":
+		return "ended", true
+	default:
+		return "", false
+	}
+}
+
+func writeWebhookReceived(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]bool{"received": true})
+}
+
+func stripeWebhookEventID(ctx context.Context, db *pgxpool.Pool, eventID string) (string, error) {
+	var id string
+	err := db.QueryRow(ctx, `SELECT id FROM monetization.billing_webhook_event WHERE provider='stripe' AND idempotency_key=$1`, eventID).Scan(&id)
+	return id, err
+}
+
+func applyStripeSubscriptionEvent(ctx context.Context, db *pgxpool.Pool, webhookID, eventID, eventType string, eventCreated int64, object stripeSubscriptionObject, status string) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	tx, err := db.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin stripe subscription transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+	var webhookStatus string
+	if err := tx.QueryRow(ctx, `SELECT status FROM monetization.billing_webhook_event WHERE id=$1 FOR UPDATE`, webhookID).Scan(&webhookStatus); err != nil {
+		return fmt.Errorf("lock stripe webhook event: %w", err)
+	}
+	if webhookStatus == "processed" {
+		return tx.Commit(ctx)
+	}
+
+	var subscriptionID string
+	err = tx.QueryRow(ctx, `SELECT id FROM monetization.user_subscription
+		WHERE provider='stripe' AND provider_ref=$1 FOR UPDATE`, object.ID).Scan(&subscriptionID)
+	if err != nil {
+		return fmt.Errorf("find linked stripe subscription: %w", err)
+	}
+	var latestCreated int64
+	if err := tx.QueryRow(ctx, `SELECT COALESCE(max((payload->>'eventCreated')::bigint), 0)
+		FROM monetization.subscription_event WHERE subscription_id=$1 AND kind LIKE 'stripe.customer.subscription.%'`, subscriptionID).Scan(&latestCreated); err != nil {
+		return fmt.Errorf("read latest stripe subscription event: %w", err)
+	}
+	if eventCreated > latestCreated {
+		_, err = tx.Exec(ctx, `UPDATE monetization.user_subscription SET status=$2,
+			current_period_start=COALESCE($3, current_period_start),
+			current_period_end=COALESCE($4, current_period_end),
+			cancel_at_period_end=COALESCE($5, cancel_at_period_end), updated_at=now() WHERE id=$1`,
+			subscriptionID, status, unixTime(object.CurrentPeriodStart), unixTime(object.CurrentPeriodEnd), object.CancelAtPeriodEnd)
+		if err != nil {
+			return fmt.Errorf("update linked stripe subscription: %w", err)
+		}
+	}
+	payload, err := json.Marshal(map[string]interface{}{"eventId": eventID, "eventCreated": eventCreated, "status": status, "applied": eventCreated > latestCreated})
+	if err != nil {
+		return fmt.Errorf("marshal stripe subscription event: %w", err)
+	}
+	if _, err := tx.Exec(ctx, `INSERT INTO monetization.subscription_event (subscription_id, kind, payload) VALUES ($1,$2,$3::jsonb)`, subscriptionID, "stripe."+eventType, payload); err != nil {
+		return fmt.Errorf("record stripe subscription event: %w", err)
+	}
+	if _, err := tx.Exec(ctx, `UPDATE monetization.billing_webhook_event SET status='processed', processed_at=now(), last_error=NULL WHERE id=$1`, webhookID); err != nil {
+		return fmt.Errorf("mark stripe webhook processed: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit stripe subscription event: %w", err)
+	}
+	return nil
+}
+
+func unixTime(seconds *int64) *time.Time {
+	if seconds == nil || *seconds <= 0 {
+		return nil
+	}
+	value := time.Unix(*seconds, 0).UTC()
+	return &value
 }
 
 // verifyStripeSignature verifies the Stripe webhook signature using HMAC SHA256.
@@ -236,19 +363,6 @@ func ingestWebhookEvent(
 	)
 
 	return id, status, nil
-}
-
-// markWebhookProcessed updates the webhook event status to "processed".
-func markWebhookProcessed(ctx context.Context, db *pgxpool.Pool, id string) error {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	const q = `UPDATE monetization.billing_webhook_event SET status = 'processed', processed_at = now() WHERE id = $1`
-	_, err := db.Exec(ctx, q, id)
-	if err != nil {
-		return fmt.Errorf("mark webhook processed: %w", err)
-	}
-	return nil
 }
 
 // writeMonetizationAudit writes an audit entry to monetization.monetization_audit_log.

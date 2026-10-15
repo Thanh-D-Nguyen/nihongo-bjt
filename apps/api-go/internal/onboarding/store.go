@@ -36,50 +36,64 @@ type SaveInput struct {
 	Style        string
 }
 
-// Store provides read/write access to profile.learner_onboarding.
-type Store struct {
-	db *pgxpool.Pool
-}
+// Store provides read/write access to canonical profile onboarding data.
+type Store struct{ db *pgxpool.Pool }
 
 // NewStore creates an onboarding store backed by the given pool.
-func NewStore(db *pgxpool.Pool) *Store {
-	return &Store{db: db}
-}
+func NewStore(db *pgxpool.Pool) *Store { return &Store{db: db} }
 
-// GetPreferences loads onboarding preferences for a user.
-// Returns ErrNotFound if no row exists.
+// GetPreferences loads saved answers from the learner profile and completion from onboarding state.
 func (s *Store) GetPreferences(ctx context.Context, userID string) (*Preferences, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	const q = `SELECT user_id, current_level, goal, topics, daily_minutes, style, completed, created_at, updated_at
-		FROM profile.learner_onboarding WHERE user_id = $1`
-
+	const q = `SELECT up.onboarding_current_level, up.learning_purpose, up.onboarding_topics,
+		up.daily_study_minutes, up.learning_personality, lo.onboarded_at IS NOT NULL,
+		lo.created_at, lo.updated_at
+		FROM profile.learner_onboarding lo
+		JOIN profile.user_profile up ON up.id = lo.user_id
+		WHERE lo.user_id = $1`
+	var level, dailyMinutes *int
+	var goal, style *string
+	var topics []string
 	var p Preferences
-	err := s.db.QueryRow(ctx, q, userID).Scan(
-		&p.UserID, &p.CurrentLevel, &p.Goal, &p.Topics,
-		&p.DailyMinutes, &p.Style, &p.Completed, &p.CreatedAt, &p.UpdatedAt,
-	)
+	err := s.db.QueryRow(ctx, q, userID).Scan(&level, &goal, &topics, &dailyMinutes, &style, &p.Completed, &p.CreatedAt, &p.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
 		}
 		return nil, fmt.Errorf("onboarding: get preferences: %w", err)
 	}
-	if p.Topics == nil {
+	if level == nil && goal == nil && len(topics) == 0 && dailyMinutes == nil && style == nil {
+		return nil, ErrNotFound
+	}
+	p.UserID = userID
+	if level != nil {
+		p.CurrentLevel = *level
+	}
+	if goal != nil {
+		p.Goal = *goal
+	}
+	if dailyMinutes != nil {
+		p.DailyMinutes = *dailyMinutes
+	}
+	if style != nil {
+		p.Style = *style
+	}
+	if topics == nil {
 		p.Topics = []string{}
+	} else {
+		p.Topics = topics
 	}
 	return &p, nil
 }
 
 // HasCompleted checks whether the user has completed onboarding.
-// Returns false (no error) if no row exists.
 func (s *Store) HasCompleted(ctx context.Context, userID string) (bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	const q = `SELECT (onboarded_at IS NOT NULL) AS completed FROM profile.learner_onboarding WHERE user_id = $1`
-
+	const q = `SELECT onboarded_at IS NOT NULL FROM profile.learner_onboarding WHERE user_id = $1`
 	var completed bool
 	err := s.db.QueryRow(ctx, q, userID).Scan(&completed)
 	if err != nil {
@@ -91,54 +105,59 @@ func (s *Store) HasCompleted(ctx context.Context, userID string) (bool, error) {
 	return completed, nil
 }
 
-// MarkSkipped sets completed=true without requiring preference data.
-// Upserts so that status check returns true even if preferences were never saved.
+// MarkSkipped persists completion without inventing questionnaire answers.
 func (s *Store) MarkSkipped(ctx context.Context, userID string) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	const q = `INSERT INTO profile.learner_onboarding (user_id, completed)
-		VALUES ($1, true)
-		ON CONFLICT (user_id) DO UPDATE SET completed = true, updated_at = NOW()`
-
-	_, err := s.db.Exec(ctx, q, userID)
-	if err != nil {
+	const q = `INSERT INTO profile.learner_onboarding (user_id, current_step, onboarded_at, updated_at)
+		VALUES ($1, 'completed', NOW(), NOW())
+		ON CONFLICT (user_id) DO UPDATE SET current_step = 'completed',
+			 onboarded_at = COALESCE(profile.learner_onboarding.onboarded_at, NOW()),
+			 updated_at = CASE WHEN profile.learner_onboarding.onboarded_at IS NULL THEN NOW() ELSE profile.learner_onboarding.updated_at END`
+	if _, err := s.db.Exec(ctx, q, userID); err != nil {
 		return fmt.Errorf("onboarding: mark skipped: %w", err)
 	}
 	return nil
 }
 
-// SavePreferences inserts or updates onboarding preferences and marks completed=true.
+// SavePreferences atomically persists answers to the profile and completion state.
 func (s *Store) SavePreferences(ctx context.Context, userID string, input SaveInput) (*Preferences, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	const q = `INSERT INTO profile.learner_onboarding
-		(user_id, current_level, goal, topics, daily_minutes, style, completed)
-		VALUES ($1, $2, $3, $4, $5, $6, true)
-		ON CONFLICT (user_id) DO UPDATE SET
-			current_level = EXCLUDED.current_level,
-			goal = EXCLUDED.goal,
-			topics = EXCLUDED.topics,
-			daily_minutes = EXCLUDED.daily_minutes,
-			style = EXCLUDED.style,
-			completed = true,
-			updated_at = NOW()
-		RETURNING user_id, current_level, goal, topics, daily_minutes, style, completed, created_at, updated_at`
-
-	var p Preferences
-	err := s.db.QueryRow(ctx, q,
-		userID, input.CurrentLevel, input.Goal, input.Topics,
-		input.DailyMinutes, input.Style,
-	).Scan(
-		&p.UserID, &p.CurrentLevel, &p.Goal, &p.Topics,
-		&p.DailyMinutes, &p.Style, &p.Completed, &p.CreatedAt, &p.UpdatedAt,
-	)
+	tx, err := s.db.Begin(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("onboarding: save preferences: %w", err)
+		return nil, fmt.Errorf("onboarding: begin save: %w", err)
 	}
-	if p.Topics == nil {
-		p.Topics = []string{}
+	defer func() { _ = tx.Rollback(ctx) }()
+	topics := input.Topics
+	if topics == nil {
+		topics = []string{}
+	}
+	const profileQ = `UPDATE profile.user_profile SET onboarding_current_level = $2,
+		onboarding_topics = $3, learning_purpose = $4, daily_study_minutes = $5,
+		learning_personality = $6, updated_at = NOW() WHERE id = $1 AND status = 'active'`
+	tag, err := tx.Exec(ctx, profileQ, userID, input.CurrentLevel, topics, input.Goal, input.DailyMinutes, input.Style)
+	if err != nil {
+		return nil, fmt.Errorf("onboarding: save profile preferences: %w", err)
+	}
+	if tag.RowsAffected() != 1 {
+		return nil, fmt.Errorf("onboarding: save preferences: learner profile not found")
+	}
+	const stateQ = `INSERT INTO profile.learner_onboarding (user_id, current_step, onboarded_at, updated_at)
+		VALUES ($1, 'completed', NOW(), NOW())
+		ON CONFLICT (user_id) DO UPDATE SET current_step = 'completed', onboarded_at = NOW(), updated_at = NOW()
+		RETURNING created_at, updated_at`
+	var p Preferences
+	p.UserID = userID
+	p.CurrentLevel, p.Goal, p.Topics = input.CurrentLevel, input.Goal, topics
+	p.DailyMinutes, p.Style, p.Completed = input.DailyMinutes, input.Style, true
+	if err := tx.QueryRow(ctx, stateQ, userID).Scan(&p.CreatedAt, &p.UpdatedAt); err != nil {
+		return nil, fmt.Errorf("onboarding: save completion: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("onboarding: commit preferences: %w", err)
 	}
 	return &p, nil
 }

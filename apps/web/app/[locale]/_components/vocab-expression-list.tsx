@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { speakJapanese } from "../../../lib/japanese-speech";
+import { FlashcardAddAction, type ContentActionLabels } from "./content-actions";
 
 /* ─── Types ─── */
 
@@ -14,6 +15,7 @@ export type VocabExpression = {
   exampleReading?: string;
   exampleMeaning?: string;
   usageNote?: string;
+  sourceId?: string;
 };
 
 type Labels = {
@@ -34,15 +36,16 @@ function ExpressionCard({
   expression,
   index,
   labels,
+  flashcardLabels,
   gradient,
 }: {
   expression: VocabExpression;
   gradient: string;
   index: number;
   labels: Labels;
+  flashcardLabels?: ContentActionLabels;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const [flashcardAdded, setFlashcardAdded] = useState(false);
 
   const handleSpeak = useCallback(
     (e: React.MouseEvent) => {
@@ -58,16 +61,6 @@ function ExpressionCard({
       if (expression.example) speakJapanese(expression.example);
     },
     [expression.example],
-  );
-
-  const handleFlashcard = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      setFlashcardAdded(true);
-      // TODO: integrate with real flashcard API when user is authenticated
-      setTimeout(() => setFlashcardAdded(false), 2500);
-    },
-    [],
   );
 
   return (
@@ -138,16 +131,14 @@ function ExpressionCard({
                 </svg>
                 {labels.listenPronunciation}
               </button>
-              <button
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition active:scale-95 ${flashcardAdded ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700 hover:bg-amber-100"}`}
-                onClick={handleFlashcard}
-                type="button"
-              >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                {flashcardAdded ? labels.addedToFlashcard : labels.addToFlashcard}
-              </button>
+              {expression.sourceId && flashcardLabels && <FlashcardAddAction
+                backText={expression.meaning}
+                frontText={expression.word}
+                labels={flashcardLabels}
+                reading={expression.reading}
+                sourceId={expression.sourceId}
+                sourceType="magazine_vocab"
+              />}
             </div>
 
             {/* Example sentence */}
@@ -216,10 +207,12 @@ export function VocabExpressionList({
   expressions,
   gradient,
   labels,
+  flashcardLabels,
 }: {
   expressions: VocabExpression[];
   gradient: string;
   labels: Labels;
+  flashcardLabels?: ContentActionLabels;
 }) {
   return (
     <div className="space-y-3">
@@ -230,6 +223,7 @@ export function VocabExpressionList({
           index={i}
           key={`${expr.word}-${i}`}
           labels={labels}
+          flashcardLabels={flashcardLabels}
         />
       ))}
     </div>

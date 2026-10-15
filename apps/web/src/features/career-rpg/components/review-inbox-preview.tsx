@@ -10,15 +10,17 @@ import { ContextMemoCard } from "./context-memo-card";
 interface Props {
   inbox: ContextMemo[];
   labels: CareerRpgLabels["inbox"];
+  feedbackError?: string | null;
+  onFeedback: (id: string, feedback: "useful" | "fuzzy" | "lost") => void;
 }
 
-export function ReviewInboxPreview({ inbox, labels }: Props) {
+export function ReviewInboxPreview({ inbox, labels, feedbackError, onFeedback }: Props) {
   const [openId, setOpenId] = useState<string | null>(inbox[0]?.id ?? null);
 
   if (inbox.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-[#E2E8F0] bg-white p-8 text-center text-sm text-[#6B7280]">
-        —
+        {labels.empty}
       </div>
     );
   }
@@ -57,13 +59,16 @@ export function ReviewInboxPreview({ inbox, labels }: Props) {
         })}
       </ul>
       <div>
+        {feedbackError ? (
+          <p className="mb-3 text-sm text-[#9F1239]" role="alert">
+            {feedbackError}
+          </p>
+        ) : null}
         {openId ? (
           <ContextMemoCard
             labels={labels}
             memo={inbox.find((m) => m.id === openId) ?? inbox[0]}
-            onFeedback={() => {
-              /* prototype no-op */
-            }}
+            onFeedback={(feedback) => onFeedback(openId, feedback)}
           />
         ) : null}
       </div>

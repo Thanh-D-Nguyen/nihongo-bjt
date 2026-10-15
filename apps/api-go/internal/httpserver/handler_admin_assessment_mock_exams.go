@@ -236,18 +236,31 @@ func adminAssessmentMockExamsDetailHandler(db *pgxpool.Pool, logger *slog.Logger
 		// Sections
 		sRows, err := db.Query(ctx, `
 			SELECT id, code, title_vi, title_ja, display_order,
-			       (SELECT COUNT(*) FROM assessment.bjt_mock_test_question q WHERE q.section_id = s.id)
+			       (SELECT COUNT(*) FROM assessment.bjt_question q WHERE q.section_id = s.id)
 			FROM assessment.bjt_test_section s WHERE s.test_id = $1 ORDER BY s.display_order ASC`, id)
-		if err == nil {
-			for sRows.Next() {
-				var sec Section
-				if err := sRows.Scan(&sec.ID, &sec.Code, &sec.TitleVi, &sec.TitleJa,
-					&sec.DisplayOrder, &sec.QuestionCount); err == nil {
-					m.Sections = append(m.Sections, sec)
-				}
-			}
-			sRows.Close()
+		if err != nil {
+			logger.Error("load mock exam sections", "error", err, "exam_id", id)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
+		for sRows.Next() {
+			var sec Section
+			if err := sRows.Scan(&sec.ID, &sec.Code, &sec.TitleVi, &sec.TitleJa,
+				&sec.DisplayOrder, &sec.QuestionCount); err != nil {
+				sRows.Close()
+				logger.Error("scan mock exam section", "error", err, "exam_id", id)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			m.Sections = append(m.Sections, sec)
+		}
+		if err := sRows.Err(); err != nil {
+			sRows.Close()
+			logger.Error("iterate mock exam sections", "error", err, "exam_id", id)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		sRows.Close()
 		if m.Sections == nil {
 			m.Sections = []Section{}
 		}
@@ -519,11 +532,21 @@ func adminAssessmentMockExamsPublishHandler(db *pgxpool.Pool, logger *slog.Logge
 		var req struct {
 			Reason string `json:"reason"`
 		}
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
 
 		ctx := r.Context()
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin mock exam publish", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer func() { _ = tx.Rollback(ctx) }()
 		var currentStatus string
-		err := db.QueryRow(ctx, "SELECT status FROM assessment.bjt_mock_test WHERE id = $1 AND type = ANY($2)",
+		err = tx.QueryRow(ctx, "SELECT status FROM assessment.bjt_mock_test WHERE id = $1 AND type = ANY($2) FOR UPDATE",
 			id, examTypes).Scan(&currentStatus)
 		if err != nil {
 			writeJSONError(w, "mock exam not found", http.StatusNotFound)
@@ -534,14 +557,27 @@ func adminAssessmentMockExamsPublishHandler(db *pgxpool.Pool, logger *slog.Logge
 			return
 		}
 		if currentStatus != "published" {
-			db.Exec(ctx, "UPDATE assessment.bjt_mock_test SET status = 'published', updated_at = NOW() WHERE id = $1", id)
+			if _, err := tx.Exec(ctx, "UPDATE assessment.bjt_mock_test SET status = 'published', updated_at = NOW() WHERE id = $1", id); err != nil {
+				logger.Error("publish mock exam", "error", err, "exam_id", id)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
 		}
 		// Audit
 		afterJSON, _ := json.Marshal(map[string]any{"status": "published", "noop": currentStatus == "published"})
 		beforeJSON, _ := json.Marshal(map[string]any{"status": currentStatus})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		if _, err := tx.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.assessment.mock_exam.published', $1, $2, 'assessment.mock_exam', $3, $4, $5, NOW())`,
-			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
+			identity.ActorID, id, req.Reason, afterJSON, beforeJSON); err != nil {
+			logger.Error("audit mock exam publish", "error", err, "exam_id", id)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit mock exam publish", "error", err, "exam_id", id)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		detailHandler := adminAssessmentMockExamsDetailHandler(db, logger)
 		detailHandler(w, r)
@@ -607,6 +643,13 @@ func adminAssessmentMockExamsDuplicateHandler(db *pgxpool.Pool, logger *slog.Log
 		json.NewDecoder(r.Body).Decode(&req)
 
 		ctx := r.Context()
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin mock exam duplicate", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer func() { _ = tx.Rollback(ctx) }()
 		type Source struct {
 			Slug             string          `json:"slug"`
 			TitleVi          string          `json:"titleVi"`
@@ -618,7 +661,7 @@ func adminAssessmentMockExamsDuplicateHandler(db *pgxpool.Pool, logger *slog.Log
 			BlueprintMeta    json.RawMessage `json:"blueprintMeta,omitempty"`
 		}
 		var src Source
-		err := db.QueryRow(ctx, `
+		err = tx.QueryRow(ctx, `
 			SELECT slug, title_vi, title_ja, description, type, level, time_limit_seconds, blueprint_meta
 			FROM assessment.bjt_mock_test WHERE id = $1 AND type = ANY($2)`, id, examTypes).Scan(
 			&src.Slug, &src.TitleVi, &src.TitleJa, &src.Description,
@@ -628,11 +671,11 @@ func adminAssessmentMockExamsDuplicateHandler(db *pgxpool.Pool, logger *slog.Log
 			return
 		}
 
-		newSlug := uniqueCopySlugSync(ctx, db, src.Slug)
+		newSlug := uniqueCopySlugSync(ctx, tx, src.Slug)
 		newTitleVi := suffixCopy(src.TitleVi, " (copy)", 200)
 
 		var newID string
-		err = db.QueryRow(ctx, `
+		err = tx.QueryRow(ctx, `
 			INSERT INTO assessment.bjt_mock_test (slug, title_vi, title_ja, description, type, status, level, time_limit_seconds, blueprint_meta, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8, NOW(), NOW())
 			RETURNING id`,
@@ -644,10 +687,100 @@ func adminAssessmentMockExamsDuplicateHandler(db *pgxpool.Pool, logger *slog.Log
 			return
 		}
 
+		sectionRows, err := tx.Query(ctx, `SELECT id::text, code, title_vi, title_ja, display_order
+			FROM assessment.bjt_test_section WHERE test_id=$1 ORDER BY display_order, id`, id)
+		if err != nil {
+			logger.Error("load mock exam sections for duplicate", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		type sectionCopy struct {
+			id, code, titleVi string
+			titleJa           *string
+			displayOrder      int
+		}
+		sections := make([]sectionCopy, 0)
+		for sectionRows.Next() {
+			var section sectionCopy
+			if err := sectionRows.Scan(&section.id, &section.code, &section.titleVi, &section.titleJa, &section.displayOrder); err != nil {
+				sectionRows.Close()
+				logger.Error("scan mock exam section for duplicate", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			sections = append(sections, section)
+		}
+		if err := sectionRows.Err(); err != nil {
+			sectionRows.Close()
+			logger.Error("iterate mock exam sections for duplicate", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		sectionRows.Close()
+		for _, section := range sections {
+			var copiedSectionID string
+			if err := tx.QueryRow(ctx, `INSERT INTO assessment.bjt_test_section (test_id, code, title_vi, title_ja, display_order)
+				VALUES ($1,$2,$3,$4,$5) RETURNING id::text`, newID, section.code, section.titleVi, section.titleJa, section.displayOrder).Scan(&copiedSectionID); err != nil {
+				logger.Error("copy mock exam section", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			questionRows, err := tx.Query(ctx, `SELECT id::text FROM assessment.bjt_question WHERE section_id=$1 ORDER BY id`, section.id)
+			if err != nil {
+				logger.Error("load mock exam questions for duplicate", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			questionIDs := make([]string, 0)
+			for questionRows.Next() {
+				var questionID string
+				if err := questionRows.Scan(&questionID); err != nil {
+					questionRows.Close()
+					logger.Error("scan mock exam question for duplicate", "error", err)
+					writeJSONError(w, "internal error", http.StatusInternalServerError)
+					return
+				}
+				questionIDs = append(questionIDs, questionID)
+			}
+			if err := questionRows.Err(); err != nil {
+				questionRows.Close()
+				logger.Error("iterate mock exam questions for duplicate", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			questionRows.Close()
+			for _, questionID := range questionIDs {
+				var copiedQuestionID string
+				err := tx.QueryRow(ctx, `INSERT INTO assessment.bjt_question (section_id,prompt,scenario,audio_script,audio_url,image_url,image_alt,image_prompt,explanation_vi,skill_tag,difficulty,source_type,source_id,remediation_card_id,quality_flags,status,tags,created_at,updated_at)
+					SELECT $1,prompt,scenario,audio_script,audio_url,image_url,image_alt,image_prompt,explanation_vi,skill_tag,difficulty,source_type,source_id,remediation_card_id,quality_flags,status,tags,NOW(),NOW()
+					FROM assessment.bjt_question WHERE id=$2 RETURNING id::text`, copiedSectionID, questionID).Scan(&copiedQuestionID)
+				if err != nil {
+					logger.Error("copy mock exam question", "error", err)
+					writeJSONError(w, "internal error", http.StatusInternalServerError)
+					return
+				}
+				if _, err := tx.Exec(ctx, `INSERT INTO assessment.bjt_question_option (question_id,option_key,text,is_correct,created_at)
+					SELECT $1,option_key,text,is_correct,NOW() FROM assessment.bjt_question_option WHERE question_id=$2`, copiedQuestionID, questionID); err != nil {
+					logger.Error("copy mock exam question options", "error", err)
+					writeJSONError(w, "internal error", http.StatusInternalServerError)
+					return
+				}
+			}
+		}
+
 		afterJSON, _ := json.Marshal(map[string]any{"newId": newID, "slug": newSlug, "sourceId": id})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		if _, err := tx.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.assessment.mock_exam.duplicated', $1, $2, 'assessment.mock_exam', $3, $4, NOW())`,
-			identity.ActorID, newID, req.Reason, afterJSON)
+			identity.ActorID, newID, req.Reason, afterJSON); err != nil {
+			logger.Error("audit mock exam duplicate", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit mock exam duplicate", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		// Return detail of new exam
 		r.URL.Path = "/api/admin/assessment/mock-exams/" + newID
@@ -749,7 +882,9 @@ func levelCandidates(level string) []string {
 	return result
 }
 
-func uniqueCopySlugSync(ctx context.Context, db *pgxpool.Pool, base string) string {
+func uniqueCopySlugSync(ctx context.Context, db interface {
+	QueryRow(context.Context, string, ...any) pgx.Row
+}, base string) string {
 	candidate := base + "-copy"
 	for n := 1; n <= 50; n++ {
 		var exists bool

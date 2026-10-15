@@ -1,0 +1,653 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-143",
+  "title": "Secure Admin leaderboard and pets APIs",
+  "start_head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Admin leaderboard and companion-pet endpoints are not individually verified; leaderboard mutations lack complete input, permission, CSRF and audit contracts, and pet listing needs authenticated read checks.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Five APIs are individually inventoried and tested; roleless/anonymous behavior is denied; mutations validate, persist, audit atomically and return accurate errors; headed 390x844 browser, Go suite, independent review pass."
+      }
+    ],
+    "expected_behavior": "The five target APIs enforce read/write RBAC and mutation CSRF, validate bounds, return correct errors, preserve history while auditing atomically, and render usable 390px table interactions.",
+    "observed_behavior": "The five registered METHOD+PATH routes have session-only guards; leaderboard CRUD lacks consistent schema validation, audit transactions and missing-record behavior, list handlers mask row errors, and the table action column clips at 390px.",
+    "rollback_plan": "Revert the isolated AUDIT-143 code commit. No database migration is required; Go/browser checks use disposable rows and explicit cleanup, and the UI adjustment only wraps existing tables in keyboard-focusable scroll regions."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY",
+      "DATABASE"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions",
+      "expect": "roleless status="
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminLeaderboardMaxEntriesRejectsInt32Overflow",
+      "expect": "want 400 for INTEGER overflow"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-14T01:22:06.941Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-14T01:22:07.327Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-14T01:22:11.404Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T01:23:13.238Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T01:24:46.862Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T01:28:43.488Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-14T01:41:24.195Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T01:43:35.113Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T01:44:11.292Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T02:11:40.097Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T02:12:14.180Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-14T02:16:46.112Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-14T02:19:58.087Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-14T02:20:02.582Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-14T01:23:12.937Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions === RUN TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions/GET_/api/admin/gamification/leaderboards 2026/10/14 10:23:12 INFO request method=GET path=/api/admin/gamification/leaderboards status=401 duration=170.75µs bytes=25 2…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions": "roleless status="
+      },
+      "fingerprint": "80c6016c9c2d093324c6513f4eb875612d4262b40d130028d453e0f422346b2a"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-14T01:24:46.361Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3c919b772fc2f149817f459fce2c8d608d6ed99e0a4c81766986916eab1e76e5"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-14T01:25:27.720Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d74f73edabbc7a0fc8c33485b4cb61fc31331d5e8a44062458dbe5015003cc86"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-14T01:26:15.937Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c17fc31d5f60629bdc9431a392622e7811233c3015f112fdf4f22c979fdcb1e8"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-14T01:28:43.119Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit143-admin-leaderboards-pets.mjs",
+      "exit_code": 1,
+      "fingerprint": "605ff53cce6b8a3d2431e8725ad0ead62b021c20969b7c4dce87c03d52400425"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-14T01:29:24.922Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit143-admin-leaderboards-pets.mjs",
+      "exit_code": 1,
+      "fingerprint": "bc2dc34dc413e5312490a582d42857b486d4109008f42aaaef87a3425ef99c8e"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-14T01:30:14.471Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit143-admin-leaderboards-pets.mjs",
+      "exit_code": 1,
+      "fingerprint": "1b78b5fa85e84d859e99ee2b7902d202237965faaf18b88e088c49ff22869f08"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-14T01:31:17.414Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit143-admin-leaderboards-pets.mjs",
+      "exit_code": 1,
+      "fingerprint": "b8621e583e7942df0e3185c909410b875bd37acf623f0611995d9082db50ee1d"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-14T01:33:49.892Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit143-admin-leaderboards-pets.mjs",
+      "exit_code": 0,
+      "fingerprint": "caa2e7c86d3e8e8fe09b94c70e23f4fc0795377858a9c24a96b21b3b4b669750"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-14T01:35:14.027Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 918,
+        "executed": 916,
+        "passed": 916,
+        "failed": 0,
+        "skipped": 2,
+        "expected_skips": 0,
+        "unexpected_skips": 2,
+        "min_passed_tests": 431
+      },
+      "message": "2 test(s) skipped that are not in go-test-skips-baseline.json — skipped tests are not verification",
+      "fingerprint": "caa2e7c86d3e8e8fe09b94c70e23f4fc0795377858a9c24a96b21b3b4b669750"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-14T01:40:32.946Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 798,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "caa2e7c86d3e8e8fe09b94c70e23f4fc0795377858a9c24a96b21b3b4b669750"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-14T01:41:23.697Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions === RUN TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions/GET_/api/admin/gamification/leaderboards 2026/10/14 10:41:21 INFO request method=GET path=/api/admin/gamification/leaderboards status=401 duration=180.041µs bytes=25 …",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"int32 overflow create status=\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions": "int32 overflow create status="
+      },
+      "fingerprint": "6d740a6350e0fbad7e5bf2c3b6134eaef2c62d5592a2b045ba3b8919899d7964"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-14T01:42:17.024Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions === RUN TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions/GET_/api/admin/gamification/leaderboards 2026/10/14 10:42:14 INFO request method=GET path=/api/admin/gamification/leaderboards status=401 duration=176.584µs bytes=25 …",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"int4 (OID 23)\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions": "int4 (OID 23)"
+      },
+      "fingerprint": "6d740a6350e0fbad7e5bf2c3b6134eaef2c62d5592a2b045ba3b8919899d7964"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-14T01:42:55.215Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions|TestAdminLeaderboardMaxEntriesRejectsInt32Overflow)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions === RUN TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions/GET_/api/admin/gamification/leaderboards 2026/10/14 10:42:53 INFO request method=GET path=/api/admin/gamification/leaderboards status=401 duration=158.208µs bytes=25 …",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"int4 (OID 23)\""
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLeaderboardMaxEntriesRejectsInt32Overflow",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLeaderboardMaxEntriesRejectsInt32Overflow 2026/10/14 10:42:53 ERROR create leaderboard error=\"failed to encode args[4]: unable to encode 2147483648 into binary format for int4 (OID 23): 2147483648 is greater than maximum value for int4\" 2026/10/14 10:42:53 INFO request method=POST p…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions": "int4 (OID 23)",
+        "go:./internal/httpserver:TestAdminLeaderboardMaxEntriesRejectsInt32Overflow": "want 400 for INTEGER overflow"
+      },
+      "fingerprint": "7e6fd933b55ddd77ff074fe86510770306984513ea27c9203afe96a980424b27"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-14T01:43:34.617Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLeaderboardMaxEntriesRejectsInt32Overflow)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLeaderboardMaxEntriesRejectsInt32Overflow",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLeaderboardMaxEntriesRejectsInt32Overflow 2026/10/14 10:43:32 ERROR create leaderboard error=\"failed to encode args[4]: unable to encode 2147483648 into binary format for int4 (OID 23): 2147483648 is greater than maximum value for int4\" 2026/10/14 10:43:32 INFO request method=POST p…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminLeaderboardMaxEntriesRejectsInt32Overflow": "want 400 for INTEGER overflow"
+      },
+      "fingerprint": "7e6fd933b55ddd77ff074fe86510770306984513ea27c9203afe96a980424b27"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-14T01:44:10.768Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions|TestAdminLeaderboardMaxEntriesRejectsInt32Overflow)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLeaderboardMaxEntriesRejectsInt32Overflow",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1c121c3e00328d9615bc49fd2471ad0891e5ca0ceeaf3f53e9749dac7def10d4"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-14T01:45:11.713Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions|TestAdminLeaderboardMaxEntriesRejectsInt32Overflow)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLeaderboardMaxEntriesRejectsInt32Overflow",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "b756c089fa429a8e92f307633320e79d535009c22f006a90d6fb28bb5cdafaa3"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-14T01:49:26.209Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 919,
+        "executed": 919,
+        "passed": 919,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "919 passed, 0 allowed skip(s)",
+      "fingerprint": "b756c089fa429a8e92f307633320e79d535009c22f006a90d6fb28bb5cdafaa3"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-14T02:01:17.909Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 798,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "b756c089fa429a8e92f307633320e79d535009c22f006a90d6fb28bb5cdafaa3"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-14T02:06:28.998Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 799,
+        "lint_errors": 69,
+        "lint_warnings": 22,
+        "new_debt": 1
+      },
+      "message": "RATCHET_VIOLATION: 1 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "b756c089fa429a8e92f307633320e79d535009c22f006a90d6fb28bb5cdafaa3"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-14T02:11:39.730Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 799,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "74632c8683488dcd00fe23f71968f386bd4261185ab8fceda5e0f839ad39c17d"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-14T02:12:13.752Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions|TestAdminLeaderboardMaxEntriesRejectsInt32Overflow)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLeaderboardAndPetsRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLeaderboardMaxEntriesRejectsInt32Overflow",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "74632c8683488dcd00fe23f71968f386bd4261185ab8fceda5e0f839ad39c17d"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-14T02:15:08.900Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 919,
+        "executed": 919,
+        "passed": 919,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "919 passed, 0 allowed skip(s)",
+      "fingerprint": "74632c8683488dcd00fe23f71968f386bd4261185ab8fceda5e0f839ad39c17d"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-14T02:16:45.737Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit143-admin-leaderboards-pets.mjs",
+      "exit_code": 0,
+      "fingerprint": "74632c8683488dcd00fe23f71968f386bd4261185ab8fceda5e0f839ad39c17d"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-14T02:19:57.751Z",
+      "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a13832-cecd-79a3-8afb-56650b3ee548",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "74632c8683488dcd00fe23f71968f386bd4261185ab8fceda5e0f839ad39c17d"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-14T02:20:02.563Z",
+    "head": "5d2b6bbcb6ca5c20ff4cecdebd96b8bd2a1b9d72",
+    "fingerprint": "74632c8683488dcd00fe23f71968f386bd4261185ab8fceda5e0f839ad39c17d",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/admin/app/[locale]/gamification/gamification-admin-client.tsx": "808a9ea9b4d4c51e125ba89ece4333fc55707357",
+      "apps/api-go/internal/httpserver/handler_admin_gamification.go": "04fcbb6e77eeeeb66de80b5adb5ceff8c819a187",
+      "apps/api-go/internal/httpserver/handler_admin_leaderboards_rbac_test.go": "5a929399c61525ecaa02ecd8a56ba533cf064405",
+      "apps/api-go/internal/httpserver/server.go": "cdd8cbf97dab91b7d9daf79b9851bc54f7bfd22f",
+      "e2e/audit/audit143-admin-leaderboards-pets.mjs": "5d8f4760c50ecbd76d9d547bf0d848db322a9e73"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

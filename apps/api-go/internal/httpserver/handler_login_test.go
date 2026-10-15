@@ -726,6 +726,28 @@ func TestAdminLogin_DisabledActor_Generic401(t *testing.T) {
 	}
 }
 
+func TestAdminLogin_IPRateLimit_429(t *testing.T) {
+	router, _ := buildLoginRouterWithLimiter(t, []string{"https://admin.example.com"}, 2, 100)
+	remoteAddr := "172.16.0.20:9999"
+
+	for i := 0; i < 3; i++ {
+		body := fmt.Sprintf(`{"email":"admin-rate-limit-%d@example.com","password":"pass"}`, i)
+		req := httptest.NewRequest(http.MethodPost, "/api/admin/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Origin", "https://admin.example.com")
+		req.RemoteAddr = remoteAddr
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if i < 2 && w.Code != http.StatusUnauthorized {
+			t.Fatalf("request %d should reach credential lookup, got %d", i+1, w.Code)
+		}
+		if i == 2 && w.Code != http.StatusTooManyRequests {
+			t.Fatalf("expected 429 after exceeding Admin login IP limit, got %d", w.Code)
+		}
+	}
+}
+
 func TestAdminLogin_LimiterNil_FailClosed503(t *testing.T) {
 	router := buildLoginRouterNoLimiter(t, []string{"https://admin.example.com"})
 

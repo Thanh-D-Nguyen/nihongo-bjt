@@ -9,6 +9,7 @@ type Conn struct {
 	ID          string
 	UserID      string
 	DisplayName string
+	Namespace   string
 	Send        chan []byte
 	closeOnce   sync.Once
 	done        chan struct{}
@@ -115,6 +116,18 @@ func (h *Hub) UserConnCount(userID string) int {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	return len(h.users[userID])
+}
+
+func (h *Hub) UserNamespaceConnCount(userID, namespace string) int {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	count := 0
+	for connID := range h.users[userID] {
+		if conn := h.conns[connID]; conn != nil && conn.Namespace == namespace {
+			count++
+		}
+	}
+	return count
 }
 
 // OnlineUsers returns all userIDs with at least one active connection.

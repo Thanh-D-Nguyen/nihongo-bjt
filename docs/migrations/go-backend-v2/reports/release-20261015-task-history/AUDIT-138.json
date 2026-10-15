@@ -1,0 +1,1277 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-138",
+  "title": "Audit and secure five Admin Magazine/Loto APIs",
+  "start_head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Test POST /api/admin/logout, GET /api/admin/magazine, POST /api/admin/magazine/generate, POST /api/admin/magazine/loto/autopilot, and GET /api/admin/magazine/loto/draws separately for contract, invalid/unauthorized behavior, and persistence or side effects."
+      },
+      {
+        "id": "AC2",
+        "text": "All Magazine/Loto route mutations enforce admin.content.write and CSRF; reads enforce admin.content.read, with anonymous 401 and authenticated roleless 403 verified by real-router PostgreSQL tests."
+      },
+      {
+        "id": "AC3",
+        "text": "Real visible Admin UI/browser validates logout, magazine list/generate, and Loto draws; autopilot is validated from same-origin visible browser session, with temporary rows cleaned."
+      }
+    ],
+    "expected_behavior": "Acceptance contract audited five APIs individually with fixture cleanup.",
+    "observed_behavior": "Five Admin Magazine/Loto APIs remain individually unverified; the route group currently applies AdminGuard but omits per-route RBAC and CSRF gates.",
+    "rollback_plan": "Revert only AUDIT-138-owned route/test/browser/inventory changes; retain prior audit commits."
+  },
+  "classification": {
+    "classes": [
+      "AUTH_SECURITY",
+      "API_CONTRACT"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminMagazineLotoRoutesEnforceContentPermissions",
+      "expect": "roleless GET status=200"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminMagazineLotoFiveApiContracts",
+      "expect": "magazine generation audit events=0"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminMagazineGenerateRejectsShortDate",
+      "expect": "invalid magazine date status=500"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate",
+      "expect": "locale=en status=500"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-13T05:59:13.526Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-13T05:59:14.120Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-13T05:59:14.486Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T06:02:06.577Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T06:03:36.236Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T06:08:35.829Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T06:09:41.862Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T06:16:33.768Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T06:22:56.542Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T06:27:50.631Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-13T06:33:51.534Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T06:34:16.838Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T06:35:02.438Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T06:35:33.653Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T06:39:21.651Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T06:47:07.634Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-13T06:53:04.934Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T06:53:47.407Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T07:12:54.725Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T07:17:40.208Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T07:34:24.234Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-13T07:37:45.236Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T07:43:49.042Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-13T07:46:59.259Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T07:51:47.866Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-13T07:54:58.656Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-13T07:59:16.947Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-13T07:59:27.747Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-13T06:01:52.040Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminMagazineLotoRoutesEnforceContentPermissions handler_admin_magazine_rbac_test.go:12: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminMagazineLotoRoutesEnforceContentPermissions (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions": "roleless GET status=200"
+      },
+      "fingerprint": "a20b05c8ca11d1707c7d24a43e0d756008e822f26d1933ff8e6bad932bcc2107"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-13T06:02:06.398Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineLotoRoutesEnforceContentPermissions === RUN TestAdminMagazineLotoRoutesEnforceContentPermissions/anonymous_GET_/api/admin/magazine?locale=vi 2026/10/13 15:02:06 INFO request method=GET path=/api/admin/magazine status=401 duration=107.542µs bytes=25 --- PASS: TestAdminMagazin…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions": "roleless GET status=200"
+      },
+      "fingerprint": "a20b05c8ca11d1707c7d24a43e0d756008e822f26d1933ff8e6bad932bcc2107"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-13T06:03:36.004Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "28ca7f71019977bdcbb7ccd15ba87b2af499670e982e9d46b7cd7e7b1dbce426"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-13T06:08:35.598Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions|TestAdminMagazineLotoFiveApiContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineLotoRoutesEnforceContentPermissions === RUN TestAdminMagazineLotoRoutesEnforceContentPermissions/anonymous_GET_/api/admin/magazine?locale=vi 2026/10/13 15:08:34 INFO request method=GET path=/api/admin/magazine status=401 duration=124.416µs bytes=25 --- PASS: TestAdminMagazin…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineLotoFiveApiContracts 2026/10/13 15:08:34 INFO request method=GET path=/api/admin/magazine status=200 duration=3.748375ms bytes=42 2026/10/13 15:08:34 INFO request method=POST path=/api/admin/magazine/generate status=200 duration=2.796167ms bytes=63 handler_admin_magazine_rba…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions": "roleless GET status=200",
+        "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts": "magazine generation audit events=0"
+      },
+      "fingerprint": "2500abbff61adfbc5e32de05c338359d9fc27fe3c3220d7d63b74c24dce2dc91"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-13T06:08:47.350Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions|TestAdminMagazineLotoFiveApiContracts|TestAdminMagazineGenerateRejectsShortDate)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineLotoRoutesEnforceContentPermissions === RUN TestAdminMagazineLotoRoutesEnforceContentPermissions/anonymous_GET_/api/admin/magazine?locale=vi 2026/10/13 15:08:46 INFO request method=GET path=/api/admin/magazine status=401 duration=124.125µs bytes=25 --- PASS: TestAdminMagazin…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineLotoFiveApiContracts 2026/10/13 15:08:46 INFO request method=GET path=/api/admin/magazine status=200 duration=2.708667ms bytes=42 2026/10/13 15:08:46 INFO request method=POST path=/api/admin/magazine/generate status=200 duration=1.879042ms bytes=63 handler_admin_magazine_rba…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineGenerateRejectsShortDate panic: runtime error: slice bounds out of range [:10] with length 3 -> github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.NewRouter.func96.adminMagazineGenerateHandler.87 -> /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-w…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions": "roleless GET status=200",
+        "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts": "magazine generation audit events=0",
+        "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate": "invalid magazine date status=500"
+      },
+      "fingerprint": "2500abbff61adfbc5e32de05c338359d9fc27fe3c3220d7d63b74c24dce2dc91"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-13T06:09:41.597Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions|TestAdminMagazineLotoFiveApiContracts|TestAdminMagazineGenerateRejectsShortDate)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1e42af4160dac865989ed33a33169750f705c071528e759691b1139535360ad1"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-13T06:15:24.795Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions|TestAdminMagazineLotoFiveApiContracts|TestAdminMagazineGenerateRejectsShortDate)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "69d51c208a0aa616f29ffd51149b46c50841989e45f503c76456a12d35d0637f"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-13T06:15:48.071Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit138-admin-apis.sh",
+      "exit_code": 1,
+      "fingerprint": "69d51c208a0aa616f29ffd51149b46c50841989e45f503c76456a12d35d0637f"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-13T06:16:33.379Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit138-admin-apis.sh",
+      "exit_code": 1,
+      "fingerprint": "38d61918891260509bccf1f0b627605076f45c5156bbfa65e88fd1d172aaf366"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-13T06:22:56.154Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions|TestAdminMagazineLotoFiveApiContracts|TestAdminMagazineGenerateRejectsShortDate)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "38d61918891260509bccf1f0b627605076f45c5156bbfa65e88fd1d172aaf366"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-13T06:27:50.234Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 882,
+        "executed": 880,
+        "passed": 880,
+        "failed": 0,
+        "skipped": 2,
+        "expected_skips": 0,
+        "unexpected_skips": 2,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "8b8a4be19bd1cfa09c0641e24516d42d1635c75b7b342aca48accba0b4cd1649"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-13T06:33:24.079Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions|TestAdminMagazineLotoFiveApiContracts|TestAdminMagazineGenerateRejectsShortDate)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminMagazineLotoRoutesEnforceContentPermissions handler_admin_magazine_rbac_test.go:16: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminMagazineLotoRoutesEnforceContentPermissions (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminMagazineLotoFiveApiContracts handler_admin_magazine_rbac_test.go:122: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminMagazineLotoFiveApiContracts (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminMagazineGenerateRejectsShortDate handler_admin_magazine_rbac_test.go:249: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminMagazineGenerateRejectsShortDate (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions": "roleless GET status=200",
+        "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts": "magazine generation audit events=0",
+        "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate": "invalid magazine date status=500"
+      },
+      "fingerprint": "8b619517adcb15b8a7e10a94f9baac20d7f01e32989da20b3ac7dc81d52b01af"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-13T06:33:51.153Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions|TestAdminMagazineLotoFiveApiContracts|TestAdminMagazineGenerateRejectsShortDate|TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineLotoRoutesEnforceContentPermissions === RUN TestAdminMagazineLotoRoutesEnforceContentPermissions/anonymous_GET_/api/admin/magazine?locale=vi 2026/10/13 15:33:50 INFO request method=GET path=/api/admin/magazine status=401 duration=136.959µs bytes=25 --- PASS: TestAdminMagazin…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineLotoFiveApiContracts 2026/10/13 15:33:50 INFO request method=GET path=/api/admin/magazine status=200 duration=3.776375ms bytes=42 2026/10/13 15:33:50 INFO request method=POST path=/api/admin/magazine/generate status=200 duration=2.534167ms bytes=63 handler_admin_magazine_rba…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineGenerateRejectsShortDate panic: runtime error: slice bounds out of range [:10] with length 3 -> github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.NewRouter.func96.adminMagazineGenerateHandler.87 -> /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-w…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate 2026/10/13 15:33:50 INFO request method=POST path=/api/admin/magazine/generate status=200 duration=2.545167ms bytes=63 handler_admin_magazine_rbac_test.go:293: unknown widget kind status=200 body={\"generated\":true,\"id\":\"683f9…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"unknown widget kind status=400\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions": "roleless GET status=200",
+        "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts": "magazine generation audit events=0",
+        "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate": "invalid magazine date status=500",
+        "go:./internal/httpserver:TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate": "unknown widget kind status=400"
+      },
+      "fingerprint": "8b619517adcb15b8a7e10a94f9baac20d7f01e32989da20b3ac7dc81d52b01af"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-13T06:34:16.455Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions|TestAdminMagazineLotoFiveApiContracts|TestAdminMagazineGenerateRejectsShortDate|TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineLotoRoutesEnforceContentPermissions === RUN TestAdminMagazineLotoRoutesEnforceContentPermissions/anonymous_GET_/api/admin/magazine?locale=vi 2026/10/13 15:34:15 INFO request method=GET path=/api/admin/magazine status=401 duration=135.375µs bytes=25 --- PASS: TestAdminMagazin…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineLotoFiveApiContracts 2026/10/13 15:34:15 INFO request method=GET path=/api/admin/magazine status=200 duration=3.052875ms bytes=42 2026/10/13 15:34:15 INFO request method=POST path=/api/admin/magazine/generate status=200 duration=2.2515ms bytes=63 handler_admin_magazine_rbac_…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineGenerateRejectsShortDate panic: runtime error: slice bounds out of range [:10] with length 3 -> github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.NewRouter.func96.adminMagazineGenerateHandler.87 -> /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-w…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate 2026/10/13 15:34:15 INFO request method=POST path=/api/admin/magazine/generate status=200 duration=3.102708ms bytes=63 handler_admin_magazine_rbac_test.go:293: unknown widget kind status=200 body={\"generated\":true,\"id\":\"8d4f0…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions": "roleless GET status=200",
+        "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts": "magazine generation audit events=0",
+        "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate": "invalid magazine date status=500",
+        "go:./internal/httpserver:TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate": "unknown widget kind status=200"
+      },
+      "fingerprint": "8b619517adcb15b8a7e10a94f9baac20d7f01e32989da20b3ac7dc81d52b01af"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-13T06:35:02.055Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions|TestAdminMagazineLotoFiveApiContracts|TestAdminMagazineGenerateRejectsShortDate|TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "b0a8b4c8b52265ca149ee2dad1ecc9a790f3d735eaf3e8d1c7544d9a3cbda85e"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-13T06:35:33.277Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "c3a2efef55b88a9bf3c5a08ce1743e7b81e0c3b68cd2eb241c59f22af9111bc8"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-13T06:39:21.271Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions|TestAdminMagazineLotoFiveApiContracts|TestAdminMagazineGenerateRejectsShortDate|TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e229cdc9f76b0debdb4c1e6d4eaf428760256ad2690a68f8fe97bad83a0134e0"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-13T06:47:07.115Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 883,
+        "executed": 883,
+        "passed": 883,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "907d0a8e64b7333ef70225bc1db89bc50cf267177114ed98d6436b722cdb2672"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-13T06:53:04.327Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions|TestAdminMagazineLotoFiveApiContracts|TestAdminMagazineGenerateRejectsShortDate|TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineLotoRoutesEnforceContentPermissions === RUN TestAdminMagazineLotoRoutesEnforceContentPermissions/anonymous_GET_/api/admin/magazine?locale=vi 2026/10/13 15:53:03 INFO request method=GET path=/api/admin/magazine status=401 duration=135.375µs bytes=25 --- PASS: TestAdminMagazin…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineLotoFiveApiContracts 2026/10/13 15:53:03 INFO request method=GET path=/api/admin/magazine status=200 duration=2.641166ms bytes=42 2026/10/13 15:53:03 INFO request method=POST path=/api/admin/magazine/generate status=200 duration=2.204208ms bytes=63 handler_admin_magazine_rba…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineGenerateRejectsShortDate panic: runtime error: slice bounds out of range [:10] with length 3 -> github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.NewRouter.func96.adminMagazineGenerateHandler.87 -> /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-w…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate 2026/10/13 15:53:03 INFO request method=POST path=/api/admin/magazine/generate status=200 duration=3.593042ms bytes=63 handler_admin_magazine_rbac_test.go:295: unknown widget kind status=200 body={\"generated\":true,\"id\":\"ac6c6…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"locale=en status=500\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions": "roleless GET status=200",
+        "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts": "magazine generation audit events=0",
+        "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate": "invalid magazine date status=500",
+        "go:./internal/httpserver:TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate": "locale=en status=500"
+      },
+      "fingerprint": "79145ef9145e8fa39b2d4c4c175cc7990d972a2b3a43baf13563f6fc65bdfdde"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-13T06:53:46.719Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions|TestAdminMagazineLotoFiveApiContracts|TestAdminMagazineGenerateRejectsShortDate|TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineLotoRoutesEnforceContentPermissions === RUN TestAdminMagazineLotoRoutesEnforceContentPermissions/anonymous_GET_/api/admin/magazine?locale=vi 2026/10/13 15:53:44 INFO request method=GET path=/api/admin/magazine status=401 duration=142.334µs bytes=25 --- PASS: TestAdminMagazin…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineLotoFiveApiContracts 2026/10/13 15:53:44 INFO request method=GET path=/api/admin/magazine status=200 duration=2.980416ms bytes=42 2026/10/13 15:53:44 INFO request method=POST path=/api/admin/magazine/generate status=200 duration=2.09375ms bytes=63 handler_admin_magazine_rbac…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineGenerateRejectsShortDate panic: runtime error: slice bounds out of range [:10] with length 3 -> github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.NewRouter.func96.adminMagazineGenerateHandler.87 -> /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-w…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate 2026/10/13 15:53:44 INFO request method=POST path=/api/admin/magazine/generate status=200 duration=5.754334ms bytes=63 2026/10/13 15:53:44 ERROR generate magazine article error=\"ERROR: duplicate key value violates unique cons…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions": "roleless GET status=200",
+        "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts": "magazine generation audit events=0",
+        "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate": "invalid magazine date status=500",
+        "go:./internal/httpserver:TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate": "locale=en status=500"
+      },
+      "fingerprint": "84289dbccd9c3ef1b2891c5b77b7aa91e0e67fc1aa341055745682c5f189e754"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-13T06:57:10.610Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 883,
+        "executed": 883,
+        "passed": 883,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "84289dbccd9c3ef1b2891c5b77b7aa91e0e67fc1aa341055745682c5f189e754"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-13T07:01:16.837Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 883,
+        "executed": 883,
+        "passed": 883,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "883 passed, 0 allowed skip(s)",
+      "fingerprint": "5f7b2850d87f79875fa5c1e2447579d69be637fca332a4a70b95a69f04af6142"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-13T07:02:48.334Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 883,
+        "executed": 881,
+        "passed": 881,
+        "failed": 0,
+        "skipped": 2,
+        "expected_skips": 0,
+        "unexpected_skips": 2,
+        "min_passed_tests": 431
+      },
+      "message": "2 test(s) skipped that are not in go-test-skips-baseline.json — skipped tests are not verification",
+      "fingerprint": "5f7b2850d87f79875fa5c1e2447579d69be637fca332a4a70b95a69f04af6142"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-13T07:03:35.519Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit138-admin-apis.sh",
+      "exit_code": 1,
+      "fingerprint": "5f7b2850d87f79875fa5c1e2447579d69be637fca332a4a70b95a69f04af6142"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-13T07:04:31.590Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit138-admin-apis.sh",
+      "exit_code": 1,
+      "fingerprint": "39701a89d01dff1ebec1563c88c0996f06defc74d8d2d407cd27815a91713618"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-13T07:11:25.639Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit138-admin-apis.sh",
+      "exit_code": 1,
+      "fingerprint": "1c8a1dd51065d5a6fe1050472d98e07c11b48ac31a338af98e589bd33f038c72"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-13T07:12:03.304Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions|TestAdminMagazineLotoFiveApiContracts|TestAdminMagazineGenerateRejectsShortDate|TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminMagazineLotoRoutesEnforceContentPermissions handler_admin_magazine_rbac_test.go:16: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminMagazineLotoRoutesEnforceContentPermissions (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminMagazineLotoFiveApiContracts handler_admin_magazine_rbac_test.go:122: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminMagazineLotoFiveApiContracts (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminMagazineGenerateRejectsShortDate handler_admin_magazine_rbac_test.go:249: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminMagazineGenerateRejectsShortDate (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate handler_admin_magazine_rbac_test.go:275: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate (0.00s)"
+        }
+      ],
+      "fingerprint": "1c8a1dd51065d5a6fe1050472d98e07c11b48ac31a338af98e589bd33f038c72"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-13T07:12:54.076Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions|TestAdminMagazineLotoFiveApiContracts|TestAdminMagazineGenerateRejectsShortDate|TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1c8a1dd51065d5a6fe1050472d98e07c11b48ac31a338af98e589bd33f038c72"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-13T07:15:49.045Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 883,
+        "executed": 883,
+        "passed": 883,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "883 passed, 0 allowed skip(s)",
+      "fingerprint": "1c8a1dd51065d5a6fe1050472d98e07c11b48ac31a338af98e589bd33f038c72"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-13T07:17:39.549Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit138-admin-apis.sh",
+      "exit_code": 1,
+      "fingerprint": "d5f761b0de8266c1dd1a38d053a0b592695a861759cdb7dcff41e235d6fc0151"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-13T07:32:06.695Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit138-admin-apis.sh",
+      "exit_code": 0,
+      "fingerprint": "b19a13d42cf618688ca47da4eb31d4de856b624be209b18a1315d51f75878ad2"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-13T07:34:23.240Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions|TestAdminMagazineLotoFiveApiContracts|TestAdminMagazineGenerateRejectsShortDate|TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d91066590401cfb4acb2ec313580e47fcc81cee5af856f449b7b28d0a14f65a1"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-13T07:37:29.637Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 883,
+        "executed": 883,
+        "passed": 883,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "883 passed, 0 allowed skip(s)",
+      "fingerprint": "d91066590401cfb4acb2ec313580e47fcc81cee5af856f449b7b28d0a14f65a1"
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-13T07:37:44.558Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit138-admin-apis.sh",
+      "exit_code": 0,
+      "fingerprint": "d91066590401cfb4acb2ec313580e47fcc81cee5af856f449b7b28d0a14f65a1"
+    },
+    {
+      "seq": 35,
+      "at": "2026-10-13T07:43:48.367Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions|TestAdminMagazineLotoFiveApiContracts|TestAdminMagazineGenerateRejectsShortDate|TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e01d42f617469e41d7116c93a5531f6338cf87ec26d8df7175dcf31a757be5ea"
+    },
+    {
+      "seq": 36,
+      "at": "2026-10-13T07:46:45.966Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 883,
+        "executed": 883,
+        "passed": 883,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "883 passed, 0 allowed skip(s)",
+      "fingerprint": "e01d42f617469e41d7116c93a5531f6338cf87ec26d8df7175dcf31a757be5ea"
+    },
+    {
+      "seq": 37,
+      "at": "2026-10-13T07:46:58.581Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit138-admin-apis.sh",
+      "exit_code": 0,
+      "fingerprint": "e01d42f617469e41d7116c93a5531f6338cf87ec26d8df7175dcf31a757be5ea"
+    },
+    {
+      "seq": 38,
+      "at": "2026-10-13T07:51:47.184Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMagazineLotoRoutesEnforceContentPermissions|TestAdminMagazineLotoFiveApiContracts|TestAdminMagazineGenerateRejectsShortDate|TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineLotoFiveApiContracts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateRejectsShortDate",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMagazineGenerateValidatesWidgetKindAndConcurrentDuplicate",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "55d9d44337f04b1fefc5a0505310747ca28f65a9e0d9d8dcb65a868f2b7ec69c"
+    },
+    {
+      "seq": 39,
+      "at": "2026-10-13T07:54:44.445Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 883,
+        "executed": 883,
+        "passed": 883,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "883 passed, 0 allowed skip(s)",
+      "fingerprint": "55d9d44337f04b1fefc5a0505310747ca28f65a9e0d9d8dcb65a868f2b7ec69c"
+    },
+    {
+      "seq": 40,
+      "at": "2026-10-13T07:54:57.971Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit138-admin-apis.sh",
+      "exit_code": 0,
+      "fingerprint": "55d9d44337f04b1fefc5a0505310747ca28f65a9e0d9d8dcb65a868f2b7ec69c"
+    },
+    {
+      "seq": 41,
+      "at": "2026-10-13T07:59:16.310Z",
+      "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Jason (fresh independent reviewer)",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "55d9d44337f04b1fefc5a0505310747ca28f65a9e0d9d8dcb65a868f2b7ec69c"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-13T07:59:27.727Z",
+    "head": "57adbcd8ab455743ead5d88072dd0fb8d31c0f34",
+    "fingerprint": "55d9d44337f04b1fefc5a0505310747ca28f65a9e0d9d8dcb65a868f2b7ec69c",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/cmd/audit138-fixture/main.go": "89ce48608bcbca14887a90fc42c3c7171a33487b",
+      "apps/api-go/internal/httpserver/handler_admin_magazine.go": "08a439b7b09ab61d19aaee6f65d259be9ec30e61",
+      "apps/api-go/internal/httpserver/handler_admin_magazine_rbac_test.go": "3639d94a8ac7af744c91c2e4248457a5d542c33d",
+      "apps/api-go/internal/httpserver/server.go": "c5206a2ecc69eabeed5295cc0bbfca826f723d0f",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "b1d0a21354683a480ae605dafebf0ec0412ada39",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "1195fe0a35408c7b5dfd51be056f554be2f41ccb",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "05a284af0f67d2e212ed7c1547a659884cf559a0",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "fac47dd8f06b4cb6944875a85e38401a2d96b768",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "4d2a216464a48c8fd7c1379cb1a05c9b5e911a42",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "2ac316680d272f0fe90811bdfdfea74e2a1594c2",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "eeffc6250ed4d5ddec3d5321ed434c97cfc1b20c",
+      "docs/migrations/go-backend-v2/reports/HANDOFF_NEXT_AUDIT.md": "035e9029847f26d6726227f939813700efa6db29",
+      "e2e/audit/audit138-admin-apis.mjs": "6dff65afefa80f4a9b54c0239e7094ab8ee5f6e8",
+      "e2e/audit/audit138-admin-apis.sh": "2daac2d0a256bf46212dd2de0e1bc11a880710aa",
+      "e2e/audit/audit138-fixture.mjs": "0f28ff682f531e17ad9fb69d1234ec0683c4e5be"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

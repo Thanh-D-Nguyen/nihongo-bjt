@@ -431,6 +431,7 @@ export function DailyRadarAdminClient({ common, labels }: { common: CommonLabels
         {loading ? <p className="text-sm text-slate-600">{common.loading}</p> : null}
         {!loading && cards.length === 0 ? <AdminEmptyState title={common.empty} /> : null}
         {cards.length > 0 ? (
+          <div className="overflow-x-auto">
           <AdminDataTable>
             <AdminDataTableHead><AdminDataTableRow><AdminDataTableTh>{t("titleVi")}</AdminDataTableTh><AdminDataTableTh>{t("module")}</AdminDataTableTh><AdminDataTableTh>{t("category")}</AdminDataTableTh><AdminDataTableTh>{t("priority")}</AdminDataTableTh><AdminDataTableTh>{t("status")}</AdminDataTableTh><AdminDataTableTh>{t("actions")}</AdminDataTableTh></AdminDataTableRow></AdminDataTableHead>
             <AdminDataTableBody>
@@ -446,11 +447,13 @@ export function DailyRadarAdminClient({ common, labels }: { common: CommonLabels
               ))}
             </AdminDataTableBody>
           </AdminDataTable>
+          </div>
         ) : null}
       </AdminSection>
 
       <AdminSection title={t("modules")}>
         {modules.length === 0 ? <AdminEmptyState title={common.empty} /> : (
+          <div className="overflow-x-auto">
           <AdminDataTable>
             <AdminDataTableHead><AdminDataTableRow><AdminDataTableTh>{t("moduleKey")}</AdminDataTableTh><AdminDataTableTh>{t("titleVi")}</AdminDataTableTh><AdminDataTableTh>{t("category")}</AdminDataTableTh><AdminDataTableTh>{t("enabled")}</AdminDataTableTh><AdminDataTableTh>{t("priority")}</AdminDataTableTh><AdminDataTableTh>{t("status")}</AdminDataTableTh><AdminDataTableTh>{t("actions")}</AdminDataTableTh></AdminDataTableRow></AdminDataTableHead>
             <AdminDataTableBody>
@@ -467,6 +470,7 @@ export function DailyRadarAdminClient({ common, labels }: { common: CommonLabels
               ))}
             </AdminDataTableBody>
           </AdminDataTable>
+          </div>
         )}
       </AdminSection>
     </div>

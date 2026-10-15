@@ -132,6 +132,7 @@ export interface HomepageLabels {
     vocab: string;
     kanji: string;
     grammar: string;
+    error: string;
   };
   tabs: {
     today: string;

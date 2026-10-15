@@ -1,0 +1,391 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-016",
+  "title": "Return assessment mock exam sections from canonical question schema",
+  "start_head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+  "preexisting_changes": {
+    ".quality/tasks/ctx-resume-1791168424.json": "39fe89f3617bfb95a702c09ce4aabffcaeb8f7bb",
+    "apps/admin/app/[locale]/access-denied/page.tsx": "c68e8af2a6f0746cd0e318a8de0db38e4b2f60b0",
+    "apps/admin/app/[locale]/login/_components/admin-login-form-client.tsx": "b82c38674e498f144d717ff592ac5dc4c5c54c19",
+    "apps/admin/app/[locale]/login/admin-login.regression.test.tsx": "5b11d85a87934d8ed3680c1754d03b34fc030a68",
+    "apps/admin/app/[locale]/login/page.tsx": "8c33a7b540c4ebf9de86a6d1dd8f9f3e5bc1f92c",
+    "apps/admin/app/auth/logout/page.tsx": "d86ad68fb3dfa9bdbac704899c04f131ab2fc0b3",
+    "apps/admin/lib/admin-api.ts": "e19f64369f0723fa79326a86f6ae83ea8c095bbc",
+    "apps/admin/lib/admin-overview-fetch.test.ts": "c551ec079ff3a0e04cb06d72801ee9eb59559234",
+    "apps/admin/lib/admin-overview-fetch.ts": "c2267b606100d8faae7be2c6bf6c5968402cd6c4",
+    "apps/admin/lib/admin-shell.regression.test.tsx": "55b1e94d273dca2be418c6026c6a879f045c0dd0",
+    "apps/admin/lib/resolve-admin-nav.ts": "54024b5d6443067d48eb4f771443046cc4f0256d",
+    "apps/admin/messages/en.json": "69bdc28b22618f0c3a5be64b5be770f56bcdc053",
+    "apps/admin/messages/ja.json": "8c371c5c05bfde3e8a37c84341de226e88b46e7e",
+    "apps/admin/messages/vi.json": "fd886017500b5ad3666721edfe15a31e5dd6311a",
+    "apps/admin/next-env.d.ts": "c4b7818fbb2c2c34c24feb1b627ee824507c5600",
+    "apps/admin/next.config.mjs": "a29e69ddd1777373ddc577abfd3ce85cce649af7",
+    "apps/admin/tsconfig.tsbuildinfo": "20868aaaf05dd14b127250d119cbda97e473f205",
+    "apps/api-go/cmd/create-test-creds/main.go": "eae3b397a5f12f5c5401c3484da23e845686aabd",
+    "apps/api-go/cmd/reset-admin-cred/main.go": "c39d53f0ce4fa29c2a3ef6b813b1abfe9af28cad",
+    "apps/api-go/deploy/local/Caddyfile": "880720642204d8f7afb53bf961224b25afac9016",
+    "apps/api-go/internal/httpserver/handler_admin_ads.go": "079e708b10af9fff5de7707fb525ac1b53ace481",
+    "apps/api-go/internal/httpserver/handler_admin_analytics.go": "1b6248374040a38c57f9463fcd1139c79a44ea26",
+    "apps/api-go/internal/httpserver/handler_admin_analytics_executive_test.go": "1d78fa48e0fbf965087b8a6bec1b89f4ec5a0a00",
+    "apps/api-go/internal/httpserver/handler_admin_core.go": "f17d7b7d4a0f96932d605765c50c96bf1922048d",
+    "apps/api-go/internal/httpserver/handler_admin_me_test.go": "702bbebb362a7b4924e50e5e7fc2db18b09eca4f",
+    "apps/api-go/internal/httpserver/handler_admin_rbac.go": "edcf8f767ba33fa949309f2bfbd7456af9378556",
+    "apps/api-go/internal/httpserver/handler_admin_rbac_test.go": "51c421cc9f311295136e78baa23d03258280c4ba",
+    "apps/api-go/internal/httpserver/handler_final_batch.go": "3124d1ab46c12045c588aa5967a942d2bbde4516",
+    "apps/api-go/internal/httpserver/handler_final_batch_test.go": "8cf16ce6a3f22e56d67888a0c7a219c846091025",
+    "apps/api-go/internal/httpserver/handler_quiz.go": "0cb4f89fa3fe44b25bc0564c933de25db659713f",
+    "apps/api-go/internal/httpserver/handler_study_feed_test.go": "a1e9da063ed6d1d083be495926d4ea159d391a4a",
+    "apps/api-go/internal/httpserver/server.go": "5699a5e983617866e4c0d716bee2be936da04a8f",
+    "apps/api-go/internal/onboarding/store.go": "48c19592ef4012165d6b010f2763aa5ebfaebaa0",
+    "apps/api-go/internal/onboarding/store_test.go": "9f5a1ab847bdd26d7ede15081049197f63e7b387",
+    "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "50f7434a56612d2a1085f350b810b6f251b1c836",
+    "apps/web/app/[locale]/login/auth-pages.regression.test.tsx": "4dd7a5db264e70ef930ec4f1579b34eabbfbbec6",
+    "apps/web/app/[locale]/login/page.tsx": "654fc22c46535743d2f08cd76715e44690140a95",
+    "apps/web/app/[locale]/register/page.tsx": "2aa45faeea0da3a919c884dc6b95f7f367cda8b2",
+    "apps/web/next-env.d.ts": "c4b7818fbb2c2c34c24feb1b627ee824507c5600",
+    "apps/web/public/__local-audit-api-probe.html": "5698fee7077de4433c4062b33a4a46bef0cfc9ee",
+    "deploy/local/Caddyfile": "72470e3b466c4a48dd7a573271d8458479e27266",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "de884b4e7d0878d9eb1d022dc340dd9b01288af1",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "8487728d2aac033244e52e9e2ea67c51069b9110",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "90a82b3dc56a42be542f2f447de5ee9239c18fa5",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "9cde135cae4e26adc1eac9947bed1944422e11f9",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "fe829921f1d4993c4f7df11759c7f9cf5b86d48c",
+    "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "aad8f5a79cca5fc3e43f63ba7891d238e7938115",
+    "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "10dcb526bb33c73f06ca40c9b0ebe99bfe993565",
+    "packages/database/prisma/migrations/20261006100000_onboarding_profile_preferences/migration.sql": "3da2325aa59c04dc632a7a515f4fdff2a6b1dd65",
+    "packages/database/prisma/schema.prisma": "0646140a9869abc692fbda4414286194ae581ff5",
+    "packages/ui/src/admin-shell.tsx": "ba1339c8c34da6b93fe433bbe260f2928ffa867e",
+    "prisma.config.ts": "02db95a7ee97e32ead17e9e82602c0e78e38924e",
+    "scripts/local-audit-status.mjs": "d0f98373f463c744dc6d03e40f4ef588c7490ab4",
+    "scripts/local-audit-up.mjs": "d68ac30f32a1113b3e9958508757667267dd90e8"
+  },
+  "spec": {
+    "problem": "Mock exam detail hid a missing SQL relation and returned an empty section list.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "GET /api/admin/assessment/mock-exams/{id} returns every persisted bjt_test_section ordered by display_order for a seeded canonical mock exam, with question counts from assessment.bjt_question."
+      },
+      {
+        "id": "AC2",
+        "text": "A section-query failure returns a visible server error instead of a successful response containing an empty sections list."
+      }
+    ],
+    "expected_behavior": "Detail returns persisted test sections in display order with question counts from the canonical bjt_question table, and database errors return 500.",
+    "observed_behavior": "Visible GET detail returned sections=[] while the same exam list reported sectionCount=9; the SQL conformance baseline also contained now-fixed nonexistent-table references.",
+    "rollback_plan": "Revert the section query/error-handling change and matching SQL conformance baseline update; no schema migration or persistent data changes are required."
+  },
+  "classification": {
+    "classes": [
+      "DOMAIN_LOGIC",
+      "API_CONTRACT",
+      "DATABASE",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminMockExamDetailReturnsPersistedSections",
+      "expect": "detail returned 0 sections, want 2"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "VALID_RED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-06T00:57:27.062Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-06T00:57:48.388Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-06T00:57:48.825Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-06T01:02:49.576Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-06T01:04:25.131Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-06T01:07:56.293Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-06T01:09:15.889Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-06T01:13:13.067Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-06T01:16:02.924Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-06T01:21:46.725Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-06T00:58:38.793Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMockExamDetailReturnsPersistedSections)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMockExamDetailReturnsPersistedSections",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMockExamDetailReturnsPersistedSections handler_admin_assessment_mock_exams_test.go:15: load canonical mock exam fixture: no rows in result set --- FAIL: TestAdminMockExamDetailReturnsPersistedSections (0.02s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"detail returned 0 sections, want 9\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminMockExamDetailReturnsPersistedSections": "detail returned 0 sections, want 9"
+      },
+      "fingerprint": "62d799d42c756e33715bf5a7efafcf01c5450880064616b9bb6904ef5bf6cd1d"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-06T01:00:50.103Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMockExamDetailReturnsPersistedSections)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMockExamDetailReturnsPersistedSections",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMockExamDetailReturnsPersistedSections handler_admin_assessment_mock_exams_test.go:31: create question fixture: ERROR: null value in column \"updated_at\" of relation \"bjt_question\" violates not-null constraint (SQLSTATE 23502) --- FAIL: TestAdminMockExamDetailReturnsPersistedSections…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"detail returned 0 sections, want 2\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminMockExamDetailReturnsPersistedSections": "detail returned 0 sections, want 2"
+      },
+      "fingerprint": "c3b9360b2ff60863dbdebc526afd61d85d484eb9d1d616230bb7fbd9c622c94d"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-06T01:01:50.040Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMockExamDetailReturnsPersistedSections)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMockExamDetailReturnsPersistedSections",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMockExamDetailReturnsPersistedSections handler_admin_assessment_mock_exams_test.go:37: status=404 body={\"error\":\"mock exam not found\"} --- FAIL: TestAdminMockExamDetailReturnsPersistedSections (0.03s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"detail returned 0 sections, want 2\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminMockExamDetailReturnsPersistedSections": "detail returned 0 sections, want 2"
+      },
+      "fingerprint": "9b2fe96e2ff5bdf6a9a979a669a619a93b7f025210ad6f0dfa5c7d1eba20b171"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-06T01:02:49.374Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMockExamDetailReturnsPersistedSections)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMockExamDetailReturnsPersistedSections",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMockExamDetailReturnsPersistedSections handler_admin_assessment_mock_exams_test.go:50: detail returned 0 sections, want 2; response={\"id\":\"f5e7bc9a-6adb-440c-9075-ccc9a2f6fcc4\",\"slug\":\"local-audit-f5e7bc9a-6adb-440c-9075-ccc9a2f6fcc4\",\"titleVi\":\"Audit fixture\",\"type\":\"mock\",\"status\"…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminMockExamDetailReturnsPersistedSections": "detail returned 0 sections, want 2"
+      },
+      "fingerprint": "c40085728a8e76ce4cd6ff21388b743a4e5339b221375b6c19262244ae76f22d"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-06T01:04:24.881Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMockExamDetailReturnsPersistedSections)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMockExamDetailReturnsPersistedSections",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f2f2ec6c08da80b1e45a6c97239935cd3f97b10bda204884a9f574e614d65aae"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-06T01:06:48.488Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMockExamDetailReturnsPersistedSections)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMockExamDetailReturnsPersistedSections",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "7b7b895db7cf6692df91278d7554083579822906385938c38c617083f51a53b1"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-06T01:07:33.868Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 483,
+        "executed": 477,
+        "passed": 476,
+        "failed": 1,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "7b7b895db7cf6692df91278d7554083579822906385938c38c617083f51a53b1"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-06T01:12:28.255Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 483,
+        "executed": 477,
+        "passed": 477,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "477 passed, 6 allowed skip(s)",
+      "fingerprint": "3a065aef57bc0ec01d2453f025769c4d562af63e46f3cb5dd1bd7f10b60538ba"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-06T01:13:12.770Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminMockExamDetailReturnsPersistedSections)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminMockExamDetailReturnsPersistedSections",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3a065aef57bc0ec01d2453f025769c4d562af63e46f3cb5dd1bd7f10b60538ba"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-06T01:16:02.651Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "3a065aef57bc0ec01d2453f025769c4d562af63e46f3cb5dd1bd7f10b60538ba"
+    }
+  ],
+  "closed": null,
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [],
+  "disowned": [
+    {
+      "path": "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json",
+      "reason": "Move combined audit-wide SQL conformance baseline refresh out of the mock-exam detail fix; track it in a dedicated task covering all already-fixed local SQL drift.",
+      "at": "2026-10-06T01:21:46.414Z"
+    }
+  ]
+}

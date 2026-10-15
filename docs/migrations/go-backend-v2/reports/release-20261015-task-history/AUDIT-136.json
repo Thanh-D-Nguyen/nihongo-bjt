@@ -1,0 +1,214 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-136",
+  "title": "Audit Admin login screen and POST /api/admin/login",
+  "start_head": "ef5bfb18d08daae399a25ff3fdc3f859b48b70bc",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Exercise the Admin login screen and POST /api/admin/login as separate inventory units through a visible headed 390x844 browser. Verify empty/wrong-password behavior, a real Argon2id-backed UI login, the exact POST response, HttpOnly session cookie, refresh persistence, rate-limit/CSRF/invalid-input behavior from current Go integration coverage, and clean all temporary actors and credentials."
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "TEST_ONLY"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-13T02:58:27.176Z",
+      "head": "ef5bfb18d08daae399a25ff3fdc3f859b48b70bc"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-13T02:58:27.535Z",
+      "head": "ef5bfb18d08daae399a25ff3fdc3f859b48b70bc"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-13T02:58:33.959Z",
+      "head": "ef5bfb18d08daae399a25ff3fdc3f859b48b70bc"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-13T03:13:33.433Z",
+      "head": "ef5bfb18d08daae399a25ff3fdc3f859b48b70bc"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-13T05:55:06.651Z",
+      "head": "ef5bfb18d08daae399a25ff3fdc3f859b48b70bc"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-13T05:55:36.146Z",
+      "head": "ef5bfb18d08daae399a25ff3fdc3f859b48b70bc"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-13T03:00:35.110Z",
+      "head": "ef5bfb18d08daae399a25ff3fdc3f859b48b70bc",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit136-admin-login.sh",
+      "exit_code": 0,
+      "fingerprint": "a00d33df1bda15726d6e46ddcc70e11b65bc8ba1816952bc6fa69a1b9127bd07"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-13T03:13:33.223Z",
+      "head": "ef5bfb18d08daae399a25ff3fdc3f859b48b70bc",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 847,
+        "executed": 845,
+        "passed": 845,
+        "failed": 0,
+        "skipped": 2,
+        "expected_skips": 0,
+        "unexpected_skips": 2,
+        "min_passed_tests": 431
+      },
+      "message": "2 test(s) skipped that are not in go-test-skips-baseline.json — skipped tests are not verification",
+      "fingerprint": "d85e84fa13e1618f5983c45e9b410f0e53e3dea703b2cce11f4799b9723916ac"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-13T03:17:44.145Z",
+      "head": "ef5bfb18d08daae399a25ff3fdc3f859b48b70bc",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 847,
+        "executed": 847,
+        "passed": 847,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "d85e84fa13e1618f5983c45e9b410f0e53e3dea703b2cce11f4799b9723916ac"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-13T05:47:17.192Z",
+      "head": "ef5bfb18d08daae399a25ff3fdc3f859b48b70bc",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit136-admin-login.sh",
+      "exit_code": 0,
+      "fingerprint": "982fa0190400b95fbd2a0b12a8bddfca2db81a8362ac46565086a0c36c687c93"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-13T05:50:50.715Z",
+      "head": "ef5bfb18d08daae399a25ff3fdc3f859b48b70bc",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit136-admin-login.sh",
+      "exit_code": 1,
+      "fingerprint": "8ab9241bf14fd3917ab2efc90ee86dec8103ed3babf2c0efa247af875e982b92"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-13T05:51:35.863Z",
+      "head": "ef5bfb18d08daae399a25ff3fdc3f859b48b70bc",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit136-admin-login.sh",
+      "exit_code": 1,
+      "fingerprint": "8ab9241bf14fd3917ab2efc90ee86dec8103ed3babf2c0efa247af875e982b92"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-13T05:51:49.651Z",
+      "head": "ef5bfb18d08daae399a25ff3fdc3f859b48b70bc",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit136-admin-login.sh",
+      "exit_code": 0,
+      "fingerprint": "8ab9241bf14fd3917ab2efc90ee86dec8103ed3babf2c0efa247af875e982b92"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-13T05:55:06.432Z",
+      "head": "ef5bfb18d08daae399a25ff3fdc3f859b48b70bc",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 847,
+        "executed": 847,
+        "passed": 847,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "847 passed, 0 allowed skip(s)",
+      "fingerprint": "8ab9241bf14fd3917ab2efc90ee86dec8103ed3babf2c0efa247af875e982b92"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-13T05:55:26.965Z",
+      "head": "ef5bfb18d08daae399a25ff3fdc3f859b48b70bc",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a133d1-9962-7c81-9c34-2fd33f25b717",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "b5d5e97d2cb5eacd4932c140e949d685f97f14ceb9d1111867467eb3649c6265",
+      "attested": true,
+      "fingerprint": "8ab9241bf14fd3917ab2efc90ee86dec8103ed3babf2c0efa247af875e982b92"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-13T05:55:36.128Z",
+    "head": "ef5bfb18d08daae399a25ff3fdc3f859b48b70bc",
+    "fingerprint": "8ab9241bf14fd3917ab2efc90ee86dec8103ed3babf2c0efa247af875e982b92",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "suite_go": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_login_test.go": "b3e6a951cf2c6d53066bdd8e7f8c1035adee7604",
+      "e2e/audit/audit136-admin-login.sh": "5b7c30a335cd4d1b304ab15156dcdb59d26036a9"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

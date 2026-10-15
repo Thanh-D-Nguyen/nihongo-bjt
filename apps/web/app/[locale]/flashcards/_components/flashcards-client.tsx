@@ -512,10 +512,10 @@ export function FlashcardsClient({
         const message = (await pres.text()) || labels.imageError;
         throw new Error(message);
       }
-      const { assetId, uploadUrl } = (await pres.json()) as { assetId: string; uploadUrl: string };
+      const { assetId, uploadUrl, uploadToken } = (await pres.json()) as { assetId: string; uploadUrl: string; uploadToken: string };
       const put = await fetch(uploadUrl, {
         body: file,
-        headers: { "Content-Type": file.type },
+        headers: { "Content-Type": file.type, "X-Media-Upload-Token": uploadToken },
         method: "PUT"
       });
       if (!put.ok) {

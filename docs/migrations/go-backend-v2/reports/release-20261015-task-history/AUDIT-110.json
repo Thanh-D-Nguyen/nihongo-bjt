@@ -1,0 +1,380 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-110",
+  "title": "Fix notification preferences save for learners without a preferences row",
+  "start_head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59",
+  "preexisting_changes": {
+    "apps/admin/next-env.d.ts": "9edff1c7cacb3bfac9a1eadcf6f51eaa99565e38",
+    "apps/admin/tsconfig.tsbuildinfo": "1ebcbc1e512aaf84682dc85cbd10250c8d5ad6e3",
+    "apps/web/next-env.d.ts": "9edff1c7cacb3bfac9a1eadcf6f51eaa99565e38",
+    "apps/web/tsconfig.tsbuildinfo": "1aa596f82d2ab2a600f0a8ab9e86410958783e30"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "PUT /api/learner/notification-preferences by a learner with no row returns 200 and the echoed preferences."
+      },
+      {
+        "id": "AC2",
+        "text": "The row is persisted with non-null updated_at; a second PUT updates the same row and advances updated_at."
+      },
+      {
+        "id": "AC3",
+        "text": "GET after PUT returns the saved values."
+      }
+    ],
+    "expected_behavior": "PUT returns 200 with the saved preferences, creates the row with created_at/updated_at set, and a subsequent GET returns the saved values.",
+    "observed_behavior": "PUT /api/learner/notification-preferences returns 500 for a learner who has no notification_preference row (INSERT leaves NOT NULL updated_at unset); the settings page shows 'Không tải hoặc lưu được' and nothing is saved.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DOMAIN_LOGIC",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestNotificationPreferencesPutCreatesMissingRow",
+      "expect": "PUT for learner without a preferences row status = 500, want 200"
+    }
+  ],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/api-go/internal/notification/store.go",
+      "find": "in_app_enabled, updated_at)\n\t\tVALUES ($1, $2, $3, $4, $5, NOW())",
+      "replace": "in_app_enabled)\n\t\tVALUES ($1, $2, $3, $4, $5)"
+    },
+    "targets": [
+      {
+        "runner": "go",
+        "package": "./internal/httpserver",
+        "test": "TestNotificationPreferencesPutCreatesMissingRow",
+        "expect": "status = 500, want 200"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-12T00:11:43.546Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-12T00:11:43.906Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-12T00:11:44.271Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T00:12:05.397Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T00:12:22.663Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T00:16:50.386Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-12T00:19:01.984Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T00:19:38.207Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-12T00:24:39.973Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-12T00:27:11.819Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-12T00:27:13.243Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-12T00:12:05.113Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestNotificationPreferencesPutCreatesMissingRow)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestNotificationPreferencesPutCreatesMissingRow",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestNotificationPreferencesPutCreatesMissingRow {\"time\":\"2026-10-12T09:12:05.049706+09:00\",\"level\":\"ERROR\",\"msg\":\"update notification preferences\",\"error\":\"notification: update preferences: ERROR: null value in column \\\"updated_at\\\" of relation \\\"notification_preference\\\" violates not-null c…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestNotificationPreferencesPutCreatesMissingRow": "PUT for learner without a preferences row status = 500, want 200"
+      },
+      "fingerprint": "68d2942d7582ef6b092c99c4f42fef4a61599df21c655c10dd17b83b4c748ff2"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-12T00:12:22.355Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestNotificationPreferencesPutCreatesMissingRow)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestNotificationPreferencesPutCreatesMissingRow",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a66f27842f37e0218afb14b93a3338387c00e556beea8fa3d6e20ffc9772c2ea"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-12T00:12:44.723Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestNotificationPreferencesPutCreatesMissingRow)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestNotificationPreferencesPutCreatesMissingRow",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "32143057f6adcd3798d57b30ccc75542a43ae444754451b4ea3f86e6ec6b5350"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-12T00:13:02.960Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/notification/store.go",
+        "find": "in_app_enabled, updated_at)\n\t\tVALUES ($1, $2, $3, $4, $5, NOW())",
+        "replace": "in_app_enabled)\n\t\tVALUES ($1, $2, $3, $4, $5)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestNotificationPreferencesPutCreatesMissingRow)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestNotificationPreferencesPutCreatesMissingRow",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestNotificationPreferencesPutCreatesMissingRow {\"time\":\"2026-10-12T09:13:01.807862+09:00\",\"level\":\"ERROR\",\"msg\":\"update notification preferences\",\"error\":\"notification: update preferences: ERROR: null value in column \\\"updated_at\\\" of relation \\\"notification_preference\\\" violates not-null c…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestNotificationPreferencesPutCreatesMissingRow": "status = 500, want 200"
+      },
+      "fingerprint": "32143057f6adcd3798d57b30ccc75542a43ae444754451b4ea3f86e6ec6b5350"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-12T00:16:50.085Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 772,
+        "executed": 772,
+        "passed": 771,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "13bb402f1ddce1d1b3d84561b4942f819c555b14fc71a6c874189b2dcf76eacb"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-12T00:17:09.287Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit110-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "13bb402f1ddce1d1b3d84561b4942f819c555b14fc71a6c874189b2dcf76eacb"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-12T00:18:36.803Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 772,
+        "executed": 772,
+        "passed": 771,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "13bb402f1ddce1d1b3d84561b4942f819c555b14fc71a6c874189b2dcf76eacb"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-12T00:19:01.557Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestNotificationPreferencesPutCreatesMissingRow)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestNotificationPreferencesPutCreatesMissingRow",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9c2f5706ab1cd9b13396cf222a98cbcd82b627c50c154d8658f0a0636970a442"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-12T00:19:28.033Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit110-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "9c2f5706ab1cd9b13396cf222a98cbcd82b627c50c154d8658f0a0636970a442"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-12T00:21:54.252Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "9c2f5706ab1cd9b13396cf222a98cbcd82b627c50c154d8658f0a0636970a442"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-12T00:24:39.619Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 772,
+        "executed": 772,
+        "passed": 772,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "772 passed, 0 allowed skip(s)",
+      "fingerprint": "9c2f5706ab1cd9b13396cf222a98cbcd82b627c50c154d8658f0a0636970a442"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-12T00:27:11.492Z",
+      "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "fresh-review-aaa6",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "33214d4ee52385b8a19980e0326f5e653dbb07b760d6b6d1672d48739fbb8eaa",
+      "attested": true,
+      "fingerprint": "9c2f5706ab1cd9b13396cf222a98cbcd82b627c50c154d8658f0a0636970a442"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-12T00:27:13.223Z",
+    "head": "8d8b2412d7a3480dca3e0bdfcef840d041d34f59",
+    "fingerprint": "9c2f5706ab1cd9b13396cf222a98cbcd82b627c50c154d8658f0a0636970a442",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_notification_preferences_test.go": "60424c222174ed6dda18bff56475d0fe513b2621",
+      "apps/api-go/internal/notification/store.go": "100f566701ab0398026ec67544a37534cd983660",
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "db46f31c255a747376eb77bf53cb30cfe6fe02ae",
+      "e2e/audit/audit110-browser-check.sh": "238158aabc05009c3cca20dbf0874f8268c8a1d3"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

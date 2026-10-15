@@ -2,13 +2,17 @@ package httpserver
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"runtime"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
@@ -22,19 +26,24 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 }
 
 // ── P1-A1.1: Admin Operations — System Sub-Domain (11 routes) ───────────────
-// All routes require admin session + "iam.manage" OR "viewer.audit" permission.
+// Routes require an admin session; reads use viewer.audit or iam.manage and writes use iam.manage, except release metadata, which is session-scoped.
 // Contracts derived from NestJS apps/api/src/operations/operations.service.ts.
 
 // adminOpsSystemHealthHandler implements GET /api/admin/operations/system/health.
 // Returns aggregated health checks: database, feature_flags, dead_letters, import_pipeline.
 func adminOpsSystemHealthHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireOperationsPermission(w, r, db, logger, "iam.manage", "viewer.audit") {
+			return
+		}
 		ctx := r.Context()
 
 		// Check database connectivity
 		dbHealthy := true
 		if _, err := db.Exec(ctx, "SELECT 1"); err != nil {
-			dbHealthy = false
+			logger.Error("check database health", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 
 		// Aggregate counts in parallel-safe sequential queries
@@ -43,17 +52,21 @@ func adminOpsSystemHealthHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 		var deadLettersOpen int
 		var importErrors24h int
 
-		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM ops.feature_flag").Scan(&featureFlagsTotal); err != nil {
-			logger.Error("count feature flags", "error", err)
-		}
-		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM ops.feature_flag WHERE enabled = true AND kill_switch = true").Scan(&killSwitchesEnabled); err != nil {
-			logger.Error("count kill switches", "error", err)
-		}
-		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM ops.dead_letter_entry WHERE status IN ('open', 'failed')").Scan(&deadLettersOpen); err != nil {
-			logger.Error("count dead letters", "error", err)
-		}
-		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM content.content_import_error WHERE created_at >= NOW() - INTERVAL '24 hours'").Scan(&importErrors24h); err != nil {
-			logger.Error("count import errors", "error", err)
+		for _, check := range []struct {
+			query string
+			dest  *int
+			name  string
+		}{
+			{"SELECT COUNT(*) FROM ops.feature_flag", &featureFlagsTotal, "count feature flags"},
+			{"SELECT COUNT(*) FROM ops.feature_flag WHERE enabled = true AND kill_switch = true", &killSwitchesEnabled, "count kill switches"},
+			{"SELECT COUNT(*) FROM ops.dead_letter_entry WHERE status IN ('open', 'failed')", &deadLettersOpen, "count dead letters"},
+			{"SELECT COUNT(*) FROM content.content_import_error WHERE created_at >= NOW() - INTERVAL '24 hours'", &importErrors24h, "count import errors"},
+		} {
+			if err := db.QueryRow(ctx, check.query).Scan(check.dest); err != nil {
+				logger.Error(check.name, "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		type Check struct {
@@ -93,35 +106,76 @@ func adminOpsSystemHealthHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 // Returns dead-letter breakdown by status and open import errors.
 func adminOpsQueueHealthHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireOperationsPermission(w, r, db, logger, "iam.manage", "viewer.audit") {
+			return
+		}
 		ctx := r.Context()
 
 		var openDL, failedDL, resolvedDL, discardedDL int
 		rows, err := db.Query(ctx, "SELECT status, COUNT(*) FROM ops.dead_letter_entry GROUP BY status")
 		if err != nil {
 			logger.Error("group dead letters", "error", err)
-		} else {
-			defer rows.Close()
-			for rows.Next() {
-				var status string
-				var count int
-				if err := rows.Scan(&status, &count); err == nil {
-					switch status {
-					case "open":
-						openDL = count
-					case "failed":
-						failedDL = count
-					case "resolved":
-						resolvedDL = count
-					case "discarded":
-						discardedDL = count
-					}
-				}
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var status string
+			var count int
+			if err := rows.Scan(&status, &count); err != nil {
+				logger.Error("scan dead letter counts", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			switch status {
+			case "open":
+				openDL = count
+			case "failed":
+				failedDL = count
+			case "resolved":
+				resolvedDL = count
+			case "discarded":
+				discardedDL = count
+			}
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate dead letter counts", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 
 		var importErrorsOpen int
 		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM content.content_import_error WHERE created_at >= NOW() - INTERVAL '24 hours' AND severity IN ('critical', 'high')").Scan(&importErrorsOpen); err != nil {
 			logger.Error("count import errors open", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		queueRows, err := db.Query(ctx, `SELECT substring(key from 7 for char_length(key) - 13), enabled
+			FROM ops.feature_flag WHERE key LIKE 'queue.%.paused' ORDER BY key`)
+		if err != nil {
+			logger.Error("list queue pause states", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer queueRows.Close()
+		type Queue struct {
+			Name   string `json:"name"`
+			Paused bool   `json:"paused"`
+		}
+		queues := []Queue{}
+		for queueRows.Next() {
+			var queue Queue
+			if err := queueRows.Scan(&queue.Name, &queue.Paused); err != nil {
+				logger.Error("scan queue pause state", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			queues = append(queues, queue)
+		}
+		if err := queueRows.Err(); err != nil {
+			logger.Error("iterate queue pause states", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 
 		stalledJobs := openDL + failedDL
@@ -131,6 +185,8 @@ func adminOpsQueueHealthHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 		}
 
 		resp := map[string]any{
+			"queues":               queues,
+			"deadLetters":          map[string]int{"total": openDL + failedDL},
 			"discardedDeadLetters": discardedDL,
 			"failedDeadLetters":    failedDL,
 			"generatedAt":          time.Now().UTC().Format(time.RFC3339),
@@ -148,6 +204,9 @@ func adminOpsQueueHealthHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 // Returns search projection sync status and latest rebuild metadata.
 func adminOpsSearchSyncHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireOperationsPermission(w, r, db, logger, "iam.manage", "viewer.audit") {
+			return
+		}
 		ctx := r.Context()
 
 		// Latest rebuild from admin_audit_log
@@ -155,15 +214,21 @@ func adminOpsSearchSyncHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 		var lastRebuildBy *string
 		var indexedDocuments *int
 		var rebuildCreatedAt *time.Time
+		var rebuildID *string
 		var actorID *string
 		var afterJSON []byte
 
 		err := db.QueryRow(ctx, `
-			SELECT created_at, actor_id, after
+			SELECT id, created_at, actor_id, after
 			FROM ops.admin_audit_log
 			WHERE action = 'ops.search.rebuild'
 			ORDER BY created_at DESC LIMIT 1
-		`).Scan(&rebuildCreatedAt, &actorID, &afterJSON)
+		`).Scan(&rebuildID, &rebuildCreatedAt, &actorID, &afterJSON)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			logger.Error("load latest search rebuild", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		if err == nil && rebuildCreatedAt != nil {
 			ts := rebuildCreatedAt.UTC().Format(time.RFC3339)
 			lastRebuildAt = &ts
@@ -182,10 +247,16 @@ func adminOpsSearchSyncHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 
 		// Content projection counts
 		var lexemeCount, kanjiCount, grammarCount, exampleCount int
-		db.QueryRow(ctx, "SELECT COUNT(*) FROM content.lexeme WHERE status = 'active'").Scan(&lexemeCount)
-		db.QueryRow(ctx, "SELECT COUNT(*) FROM content.kanji WHERE status = 'active'").Scan(&kanjiCount)
-		db.QueryRow(ctx, "SELECT COUNT(*) FROM content.grammar_point WHERE status = 'active'").Scan(&grammarCount)
-		db.QueryRow(ctx, "SELECT COUNT(*) FROM content.example_sentence WHERE status = 'active'").Scan(&exampleCount)
+		for _, count := range []struct {
+			query string
+			dest  *int
+		}{{"SELECT COUNT(*) FROM content.lexeme WHERE status = 'active'", &lexemeCount}, {"SELECT COUNT(*) FROM content.kanji WHERE status = 'active'", &kanjiCount}, {"SELECT COUNT(*) FROM content.grammar_point WHERE status = 'active'", &grammarCount}, {"SELECT COUNT(*) FROM content.example_sentence WHERE status = 'active'", &exampleCount}} {
+			if err := db.QueryRow(ctx, count.query).Scan(count.dest); err != nil {
+				logger.Error("count search projection", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+		}
 
 		contentProjectionTotal := lexemeCount + kanjiCount + grammarCount + exampleCount
 
@@ -203,7 +274,16 @@ func adminOpsSearchSyncHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 			"indexedDocuments":       indexedDocuments,
 			"lastRebuildAt":          lastRebuildAt,
 			"lastRebuildBy":          lastRebuildBy,
+			"totalDocs":              contentProjectionTotal,
+			"byType":                 map[string]int{"lexeme": lexemeCount, "kanji": kanjiCount, "grammar": grammarCount, "example": exampleCount},
+			"ageMs":                  nil,
 			"status":                 status,
+		}
+		if rebuildCreatedAt != nil && rebuildID != nil {
+			resp["ageMs"] = time.Since(*rebuildCreatedAt).Milliseconds()
+			resp["lastJob"] = map[string]any{"id": *rebuildID, "createdAt": rebuildCreatedAt.UTC().Format(time.RFC3339), "status": status}
+		} else {
+			resp["lastJob"] = nil
 		}
 		writeJSON(w, http.StatusOK, resp)
 	}
@@ -236,12 +316,19 @@ func adminOpsReleaseHandler(logger *slog.Logger) http.HandlerFunc {
 // Returns recent queue control audit events.
 func adminOpsQueueActionsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireOperationsPermission(w, r, db, logger, "iam.manage", "viewer.audit") {
+			return
+		}
 		ctx := r.Context()
 		queueName := r.URL.Query().Get("queueName")
-		limit := queryInt(r, "limit", 50)
+		limit, ok := operationsSystemLimit(r)
+		if !ok {
+			writeJSONError(w, "invalid limit", http.StatusBadRequest)
+			return
+		}
 
 		query := `
-			SELECT a.id, a.action, a.actor_id, a.target_id, a.reason, a.created_at,
+			SELECT a.id, a.action, a.actor_id, a.target_id, COALESCE(a.reason, ''), a.created_at,
 			       COALESCE(act.display_name, '') as actor_name, COALESCE(act.email, '') as actor_email
 			FROM ops.admin_audit_log a
 			LEFT JOIN authz.admin_actor act ON act.id = a.actor_id
@@ -265,23 +352,39 @@ func adminOpsQueueActionsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 		defer rows.Close()
 
 		type Action struct {
-			ID         string `json:"id"`
-			Action     string `json:"action"`
-			ActorID    string `json:"actorId"`
-			ActorName  string `json:"actorName"`
-			ActorEmail string `json:"actorEmail"`
-			TargetID   string `json:"targetId"`
-			Reason     string `json:"reason"`
-			CreatedAt  string `json:"createdAt"`
+			ID     string `json:"id"`
+			Action string `json:"action"`
+			Actor  *struct {
+				ID          string `json:"id"`
+				DisplayName string `json:"displayName"`
+				Email       string `json:"email"`
+			} `json:"actor"`
+			TargetID  string `json:"targetId"`
+			Reason    string `json:"reason"`
+			CreatedAt string `json:"createdAt"`
 		}
 		var actions []Action
 		for rows.Next() {
 			var a Action
 			var createdAt time.Time
-			if err := rows.Scan(&a.ID, &a.Action, &a.ActorID, &a.TargetID, &a.Reason, &createdAt, &a.ActorName, &a.ActorEmail); err == nil {
-				a.CreatedAt = createdAt.UTC().Format(time.RFC3339)
-				actions = append(actions, a)
+			var actorID, actorName, actorEmail string
+			if err := rows.Scan(&a.ID, &a.Action, &actorID, &a.TargetID, &a.Reason, &createdAt, &actorName, &actorEmail); err != nil {
+				logger.Error("scan queue action", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			a.Actor = &struct {
+				ID          string `json:"id"`
+				DisplayName string `json:"displayName"`
+				Email       string `json:"email"`
+			}{ID: actorID, DisplayName: actorName, Email: actorEmail}
+			a.CreatedAt = createdAt.UTC().Format(time.RFC3339)
+			actions = append(actions, a)
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate queue actions", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if actions == nil {
 			actions = []Action{}
@@ -318,11 +421,18 @@ func adminOpsQueueDrainHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 // Returns recent release management audit events.
 func adminOpsReleaseHistoryHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireOperationsPermission(w, r, db, logger, "iam.manage", "viewer.audit") {
+			return
+		}
 		ctx := r.Context()
-		limit := queryInt(r, "limit", 50)
+		limit, ok := operationsSystemLimit(r)
+		if !ok {
+			writeJSONError(w, "invalid limit", http.StatusBadRequest)
+			return
+		}
 
 		rows, err := db.Query(ctx, `
-			SELECT a.id, a.action, a.actor_id, a.target_id, a.reason, a.after, a.created_at,
+			SELECT a.id, a.action, a.actor_id, a.target_id, COALESCE(a.reason, ''), a.after, a.created_at,
 			       COALESCE(act.display_name, '') as actor_name, COALESCE(act.email, '') as actor_email
 			FROM ops.admin_audit_log a
 			LEFT JOIN authz.admin_actor act ON act.id = a.actor_id
@@ -337,24 +447,40 @@ func adminOpsReleaseHistoryHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		defer rows.Close()
 
 		type Event struct {
-			ID         string          `json:"id"`
-			Action     string          `json:"action"`
-			ActorID    string          `json:"actorId"`
-			ActorName  string          `json:"actorName"`
-			ActorEmail string          `json:"actorEmail"`
-			TargetID   string          `json:"targetId"`
-			Reason     string          `json:"reason"`
-			After      json.RawMessage `json:"after,omitempty"`
-			CreatedAt  string          `json:"createdAt"`
+			ID     string `json:"id"`
+			Action string `json:"action"`
+			Actor  *struct {
+				ID          string `json:"id"`
+				DisplayName string `json:"displayName"`
+				Email       string `json:"email"`
+			} `json:"actor"`
+			TargetID  string          `json:"targetId"`
+			Reason    string          `json:"reason"`
+			After     json.RawMessage `json:"after,omitempty"`
+			CreatedAt string          `json:"createdAt"`
 		}
 		var events []Event
 		for rows.Next() {
 			var e Event
 			var createdAt time.Time
-			if err := rows.Scan(&e.ID, &e.Action, &e.ActorID, &e.TargetID, &e.Reason, &e.After, &createdAt, &e.ActorName, &e.ActorEmail); err == nil {
-				e.CreatedAt = createdAt.UTC().Format(time.RFC3339)
-				events = append(events, e)
+			var actorID, actorName, actorEmail string
+			if err := rows.Scan(&e.ID, &e.Action, &actorID, &e.TargetID, &e.Reason, &e.After, &createdAt, &actorName, &actorEmail); err != nil {
+				logger.Error("scan release history", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			e.Actor = &struct {
+				ID          string `json:"id"`
+				DisplayName string `json:"displayName"`
+				Email       string `json:"email"`
+			}{ID: actorID, DisplayName: actorName, Email: actorEmail}
+			e.CreatedAt = createdAt.UTC().Format(time.RFC3339)
+			events = append(events, e)
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate release history", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if events == nil {
 			events = []Event{}
@@ -367,6 +493,9 @@ func adminOpsReleaseHistoryHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 // Records known-good release audit (requires confirmation === version).
 func adminOpsReleaseMarkKnownGoodHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireOperationsPermission(w, r, db, logger, "iam.manage") {
+			return
+		}
 		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
@@ -380,6 +509,10 @@ func adminOpsReleaseMarkKnownGoodHandler(db *pgxpool.Pool, logger *slog.Logger) 
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+		if !validReleaseInput(req.Version, req.Reason) {
+			writeJSONError(w, "version and reason are required", http.StatusBadRequest)
 			return
 		}
 		if req.Confirmation != req.Version {
@@ -411,6 +544,9 @@ func adminOpsReleaseMarkKnownGoodHandler(db *pgxpool.Pool, logger *slog.Logger) 
 // Records rollback preparation audit (requires confirmation === targetVersion).
 func adminOpsReleasePrepareRollbackHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireOperationsPermission(w, r, db, logger, "iam.manage") {
+			return
+		}
 		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
@@ -424,6 +560,10 @@ func adminOpsReleasePrepareRollbackHandler(db *pgxpool.Pool, logger *slog.Logger
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+		if !validReleaseInput(req.TargetVersion, req.Reason) {
+			writeJSONError(w, "targetVersion and reason are required", http.StatusBadRequest)
 			return
 		}
 		if req.Confirmation != req.TargetVersion {
@@ -456,6 +596,9 @@ func adminOpsReleasePrepareRollbackHandler(db *pgxpool.Pool, logger *slog.Logger
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 func handleQueueTransition(db *pgxpool.Pool, logger *slog.Logger, w http.ResponseWriter, r *http.Request, action string) {
+	if !requireOperationsPermission(w, r, db, logger, "iam.manage") {
+		return
+	}
 	identity, ok := authn.GetAdminIdentity(r.Context())
 	if !ok {
 		writeJSONError(w, "unauthorized", http.StatusUnauthorized)
@@ -471,8 +614,8 @@ func handleQueueTransition(db *pgxpool.Pool, logger *slog.Logger, w http.Respons
 		writeJSONError(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
-	if req.QueueName == "" {
-		writeJSONError(w, "queueName required", http.StatusBadRequest)
+	if !validQueueInput(req.QueueName, req.Reason) {
+		writeJSONError(w, "valid queueName and reason are required", http.StatusBadRequest)
 		return
 	}
 
@@ -489,8 +632,14 @@ func handleQueueTransition(db *pgxpool.Pool, logger *slog.Logger, w http.Respons
 
 	if action != "drain" {
 		enabled := action == "pause"
-		// Upsert feature flag
-		_, err := db.Exec(r.Context(), `
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin queue transition", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(r.Context())
+		_, err = tx.Exec(r.Context(), `
 			INSERT INTO ops.feature_flag (key, enabled, kill_switch, description, scope, rules, created_at, updated_at)
 			VALUES ($1, $2, false, $3, 'ops', '{}', NOW(), NOW())
 			ON CONFLICT (key) DO UPDATE SET enabled = $2, updated_at = NOW()
@@ -502,12 +651,19 @@ func handleQueueTransition(db *pgxpool.Pool, logger *slog.Logger, w http.Respons
 		}
 		// Record audit
 		afterJSON, _ := json.Marshal(map[string]any{"key": flagKey, "enabled": enabled})
-		_, err = db.Exec(r.Context(), `
+		_, err = tx.Exec(r.Context(), `
 			INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ($1, $2, $3, 'ops.queue', $4, $5, NOW())
 		`, "ops.queue."+action, identity.ActorID, req.QueueName, req.Reason, afterJSON)
 		if err != nil {
 			logger.Error("audit queue transition", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit queue transition", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"queueName": req.QueueName, "paused": enabled, "action": action})
 	} else {
@@ -524,6 +680,34 @@ func handleQueueTransition(db *pgxpool.Pool, logger *slog.Logger, w http.Respons
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"queueName": req.QueueName, "action": action, "status": "drain_requested"})
 	}
+}
+
+func operationsSystemLimit(r *http.Request) (int, bool) {
+	raw := r.URL.Query().Get("limit")
+	if raw == "" {
+		return 50, true
+	}
+	if strings.TrimSpace(raw) != raw {
+		return 0, false
+	}
+	limit, err := strconv.Atoi(raw)
+	return limit, err == nil && limit >= 1 && limit <= 100
+}
+
+func validQueueInput(queueName, reason string) bool {
+	if len(queueName) == 0 || len(queueName) > 64 || len(strings.TrimSpace(reason)) < 3 || len(reason) > 500 {
+		return false
+	}
+	for _, r := range queueName {
+		if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '_' || r == '-') {
+			return false
+		}
+	}
+	return true
+}
+
+func validReleaseInput(version, reason string) bool {
+	return len(strings.TrimSpace(version)) > 0 && len(version) <= 128 && len(strings.TrimSpace(reason)) >= 3 && len(reason) <= 500
 }
 
 func boolToStatus(b bool) string {

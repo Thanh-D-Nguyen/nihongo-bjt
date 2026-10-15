@@ -22,11 +22,13 @@ import (
 	"net/http/httptest"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 	"nhooyr.io/websocket"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
@@ -53,6 +55,146 @@ func newUpgradeFixture(t *testing.T, store *session.Store) *upgradeFixture {
 	ts := httptest.NewServer(r)
 	t.Cleanup(ts.Close)
 	return &upgradeFixture{srv: srv, ts: ts}
+}
+
+func TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace(t *testing.T) {
+	db := realtimeTestPool(t)
+	redisURL := os.Getenv("TEST_REDIS_URL")
+	if redisURL == "" {
+		t.Skip("TEST_REDIS_URL not set; skipping Redis integration test")
+	}
+	options, err := redis.ParseURL(redisURL)
+	if err != nil {
+		t.Fatalf("parse TEST_REDIS_URL: %v", err)
+	}
+	rdb := redis.NewClient(options)
+	if err := rdb.Ping(context.Background()).Err(); err != nil {
+		t.Fatalf("ping test Redis: %v", err)
+	}
+	t.Cleanup(func() { _ = rdb.Close() })
+
+	store := session.NewStore(db)
+	userID, raw := seedLearnerSession(t, db, store)
+	otherUserID, otherRaw := seedLearnerSession(t, db, store)
+	presence := NewPresenceService(rdb)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_, _ = rdb.HDel(ctx, presenceOnlineKey, userID).Result()
+	_, _ = rdb.HDel(ctx, presenceLastSeenKey, userID).Result()
+	t.Cleanup(func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		for _, id := range []string{userID, otherUserID} {
+			_, _ = rdb.HDel(cleanupCtx, presenceOnlineKey, id).Result()
+			_, _ = rdb.HDel(cleanupCtx, presenceLastSeenKey, id).Result()
+		}
+	})
+
+	f := newUpgradeFixture(t, store)
+	f.srv.presence.SetService(presence)
+	c1, resp, err := f.dial(t, "/ws/presence", cookieHeader("bjt_web_session", raw, ""))
+	requireUpgraded(t, resp, err)
+	waitFor(t, "first connection online", func() bool {
+		online, err := presence.IsOnline(ctx, userID)
+		return err == nil && online
+	})
+
+	hook := &presenceReconnectRaceHook{
+		userID:              userID,
+		offlineStarted:      make(chan struct{}),
+		releaseOffline:      make(chan struct{}),
+		onlineDuringOffline: make(chan struct{}, 1),
+	}
+	rdb.AddHook(hook)
+	t.Cleanup(hook.release)
+	if err := c1.Close(websocket.StatusNormalClosure, "race fixture"); err != nil {
+		t.Fatalf("close final presence connection: %v", err)
+	}
+	select {
+	case <-hook.offlineStarted:
+	case <-time.After(3 * time.Second):
+		t.Fatal("last disconnect did not begin Redis offline transition")
+	}
+
+	c2, resp, err := f.dial(t, "/ws/presence", cookieHeader("bjt_web_session", raw, ""))
+	requireUpgraded(t, resp, err)
+	c3, resp, err := f.dial(t, "/ws/presence", cookieHeader("bjt_web_session", otherRaw, ""))
+	requireUpgraded(t, resp, err)
+	defer c3.CloseNow()
+	otherOnline := false
+	deadline := time.Now().Add(250 * time.Millisecond)
+	for time.Now().Before(deadline) {
+		otherOnline, err = presence.IsOnline(ctx, otherUserID)
+		if err == nil && otherOnline {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if !otherOnline {
+		t.Fatal("unrelated user's presence connect blocked by another user's disconnect")
+	}
+	select {
+	case <-hook.onlineDuringOffline:
+		t.Fatalf("reconnect wrote online while the prior disconnect was still removing it")
+	case <-time.After(250 * time.Millisecond):
+	}
+	hook.release()
+	waitFor(t, "reconnected user online after prior disconnect", func() bool {
+		online, err := presence.IsOnline(ctx, userID)
+		return err == nil && online
+	})
+	_ = c2.Close(websocket.StatusNormalClosure, "test complete")
+}
+
+type presenceReconnectRaceHook struct {
+	userID              string
+	offlineStarted      chan struct{}
+	releaseOffline      chan struct{}
+	onlineDuringOffline chan struct{}
+	offlineOnce         sync.Once
+	releaseOnce         sync.Once
+}
+
+func (h *presenceReconnectRaceHook) DialHook(next redis.DialHook) redis.DialHook { return next }
+
+func (h *presenceReconnectRaceHook) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
+	return next
+}
+
+func (h *presenceReconnectRaceHook) ProcessPipelineHook(next redis.ProcessPipelineHook) redis.ProcessPipelineHook {
+	return func(ctx context.Context, cmds []redis.Cmder) error {
+		for _, cmd := range cmds {
+			args := cmd.Args()
+			if len(args) < 3 || fmt.Sprint(args[2]) != h.userID {
+				continue
+			}
+			if cmd.Name() == "hdel" && fmt.Sprint(args[1]) == presenceOnlineKey {
+				h.offlineOnce.Do(func() {
+					close(h.offlineStarted)
+					<-h.releaseOffline
+				})
+			}
+			if cmd.Name() == "hset" && fmt.Sprint(args[1]) == presenceOnlineKey {
+				select {
+				case <-h.offlineStarted:
+					select {
+					case <-h.releaseOffline:
+					default:
+						select {
+						case h.onlineDuringOffline <- struct{}{}:
+						default:
+						}
+					}
+				default:
+				}
+			}
+		}
+		return next(ctx, cmds)
+	}
+}
+
+func (h *presenceReconnectRaceHook) release() {
+	h.releaseOnce.Do(func() { close(h.releaseOffline) })
 }
 
 func (f *upgradeFixture) wsURL(path string) string {
@@ -261,6 +403,18 @@ func TestRealUpgrade_BattleProtocolAndLifecycle(t *testing.T) {
 	conn, resp, err := f.dial(t, "/ws/battle", cookieHeader("bjt_web_session", raw, trustedTestOrigin))
 	requireUpgraded(t, resp, err)
 	waitFor(t, "connection registration", func() bool { return f.srv.hub.UserConnCount(userID) == 1 })
+	if got := f.srv.hub.UserNamespaceConnCount(userID, "battle"); got != 1 {
+		t.Fatalf("battle connection count = %d, want 1", got)
+	}
+	writeEvent(t, conn, `{"event":"battle:lobby_join","data":{"userId":"spoofed","displayName":"Spoofed"}}`)
+	lobbyAck := readEvent(t, conn)
+	if lobbyAck.Event != "battle:lobby_joined" || !strings.Contains(string(lobbyAck.Data), userID) || !strings.Contains(string(lobbyAck.Data), "WS Learner") || strings.Contains(string(lobbyAck.Data), "Spoofed") {
+		t.Fatalf("lobby identity must use the learner session: %s %s", lobbyAck.Event, lobbyAck.Data)
+	}
+	lobbyPresence := readEvent(t, conn)
+	if lobbyPresence.Event != "battle:lobby_presence" || !strings.Contains(string(lobbyPresence.Data), "WS Learner") {
+		t.Fatalf("expected authenticated lobby presence, got %s %s", lobbyPresence.Event, lobbyPresence.Data)
+	}
 
 	// Invalid frames are dropped without closing the connection.
 	writeEvent(t, conn, `not json`)

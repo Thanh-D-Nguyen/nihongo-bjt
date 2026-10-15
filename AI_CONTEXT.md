@@ -4,6 +4,8 @@ This is the first file any AI assistant should read before changing this reposit
 
 ## Product
 
+Agents follow autonomy-first execution in engineering policy §17: repair ordinary local failures themselves; preserve WAITING_FOR_DECISION for consequential interactive choices and resume afterward. Missing conversation history means reconstruct durable task/Git state.
+
 KotobaWorks is a production-grade Japanese and BJT learning platform. It combines serious BJT preparation with daily-life Japanese learning, reading support, gamified practice, and admin-managed content workflows.
 
 The product must not ship as demo-only UI. A feature is considered done only when the real vertical slice exists: typed model and API contract, persistence or provider abstraction, validation, auth/RBAC when relevant, i18n keys, audit logging for admin mutations, and focused tests for core logic.
@@ -18,7 +20,7 @@ The product must not ship as demo-only UI. A feature is considered done only whe
 6. `DESIGN.md`, `.ai-design/`, and `docs/design/` - active design system and design references.
 7. `docs/cursor-prompts/*.xml` - phase prompts and implementation guidance.
 
-Engineering workflow and quality gates are defined only in `docs/engineering/ENGINEERING_POLICY.md`; it overrides any workflow/verification guidance in this file or older docs.
+Engineering workflow and quality gates are defined only in `docs/engineering/ENGINEERING_POLICY.md`; it overrides any workflow/verification guidance in this file or older docs. Every non-doc change runs through the lifecycle harness: `pnpm quality begin <ID-123> "<title>"`, then follow `pnpm quality status` until `pnpm quality close` (policy §16).
 
 If docs disagree on product behavior, prefer this order: current code and schema, `docs/spec/index.md`, canonical spec, active Cursor rules, then older supporting docs.
 

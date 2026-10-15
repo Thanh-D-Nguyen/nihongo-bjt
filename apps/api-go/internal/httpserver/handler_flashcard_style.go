@@ -26,10 +26,19 @@ func listFlashcardStylesHandler(store *flashcardstyle.Store, logger *slog.Logger
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+		active, err := store.GetActiveStyle(r.Context(), identity.UserID)
+		if err != nil {
+			logger.Error("get active flashcard style for list", "error", err, "user_id", identity.UserID)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(styles)
+		_ = json.NewEncoder(w).Encode(struct {
+			ActiveSlug *string                `json:"activeSlug"`
+			Styles     []flashcardstyle.Style `json:"styles"`
+		}{ActiveSlug: active.Slug, Styles: styles})
 	}
 }
 

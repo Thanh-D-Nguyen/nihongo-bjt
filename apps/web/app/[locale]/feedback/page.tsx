@@ -17,23 +17,27 @@ export default function FeedbackPage() {
   const [email, setEmail] = useState("");
   const [category, setCategory] = useState("bug");
   const [message, setMessage] = useState("");
-  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "success" | "error" | "rateLimited" | "pending">("idle");
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
+      if (status === "pending") return;
+      setStatus("pending");
       try {
         const res = await fetch("/api/feedback", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, email, category, message }),
         });
-        if (res.ok) {
+        if (res.status === 201) {
           setStatus("success");
           setName("");
           setEmail("");
           setCategory("bug");
           setMessage("");
+        } else if (res.status === 429) {
+          setStatus("rateLimited");
         } else {
           setStatus("error");
         }
@@ -41,7 +45,7 @@ export default function FeedbackPage() {
         setStatus("error");
       }
     },
-    [name, email, category, message],
+    [name, email, category, message, status],
   );
 
   const categories = [
@@ -66,11 +70,12 @@ export default function FeedbackPage() {
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-ink">
+              <label htmlFor="feedback-name" className="mb-1 block text-sm font-medium text-ink">
                 {t.nameLabel}
               </label>
               <input
-                className="w-full rounded-lg border border-ink/10 bg-white px-3 py-2 text-sm focus:border-leaf focus:outline-none focus:ring-1 focus:ring-leaf"
+                id="feedback-name"
+                className="min-h-12 w-full rounded-lg border border-ink/10 bg-white px-3 py-2 text-sm focus:border-leaf focus:outline-none focus:ring-1 focus:ring-leaf"
                 onChange={(e) => setName(e.target.value)}
                 placeholder={t.namePlaceholder}
                 type="text"
@@ -78,11 +83,12 @@ export default function FeedbackPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-ink">
+              <label htmlFor="feedback-email" className="mb-1 block text-sm font-medium text-ink">
                 {t.emailLabel}
               </label>
               <input
-                className="w-full rounded-lg border border-ink/10 bg-white px-3 py-2 text-sm focus:border-leaf focus:outline-none focus:ring-1 focus:ring-leaf"
+                id="feedback-email"
+                className="min-h-12 w-full rounded-lg border border-ink/10 bg-white px-3 py-2 text-sm focus:border-leaf focus:outline-none focus:ring-1 focus:ring-leaf"
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t.emailPlaceholder}
                 type="email"
@@ -92,11 +98,12 @@ export default function FeedbackPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">
+            <label htmlFor="feedback-category" className="mb-1 block text-sm font-medium text-ink">
               {t.categoryLabel}
             </label>
             <select
-              className="w-full rounded-lg border border-ink/10 bg-white px-3 py-2 text-sm focus:border-leaf focus:outline-none focus:ring-1 focus:ring-leaf"
+              id="feedback-category"
+              className="min-h-12 w-full rounded-lg border border-ink/10 bg-white px-3 py-2 text-sm focus:border-leaf focus:outline-none focus:ring-1 focus:ring-leaf"
               onChange={(e) => setCategory(e.target.value)}
               value={category}
             >
@@ -109,10 +116,11 @@ export default function FeedbackPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">
+            <label htmlFor="feedback-message" className="mb-1 block text-sm font-medium text-ink">
               {t.messageLabel}
             </label>
             <textarea
+              id="feedback-message"
               className="min-h-[120px] w-full rounded-lg border border-ink/10 bg-white px-3 py-2 text-sm focus:border-leaf focus:outline-none focus:ring-1 focus:ring-leaf"
               onChange={(e) => setMessage(e.target.value)}
               placeholder={t.messagePlaceholder}
@@ -121,16 +129,16 @@ export default function FeedbackPage() {
             />
           </div>
 
-          {status === "error" && (
-            <p className="text-sm text-red-600">{t.error}</p>
+          {(status === "error" || status === "rateLimited") && (
+            <p className="text-sm text-red-600">{status === "rateLimited" ? t.rateLimit : t.error}</p>
           )}
 
           <button
-            className="w-full rounded-lg bg-leaf px-4 py-2.5 text-sm font-medium text-white hover:bg-leaf/90 disabled:opacity-50"
-            disabled={!message.trim()}
+            className="min-h-12 w-full rounded-lg bg-leaf px-4 py-2.5 text-sm font-medium text-white hover:bg-leaf/90 disabled:opacity-50"
+            disabled={!message.trim() || status === "pending"}
             type="submit"
           >
-            {t.submit}
+            {status === "pending" ? t.submitting : t.submit}
           </button>
         </form>
       )}

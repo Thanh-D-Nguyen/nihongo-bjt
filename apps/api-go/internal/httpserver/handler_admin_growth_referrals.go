@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -76,14 +77,17 @@ func adminGrowthReferralsListHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		defer rows.Close()
 
 		type ReferralSummary struct {
-			ID             string  `json:"id"`
-			Code           string  `json:"code"`
-			UserID         string  `json:"userId"`
-			DisplayName    *string `json:"displayName,omitempty"`
-			Email          *string `json:"email,omitempty"`
-			EventsLastHour int     `json:"eventsLastHour"`
-			AbuseFlag      bool    `json:"abuseFlag"`
-			CreatedAt      string  `json:"createdAt"`
+			ID     string `json:"id"`
+			Code   string `json:"code"`
+			UserID string `json:"userId"`
+			User   struct {
+				ID          string  `json:"id"`
+				Email       *string `json:"email"`
+				DisplayName string  `json:"displayName"`
+			} `json:"user"`
+			EventsLastHour int    `json:"eventsLastHour"`
+			AbuseFlag      bool   `json:"abuseFlag"`
+			CreatedAt      string `json:"createdAt"`
 		}
 
 		var items []ReferralSummary
@@ -91,7 +95,8 @@ func adminGrowthReferralsListHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		for rows.Next() {
 			var rs ReferralSummary
 			var createdAt time.Time
-			if err := rows.Scan(&rs.ID, &rs.Code, &rs.UserID, &rs.DisplayName, &rs.Email, &createdAt); err == nil {
+			if err := rows.Scan(&rs.ID, &rs.Code, &rs.UserID, &rs.User.DisplayName, &rs.User.Email, &createdAt); err == nil {
+				rs.User.ID = rs.UserID
 				rs.CreatedAt = createdAt.UTC().Format(time.RFC3339)
 				items = append(items, rs)
 				codes = append(codes, rs.Code)
@@ -165,30 +170,37 @@ func adminGrowthReferralsDetailHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		ctx := r.Context()
 
 		type AuditEntry struct {
-			ID         string          `json:"id"`
-			Action     string          `json:"action"`
-			ActorID    string          `json:"actorId"`
-			ActorName  *string         `json:"actorName,omitempty"`
-			ActorEmail *string         `json:"actorEmail,omitempty"`
-			Reason     string          `json:"reason"`
-			After      json.RawMessage `json:"after,omitempty"`
-			Before     json.RawMessage `json:"before,omitempty"`
-			CreatedAt  string          `json:"createdAt"`
+			ID     string `json:"id"`
+			Action string `json:"action"`
+			Actor  *struct {
+				ID          string `json:"id"`
+				DisplayName string `json:"displayName"`
+				Email       string `json:"email"`
+			} `json:"actor"`
+			Reason    *string `json:"reason"`
+			CreatedAt string  `json:"createdAt"`
 		}
 
 		type EventEntry struct {
-			ID        string `json:"id"`
-			Code      string `json:"code"`
-			UserID    string `json:"userId"`
-			CreatedAt string `json:"createdAt"`
+			ID             string          `json:"id"`
+			Kind           string          `json:"kind"`
+			Code           string          `json:"code"`
+			Payload        json.RawMessage `json:"payload"`
+			ReferrerUserID string          `json:"referrerUserId"`
+			ReferredUserID *string         `json:"referredUserId"`
+			CreatedAt      string          `json:"createdAt"`
 		}
 
 		type ReferralDetail struct {
-			ID             string       `json:"id"`
-			Code           string       `json:"code"`
-			UserID         string       `json:"userId"`
-			DisplayName    *string      `json:"displayName,omitempty"`
-			Email          *string      `json:"email,omitempty"`
+			ID     string `json:"id"`
+			Code   string `json:"code"`
+			UserID string `json:"userId"`
+			User   struct {
+				ID          string  `json:"id"`
+				Email       *string `json:"email"`
+				DisplayName string  `json:"displayName"`
+			} `json:"user"`
+			CreatedAt      string       `json:"createdAt"`
 			EventsLastHour int          `json:"eventsLastHour"`
 			AbuseFlag      bool         `json:"abuseFlag"`
 			Events         []EventEntry `json:"events"`
@@ -201,15 +213,17 @@ func adminGrowthReferralsDetailHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			SELECT rc.id, rc.code, rc.user_id, u.display_name, u.email, rc.created_at
 			FROM growth.referral_code rc
 			LEFT JOIN profile.user_profile u ON u.id = rc.user_id
-			WHERE rc.id = $1`, id).Scan(&rd.ID, &rd.Code, &rd.UserID, &rd.DisplayName, &rd.Email, &createdAt)
+			WHERE rc.id = $1`, id).Scan(&rd.ID, &rd.Code, &rd.UserID, &rd.User.DisplayName, &rd.User.Email, &createdAt)
 		if err != nil {
 			writeJSONError(w, "referral not found", http.StatusNotFound)
 			return
 		}
+		rd.User.ID = rd.UserID
+		rd.CreatedAt = createdAt.UTC().Format(time.RFC3339)
 
 		// Events (last 50)
 		eRows, err := db.Query(ctx, `
-			SELECT id, code, user_id, created_at
+			SELECT id, kind, code, payload, referrer_user_id, referred_user_id, created_at
 			FROM growth.referral_event
 			WHERE code = $1
 			ORDER BY created_at DESC LIMIT 50`, rd.Code)
@@ -217,7 +231,7 @@ func adminGrowthReferralsDetailHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			for eRows.Next() {
 				var ev EventEntry
 				var ts time.Time
-				if eRows.Scan(&ev.ID, &ev.Code, &ev.UserID, &ts) == nil {
+				if eRows.Scan(&ev.ID, &ev.Kind, &ev.Code, &ev.Payload, &ev.ReferrerUserID, &ev.ReferredUserID, &ts) == nil {
 					ev.CreatedAt = ts.UTC().Format(time.RFC3339)
 					rd.Events = append(rd.Events, ev)
 				}
@@ -238,8 +252,8 @@ func adminGrowthReferralsDetailHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 
 		// Audit trail
 		aRows, err := db.Query(ctx, `
-			SELECT a.id, a.action, a.actor_id, act.display_name, act.email,
-				a.reason, a.after, a.before, a.created_at
+			SELECT a.id, a.action, act.id, act.display_name, act.email,
+				a.reason, a.created_at
 			FROM ops.admin_audit_log a
 			LEFT JOIN authz.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_id = $1 AND a.target_type = 'growth.referral_code'
@@ -247,9 +261,14 @@ func adminGrowthReferralsDetailHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		if err == nil {
 			for aRows.Next() {
 				var ae AuditEntry
+				ae.Actor = &struct {
+					ID          string `json:"id"`
+					DisplayName string `json:"displayName"`
+					Email       string `json:"email"`
+				}{}
 				var ts time.Time
-				if aRows.Scan(&ae.ID, &ae.Action, &ae.ActorID, &ae.ActorName,
-					&ae.ActorEmail, &ae.Reason, &ae.After, &ae.Before, &ts) == nil {
+				if aRows.Scan(&ae.ID, &ae.Action, &ae.Actor.ID, &ae.Actor.DisplayName,
+					&ae.Actor.Email, &ae.Reason, &ts) == nil {
 					ae.CreatedAt = ts.UTC().Format(time.RFC3339)
 					rd.Audit = append(rd.Audit, ae)
 				}
@@ -280,13 +299,23 @@ func adminGrowthReferralsRevokeHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		var req struct {
 			Reason string `json:"reason"`
 		}
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || len(strings.TrimSpace(req.Reason)) < 3 {
+			writeJSONError(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
 
 		ctx := r.Context()
+		tx, err := db.BeginTx(ctx, pgx.TxOptions{})
+		if err != nil {
+			logger.Error("begin referral revoke", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 
 		// Fetch before state
 		var beforeCode, beforeUserID string
-		err := db.QueryRow(ctx, "SELECT code, user_id FROM growth.referral_code WHERE id = $1", id).
+		err = tx.QueryRow(ctx, "SELECT code, user_id FROM growth.referral_code WHERE id = $1 FOR UPDATE", id).
 			Scan(&beforeCode, &beforeUserID)
 		if err != nil {
 			writeJSONError(w, "referral not found", http.StatusNotFound)
@@ -294,7 +323,7 @@ func adminGrowthReferralsRevokeHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		}
 
 		// Delete the referral code
-		if _, err := db.Exec(ctx, "DELETE FROM growth.referral_code WHERE id = $1", id); err != nil {
+		if _, err := tx.Exec(ctx, "DELETE FROM growth.referral_code WHERE id = $1", id); err != nil {
 			logger.Error("revoke referral", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
@@ -302,9 +331,16 @@ func adminGrowthReferralsRevokeHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 
 		// Write audit
 		beforeJSON, _ := json.Marshal(map[string]any{"code": beforeCode, "userId": beforeUserID})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
-			VALUES ('admin.growth.referral_code.revoked', $1, $2, 'growth.referral_code', $3, NULL, $4, NOW())`,
-			identity.ActorID, id, req.Reason, beforeJSON)
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.growth.referral_code.revoked", "growth.referral_code", id, req.Reason, json.RawMessage(beforeJSON), nil); err != nil {
+			logger.Error("audit referral revoke", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit referral revoke", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "revoked": true})
 	}

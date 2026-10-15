@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -8,7 +9,9 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"unicode/utf8"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
@@ -20,6 +23,99 @@ import (
 // DB tables: gamification.streak_config, gamification.achievement_definition,
 // gamification.achievement_tier, gamification.leaderboard_config,
 // gamification.companion_pet.
+
+type adminAchievementDefinitionInput struct {
+	Slug           string  `json:"slug"`
+	NameKey        string  `json:"nameKey"`
+	DescriptionKey string  `json:"descriptionKey"`
+	Category       string  `json:"category"`
+	MetricKey      string  `json:"metricKey"`
+	IconURL        *string `json:"iconUrl"`
+	DisplayOrder   int     `json:"displayOrder"`
+	Enabled        *bool   `json:"enabled"`
+}
+
+type adminAchievementTierInput struct {
+	Tier        string  `json:"tier"`
+	Threshold   int     `json:"threshold"`
+	RewardType  *string `json:"rewardType"`
+	RewardValue *string `json:"rewardValue"`
+	IconURL     *string `json:"iconUrl"`
+	NameKey     *string `json:"nameKey"`
+}
+
+func decodeAdminAchievementDefinition(r *http.Request, input *adminAchievementDefinitionInput) error {
+	var raw json.RawMessage
+	if err := json.NewDecoder(r.Body).Decode(&raw); err != nil {
+		return err
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		return err
+	}
+	for _, field := range []string{"displayOrder", "enabled"} {
+		if value, ok := fields[field]; ok && strings.TrimSpace(string(value)) == "null" {
+			return fmt.Errorf("%s cannot be null", field)
+		}
+	}
+	return json.Unmarshal(raw, input)
+}
+
+func normalizeOptionalAdminString(value *string, max int) bool {
+	if value == nil {
+		return true
+	}
+	*value = strings.TrimSpace(*value)
+	return utf8.RuneCountInString(*value) <= max
+}
+
+func normalizeAdminAchievementDefinition(input *adminAchievementDefinitionInput) bool {
+	input.Slug = strings.TrimSpace(input.Slug)
+	input.NameKey = strings.TrimSpace(input.NameKey)
+	input.DescriptionKey = strings.TrimSpace(input.DescriptionKey)
+	input.MetricKey = strings.TrimSpace(input.MetricKey)
+	if n := len(input.Slug); n == 0 || n > 128 {
+		return false
+	}
+	for _, r := range input.Slug {
+		if !((r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '_' || r == '-') {
+			return false
+		}
+	}
+	if utf8.RuneCountInString(input.NameKey) == 0 || utf8.RuneCountInString(input.NameKey) > 255 ||
+		utf8.RuneCountInString(input.DescriptionKey) == 0 || utf8.RuneCountInString(input.DescriptionKey) > 255 ||
+		utf8.RuneCountInString(input.MetricKey) == 0 || utf8.RuneCountInString(input.MetricKey) > 64 || input.DisplayOrder < 0 {
+		return false
+	}
+	switch input.Category {
+	case "learning", "social", "streak", "mastery", "battle":
+	default:
+		return false
+	}
+	if !normalizeOptionalAdminString(input.IconURL, 2048) {
+		return false
+	}
+	if input.Enabled == nil {
+		enabled := true
+		input.Enabled = &enabled
+	}
+	return true
+}
+
+func normalizeAdminAchievementTier(input *adminAchievementTierInput) bool {
+	if input.Threshold < 1 {
+		return false
+	}
+	switch input.Tier {
+	case "bronze", "silver", "gold", "platinum":
+	default:
+		return false
+	}
+	return normalizeOptionalAdminString(input.RewardType, 32) &&
+		normalizeOptionalAdminString(input.RewardValue, 255) &&
+		normalizeOptionalAdminString(input.IconURL, 2048) &&
+		normalizeOptionalAdminString(input.NameKey, 255)
+}
 
 // ── Streak Config ───────────────────────────────────────────────────────────
 
@@ -51,12 +147,20 @@ func adminStreakConfigsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		for rows.Next() {
 			var c Config
 			var ca, ua time.Time
-			if rows.Scan(&c.ID, &c.Name, &c.ActivityType, &c.MinActionsPerDay,
-				&c.FreezesAllowed, &c.Enabled, &c.CreatedBy, &c.UpdatedBy, &ca, &ua) == nil {
-				c.CreatedAt = ca.UTC().Format(time.RFC3339)
-				c.UpdatedAt = ua.UTC().Format(time.RFC3339)
-				items = append(items, c)
+			if err := rows.Scan(&c.ID, &c.Name, &c.ActivityType, &c.MinActionsPerDay,
+				&c.FreezesAllowed, &c.Enabled, &c.CreatedBy, &c.UpdatedBy, &ca, &ua); err != nil {
+				logger.Error("scan streak config", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			c.CreatedAt = ca.UTC().Format(time.RFC3339)
+			c.UpdatedAt = ua.UTC().Format(time.RFC3339)
+			items = append(items, c)
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate streak configs", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if items == nil {
 			items = []Config{}
@@ -84,12 +188,20 @@ func adminStreakConfigCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		if req.Name == "" || req.ActivityType == "" {
-			writeJSONError(w, "name and activityType required", http.StatusBadRequest)
+		req.Name = strings.TrimSpace(req.Name)
+		if !validAdminStreakConfig(req.Name, req.ActivityType, req.MinActionsPerDay, req.FreezesAllowed) {
+			writeJSONError(w, "invalid streak configuration", http.StatusBadRequest)
 			return
 		}
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin create streak config", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(r.Context())
 		var id string
-		err := db.QueryRow(r.Context(), `INSERT INTO gamification.streak_config
+		err = tx.QueryRow(r.Context(), `INSERT INTO gamification.streak_config
 			(name, activity_type, min_actions_per_day, freezes_allowed, enabled, created_by, updated_by, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, $6, $6, NOW(), NOW()) RETURNING id`,
 			req.Name, req.ActivityType, req.MinActionsPerDay, req.FreezesAllowed, req.Enabled, identity.ActorID).Scan(&id)
@@ -98,8 +210,35 @@ func adminStreakConfigCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+		after, _ := json.Marshal(req)
+		if _, err := tx.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, after, created_at)
+			VALUES ('admin.gamification.streak.created',$1,$2,'gamification.streak_config',$3,NOW())`, identity.ActorID, id, after); err != nil {
+			logger.Error("audit create streak config", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit create streak config", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusCreated, map[string]any{"id": id, "name": req.Name})
 	}
+}
+
+func validStreakActivityType(value string) bool {
+	switch value {
+	case "review", "exercise", "quiz", "battle", "any":
+		return true
+	default:
+		return false
+	}
+}
+
+func validAdminStreakConfig(name, activityType string, minActionsPerDay, freezesAllowed int) bool {
+	return utf8.RuneCountInString(name) > 0 && utf8.RuneCountInString(name) <= 128 &&
+		validStreakActivityType(activityType) && minActionsPerDay >= 1 && minActionsPerDay <= 100 &&
+		freezesAllowed >= 0 && freezesAllowed <= 10
 }
 
 // adminStreakConfigUpdateHandler implements PUT /api/admin/gamification/streaks/{id}.
@@ -111,7 +250,7 @@ func adminStreakConfigUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			return
 		}
 		id := extractPathParam(r.URL.Path, "streaks", 1)
-		if id == "" {
+		if !isValidUUID(id) {
 			writeJSONError(w, "streak config id required", http.StatusBadRequest)
 			return
 		}
@@ -126,13 +265,49 @@ func adminStreakConfigUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		_, err := db.Exec(r.Context(), `UPDATE gamification.streak_config SET
+		req.Name = strings.TrimSpace(req.Name)
+		if !validAdminStreakConfig(req.Name, req.ActivityType, req.MinActionsPerDay, req.FreezesAllowed) {
+			writeJSONError(w, "invalid streak configuration", http.StatusBadRequest)
+			return
+		}
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin update streak config", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(r.Context())
+		var before json.RawMessage
+		err = tx.QueryRow(r.Context(), `SELECT jsonb_build_object('name',name,'activityType',activity_type,'minActionsPerDay',min_actions_per_day,'freezesAllowed',freezes_allowed,'enabled',enabled)
+			FROM gamification.streak_config WHERE id=$1 FOR UPDATE`, id).Scan(&before)
+		if err == pgx.ErrNoRows {
+			writeJSONError(w, "streak config not found", http.StatusNotFound)
+			return
+		}
+		if err != nil {
+			logger.Error("read streak config before update", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		_, err = tx.Exec(r.Context(), `UPDATE gamification.streak_config SET
 			name=$1, activity_type=$2, min_actions_per_day=$3, freezes_allowed=$4,
 			enabled=$5, updated_by=$6, updated_at=NOW() WHERE id=$7`,
 			req.Name, req.ActivityType, req.MinActionsPerDay, req.FreezesAllowed,
 			req.Enabled, identity.ActorID, id)
 		if err != nil {
 			logger.Error("update streak config", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		after, _ := json.Marshal(req)
+		if _, err := tx.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, before, after, created_at)
+			VALUES ('admin.gamification.streak.updated',$1,$2,'gamification.streak_config',$3,$4,NOW())`, identity.ActorID, id, before, after); err != nil {
+			logger.Error("audit update streak config", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit update streak config", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
@@ -143,17 +318,49 @@ func adminStreakConfigUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 // adminStreakConfigDeleteHandler implements DELETE /api/admin/gamification/streaks/{id}.
 func adminStreakConfigDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, ok := authn.GetAdminIdentity(r.Context())
+		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
 		id := extractPathParam(r.URL.Path, "streaks", 1)
-		if id == "" {
+		if !isValidUUID(id) {
 			writeJSONError(w, "streak config id required", http.StatusBadRequest)
 			return
 		}
-		db.Exec(r.Context(), "DELETE FROM gamification.streak_config WHERE id=$1", id)
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin delete streak config", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(r.Context())
+		var before json.RawMessage
+		if err := tx.QueryRow(r.Context(), `SELECT jsonb_build_object('name',name,'activityType',activity_type,'minActionsPerDay',min_actions_per_day,'freezesAllowed',freezes_allowed,'enabled',enabled)
+			FROM gamification.streak_config WHERE id=$1 FOR UPDATE`, id).Scan(&before); err == pgx.ErrNoRows {
+			writeJSONError(w, "streak config not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			logger.Error("read streak config before delete", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if _, err := tx.Exec(r.Context(), "DELETE FROM gamification.streak_config WHERE id=$1", id); err != nil {
+			logger.Error("delete streak config", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if _, err := tx.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, before, created_at)
+			VALUES ('admin.gamification.streak.deleted',$1,$2,'gamification.streak_config',$3,NOW())`, identity.ActorID, id, before); err != nil {
+			logger.Error("audit delete streak config", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit delete streak config", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true, "id": id})
 	}
 }
@@ -164,7 +371,7 @@ func adminStreakConfigDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 func adminAchievementsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query(r.Context(), `SELECT id, slug, name_key, description_key, category,
-			metric_key, icon_url, display_order, enabled, created_by, updated_by, created_at, updated_at
+			metric_key, icon_url, display_order, enabled, created_at, updated_at
 			FROM gamification.achievement_definition ORDER BY category ASC, display_order ASC`)
 		if err != nil {
 			logger.Error("list achievements", "error", err)
@@ -199,30 +406,51 @@ func adminAchievementsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		for rows.Next() {
 			var a Achievement
 			var ca, ua time.Time
-			if rows.Scan(&a.ID, &a.Slug, &a.NameKey, &a.DescriptionKey, &a.Category,
-				&a.MetricKey, &a.IconURL, &a.DisplayOrder, &a.Enabled, nil, nil, &ca, &ua) == nil {
-				a.CreatedAt = ca.UTC().Format(time.RFC3339)
-				a.UpdatedAt = ua.UTC().Format(time.RFC3339)
-				a.Tiers = []Tier{}
-				items = append(items, a)
+			if err := rows.Scan(&a.ID, &a.Slug, &a.NameKey, &a.DescriptionKey, &a.Category,
+				&a.MetricKey, &a.IconURL, &a.DisplayOrder, &a.Enabled, &ca, &ua); err != nil {
+				logger.Error("scan achievements", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			a.CreatedAt = ca.UTC().Format(time.RFC3339)
+			a.UpdatedAt = ua.UTC().Format(time.RFC3339)
+			a.Tiers = []Tier{}
+			items = append(items, a)
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate achievements", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if items == nil {
 			items = []Achievement{}
 		}
 		// Load tiers for each achievement
 		for i := range items {
-			tRows, _ := db.Query(r.Context(), `SELECT id, tier, threshold, reward_type, reward_value, icon_url, name_key
+			tRows, err := db.Query(r.Context(), `SELECT id, tier, threshold, reward_type, reward_value, icon_url, name_key
 				FROM gamification.achievement_tier WHERE achievement_id=$1 ORDER BY threshold ASC`, items[i].ID)
-			if tRows != nil {
-				for tRows.Next() {
-					var t Tier
-					if tRows.Scan(&t.ID, &t.Tier, &t.Threshold, &t.RewardType, &t.RewardValue, &t.IconURL, &t.NameKey) == nil {
-						items[i].Tiers = append(items[i].Tiers, t)
-					}
-				}
-				tRows.Close()
+			if err != nil {
+				logger.Error("list achievement tiers", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			for tRows.Next() {
+				var t Tier
+				if err := tRows.Scan(&t.ID, &t.Tier, &t.Threshold, &t.RewardType, &t.RewardValue, &t.IconURL, &t.NameKey); err != nil {
+					tRows.Close()
+					logger.Error("scan achievement tiers", "error", err)
+					writeJSONError(w, "internal error", http.StatusInternalServerError)
+					return
+				}
+				items[i].Tiers = append(items[i].Tiers, t)
+			}
+			if err := tRows.Err(); err != nil {
+				tRows.Close()
+				logger.Error("iterate achievement tiers", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			tRows.Close()
 		}
 		writeJSON(w, http.StatusOK, items)
 	}
@@ -266,23 +494,39 @@ func adminAchievementDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 			FROM gamification.achievement_definition WHERE id=$1`, id).
 			Scan(&d.ID, &d.Slug, &d.NameKey, &d.DescriptionKey, &d.Category,
 				&d.MetricKey, &d.IconURL, &d.DisplayOrder, &d.Enabled, &ca, &ua)
-		if err != nil {
+		if err == pgx.ErrNoRows {
 			writeJSONError(w, "achievement not found", http.StatusNotFound)
+			return
+		}
+		if err != nil {
+			logger.Error("read achievement detail", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 		d.CreatedAt = ca.UTC().Format(time.RFC3339)
 		d.UpdatedAt = ua.UTC().Format(time.RFC3339)
 		d.Tiers = []Tier{}
-		tRows, _ := db.Query(r.Context(), `SELECT id, tier, threshold, reward_type, reward_value, icon_url, name_key
+		tRows, err := db.Query(r.Context(), `SELECT id, tier, threshold, reward_type, reward_value, icon_url, name_key
 			FROM gamification.achievement_tier WHERE achievement_id=$1 ORDER BY threshold ASC`, id)
-		if tRows != nil {
-			for tRows.Next() {
-				var t Tier
-				if tRows.Scan(&t.ID, &t.Tier, &t.Threshold, &t.RewardType, &t.RewardValue, &t.IconURL, &t.NameKey) == nil {
-					d.Tiers = append(d.Tiers, t)
-				}
+		if err != nil {
+			logger.Error("list achievement detail tiers", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tRows.Close()
+		for tRows.Next() {
+			var t Tier
+			if err := tRows.Scan(&t.ID, &t.Tier, &t.Threshold, &t.RewardType, &t.RewardValue, &t.IconURL, &t.NameKey); err != nil {
+				logger.Error("scan achievement detail tier", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
-			tRows.Close()
+			d.Tiers = append(d.Tiers, t)
+		}
+		if err := tRows.Err(); err != nil {
+			logger.Error("iterate achievement detail tiers", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		writeJSON(w, http.StatusOK, d)
 	}
@@ -296,32 +540,42 @@ func adminAchievementCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
-		var req struct {
-			Slug           string  `json:"slug"`
-			NameKey        string  `json:"nameKey"`
-			DescriptionKey string  `json:"descriptionKey"`
-			Category       string  `json:"category"`
-			MetricKey      string  `json:"metricKey"`
-			IconURL        *string `json:"iconUrl"`
-			DisplayOrder   int     `json:"displayOrder"`
-			Enabled        bool    `json:"enabled"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		var req adminAchievementDefinitionInput
+		if err := decodeAdminAchievementDefinition(r, &req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		if req.Slug == "" || req.NameKey == "" {
-			writeJSONError(w, "slug and nameKey required", http.StatusBadRequest)
+		if !normalizeAdminAchievementDefinition(&req) {
+			writeJSONError(w, "invalid achievement definition", http.StatusBadRequest)
 			return
 		}
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin create achievement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(r.Context())
 		var id string
-		err := db.QueryRow(r.Context(), `INSERT INTO gamification.achievement_definition
+		err = tx.QueryRow(r.Context(), `INSERT INTO gamification.achievement_definition
 			(slug, name_key, description_key, category, metric_key, icon_url, display_order, enabled, created_by, updated_by, created_at, updated_at)
 			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$9,NOW(),NOW()) RETURNING id`,
 			req.Slug, req.NameKey, req.DescriptionKey, req.Category, req.MetricKey,
-			req.IconURL, req.DisplayOrder, req.Enabled, identity.ActorID).Scan(&id)
+			req.IconURL, req.DisplayOrder, *req.Enabled, identity.ActorID).Scan(&id)
 		if err != nil {
 			logger.Error("create achievement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if _, err := tx.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, after, created_at)
+			VALUES ('admin.gamification.achievement.created',$1,$2,'gamification.achievement_definition',
+			jsonb_build_object('slug',$3::text,'nameKey',$4::text,'category',$5::text,'metricKey',$6::text),NOW())`, identity.ActorID, id, req.Slug, req.NameKey, req.Category, req.MetricKey); err != nil {
+			logger.Error("audit create achievement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit create achievement", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
@@ -342,27 +596,47 @@ func adminAchievementUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 			writeJSONError(w, "achievement id required", http.StatusBadRequest)
 			return
 		}
-		var req struct {
-			Slug           string  `json:"slug"`
-			NameKey        string  `json:"nameKey"`
-			DescriptionKey string  `json:"descriptionKey"`
-			Category       string  `json:"category"`
-			MetricKey      string  `json:"metricKey"`
-			IconURL        *string `json:"iconUrl"`
-			DisplayOrder   int     `json:"displayOrder"`
-			Enabled        bool    `json:"enabled"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		var req adminAchievementDefinitionInput
+		if err := decodeAdminAchievementDefinition(r, &req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		_, err := db.Exec(r.Context(), `UPDATE gamification.achievement_definition SET
+		if !normalizeAdminAchievementDefinition(&req) {
+			writeJSONError(w, "invalid achievement definition", http.StatusBadRequest)
+			return
+		}
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin update achievement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(r.Context())
+		var updatedID string
+		err = tx.QueryRow(r.Context(), `UPDATE gamification.achievement_definition SET
 			slug=$1, name_key=$2, description_key=$3, category=$4, metric_key=$5,
-			icon_url=$6, display_order=$7, enabled=$8, updated_by=$9, updated_at=NOW() WHERE id=$10`,
+			icon_url=$6, display_order=$7, enabled=$8, updated_by=$9, updated_at=NOW() WHERE id=$10 RETURNING id`,
 			req.Slug, req.NameKey, req.DescriptionKey, req.Category, req.MetricKey,
-			req.IconURL, req.DisplayOrder, req.Enabled, identity.ActorID, id)
+			req.IconURL, req.DisplayOrder, *req.Enabled, identity.ActorID, id).Scan(&updatedID)
+		if err == pgx.ErrNoRows {
+			writeJSONError(w, "achievement not found", http.StatusNotFound)
+			return
+		}
 		if err != nil {
 			logger.Error("update achievement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if _, err := tx.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, after, created_at)
+			VALUES ('admin.gamification.achievement.updated',$1,$2,'gamification.achievement_definition',
+			jsonb_build_object('slug',$3::text,'nameKey',$4::text,'descriptionKey',$5::text,'category',$6::text,'metricKey',$7::text,'enabled',$8::boolean),NOW())`,
+			identity.ActorID, updatedID, req.Slug, req.NameKey, req.DescriptionKey, req.Category, req.MetricKey, *req.Enabled); err != nil {
+			logger.Error("audit update achievement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit update achievement", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
@@ -373,7 +647,7 @@ func adminAchievementUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 // adminAchievementDeleteHandler implements DELETE /api/admin/gamification/achievements/{id}.
 func adminAchievementDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, ok := authn.GetAdminIdentity(r.Context())
+		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
@@ -383,9 +657,44 @@ func adminAchievementDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 			writeJSONError(w, "achievement id required", http.StatusBadRequest)
 			return
 		}
-		// Delete tiers first (cascade may not be configured)
-		db.Exec(r.Context(), "DELETE FROM gamification.achievement_tier WHERE achievement_id=$1", id)
-		db.Exec(r.Context(), "DELETE FROM gamification.achievement_definition WHERE id=$1", id)
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin delete achievement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(r.Context())
+		var slug, nameKey, descriptionKey string
+		if err := tx.QueryRow(r.Context(), `SELECT slug,name_key,description_key FROM gamification.achievement_definition WHERE id=$1 FOR UPDATE`, id).Scan(&slug, &nameKey, &descriptionKey); err == pgx.ErrNoRows {
+			writeJSONError(w, "achievement not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			logger.Error("read achievement before delete", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if _, err := tx.Exec(r.Context(), "DELETE FROM gamification.achievement_tier WHERE achievement_id=$1", id); err != nil {
+			logger.Error("delete achievement tiers", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if _, err := tx.Exec(r.Context(), "DELETE FROM gamification.achievement_definition WHERE id=$1", id); err != nil {
+			logger.Error("delete achievement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if _, err := tx.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, before, created_at)
+			VALUES ('admin.gamification.achievement.deleted',$1,$2,'gamification.achievement_definition',
+			jsonb_build_object('slug',$3::text,'nameKey',$4::text,'descriptionKey',$5::text),NOW())`, identity.ActorID, id, slug, nameKey, descriptionKey); err != nil {
+			logger.Error("audit delete achievement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit delete achievement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true, "id": id})
 	}
 }
@@ -398,6 +707,16 @@ func adminAchievementTiersListHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		achievementID := extractPathParam(r.URL.Path, "achievements", 1)
 		if achievementID == "" {
 			writeJSONError(w, "achievement id required", http.StatusBadRequest)
+			return
+		}
+		var exists bool
+		if err := db.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM gamification.achievement_definition WHERE id=$1)`, achievementID).Scan(&exists); err != nil {
+			logger.Error("check achievement before listing tiers", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if !exists {
+			writeJSONError(w, "achievement not found", http.StatusNotFound)
 			return
 		}
 		rows, err := db.Query(r.Context(), `SELECT id, tier, threshold, reward_type, reward_value, icon_url, name_key
@@ -420,9 +739,17 @@ func adminAchievementTiersListHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		var items []Tier
 		for rows.Next() {
 			var t Tier
-			if rows.Scan(&t.ID, &t.Tier, &t.Threshold, &t.RewardType, &t.RewardValue, &t.IconURL, &t.NameKey) == nil {
-				items = append(items, t)
+			if err := rows.Scan(&t.ID, &t.Tier, &t.Threshold, &t.RewardType, &t.RewardValue, &t.IconURL, &t.NameKey); err != nil {
+				logger.Error("scan achievement tiers", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			items = append(items, t)
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate achievement tiers", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if items == nil {
 			items = []Tier{}
@@ -434,7 +761,7 @@ func adminAchievementTiersListHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 // adminAchievementTierCreateHandler implements POST /api/admin/gamification/achievements/{achievementId}/tiers.
 func adminAchievementTierCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, ok := authn.GetAdminIdentity(r.Context())
+		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
@@ -444,25 +771,52 @@ func adminAchievementTierCreateHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			writeJSONError(w, "achievement id required", http.StatusBadRequest)
 			return
 		}
-		var req struct {
-			Tier        string  `json:"tier"`
-			Threshold   int     `json:"threshold"`
-			RewardType  *string `json:"rewardType"`
-			RewardValue *string `json:"rewardValue"`
-			IconURL     *string `json:"iconUrl"`
-			NameKey     *string `json:"nameKey"`
-		}
+		var req adminAchievementTierInput
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
+		if !normalizeAdminAchievementTier(&req) {
+			writeJSONError(w, "invalid achievement tier", http.StatusBadRequest)
+			return
+		}
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin create achievement tier", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(r.Context())
+		var exists bool
+		if err := tx.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM gamification.achievement_definition WHERE id=$1)`, achievementID).Scan(&exists); err != nil {
+			logger.Error("check achievement before tier create", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if !exists {
+			writeJSONError(w, "achievement not found", http.StatusNotFound)
+			return
+		}
 		var id string
-		err := db.QueryRow(r.Context(), `INSERT INTO gamification.achievement_tier
+		err = tx.QueryRow(r.Context(), `INSERT INTO gamification.achievement_tier
 			(achievement_id, tier, threshold, reward_type, reward_value, icon_url, name_key)
 			VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
 			achievementID, req.Tier, req.Threshold, req.RewardType, req.RewardValue, req.IconURL, req.NameKey).Scan(&id)
 		if err != nil {
 			logger.Error("create achievement tier", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if _, err := tx.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, after, created_at)
+			VALUES ('admin.gamification.achievement_tier.created',$1,$2,'gamification.achievement_tier',
+			jsonb_build_object('achievementId',$3::text,'tier',$4::text,'threshold',$5::int,'rewardType',$6::text,'rewardValue',$7::text,'nameKey',$8::text),NOW())`,
+			identity.ActorID, id, achievementID, req.Tier, req.Threshold, req.RewardType, req.RewardValue, req.NameKey); err != nil {
+			logger.Error("audit create achievement tier", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit create achievement tier", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
@@ -473,7 +827,7 @@ func adminAchievementTierCreateHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 // adminAchievementTierUpdateHandler implements PUT /api/admin/gamification/achievements/tiers/{id}.
 func adminAchievementTierUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, ok := authn.GetAdminIdentity(r.Context())
+		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
@@ -483,23 +837,45 @@ func adminAchievementTierUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			writeJSONError(w, "tier id required", http.StatusBadRequest)
 			return
 		}
-		var req struct {
-			Tier        string  `json:"tier"`
-			Threshold   int     `json:"threshold"`
-			RewardType  *string `json:"rewardType"`
-			RewardValue *string `json:"rewardValue"`
-			IconURL     *string `json:"iconUrl"`
-			NameKey     *string `json:"nameKey"`
-		}
+		var req adminAchievementTierInput
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		_, err := db.Exec(r.Context(), `UPDATE gamification.achievement_tier SET
-			tier=$1, threshold=$2, reward_type=$3, reward_value=$4, icon_url=$5, name_key=$6 WHERE id=$7`,
-			req.Tier, req.Threshold, req.RewardType, req.RewardValue, req.IconURL, req.NameKey, id)
+		if !normalizeAdminAchievementTier(&req) {
+			writeJSONError(w, "invalid achievement tier", http.StatusBadRequest)
+			return
+		}
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin update achievement tier", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(r.Context())
+		var achievementID string
+		err = tx.QueryRow(r.Context(), `UPDATE gamification.achievement_tier SET
+			tier=$1, threshold=$2, reward_type=$3, reward_value=$4, icon_url=$5, name_key=$6 WHERE id=$7
+			RETURNING achievement_id`, req.Tier, req.Threshold, req.RewardType, req.RewardValue, req.IconURL, req.NameKey, id).Scan(&achievementID)
+		if err == pgx.ErrNoRows {
+			writeJSONError(w, "achievement tier not found", http.StatusNotFound)
+			return
+		}
 		if err != nil {
 			logger.Error("update achievement tier", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if _, err := tx.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, after, created_at)
+			VALUES ('admin.gamification.achievement_tier.updated',$1,$2,'gamification.achievement_tier',
+			jsonb_build_object('achievementId',$3::text,'tier',$4::text,'threshold',$5::int,'rewardType',$6::text,'rewardValue',$7::text,'nameKey',$8::text),NOW())`,
+			identity.ActorID, id, achievementID, req.Tier, req.Threshold, req.RewardType, req.RewardValue, req.NameKey); err != nil {
+			logger.Error("audit update achievement tier", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit update achievement tier", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
@@ -510,7 +886,7 @@ func adminAchievementTierUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 // adminAchievementTierDeleteHandler implements DELETE /api/admin/gamification/achievements/tiers/{id}.
 func adminAchievementTierDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, ok := authn.GetAdminIdentity(r.Context())
+		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
@@ -520,18 +896,93 @@ func adminAchievementTierDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			writeJSONError(w, "tier id required", http.StatusBadRequest)
 			return
 		}
-		db.Exec(r.Context(), "DELETE FROM gamification.achievement_tier WHERE id=$1", id)
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin delete achievement tier", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(r.Context())
+		var achievementID, tier string
+		var threshold int
+		if err := tx.QueryRow(r.Context(), `DELETE FROM gamification.achievement_tier WHERE id=$1 RETURNING achievement_id, tier, threshold`, id).Scan(&achievementID, &tier, &threshold); err == pgx.ErrNoRows {
+			writeJSONError(w, "achievement tier not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			logger.Error("delete achievement tier", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if _, err := tx.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, before, created_at)
+			VALUES ('admin.gamification.achievement_tier.deleted',$1,$2,'gamification.achievement_tier',
+			jsonb_build_object('achievementId',$3::text,'tier',$4::text,'threshold',$5::int),NOW())`, identity.ActorID, id, achievementID, tier, threshold); err != nil {
+			logger.Error("audit delete achievement tier", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit delete achievement tier", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true, "id": id})
 	}
 }
 
 // ── Leaderboard Config ──────────────────────────────────────────────────────
 
+type adminLeaderboardInput struct {
+	Name       string  `json:"name"`
+	NameKey    *string `json:"nameKey"`
+	MetricType string  `json:"metricType"`
+	Period     string  `json:"period"`
+	MaxEntries int     `json:"maxEntries"`
+	Enabled    bool    `json:"enabled"`
+}
+
+func normalizeAdminLeaderboardInput(input *adminLeaderboardInput) bool {
+	input.Name = strings.TrimSpace(input.Name)
+	input.MetricType = strings.TrimSpace(input.MetricType)
+	input.Period = strings.TrimSpace(input.Period)
+	if input.NameKey != nil {
+		value := strings.TrimSpace(*input.NameKey)
+		input.NameKey = &value
+	}
+	if utf8.RuneCountInString(input.Name) == 0 || utf8.RuneCountInString(input.Name) > 128 ||
+		!normalizeOptionalAdminString(input.NameKey, 255) ||
+		utf8.RuneCountInString(input.MetricType) == 0 || utf8.RuneCountInString(input.MetricType) > 32 ||
+		input.MaxEntries < 1 || input.MaxEntries > 1<<31-1 {
+		return false
+	}
+	switch input.Period {
+	case "daily", "weekly", "monthly", "all_time":
+		return true
+	default:
+		return false
+	}
+}
+
+func writeAdminLeaderboardAudit(ctx context.Context, tx pgx.Tx, actorID, action, targetID string, before, after any) error {
+	beforeJSON, err := json.Marshal(before)
+	if err != nil {
+		return err
+	}
+	afterJSON, err := json.Marshal(after)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO ops.admin_audit_log
+		(action, actor_id, target_id, target_type, before, after, created_at)
+		VALUES ($1,$2,$3,'gamification.leaderboard_config',NULLIF($4,'null')::jsonb,NULLIF($5,'null')::jsonb,NOW())`,
+		action, actorID, targetID, string(beforeJSON), string(afterJSON))
+	return err
+}
+
 // adminLeaderboardsListHandler implements GET /api/admin/gamification/leaderboards.
 func adminLeaderboardsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query(r.Context(), `SELECT id, name, name_key, metric_type, period,
-			max_entries, enabled, created_by, updated_by, created_at, updated_at
+			max_entries, enabled, created_at, updated_at
 			FROM gamification.leaderboard_config ORDER BY period ASC, metric_type ASC`)
 		if err != nil {
 			logger.Error("list leaderboards", "error", err)
@@ -554,12 +1005,20 @@ func adminLeaderboardsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		for rows.Next() {
 			var c Config
 			var ca, ua time.Time
-			if rows.Scan(&c.ID, &c.Name, &c.NameKey, &c.MetricType, &c.Period,
-				&c.MaxEntries, &c.Enabled, nil, nil, &ca, &ua) == nil {
-				c.CreatedAt = ca.UTC().Format(time.RFC3339)
-				c.UpdatedAt = ua.UTC().Format(time.RFC3339)
-				items = append(items, c)
+			if err := rows.Scan(&c.ID, &c.Name, &c.NameKey, &c.MetricType, &c.Period,
+				&c.MaxEntries, &c.Enabled, &ca, &ua); err != nil {
+				logger.Error("scan leaderboard", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			c.CreatedAt = ca.UTC().Format(time.RFC3339)
+			c.UpdatedAt = ua.UTC().Format(time.RFC3339)
+			items = append(items, c)
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate leaderboards", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if items == nil {
 			items = []Config{}
@@ -576,29 +1035,40 @@ func adminLeaderboardCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
-		var req struct {
-			Name       string  `json:"name"`
-			NameKey    *string `json:"nameKey"`
-			MetricType string  `json:"metricType"`
-			Period     string  `json:"period"`
-			MaxEntries int     `json:"maxEntries"`
-			Enabled    bool    `json:"enabled"`
-		}
+		var req adminLeaderboardInput
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		if req.Name == "" || req.MetricType == "" || req.Period == "" {
-			writeJSONError(w, "name, metricType, and period required", http.StatusBadRequest)
+		if !normalizeAdminLeaderboardInput(&req) {
+			writeJSONError(w, "invalid leaderboard configuration", http.StatusBadRequest)
 			return
 		}
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin create leaderboard", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(r.Context())
 		var id string
-		err := db.QueryRow(r.Context(), `INSERT INTO gamification.leaderboard_config
+		err = tx.QueryRow(r.Context(), `INSERT INTO gamification.leaderboard_config
 			(name, name_key, metric_type, period, max_entries, enabled, created_by, updated_by, created_at, updated_at)
 			VALUES ($1,$2,$3,$4,$5,$6,$7,$7,NOW(),NOW()) RETURNING id`,
 			req.Name, req.NameKey, req.MetricType, req.Period, req.MaxEntries, req.Enabled, identity.ActorID).Scan(&id)
 		if err != nil {
 			logger.Error("create leaderboard", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		after := map[string]any{"id": id, "name": req.Name, "nameKey": req.NameKey, "metricType": req.MetricType, "period": req.Period, "maxEntries": req.MaxEntries, "enabled": req.Enabled}
+		if err := writeAdminLeaderboardAudit(r.Context(), tx, identity.ActorID, "admin.gamification.leaderboard.created", id, nil, after); err != nil {
+			logger.Error("audit create leaderboard", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit create leaderboard", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
@@ -619,25 +1089,53 @@ func adminLeaderboardUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 			writeJSONError(w, "leaderboard id required", http.StatusBadRequest)
 			return
 		}
-		var req struct {
-			Name       string  `json:"name"`
-			NameKey    *string `json:"nameKey"`
-			MetricType string  `json:"metricType"`
-			Period     string  `json:"period"`
-			MaxEntries int     `json:"maxEntries"`
-			Enabled    bool    `json:"enabled"`
-		}
+		var req adminLeaderboardInput
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		_, err := db.Exec(r.Context(), `UPDATE gamification.leaderboard_config SET
+		if !normalizeAdminLeaderboardInput(&req) {
+			writeJSONError(w, "invalid leaderboard configuration", http.StatusBadRequest)
+			return
+		}
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin update leaderboard", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(r.Context())
+		var before adminLeaderboardInput
+		err = tx.QueryRow(r.Context(), `SELECT name,name_key,metric_type,period,max_entries,enabled
+			FROM gamification.leaderboard_config WHERE id=$1 FOR UPDATE`, id).
+			Scan(&before.Name, &before.NameKey, &before.MetricType, &before.Period, &before.MaxEntries, &before.Enabled)
+		if err == pgx.ErrNoRows {
+			writeJSONError(w, "leaderboard not found", http.StatusNotFound)
+			return
+		}
+		if err != nil {
+			logger.Error("load leaderboard for update", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		_, err = tx.Exec(r.Context(), `UPDATE gamification.leaderboard_config SET
 			name=$1, name_key=$2, metric_type=$3, period=$4, max_entries=$5,
 			enabled=$6, updated_by=$7, updated_at=NOW() WHERE id=$8`,
 			req.Name, req.NameKey, req.MetricType, req.Period, req.MaxEntries,
 			req.Enabled, identity.ActorID, id)
 		if err != nil {
 			logger.Error("update leaderboard", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		after := map[string]any{"name": req.Name, "nameKey": req.NameKey, "metricType": req.MetricType, "period": req.Period, "maxEntries": req.MaxEntries, "enabled": req.Enabled}
+		if err := writeAdminLeaderboardAudit(r.Context(), tx, identity.ActorID, "admin.gamification.leaderboard.updated", id, before, after); err != nil {
+			logger.Error("audit update leaderboard", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit update leaderboard", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
@@ -648,7 +1146,7 @@ func adminLeaderboardUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 // adminLeaderboardDeleteHandler implements DELETE /api/admin/gamification/leaderboards/{id}.
 func adminLeaderboardDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, ok := authn.GetAdminIdentity(r.Context())
+		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
@@ -658,7 +1156,53 @@ func adminLeaderboardDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 			writeJSONError(w, "leaderboard id required", http.StatusBadRequest)
 			return
 		}
-		db.Exec(r.Context(), "DELETE FROM gamification.leaderboard_config WHERE id=$1", id)
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin delete leaderboard", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(r.Context())
+		// FK inserts take a key-share lock on this row, so serialize them before checking history.
+		var before adminLeaderboardInput
+		err = tx.QueryRow(r.Context(), `SELECT name,name_key,metric_type,period,max_entries,enabled
+			FROM gamification.leaderboard_config WHERE id=$1 FOR UPDATE`, id).
+			Scan(&before.Name, &before.NameKey, &before.MetricType, &before.Period, &before.MaxEntries, &before.Enabled)
+		if err == pgx.ErrNoRows {
+			writeJSONError(w, "leaderboard not found", http.StatusNotFound)
+			return
+		}
+		if err != nil {
+			logger.Error("lock leaderboard for delete", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		var hasEntries bool
+		if err := tx.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM gamification.leaderboard_entry WHERE leaderboard_id=$1)`, id).Scan(&hasEntries); err != nil {
+			logger.Error("check leaderboard history", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if hasEntries {
+			writeJSONError(w, "leaderboard has historical entries", http.StatusConflict)
+			return
+		}
+		_, err = tx.Exec(r.Context(), `DELETE FROM gamification.leaderboard_config WHERE id=$1`, id)
+		if err != nil {
+			logger.Error("delete leaderboard", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := writeAdminLeaderboardAudit(r.Context(), tx, identity.ActorID, "admin.gamification.leaderboard.deleted", id, before, map[string]bool{"deleted": true}); err != nil {
+			logger.Error("audit delete leaderboard", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit delete leaderboard", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true, "id": id})
 	}
 }
@@ -694,10 +1238,14 @@ func adminPetsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFun
 	return func(w http.ResponseWriter, r *http.Request) {
 		stage := r.URL.Query().Get("stage")
 		search := r.URL.Query().Get("search")
+		if stage != "" && !isValidPetStage(stage) {
+			writeJSONError(w, "invalid pet stage", http.StatusBadRequest)
+			return
+		}
 		whereParts := []string{}
 		args := []any{}
 		argIdx := 1
-		if stage != "" && isValidPetStage(stage) {
+		if stage != "" {
 			whereParts = append(whereParts, fmt.Sprintf("stage = $%d", argIdx))
 			args = append(args, stage)
 			argIdx++
@@ -741,24 +1289,32 @@ func adminPetsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFun
 		for rows.Next() {
 			var p Pet
 			var lfa, ea, ca, ua *time.Time
-			if rows.Scan(&p.ID, &p.UserID, &p.Name, &p.Stage, &p.XP, &p.Happiness, &p.Mood,
-				&p.CostumeSlug, &p.TotalFeedings, &lfa, &ea, &ca, &ua) == nil {
-				if lfa != nil {
-					s := lfa.UTC().Format(time.RFC3339)
-					p.LastFedAt = &s
-				}
-				if ea != nil {
-					s := ea.UTC().Format(time.RFC3339)
-					p.EvolvedAt = &s
-				}
-				if ca != nil {
-					p.CreatedAt = ca.UTC().Format(time.RFC3339)
-				}
-				if ua != nil {
-					p.UpdatedAt = ua.UTC().Format(time.RFC3339)
-				}
-				items = append(items, p)
+			if err := rows.Scan(&p.ID, &p.UserID, &p.Name, &p.Stage, &p.XP, &p.Happiness, &p.Mood,
+				&p.CostumeSlug, &p.TotalFeedings, &lfa, &ea, &ca, &ua); err != nil {
+				logger.Error("scan pet", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			if lfa != nil {
+				s := lfa.UTC().Format(time.RFC3339)
+				p.LastFedAt = &s
+			}
+			if ea != nil {
+				s := ea.UTC().Format(time.RFC3339)
+				p.EvolvedAt = &s
+			}
+			if ca != nil {
+				p.CreatedAt = ca.UTC().Format(time.RFC3339)
+			}
+			if ua != nil {
+				p.UpdatedAt = ua.UTC().Format(time.RFC3339)
+			}
+			items = append(items, p)
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate pets", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if items == nil {
 			items = []Pet{}
@@ -771,21 +1327,40 @@ func adminPetsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFun
 func adminPetsStatsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var total int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM gamification.companion_pet").Scan(&total)
-		stageRows, _ := db.Query(r.Context(), "SELECT stage, COUNT(*) FROM gamification.companion_pet GROUP BY stage")
+		if err := db.QueryRow(r.Context(), "SELECT COUNT(*) FROM gamification.companion_pet").Scan(&total); err != nil {
+			logger.Error("count pets", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		stageRows, err := db.Query(r.Context(), "SELECT stage, COUNT(*) FROM gamification.companion_pet GROUP BY stage")
+		if err != nil {
+			logger.Error("count pets by stage", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer stageRows.Close()
 		byStage := []map[string]any{}
-		if stageRows != nil {
-			for stageRows.Next() {
-				var stage string
-				var count int
-				if stageRows.Scan(&stage, &count) == nil {
-					byStage = append(byStage, map[string]any{"stage": stage, "count": count})
-				}
+		for stageRows.Next() {
+			var stage string
+			var count int
+			if err := stageRows.Scan(&stage, &count); err != nil {
+				logger.Error("scan pets by stage", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
-			stageRows.Close()
+			byStage = append(byStage, map[string]any{"stage": stage, "count": count})
+		}
+		if err := stageRows.Err(); err != nil {
+			logger.Error("iterate pets by stage", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		var avgHappiness, avgXP *float64
-		db.QueryRow(r.Context(), "SELECT AVG(happiness), AVG(xp) FROM gamification.companion_pet").Scan(&avgHappiness, &avgXP)
+		if err := db.QueryRow(r.Context(), "SELECT AVG(happiness), AVG(xp) FROM gamification.companion_pet").Scan(&avgHappiness, &avgXP); err != nil {
+			logger.Error("average pet stats", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		ah := 0
 		ax := 0
 		if avgHappiness != nil {
@@ -807,8 +1382,8 @@ func adminPetsStatsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 func adminPetDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := extractPathParam(r.URL.Path, "pets", 1)
-		if id == "" {
-			writeJSONError(w, "pet id required", http.StatusBadRequest)
+		if !isValidUUID(id) {
+			writeJSONError(w, "invalid pet id", http.StatusBadRequest)
 			return
 		}
 		type Pet struct {
@@ -833,8 +1408,13 @@ func adminPetDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 			FROM gamification.companion_pet WHERE id=$1`, id).
 			Scan(&p.ID, &p.UserID, &p.Name, &p.Stage, &p.XP, &p.Happiness, &p.Mood,
 				&p.CostumeSlug, &p.TotalFeedings, &lfa, &ea, &ca, &ua)
-		if err != nil {
+		if err == pgx.ErrNoRows {
 			writeJSONError(w, "pet not found", http.StatusNotFound)
+			return
+		}
+		if err != nil {
+			logger.Error("get pet detail", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 		if lfa != nil {
@@ -855,17 +1435,33 @@ func adminPetDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 	}
 }
 
+func writeAdminPetAudit(ctx context.Context, tx pgx.Tx, actorID, action, petID string, before, after any) error {
+	beforeJSON, err := json.Marshal(before)
+	if err != nil {
+		return err
+	}
+	afterJSON, err := json.Marshal(after)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO ops.admin_audit_log
+		(action,actor_id,target_id,target_type,before,after,created_at)
+		VALUES ($1,$2,$3,'gamification.companion_pet',$4::jsonb,$5::jsonb,NOW())`,
+		action, actorID, petID, string(beforeJSON), string(afterJSON))
+	return err
+}
+
 // adminPetUpdateHandler implements PUT /api/admin/gamification/pets/{id}.
 func adminPetUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, ok := authn.GetAdminIdentity(r.Context())
+		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
 		id := extractPathParam(r.URL.Path, "pets", 1)
-		if id == "" {
-			writeJSONError(w, "pet id required", http.StatusBadRequest)
+		if !isValidUUID(id) {
+			writeJSONError(w, "invalid pet id", http.StatusBadRequest)
 			return
 		}
 		var req struct {
@@ -878,20 +1474,64 @@ func adminPetUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
+		if (req.Stage != nil && !isValidPetStage(*req.Stage)) ||
+			(req.XP != nil && (*req.XP < 0 || *req.XP > int(^uint32(0)>>1))) ||
+			(req.Happiness != nil && (*req.Happiness < 0 || *req.Happiness > 100)) {
+			writeJSONError(w, "invalid pet fields", http.StatusBadRequest)
+			return
+		}
+		if req.Name != nil {
+			cleanName := strings.TrimSpace(*req.Name)
+			if utf8.RuneCountInString(cleanName) == 0 || utf8.RuneCountInString(cleanName) > 30 {
+				writeJSONError(w, "invalid pet name", http.StatusBadRequest)
+				return
+			}
+			req.Name = &cleanName
+		}
+		if req.Stage == nil && req.XP == nil && req.Happiness == nil && req.Name == nil {
+			writeJSONError(w, "at least one field to update is required", http.StatusBadRequest)
+			return
+		}
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin update pet", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(r.Context())
+		var before struct {
+			Name      string `json:"name"`
+			Stage     string `json:"stage"`
+			XP        int    `json:"xp"`
+			Happiness int    `json:"happiness"`
+			Mood      string `json:"mood"`
+		}
+		err = tx.QueryRow(r.Context(), `SELECT name,stage,xp,happiness,mood
+			FROM gamification.companion_pet WHERE id=$1 FOR UPDATE`, id).
+			Scan(&before.Name, &before.Stage, &before.XP, &before.Happiness, &before.Mood)
+		if err == pgx.ErrNoRows {
+			writeJSONError(w, "pet not found", http.StatusNotFound)
+			return
+		}
+		if err != nil {
+			logger.Error("load pet for update", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		setClauses := []string{}
 		args := []any{}
 		argIdx := 1
-		if req.Stage != nil && isValidPetStage(*req.Stage) {
+		if req.Stage != nil {
 			setClauses = append(setClauses, fmt.Sprintf("stage = $%d", argIdx))
 			args = append(args, *req.Stage)
 			argIdx++
 		}
-		if req.XP != nil && *req.XP >= 0 {
+		if req.XP != nil {
 			setClauses = append(setClauses, fmt.Sprintf("xp = $%d", argIdx))
 			args = append(args, *req.XP)
 			argIdx++
 		}
-		if req.Happiness != nil && *req.Happiness >= 0 && *req.Happiness <= 100 {
+		if req.Happiness != nil {
 			setClauses = append(setClauses, fmt.Sprintf("happiness = $%d", argIdx))
 			args = append(args, *req.Happiness)
 			argIdx++
@@ -900,25 +1540,44 @@ func adminPetUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 			argIdx++
 		}
 		if req.Name != nil {
-			cleanName := strings.TrimSpace(*req.Name)
-			if len(cleanName) > 30 {
-				cleanName = cleanName[:30]
-			}
-			if cleanName != "" {
-				setClauses = append(setClauses, fmt.Sprintf("name = $%d", argIdx))
-				args = append(args, cleanName)
-				argIdx++
-			}
-		}
-		if len(setClauses) == 0 {
-			writeJSONError(w, "at least one field to update is required", http.StatusBadRequest)
-			return
+			setClauses = append(setClauses, fmt.Sprintf("name = $%d", argIdx))
+			args = append(args, *req.Name)
+			argIdx++
 		}
 		setClauses = append(setClauses, "updated_at = NOW()")
 		query := "UPDATE gamification.companion_pet SET " + strings.Join(setClauses, ", ") + fmt.Sprintf(" WHERE id = $%d", argIdx)
 		args = append(args, id)
-		if _, err := db.Exec(r.Context(), query, args...); err != nil {
+		result, err := tx.Exec(r.Context(), query, args...)
+		if err != nil {
 			logger.Error("update pet", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if result.RowsAffected() == 0 {
+			writeJSONError(w, "pet not found", http.StatusNotFound)
+			return
+		}
+		after := map[string]any{"name": before.Name, "stage": before.Stage, "xp": before.XP, "happiness": before.Happiness, "mood": before.Mood}
+		if req.Name != nil {
+			after["name"] = *req.Name
+		}
+		if req.Stage != nil {
+			after["stage"] = *req.Stage
+		}
+		if req.XP != nil {
+			after["xp"] = *req.XP
+		}
+		if req.Happiness != nil {
+			after["happiness"] = *req.Happiness
+			after["mood"] = getMoodFromHappiness(*req.Happiness)
+		}
+		if err := writeAdminPetAudit(r.Context(), tx, identity.ActorID, "admin.gamification.pet.updated", id, before, after); err != nil {
+			logger.Error("audit pet update", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit pet update", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
@@ -929,22 +1588,67 @@ func adminPetUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 // adminPetResetHandler implements POST /api/admin/gamification/pets/{id}/reset.
 func adminPetResetHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, ok := authn.GetAdminIdentity(r.Context())
+		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
 		id := extractPathParam(r.URL.Path, "pets", 1)
-		if id == "" {
-			writeJSONError(w, "pet id required", http.StatusBadRequest)
+		if !isValidUUID(id) {
+			writeJSONError(w, "invalid pet id", http.StatusBadRequest)
 			return
 		}
-		_, err := db.Exec(r.Context(), `UPDATE gamification.companion_pet SET
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin reset pet", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(r.Context())
+		var before struct {
+			Stage         string  `json:"stage"`
+			XP            int     `json:"xp"`
+			Happiness     int     `json:"happiness"`
+			Mood          string  `json:"mood"`
+			TotalFeedings int     `json:"totalFeedings"`
+			LastFedAt     *string `json:"lastFedAt"`
+			EvolvedAt     *string `json:"evolvedAt"`
+			CostumeSlug   *string `json:"costumeSlug"`
+		}
+		err = tx.QueryRow(r.Context(), `SELECT stage,xp,happiness,mood,total_feedings,
+			last_fed_at::text,evolved_at::text,costume_slug FROM gamification.companion_pet WHERE id=$1 FOR UPDATE`, id).
+			Scan(&before.Stage, &before.XP, &before.Happiness, &before.Mood, &before.TotalFeedings,
+				&before.LastFedAt, &before.EvolvedAt, &before.CostumeSlug)
+		if err == pgx.ErrNoRows {
+			writeJSONError(w, "pet not found", http.StatusNotFound)
+			return
+		}
+		if err != nil {
+			logger.Error("load pet for reset", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		result, err := tx.Exec(r.Context(), `UPDATE gamification.companion_pet SET
 			stage='egg', xp=0, happiness=100, mood='happy', total_feedings=0,
 			last_fed_at=NULL, evolved_at=NULL, costume_slug=NULL, updated_at=NOW()
 			WHERE id=$1`, id)
 		if err != nil {
 			logger.Error("reset pet", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if result.RowsAffected() == 0 {
+			writeJSONError(w, "pet not found", http.StatusNotFound)
+			return
+		}
+		after := map[string]any{"stage": "egg", "xp": 0, "happiness": 100, "mood": "happy", "totalFeedings": 0, "lastFedAt": nil, "evolvedAt": nil, "costumeSlug": nil}
+		if err := writeAdminPetAudit(r.Context(), tx, identity.ActorID, "admin.gamification.pet.reset", id, before, after); err != nil {
+			logger.Error("audit pet reset", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit pet reset", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}

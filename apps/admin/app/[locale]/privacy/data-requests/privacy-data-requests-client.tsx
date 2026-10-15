@@ -92,8 +92,6 @@ export function PrivacyDataRequestsClient({
   type Action = "ack" | "fulfill" | "reject" | "erase" | null;
   const [action, setAction] = useState<Action>(null);
   const [reason, setReason] = useState("");
-  const [downloadUrl, setDownloadUrl] = useState("");
-  const [notes, setNotes] = useState("");
   const [confirmToken, setConfirmToken] = useState("");
   const [mutating, setMutating] = useState(false);
   const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
@@ -159,8 +157,6 @@ export function PrivacyDataRequestsClient({
     setDetail(null);
     setAction(null);
     setReason("");
-    setDownloadUrl("");
-    setNotes("");
     setConfirmToken("");
     void loadDetail(item.id);
   }
@@ -191,8 +187,6 @@ export function PrivacyDataRequestsClient({
       } else if (action === "fulfill") {
         url = `/api/admin/privacy/requests/${selected.id}/fulfill`;
         method = "POST";
-        if (downloadUrl.trim()) body.downloadUrl = downloadUrl.trim();
-        if (notes.trim()) body.notes = notes.trim();
       } else if (action === "reject") {
         url = `/api/admin/privacy/requests/${selected.id}/reject`;
         method = "POST";
@@ -216,8 +210,6 @@ export function PrivacyDataRequestsClient({
       void loadDetail(selected.id);
       setAction(null);
       setReason("");
-      setDownloadUrl("");
-      setNotes("");
       setConfirmToken("");
     } finally {
       setMutating(false);
@@ -439,12 +431,7 @@ export function PrivacyDataRequestsClient({
                     <label className="block text-xs font-semibold uppercase text-gray-600">{t("reason")}</label>
                     <input className="mt-1 w-full rounded border px-2 py-1 text-sm" onChange={(e) => setReason(e.target.value)} value={reason} placeholder={t("reasonPlaceholder")} />
                     {action === "fulfill" ? (
-                      <>
-                        <label className="mt-2 block text-xs font-semibold uppercase text-gray-600">{t("downloadUrl")}</label>
-                        <input className="mt-1 w-full rounded border px-2 py-1 text-sm" onChange={(e) => setDownloadUrl(e.target.value)} value={downloadUrl} placeholder="https://…" />
-                        <label className="mt-2 block text-xs font-semibold uppercase text-gray-600">{t("notes")}</label>
-                        <textarea className="mt-1 w-full rounded border px-2 py-1 text-sm" onChange={(e) => setNotes(e.target.value)} rows={2} value={notes} />
-                      </>
+                      <p className="mt-2 text-sm text-gray-600">{t("fulfillServerGeneratedExport")}</p>
                     ) : null}
                     {eraseGate ? (
                       <>

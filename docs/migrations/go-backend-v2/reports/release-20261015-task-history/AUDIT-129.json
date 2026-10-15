@@ -1,0 +1,108 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-129",
+  "title": "Remove unused React runtime binding from Admin flashcard styles test",
+  "start_head": "64496518adf89291e629e047cd707789aa22d718",
+  "preexisting_changes": {
+    "apps/admin/tsconfig.tsbuildinfo": "a079d368bcbac4de8cf8654496187a1ff3d43ebf",
+    "apps/api-go/internal/flashcardstyle/store.go": "e21d09015be95cec5f15bcace51f0a60b4036717",
+    "apps/api-go/internal/flashcardstyle/store_test.go": "896964c4fb91062b93e007f214eaf480ccc193f6",
+    "apps/api-go/internal/httpserver/handler_flashcard_style.go": "5c3aa084de68ccaa623cc707f91045ed5c69cf97",
+    "apps/api-go/internal/httpserver/handler_flashcard_style_contract_test.go": "be616f5f85cf531305eb70b4c0208aa19ecc862d",
+    "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "fda1abec4d59ba4b71000077b1fa3c88d71a7f76",
+    "apps/web/app/[locale]/flashcards/_components/flashcard-style-picker.test.tsx": "7d471186b665b11e51588f6e6296082ad975f88a",
+    "apps/web/tsconfig.tsbuildinfo": "4ae9c8fd6999b15819ae9f686c5a5d136feada70"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Lint ratchet reports no new error for the Admin flashcard styles test, and its existing test suite remains green."
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": "Restore the original dynamic React import and retest if the static type-only import fails."
+  },
+  "classification": {
+    "classes": [
+      "TEST_ONLY"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": "Remove one unused runtime binding from an existing UI test mock"
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-13T01:10:42.230Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-13T01:10:58.855Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-13T01:11:08.471Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-13T01:16:40.909Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-13T01:16:35.410Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 466,
+        "executed": 466,
+        "passed": 466,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 792,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "21db2e108c8771bfc4abb8a3385b6f9117318789790270b5dc195313d88f5643"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-13T01:16:40.892Z",
+    "head": "64496518adf89291e629e047cd707789aa22d718",
+    "fingerprint": "21db2e108c8771bfc4abb8a3385b6f9117318789790270b5dc195313d88f5643",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/admin/app/[locale]/flashcards/styles/flashcard-styles-admin-client.test.tsx": "5f687939c03e630970b8a34d6b8eed9d20eac84e"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

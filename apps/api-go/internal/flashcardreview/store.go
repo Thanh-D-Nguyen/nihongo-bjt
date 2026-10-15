@@ -17,16 +17,24 @@ var ErrNotFound = errors.New("flashcardreview: not found")
 
 // DueFlashcard represents a flashcard due for review with its SRS metadata.
 type DueFlashcard struct {
-	ID           string    `json:"id"`
-	CardID       string    `json:"cardId"`
-	State        string    `json:"state"`
-	DueAt        time.Time `json:"dueAt"`
-	IntervalDays int       `json:"intervalDays"`
-	EaseFactor   float64   `json:"easeFactor"`
-	Repetitions  int       `json:"repetitions"`
-	Lapses       int       `json:"lapses"`
-	Leeched      bool      `json:"leeched"`
-	ComebackMode bool      `json:"comebackMode"`
+	ID           string         `json:"id"`
+	CardID       string         `json:"cardId"`
+	State        string         `json:"state"`
+	DueAt        time.Time      `json:"dueAt"`
+	IntervalDays int            `json:"intervalDays"`
+	EaseFactor   float64        `json:"easeFactor"`
+	Repetitions  int            `json:"repetitions"`
+	Lapses       int            `json:"lapses"`
+	Leeched      bool           `json:"leeched"`
+	ComebackMode bool           `json:"comebackMode"`
+	Card         DueCardContent `json:"card"`
+}
+
+type DueCardContent struct {
+	ID        string `json:"id"`
+	FrontText string `json:"frontText"`
+	BackText  string `json:"backText"`
+	Reading   string `json:"reading"`
 }
 
 // ReviewInput contains validated fields for submitting a single flashcard review.
@@ -84,10 +92,17 @@ func (s *Store) GetDueFlashcards(ctx context.Context, userID string, limit int) 
 	if limit <= 0 || limit > 200 {
 		limit = 50
 	}
-	const q = `SELECT id, card_id, state, due_at, interval_days, ease_factor, repetitions, lapses, leeched, comeback_mode
-FROM learning.user_flashcard
-WHERE user_id = $1 AND due_at <= NOW()
-ORDER BY due_at ASC
+	const q = `SELECT uf.id, uf.card_id, uf.state, uf.due_at, uf.interval_days, uf.ease_factor, uf.repetitions, uf.lapses, uf.leeched, uf.comeback_mode,
+	fv.front_text, fv.back_text, COALESCE(fv.reading, '')
+FROM learning.user_flashcard uf
+JOIN learning.flashcard_variant fv ON fv.id = uf.card_id
+WHERE uf.user_id = $1 AND uf.due_at <= NOW() AND fv.status='active'
+	AND EXISTS (
+		SELECT 1 FROM learning.deck_card dc JOIN learning.deck d ON d.id=dc.deck_id
+		WHERE dc.card_id=uf.card_id AND d.status='active'
+		AND (d.owner_user_id=$1 OR d.visibility='public')
+	)
+ORDER BY uf.due_at ASC
 LIMIT $2`
 	rows, err := s.db.Query(ctx, q, userID, limit)
 	if err != nil {
@@ -97,9 +112,10 @@ LIMIT $2`
 	var cards []DueFlashcard
 	for rows.Next() {
 		var c DueFlashcard
-		if err := rows.Scan(&c.ID, &c.CardID, &c.State, &c.DueAt, &c.IntervalDays, &c.EaseFactor, &c.Repetitions, &c.Lapses, &c.Leeched, &c.ComebackMode); err != nil {
+		if err := rows.Scan(&c.ID, &c.CardID, &c.State, &c.DueAt, &c.IntervalDays, &c.EaseFactor, &c.Repetitions, &c.Lapses, &c.Leeched, &c.ComebackMode, &c.Card.FrontText, &c.Card.BackText, &c.Card.Reading); err != nil {
 			return nil, fmt.Errorf("flashcardreview: scan due flashcard: %w", err)
 		}
+		c.Card.ID = c.CardID
 		cards = append(cards, c)
 	}
 	if err := rows.Err(); err != nil {
@@ -123,12 +139,17 @@ func (s *Store) SubmitReview(ctx context.Context, userID string, input ReviewInp
 	defer tx.Rollback(ctx)
 
 	// Load current state with row lock
-	const loadQ = `SELECT state, ease_factor, interval_days, repetitions, lapses
-FROM learning.user_flashcard WHERE id = $1 AND user_id = $2 FOR UPDATE`
+	const loadQ = `SELECT uf.state, uf.ease_factor, uf.interval_days, uf.repetitions, uf.lapses, uf.due_at
+FROM learning.user_flashcard uf JOIN learning.flashcard_variant fv ON fv.id=uf.card_id AND fv.status='active'
+WHERE uf.id = $1 AND uf.user_id = $2 AND EXISTS (
+	SELECT 1 FROM learning.deck_card dc JOIN learning.deck d ON d.id=dc.deck_id
+	WHERE dc.card_id=uf.card_id AND d.status='active' AND (d.owner_user_id=$2 OR d.visibility='public')
+) FOR UPDATE OF uf`
 	var currentState string
 	var easeFactor float64
 	var intervalDays, repetitions, lapses int
-	err = tx.QueryRow(ctx, loadQ, input.UserFlashcardID, userID).Scan(&currentState, &easeFactor, &intervalDays, &repetitions, &lapses)
+	var previousDue time.Time
+	err = tx.QueryRow(ctx, loadQ, input.UserFlashcardID, userID).Scan(&currentState, &easeFactor, &intervalDays, &repetitions, &lapses, &previousDue)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrNotFound
@@ -154,9 +175,9 @@ FROM learning.user_flashcard WHERE id = $1 AND user_id = $2 FOR UPDATE`
 	}
 
 	// Record review event
-	const insertEvent = `INSERT INTO learning.review_event (user_id, user_flashcard_id, rating, elapsed_ms, reviewed_at)
-		VALUES ($1, $2, $3, $4, $5)`
-	if _, err := tx.Exec(ctx, insertEvent, userID, input.UserFlashcardID, input.Rating, input.ElapsedMs, input.ReviewedAt); err != nil {
+	const insertEvent = `INSERT INTO learning.review_event (user_id, user_flashcard_id, rating, elapsed_ms, previous_due_at, next_due_at, reviewed_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)`
+	if _, err := tx.Exec(ctx, insertEvent, userID, input.UserFlashcardID, input.Rating, input.ElapsedMs, previousDue, nextDue, input.ReviewedAt); err != nil {
 		return fmt.Errorf("flashcardreview: insert review event: %w", err)
 	}
 
@@ -182,12 +203,23 @@ func (s *Store) GetDistractors(ctx context.Context, userID, userFlashcardID stri
 		}
 		return nil, fmt.Errorf("flashcardreview: verify ownership: %w", err)
 	}
-	// Load distractors from variant pool excluding the correct answer
-	const q = `SELECT id, content, type FROM content.flashcard_variant
-		WHERE card_id IN (SELECT card_id FROM content.flashcard WHERE id = (SELECT card_id FROM content.flashcard_variant WHERE id = $1))
-		AND id != $1
+	// Use canonical flashcard variants; custom cards are limited to their visible deck.
+	const q = `SELECT candidate.id, candidate.back_text, candidate.source_type
+		FROM learning.flashcard_variant current
+		JOIN learning.flashcard_variant candidate
+		  ON candidate.status = 'active'
+		 AND candidate.source_type = current.source_type
+		 AND candidate.id <> current.id
+		 AND (
+			(current.source_type = 'custom' AND candidate.source_id = current.source_id
+			 AND EXISTS (SELECT 1 FROM learning.deck d JOIN learning.deck_card dc ON dc.deck_id = d.id
+				WHERE d.id = current.source_id AND dc.card_id = candidate.id AND d.status = 'active'
+				AND (d.owner_user_id = $3 OR d.visibility = 'public')))
+			OR (current.source_type <> 'custom' AND candidate.source_id <> current.source_id)
+		 )
+		WHERE current.id = $1
 		ORDER BY RANDOM() LIMIT $2`
-	rows, err := s.db.Query(ctx, q, cardID, limit)
+	rows, err := s.db.Query(ctx, q, cardID, limit, userID)
 	if err != nil {
 		return nil, fmt.Errorf("flashcardreview: get distractors: %w", err)
 	}

@@ -1,0 +1,249 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "FEED-002",
+  "title": "Restore real recommendation response and Admin permission contracts",
+  "start_head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+  "preexisting_changes": {
+    ".quality/tasks/ctx-resume-1791168424.json": "39fe89f3617bfb95a702c09ce4aabffcaeb8f7bb",
+    "apps/admin/app/[locale]/login/_components/admin-login-form-client.tsx": "92dbef195520e5fde8a2cf956fb7898713eed217",
+    "apps/admin/lib/admin-api.ts": "e19f64369f0723fa79326a86f6ae83ea8c095bbc",
+    "apps/admin/next-env.d.ts": "c4b7818fbb2c2c34c24feb1b627ee824507c5600",
+    "apps/admin/next.config.mjs": "a29e69ddd1777373ddc577abfd3ce85cce649af7",
+    "apps/api-go/cmd/create-test-creds/main.go": "eae3b397a5f12f5c5401c3484da23e845686aabd",
+    "apps/api-go/cmd/reset-admin-cred/main.go": "c39d53f0ce4fa29c2a3ef6b813b1abfe9af28cad",
+    "apps/api-go/deploy/local/Caddyfile": "880720642204d8f7afb53bf961224b25afac9016",
+    "apps/api-go/internal/httpserver/handler_study_feed_test.go": "fcad3fb1b710055de6cf33cdee5bb94d5f047fda",
+    "apps/web/app/[locale]/login/auth-pages.regression.test.tsx": "5d4801b0b94e8da68b2ab5ec2bd5afbf59143f1a",
+    "apps/web/app/[locale]/login/page.tsx": "b06d342b8faffe4936cb790287e52d1dfdd3e422",
+    "apps/web/app/[locale]/register/page.tsx": "2aa45faeea0da3a919c884dc6b95f7f367cda8b2",
+    "apps/web/next-env.d.ts": "c4b7818fbb2c2c34c24feb1b627ee824507c5600",
+    "apps/web/tsconfig.tsbuildinfo": "b6360e04fc2fbf707e319b7434f7c16ad1997824",
+    "deploy/local/Caddyfile": "72470e3b466c4a48dd7a573271d8458479e27266",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "a36fe8e92c2556f58e045e1364919a4c6370de30",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "c8fe4f57b7f694a857bd2fe361cbb0760530691e",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "79bd48842b9f3b97216fbfb1b35bb0814e4420dc",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "e7f7a1aeb5cefedab965ae845ddee0bceee7d6bf",
+    "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "f25cc0206d75762e1ea11897a1564d6aa7c33aab",
+    "scripts/local-audit-up.mjs": "d68ac30f32a1113b3e9958508757667267dd90e8"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Authenticated study feed returns canonical published persisted content with items/meta envelope"
+      },
+      {
+        "id": "AC2",
+        "text": "Admin me exposes actual active role permissions consumed by Admin UI"
+      }
+    ],
+    "expected_behavior": "Real persisted data and correct contracts with safe errors",
+    "observed_behavior": "Study feed hardcoded array crashes home; Admin me hardcoded empty permissions hides management",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestStudyFeed_PublishedLessonsEnvelope",
+      "expect": "expected study-feed object envelope"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminMeRegression_CanonicalActorRoles",
+      "expect": "expected canonical nested active role permissions"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "VERIFYING",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-05T09:48:23.793Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-05T09:48:24.213Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-05T09:48:24.760Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-05T09:50:17.087Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-05T10:01:44.056Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-05T09:48:35.107Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStudyFeed_CanonicalPublishedLessons)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStudyFeed_CanonicalPublishedLessons",
+          "outcome": "NOT_FOUND",
+          "excerpt": "testing: warning: no tests to run PASS ok github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver 0.429s [no tests to run]",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestStudyFeed_CanonicalPublishedLessons": "envelope"
+      },
+      "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-05T09:48:58.774Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStudyFeed_CanonicalPublishedLessons|TestStudyFeed_PublishedLessonsEnvelope)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStudyFeed_CanonicalPublishedLessons",
+          "outcome": "NOT_FOUND",
+          "excerpt": "FAIL FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver 0.424s",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "go:./internal/httpserver:TestStudyFeed_PublishedLessonsEnvelope",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStudyFeed_PublishedLessonsEnvelope handler_study_feed_test.go:94: expected study-feed object envelope with items and meta, got [] : json: cannot unmarshal array into Go value of type struct { Items []struct { ID string \"json:\\\"id\\\"\"; Type string \"json:\\\"type\\\"\"; Title string \"json:\\\"titl…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestStudyFeed_CanonicalPublishedLessons": "envelope",
+        "go:./internal/httpserver:TestStudyFeed_PublishedLessonsEnvelope": "expected study-feed object envelope"
+      },
+      "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-05T09:50:16.876Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStudyFeed_PublishedLessonsEnvelope)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStudyFeed_PublishedLessonsEnvelope",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStudyFeed_PublishedLessonsEnvelope handler_study_feed_test.go:94: expected study-feed object envelope with items and meta, got [] : json: cannot unmarshal array into Go value of type struct { Items []struct { ID string \"json:\\\"id\\\"\"; Type string \"json:\\\"type\\\"\"; Title string \"json:\\\"titl…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestStudyFeed_PublishedLessonsEnvelope": "expected study-feed object envelope"
+      },
+      "fingerprint": "bda4cfadd9b71c9c381fea6aceb11f8ab84cc5f0a7a280b88cbd55b9ce740f87"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-05T09:52:34.499Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStudyFeed_PublishedLessonsEnvelope|TestAdminMeRegression_CanonicalActorRoles)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStudyFeed_PublishedLessonsEnvelope",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStudyFeed_PublishedLessonsEnvelope handler_study_feed_test.go:94: expected study-feed object envelope with items and meta, got [] : json: cannot unmarshal array into Go value of type struct { Items []struct { ID string \"json:\\\"id\\\"\"; Type string \"json:\\\"type\\\"\"; Title string \"json:\\\"titl…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMeRegression_CanonicalActorRoles",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminMeRegression_CanonicalActorRoles handler_admin_me_test.go:111: expected canonical nested active role permissions; got map[], want map[auditor-d441c261-da47-4ca4-8c9e-4de84cf0b0fa:[audit.d441c261-da47-4ca4-8c9e-4de84cf0b0fa] editor-d441c261-da47-4ca4-8c9e-4de84cf0b0fa:[audit.d441c261…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestStudyFeed_PublishedLessonsEnvelope": "expected study-feed object envelope",
+        "go:./internal/httpserver:TestAdminMeRegression_CanonicalActorRoles": "expected canonical nested active role permissions"
+      },
+      "fingerprint": "8d41cfc220dc48d3734df973a5426e13c6e80ad1f84f31829161fa747950219c"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-05T10:01:43.403Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStudyFeed_PublishedLessonsEnvelope|TestAdminMeRegression_CanonicalActorRoles)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStudyFeed_PublishedLessonsEnvelope",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminMeRegression_CanonicalActorRoles",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ac4a05e21d1170309acd53faa0f9a602a165221b123917888095d854ef2348db"
+    }
+  ],
+  "closed": null,
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

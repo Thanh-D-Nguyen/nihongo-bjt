@@ -6,7 +6,9 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 
+	"github.com/google/uuid"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/gamification"
 )
@@ -44,6 +46,12 @@ func recordActivityHandler(store *gamification.Store, logger *slog.Logger) http.
 		activityType := r.URL.Query().Get("activityType")
 		if activityType == "" {
 			writeJSONError(w, "activityType required", http.StatusBadRequest)
+			return
+		}
+		switch activityType {
+		case "review", "exercise", "quiz", "battle":
+		default:
+			writeJSONError(w, "invalid activityType", http.StatusBadRequest)
 			return
 		}
 		if err := store.RecordActivity(r.Context(), identity.UserID, activityType); err != nil {
@@ -149,6 +157,16 @@ func acknowledgeAchievementsHandler(store *gamification.Store, logger *slog.Logg
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
+		if len(req.IDs) == 0 || len(req.IDs) > 100 {
+			writeJSONError(w, "between 1 and 100 achievement ids required", http.StatusBadRequest)
+			return
+		}
+		for _, id := range req.IDs {
+			if _, err := uuid.Parse(id); err != nil {
+				writeJSONError(w, "invalid achievement id", http.StatusBadRequest)
+				return
+			}
+		}
 		if err := store.AcknowledgeAchievements(r.Context(), identity.UserID, req.IDs); err != nil {
 			logger.Error("acknowledge achievements", "error", err, "user_id", identity.UserID)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -185,8 +203,16 @@ func getLeaderboardHandler(store *gamification.Store, logger *slog.Logger) http.
 			writeJSONError(w, "leaderboard id required", http.StatusBadRequest)
 			return
 		}
+		if _, err := uuid.Parse(id); err != nil {
+			writeJSONError(w, "invalid leaderboard id", http.StatusBadRequest)
+			return
+		}
 		entries, err := store.GetLeaderboard(r.Context(), id)
 		if err != nil {
+			if errors.Is(err, gamification.ErrNotFound) {
+				writeJSONError(w, "leaderboard not found", http.StatusNotFound)
+				return
+			}
 			logger.Error("get leaderboard", "error", err, "id", id)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
@@ -210,8 +236,16 @@ func getMyRankHandler(store *gamification.Store, logger *slog.Logger) http.Handl
 			writeJSONError(w, "leaderboard id required", http.StatusBadRequest)
 			return
 		}
+		if _, err := uuid.Parse(id); err != nil {
+			writeJSONError(w, "invalid leaderboard id", http.StatusBadRequest)
+			return
+		}
 		rank, err := store.GetUserRank(r.Context(), id, identity.UserID)
 		if err != nil {
+			if errors.Is(err, gamification.ErrNotFound) {
+				writeJSONError(w, "leaderboard not found", http.StatusNotFound)
+				return
+			}
 			logger.Error("get my rank", "error", err, "leaderboard_id", id, "user_id", identity.UserID)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
@@ -240,6 +274,10 @@ func startFocusHandler(store *gamification.Store, logger *slog.Logger) http.Hand
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
+		if req.Mode != "" && req.Mode != "focus" {
+			writeJSONError(w, "invalid focus mode", http.StatusBadRequest)
+			return
+		}
 		session, err := store.StartFocusSession(r.Context(), identity.UserID, req.DurationMinutes, req.Mode)
 		if err != nil {
 			logger.Error("start focus", "error", err, "user_id", identity.UserID)
@@ -262,6 +300,7 @@ func endFocusHandler(store *gamification.Store, logger *slog.Logger) http.Handle
 		}
 		var req struct {
 			SessionID string `json:"sessionId"`
+			Completed bool   `json:"completed"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
@@ -271,7 +310,7 @@ func endFocusHandler(store *gamification.Store, logger *slog.Logger) http.Handle
 			writeJSONError(w, "sessionId required", http.StatusBadRequest)
 			return
 		}
-		if err := store.EndFocusSession(r.Context(), identity.UserID, req.SessionID); err != nil {
+		if err := store.EndFocusSession(r.Context(), identity.UserID, req.SessionID, req.Completed); err != nil {
 			if errors.Is(err, gamification.ErrNotFound) {
 				writeJSONError(w, "session not found", http.StatusNotFound)
 				return
@@ -282,7 +321,7 @@ func endFocusHandler(store *gamification.Store, logger *slog.Logger) http.Handle
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]bool{"completed": true})
+		_ = json.NewEncoder(w).Encode(map[string]bool{"completed": req.Completed})
 	}
 }
 
@@ -367,7 +406,8 @@ func renamePetHandler(store *gamification.Store, logger *slog.Logger) http.Handl
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		if req.Name == "" {
+		req.Name = strings.TrimSpace(req.Name)
+		if req.Name == "" || len([]rune(req.Name)) > 30 {
 			writeJSONError(w, "name required", http.StatusBadRequest)
 			return
 		}
@@ -442,6 +482,10 @@ func getEventHandler(store *gamification.Store, logger *slog.Logger) http.Handle
 			writeJSONError(w, "event id required", http.StatusBadRequest)
 			return
 		}
+		if _, err := uuid.Parse(eventID); err != nil {
+			writeJSONError(w, "invalid event id", http.StatusBadRequest)
+			return
+		}
 		event, err := store.GetEvent(r.Context(), identity.UserID, eventID)
 		if err != nil {
 			if errors.Is(err, gamification.ErrNotFound) {
@@ -471,7 +515,15 @@ func joinEventHandler(store *gamification.Store, logger *slog.Logger) http.Handl
 			writeJSONError(w, "event id required", http.StatusBadRequest)
 			return
 		}
+		if _, err := uuid.Parse(eventID); err != nil {
+			writeJSONError(w, "invalid event id", http.StatusBadRequest)
+			return
+		}
 		if err := store.JoinEvent(r.Context(), identity.UserID, eventID); err != nil {
+			if errors.Is(err, gamification.ErrNotFound) {
+				writeJSONError(w, "event not found or inactive", http.StatusNotFound)
+				return
+			}
 			logger.Error("join event", "error", err, "event_id", eventID, "user_id", identity.UserID)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return

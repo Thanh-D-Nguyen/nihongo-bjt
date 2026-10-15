@@ -27,7 +27,7 @@ type Deck = {
   visibility: string;
   status: string;
   updatedAt: string;
-  _count?: { cards: number };
+  cardCount: number;
 };
 
 type ListResponse = { items: Deck[]; total: number; page: number; pageSize: number };
@@ -134,7 +134,8 @@ export function DeckAdminClient({ labels }: { labels: Labels }) {
         method: "POST",
       });
       if (!r.ok) { setToast({ kind: "err", text: t("transitionFailed") }); return; }
-      setDetail((await r.json()) as Detail);
+      await r.json();
+      await loadDetail(detail.id);
       setTransitioning(null);
       setReason("");
       setToast({ kind: "ok", text: t("transitionOk") });
@@ -147,7 +148,7 @@ export function DeckAdminClient({ labels }: { labels: Labels }) {
     const header = ["id", "titleVi", "titleJa", "visibility", "status", "cards", "ownerUserId", "updatedAt"];
     const rows = list.items.map((it) => [
       it.id, it.titleVi, it.titleJa ?? "", it.visibility, it.status,
-      String(it._count?.cards ?? 0), it.ownerUserId ?? "", it.updatedAt,
+      String(it.cardCount), it.ownerUserId ?? "", it.updatedAt,
     ]);
     downloadCsv(`decks-${Date.now()}.csv`, header, rows);
   }
@@ -215,44 +216,46 @@ export function DeckAdminClient({ labels }: { labels: Labels }) {
         ) : list.items.length === 0 ? (
           <AdminEmptyState title="Chưa có deck nào." />
         ) : (
-          <AdminDataTable>
-            <AdminDataTableHead>
-              <AdminDataTableRow>
-                <AdminDataTableTh>{t("colTitleVi")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colTitleJa")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colVisibility")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colStatus")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colCards")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colUpdated")}</AdminDataTableTh>
-              </AdminDataTableRow>
-            </AdminDataTableHead>
-            <AdminDataTableBody>
-              {list.items.map((it) => (
-                <AdminDataTableRow
-                  key={it.id}
-                  className="cursor-pointer hover:bg-indigo-50/40"
-                  onClick={() => openDrawer(it)}
-                >
-                  <AdminDataTableTd><span className="text-sm">{it.titleVi}</span></AdminDataTableTd>
-                  <AdminDataTableTd><span className="text-sm text-gray-700">{it.titleJa ?? "—"}</span></AdminDataTableTd>
-                  <AdminDataTableTd>
-                    <AdminStatusBadge tone="neutral">
-                      {t(`visibility_${it.visibility}`) || it.visibility}
-                    </AdminStatusBadge>
-                  </AdminDataTableTd>
-                  <AdminDataTableTd>
-                    <AdminStatusBadge tone={statusTone(it.status)}>
-                      {t(`status_${it.status}`) || it.status}
-                    </AdminStatusBadge>
-                  </AdminDataTableTd>
-                  <AdminDataTableTd><span className="text-sm">{it._count?.cards ?? 0}</span></AdminDataTableTd>
-                  <AdminDataTableTd>
-                    <span className="text-xs text-gray-500">{new Date(it.updatedAt).toLocaleString()}</span>
-                  </AdminDataTableTd>
+          <div className="overflow-x-auto">
+            <AdminDataTable>
+              <AdminDataTableHead>
+                <AdminDataTableRow>
+                  <AdminDataTableTh>{t("colTitleVi")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colTitleJa")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colVisibility")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colStatus")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colCards")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colUpdated")}</AdminDataTableTh>
                 </AdminDataTableRow>
-              ))}
-            </AdminDataTableBody>
-          </AdminDataTable>
+              </AdminDataTableHead>
+              <AdminDataTableBody>
+                {list.items.map((it) => (
+                  <AdminDataTableRow
+                    key={it.id}
+                    className="cursor-pointer hover:bg-indigo-50/40"
+                    onClick={() => openDrawer(it)}
+                  >
+                    <AdminDataTableTd><span className="text-sm">{it.titleVi}</span></AdminDataTableTd>
+                    <AdminDataTableTd><span className="text-sm text-gray-700">{it.titleJa ?? "—"}</span></AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <AdminStatusBadge tone="neutral">
+                        {t(`visibility_${it.visibility}`) || it.visibility}
+                      </AdminStatusBadge>
+                    </AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <AdminStatusBadge tone={statusTone(it.status)}>
+                        {t(`status_${it.status}`) || it.status}
+                      </AdminStatusBadge>
+                    </AdminDataTableTd>
+                    <AdminDataTableTd><span className="text-sm">{it.cardCount}</span></AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <span className="text-xs text-gray-500">{new Date(it.updatedAt).toLocaleString()}</span>
+                    </AdminDataTableTd>
+                  </AdminDataTableRow>
+                ))}
+              </AdminDataTableBody>
+            </AdminDataTable>
+          </div>
         )}
 
         {list && list.total > PAGE_SIZE ? (
@@ -269,10 +272,10 @@ export function DeckAdminClient({ labels }: { labels: Labels }) {
           <div className="h-full w-full max-w-2xl overflow-y-auto bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between">
               <div>
-                <div className="text-xs uppercase tracking-wide text-gray-500">{selected.visibility} · {selected.status}</div>
+                <div className="text-xs uppercase tracking-wide text-gray-500">{detail?.visibility ?? selected.visibility} · {detail?.status ?? selected.status}</div>
                 <div className="text-lg font-semibold">{selected.titleVi}</div>
                 {selected.titleJa ? <div className="text-sm text-gray-700">{selected.titleJa}</div> : null}
-                <div className="mt-1 text-xs text-gray-500">{t("colCards")}: {selected._count?.cards ?? 0}</div>
+                <div className="mt-1 text-xs text-gray-500">{t("colCards")}: {selected.cardCount}</div>
               </div>
               <button className="rounded border px-2 py-1 text-sm" onClick={closeDrawer} type="button">{t("close")}</button>
             </div>

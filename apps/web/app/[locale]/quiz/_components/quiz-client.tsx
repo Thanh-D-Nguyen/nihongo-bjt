@@ -9,6 +9,7 @@ import {
   PageHeader
 } from "@nihongo-bjt/ui";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -17,7 +18,6 @@ import {
 } from "../../../../components/reading-assist/annotated-japanese-text";
 import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
-import { recordStudyProgress } from "../../../_hooks/use-study-progress";
 import { ShareDrawer } from "../../_components/share-drawer";
 import { BjtAudioPlayer, isAudioSection } from "./bjt-audio-player";
 import { BjtFormatGuidePanel } from "./bjt-format-guide";
@@ -45,8 +45,16 @@ function useAnimatedNumber(target: number, duration = 1200) {
   return value;
 }
 
+export function formatEstimatedScore(score: number | null, animatedScore: number): number | "—" {
+  return score === null ? "—" : animatedScore;
+}
+
+export function isQuizAnswerExpired(status: number, error?: string): boolean {
+  return status === 403 || (status === 409 && error === "session expired");
+}
+
 export interface Template {
-  _count: { sections: number; sessions: number };
+  createdAt: string;
   blueprintMeta?: {
     reference?: {
       purpose?: string;
@@ -54,13 +62,15 @@ export interface Template {
       sourceUrl?: string;
     };
   } | null;
-  description: string | null;
+  description?: string | null;
   id: string;
   level: string | null;
-  slug: string;
+  sectionCount: number;
+  sessionCount: number;
   timeLimitSeconds: number | null;
   titleJa: string | null;
-  titleVi: string;
+  title?: string;
+  titleVi?: string;
   type: string;
 }
 
@@ -384,7 +394,16 @@ interface SessionHistoryItem {
 /*  Main Component                                                     */
 /* ------------------------------------------------------------------ */
 
-export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; locale?: string }) {
+export function QuizClient({
+  focusMode = false,
+  labels,
+  locale = "vi"
+}: {
+  focusMode?: boolean;
+  labels: QuizLabels;
+  locale?: string;
+}) {
+  const router = useRouter();
   const [error, setError] = useState(false);
   const [question, setQuestion] = useState<QuestionPayload | null>(null);
   const [results, setResults] = useState<SessionPayload | null>(null);
@@ -462,7 +481,6 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
           if (res.ok) {
             const data = (await res.json()) as QuestionPayload;
             if (data.session.status === "completed") {
-              recordStudyProgress("bjt_quiz");
               setResults(data.session);
               setQuestion(null);
             }
@@ -525,7 +543,6 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
         }
         const data = (await res.json()) as QuestionPayload;
         if (data.session.status === "completed") {
-          recordStudyProgress("bjt_quiz");
           setResults(data.session);
           setResuming(false);
           return true;
@@ -605,10 +622,16 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
       void loadSessionHistory(userId);
       const active = await checkActiveSession(userId);
       if (active) {
-        await resumeSession(active.id, userId, active.remainingSeconds);
+        if (focusMode) {
+          await resumeSession(active.id, userId, active.remainingSeconds);
+        } else {
+          router.replace(`/${locale}/quiz/session`);
+        }
+      } else if (focusMode) {
+        router.replace(`/${locale}/quiz`);
       }
     })();
-  }, [userId, checkActiveSession, loadOfficialStatus, loadSessionHistory, resumeSession]);
+  }, [userId, checkActiveSession, loadOfficialStatus, loadSessionHistory, resumeSession, focusMode, locale, router]);
 
   useEffect(() => {
     if (!userId) {
@@ -666,23 +689,12 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
     setSubmitting(true);
     try {
       const started = await learnerApiFetch("/api/quiz/start", {
-        body: JSON.stringify({ testId, userId: uid }),
+        body: JSON.stringify({ templateId: testId }),
         headers: { "Content-Type": "application/json" },
         method: "POST"
       });
       if (!started.ok) throw new Error("Start quiz failed");
-      const session = (await started.json()) as { id: string };
-      const next = await learnerApiFetch(
-        `/api/quiz/session/${session.id}/question?userId=${encodeURIComponent(uid)}`
-      );
-      const data = (await next.json()) as QuestionPayload;
-      setQuestion(data);
-      // Start timer if the exam is timed
-      if (data.session.remainingSeconds != null && data.session.remainingSeconds > 0) {
-        startTimer(data.session.remainingSeconds);
-      } else if (data.session.timeLimitSeconds != null && data.session.timeLimitSeconds > 0) {
-        startTimer(data.session.timeLimitSeconds);
-      }
+      router.replace(`/${locale}/quiz/session`);
     } catch {
       setError(true);
     } finally {
@@ -725,15 +737,14 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
     }
     try {
       const response = await learnerApiFetch(`/api/quiz/session/${question.session.id}/answer`, {
-        body: JSON.stringify({ optionKey, questionId: question.question.id, userId: uid }),
+        body: JSON.stringify({ selectedOption: optionKey, questionId: question.question.id }),
         headers: { "Content-Type": "application/json" },
         method: "POST"
       });
       if (!response.ok) {
-        // Check if session expired
-        if (response.status === 403) {
+        const failure = (await response.clone().json().catch(() => null)) as { error?: string } | null;
+        if (isQuizAnswerExpired(response.status, failure?.error)) {
           stopTimer();
-          // Try to load results
           const resultRes = await learnerApiFetch(
             `/api/quiz/session/${question.session.id}/results?userId=${encodeURIComponent(uid)}`
           );
@@ -749,7 +760,6 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
       const data = (await response.json()) as { session: SessionPayload };
       if (data.session.status === "completed") {
         stopTimer();
-        recordStudyProgress("bjt_quiz");
         setResults(data.session);
         setQuestion(null);
         return;
@@ -774,6 +784,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
     setShowBreakdown(false);
     setFlaggedQuestions(new Set());
     setConfidenceMap({});
+    if (focusMode) router.replace(`/${locale}/quiz`);
   }
 
   function toggleFlag(questionId: string) {
@@ -790,7 +801,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
   const filteredTemplates = useMemo(() => {
     return templates.filter((t) => {
       if (typeFilter === "official") return t.type === "official";
-      if (t.type !== "practice") return false;
+      if (t.type !== "practice" && t.type !== "mock") return false;
       if (levelFilter !== "all" && normalizeLevel(t.level) !== levelFilter) return false;
       return true;
     });
@@ -799,7 +810,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
   const uniqueLevels = useMemo(() => {
     const levels = new Set(
       templates
-        .filter((template) => template.type === "practice")
+        .filter((template) => template.type === "practice" || template.type === "mock")
         .map((template) => normalizeLevel(template.level))
         .filter(Boolean) as string[]
     );
@@ -855,7 +866,13 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
   /* ---- Render ---- */
 
   return (
-    <main className="w-full space-y-6 pb-12 sm:pb-16">
+    <main
+      className={
+        focusMode
+          ? "fixed inset-0 z-50 w-full overflow-x-hidden overflow-y-auto bg-paper px-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-4 sm:px-6 sm:pt-6"
+          : "w-full space-y-6 pb-12 sm:pb-16"
+      }
+    >
       {/* Header */}
       {showHub && (
         <PageHeader
@@ -1412,10 +1429,11 @@ export function ExamCard({
   template: Template;
   userId: string | null;
 }) {
-  const title = locale === "ja" && template.titleJa ? template.titleJa : template.titleVi;
+  const title =
+    locale === "ja" && template.titleJa ? template.titleJa : (template.titleVi ?? template.title ?? "");
   const level = template.level?.replace("BJT-", "") ?? "";
   const levelColor = BAND_COLORS[level] ?? "text-muted";
-  const sections = template._count?.sections ?? 0;
+  const sections = template.sectionCount;
   const timeMin = template.timeLimitSeconds
     ? Math.max(1, Math.round(template.timeLimitSeconds / 60))
     : null;
@@ -1998,7 +2016,9 @@ function ResultsSummary({
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted">
                   {(labels.scoreLabel ?? "Điểm").replace(":", "").replace(" (thang 800)", "")}
                 </p>
-                <p className="mt-1 text-3xl font-extrabold tabular-nums text-ink">{animScore}</p>
+                <p className="mt-1 text-3xl font-extrabold tabular-nums text-ink">
+                  {formatEstimatedScore(results.estimatedScore, animScore)}
+                </p>
                 <p className="text-[10px] text-muted">{labels.totalScore ?? "/ 800"}</p>
               </div>
               <div>

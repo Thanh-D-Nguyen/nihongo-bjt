@@ -70,9 +70,9 @@ export default async function ForgotPasswordPage({
       </div>
 
       {/* Locale switcher */}
-      <nav aria-label="Language" className="mb-6 flex justify-center">
+      <nav aria-label={t.languageLabel} className="mb-6 flex justify-center">
         <div className="inline-flex items-center gap-1 rounded-full border border-ink/10 bg-surface/70 p-1">
-          {(["vi", "ja"] as const).map((code) => {
+          {(["vi", "ja", "en"] as const).map((code) => {
             const isActive = code === loc;
             const href = `/${code}/forgot-password${localeQs ? `?${localeQs}` : ""}`;
             return (

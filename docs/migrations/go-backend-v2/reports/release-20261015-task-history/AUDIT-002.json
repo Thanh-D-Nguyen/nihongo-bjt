@@ -1,0 +1,85 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-002",
+  "title": "Recover local stack and exhaustively audit current product",
+  "start_head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+  "preexisting_changes": {
+    ".quality/tasks/ctx-resume-1791168424.json": "39fe89f3617bfb95a702c09ce4aabffcaeb8f7bb",
+    "apps/admin/app/[locale]/login/_components/admin-login-form-client.tsx": "92dbef195520e5fde8a2cf956fb7898713eed217",
+    "apps/admin/lib/admin-api.ts": "e19f64369f0723fa79326a86f6ae83ea8c095bbc",
+    "apps/admin/next-env.d.ts": "c4b7818fbb2c2c34c24feb1b627ee824507c5600",
+    "apps/admin/next.config.mjs": "a29e69ddd1777373ddc577abfd3ce85cce649af7",
+    "apps/api-go/cmd/create-test-creds/main.go": "eae3b397a5f12f5c5401c3484da23e845686aabd",
+    "apps/api-go/cmd/reset-admin-cred/main.go": "c39d53f0ce4fa29c2a3ef6b813b1abfe9af28cad",
+    "apps/api-go/deploy/local/Caddyfile": "880720642204d8f7afb53bf961224b25afac9016",
+    "deploy/local/Caddyfile": "72470e3b466c4a48dd7a573271d8458479e27266",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "a36fe8e92c2556f58e045e1364919a4c6370de30",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "79bd48842b9f3b97216fbfb1b35bb0814e4420dc",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "1ab6b12e9beed3dfa58bf71431586b5462e86d92",
+    "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "f25cc0206d75762e1ea11897a1564d6aa7c33aab"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "One persistent foreground command starts dependencies, Go API, learner, admin, and proxy without disrupting unrelated port owners"
+      },
+      {
+        "id": "AC2",
+        "text": "Visible real learner registration/login and admin login precede per-item product auditing"
+      },
+      {
+        "id": "AC3",
+        "text": "Vietnamese registration/login copy is localized and confirm-password mismatch blocks registration"
+      },
+      {
+        "id": "AC4",
+        "text": "Successful real email/password login or auto-login refreshes authenticated state; errors stay localized"
+      }
+    ],
+    "expected_behavior": "Localized verified registration/login and immediate session state",
+    "observed_behavior": "Real form auto-login leaves stale anonymous state; raw English and missing confirmation observed",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "INFRASTRUCTURE"
+    ],
+    "change_kind": "add",
+    "rationale": ""
+  },
+  "red_exception": {
+    "category": "config_only",
+    "reason": "Local runtime wiring and process supervision; validate config and runtime health",
+    "declared_before_red": true
+  },
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "IMPLEMENTING",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-05T09:36:49.992Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-05T09:36:50.385Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-05T09:36:50.784Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    }
+  ],
+  "evidence": [],
+  "closed": null,
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

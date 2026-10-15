@@ -180,7 +180,7 @@ func createActorHandler(
 		}
 
 		// Rate limit by IP.
-		peerIP := authn.NormalizePeerIP(r.RemoteAddr)
+		peerIP := requestClientIP(r)
 		ipKey := "ip:admin-create:" + peerIP
 		ok, err := rateLimiter.Allow(ipKey)
 		if err != nil || !ok {
@@ -226,6 +226,18 @@ func createActorHandler(
 		// not profile.user_profile, so we must use the admin credential table).
 		if err := credStore.SetAdminCredentialTx(ctx, tx, actorID, []byte(password)); err != nil {
 			logger.Error("create-actor: set credential failed", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		identity, ok := authn.GetAdminIdentity(ctx)
+		if !ok {
+			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		if err := writeAdminAuditLog(ctx, tx, identity.ActorID, "admin.iam.actor.created", "authz.admin_actor", actorID, nil, map[string]any{
+			"id": actorID, "email": email, "displayName": displayName, "status": "active",
+		}); err != nil {
+			logger.Error("create-actor: audit log failed", "error", err, "actor_id", actorID)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
@@ -300,7 +312,7 @@ func updateActorStatusHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handle
 		}
 
 		ctx := r.Context()
-		if err := updateAdminActorStatus(ctx, db, actorID, status); err != nil {
+		if err := updateAdminActorStatus(ctx, db, identity.ActorID, actorID, status); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				writeJSONError(w, "actor not found", http.StatusNotFound)
 				return
@@ -366,7 +378,12 @@ func assignRoleHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 		}
 
 		ctx := r.Context()
-		grantedAt, err := assignActorRole(ctx, db, actorID, roleID)
+		identity, ok := authn.GetAdminIdentity(ctx)
+		if !ok {
+			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		grantedAt, err := assignActorRole(ctx, db, identity.ActorID, actorID, roleID)
 		if err != nil {
 			if strings.Contains(err.Error(), "foreign key") || strings.Contains(err.Error(), "violates") {
 				writeJSONError(w, "actor or role not found", http.StatusNotFound)
@@ -407,7 +424,12 @@ func removeRoleHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 		}
 
 		ctx := r.Context()
-		if err := removeActorRole(ctx, db, actorID, roleID); err != nil {
+		identity, ok := authn.GetAdminIdentity(ctx)
+		if !ok {
+			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		if err := removeActorRole(ctx, db, identity.ActorID, actorID, roleID); err != nil {
 			logger.Error("remove-role: failed", "error", err, "actor_id", actorID, "role_id", roleID)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
@@ -576,52 +598,122 @@ func createAdminActor(ctx context.Context, tx pgx.Tx, email, displayName string)
 	return id, nil
 }
 
-func updateAdminActorStatus(ctx context.Context, db *pgxpool.Pool, actorID, status string) error {
+func writeAdminAuditLog(ctx context.Context, tx pgx.Tx, actorID, action, targetType, targetID string, before, after any) error {
+	var beforeJSON, afterJSON any
+	if before != nil {
+		encoded, err := json.Marshal(before)
+		if err != nil {
+			return fmt.Errorf("encode audit before state: %w", err)
+		}
+		beforeJSON = string(encoded)
+	}
+	if after != nil {
+		encoded, err := json.Marshal(after)
+		if err != nil {
+			return fmt.Errorf("encode audit after state: %w", err)
+		}
+		afterJSON = string(encoded)
+	}
+	_, err := tx.Exec(ctx, `INSERT INTO ops.admin_audit_log
+		(action, actor_id, target_type, target_id, before, after, created_at)
+		VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, now())`,
+		action, actorID, targetType, targetID, beforeJSON, afterJSON)
+	if err != nil {
+		return fmt.Errorf("write admin audit log: %w", err)
+	}
+	return nil
+}
+
+func updateAdminActorStatus(ctx context.Context, db *pgxpool.Pool, adminID, actorID, status string) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
+	tx, err := db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return fmt.Errorf("begin actor status transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	var before map[string]any
+	if err := tx.QueryRow(ctx, `SELECT jsonb_build_object('id', id, 'email', email, 'displayName', display_name, 'status', status)
+		FROM authz.admin_actor WHERE id = $1 FOR UPDATE`, actorID).Scan(&before); err != nil {
+		return fmt.Errorf("load actor before status update: %w", err)
+	}
 	const q = `UPDATE authz.admin_actor SET status = $2, updated_at = now() WHERE id = $1 AND status != $2`
-	tag, err := db.Exec(ctx, q, actorID, status)
+	tag, err := tx.Exec(ctx, q, actorID, status)
 	if err != nil {
 		return fmt.Errorf("update actor status: %w", err)
 	}
 	if tag.RowsAffected() == 0 {
 		return pgx.ErrNoRows
 	}
+	after := map[string]any{"id": actorID, "email": before["email"], "displayName": before["displayName"], "status": status}
+	if err := writeAdminAuditLog(ctx, tx, adminID, "admin.iam.actor.status_changed", "authz.admin_actor", actorID, before, after); err != nil {
+		return err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit actor status transaction: %w", err)
+	}
 	return nil
 }
 
-func assignActorRole(ctx context.Context, db *pgxpool.Pool, actorID, roleID string) (time.Time, error) {
+func assignActorRole(ctx context.Context, db *pgxpool.Pool, adminID, actorID, roleID string) (time.Time, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
+	tx, err := db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return time.Time{}, fmt.Errorf("begin assign role transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
 	const q = `INSERT INTO authz.admin_actor_role (actor_id, role_id)
 	VALUES ($1, $2)
 	ON CONFLICT (actor_id, role_id) DO NOTHING
 	RETURNING granted_at`
 	var grantedAt time.Time
-	if err := db.QueryRow(ctx, q, actorID, roleID).Scan(&grantedAt); err != nil {
+	if err := tx.QueryRow(ctx, q, actorID, roleID).Scan(&grantedAt); err != nil {
 		// If ON CONFLICT DO NOTHING fired, no row returned — query existing.
 		if errors.Is(err, pgx.ErrNoRows) {
 			const q2 = `SELECT granted_at FROM authz.admin_actor_role WHERE actor_id = $1 AND role_id = $2`
-			if err2 := db.QueryRow(ctx, q2, actorID, roleID).Scan(&grantedAt); err2 != nil {
+			if err2 := tx.QueryRow(ctx, q2, actorID, roleID).Scan(&grantedAt); err2 != nil {
 				return time.Time{}, fmt.Errorf("assign role (idempotent): %w", err2)
+			}
+			if err := tx.Commit(ctx); err != nil {
+				return time.Time{}, fmt.Errorf("commit idempotent role transaction: %w", err)
 			}
 			return grantedAt, nil
 		}
 		return time.Time{}, fmt.Errorf("assign role: %w", err)
 	}
+	if err := writeAdminAuditLog(ctx, tx, adminID, "admin.iam.actor.role_assigned", "authz.admin_actor_role", actorID, nil, map[string]string{"actorId": actorID, "roleId": roleID}); err != nil {
+		return time.Time{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return time.Time{}, fmt.Errorf("commit role assignment transaction: %w", err)
+	}
 	return grantedAt, nil
 }
 
-func removeActorRole(ctx context.Context, db *pgxpool.Pool, actorID, roleID string) error {
+func removeActorRole(ctx context.Context, db *pgxpool.Pool, adminID, actorID, roleID string) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
+	tx, err := db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return fmt.Errorf("begin remove role transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
 	const q = `DELETE FROM authz.admin_actor_role WHERE actor_id = $1 AND role_id = $2`
-	_, err := db.Exec(ctx, q, actorID, roleID)
+	tag, err := tx.Exec(ctx, q, actorID, roleID)
 	if err != nil {
 		return fmt.Errorf("remove role: %w", err)
+	}
+	if tag.RowsAffected() > 0 {
+		if err := writeAdminAuditLog(ctx, tx, adminID, "admin.iam.actor.role_revoked", "authz.admin_actor_role", actorID, map[string]string{"actorId": actorID, "roleId": roleID}, nil); err != nil {
+			return err
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit role removal transaction: %w", err)
 	}
 	return nil
 }
@@ -692,7 +784,7 @@ func queryAllPermissions(ctx context.Context, db *pgxpool.Pool) ([]adminPermissi
 	}
 	defer rows.Close()
 
-	var perms []adminPermissionResponse
+	perms := make([]adminPermissionResponse, 0)
 	for rows.Next() {
 		var id, code string
 		if err := rows.Scan(&id, &code); err != nil {

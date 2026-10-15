@@ -39,7 +39,7 @@ type loginRequest struct {
 }
 
 // learnerLoginHandler implements POST /api/auth/login.
-// Requires non-nil rateLimiter (fail closed). Uses authn.NormalizePeerIP for IP key.
+// Requires non-nil rateLimiter (fail closed). Uses requestClientIP (trusted-proxy aware) for the IP key.
 // Generic 401 for all credential failures; 500 only for backend outages.
 func learnerLoginHandler(
 	credStore *credential.Store,
@@ -113,8 +113,8 @@ func learnerLoginHandler(
 			return
 		}
 
-		// Rate limit by normalized peer IP (ignores X-Forwarded-For/X-Real-IP).
-		peerIP := authn.NormalizePeerIP(r.RemoteAddr)
+		// Rate limit by the resolved client IP (X-Forwarded-For counts only from trusted proxies).
+		peerIP := requestClientIP(r)
 		ipKey := "ip:" + peerIP
 		ok, err := rateLimiter.Allow(ipKey)
 		if err != nil || !ok {
@@ -184,7 +184,7 @@ func learnerLoginHandler(
 }
 
 // adminLoginHandler implements POST /api/admin/login.
-// Requires non-nil rateLimiter (fail closed). Uses authn.NormalizePeerIP for IP key.
+// Requires non-nil rateLimiter (fail closed). Uses requestClientIP (trusted-proxy aware) for the IP key.
 // Generic 401 for all credential failures; 500 only for backend outages.
 func adminLoginHandler(
 	credStore *credential.Store,
@@ -258,8 +258,8 @@ func adminLoginHandler(
 			return
 		}
 
-		// Rate limit by normalized peer IP.
-		peerIP := authn.NormalizePeerIP(r.RemoteAddr)
+		// Rate limit by the resolved client IP (see clientIPMiddleware).
+		peerIP := requestClientIP(r)
 		ipKey := "ip:" + peerIP
 		ok, err := rateLimiter.Allow(ipKey)
 		if err != nil || !ok {

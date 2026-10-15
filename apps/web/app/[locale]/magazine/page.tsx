@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
 
 import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
+import { getServerApiBaseUrl } from "../../../lib/server-api-url";
 import { MagazinePageClient } from "./_components/magazine-page-client";
 import { MagazineGridSkeleton } from "./_components/magazine-skeleton";
 
@@ -20,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   };
 }
 
-const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
+const apiBaseUrl = getServerApiBaseUrl();
 
 /* ─── Types ─── */
 
@@ -62,7 +64,11 @@ async function fetchMagazine(kind?: string, page = 1): Promise<MagazineResponse 
       cache: "no-store",
     });
     if (!res.ok) return null;
-    return (await res.json()) as MagazineResponse;
+    const result: unknown = await res.json();
+    if (typeof result !== "object" || result === null || !Array.isArray((result as MagazineResponse).data)) {
+      return null;
+    }
+    return result as MagazineResponse;
   } catch {
     return null;
   }
@@ -80,13 +86,15 @@ export default async function MagazinePage({
   const { locale } = await params;
   const sp = await searchParams;
   const kind = sp.kind ?? "all";
-  const page = Math.max(1, Number(sp.page) || 1);
+  const pageParam = Number(sp.page);
+  const page = Number.isSafeInteger(pageParam) && pageParam > 0 ? pageParam : 1;
   const t = messages[locale] ?? messages.vi;
 
   const result = await fetchMagazine(kind, page);
-  const articles = result?.data ?? [];
-  const total = result?.total ?? 0;
-  const totalPages = Math.ceil(total / 12);
+  const retryParams = new URLSearchParams();
+  if (kind !== "all") retryParams.set("kind", kind);
+  if (page > 1) retryParams.set("page", String(page));
+  const retryHref = `/${locale}/magazine${retryParams.size ? `?${retryParams.toString()}` : ""}`;
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-background via-background to-accent/5 px-4 pb-28 pt-6 sm:px-6 lg:px-8">
@@ -113,14 +121,24 @@ export default async function MagazinePage({
 
         {/* Content */}
         <Suspense fallback={<MagazineGridSkeleton />}>
-          <MagazinePageClient
-            articles={articles}
-            locale={locale}
-            kind={kind}
-            page={page}
-            totalPages={totalPages}
-            t={t.magazine}
-          />
+          {result ? (
+            <MagazinePageClient
+              articles={result.data}
+              locale={locale}
+              kind={kind}
+              page={result.page}
+              totalPages={Math.ceil(result.total / result.limit)}
+              t={t.magazine}
+            />
+          ) : (
+            <section role="alert" className="mt-12 rounded-3xl border border-border/50 bg-card p-8 text-center">
+              <h2 className="text-xl font-bold text-foreground">{t.magazine.loadErrorTitle}</h2>
+              <p className="mt-2 text-sm text-muted-foreground">{t.magazine.loadErrorDescription}</p>
+              <Link href={retryHref} className="mt-5 inline-flex min-h-12 items-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35">
+                {t.magazine.retry}
+              </Link>
+            </section>
+          )}
         </Suspense>
       </div>
     </main>

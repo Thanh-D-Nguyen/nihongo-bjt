@@ -1,0 +1,8 @@
+# Human sign-off for the engineering process itself and for task evidence that
+# CI cannot recompute (attested review/command gates). Takes effect only with
+# branch protection "Require review from Code Owners" (policy §16.6).
+/tasks/              @Thanh-D-Nguyen
+/.github/            @Thanh-D-Nguyen
+/scripts/quality/    @Thanh-D-Nguyen
+/docs/engineering/   @Thanh-D-Nguyen
+/.claude/            @Thanh-D-Nguyen

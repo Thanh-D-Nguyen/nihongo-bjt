@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"time"
 
@@ -44,34 +45,45 @@ import (
 
 // Dependencies holds external dependencies required by the HTTP server.
 type Dependencies struct {
-	Config               *config.Config
-	Logger               *slog.Logger
-	DB                   postgres.Pinger        // nil if not configured; readiness returns 503
-	DBPool               *pgxpool.Pool          // concrete pool for handlers needing BeginTx/Query; nil if DB not configured
-	Redis                redisx.Pinger          // nil if not configured; readiness reports not_configured
-	SessionStore         *session.Store         // nil if DB not configured
-	ProfileStore         *profile.Store         // nil if DB not configured
-	RBACStore            *authz.Store           // nil if DB not configured
-	CredentialStore      *credential.Store      // nil if DB not configured
-	RateLimiter          *authn.RateLimiter     // nil disables login (fail closed in handler)
-	MediaStore           *media.Store           // nil if DB not configured; media endpoints return 503
-	MediaBucket          *blob.Bucket           // nil if media storage not configured; upload/stream return 503
-	SearchClient         *search.Client         // nil if Meilisearch not configured; search endpoints return 503
-	OnboardingStore      *onboarding.Store      // nil if DB not configured; onboarding endpoints return 503
-	NotificationStore    *notification.Store    // nil if DB not configured; notification endpoints return 503
-	PrivacyStore         *privacy.Store         // nil if DB not configured; privacy endpoints return 503
-	AuthLinkStore        *authlink.Store        // nil if DB not configured; link/exchange returns 503
-	PlacementStore       *placement.Store       // nil if DB not configured; placement endpoints return 503
-	GamificationStore    *gamification.Store    // nil if DB not configured; gamification endpoints return 503
-	ExerciseReviewStore  *exercisereview.Store  // nil if DB not configured; exercise review endpoints return 503
-	FlashcardStyleStore  *flashcardstyle.Store  // nil if DB not configured; flashcard style endpoints return 503
-	FlashcardReviewStore *flashcardreview.Store // nil if DB not configured; flashcard review endpoints return 503
-	FlashcardDeckStore   *flashcarddeck.Store   // nil if DB not configured; flashcard deck endpoints return 503
-	QuizTemplateStore    *quiztemplate.Store    // nil if DB not configured; quiz template endpoints return 503
-	StudyPlanStore       *studyplan.Store       // nil if DB not configured; study plan endpoints return 503
-	CareerStore          *career.Store          // nil if DB not configured; career endpoints return 503
-	ScenarioStore        *scenario.Store        // nil if DB not configured; scenario endpoints return 503
-	Version              string
+	Config                *config.Config
+	Logger                *slog.Logger
+	DB                    postgres.Pinger    // nil if not configured; readiness returns 503
+	DBPool                *pgxpool.Pool      // concrete pool for handlers needing BeginTx/Query; nil if DB not configured
+	Redis                 redisx.Pinger      // nil if not configured; readiness reports not_configured
+	SessionStore          *session.Store     // nil if DB not configured
+	ProfileStore          *profile.Store     // nil if DB not configured
+	RBACStore             *authz.Store       // nil if DB not configured
+	CredentialStore       *credential.Store  // nil if DB not configured
+	RateLimiter           *authn.RateLimiter // nil disables login (fail closed in handler)
+	PublicReadRateLimiter *authn.RateLimiter // nil disables public catalog reads (fail closed)
+	PresenceService       *realtime.PresenceService
+	PasswordResetQueue    *PasswordResetQueue
+	MediaStore            *media.Store           // nil if DB not configured; media endpoints return 503
+	MediaBucket           *blob.Bucket           // nil if media storage not configured; upload/stream return 503
+	SearchClient          *search.Client         // nil if Meilisearch not configured; search endpoints return 503
+	OnboardingStore       *onboarding.Store      // nil if DB not configured; onboarding endpoints return 503
+	NotificationStore     *notification.Store    // nil if DB not configured; notification endpoints return 503
+	PrivacyStore          *privacy.Store         // nil if DB not configured; privacy endpoints return 503
+	AuthLinkStore         *authlink.Store        // nil if DB not configured; link/exchange returns 503
+	PlacementStore        *placement.Store       // nil if DB not configured; placement endpoints return 503
+	GamificationStore     *gamification.Store    // nil if DB not configured; gamification endpoints return 503
+	ExerciseReviewStore   *exercisereview.Store  // nil if DB not configured; exercise review endpoints return 503
+	FlashcardStyleStore   *flashcardstyle.Store  // nil if DB not configured; flashcard style endpoints return 503
+	FlashcardReviewStore  *flashcardreview.Store // nil if DB not configured; flashcard review endpoints return 503
+	FlashcardDeckStore    *flashcarddeck.Store   // nil if DB not configured; flashcard deck endpoints return 503
+	QuizTemplateStore     *quiztemplate.Store    // nil if DB not configured; quiz template endpoints return 503
+	StudyPlanStore        *studyplan.Store       // nil if DB not configured; study plan endpoints return 503
+	CareerStore           *career.Store          // nil if DB not configured; career endpoints return 503
+	ScenarioStore         *scenario.Store        // nil if DB not configured; scenario endpoints return 503
+	Version               string
+}
+
+type PasswordResetMailer interface {
+	SendPasswordReset(context.Context, string, string, string) error
+}
+
+type PasswordResetRequestQueue interface {
+	Enqueue(string, string) bool
 }
 
 // NewRouter creates the chi router with all routes and middleware.
@@ -80,12 +92,16 @@ func NewRouter(deps Dependencies) http.Handler {
 
 	r.Use(middleware.RequestID)
 	// NOTE: middleware.RealIP intentionally omitted. It trusts X-Forwarded-For /
-	// X-Real-IP headers, which allows unauthenticated clients to spoof the IP
-	// used for rate-limit keys unless the proxy boundary is cryptographically
-	// enforced. Until Caddy (or equivalent) is proven as the sole ingress and
-	// configured to overwrite these headers, we derive the peer IP directly
-	// from r.RemoteAddr in the login handler (host only, no ephemeral port).
-	// The account/email key dimension provides additional cardinality protection.
+	// X-Real-IP from any peer, which lets unauthenticated clients spoof the IP
+	// used for rate-limit keys. clientIPMiddleware instead honours the rightmost
+	// X-Forwarded-For address only from loopback or the configured
+	// TRUSTED_PROXY_CIDRS (the Caddy/web containers), so deployments behind a
+	// reverse proxy key limits per visitor rather than per proxy container.
+	var trustedProxies []*net.IPNet
+	if deps.Config != nil {
+		trustedProxies = deps.Config.TrustedProxyCIDRs
+	}
+	r.Use(clientIPMiddleware(trustedProxies))
 	r.Use(slogMiddleware(deps.Logger))
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(30 * time.Second))
@@ -93,6 +109,7 @@ func NewRouter(deps Dependencies) http.Handler {
 	// Health endpoints — no auth required.
 	r.Get("/health/live", liveHandler())
 	r.Get("/health/ready", readyHandler(deps))
+	r.Post("/api/feedback", feedbackHandler(deps.DBPool, deps.RateLimiter, deps.Logger))
 
 	// Guard configuration.
 	guardCfg := authn.DefaultGuardConfig(deps.Logger)
@@ -169,9 +186,11 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Post("/api/auth/register", registerHandler(
 				deps.DBPool, deps.CredentialStore, deps.RateLimiter, deps.Logger,
 			))
-			lr.Post("/api/auth/forgot-password", forgotPasswordHandler(
-				deps.DBPool, deps.RateLimiter, deps.Logger,
-			))
+			var resetQueue PasswordResetRequestQueue
+			if deps.PasswordResetQueue != nil {
+				resetQueue = deps.PasswordResetQueue
+			}
+			lr.Post("/api/auth/forgot-password", forgotPasswordHandler(deps.RateLimiter, deps.Logger, resetQueue))
 			lr.Post("/api/auth/reset-password", resetPasswordHandler(
 				deps.DBPool, deps.CredentialStore, deps.SessionStore, deps.RateLimiter, deps.Logger,
 			))
@@ -206,12 +225,14 @@ func NewRouter(deps Dependencies) http.Handler {
 		if deps.DBPool != nil && deps.CredentialStore != nil && deps.RBACStore != nil {
 			r.Group(func(ar chi.Router) {
 				ar.Use(adminGuard)
+				ar.Use(authz.RequirePermission(deps.RBACStore, "iam.manage"))
 				ar.Get("/api/admin/actors", listActorsHandler(deps.DBPool, deps.Logger))
 				ar.Get("/api/admin/roles", listRolesHandler(deps.DBPool, deps.Logger))
 				ar.Get("/api/admin/permissions", listPermissionsHandler(deps.DBPool, deps.Logger))
 			})
 			r.Group(func(ar chi.Router) {
 				ar.Use(adminGuard)
+				ar.Use(authz.RequirePermission(deps.RBACStore, "iam.manage"))
 				ar.Use(authn.CSRFGuard(csrfCfg))
 				ar.Post("/api/admin/actors", createActorHandler(
 					deps.DBPool, deps.CredentialStore, deps.RateLimiter, deps.Logger,
@@ -233,6 +254,9 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Post("/api/media/upload", uploadMediaHandler(
 				deps.MediaStore, deps.MediaBucket, deps.RateLimiter, deps.Logger,
 			))
+			lr.Put("/api/media/upload/{id}", putPresignedMediaUploadHandler(
+				deps.DBPool, deps.MediaBucket, deps.RateLimiter, deps.Logger,
+			))
 		})
 	}
 
@@ -245,6 +269,7 @@ func NewRouter(deps Dependencies) http.Handler {
 	// M12: Realtime WebSocket endpoints — battle and presence namespaces.
 	if deps.SessionStore != nil {
 		rtServer := realtime.NewServer(deps.SessionStore, deps.Logger)
+		rtServer.SetPresenceService(deps.PresenceService)
 		rtServer.Start()
 		realtime.MountRoutes(r, deps.SessionStore, rtServer, csrfCfg)
 	}
@@ -274,6 +299,11 @@ func NewRouter(deps Dependencies) http.Handler {
 		r.Group(func(lr chi.Router) {
 			lr.Use(learnerGuard)
 			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/exercises/generate", generateExercisesHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
 			lr.Post("/api/exercises/sessions", startExerciseSessionHandler(deps.DBPool, deps.Logger))
 			lr.Post("/api/exercises/sessions/{id}/answer", submitExerciseAnswerHandler(deps.DBPool, deps.Logger))
 			lr.Post("/api/exercises/sessions/{id}/complete", completeExerciseSessionHandler(deps.DBPool, deps.Logger))
@@ -283,8 +313,17 @@ func NewRouter(deps Dependencies) http.Handler {
 		r.Group(func(lr chi.Router) {
 			lr.Use(learnerGuard)
 			lr.Use(authn.CSRFGuard(csrfCfg))
-			lr.Post("/api/quiz/start", startQuizSessionHandler(deps.DBPool, deps.Logger))
-			lr.Post("/api/quiz/session/{id}/answer", submitQuizAnswerHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/quiz/start", startAssessmentQuizHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/quiz/session/{id}/answer", submitAssessmentQuizAnswerHandler(deps.DBPool, deps.StudyPlanStore, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/quiz/session/active", quizActiveSessionHandler(deps.DBPool, deps.StudyPlanStore, deps.Logger))
+			lr.Get("/api/quiz/session/history", quizHistoryHandler(deps.DBPool, deps.Logger))
+			lr.Get("/api/quiz/session/{id}/question", quizSessionQuestionHandler(deps.DBPool, deps.StudyPlanStore, deps.Logger))
+			lr.Get("/api/quiz/session/{id}/results", quizResultsHandler(deps.DBPool, deps.Logger))
+			lr.Get("/api/quiz/session/{id}/results/breakdown", quizBreakdownHandler(deps.DBPool, deps.Logger))
+			lr.Get("/api/quiz/official-simulation/status", officialQuizStatusHandler(deps.DBPool, deps.Logger))
 		})
 	}
 
@@ -296,37 +335,106 @@ func NewRouter(deps Dependencies) http.Handler {
 	// M11: Share image generation stub (deferred — see handler_webhook.go for rationale).
 	r.Get("/api/share/image/{kind}", shareImageStubHandler(deps.Logger))
 
-	// Public content endpoints — anonymous-safe stubs restoring NestJS parity.
-	// These return empty/minimal responses so the learner home renders without
-	// error banners for unauthenticated users. Full data-layer implementations
-	// are deferred; these stubs satisfy the PUBLIC/OPTIONAL_AUTH contract.
-	r.Get("/api/nhk-news", nhkNewsListHandler(deps.Logger))
-	r.Get("/api/daily-radar/home", dailyRadarHomeHandler(deps.Logger))
-	r.Get("/api/daily/home", dailyHomeHandler(deps.Logger))
-	r.Get("/api/announcements", announcementsListHandler(deps.Logger))
-	r.Post("/api/ads/decision", adsDecisionHandler(deps.Logger))
-	// P0-L2: Announcement dismiss + ads impression/click — optional auth; CSRF for writes.
-	r.Group(func(pr chi.Router) {
-		pr.Use(authn.CSRFGuard(csrfCfg))
-		pr.Post("/api/announcements/{id}/dismiss", announcementDismissHandler(deps.Logger))
-		pr.Post("/api/ads/impression", adsImpressionHandler(deps.Logger))
-		pr.Post("/api/ads/click", adsClickHandler(deps.Logger))
-	})
-
-	// M8: Search — learner session-guarded; reindex is admin-only.
-	if deps.SearchClient != nil && deps.SessionStore != nil {
+	// Public content endpoints. NHK articles are backed by PostgreSQL; the
+	// remaining home feeds retain their anonymous-safe placeholder contracts.
+	if deps.DBPool != nil {
+		r.Get("/api/nhk-news", nhkNewsListHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/nhk-news/{id}", nhkArticleDetailHandler(deps.DBPool, deps.Logger))
+		levelReadLimiter := deps.PublicReadRateLimiter
+		trustedProxyCIDRs := deps.Config.TrustedProxyCIDRs
+		publicProfile := http.Handler(publicProfileHandler(deps.ProfileStore, deps.PresenceService, deps.Logger))
+		if deps.SessionStore != nil {
+			publicProfile = authn.OptionalLearnerGuard(deps.SessionStore, guardCfg)(publicProfile)
+		}
+		r.Method(http.MethodGet, "/api/users/{userId}/profile", levelReadRateLimit(
+			levelReadLimiter, "user-profile", deps.Logger, trustedProxyCIDRs, publicProfile,
+		))
+		r.Method(http.MethodGet, "/api/levels", levelReadRateLimit(
+			levelReadLimiter, "list", deps.Logger, trustedProxyCIDRs, levelListHandler(deps.DBPool, deps.Logger),
+		))
+		for _, kind := range []string{"vocabulary", "kanji", "grammar"} {
+			r.Method(http.MethodGet, "/api/levels/{code}/"+kind, levelReadRateLimit(
+				levelReadLimiter, kind, deps.Logger, trustedProxyCIDRs, levelReferenceHandler(deps.DBPool, deps.Logger, kind),
+			))
+		}
+		levelDetail := http.Handler(levelDetailHandler(deps.DBPool, deps.Logger))
+		r.Method(http.MethodGet, "/api/levels/{code}", levelReadRateLimit(levelReadLimiter, "detail", deps.Logger, trustedProxyCIDRs, levelDetail))
+		lessons := http.Handler(levelLessonsHandler(deps.DBPool, deps.Logger))
+		if deps.SessionStore != nil {
+			lessons = authn.OptionalLearnerGuard(deps.SessionStore, guardCfg)(lessons)
+		}
+		r.Method(http.MethodGet, "/api/levels/{code}/lessons", levelReadRateLimit(levelReadLimiter, "lessons", deps.Logger, trustedProxyCIDRs, lessons))
+		lessonDetail := http.Handler(getLessonDetailHandler(deps.DBPool, deps.Logger))
+		if deps.SessionStore != nil {
+			lessonDetail = authn.OptionalLearnerGuard(deps.SessionStore, guardCfg)(lessonDetail)
+		}
+		r.Method(http.MethodGet, "/api/levels/lessons/{slug}", levelReadRateLimit(levelReadLimiter, "lesson-detail", deps.Logger, trustedProxyCIDRs, lessonDetail))
+	}
+	if deps.DBPool != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
 		r.Group(func(lr chi.Router) {
 			lr.Use(learnerGuard)
-			lr.Get("/api/search", searchHandler(deps.SearchClient, deps.Logger))
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Put("/api/levels/lessons/{slug}/progress", updateLessonProgressHandler(deps.DBPool, deps.Logger))
 		})
+	}
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/nhk-news/reading/progress", nhkReadingProgressHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/nhk-news/{id}/reading", nhkReadingProgressHandler(deps.DBPool, deps.Logger))
+			lr.Get("/api/nhk-news/{id}/bookmark", nhkBookmarkHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/nhk-news/{id}/bookmark", nhkBookmarkHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/nhk-news/{id}/flashcard", nhkFlashcardHandler(deps.DBPool, deps.Logger, false))
+			lr.Post("/api/nhk-news/{id}/flashcards", nhkFlashcardHandler(deps.DBPool, deps.Logger, true))
+		})
+	}
+	r.Get("/api/daily-radar/home", dailyRadarHomeHandler(deps.DBPool, deps.Logger))
+	dailyHome := http.Handler(dailyHomeHandler(deps.DBPool, deps.Logger))
+	if deps.SessionStore != nil {
+		dailyHome = authn.OptionalLearnerGuard(deps.SessionStore, guardCfg)(dailyHome)
+	}
+	r.Method(http.MethodGet, "/api/daily/home", dailyHome)
+	if deps.DBPool != nil {
+		r.Get("/api/daily/items/{id}", dailyItemDetailHandler(deps.DBPool, deps.Logger))
+	}
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		dailyAction := dailyItemActionHandler(deps.DBPool, deps.Logger, flashcarddeck.NewStore(deps.DBPool))
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/daily/items/{id}/{action}", dailyAction)
+		})
+	}
+	r.Get("/api/announcements", announcementsListHandler(deps.DBPool, deps.Logger))
+	r.Post("/api/ads/decision", adsDecisionHandler(deps.DBPool, deps.Logger))
+	// P0-L2: Announcement dismiss + ads impression/click — optional auth; CSRF for writes.
+	r.Group(func(pr chi.Router) {
+		pr.Use(authn.OptionalLearnerGuard(deps.SessionStore, guardCfg))
+		pr.Use(authn.CSRFGuard(csrfCfg))
+		pr.Post("/api/announcements/{id}/dismiss", dismissAnnouncementHandler(deps.DBPool, deps.Logger))
+		pr.Post("/api/ads/impression", adsImpressionHandler(deps.DBPool, deps.Logger))
+		pr.Post("/api/ads/click", adsClickHandler(deps.DBPool, deps.Logger))
+	})
+
+	// M8: Public search reads the active content projection; reindex is admin-only.
+	if deps.SearchClient != nil {
+		r.Get("/api/search", searchHandler(deps.DBPool, deps.SearchClient, deps.Logger))
 	}
 	if deps.SearchClient != nil && deps.SessionStore != nil {
 		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
 			ar.Use(authn.CSRFGuard(csrfCfg))
-			ar.Post("/api/search/index", reindexHandler(deps.SearchClient, deps.Logger))
+			// Same authority as the operations search-rebuild endpoints.
+			ar.Use(authz.RequirePermission(deps.RBACStore, "iam.manage"))
+			ar.Post("/api/search/index", reindexHandler(deps.DBPool, deps.SearchClient, deps.Logger))
 		})
 	}
 
@@ -538,6 +646,7 @@ func NewRouter(deps Dependencies) http.Handler {
 		// Mutating mock exam endpoints (CSRF-protected).
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequirePermission(deps.RBACStore, "admin.content.write"))
 			ar.Use(authn.CSRFGuard(csrfCfg))
 			ar.Post("/api/admin/assessment/mock-exams", adminAssessmentMockExamsCreateHandler(deps.DBPool, deps.Logger))
 			ar.Patch("/api/admin/assessment/mock-exams/{id}", adminAssessmentMockExamsPatchHandler(deps.DBPool, deps.Logger))
@@ -549,7 +658,7 @@ func NewRouter(deps Dependencies) http.Handler {
 	}
 
 	// P1-A2.2: Admin Assessment — Question Bank sub-domain (7 routes).
-	if deps.DBPool != nil && deps.SessionStore != nil {
+	if deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil {
 		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
 		// Read-only question bank endpoints.
 		r.Group(func(ar chi.Router) {
@@ -561,11 +670,17 @@ func NewRouter(deps Dependencies) http.Handler {
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
 			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Use(authz.RequirePermission(deps.RBACStore, "assessment.manage"))
 			ar.Post("/api/admin/assessment/question-bank", adminAssessmentQuestionBankCreateHandler(deps.DBPool, deps.Logger))
 			ar.Patch("/api/admin/assessment/question-bank/{id}", adminAssessmentQuestionBankPatchHandler(deps.DBPool, deps.Logger))
 			ar.Post("/api/admin/assessment/question-bank/bulk", adminAssessmentQuestionBankBulkHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/assessment/question-bank/{id}/suggest-edit", adminAssessmentQuestionBankSuggestEditHandler(deps.DBPool, deps.Logger))
 			ar.Delete("/api/admin/assessment/question-bank/{id}", adminAssessmentQuestionBankDeleteHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Use(authz.RequireAnyPermission(deps.RBACStore, []string{"assessment.review", "assessment.manage"}))
+			ar.Post("/api/admin/assessment/question-bank/{id}/suggest-edit", adminAssessmentQuestionBankSuggestEditHandler(deps.DBPool, deps.Logger))
 		})
 	}
 
@@ -578,10 +693,11 @@ func NewRouter(deps Dependencies) http.Handler {
 			ar.Get("/api/admin/assessment/quiz-templates", adminAssessmentQuizTemplatesListHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/assessment/quiz-templates/{id}", adminAssessmentQuizTemplatesDetailHandler(deps.DBPool, deps.Logger))
 		})
-		// Mutating quiz template endpoints (CSRF-protected).
+		// Mutating quiz template endpoints (CSRF-protected, assessment managers only).
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
 			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Use(authz.RequirePermission(deps.RBACStore, "assessment.manage"))
 			ar.Post("/api/admin/assessment/quiz-templates", adminAssessmentQuizTemplatesCreateHandler(deps.DBPool, deps.Logger))
 			ar.Patch("/api/admin/assessment/quiz-templates/{id}", adminAssessmentQuizTemplatesPatchHandler(deps.DBPool, deps.Logger))
 			ar.Post("/api/admin/assessment/quiz-templates/{id}/publish", adminAssessmentQuizTemplatesPublishHandler(deps.DBPool, deps.Logger))
@@ -600,10 +716,11 @@ func NewRouter(deps Dependencies) http.Handler {
 			ar.Get("/api/admin/assessment/remediation/rules", adminAssessmentRemediationRulesListHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/assessment/remediation/rules/{id}", adminAssessmentRemediationRulesDetailHandler(deps.DBPool, deps.Logger))
 		})
-		// Mutating remediation rules endpoints (CSRF-protected).
+		// Mutating remediation rules endpoints (CSRF-protected, assessment managers only).
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
 			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Use(authz.RequirePermission(deps.RBACStore, "assessment.manage"))
 			ar.Post("/api/admin/assessment/remediation/rules", adminAssessmentRemediationRulesCreateHandler(deps.DBPool, deps.Logger))
 			ar.Patch("/api/admin/assessment/remediation/rules/{id}", adminAssessmentRemediationRulesPatchHandler(deps.DBPool, deps.Logger))
 			ar.Post("/api/admin/assessment/remediation/rules/{id}/enable", adminAssessmentRemediationRulesEnableHandler(deps.DBPool, deps.Logger))
@@ -618,6 +735,7 @@ func NewRouter(deps Dependencies) http.Handler {
 		// Read-only campaign endpoints.
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.growth.read", "growth.manage", "viewer.audit"}))
 			ar.Get("/api/admin/growth/campaigns", adminGrowthCampaignsListHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/growth/campaigns/audience-estimate", adminGrowthCampaignsAudienceEstimateHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/growth/campaigns/{id}", adminGrowthCampaignsDetailHandler(deps.DBPool, deps.Logger))
@@ -626,6 +744,7 @@ func NewRouter(deps Dependencies) http.Handler {
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
 			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Use(authz.RequirePermission(deps.RBACStore, "growth.manage"))
 			ar.Post("/api/admin/growth/campaigns", adminGrowthCampaignsCreateHandler(deps.DBPool, deps.Logger))
 			ar.Patch("/api/admin/growth/campaigns/{id}", adminGrowthCampaignsPatchHandler(deps.DBPool, deps.Logger))
 			ar.Post("/api/admin/growth/campaigns/{id}/schedule", adminGrowthCampaignsTransitionHandler(deps.DBPool, deps.Logger))
@@ -642,6 +761,7 @@ func NewRouter(deps Dependencies) http.Handler {
 		// Read-only postcard endpoints.
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.growth.read", "growth.manage", "viewer.audit"}))
 			ar.Get("/api/admin/growth/postcards", adminGrowthPostcardsListHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/growth/postcards/{id}", adminGrowthPostcardsDetailHandler(deps.DBPool, deps.Logger))
 		})
@@ -649,10 +769,18 @@ func NewRouter(deps Dependencies) http.Handler {
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
 			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Use(authz.RequirePermission(deps.RBACStore, "growth.manage"))
 			ar.Post("/api/admin/growth/postcards", adminGrowthPostcardsCreateHandler(deps.DBPool, deps.Logger))
 			ar.Patch("/api/admin/growth/postcards/{id}", adminGrowthPostcardsPatchHandler(deps.DBPool, deps.Logger))
 			ar.Post("/api/admin/growth/postcards/{id}/publish", adminGrowthPostcardsPublishHandler(deps.DBPool, deps.Logger))
 			ar.Post("/api/admin/growth/postcards/{id}/archive", adminGrowthPostcardsArchiveHandler(deps.DBPool, deps.Logger))
+		})
+		// Postcard preview renders without persisting, but it is a POST: CSRF-protected and limited to growth readers.
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Use(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.growth.read", "growth.manage", "viewer.audit"}))
+			ar.Post("/api/admin/growth/share-template/preview", adminGrowthSharePreviewHandler())
 		})
 	}
 
@@ -662,6 +790,7 @@ func NewRouter(deps Dependencies) http.Handler {
 		// Read-only social template endpoints.
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.growth.read", "growth.manage", "iam.manage", "viewer.audit"}))
 			ar.Get("/api/admin/growth/social/templates", adminGrowthSocialTemplatesListHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/growth/social/templates/{id}", adminGrowthSocialTemplatesDetailHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/growth/social/events", adminGrowthSocialEventsListHandler(deps.DBPool, deps.Logger))
@@ -670,6 +799,7 @@ func NewRouter(deps Dependencies) http.Handler {
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
 			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Use(authz.RequireAnyPermission(deps.RBACStore, []string{"growth.manage", "iam.manage"}))
 			ar.Post("/api/admin/growth/social/templates", adminGrowthSocialTemplatesCreateHandler(deps.DBPool, deps.Logger))
 			ar.Patch("/api/admin/growth/social/templates/{id}", adminGrowthSocialTemplatesPatchHandler(deps.DBPool, deps.Logger))
 			ar.Post("/api/admin/growth/social/templates/{id}/publish", adminGrowthSocialTemplatesPublishHandler(deps.DBPool, deps.Logger))
@@ -683,12 +813,14 @@ func NewRouter(deps Dependencies) http.Handler {
 		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.growth.read", "growth.manage", "iam.manage", "viewer.audit"}))
 			ar.Get("/api/admin/growth/referrals", adminGrowthReferralsListHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/growth/referrals/{id}", adminGrowthReferralsDetailHandler(deps.DBPool, deps.Logger))
 		})
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
 			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Use(authz.RequireAnyPermission(deps.RBACStore, []string{"growth.manage", "iam.manage"}))
 			ar.Post("/api/admin/growth/referrals/{id}/revoke", adminGrowthReferralsRevokeHandler(deps.DBPool, deps.Logger))
 		})
 	}
@@ -698,11 +830,13 @@ func NewRouter(deps Dependencies) http.Handler {
 		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequireAnyPermission(deps.RBACStore, []string{"iam.manage", "support.user.read"}))
 			ar.Get("/api/admin/battle/abuse", adminBattleAbuseListHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/battle/abuse/{id}", adminBattleAbuseDetailHandler(deps.DBPool, deps.Logger))
 		})
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequirePermission(deps.RBACStore, "battle.manage"))
 			ar.Use(authn.CSRFGuard(csrfCfg))
 			ar.Post("/api/admin/battle/abuse/{id}/resolve", adminBattleAbuseResolveHandler(deps.DBPool, deps.Logger))
 			ar.Post("/api/admin/battle/abuse/{id}/escalate", adminBattleAbuseEscalateHandler(deps.DBPool, deps.Logger))
@@ -719,6 +853,7 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequirePermission(deps.RBACStore, "battle.manage"))
 			ar.Use(authn.CSRFGuard(csrfCfg))
 			ar.Post("/api/admin/battle/bots", adminBattleBotsCreateHandler(deps.DBPool, deps.Logger))
 			ar.Patch("/api/admin/battle/bots/{id}", adminBattleBotsPatchHandler(deps.DBPool, deps.Logger))
@@ -739,6 +874,7 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequirePermission(deps.RBACStore, "battle.manage"))
 			ar.Use(authn.CSRFGuard(csrfCfg))
 			ar.Post("/api/admin/battle/configs", adminBattleConfigsCreateHandler(deps.DBPool, deps.Logger))
 			ar.Patch("/api/admin/battle/configs/{id}", adminBattleConfigsPatchHandler(deps.DBPool, deps.Logger))
@@ -761,6 +897,7 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequirePermission(deps.RBACStore, "battle.manage"))
 			ar.Use(authn.CSRFGuard(csrfCfg))
 			ar.Post("/api/admin/battle/matches/{id}/abort", adminBattleMatchesAbortHandler(deps.DBPool, deps.Logger))
 			ar.Post("/api/admin/battle/matches/{id}/rerun", adminBattleMatchesRerunHandler(deps.DBPool, deps.Logger))
@@ -831,48 +968,76 @@ func NewRouter(deps Dependencies) http.Handler {
 		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
-			ar.Get("/api/admin/monetization/ads/overview", adminMonetizationAdsOverviewHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/monetization/ads/placements", adminMonetizationAdsPlacementsListHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/monetization/ads/campaigns", adminMonetizationAdsCampaignsListHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/monetization/ads/providers", adminMonetizationAdsProvidersListHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/monetization/ads/rules", adminMonetizationAdsRulesListHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/monetization/ads/performance", adminMonetizationAdsPerformanceHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/monetization/ads/audit", adminMonetizationAdsAuditHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.read", "ads.placement.view", "ads.campaign.view", "ads.performance.view"})).
+				Get("/api/admin/monetization/ads/overview", adminMonetizationAdsOverviewHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.read", "ads.placement.view"})).
+				Get("/api/admin/monetization/ads/placements", adminMonetizationAdsPlacementsListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.read", "ads.campaign.view"})).
+				Get("/api/admin/monetization/ads/campaigns", adminMonetizationAdsCampaignsListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.read", "ads.provider.view"})).
+				Get("/api/admin/monetization/ads/providers", adminMonetizationAdsProvidersListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.read", "ads.rules.manage"})).
+				Get("/api/admin/monetization/ads/rules", adminMonetizationAdsRulesListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.read", "ads.performance.view"})).
+				Get("/api/admin/monetization/ads/performance", adminMonetizationAdsPerformanceHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.read", "ads.audit.view", "viewer.audit"})).
+				Get("/api/admin/monetization/ads/audit", adminMonetizationAdsAuditHandler(deps.DBPool, deps.Logger))
 		})
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
 			ar.Use(authn.CSRFGuard(csrfCfg))
-			ar.Post("/api/admin/monetization/ads/placements", adminMonetizationAdsPlacementsCreateHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/monetization/ads/placements/{id}", adminMonetizationAdsPlacementsPatchHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/monetization/ads/campaigns", adminMonetizationAdsCampaignsCreateHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/monetization/ads/campaigns/{id}", adminMonetizationAdsCampaignsPatchHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/monetization/ads/providers/{key}", adminMonetizationAdsProvidersPatchHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/monetization/ads/rules", adminMonetizationAdsRulesCreateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.write", "ads.placement.manage"})).
+				Post("/api/admin/monetization/ads/placements", adminMonetizationAdsPlacementsCreateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.write", "ads.placement.manage"})).
+				Patch("/api/admin/monetization/ads/placements/{id}", adminMonetizationAdsPlacementsPatchHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.write", "ads.campaign.manage"})).
+				Post("/api/admin/monetization/ads/campaigns", adminMonetizationAdsCampaignsCreateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.write", "ads.campaign.manage"})).
+				Patch("/api/admin/monetization/ads/campaigns/{id}", adminMonetizationAdsCampaignsPatchHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.write", "ads.provider.manage"})).
+				Patch("/api/admin/monetization/ads/providers/{key}", adminMonetizationAdsProvidersPatchHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.write", "ads.rules.manage"})).
+				Post("/api/admin/monetization/ads/rules", adminMonetizationAdsRulesCreateHandler(deps.DBPool, deps.Logger))
 		})
 	}
 
-	// P1-A6: Admin Analytics — 8 domains × 5 endpoints = 40 routes.
-	if deps.DBPool != nil && deps.SessionStore != nil {
+	// P1-A6: Admin Analytics — aggregate executive + 8 domains × 5 endpoints.
+	if deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil {
 		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		analyticsReaders := []string{"viewer.analytics", "admin.analytics.view", "analytics.view"}
+		analyticsManagers := append(append([]string(nil), analyticsReaders...), "admin.analytics.manage")
+
+		// Aggregate executive dashboard (GET /api/admin/analytics?days=N)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, analyticsReaders)).
+				Get("/api/admin/analytics", adminAnalyticsExecutiveHandler(deps.DBPool, deps.Logger))
+		})
+
 		for _, domain := range analyticsDomains {
 			domain := domain // capture loop variable
 			r.Group(func(ar chi.Router) {
 				ar.Use(adminGuard)
-				ar.Get("/api/admin/analytics/"+domain+"/summary", adminAnalyticsSummaryHandler(deps.DBPool, deps.Logger))
-				ar.Get("/api/admin/analytics/"+domain+"/timeseries", adminAnalyticsTimeseriesHandler(deps.DBPool, deps.Logger))
-				ar.Get("/api/admin/analytics/"+domain+"/breakdown", adminAnalyticsBreakdownHandler(deps.DBPool, deps.Logger))
+				ar.With(authz.RequireAnyPermission(deps.RBACStore, analyticsReaders)).
+					Get("/api/admin/analytics/"+domain+"/summary", adminAnalyticsSummaryHandler(deps.DBPool, deps.Logger))
+				ar.With(authz.RequireAnyPermission(deps.RBACStore, analyticsReaders)).
+					Get("/api/admin/analytics/"+domain+"/timeseries", adminAnalyticsTimeseriesHandler(deps.DBPool, deps.Logger))
+				ar.With(authz.RequireAnyPermission(deps.RBACStore, analyticsReaders)).
+					Get("/api/admin/analytics/"+domain+"/breakdown", adminAnalyticsBreakdownHandler(deps.DBPool, deps.Logger))
 			})
 			r.Group(func(ar chi.Router) {
 				ar.Use(adminGuard)
 				ar.Use(authn.CSRFGuard(csrfCfg))
-				ar.Post("/api/admin/analytics/"+domain+"/export", adminAnalyticsExportHandler(deps.DBPool, deps.Logger))
-				ar.Post("/api/admin/analytics/"+domain+"/refresh", adminAnalyticsRefreshHandler(deps.DBPool, deps.Logger))
+				ar.With(authz.RequireAnyPermission(deps.RBACStore, analyticsManagers)).
+					Post("/api/admin/analytics/"+domain+"/export", adminAnalyticsExportHandler(deps.DBPool, deps.Logger))
+				ar.With(authz.RequireAnyPermission(deps.RBACStore, analyticsManagers)).
+					Post("/api/admin/analytics/"+domain+"/refresh", adminAnalyticsRefreshHandler(deps.DBPool, deps.Logger))
 			})
 		}
 	}
 
 	// P1-A7: Admin Core — IAM + Users + Content + Support + Audit + I18n + ReadingAssist (38 routes).
-	if deps.DBPool != nil && deps.SessionStore != nil {
+	if deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil {
 		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
 
 		// Session / Me / Module Contracts (3 routes)
@@ -880,12 +1045,14 @@ func NewRouter(deps Dependencies) http.Handler {
 			ar.Use(adminGuard)
 			ar.Get("/api/admin/session", adminSessionHandler(deps.RBACStore, deps.Logger))
 			ar.Get("/api/admin/me", adminMeHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/module-contracts", adminModuleContractsHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/module-contracts", adminModuleContractsHandler(deps.DBPool, deps.Logger))
 		})
 
 		// IAM: Roles (2 routes)
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequirePermission(deps.RBACStore, "iam.manage"))
 			ar.Get("/api/admin/iam/roles", adminIamRolesListHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/iam/roles/{code}", adminIamRoleDetailHandler(deps.DBPool, deps.Logger))
 		})
@@ -893,6 +1060,7 @@ func NewRouter(deps Dependencies) http.Handler {
 		// IAM: Permissions (2 routes)
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequirePermission(deps.RBACStore, "iam.manage"))
 			ar.Get("/api/admin/iam/permissions", adminIamPermissionsListHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/iam/permissions/{code}", adminIamPermissionDetailHandler(deps.DBPool, deps.Logger))
 		})
@@ -900,6 +1068,7 @@ func NewRouter(deps Dependencies) http.Handler {
 		// IAM: Admins (4 read + 3 write = 7 routes)
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequirePermission(deps.RBACStore, "iam.manage"))
 			ar.Get("/api/admin/iam/admins", adminIamAdminsListHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/iam/admins/{id}", adminIamAdminDetailHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/iam/role-audit", adminIamRoleAuditHandler(deps.DBPool, deps.Logger))
@@ -907,6 +1076,7 @@ func NewRouter(deps Dependencies) http.Handler {
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
 			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Use(authz.RequirePermission(deps.RBACStore, "iam.manage"))
 			ar.Post("/api/admin/iam/admins/{id}/roles", adminIamAdminAssignRoleHandler(deps.DBPool, deps.Logger))
 			ar.Delete("/api/admin/iam/admins/{id}/roles/{roleCode}", adminIamAdminRevokeRoleHandler(deps.DBPool, deps.Logger))
 			ar.Patch("/api/admin/iam/admins/{id}", adminIamAdminPatchHandler(deps.DBPool, deps.Logger))
@@ -915,10 +1085,12 @@ func NewRouter(deps Dependencies) http.Handler {
 		// Content: Summary + Lexeme Examples (4 routes)
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequirePermission(deps.RBACStore, "admin.content.read"))
 			ar.Get("/api/admin/content/summary", adminContentSummaryHandler(deps.DBPool, deps.Logger))
 		})
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequirePermission(deps.RBACStore, "admin.content.write"))
 			ar.Use(authn.CSRFGuard(csrfCfg))
 			ar.Post("/api/admin/lexemes/{id}/examples", adminLexemeExamplesCreateHandler(deps.DBPool, deps.Logger))
 			ar.Patch("/api/admin/lexemes/{id}/examples/{linkId}", adminLexemeExamplePatchHandler(deps.DBPool, deps.Logger))
@@ -928,10 +1100,12 @@ func NewRouter(deps Dependencies) http.Handler {
 		// Content: CRUD (4 routes)
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequirePermission(deps.RBACStore, "admin.content.read"))
 			ar.Get("/api/admin/content", adminContentListHandler(deps.DBPool, deps.Logger))
 		})
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequirePermission(deps.RBACStore, "admin.content.write"))
 			ar.Use(authn.CSRFGuard(csrfCfg))
 			ar.Post("/api/admin/content", adminContentCreateHandler(deps.DBPool, deps.Logger))
 			ar.Patch("/api/admin/content/{type}/{id}/status", adminContentStatusPatchHandler(deps.DBPool, deps.Logger))
@@ -953,7 +1127,10 @@ func NewRouter(deps Dependencies) http.Handler {
 			ar.Use(authn.CSRFGuard(csrfCfg))
 			ar.Patch("/api/admin/users/{id}/status", adminUserStatusPatchHandler(deps.DBPool, deps.Logger))
 			ar.Patch("/api/admin/users/{id}/plan", adminUserPlanPatchHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/users/{id}/support-notes", adminUserSupportNoteHandler(deps.DBPool, deps.Logger))
+			ar.Group(func(sr chi.Router) {
+				sr.Use(authz.RequireAnyPermission(deps.RBACStore, []string{"support.user.write", "support.user", "iam.manage"}))
+				sr.Post("/api/admin/users/{id}/support-notes", adminUserSupportNoteHandler(deps.DBPool, deps.Logger))
+			})
 			ar.Post("/api/admin/users/invite", adminUserInviteHandler(deps.DBPool, deps.Logger))
 			ar.Post("/api/admin/users", adminUserCreateHandler(deps.DBPool, deps.Logger))
 		})
@@ -961,17 +1138,20 @@ func NewRouter(deps Dependencies) http.Handler {
 		// Audit (1 route)
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequireAnyPermission(deps.RBACStore, []string{"viewer.audit", "iam.manage"}))
 			ar.Get("/api/admin/audit", adminAuditHandler(deps.DBPool, deps.Logger))
 		})
 
 		// Support Notes (2 routes)
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequireAnyPermission(deps.RBACStore, []string{"support.user.read", "support.user.write", "support.user", "iam.manage"}))
 			ar.Get("/api/admin/support/notes", adminSupportNotesListHandler(deps.DBPool, deps.Logger))
 		})
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
 			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Use(authz.RequireAnyPermission(deps.RBACStore, []string{"support.user.write", "support.user", "iam.manage"}))
 			ar.Post("/api/admin/support/notes", adminSupportNotesCreateHandler(deps.DBPool, deps.Logger))
 		})
 
@@ -981,161 +1161,258 @@ func NewRouter(deps Dependencies) http.Handler {
 			ar.Get("/api/admin/reading-assist/reports", adminReadingAssistReportsHandler(deps.DBPool, deps.Logger))
 
 			// P1-A8: Admin Learning — Paths + Competencies + Review (20 routes)
-			ar.Get("/api/admin/learning/paths", adminLearningPathsListHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/learning/paths", adminLearningPathCreateHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/learning/paths/{id}", adminLearningPathDetailHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/learning/paths/{id}", adminLearningPathPatchHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/learning/paths/{id}/publish", adminLearningPathPublishHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/learning/paths/{id}/archive", adminLearningPathArchiveHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/learning/paths/{id}/duplicate", adminLearningPathDuplicateHandler(deps.DBPool, deps.Logger))
-			ar.Delete("/api/admin/learning/paths/{id}", adminLearningPathDeleteHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/learning/competencies", adminCompetenciesListHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/learning/competencies", adminCompetencyCreateHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/learning/competencies/{id}", adminCompetencyDetailHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/learning/competencies/{id}", adminCompetencyPatchHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/learning/competencies/{id}/publish", adminCompetencyPublishHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/learning/competencies/{id}/archive", adminCompetencyArchiveHandler(deps.DBPool, deps.Logger))
-			ar.Delete("/api/admin/learning/competencies/{id}", adminCompetencyDeleteHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/learning/review/summary", adminLearningReviewSummaryHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/learning/review/retention-curve", adminLearningReviewRetentionCurveHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/learning/review/problem-cards", adminLearningReviewProblemCardsHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/learning/review/cards/{id}", adminLearningReviewCardDetailHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/learning/review/cards/{id}/force-reintroduce", adminLearningReviewForceReintroduceHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/learning/paths", adminLearningPathsListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/learning/paths", adminLearningPathCreateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/learning/paths/{id}", adminLearningPathDetailHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Patch("/api/admin/learning/paths/{id}", adminLearningPathPatchHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/learning/paths/{id}/publish", adminLearningPathPublishHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/learning/paths/{id}/archive", adminLearningPathArchiveHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/learning/paths/{id}/duplicate", adminLearningPathDuplicateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Delete("/api/admin/learning/paths/{id}", adminLearningPathDeleteHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/learning/competencies", adminCompetenciesListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/learning/competencies", adminCompetencyCreateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/learning/competencies/{id}", adminCompetencyDetailHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Patch("/api/admin/learning/competencies/{id}", adminCompetencyPatchHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/learning/competencies/{id}/publish", adminCompetencyPublishHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/learning/competencies/{id}/archive", adminCompetencyArchiveHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Delete("/api/admin/learning/competencies/{id}", adminCompetencyDeleteHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).Get("/api/admin/learning/review/summary", adminLearningReviewSummaryHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).Get("/api/admin/learning/review/retention-curve", adminLearningReviewRetentionCurveHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).Get("/api/admin/learning/review/problem-cards", adminLearningReviewProblemCardsHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).Get("/api/admin/learning/review/cards/{id}", adminLearningReviewCardDetailHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).Post("/api/admin/learning/review/cards/{id}/force-reintroduce", adminLearningReviewForceReintroduceHandler(deps.DBPool, deps.Logger))
 
 			// P1-A9: Admin Gamification — Streaks + Achievements + Tiers + Leaderboards + Pets (23 routes)
-			ar.Get("/api/admin/gamification/streaks", adminStreakConfigsListHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/gamification/streaks", adminStreakConfigCreateHandler(deps.DBPool, deps.Logger))
-			ar.Put("/api/admin/gamification/streaks/{id}", adminStreakConfigUpdateHandler(deps.DBPool, deps.Logger))
-			ar.Delete("/api/admin/gamification/streaks/{id}", adminStreakConfigDeleteHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/gamification/achievements", adminAchievementsListHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/gamification/achievements/{id}", adminAchievementDetailHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/gamification/achievements", adminAchievementCreateHandler(deps.DBPool, deps.Logger))
-			ar.Put("/api/admin/gamification/achievements/{id}", adminAchievementUpdateHandler(deps.DBPool, deps.Logger))
-			ar.Delete("/api/admin/gamification/achievements/{id}", adminAchievementDeleteHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/gamification/achievements/{achievementId}/tiers", adminAchievementTiersListHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/gamification/achievements/{achievementId}/tiers", adminAchievementTierCreateHandler(deps.DBPool, deps.Logger))
-			ar.Put("/api/admin/gamification/achievements/tiers/{id}", adminAchievementTierUpdateHandler(deps.DBPool, deps.Logger))
-			ar.Delete("/api/admin/gamification/achievements/tiers/{id}", adminAchievementTierDeleteHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/gamification/leaderboards", adminLeaderboardsListHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/gamification/leaderboards", adminLeaderboardCreateHandler(deps.DBPool, deps.Logger))
-			ar.Put("/api/admin/gamification/leaderboards/{id}", adminLeaderboardUpdateHandler(deps.DBPool, deps.Logger))
-			ar.Delete("/api/admin/gamification/leaderboards/{id}", adminLeaderboardDeleteHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/gamification/pets", adminPetsListHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/gamification/pets/stats", adminPetsStatsHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/gamification/pets/{id}", adminPetDetailHandler(deps.DBPool, deps.Logger))
-			ar.Put("/api/admin/gamification/pets/{id}", adminPetUpdateHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/gamification/pets/{id}/reset", adminPetResetHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/gamification/streaks", adminStreakConfigsListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/gamification/streaks", adminStreakConfigCreateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Put("/api/admin/gamification/streaks/{id}", adminStreakConfigUpdateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Delete("/api/admin/gamification/streaks/{id}", adminStreakConfigDeleteHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/gamification/achievements", adminAchievementsListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/gamification/achievements/{id}", adminAchievementDetailHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/gamification/achievements", adminAchievementCreateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Put("/api/admin/gamification/achievements/{id}", adminAchievementUpdateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Delete("/api/admin/gamification/achievements/{id}", adminAchievementDeleteHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/gamification/achievements/{achievementId}/tiers", adminAchievementTiersListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/gamification/achievements/{achievementId}/tiers", adminAchievementTierCreateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Put("/api/admin/gamification/achievements/tiers/{id}", adminAchievementTierUpdateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Delete("/api/admin/gamification/achievements/tiers/{id}", adminAchievementTierDeleteHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/gamification/leaderboards", adminLeaderboardsListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/gamification/leaderboards", adminLeaderboardCreateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Put("/api/admin/gamification/leaderboards/{id}", adminLeaderboardUpdateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Delete("/api/admin/gamification/leaderboards/{id}", adminLeaderboardDeleteHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/gamification/pets", adminPetsListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/gamification/pets/stats", adminPetsStatsHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/gamification/pets/{id}", adminPetDetailHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Put("/api/admin/gamification/pets/{id}", adminPetUpdateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/gamification/pets/{id}/reset", adminPetResetHandler(deps.DBPool, deps.Logger))
 
 			// P1-A10: Admin Ads — Overview + Placements + Campaigns + Providers + Rules + Performance + Audit (13 routes)
-			ar.Get("/api/admin/ads/overview", adminAdsOverviewHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/ads/placements", adminAdsPlacementsListHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/ads/placements", adminAdsPlacementCreateHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/ads/placements/{id}", adminAdsPlacementPatchHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/ads/campaigns", adminAdsCampaignsListHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/ads/campaigns", adminAdsCampaignCreateHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/ads/campaigns/{id}", adminAdsCampaignPatchHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/ads/providers", adminAdsProvidersListHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/ads/providers/{key}", adminAdsProviderPatchHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/ads/rules", adminAdsRulesListHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/ads/rules", adminAdsRuleUpsertHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/ads/performance", adminAdsPerformanceHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/ads/audit", adminAdsAuditHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.read", "ads.placement.view", "ads.campaign.view", "ads.provider.view", "ads.performance.view"})).
+				Get("/api/admin/ads/overview", adminAdsOverviewHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.read", "ads.placement.view"})).
+				Get("/api/admin/ads/placements", adminAdsPlacementsListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.write", "ads.placement.manage"}), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/ads/placements", adminAdsPlacementCreateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.write", "ads.placement.manage"}), authn.CSRFGuard(csrfCfg)).
+				Patch("/api/admin/ads/placements/{id}", adminAdsPlacementPatchHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.read", "ads.campaign.view"})).
+				Get("/api/admin/ads/campaigns", adminAdsCampaignsListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.write", "ads.campaign.manage"}), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/ads/campaigns", adminAdsCampaignCreateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.write", "ads.campaign.manage"}), authn.CSRFGuard(csrfCfg)).
+				Patch("/api/admin/ads/campaigns/{id}", adminAdsCampaignPatchHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.read", "ads.provider.view"})).
+				Get("/api/admin/ads/providers", adminAdsProvidersListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.write", "ads.provider.manage"}), authn.CSRFGuard(csrfCfg)).
+				Patch("/api/admin/ads/providers/{key}", adminAdsProviderPatchHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.read", "ads.rules.manage"})).
+				Get("/api/admin/ads/rules", adminAdsRulesListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.write", "ads.rules.manage"}), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/ads/rules", adminAdsRuleUpsertHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.read", "ads.performance.view"})).
+				Get("/api/admin/ads/performance", adminAdsPerformanceHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.monetization.read", "ads.audit.view", "viewer.audit"})).
+				Get("/api/admin/ads/audit", adminAdsAuditHandler(deps.DBPool, deps.Logger))
 
 			// P1-A11: Admin Magazine + Loto — Articles + Predictions + Lab (16 routes)
-			ar.Get("/api/admin/magazine", adminMagazineListHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/magazine/generate", adminMagazineGenerateHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/magazine/{id}/regenerate", adminMagazineRegenerateHandler(deps.DBPool, deps.Logger))
-			ar.Delete("/api/admin/magazine/{id}", adminMagazineDeleteHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/magazine/loto/predictions", adminLotoPredictionsListHandler(deps.DBPool, deps.Logger))
-			ar.Put("/api/admin/magazine/loto/predictions/{id}/approve", adminLotoPredictionApproveHandler(deps.DBPool, deps.Logger))
-			ar.Put("/api/admin/magazine/loto/predictions/{id}/reject", adminLotoPredictionRejectHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/magazine/loto/predictions/results", adminLotoResultsInputHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/magazine/loto/predictions/analytics", adminLotoAnalyticsHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/magazine/loto/summary", adminLotoSummaryHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/magazine/loto/draws", adminLotoDrawsHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/magazine/loto/import-csv", adminLotoImportCSVHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/magazine/loto/sync", adminLotoSyncHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/magazine/loto/autopilot", adminLotoAutopilotHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/magazine/loto/generate", adminLotoGenerateHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/magazine/loto/publish", adminLotoPublishHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/magazine", adminMagazineListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/magazine/generate", adminMagazineGenerateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/magazine/{id}/regenerate", adminMagazineRegenerateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Delete("/api/admin/magazine/{id}", adminMagazineDeleteHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/magazine/loto/predictions", adminLotoPredictionsListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Put("/api/admin/magazine/loto/predictions/{id}/approve", adminLotoPredictionApproveHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Put("/api/admin/magazine/loto/predictions/{id}/reject", adminLotoPredictionRejectHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/magazine/loto/predictions/results", adminLotoResultsInputHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/magazine/loto/predictions/analytics", adminLotoAnalyticsHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/magazine/loto/summary", adminLotoSummaryHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/magazine/loto/draws", adminLotoDrawsHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/magazine/loto/import-csv", adminLotoImportCSVHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/magazine/loto/sync", adminLotoSyncHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/magazine/loto/autopilot", adminLotoAutopilotHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/magazine/loto/generate", adminLotoGenerateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/magazine/loto/publish", adminLotoPublishHandler(deps.DBPool, deps.Logger))
 
 			// P1-A12: Admin Flashcards — Decks + Variants + Styles (15 routes)
-			ar.Get("/api/admin/flashcards/decks", adminFlashcardDecksListHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/flashcards/decks/generate", adminFlashcardDeckGenerateHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/flashcards/decks/{id}", adminFlashcardDeckDetailHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/flashcards/decks/{id}/transition", adminFlashcardDeckTransitionHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/flashcards/variants", adminFlashcardVariantsListHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/flashcards/variants/{id}", adminFlashcardVariantDetailHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/flashcards/variants/{id}", adminFlashcardVariantPatchHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/flashcards/variants/{id}/transition", adminFlashcardVariantTransitionHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/flashcards/variants/{id}/source", adminFlashcardVariantSourcePatchHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/flashcards/styles", adminFlashcardStylesListHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/flashcards/styles/analytics/adoption", adminFlashcardStylesAdoptionHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/flashcards/styles/{id}", adminFlashcardStyleDetailHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/flashcards/styles", adminFlashcardStyleCreateHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/flashcards/styles/{id}", adminFlashcardStylePatchHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/flashcards/styles/{id}/transition", adminFlashcardStyleTransitionHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/flashcards/decks", adminFlashcardDecksListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/flashcards/decks/generate", adminFlashcardDeckGenerateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/flashcards/decks/{id}", adminFlashcardDeckDetailHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/flashcards/decks/{id}/transition", adminFlashcardDeckTransitionHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/flashcards/variants", adminFlashcardVariantsListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/flashcards/variants/{id}", adminFlashcardVariantDetailHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Patch("/api/admin/flashcards/variants/{id}", adminFlashcardVariantPatchHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/flashcards/variants/{id}/transition", adminFlashcardVariantTransitionHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Patch("/api/admin/flashcards/variants/{id}/source", adminFlashcardVariantSourcePatchHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/flashcards/styles", adminFlashcardStylesListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/flashcards/styles/analytics/adoption", adminFlashcardStylesAdoptionHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/flashcards/styles/{id}", adminFlashcardStyleDetailHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/flashcards/styles", adminFlashcardStyleCreateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Patch("/api/admin/flashcards/styles/{id}", adminFlashcardStylePatchHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/flashcards/styles/{id}/transition", adminFlashcardStyleTransitionHandler(deps.DBPool, deps.Logger))
 
 			// P1-A13: Admin Legal — Policies + Cookie Categories + Retention (11 routes)
 			ar.Get("/api/admin/legal/policies", adminLegalPoliciesListHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/legal/policies/{id}", adminLegalPolicyDetailHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/legal/policies/{id}/diff", adminLegalPolicyDiffHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/legal/policies", adminLegalPolicyCreateHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/legal/policies/{id}", adminLegalPolicyPatchHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/legal/policies/{id}/publish", adminLegalPolicyPublishHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/legal/policies/{id}/archive", adminLegalPolicyArchiveHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/legal/policies/{id}/duplicate", adminLegalPolicyDuplicateHandler(deps.DBPool, deps.Logger))
-			ar.Delete("/api/admin/legal/policies/{id}", adminLegalPolicyDeleteHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/legal/cookie-categories", adminLegalCookieCategoriesHandler())
-			ar.Get("/api/admin/legal/retention", adminLegalRetentionHandler())
+			ar.With(authn.CSRFGuard(csrfCfg)).Post("/api/admin/legal/policies", adminLegalPolicyCreateHandler(deps.DBPool, deps.Logger))
+			ar.With(authn.CSRFGuard(csrfCfg)).Patch("/api/admin/legal/policies/{id}", adminLegalPolicyPatchHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.legal.write", "legal.admin", "iam.manage"}), authn.CSRFGuard(csrfCfg)).
+				Patch("/api/admin/legal/policies/{id}/publish", adminLegalPolicyPublishHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.legal.write", "legal.admin", "iam.manage"}), authn.CSRFGuard(csrfCfg)).
+				Patch("/api/admin/legal/policies/{id}/archive", adminLegalPolicyArchiveHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.legal.write", "legal.admin", "iam.manage"}), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/legal/policies/{id}/duplicate", adminLegalPolicyDuplicateHandler(deps.DBPool, deps.Logger))
+			ar.With(authn.CSRFGuard(csrfCfg)).Delete("/api/admin/legal/policies/{id}", adminLegalPolicyDeleteHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.legal.read", "admin.legal.write", "legal.admin", "iam.manage"})).Get("/api/admin/legal/cookie-categories", adminLegalCookieCategoriesHandler())
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.legal.read", "admin.legal.write", "legal.admin", "iam.manage"})).Get("/api/admin/legal/retention", adminLegalRetentionHandler())
 
 			// P1-A14: Admin Daily Radar + Exercises — Modules/Cards + Config/CRUD/Analytics (22 routes)
 			ar.Get("/api/admin/daily-radar/summary", adminDailyRadarSummaryHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/daily-radar/modules", adminDailyRadarModulesListHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/daily-radar/modules", adminDailyRadarModuleCreateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).Post("/api/admin/daily-radar/modules", adminDailyRadarModuleCreateHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/daily-radar/modules/{id}", adminDailyRadarModuleDetailHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/daily-radar/modules/{id}", adminDailyRadarModulePatchHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/daily-radar/modules/{id}/archive", adminDailyRadarModuleArchiveHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).Patch("/api/admin/daily-radar/modules/{id}", adminDailyRadarModulePatchHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).Post("/api/admin/daily-radar/modules/{id}/archive", adminDailyRadarModuleArchiveHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/daily-radar/cards", adminDailyRadarCardsListHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/daily-radar/cards", adminDailyRadarCardCreateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).Post("/api/admin/daily-radar/cards", adminDailyRadarCardCreateHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/daily-radar/cards/{id}", adminDailyRadarCardDetailHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/daily-radar/cards/{id}", adminDailyRadarCardPatchHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/daily-radar/cards/{id}/publish", adminDailyRadarCardPublishHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/daily-radar/cards/{id}/archive", adminDailyRadarCardArchiveHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/daily-radar/cards/{id}/duplicate", adminDailyRadarCardDuplicateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).Patch("/api/admin/daily-radar/cards/{id}", adminDailyRadarCardPatchHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).Post("/api/admin/daily-radar/cards/{id}/publish", adminDailyRadarCardPublishHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).Post("/api/admin/daily-radar/cards/{id}/archive", adminDailyRadarCardArchiveHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).Post("/api/admin/daily-radar/cards/{id}/duplicate", adminDailyRadarCardDuplicateHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/exercises/config", adminExercisesConfigListHandler(deps.DBPool, deps.Logger))
-			ar.Put("/api/admin/exercises/config", adminExercisesConfigUpsertHandler(deps.DBPool, deps.Logger))
-			ar.Delete("/api/admin/exercises/config/{id}", adminExercisesConfigDeleteHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).Put("/api/admin/exercises/config", adminExercisesConfigUpsertHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).Delete("/api/admin/exercises/config/{id}", adminExercisesConfigDeleteHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/exercises", adminExercisesListHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/exercises/{id}", adminExerciseDetailHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/exercises", adminExerciseCreateHandler(deps.DBPool, deps.Logger))
-			ar.Put("/api/admin/exercises/{id}", adminExerciseUpdateHandler(deps.DBPool, deps.Logger))
-			ar.Delete("/api/admin/exercises/{id}", adminExerciseDeleteHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).Post("/api/admin/exercises", adminExerciseCreateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).Put("/api/admin/exercises/{id}", adminExerciseUpdateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).Delete("/api/admin/exercises/{id}", adminExerciseDeleteHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/exercises/analytics/performance", adminExercisesPerformanceAnalyticsHandler(deps.DBPool, deps.Logger))
 
 			// P1-A15: Admin Media + Companion + Privacy (16 routes)
-			ar.Get("/api/admin/media", adminMediaListHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/media/{id}", adminMediaDetailHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/media/{id}/metadata", adminMediaMetadataPatchHandler(deps.DBPool, deps.Logger))
-			ar.Delete("/api/admin/media/{id}", adminMediaSoftDeleteHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/media", adminMediaListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/media/{id}", adminMediaDetailHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Patch("/api/admin/media/{id}/metadata", adminMediaMetadataPatchHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Delete("/api/admin/media/{id}", adminMediaSoftDeleteHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/companion/config", adminCompanionConfigHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/companion/tips", adminCompanionTipsListHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/companion/tips", adminCompanionTipCreateHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/companion/tips/{id}", adminCompanionTipPatchHandler(deps.DBPool, deps.Logger))
-			ar.Delete("/api/admin/companion/tips/{id}", adminCompanionTipDeleteHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/privacy/requests", adminPrivacyRequestsListHandler(deps.DBPool, deps.Logger))
-			ar.Get("/api/admin/privacy/requests/{id}", adminPrivacyRequestDetailHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/privacy/requests/{id}/acknowledge", adminPrivacyRequestAcknowledgeHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/privacy/requests/{id}/fulfill", adminPrivacyRequestFulfillHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/privacy/requests/{id}/reject", adminPrivacyRequestRejectHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/privacy/requests/{id}/erasure-confirm", adminPrivacyErasureConfirmHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/companion/tips", adminCompanionTipCreateHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Patch("/api/admin/companion/tips/{id}", adminCompanionTipPatchHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Delete("/api/admin/companion/tips/{id}", adminCompanionTipDeleteHandler(deps.DBPool, deps.Logger))
+			privacyManagers := []string{"iam.manage", "admin.privacy.write", "privacy.manage"}
+			privacyReaders := append([]string{"admin.content.read"}, privacyManagers...)
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, privacyReaders)).Get("/api/admin/privacy/requests", adminPrivacyRequestsListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, privacyReaders)).Get("/api/admin/privacy/requests/{id}", adminPrivacyRequestDetailHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, privacyManagers), authn.CSRFGuard(csrfCfg)).Patch("/api/admin/privacy/requests/{id}/acknowledge", adminPrivacyRequestAcknowledgeHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, privacyManagers), authn.CSRFGuard(csrfCfg)).Post("/api/admin/privacy/requests/{id}/fulfill", adminPrivacyRequestFulfillHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, privacyManagers), authn.CSRFGuard(csrfCfg)).Post("/api/admin/privacy/requests/{id}/reject", adminPrivacyRequestRejectHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequireAnyPermission(deps.RBACStore, privacyManagers), authn.CSRFGuard(csrfCfg)).Post("/api/admin/privacy/requests/{id}/erasure-confirm", adminPrivacyErasureConfirmHandler(deps.DBPool, deps.Logger))
 
 			// P1-A16: Admin Cardgen — Rules + Jobs (7 routes)
 			ar.Get("/api/admin/cardgen/rules", adminCardgenRulesListHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/cardgen/rules/{id}", adminCardgenRuleDetailHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/cardgen/rules", adminCardgenRuleCreateHandler(deps.DBPool, deps.Logger))
-			ar.Put("/api/admin/cardgen/rules/{id}", adminCardgenRuleUpdateHandler(deps.DBPool, deps.Logger))
-			ar.Delete("/api/admin/cardgen/rules/{id}", adminCardgenRuleDeleteHandler(deps.DBPool, deps.Logger))
+			ar.Group(func(wr chi.Router) {
+				wr.Use(authz.RequirePermission(deps.RBACStore, "admin.content.write"))
+				wr.Use(authn.CSRFGuard(csrfCfg))
+				wr.Post("/api/admin/cardgen/rules", adminCardgenRuleCreateHandler(deps.DBPool, deps.Logger))
+				wr.Put("/api/admin/cardgen/rules/{id}", adminCardgenRuleUpdateHandler(deps.DBPool, deps.Logger))
+				wr.Delete("/api/admin/cardgen/rules/{id}", adminCardgenRuleDeleteHandler(deps.DBPool, deps.Logger))
+			})
 			ar.Get("/api/admin/cardgen/jobs", adminCardgenJobsListHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/cardgen/jobs/{id}", adminCardgenJobDetailHandler(deps.DBPool, deps.Logger))
 
@@ -1146,22 +1423,32 @@ func NewRouter(deps Dependencies) http.Handler {
 			ar.Get("/api/admin/quiz/sessions", adminQuizSessionsListHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/assessment/quiz-sessions", adminAssessmentQuizSessionsListHandler(deps.DBPool, deps.Logger))
 			ar.Get("/api/admin/assessment/quiz-sessions/{id}", adminAssessmentQuizSessionDetailHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/assessment/quiz-sessions/{id}/abort", adminAssessmentQuizSessionAbortHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/assessment/quiz-sessions/{id}/extend-time", adminAssessmentQuizSessionExtendTimeHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "assessment.manage"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/assessment/quiz-sessions/{id}/abort", adminAssessmentQuizSessionAbortHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "assessment.manage"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/assessment/quiz-sessions/{id}/extend-time", adminAssessmentQuizSessionExtendTimeHandler(deps.DBPool, deps.Logger))
 
 			// P1-A18: Admin NHK News — Config + Refresh (3 routes; FINAL ADMIN DOMAIN)
-			ar.Get("/api/admin/nhk-news/config", adminNhkNewsConfigHandler(deps.DBPool, deps.Logger))
-			ar.Patch("/api/admin/nhk-news/config", adminNhkNewsConfigPatchHandler(deps.DBPool, deps.Logger))
-			ar.Post("/api/admin/nhk-news/refresh", adminNhkNewsRefreshHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/nhk-news/config", adminNhkNewsConfigHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Patch("/api/admin/nhk-news/config", adminNhkNewsConfigPatchHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/nhk-news/refresh", adminNhkNewsRefreshHandler(deps.DBPool, deps.Logger))
 		})
 
-		// I18n Admin (4 routes)
+		// I18n Admin: readers can inspect translations; writes require content-write or IAM permissions.
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
+			ar.Use(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.content.read", "admin.content.write", "iam.manage"}))
+			ar.Get("/api/admin/i18n/keys", adminI18nKeysListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/i18n/keys/{id}", adminI18nKeyDetailHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/i18n/pending", adminI18nPendingHandler(deps.DBPool, deps.Logger))
 		})
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
 			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Use(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.content.write", "iam.manage"}))
 			ar.Patch("/api/admin/i18n/keys/{id}/translation", adminI18nTranslationPatchHandler(deps.DBPool, deps.Logger))
 		})
 	}
@@ -1193,6 +1480,16 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Use(authn.CSRFGuard(csrfCfg))
 			lr.Put("/api/learner/notification-preferences", putNotificationPreferencesHandler(deps.NotificationStore, deps.Logger))
 		})
+		// In-app inbox feed — learner session-guarded; CSRF for the read mutation.
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/learner/in-app-notifications", listInAppNotificationsHandler(deps.NotificationStore, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/learner/in-app-notifications/{id}/read", markInAppNotificationReadHandler(deps.NotificationStore, deps.Logger))
+		})
 	}
 	// P0-L1: Privacy requests — learner session-guarded; CSRF for writes.
 	if deps.PrivacyStore != nil && deps.SessionStore != nil {
@@ -1207,6 +1504,13 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Post("/api/learner/privacy/requests", createPrivacyRequestHandler(deps.PrivacyStore, deps.Logger))
 		})
 	}
+	if deps.SessionStore != nil && deps.DBPool != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/learner/privacy/requests/{id}/export", learnerPrivacyExportDownloadHandler(deps.DBPool, deps.Logger))
+		})
+	}
 	// P0-L1: Auth link exchange — public (no session guard); CSRF-protected.
 	if deps.AuthLinkStore != nil {
 		r.Group(func(pr chi.Router) {
@@ -1214,9 +1518,27 @@ func NewRouter(deps Dependencies) http.Handler {
 			pr.Post("/api/auth/link/exchange", exchangeLinkCodeHandler(deps.AuthLinkStore, deps.Logger))
 		})
 	}
+	// Learner linked identities are always scoped to the active session; the
+	// userId query parameter sent by older clients is intentionally ignored.
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/auth/identities", listLearnerIdentitiesHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Delete("/api/auth/identities/{id}", deleteLearnerIdentityHandler(deps.DBPool, deps.Logger))
+		})
+	}
 	// P0-L1: Placement test — learner session-guarded; CSRF for writes.
 	if deps.PlacementStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/learner/onboarding", placementOnboardingStatusHandler(deps.PlacementStore, deps.Logger))
+		})
 		r.Group(func(lr chi.Router) {
 			lr.Use(learnerGuard)
 			lr.Use(authn.CSRFGuard(csrfCfg))
@@ -1321,6 +1643,7 @@ func NewRouter(deps Dependencies) http.Handler {
 		r.Group(func(lr chi.Router) {
 			lr.Use(learnerGuard)
 			lr.Get("/api/flashcards/decks", listDecksHandler(deps.FlashcardDeckStore, deps.Logger))
+			lr.Get("/api/flashcards/decks/{deckId}", getDeckHandler(deps.FlashcardDeckStore, deps.Logger))
 		})
 		r.Group(func(lr chi.Router) {
 			lr.Use(learnerGuard)
@@ -1379,11 +1702,6 @@ func NewRouter(deps Dependencies) http.Handler {
 		r.Get("/api/daily-radar/modules", listDailyRadarModulesHandler(deps.DBPool, deps.Logger))
 		r.Get("/api/daily-radar/cards", listDailyRadarCardsHandler(deps.DBPool, deps.Logger))
 		r.Get("/api/daily-radar/cards/{slug}", getDailyRadarCardBySlugHandler(deps.DBPool, deps.Logger))
-	}
-
-	// P0-L5: Announcements — dismiss (auth optional).
-	if deps.DBPool != nil {
-		r.Post("/api/announcements/{id}/dismiss", dismissAnnouncementHandler(deps.DBPool, deps.Logger))
 	}
 
 	// P0-L5: Scenarios — learner session-guarded; CSRF for writes.
@@ -1464,6 +1782,7 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Use(authn.CSRFGuard(csrfCfg))
 			lr.Patch("/api/career/me", updateCareerMeHandler(deps.CareerStore, deps.Logger))
 			lr.Post("/api/career/clock-in", clockInHandler(deps.CareerStore, deps.Logger))
+			lr.Patch("/api/career/inbox/{memoID}", updateCareerInboxFeedbackHandler(deps.CareerStore, deps.Logger))
 		})
 	}
 
@@ -1475,6 +1794,7 @@ func NewRouter(deps Dependencies) http.Handler {
 
 	// P0-L5: Content Lexemes & Grammar — public routes.
 	if deps.DBPool != nil {
+		r.Get("/api/content/summary", contentSummaryHandler(deps.DBPool, deps.Logger))
 		r.Get("/api/content/lexemes", listLexemesHandler(deps.DBPool, deps.Logger))
 		r.Get("/api/content/lexemes/{id}", getLexemeDetailHandler(deps.DBPool, deps.Logger))
 		r.Get("/api/content/grammar", listGrammarHandler(deps.DBPool, deps.Logger))
@@ -1543,6 +1863,7 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Use(learnerGuard)
 			lr.Get("/api/analytics/learner", getAnalyticsLearnerHandler(deps.DBPool, deps.Logger))
 			lr.Get("/api/analytics", getAnalyticsHandler(deps.DBPool, deps.Logger))
+			lr.Get("/api/analytics/weekly-report/latest", getWeeklyReportLatestHandler(deps.DBPool, deps.Logger))
 			lr.Get("/api/analytics/heatmap", getAnalyticsHeatmapHandler(deps.DBPool, deps.Logger))
 		})
 	}
@@ -1556,7 +1877,13 @@ func NewRouter(deps Dependencies) http.Handler {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
 		r.Group(func(lr chi.Router) {
 			lr.Use(learnerGuard)
+			lr.Get("/api/battle/leaderboard", getBattleLeaderboardHandler(deps.DBPool, deps.Logger))
 			lr.Get("/api/battle/chat/recent", getBattleChatRecentHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/battle/chat", postBattleChatHandler(deps.DBPool, deps.Logger))
 		})
 	}
 
@@ -1611,7 +1938,9 @@ func NewRouter(deps Dependencies) http.Handler {
 	// P0-L5 Final Batch: Public shares/decks — no auth required.
 	if deps.DBPool != nil {
 		r.Get("/api/public/shares/{token}", getPublicShareHandler(deps.DBPool, deps.Logger))
-		r.Get("/api/public/decks/{token}", getPublicDeckHandler(deps.DBPool, deps.Logger))
+	}
+	if deps.FlashcardDeckStore != nil {
+		r.Get("/api/public/decks/{token}", getPublicDeckHandler(deps.FlashcardDeckStore, deps.Logger))
 	}
 
 	// P0-L5 Final Batch: Media search/proxy/presign/complete — learner session-guarded; CSRF for writes.
@@ -1621,9 +1950,9 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Use(learnerGuard)
 			lr.Use(authn.CSRFGuard(csrfCfg))
 			lr.Post("/api/media/search-images", postMediaSearchImagesHandler(deps.DBPool, deps.Logger))
-			lr.Post("/api/media/proxy-image", postMediaProxyImageHandler(deps.DBPool, deps.Logger))
-			lr.Post("/api/media/presign-upload", postMediaPresignUploadHandler(deps.DBPool, deps.Logger))
-			lr.Post("/api/media/complete-upload", postMediaCompleteUploadHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/media/proxy-image", postMediaProxyImageHandler(deps.DBPool, deps.MediaBucket, deps.Logger))
+			lr.Post("/api/media/presign-upload", postMediaPresignUploadHandler(deps.DBPool, deps.MediaBucket, deps.RateLimiter, deps.Logger))
+			lr.Post("/api/media/complete-upload", postMediaCompleteUploadHandler(deps.DBPool, deps.MediaBucket, deps.RateLimiter, deps.Logger))
 		})
 	}
 

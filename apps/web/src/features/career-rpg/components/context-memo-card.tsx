@@ -26,9 +26,7 @@ export function ContextMemoCard({ labels, memo, onFeedback }: Props) {
   return (
     <div
       className={`relative overflow-hidden rounded-2xl border bg-[#FFFDF7] shadow-sm ${
-        memo.status === "unread"
-          ? "border-[#FDE68A] ring-2 ring-[#FBBF24]/30"
-          : "border-[#E8E0CC]"
+        memo.status === "unread" ? "border-[#FDE68A] ring-2 ring-[#FBBF24]/30" : "border-[#E8E0CC]"
       }`}
     >
       <MemoSealStamp label="社内メモ" />
@@ -82,26 +80,21 @@ export function ContextMemoCard({ labels, memo, onFeedback }: Props) {
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-dashed border-[#E8D5A0] pt-4">
           <span
             className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-wide ${
-              memo.status === "unread"
-                ? "bg-[#9F1239] text-white"
-                : "bg-[#E8D5A0] text-[#78350F]"
+              memo.status === "unread" ? "bg-[#9F1239] text-white" : "bg-[#E8D5A0] text-[#78350F]"
             }`}
           >
             {memo.status === "unread" ? labels.statusUnread : labels.statusRead}
           </span>
           {onFeedback ? (
-            <div className="flex gap-2">
-              <MemoActionButton
-                onClick={() => onFeedback("useful")}
-                variant="primary"
-              >
-                {labels.markReadCta}
+            <div className="flex flex-wrap gap-2">
+              <MemoActionButton onClick={() => onFeedback("useful")} variant="primary">
+                {labels.feelUseful}
               </MemoActionButton>
-              <MemoActionButton
-                onClick={() => onFeedback("fuzzy")}
-                variant="secondary"
-              >
-                {labels.reviewCompleteCta}
+              <MemoActionButton onClick={() => onFeedback("fuzzy")} variant="secondary">
+                {labels.feelStillFuzzy}
+              </MemoActionButton>
+              <MemoActionButton onClick={() => onFeedback("lost")} variant="secondary">
+                {labels.feelLost}
               </MemoActionButton>
             </div>
           ) : null}
@@ -131,7 +124,7 @@ function MemoActionButton({
 }) {
   return (
     <button
-      className={`min-h-8 rounded-lg border px-3 text-[11px] font-semibold transition-colors ${
+      className={`min-h-12 rounded-lg border px-3 text-[11px] font-semibold transition-colors ${
         variant === "primary"
           ? "border-[#9F1239]/30 bg-[#FFF5F5] text-[#9F1239] hover:bg-[#FEE2E2]"
           : "border-[#E8D5A0] bg-[#FEF9EC] text-[#78350F] hover:bg-[#FEF3C7]"

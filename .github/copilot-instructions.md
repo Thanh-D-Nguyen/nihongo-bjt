@@ -6,6 +6,8 @@ This is the NihonGo BJT learning platform. The system is functionally complete. 
 
 Primary AI entrypoint: `AI_CONTEXT.md`
 
+Engineering policy (mandatory, overrides any workflow guidance below): `docs/engineering/ENGINEERING_POLICY.md`. Every non-doc change runs through the lifecycle harness — `pnpm quality begin <ID-123> "<title>"`, then follow `pnpm quality status` until `pnpm quality close`; CI rejects changes without a CLOSED task.
+
 Canonical spec: `docs/spec/nihongo_bjt_cursor_master_spec_final_completed_v2.md`
 
 For context, start from:
@@ -17,10 +19,10 @@ For context, start from:
 
 ## Tech Stack
 
-- **Backend**: NestJS + PostgreSQL + Prisma + Redis/BullMQ
+- **Backend**: Go API (`apps/api-go`, authoritative; legacy NestJS removed) + PostgreSQL (schema owned by Prisma) + Redis/BullMQ
 - **Frontend**: React (admin app + learner web app)
 - **Search**: Meilisearch
-- **Realtime**: Socket.IO
+- **Realtime**: plain WebSocket served by the Go API (`/ws/battle`, `/ws/presence`)
 - **Auth**: Keycloak
 - **Monorepo**: pnpm workspaces + Turborepo
 

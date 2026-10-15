@@ -73,6 +73,7 @@
       "authDisabledHint": "現在この環境では新規登録ができません。管理者にお問い合わせください。"
     },
     "forgotPassword": {
+      "languageLabel": "言語",
       "metaTitle": "パスワードをお忘れですか — KotobaWorks",
       "title": "パスワードをお忘れですか",
       "subtitle": "登録済みのメールアドレスを入力してください。パスワード再設定リンクをお送りします。",
@@ -84,6 +85,24 @@
       "backToLogin": "ログインに戻る",
       "genericError": "エラーが発生しました。しばらくしてから再度お試しください。",
       "validationError": "有効なメールアドレスを入力してください。"
+    },
+    "resetPassword": {
+      "languageLabel": "言語",
+      "metaTitle": "パスワード再設定 — KotobaWorks",
+      "title": "新しいパスワードを設定",
+      "subtitle": "新しいパスワードを入力して、学習を続けましょう。",
+      "passwordLabel": "新しいパスワード",
+      "confirmPasswordLabel": "新しいパスワードの確認",
+      "passwordHint": "パスワードは8文字以上で入力してください。",
+      "passwordTooLong": "パスワードが長すぎます。",
+      "preparing": "パスワード再設定フォームを準備しています…",
+      "primaryCta": "新しいパスワードを保存",
+      "submitting": "保存中…",
+      "successMessage": "パスワードを変更しました。新しいパスワードでログインしてください。",
+      "backToLogin": "ログインに戻る",
+      "genericError": "パスワードを変更できませんでした。しばらくしてから再度お試しください。",
+      "invalidToken": "再設定リンクが無効か、有効期限が切れています。新しいリンクをリクエストしてください。",
+      "mismatch": "パスワードが一致しません。"
     }
   },
   "nav": {
@@ -378,7 +397,8 @@
       "viewAll": "すべて見る",
       "vocab": "語彙",
       "kanji": "漢字",
-      "grammar": "文法"
+      "grammar": "文法",
+      "error": "BJTロードマップを読み込めません。"
     },
     "tabs": {
       "today": "今日",
@@ -424,6 +444,7 @@
     "bookmarkAdd": "保存する",
     "bookmarkRemove": "保存済み",
     "summaryNote": "これは要約です。全文はNHKの元記事でご覧いただけます。",
+    "contentUnavailable": "この記事はタイトルのみ保存されています。本文はNHKの元記事でご覧ください。",
     "readFullArticle": "NHKで全文を読む",
     "furiganaToggle": "ふりがな表示",
     "furiganaOn": "ふりがな",
@@ -1431,6 +1452,53 @@
       "descriptionLabel": "画像説明",
       "pendingLabel": "画像生成待ち",
       "promptLabel": "画像生成プロンプト"
+    },
+    "print": {
+      "loading": "練習問題を読み込んでいます…",
+      "loadError": "練習問題を読み込めませんでした。再試行するか、練習画面に戻ってください。",
+      "retry": "再読み込み",
+      "back": "戻る",
+      "showAnswers": "解答を表示",
+      "printButton": "問題を印刷",
+      "coverKicker": "KotobaWorks · 練習教材",
+      "practiceTitle": "練習問題",
+      "level": "レベル",
+      "questionCount": "問題数",
+      "questionUnit": "問",
+      "timeLimit": "制限時間",
+      "minuteUnit": "分",
+      "structure": "試験構成",
+      "sectionCount": "セクション",
+      "total": "合計",
+      "instructions": "注意事項",
+      "chooseAnswer": "選択肢から最も適切な答えを選んでください。",
+      "independentNotice": "KotobaWorks独自の練習教材です。公式試験問題ではありません。",
+      "listeningNotice": "聴解問題は台本として印刷され、紙面では音声を再生できません。",
+      "answerSheet": "解答用紙",
+      "answerSheetHint": "解答を選び、「解答を表示」を選ぶと正解を確認できます。",
+      "scoreTitle": "BJTレベルの目安",
+      "scoreDescription": "スコア範囲とレベルの説明は参考情報です。",
+      "rank": "レベル",
+      "scoreRange": "スコア範囲",
+      "description": "説明",
+      "footerTitle": "KotobaWorks · 独自練習教材",
+      "footerDisclaimer": "公式のBJT試験ではありません。練習結果は公式スコアを予測するものではありません。",
+      "levelDescriptions": {
+        "J1+": "優れたビジネスコミュニケーション能力",
+        "J1": "高いビジネスコミュニケーション能力",
+        "J2": "良好なビジネスコミュニケーション能力",
+        "J3": "中級のビジネスコミュニケーション能力",
+        "J4": "基本的なビジネスコミュニケーション能力",
+        "J5": "基礎的なビジネスコミュニケーション能力"
+      },
+      "examTitle": "BJTビジネス日本語能力テスト",
+      "part": "部門",
+      "section": "セクション",
+      "partNames": {
+        "LC": "聴解",
+        "LR": "聴読解",
+        "RC": "読解"
+      }
     }
   },
   "onboarding": {
@@ -1487,6 +1555,8 @@
     "error": "読み込みまたは申請に失敗しました。",
     "userId": "学習者コード",
     "export": "データのコピーを申請",
+    "download": "データエクスポートをダウンロード",
+    "exportExpired": "このエクスポートは期限切れです。新しいデータエクスポートを申請してください。",
     "delete": "アカウント削除を申請",
     "listTitle": "最近のリクエスト",
     "empty": "リクエストはまだありません。",
@@ -1600,6 +1670,9 @@
     }
   },
   "accounts": {
+    "linkedAccountsEmpty": "管理できる連携済みアカウントはありません。",
+    "linkedAccountsSubtitle": "以前に連携したアカウントを管理できます。新しいSNSアカウントの連携には現在対応していません。",
+    "linkedAccountsTitle": "連携済みアカウント",
     "connected": "連携済み",
     "exchangeError": "ログインコードを交換できませんでした。",
     "exchangeOk": "Googleアカウントと同期しました。",
@@ -1633,7 +1706,7 @@
     "accuracy": "BJT正答率",
     "completedSessions": "完了したBJTセッション",
     "empty": "この期間の分析データはまだありません。",
-    "emptyTitle": "7日分のデータがまだ十分ではありません",
+    "emptyTitleDynamic": "{n}日分のデータがまだ十分ではありません",
     "emptyDescription": "復習かBJT演習を続けると、ここに蓄積されます。",
     "emptyCtaFlashcards": "カード復習",
     "emptyCtaQuiz": "BJT演習",
@@ -1669,10 +1742,10 @@
     "nudgeStreak": "{n}日連続です — ペースは自分のもので。",
     "nudgeCalm": "焦らず、今日できる一歩を選びましょう。",
     "activityTitle": "日別の活動量",
-    "activityDescription": "緑：SRS復習、紺：BJT解答、橙：完了セッション。選択した期間の実データです。",
-    "activityReviewsShort": "SRS",
-    "activityQuizShort": "BJT",
-    "activitySessionsShort": "セッション",
+    "activityDescription": "棒グラフは日ごとの学習時間を表示します。詳細には選択期間のXPと学習セッション数も表示します。",
+    "activityLessonsShort": "学習セッション",
+    "activityMinutesShort": "学習時間（分）",
+    "activityXpShort": "XP",
     "activityEmpty": "この期間に活動はまだありません。",
     "activityTableCaption": "日別の学習活動（UTC）",
     "activityColDateUtc": "日付（UTC）",
@@ -1681,7 +1754,7 @@
     "learningPathsEmpty": "公開パスはまだありません。",
     "learningPathsCta": "BJT演習へ",
     "learningPathsLevel": "目標: {level}",
-    "heatmapLabel": "活動ヒートマップ（12週間）",
+    "heatmapLabel": "活動ヒートマップ",
     "shareProgress": "進捗をシェア",
     "viewAchievements": "実績を見る",
     "trendVsPrevious": "前の{n}日間との比較"
@@ -1731,7 +1804,9 @@
     "section4Title": "4. あなたの権利",
     "section4Body": "設定 > プライバシーからいつでもデータのエクスポートやアカウント削除を要求できます。",
     "section5Title": "5. お問い合わせ",
-    "section5Body": "プライバシーポリシーに関するご質問は、フィードバックページからお問い合わせください。"
+    "section5Body": "プライバシーポリシーに関するご質問は、フィードバックページからお問い合わせください。",
+    "settingsPrivacyLink": "プライバシー設定を開く",
+    "feedbackLink": "フィードバックを送る"
   },
   "feedbackPage": {
     "metaTitle": "フィードバック — KotobaWorks",
@@ -1749,6 +1824,8 @@
     "messageLabel": "内容",
     "messagePlaceholder": "詳しく記載してください...",
     "submit": "送信",
+    "submitting": "送信中…",
+    "rateLimit": "送信が速すぎます。少し待ってからもう一度お試しください。",
     "success": "フィードバックありがとうございます！できるだけ早く確認します。",
     "error": "送信できませんでした。後でもう一度お試しください。"
   },
@@ -1772,6 +1849,7 @@
     "statsWords": "語彙",
     "statsKanji": "漢字",
     "statsGrammar": "文法",
+    "statsUnavailable": "統計を取得できません",
     "recentTitle": "最近の検索",
     "recentEmpty": "検索履歴がありません",
     "progressTitle": "私の進捗",
@@ -1971,6 +2049,7 @@
       "daily_auto": "デイリー自動"
     },
     "sourceType": "ソース",
+    "topic": "トピックまたはキーワード",
     "sources": {
       "lexeme": "語彙",
       "grammar": "文法",
@@ -1985,7 +2064,7 @@
     "count": "カード数",
     "generating": "カードを作成中...",
     "success": "{count}枚のカードを作成しました！",
-    "viewDeck": "デッキを見る",
+    "viewDeck": "作成したカードを復習",
     "previewResult": "推定: {count}枚",
     "jobs": "作成履歴",
     "error": "エラーが発生しました。もう一度お試しください。"
@@ -2017,11 +2096,17 @@
       "eyebrow": "社員ファイル",
       "title": "キャリアファイル",
       "subtitle": "ランク、スキル、社内外の関係。",
+      "loading": "キャリア情報を読み込んでいます…",
+      "loadError": "キャリア情報を読み込めませんでした。もう一度お試しください。",
+      "retry": "再試行",
+      "loginLink": "ログイン",
       "rankBadgeStamp": "辞令",
       "nextRankLabel": "次のランク:",
       "rankProgressLabel": "ランクXP",
       "skillsTitle": "スキルマップ",
       "skillsSubtitle": "ビジネス日本語の6軸。",
+      "skillsEmpty": "スキルデータはまだありません。",
+      "ranksEmpty": "ランクデータはまだありません。",
       "skillsAxisLabels": {
         "keigo": "敬語",
         "written": "ビジネス文書",
@@ -2032,6 +2117,7 @@
       },
       "relationsTitle": "社内・社外関係",
       "relationsSubtitle": "信頼度は各章での選択で変動します。",
+      "relationsEmpty": "人間関係のデータはまだありません。",
       "trustLabel": "信頼度",
       "relationUchi": "内 (uchi)",
       "relationSoto": "外 (soto)",
@@ -2117,6 +2203,10 @@
       "eyebrow": "振り返りトレイ",
       "title": "Review Inbox",
       "subtitle": "先輩からのメモ。フラッシュカードではなく、ミスのあとに届く振り返りです。",
+      "empty": "受信トレイにメモはありません。新しい振り返りメモはここに届きます。",
+      "loadError": "Review Inboxを読み込めませんでした。",
+      "retry": "再試行",
+      "feedbackError": "フィードバックを保存できませんでした。もう一度お試しください。",
       "fromLabel": "From",
       "surfaceLabel": "表面の意味",
       "realIntentLabel": "真意",
@@ -2235,7 +2325,15 @@
     "kanji": "漢字",
     "grammar": "文法",
     "loading": "読み込み中...",
-    "error": "データを読み込めませんでした。"
+    "error": "データを読み込めませんでした。",
+    "assessmentIntro": "BJT診断テストを受けて、現在のレベルと学習ロードマップを確認しましょう。",
+    "assessmentCta": "診断テストを受ける",
+    "readinessTitle": "模擬試験の準備状況",
+    "readinessSubtitle": "最近の成績に基づく",
+    "readinessCta": "模擬試験を受ける",
+    "accuracyAcross": "{count}回のセッションの正答率",
+    "noSessions": "完了したセッションはまだありません",
+    "analyticsError": "模擬試験の分析を読み込めません。後でもう一度お試しください。"
   },
   "levelDetail": {
     "back": "BJTレベル",
@@ -2285,6 +2383,9 @@
     "expandSection": "展開する",
     "completed": "完了",
     "markComplete": "完了にする",
+    "loginToSave": "ログインして学習状況を保存",
+    "savingProgress": "保存中...",
+    "progressError": "学習状況を保存できませんでした。もう一度お試しください。",
     "close": "閉じる",
     "posLabel": "品詞",
     "onyomiLabel": "音読み",
@@ -2373,6 +2474,7 @@
     "densityCompact": "コンパクト",
     "densityComfortable": "ゆとり",
     "saved": "保存しました。",
+    "saveError": "設定を同期できませんでした。この端末では引き続き設定が適用されます。",
     "preview": "プレビュー",
     "previewText": "日本のビジネス现場では、敷語と謙譲語の使い分けが大切です。"
   },
@@ -2396,7 +2498,11 @@
     "backHome": "← ホームに戻る",
     "enforcementOff": "現在は完全無料モードです。すべての機能がご利用いただけます。",
     "checkoutLoading": "処理中...",
-    "checkoutError": "お支払い処理に失敗しました。もう一度お試しください。"
+    "checkoutError": "登録リクエストを開始できませんでした。もう一度お試しください。",
+    "checkoutPending": "アップグレード申請は確認待ちです。支払い確認後にプランが有効になります。",
+    "checkoutPendingShort": "確認待ち",
+    "retry": "再試行",
+    "signInToUpgrade": "ログインしてアップグレード"
   },
   "subscription": {
     "title": "サブスクリプション",
@@ -2444,6 +2550,9 @@
   "magazine": {
     "title": "デイリーマガジン",
     "subtitle": "毎日楽しいコンテンツで日本語を学ぼう",
+    "loadErrorTitle": "マガジンを読み込めませんでした",
+    "loadErrorDescription": "サービスは一時的に利用できません。もう一度お試しください。",
+    "retry": "再試行",
     "filterAll": "すべて",
     "filterVocab": "単語",
     "filterWeather": "天気",
@@ -2462,6 +2571,16 @@
     "quizPerfect": "完璧！全問正解です！",
     "quizGood": "よくできました！この調子で頑張りましょう！",
     "quizTryAgain": "もう少し頑張りましょう！上の単語を復習してみてください。",
+    "quizSaveFailed": "結果を保存できませんでした。ログインしてもう一度お試しください。",
+    "addFlashcard": "単語帳に追加",
+    "addedFlashcard": "単語帳に追加しました",
+    "signInHint": "この機能を使うにはログインしてください",
+    "chooseDeck": "デッキを選択",
+    "createDeck": "新しいデッキを作成",
+    "newDeckPlaceholder": "新しいデッキ名...",
+    "nDecks": "デッキがありません",
+    "flashcardError": "単語をデッキに追加できませんでした。もう一度お試しください。",
+    "backToMagazine": "マガジンに戻る",
     "todayTitle": "今日の記事",
     "todayViewAll": "すべて見る →",
     "readMore": "続きを読む",
@@ -2626,5 +2745,36 @@
     "selfPreview": "他のユーザーからの見え方",
     "copyUrl": "URLをコピー",
     "editProfile": "編集"
+  },
+  "scenarios": {
+    "list": {
+      "title": "ビジネスシナリオ",
+      "description": "日本の職場でのコミュニケーションを練習しましょう。",
+      "difficulty": { "beginner": "初級", "intermediate": "中級", "advanced": "上級" },
+      "duration": "⏱️ 約{count}分",
+      "steps": "📋 {count}ステップ",
+      "attempts": "🎮 {count}回プレイ",
+      "empty": "シナリオはまだありません。",
+      "loadError": "シナリオを読み込めませんでした。",
+      "retry": "再試行"
+    },
+    "play": {
+      "loadError": "シナリオを読み込めませんでした。再読み込みしてください。",
+      "answerError": "回答を送信できませんでした。もう一度選択できます。",
+      "completeError": "結果を保存できませんでした。もう一度お試しください。",
+      "notFound": "シナリオが見つかりません。",
+      "score": "{total}/{max} 点",
+      "replay": "もう一度プレイ",
+      "back": "戻る",
+      "step": "ステップ {current}/{total}",
+      "stepLabel": "ステップ {step}:",
+      "optimal": "最適な回答 {count}/{total} · {percent}%",
+      "optimalAnswer": "よい選択です！",
+      "suboptimalAnswer": "より適切な選択肢があります",
+      "points": "点",
+      "showResult": "結果を見る",
+      "continue": "続ける →",
+      "retry": "再試行"
+    }
   }
 }

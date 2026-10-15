@@ -9,6 +9,7 @@
 //
 // Exit codes: 0 PASS · 1 RATCHET_VIOLATION (new debt, stale baseline, coverage floor) · 2 TOOL_FAILURE.
 // The baseline is only ever written by --update-baseline; CI never mutates it.
+// With QUALITY_SUMMARY_DIR set, also writes $QUALITY_SUMMARY_DIR/frontend.json (execution accounting).
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
@@ -23,6 +24,7 @@ import {
   compareDebt,
   validateBaseline
 } from "./frontend-debt-lib.mjs";
+import { writeSuiteSummary } from "./harness/lib/summary.mjs";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const baselinePath = path.join(repoRoot, "scripts/quality/frontend-debt-baseline.json");
@@ -142,8 +144,26 @@ function main() {
     return 0;
   }
 
-  const { newDebt, resolved, floors } = compareDebt(loadBaseline(), current);
+  const baseline = loadBaseline();
+  const { newDebt, resolved, floors } = compareDebt(baseline, current);
+  const newSkips = newDebt.filter((d) => d.kind === "skipped-test").reduce((n, d) => n + d.delta, 0);
+  const accounting = {
+    discovered: current.tests.tests,
+    executed: current.tests.tests - current.tests.skipped.length,
+    passed: current.tests.tests - current.tests.skipped.length - current.tests.failures.length,
+    failed: current.tests.failures.length,
+    failed_new: newDebt.filter((d) => d.kind === "failing-test").reduce((n, d) => n + d.delta, 0),
+    skipped: current.tests.skipped.length,
+    expected_skips: current.tests.skipped.length - newSkips,
+    unexpected_skips: newSkips,
+    lint_files: current.lint.lintedFiles,
+    lint_errors: current.lint.errorCount,
+    lint_warnings: current.lint.warningCount,
+    new_debt: newDebt.length
+  };
+  const summarize = (result, message) => writeSuiteSummary("frontend", result, accounting, message);
   if (newDebt.length || floors.length) {
+    summarize("VIOLATION", `RATCHET_VIOLATION: ${newDebt.length} new debt item(s), ${floors.length} floor drop(s)`);
     printItems("NEW debt (not in baseline):", newDebt);
     for (const f of floors) console.log(`  - [coverage-floor] ${f}`);
     for (const item of newDebt) annotate("error", `new ${item.kind}: ${item.id}`);
@@ -154,9 +174,11 @@ function main() {
   if (resolved.length) {
     printItems("Fixed debt still listed in the baseline:", resolved);
     annotate("error", "baseline is stale: run `node scripts/quality/check-frontend-debt.mjs --update-baseline` and commit");
+    summarize("VIOLATION", `BASELINE_STALE: ${resolved.length} fixed item(s) still in the baseline`);
     console.log("\nRESULT: BASELINE_STALE — run `node scripts/quality/check-frontend-debt.mjs --update-baseline` and commit the shrunken baseline.");
     return 1;
   }
+  summarize("PASS", "no debt beyond the committed baseline");
   console.log("\nRESULT: PASS — no debt beyond the committed baseline.");
   return 0;
 }
@@ -167,6 +189,7 @@ try {
   // Any unexpected error is also a tool failure: it must never read as PASS
   // or be confused with a ratchet violation.
   const message = error instanceof ToolFailure ? error.message : (error?.stack ?? String(error));
+  if (!updateBaseline) writeSuiteSummary("frontend", "TOOL_FAILURE", null, String(error?.message ?? error).split("\n")[0]);
   console.error(`\nRESULT: TOOL_FAILURE — ${message}`);
   annotate("error", `tool failure: ${error?.message ?? error}`);
   process.exitCode = 2;

@@ -84,46 +84,48 @@ export function LegalRetentionAdminClient({
         ) : items.length === 0 ? (
           <AdminEmptyState title={common.empty} />
         ) : (
-          <AdminDataTable>
-            <AdminDataTableHead>
-              <AdminDataTableRow>
-                <AdminDataTableTh>{t("colDomain")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colRetention")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colGrace")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colSchedule")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colRunner")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colReversibility")}</AdminDataTableTh>
-              </AdminDataTableRow>
-            </AdminDataTableHead>
-            <AdminDataTableBody>
-              {items.map((it) => (
-                <AdminDataTableRow key={it.domain}>
-                  <AdminDataTableTd>
-                    <div className="font-mono text-xs text-gray-500">{it.domain}</div>
-                    <div className="text-sm font-semibold">{it.label}</div>
-                    <div className="text-xs text-gray-600">{it.description}</div>
-                  </AdminDataTableTd>
-                  <AdminDataTableTd>
-                    <span className="font-mono text-sm">{it.retentionDays} {t("days")}</span>
-                  </AdminDataTableTd>
-                  <AdminDataTableTd>
-                    <span className="font-mono text-xs">{it.gracePeriodDays} {t("days")}</span>
-                  </AdminDataTableTd>
-                  <AdminDataTableTd>
-                    <AdminStatusBadge tone="neutral">{it.schedule}</AdminStatusBadge>
-                  </AdminDataTableTd>
-                  <AdminDataTableTd>
-                    <span className="font-mono text-xs">{it.runner}</span>
-                  </AdminDataTableTd>
-                  <AdminDataTableTd>
-                    <AdminStatusBadge tone={it.irreversible ? "danger" : "neutral"}>
-                      {it.irreversible ? t("irreversible") : t("reversible")}
-                    </AdminStatusBadge>
-                  </AdminDataTableTd>
+          <div className="w-full overflow-x-auto">
+            <AdminDataTable>
+              <AdminDataTableHead>
+                <AdminDataTableRow>
+                  <AdminDataTableTh>{t("colDomain")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colRetention")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colGrace")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colSchedule")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colRunner")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colReversibility")}</AdminDataTableTh>
                 </AdminDataTableRow>
-              ))}
-            </AdminDataTableBody>
-          </AdminDataTable>
+              </AdminDataTableHead>
+              <AdminDataTableBody>
+                {items.map((it) => (
+                  <AdminDataTableRow key={it.domain}>
+                    <AdminDataTableTd>
+                      <div className="font-mono text-xs text-gray-500">{it.domain}</div>
+                      <div className="text-sm font-semibold">{it.label}</div>
+                      <div className="text-xs text-gray-600">{it.description}</div>
+                    </AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <span className="font-mono text-sm">{it.retentionDays} {t("days")}</span>
+                    </AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <span className="font-mono text-xs">{it.gracePeriodDays} {t("days")}</span>
+                    </AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <AdminStatusBadge tone="neutral">{it.schedule}</AdminStatusBadge>
+                    </AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <span className="font-mono text-xs">{it.runner}</span>
+                    </AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <AdminStatusBadge tone={it.irreversible ? "danger" : "neutral"}>
+                        {it.irreversible ? t("irreversible") : t("reversible")}
+                      </AdminStatusBadge>
+                    </AdminDataTableTd>
+                  </AdminDataTableRow>
+                ))}
+              </AdminDataTableBody>
+            </AdminDataTable>
+          </div>
         )}
       </AdminSection>
     </div>

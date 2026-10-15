@@ -37,20 +37,32 @@ const LOCALE_LABEL_KEYS: Record<LoginLocale, "localeSwitchVi" | "localeSwitchJa"
   en: "localeSwitchEn"
 };
 
-/**
- * Validates that a returnTo path is safe (same-origin relative path).
- * Mirrors the previous safeReturnToPath from kc-cookies but without the
- * Keycloak dependency.
- */
-function safeReturnToPath(raw: string | null, fallback: string): string {
-  if (!raw) return fallback;
-  // Only allow relative paths starting with /
-  if (!raw.startsWith("/")) return fallback;
-  // Reject protocol-relative URLs (//evil.com)
-  if (raw.startsWith("//")) return fallback;
-  // Reject paths with encoded slashes or traversal
-  if (raw.includes("..")) return fallback;
-  return raw;
+/** Accept Admin paths, including paths with the Next.js basePath stripped. */
+function safeReturnToPath(raw: unknown, fallback: string): string {
+  if (typeof raw !== "string" || !raw || raw !== raw.trim() || /[\\\p{Cc}]/u.test(raw)) return fallback;
+  let path = raw.split(/[?#]/, 1)[0];
+  try {
+    // Validate the encoding before checking all nested encoded traversal forms.
+    path = decodeURIComponent(path);
+  } catch {
+    return fallback;
+  }
+  for (;;) {
+    if (
+      !/^\/(?:admin\/)?(?:vi|ja|en)(?:\/|$)/.test(path) ||
+      /[\\\p{Cc}]|(?:^|\/)\.{1,2}(?:\/|$)/u.test(path)
+    ) {
+      return fallback;
+    }
+    const decoded = path.replace(/%[\da-f]{2}/gi, (code) =>
+      String.fromCharCode(Number.parseInt(code.slice(1), 16))
+    );
+    if (decoded === path) break;
+    path = decoded;
+  }
+  // Check the literal namespace too; never navigate to an encoded root segment.
+  if (!/^\/(?:admin\/)?(?:vi|ja|en)(?:\/|[?#]|$)/.test(raw)) return fallback;
+  return raw.startsWith("/admin/") ? raw : `/admin${raw}`;
 }
 
 export default async function AdminLoginPage({
@@ -58,7 +70,11 @@ export default async function AdminLoginPage({
   searchParams
 }: Readonly<{
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ authError?: string; returnTo?: string; u?: string }>;
+  searchParams: Promise<{
+    authError?: string | string[];
+    returnTo?: string | string[];
+    u?: string | string[];
+  }>;
 }>) {
   const { locale } = await params;
   const sp = await searchParams;
@@ -72,11 +88,11 @@ export default async function AdminLoginPage({
   // Go-native auth is always ready (no external IdP config needed).
   const authReady = true;
 
-  const errMapped = userFacingAuthError(sp.authError, errorsCopy);
+  const errMapped = userFacingAuthError(typeof sp.authError === "string" ? sp.authError : undefined, errorsCopy);
   const err = errMapped;
 
   // Validate returnTo for safe redirect after login.
-  const returnTo = safeReturnToPath(sp.returnTo ?? null, `/${locale}`);
+  const returnTo = safeReturnToPath(sp.returnTo ?? null, `/admin/${locale}`);
 
   // Username preserved across the no-JS form-fallback round trip.
   const defaultUsername =
@@ -84,8 +100,9 @@ export default async function AdminLoginPage({
 
   // Locale switcher preserves returnTo so a deep link survives a language change.
   const localeQuery = new URLSearchParams();
-  if (sp.returnTo && safeReturnToPath(sp.returnTo, "") === sp.returnTo) {
-    localeQuery.set("returnTo", sp.returnTo);
+  const localeReturnTo = safeReturnToPath(sp.returnTo ?? null, "");
+  if (localeReturnTo) {
+    localeQuery.set("returnTo", localeReturnTo);
   }
   const localeQs = localeQuery.toString();
 
@@ -109,6 +126,7 @@ export default async function AdminLoginPage({
               const href = `/${code}/login${localeQs ? `?${localeQs}` : ""}`;
               return (
                 <Link
+                  key={code}
                   aria-current={isActive ? "page" : undefined}
                   className={
                     isActive

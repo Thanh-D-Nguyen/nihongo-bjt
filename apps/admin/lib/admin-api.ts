@@ -1,6 +1,7 @@
 "use client";
 
-const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
+// Use relative URLs so requests route through Next.js rewrites (basePath-aware).
+const apiBaseUrl = "";
 
 /** Browser fetch has no default timeout; avoid hanging when the API is down. */
 const ADMIN_API_FETCH_TIMEOUT_MS = 25_000;

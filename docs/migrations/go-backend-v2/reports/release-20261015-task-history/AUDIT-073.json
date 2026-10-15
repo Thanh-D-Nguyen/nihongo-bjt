@@ -1,0 +1,1711 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-073",
+  "title": "Audit learner exercises screen",
+  "start_head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The authenticated exercises screen had broken canonical review/progress storage and mismatched session contracts; the generator was absent and mixed Japanese/English examples produced invalid word-order prompts.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "GET /api/exercises/review/due returns HTTP 200 with the documented due-review list contract when empty and when due exercises exist."
+      },
+      {
+        "id": "AC2",
+        "text": "Due review reads/writes use the canonical Prisma exercise schema and a PostgreSQL integration regression covers due, get-state, and upsert operations."
+      },
+      {
+        "id": "AC3",
+        "text": "Visible authenticated /vi/exercises shows a helpful review empty state when no items are due and completes the practice journey with persisted daily progress."
+      },
+      {
+        "id": "AC4",
+        "text": "Anonymous visits redirect to localized login; authenticated desktop and 390x844 screen states render without browser errors or horizontal overflow."
+      },
+      {
+        "id": "AC5",
+        "text": "GET /api/exercises/daily-progress reads the canonical exercise sessions and profile goal, returns completed/goal/progress/isComplete, and fails with a logged 500 rather than fake zero progress on DB errors."
+      },
+      {
+        "id": "AC6",
+        "text": "CSRF-protected POST /api/exercises/generate returns up to the requested number of persisted, canonical meaning-match questions from active lexemes without exposing correct answers; retries reuse the source-keyed cache."
+      },
+      {
+        "id": "AC7",
+        "text": "Learner exercise sessions accept only existing same-type question IDs assigned at start; answer submission rejects unassigned questions, scores against persisted canonical exercises, returns feedback and totals, and increments daily progress after completion."
+      },
+      {
+        "id": "AC8",
+        "text": "Visible authenticated learner can generate, answer and complete each available exercise type; mixed Japanese/English examples are excluded from word-order generation; daily progress persists after refresh, anonymous access redirects to localized login, and the 390x844 screen has no horizontal overflow."
+      },
+      {
+        "id": "AC9",
+        "text": "POST /api/exercises/sessions rejects unsupported levels and placements with 400 before persistence; completing a session returns 409 until every assigned exercise has a saved answer, then persists exact totals."
+      }
+    ],
+    "expected_behavior": "The review queue is readable from canonical persisted exercise SRS rows; the setup screen and review affordance reflect real API responses, and learner practice stays functional.",
+    "observed_behavior": "Visible authenticated browser rendered /vi/exercises but GET /api/exercises/review/due?limit=50 returned 500; API log states relation learning.exercise_review_state does not exist. Prisma migration/schema place it in exercise.exercise_review_state.",
+    "rollback_plan": "Revert the exercise-review query/test/baseline changes only; preserve the existing Prisma migration and canonical exercise data."
+  },
+  "classification": {
+    "classes": [
+      "DATABASE",
+      "API_CONTRACT",
+      "DOMAIN_LOGIC",
+      "UI_ONLY",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/exercisereview",
+      "test": "TestStoreUsesCanonicalExerciseSchema",
+      "expect": "relation \"learning.exercise_review_state\" does not exist"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+      "expect": "daily progress ="
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers",
+      "expect": "generate status = 404"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestExerciseSubmitAnswer_Success",
+      "expect": "start: expected 201"
+    }
+  ],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/api-go/internal/httpserver/handler_exercise_generate.go",
+      "find": "unicode.Is(unicode.Latin, r)",
+      "replace": "unicode.Is(unicode.Cyrillic, r)"
+    },
+    "targets": [
+      {
+        "runner": "go",
+        "package": "./internal/httpserver",
+        "test": "TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples",
+        "expect": "mixed-language example generated a word-order exercise"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [
+    {
+      "finding": "test_skip_added:apps/api-go/internal/exercisereview/store_integration_test.go",
+      "reason": "This regression needs disposable PostgreSQL. Canonical suite_go provisions TEST_DATABASE_URL and verifies the integration test executes without skips."
+    },
+    {
+      "finding": "test_skip_added:apps/api-go/internal/httpserver/handler_exercise_progress_integration_test.go",
+      "reason": "This authenticated API regression requires canonical PostgreSQL. suite_go provisions TEST_DATABASE_URL and verifies it executes without skips."
+    }
+  ],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-08T12:24:19.783Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-08T12:26:25.577Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T12:26:51.824Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T12:27:44.392Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T12:29:01.168Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-08T12:29:35.149Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T12:29:46.632Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T12:34:57.226Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T12:37:42.670Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T12:38:23.310Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T12:38:41.365Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T12:38:56.549Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T12:46:38.411Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T12:56:28.843Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T13:05:51.751Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T13:20:03.346Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T13:22:39.429Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T13:23:45.033Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T13:28:43.920Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T13:36:13.183Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T13:58:00.914Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T14:12:27.524Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T14:20:39.967Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T14:23:29.785Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T14:29:13.937Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T14:36:29.976Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T14:36:56.988Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T14:45:45.058Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T14:51:48.437Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-08T14:56:15.487Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-08T14:56:20.000Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-08T12:27:10.061Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestStoreUsesCanonicalExerciseSchema store_integration_test.go:15: TEST_DATABASE_URL not set; run with scripts/quality/with-test-db.sh --- SKIP: TestStoreUsesCanonicalExerciseSchema (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema": "get due exercises returns PostgreSQL error for nonexistent learning.exercise_review_state relation"
+      },
+      "fingerprint": "2985383ae4ee5fa1d129dd7b2ead039d48143abab91360de01c7f4bfb2c629f7"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-08T12:27:26.794Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoreUsesCanonicalExerciseSchema store_integration_test.go:32: create review fixture: ERROR: null value in column \"updated_at\" of relation \"exercise_review_state\" violates not-null constraint (SQLSTATE 23502) --- FAIL: TestStoreUsesCanonicalExerciseSchema (0.02s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"get due exercises returns PostgreSQL error for nonexistent learning.exercise_review_state relation\""
+        }
+      ],
+      "expects": {
+        "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema": "get due exercises returns PostgreSQL error for nonexistent learning.exercise_review_state relation"
+      },
+      "fingerprint": "2985383ae4ee5fa1d129dd7b2ead039d48143abab91360de01c7f4bfb2c629f7"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-08T12:27:44.203Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoreUsesCanonicalExerciseSchema store_integration_test.go:41: get due exercises: exercisereview: get due exercises: ERROR: relation \"learning.exercise_review_state\" does not exist (SQLSTATE 42P01) --- FAIL: TestStoreUsesCanonicalExerciseSchema (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema": "relation \"learning.exercise_review_state\" does not exist"
+      },
+      "fingerprint": "706bb483a7b209878b70bda54086828f15d09b3e8906e1ac03db6625d92b4a51"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-08T12:28:17.752Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestStoreUsesCanonicalExerciseSchema store_integration_test.go:15: TEST_DATABASE_URL not set; run with scripts/quality/with-test-db.sh --- SKIP: TestStoreUsesCanonicalExerciseSchema (0.00s)"
+        }
+      ],
+      "fingerprint": "fc30f5ed04c4867caa62ab16e42e13ed93e19391bad594de1580fccd6489ff5d"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-08T12:28:33.597Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestStoreUsesCanonicalExerciseSchema store_integration_test.go:54: upsert review state: exercisereview: upsert review state: ERROR: null value in column \"updated_at\" of relation \"exercise_review_state\" violates not-null constraint (SQLSTATE 23502) --- FAIL: TestStoreUsesCanonicalExerciseSche…"
+        }
+      ],
+      "fingerprint": "fc30f5ed04c4867caa62ab16e42e13ed93e19391bad594de1580fccd6489ff5d"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-08T12:29:00.951Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ddb3ed48079ed99ca64393de1a0d8b0b4e54469c3111bd1d05bf201f6f5e2c94"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-08T12:29:34.896Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "35820ffd947434f4038cd414a4ed55571bbc96327c919462bbf73bd585539d35"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-08T12:32:39.824Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 690,
+        "executed": 690,
+        "passed": 690,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "690 passed, 0 allowed skip(s)",
+      "fingerprint": "35820ffd947434f4038cd414a4ed55571bbc96327c919462bbf73bd585539d35"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-08T12:34:56.962Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "35820ffd947434f4038cd414a4ed55571bbc96327c919462bbf73bd585539d35"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-08T12:37:42.138Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoreUsesCanonicalExerciseSchema store_integration_test.go:41: get due exercises: exercisereview: get due exercises: ERROR: relation \"learning.exercise_review_state\" does not exist (SQLSTATE 42P01) --- FAIL: TestStoreUsesCanonicalExerciseSchema (0.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion handler_exercise_progress_integration_test.go:65: daily progress = {Completed:0 Goal:0 Progress:0 IsComplete:false SessionCount:0 TotalQuestions:0}; want 3/4 (0.75), incomplete, two sessions --- FAIL: TestExercisesDailyProgressRetur…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema": "relation \"learning.exercise_review_state\" does not exist",
+        "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion": "daily progress ="
+      },
+      "fingerprint": "fbfe208a7b5c339ac530eb03ffe67a1c641c3c7cd85c2094176ba31f00b590a5"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-08T12:38:22.954Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "82e7afba2c446c09955b8848b1114e634c17cff5dc85b20be96d8ffb33410267"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-08T12:38:56.169Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "197c7e129810df1017a98d51222455461212796a6d5e16d927d500d39e0416ed"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-08T12:40:48.794Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -lc docker compose config --quiet && node scripts/local-audit-status.mjs --stable",
+      "exit_code": 0,
+      "fingerprint": "197c7e129810df1017a98d51222455461212796a6d5e16d927d500d39e0416ed"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-08T12:46:37.955Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion|TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoreUsesCanonicalExerciseSchema store_integration_test.go:41: get due exercises: exercisereview: get due exercises: ERROR: relation \"learning.exercise_review_state\" does not exist (SQLSTATE 42P01) --- FAIL: TestStoreUsesCanonicalExerciseSchema (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion handler_exercise_progress_integration_test.go:65: daily progress = {Completed:0 Goal:0 Progress:0 IsComplete:false SessionCount:0 TotalQuestions:0}; want 3/4 (0.75), incomplete, two sessions --- FAIL: TestExercisesDailyProgressRetur…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers handler_exercise_test.go:113: generate status = 404: 404 page not found --- FAIL: TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema": "relation \"learning.exercise_review_state\" does not exist",
+        "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion": "daily progress =",
+        "go:./internal/httpserver:TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers": "generate status = 404"
+      },
+      "fingerprint": "cfc02fed2496c6e70c480101942fcf1e5c73750b6bae77b8e7a90aeb2587d6f0"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-08T12:48:02.410Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion|TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers|TestExerciseSubmitAnswer_Success)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoreUsesCanonicalExerciseSchema store_integration_test.go:41: get due exercises: exercisereview: get due exercises: ERROR: relation \"learning.exercise_review_state\" does not exist (SQLSTATE 42P01) --- FAIL: TestStoreUsesCanonicalExerciseSchema (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion handler_exercise_progress_integration_test.go:65: daily progress = {Completed:0 Goal:0 Progress:0 IsComplete:false SessionCount:0 TotalQuestions:0}; want 3/4 (0.75), incomplete, two sessions --- FAIL: TestExercisesDailyProgressRetur…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers handler_exercise_test.go:113: generate status = 404: 404 page not found --- FAIL: TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseSubmitAnswer_Success",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExerciseSubmitAnswer_Success handler_exercise_test.go:167: start: expected 201, got 400: {\"error\":\"invalid request\"} --- FAIL: TestExerciseSubmitAnswer_Success (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema": "relation \"learning.exercise_review_state\" does not exist",
+        "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion": "daily progress =",
+        "go:./internal/httpserver:TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers": "generate status = 404",
+        "go:./internal/httpserver:TestExerciseSubmitAnswer_Success": "start: expected 201"
+      },
+      "fingerprint": "087fc0d8ab6a791afc1310218d01fc20d64ff1e881cb090050533b6c462fbaa3"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-08T12:56:27.996Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion|TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers|TestExerciseSubmitAnswer_Success)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseSubmitAnswer_Success",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "6605f8735f3c2e5e2a30fba2707c3a9eb8c5bbc6fae265897a81e9d0cc93d243"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-08T12:59:06.963Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "6605f8735f3c2e5e2a30fba2707c3a9eb8c5bbc6fae265897a81e9d0cc93d243"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-08T12:59:42.662Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 692,
+        "executed": 692,
+        "passed": 691,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "6605f8735f3c2e5e2a30fba2707c3a9eb8c5bbc6fae265897a81e9d0cc93d243"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-08T13:03:21.052Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 369,
+        "executed": 369,
+        "passed": 369,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 760,
+        "lint_errors": 65,
+        "lint_warnings": 26,
+        "new_debt": 1
+      },
+      "message": "RATCHET_VIOLATION: 1 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "6605f8735f3c2e5e2a30fba2707c3a9eb8c5bbc6fae265897a81e9d0cc93d243"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-08T13:05:51.095Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -lc docker compose config --quiet && node scripts/local-audit-status.mjs --stable",
+      "exit_code": 0,
+      "fingerprint": "f3621a0c4d4c6717bd8f69cc02b4c839e6559fba8252e287a46ca6055a7b529a"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-08T13:19:01.606Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion|TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers|TestExerciseSubmitAnswer_Success)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestStoreUsesCanonicalExerciseSchema store_integration_test.go:15: TEST_DATABASE_URL not set; run with scripts/quality/with-test-db.sh --- SKIP: TestStoreUsesCanonicalExerciseSchema (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_exercise_test.go:147:12: undefined: wordOrderDrafts internal/httpserver/handler_exercise_test.go:147:30: undefined: exerciseSentence FAIL git…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_exercise_test.go:147:12: undefined: wordOrderDrafts internal/httpserver/handler_exercise_test.go:147:30: undefined: exerciseSentence FAIL git…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseSubmitAnswer_Success",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_exercise_test.go:147:12: undefined: wordOrderDrafts internal/httpserver/handler_exercise_test.go:147:30: undefined: exerciseSentence FAIL git…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema": "relation \"learning.exercise_review_state\" does not exist",
+        "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion": "daily progress =",
+        "go:./internal/httpserver:TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers": "generate status = 404",
+        "go:./internal/httpserver:TestExerciseSubmitAnswer_Success": "start: expected 201"
+      },
+      "fingerprint": "76d98b5394c36c5297347de7507dfa5427d814be35ad49a6ddbf7b55c306ac46"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-08T13:20:02.755Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion|TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers|TestExerciseSubmitAnswer_Success|TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestStoreUsesCanonicalExerciseSchema store_integration_test.go:15: TEST_DATABASE_URL not set; run with scripts/quality/with-test-db.sh --- SKIP: TestStoreUsesCanonicalExerciseSchema (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_exercise_test.go:147:12: undefined: wordOrderDrafts internal/httpserver/handler_exercise_test.go:147:30: undefined: exerciseSentence FAIL git…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_exercise_test.go:147:12: undefined: wordOrderDrafts internal/httpserver/handler_exercise_test.go:147:30: undefined: exerciseSentence FAIL git…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseSubmitAnswer_Success",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_exercise_test.go:147:12: undefined: wordOrderDrafts internal/httpserver/handler_exercise_test.go:147:30: undefined: exerciseSentence FAIL git…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_exercise_test.go:147:12: undefined: wordOrderDrafts internal/httpserver/handler_exercise_test.go:147:30: undefined: exerciseSentence FAIL git…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema": "relation \"learning.exercise_review_state\" does not exist",
+        "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion": "daily progress =",
+        "go:./internal/httpserver:TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers": "generate status = 404",
+        "go:./internal/httpserver:TestExerciseSubmitAnswer_Success": "start: expected 201",
+        "go:./internal/httpserver:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples": "mixed-language example generated a word-order exercise"
+      },
+      "fingerprint": "28c9ecd2cdf48824878119163dc69749351923a296332a1dc3c2c5cc6f88a851"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-08T13:21:01.483Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_exercise_test.go:147:12: undefined: wordOrderDrafts internal/httpserver/handler_exercise_test.go:147:30: undefined: exerciseSentence FAIL git…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples": "mixed-language example generated a word-order exercise"
+      },
+      "fingerprint": "28c9ecd2cdf48824878119163dc69749351923a296332a1dc3c2c5cc6f88a851"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-08T13:22:38.917Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "sensitivity",
+      "outcome": "INSENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_exercise_generate.go",
+        "find": "\t\tif strings.IndexFunc(sentence.Japanese, func(r rune) bool { return unicode.IsLetter(r) && unicode.Is(unicode.Latin, r) }) >= 0 {\n\t\t\tcontinue\n\t\t}",
+        "replace": ""
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_exercise_generate.go:12:2: \"unicode\" imported and not used FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [build failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples": "mixed-language example generated a word-order exercise"
+      },
+      "fingerprint": "76d98b5394c36c5297347de7507dfa5427d814be35ad49a6ddbf7b55c306ac46"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-08T13:23:07.242Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "sensitivity",
+      "outcome": "INSENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_exercise_generate.go",
+        "find": "unicode.Is(unicode.Latin, r)",
+        "replace": "unicode.Is(unicode.Han, r)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples",
+          "outcome": "PASS",
+          "excerpt": "=== RUN TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples --- PASS: TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples (0.00s)",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples": "mixed-language example generated a word-order exercise"
+      },
+      "fingerprint": "76d98b5394c36c5297347de7507dfa5427d814be35ad49a6ddbf7b55c306ac46"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-08T13:23:28.203Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_exercise_generate.go",
+        "find": "unicode.Is(unicode.Latin, r)",
+        "replace": "unicode.Is(unicode.Cyrillic, r)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples handler_exercise_test.go:153: mixed-language example generated a word-order exercise: map[hint:Tôi bổ quả táo làm đôi từ chính giữa. shuffledTokens:[into the two リンゴを真ん中から二つに切った. cut apple I halves.]] --- FAIL: TestWordOrderDraftsRejec…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples": "mixed-language example generated a word-order exercise"
+      },
+      "fingerprint": "76d98b5394c36c5297347de7507dfa5427d814be35ad49a6ddbf7b55c306ac46"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-08T13:23:44.484Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion|TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers|TestExerciseSubmitAnswer_Success|TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseSubmitAnswer_Success",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "76d98b5394c36c5297347de7507dfa5427d814be35ad49a6ddbf7b55c306ac46"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-08T13:28:43.247Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "738868cc50c00b0a5fa4c3c6da7189906948f46257e223e211849469f31126f7"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-08T13:31:16.934Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 693,
+        "executed": 693,
+        "passed": 693,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "693 passed, 0 allowed skip(s)",
+      "fingerprint": "738868cc50c00b0a5fa4c3c6da7189906948f46257e223e211849469f31126f7"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-08T13:35:18.975Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 369,
+        "executed": 369,
+        "passed": 369,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 760,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "738868cc50c00b0a5fa4c3c6da7189906948f46257e223e211849469f31126f7"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-08T13:36:12.441Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion|TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers|TestExerciseSubmitAnswer_Success|TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseSubmitAnswer_Success",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "738868cc50c00b0a5fa4c3c6da7189906948f46257e223e211849469f31126f7"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-08T13:58:00.048Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "node scripts/local-audit-status.mjs --stable",
+      "exit_code": 0,
+      "fingerprint": "e73cfc7dca0993a97f0e37c3e105af5ca2ab44916f70880ab4e00ce42aa23cd3"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-08T14:02:00.045Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "e73cfc7dca0993a97f0e37c3e105af5ca2ab44916f70880ab4e00ce42aa23cd3"
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-08T14:04:36.847Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 694,
+        "executed": 694,
+        "passed": 694,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "891549c9f95406fe34bea28777e130da0a077ccb50e0fcc351f49998e39674ab"
+    },
+    {
+      "seq": 35,
+      "at": "2026-10-08T14:08:13.667Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 369,
+        "executed": 369,
+        "passed": 369,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 760,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "49f162d22647bbcd973e58ab88c579f5131b4f6c95b539e3648da43ff630a941"
+    },
+    {
+      "seq": 36,
+      "at": "2026-10-08T14:12:12.095Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion|TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers|TestExerciseSubmitAnswer_Success|TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestStoreUsesCanonicalExerciseSchema store_integration_test.go:15: TEST_DATABASE_URL not set; run with scripts/quality/with-test-db.sh --- SKIP: TestStoreUsesCanonicalExerciseSchema (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion handler_exercise_progress_integration_test.go:17: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers handler_exercise_test.go:104: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseSubmitAnswer_Success",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestExerciseSubmitAnswer_Success handler_exercise_test.go:188: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestExerciseSubmitAnswer_Success (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c01dfc485db13346964dcebab26e3faa5c85d1e06a682f07be02c8dccf1a5572"
+    },
+    {
+      "seq": 37,
+      "at": "2026-10-08T14:12:26.080Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion|TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers|TestExerciseSubmitAnswer_Success|TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseSubmitAnswer_Success",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c01dfc485db13346964dcebab26e3faa5c85d1e06a682f07be02c8dccf1a5572"
+    },
+    {
+      "seq": 38,
+      "at": "2026-10-08T14:14:53.346Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "c01dfc485db13346964dcebab26e3faa5c85d1e06a682f07be02c8dccf1a5572"
+    },
+    {
+      "seq": 39,
+      "at": "2026-10-08T14:17:10.665Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 694,
+        "executed": 694,
+        "passed": 694,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "694 passed, 0 allowed skip(s)",
+      "fingerprint": "c01dfc485db13346964dcebab26e3faa5c85d1e06a682f07be02c8dccf1a5572"
+    },
+    {
+      "seq": 40,
+      "at": "2026-10-08T14:20:38.603Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 369,
+        "executed": 369,
+        "passed": 369,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 760,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "c01dfc485db13346964dcebab26e3faa5c85d1e06a682f07be02c8dccf1a5572"
+    },
+    {
+      "seq": 41,
+      "at": "2026-10-08T14:23:28.453Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "f3421d366355522e4ee5b06785c5339ffdc577d5558dc3b415dfe493af5e3360"
+    },
+    {
+      "seq": 42,
+      "at": "2026-10-08T14:25:43.674Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 694,
+        "executed": 694,
+        "passed": 694,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "694 passed, 0 allowed skip(s)",
+      "fingerprint": "f3421d366355522e4ee5b06785c5339ffdc577d5558dc3b415dfe493af5e3360"
+    },
+    {
+      "seq": 43,
+      "at": "2026-10-08T14:28:43.039Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 369,
+        "executed": 369,
+        "passed": 369,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 760,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "f3421d366355522e4ee5b06785c5339ffdc577d5558dc3b415dfe493af5e3360"
+    },
+    {
+      "seq": 44,
+      "at": "2026-10-08T14:29:12.572Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion|TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers|TestExerciseSubmitAnswer_Success|TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseSubmitAnswer_Success",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f3421d366355522e4ee5b06785c5339ffdc577d5558dc3b415dfe493af5e3360"
+    },
+    {
+      "seq": 45,
+      "at": "2026-10-08T14:36:55.561Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion|TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers|TestExerciseSubmitAnswer_Success|TestExerciseStart_Success|TestExerciseComplete_Success)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/exercisereview [github.com/kotobawork/nihongo-bjt/api-go/internal/exercisereview.test] internal/exercisereview/store_integration_test.go:51:12: due[0].Exercise undefined (type DueExercise has no field or method Exercise) internal/exercisereview/sto…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_exercise_test.go:174:12: undefined: wordOrderDrafts internal/httpserver/handler_exercise_test.go:174:30: undefined: exerciseSentence internal…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_exercise_test.go:174:12: undefined: wordOrderDrafts internal/httpserver/handler_exercise_test.go:174:30: undefined: exerciseSentence internal…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseSubmitAnswer_Success",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_exercise_test.go:174:12: undefined: wordOrderDrafts internal/httpserver/handler_exercise_test.go:174:30: undefined: exerciseSentence internal…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseStart_Success",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_exercise_test.go:174:12: undefined: wordOrderDrafts internal/httpserver/handler_exercise_test.go:174:30: undefined: exerciseSentence internal…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseComplete_Success",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_exercise_test.go:174:12: undefined: wordOrderDrafts internal/httpserver/handler_exercise_test.go:174:30: undefined: exerciseSentence internal…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema": "relation \"learning.exercise_review_state\" does not exist",
+        "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion": "daily progress =",
+        "go:./internal/httpserver:TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers": "generate status = 404",
+        "go:./internal/httpserver:TestExerciseSubmitAnswer_Success": "start: expected 201",
+        "go:./internal/httpserver:TestExerciseStart_Success": "invalid level: expected 400",
+        "go:./internal/httpserver:TestExerciseComplete_Success": "unfinished completion: expected 409"
+      },
+      "fingerprint": "975af393e246b8c6b2756a4873d60d3b426234b31142e85ee0818ed2c1d6087f"
+    },
+    {
+      "seq": 46,
+      "at": "2026-10-08T14:45:43.709Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "e2ed120d5adfccef2f6ac92fbc3ecebc80eaa42e1206c274d56666969922eeb2"
+    },
+    {
+      "seq": 47,
+      "at": "2026-10-08T14:48:20.141Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 694,
+        "executed": 694,
+        "passed": 694,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "694 passed, 0 allowed skip(s)",
+      "fingerprint": "e2ed120d5adfccef2f6ac92fbc3ecebc80eaa42e1206c274d56666969922eeb2"
+    },
+    {
+      "seq": 48,
+      "at": "2026-10-08T14:51:31.627Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 369,
+        "executed": 369,
+        "passed": 369,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 760,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "e2ed120d5adfccef2f6ac92fbc3ecebc80eaa42e1206c274d56666969922eeb2"
+    },
+    {
+      "seq": 49,
+      "at": "2026-10-08T14:51:47.011Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoreUsesCanonicalExerciseSchema)$ ./internal/exercisereview",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion|TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers|TestExerciseSubmitAnswer_Success|TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/exercisereview:TestStoreUsesCanonicalExerciseSchema",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseGenerate_ReturnsPersistedQuestionsWithoutAnswers",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseSubmitAnswer_Success",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestWordOrderDraftsRejectMixedJapaneseAndEnglishExamples",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e2ed120d5adfccef2f6ac92fbc3ecebc80eaa42e1206c274d56666969922eeb2"
+    },
+    {
+      "seq": 50,
+      "at": "2026-10-08T14:56:14.187Z",
+      "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Popper",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "e2ed120d5adfccef2f6ac92fbc3ecebc80eaa42e1206c274d56666969922eeb2"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-08T14:56:19.981Z",
+    "head": "43408b8e6c5c5a9828c7217cebefe00358c4075a",
+    "fingerprint": "e2ed120d5adfccef2f6ac92fbc3ecebc80eaa42e1206c274d56666969922eeb2",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/exercisereview/store.go": "dda12187b79e4d7239e0e35e4e6a9e186f6da230",
+      "apps/api-go/internal/exercisereview/store_integration_test.go": "78309e3c745c41455960f6f88d3721cd82286ee8",
+      "apps/api-go/internal/httpserver/handler_exercise.go": "2a90651b16e4c8e151bde09f053e9876338d35f6",
+      "apps/api-go/internal/httpserver/handler_exercise_generate.go": "8cd9b2820ee89b4aee66fae41efd1736e8f4e09e",
+      "apps/api-go/internal/httpserver/handler_exercise_progress_integration_test.go": "435e8e1fe0698e344f418e6eb5df9d0ac80a18bc",
+      "apps/api-go/internal/httpserver/handler_exercise_test.go": "7a30320c88028443f9b00a36eb07c5872e1d2bbe",
+      "apps/api-go/internal/httpserver/handler_final_batch.go": "7e1c039a0cf6dafdaacd07a0b6ada256fe3a7891",
+      "apps/api-go/internal/httpserver/server.go": "19b0cb73805965b5466a27021aab7902dc6c6672",
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "4660a13709a347e140f51333682d12afa925da09",
+      "apps/web/app/[locale]/exercises/_components/exercises-page-client.tsx": "eec5ec75d1ee8442934d7ff73c05bedbc24331c6",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "ab8b57f2b08fcd6ffe744273d8f2e02b26810f16",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "a2e3967bc044d86f4230dd1ed0490fb77b7bb0ea",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "b5e3863d2b26ef8c45bda7760d3d671158094884",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "e90b41d291d9da3a1f8f865181afb4ef9763bf83",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "606a068b383ab54b29ed1dfb2c30fc38eebbba7a",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "44d4a3e201fb094b9000eee093fa05d879ad074b",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "3c0f9bb50c3c661e3646fb825f576e53bdc125bb",
+      "packages/database/generated/client/edge.js": "09e781622d35be30d61de4ead2a86accd6243acb",
+      "packages/database/generated/client/index-browser.js": "1351e6d98ddc5c3f750a4ae424c639e6d96b470e",
+      "packages/database/generated/client/index.d.ts": "e8f02db84c5f945b5862c0dbdd89251b95705a21",
+      "packages/database/generated/client/index.js": "e5badcd842092b4dd425796ac8750edd3da59ff5",
+      "packages/database/generated/client/package.json": "807d9835d607d994e238bdff0aa3ddecfc8c3f51",
+      "packages/database/generated/client/schema.prisma": "688d7ab56b911d7c7d10ad52fd29f571c5aec366",
+      "packages/database/prisma/migrations/20261008130000_exercise_assignment_cache/migration.sql": "7013d48485e355dd4eb9ac2dcaa3163b5b96b9fc",
+      "packages/database/prisma/schema.prisma": "7625d71f739187e1fe61df160647950193123557"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

@@ -1,0 +1,184 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-152",
+  "title": "Fix admin growth referrals list and detail contract",
+  "start_head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+  "preexisting_changes": {
+    "apps/admin/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/admin/tsconfig.tsbuildinfo": "6b0c7bc84ee49d33491f829cb00b397b9e0b3723",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_iam_test.go": "aee00270d49976ed76fe616f9893de4a8ac7431c",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_rbac_test.go": "996ba6a016727ad3f7cd9a5c033c569e93b9ff8e",
+    "apps/api-go/internal/httpserver/handler_admin_core.go": "c12a0160d9718accb5db77ed259c1d56e6ac3990",
+    "apps/api-go/internal/httpserver/handler_admin_growth_campaigns.go": "d1cf6a0cd0d109b9ff59523da87e8d640db8b7b8",
+    "apps/api-go/internal/httpserver/handler_admin_growth_postcards.go": "34013e9db95374d6ef0771be9f09f251202b17ca",
+    "apps/api-go/internal/httpserver/handler_admin_growth_referrals.go": "c6d8f2c781ca0962fec1e24305cc8933e9608c9d",
+    "apps/api-go/internal/httpserver/handler_admin_growth_social.go": "b04e7dad08821f1c419273227d71a26dd8a521c5",
+    "apps/api-go/internal/httpserver/server.go": "083ee51c8d1f15f4ed7d720f3f429009ebaee23a",
+    "apps/web/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/web/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/web/tsconfig.tsbuildinfo": "91d48d855b4f16f10809b5e9d91bae8ed06c76dc"
+  },
+  "spec": {
+    "problem": "The Admin referrals client expects a nested user object on list and detail responses, plus event and audit fields matching its types; the Go handlers expose flattened users and incomplete event fields. Revoke must remain functional and auditable.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "GET referrals list returns the Admin Summary shape with nested user and pagination; matching persisted events populate eventsLastHour/abuseFlag."
+      },
+      {
+        "id": "AC2",
+        "text": "GET referral detail returns the Summary shape plus schema-backed events and audit fields in the shape consumed by the Admin client."
+      },
+      {
+        "id": "AC3",
+        "text": "POST revoke as an authorized growth manager returns {id, revoked:true}, removes the referral code and writes the expected audit record."
+      }
+    ],
+    "expected_behavior": "List and detail conform to the existing Admin caller and persisted ReferralCode/ReferralEvent schema; authorized revoke returns success, deletes the referral code, and records its audit event.",
+    "observed_behavior": "List/detail currently serialize displayName and email at the top level; detail events omit kind, payload, referrerUserId and referredUserId. Revoke has no positive contract test in a separate owned test file.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DOMAIN_LOGIC"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminGrowthReferralsListAndDetailUseAdminClientContractAUDIT152",
+      "expect": "list item contract="
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows",
+      "expect": "event UI field \"publicToken\" missing"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "VALID_RED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-14T22:51:09.050Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-14T22:51:18.271Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-14T22:51:23.778Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T22:52:53.838Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-14T22:52:26.961Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthReferralsListAndDetailUseAdminClientContractAUDIT152)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthReferralsListAndDetailUseAdminClientContractAUDIT152",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminGrowthReferralsListAndDetailUseAdminClientContractAUDIT152 handler_admin_growth_referrals_contract_test.go:14: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthReferralsListAndDetailUseAdminClientContractAUDIT152 (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthReferralsListAndDetailUseAdminClientContractAUDIT152": "list item contract="
+      },
+      "fingerprint": "d7a1d3269ccc1725c1fd578f927de7d09b3226eade8a40b39c6176412506ff7d"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-14T22:52:53.458Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthReferralsListAndDetailUseAdminClientContractAUDIT152|TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthReferralsListAndDetailUseAdminClientContractAUDIT152",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthReferralsListAndDetailUseAdminClientContractAUDIT152 2026/10/15 07:52:51 INFO request method=GET path=/api/admin/growth/referrals status=200 duration=6.198166ms bytes=313 handler_admin_growth_referrals_contract_test.go:82: list item contract={ID:da13813e-857b-492d-8caa-311903c…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows 2026/10/15 07:52:52 INFO request method=GET path=/api/admin/growth/social/events status=200 duration=5.381708ms bytes=281 handler_admin_growth_social_audit153_test.go:92: event UI field \"publicToken\" missing: {\"items\":[{\"id\":…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthReferralsListAndDetailUseAdminClientContractAUDIT152": "list item contract=",
+        "go:./internal/httpserver:TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows": "event UI field \"publicToken\" missing"
+      },
+      "fingerprint": "d7a1d3269ccc1725c1fd578f927de7d09b3226eade8a40b39c6176412506ff7d"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-14T22:53:58.767Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthReferralsListAndDetailUseAdminClientContractAUDIT152|TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthReferralsListAndDetailUseAdminClientContractAUDIT152",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows 2026/10/15 07:53:58 INFO request method=GET path=/api/admin/growth/social/events status=200 duration=5.272292ms bytes=281 handler_admin_growth_social_audit153_test.go:92: event UI field \"publicToken\" missing: {\"items\":[{\"id\":…"
+        }
+      ],
+      "fingerprint": "b61fafae654bb71c149aa9ed1d61424b5e88736bfe7845879fcfd29c89bc8261"
+    }
+  ],
+  "closed": null,
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [
+    "apps/api-go/internal/httpserver/handler_admin_growth_referrals.go"
+  ]
+}

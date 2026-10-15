@@ -2,12 +2,15 @@ package httpserver
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
@@ -70,9 +73,13 @@ func adminMediaListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 		}
 
 		var total int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM media.asset "+whereClause, args...).Scan(&total)
+		if err := db.QueryRow(r.Context(), "SELECT COUNT(*) FROM media.asset "+whereClause, args...).Scan(&total); err != nil {
+			logger.Error("count media assets admin", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
-		dataQ := fmt.Sprintf(`SELECT id, object_key, source_url, mime_type, byte_size, rights_status, license,
+		dataQ := fmt.Sprintf(`SELECT id, object_key, mime_type, byte_size, rights_status, license,
 			source_url, provenance, accessibility, status, created_at, updated_at
 			FROM media.asset %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
@@ -89,12 +96,11 @@ func adminMediaListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 		type Asset struct {
 			ID            string          `json:"id"`
 			ObjectKey     string          `json:"objectKey"`
-			OriginalName  string          `json:"originalName"`
 			MimeType      string          `json:"mimeType"`
-			SizeBytes     int64           `json:"sizeBytes"`
+			SizeBytes     *int64          `json:"byteSize"`
 			RightsStatus  *string         `json:"rightsStatus,omitempty"`
 			License       *string         `json:"license,omitempty"`
-			SourceURL     *string         `json:"sourceUrl,omitempty"`
+			SourceURL     *string         `json:"sourceUrl"`
 			Provenance    json.RawMessage `json:"provenance,omitempty"`
 			Accessibility json.RawMessage `json:"accessibility,omitempty"`
 			Status        string          `json:"status"`
@@ -106,13 +112,21 @@ func adminMediaListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 		for rows.Next() {
 			var a Asset
 			var ca, ua time.Time
-			if rows.Scan(&a.ID, &a.ObjectKey, &a.OriginalName, &a.MimeType, &a.SizeBytes,
+			if err := rows.Scan(&a.ID, &a.ObjectKey, &a.MimeType, &a.SizeBytes,
 				&a.RightsStatus, &a.License, &a.SourceURL, &a.Provenance, &a.Accessibility,
-				&a.Status, &ca, &ua) == nil {
-				a.CreatedAt = ca.UTC().Format(time.RFC3339)
-				a.UpdatedAt = ua.UTC().Format(time.RFC3339)
-				items = append(items, a)
+				&a.Status, &ca, &ua); err != nil {
+				logger.Error("scan media asset admin", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			a.CreatedAt = ca.UTC().Format(time.RFC3339)
+			a.UpdatedAt = ua.UTC().Format(time.RFC3339)
+			items = append(items, a)
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate media assets admin", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if items == nil {
 			items = []Asset{}
@@ -127,7 +141,7 @@ func adminMediaListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 func adminMediaDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := extractPathParam(r.URL.Path, "media", 1)
-		if id == "" {
+		if !isValidUUID(id) {
 			writeJSONError(w, "media id required", http.StatusBadRequest)
 			return
 		}
@@ -135,12 +149,11 @@ func adminMediaDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 		type Asset struct {
 			ID            string            `json:"id"`
 			ObjectKey     string            `json:"objectKey"`
-			OriginalName  string            `json:"originalName"`
 			MimeType      string            `json:"mimeType"`
-			SizeBytes     int64             `json:"sizeBytes"`
+			SizeBytes     *int64            `json:"byteSize"`
 			RightsStatus  *string           `json:"rightsStatus,omitempty"`
 			License       *string           `json:"license,omitempty"`
-			SourceURL     *string           `json:"sourceUrl,omitempty"`
+			SourceURL     *string           `json:"sourceUrl"`
 			Provenance    json.RawMessage   `json:"provenance,omitempty"`
 			Accessibility json.RawMessage   `json:"accessibility,omitempty"`
 			Status        string            `json:"status"`
@@ -151,39 +164,59 @@ func adminMediaDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 
 		var a Asset
 		var ca, ua time.Time
-		err := db.QueryRow(r.Context(), `SELECT id, object_key, source_url, mime_type, byte_size, rights_status, license,
+		err := db.QueryRow(r.Context(), `SELECT id, object_key, mime_type, byte_size, rights_status, license,
 			source_url, provenance, accessibility, status, created_at, updated_at
 			FROM media.asset WHERE id=$1`, id).
-			Scan(&a.ID, &a.ObjectKey, &a.OriginalName, &a.MimeType, &a.SizeBytes,
+			Scan(&a.ID, &a.ObjectKey, &a.MimeType, &a.SizeBytes,
 				&a.RightsStatus, &a.License, &a.SourceURL, &a.Provenance, &a.Accessibility,
 				&a.Status, &ca, &ua)
-		if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
 			writeJSONError(w, "media asset not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			logger.Error("read admin media asset", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 		a.CreatedAt = ca.UTC().Format(time.RFC3339)
 		a.UpdatedAt = ua.UTC().Format(time.RFC3339)
 
 		a.Audit = []json.RawMessage{}
-		auditRows, _ := db.Query(r.Context(), `SELECT id, action, actor_id, reason, before, after, created_at
+		auditRows, err := db.Query(r.Context(), `SELECT id, action, actor_id, reason, before, after, created_at
 			FROM ops.admin_audit_log WHERE target_id=$1 AND target_type='media.asset'
 			ORDER BY created_at DESC LIMIT 30`, id)
-		if auditRows != nil {
-			for auditRows.Next() {
-				var aid, action, actorID string
-				var reason *string
-				var before, after json.RawMessage
-				var aca time.Time
-				if auditRows.Scan(&aid, &action, &actorID, &reason, &before, &after, &aca) == nil {
-					entry, _ := json.Marshal(map[string]any{
-						"id": aid, "action": action, "actorId": actorID,
-						"reason": reason, "before": before, "after": after,
-						"createdAt": aca.UTC().Format(time.RFC3339),
-					})
-					a.Audit = append(a.Audit, entry)
-				}
+		if err != nil {
+			logger.Error("read media asset audit", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer auditRows.Close()
+		for auditRows.Next() {
+			var aid, action, actorID string
+			var reason *string
+			var before, after json.RawMessage
+			var aca time.Time
+			if err := auditRows.Scan(&aid, &action, &actorID, &reason, &before, &after, &aca); err != nil {
+				logger.Error("scan media asset audit", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
-			auditRows.Close()
+			entry, err := json.Marshal(map[string]any{
+				"id": aid, "action": action, "actorId": actorID,
+				"reason": reason, "before": before, "after": after,
+				"createdAt": aca.UTC().Format(time.RFC3339),
+			})
+			if err != nil {
+				logger.Error("encode media asset audit", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			a.Audit = append(a.Audit, entry)
+		}
+		if err := auditRows.Err(); err != nil {
+			logger.Error("iterate media asset audit", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 
 		writeJSON(w, http.StatusOK, a)
@@ -200,7 +233,7 @@ func adminMediaMetadataPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		}
 
 		id := extractPathParam(r.URL.Path, "media", 1)
-		if id == "" {
+		if !isValidUUID(id) {
 			writeJSONError(w, "media id required", http.StatusBadRequest)
 			return
 		}
@@ -222,9 +255,25 @@ func adminMediaMetadataPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			return
 		}
 
+		ctx := r.Context()
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin media metadata update", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 		// Get before state
 		var beforeJSON json.RawMessage
-		db.QueryRow(r.Context(), `SELECT row_to_json(t) FROM (SELECT license, rights_status, source_url, provenance, accessibility FROM media.asset WHERE id=$1) t`, id).Scan(&beforeJSON)
+		err = tx.QueryRow(ctx, `SELECT row_to_json(t) FROM (SELECT license, rights_status, source_url, provenance, accessibility FROM media.asset WHERE id=$1 FOR UPDATE) t`, id).Scan(&beforeJSON)
+		if errors.Is(err, pgx.ErrNoRows) {
+			writeJSONError(w, "media asset not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			logger.Error("read media metadata before update", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		if beforeJSON == nil {
 			writeJSONError(w, "media asset not found", http.StatusNotFound)
 			return
@@ -269,16 +318,28 @@ func adminMediaMetadataPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		query := "UPDATE media.asset SET " + joinStrings(setClauses, ", ") + " WHERE id = $" + itoa(argIdx)
 		args = append(args, id)
 
-		if _, err := db.Exec(r.Context(), query, args...); err != nil {
+		if _, err := tx.Exec(ctx, query, args...); err != nil {
 			logger.Error("patch media metadata", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 
-		afterJSON, _ := json.Marshal(req)
-		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
-			VALUES ('media.metadata.updated',$1,$2,'media.asset',$3,$4,$5,NOW())`,
-			identity.ActorID, id, req.Reason, beforeJSON, afterJSON)
+		var afterJSON json.RawMessage
+		if err := tx.QueryRow(ctx, `SELECT row_to_json(t) FROM (SELECT license, rights_status, source_url, provenance, accessibility FROM media.asset WHERE id=$1) t`, id).Scan(&afterJSON); err != nil {
+			logger.Error("read media metadata after update", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "media.metadata.updated", "media.asset", id, req.Reason, beforeJSON, afterJSON); err != nil {
+			logger.Error("audit media metadata update", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit media metadata update", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "updated": true})
 	}
@@ -294,7 +355,7 @@ func adminMediaSoftDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 		}
 
 		id := extractPathParam(r.URL.Path, "media", 1)
-		if id == "" {
+		if !isValidUUID(id) {
 			writeJSONError(w, "media id required", http.StatusBadRequest)
 			return
 		}
@@ -311,25 +372,42 @@ func adminMediaSoftDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 			return
 		}
 
-		var beforeStatus string
-		err := db.QueryRow(r.Context(), "SELECT status FROM media.asset WHERE id=$1", id).Scan(&beforeStatus)
+		ctx := r.Context()
+		tx, err := db.Begin(ctx)
 		if err != nil {
+			logger.Error("begin media soft delete", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
+		var beforeStatus string
+		err = tx.QueryRow(ctx, "SELECT status FROM media.asset WHERE id=$1 FOR UPDATE", id).Scan(&beforeStatus)
+		if errors.Is(err, pgx.ErrNoRows) {
 			writeJSONError(w, "media asset not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			logger.Error("read media asset before delete", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 
-		_, err = db.Exec(r.Context(), "UPDATE media.asset SET status='deleted', updated_at=NOW() WHERE id=$1", id)
+		_, err = tx.Exec(ctx, "UPDATE media.asset SET status='deleted', updated_at=NOW() WHERE id=$1", id)
 		if err != nil {
 			logger.Error("soft delete media", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 
-		beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus})
-		afterJSON, _ := json.Marshal(map[string]any{"status": "deleted"})
-		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
-			VALUES ('media.soft_deleted',$1,$2,'media.asset',$3,$4,$5,NOW())`,
-			identity.ActorID, id, req.Reason, beforeJSON, afterJSON)
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "media.soft_deleted", "media.asset", id, req.Reason, map[string]any{"status": beforeStatus}, map[string]any{"status": "deleted"}); err != nil {
+			logger.Error("audit media soft delete", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit media soft delete", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": "deleted"})
 	}
@@ -341,7 +419,11 @@ func adminMediaSoftDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 func adminCompanionConfigHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var tipCount int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM content.companion_tip").Scan(&tipCount)
+		if err := db.QueryRow(r.Context(), "SELECT COUNT(*) FROM content.companion_tip").Scan(&tipCount); err != nil {
+			logger.Error("count companion tips", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		type RiveAsset struct {
 			File  string `json:"file"`
@@ -356,16 +438,27 @@ func adminCompanionConfigHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 		}
 
 		// Get distinct categories
-		catRows, _ := db.Query(r.Context(), "SELECT DISTINCT category FROM content.companion_tip ORDER BY category")
+		catRows, err := db.Query(r.Context(), "SELECT DISTINCT category FROM content.companion_tip ORDER BY category")
+		if err != nil {
+			logger.Error("list companion tip categories", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer catRows.Close()
 		categories := []string{}
-		if catRows != nil {
-			for catRows.Next() {
-				var c string
-				if catRows.Scan(&c) == nil {
-					categories = append(categories, c)
-				}
+		for catRows.Next() {
+			var c string
+			if err := catRows.Scan(&c); err != nil {
+				logger.Error("scan companion tip category", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
-			catRows.Close()
+			categories = append(categories, c)
+		}
+		if err := catRows.Err(); err != nil {
+			logger.Error("iterate companion tip categories", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 
 		writeJSON(w, http.StatusOK, map[string]any{
@@ -410,12 +503,20 @@ func adminCompanionTipsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		for rows.Next() {
 			var t Tip
 			var ca, ua time.Time
-			if rows.Scan(&t.ID, &t.Category, &t.ContentJa, &t.ContentVi, &t.ExampleJa, &t.ExampleVi,
-				&t.JLPTLevel, &t.Active, &t.SortOrder, &ca, &ua) == nil {
-				t.CreatedAt = ca.UTC().Format(time.RFC3339)
-				t.UpdatedAt = ua.UTC().Format(time.RFC3339)
-				items = append(items, t)
+			if err := rows.Scan(&t.ID, &t.Category, &t.ContentJa, &t.ContentVi, &t.ExampleJa, &t.ExampleVi,
+				&t.JLPTLevel, &t.Active, &t.SortOrder, &ca, &ua); err != nil {
+				logger.Error("scan companion tip", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			t.CreatedAt = ca.UTC().Format(time.RFC3339)
+			t.UpdatedAt = ua.UTC().Format(time.RFC3339)
+			items = append(items, t)
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate companion tips", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if items == nil {
 			items = []Tip{}
@@ -464,8 +565,16 @@ func adminCompanionTipCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			sortOrder = *req.SortOrder
 		}
 
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin companion tip create", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(r.Context())
+
 		var id string
-		err := db.QueryRow(r.Context(), `INSERT INTO content.companion_tip
+		err = tx.QueryRow(r.Context(), `INSERT INTO content.companion_tip
 			(category, content_ja, content_vi, example_ja, example_vi, jlpt_level, active, sort_order, created_at, updated_at)
 			VALUES ($1,$2,$3,$4,$5,$6,true,$7,NOW(),NOW()) RETURNING id`,
 			req.Category, req.ContentJa, req.ContentVi, req.ExampleJa, req.ExampleVi, req.JLPTLevel, sortOrder).Scan(&id)
@@ -475,10 +584,24 @@ func adminCompanionTipCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			return
 		}
 
-		afterJSON, _ := json.Marshal(map[string]any{"id": id, "category": req.Category})
-		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		afterJSON, err := json.Marshal(map[string]any{"id": id, "category": req.Category})
+		if err != nil {
+			logger.Error("encode companion tip audit", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if _, err := tx.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('companion.tip.created',$1,$2,'companion_tip','create',$3,NOW())`,
-			identity.ActorID, id, afterJSON)
+			identity.ActorID, id, afterJSON); err != nil {
+			logger.Error("audit companion tip create", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit companion tip create", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		writeJSON(w, http.StatusCreated, map[string]any{"id": id})
 	}
@@ -496,6 +619,10 @@ func adminCompanionTipPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		id := extractPathParam(r.URL.Path, "tips", 1)
 		if id == "" {
 			writeJSONError(w, "tip id required", http.StatusBadRequest)
+			return
+		}
+		if _, err := uuid.Parse(id); err != nil {
+			writeJSONError(w, "invalid tip id", http.StatusBadRequest)
 			return
 		}
 
@@ -540,16 +667,42 @@ func adminCompanionTipPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		query := "UPDATE content.companion_tip SET " + joinStrings(setClauses, ", ") + " WHERE id = $" + itoa(argIdx)
 		args = append(args, id)
 
-		if _, err := db.Exec(r.Context(), query, args...); err != nil {
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin companion tip update", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(r.Context())
+		result, err := tx.Exec(r.Context(), query, args...)
+		if err != nil {
 			logger.Error("patch companion tip", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+		if result.RowsAffected() == 0 {
+			writeJSONError(w, "tip not found", http.StatusNotFound)
+			return
+		}
 
-		afterJSON, _ := json.Marshal(req)
-		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		afterJSON, err := json.Marshal(req)
+		if err != nil {
+			logger.Error("encode companion tip audit", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if _, err := tx.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('companion.tip.updated',$1,$2,'companion_tip','patch',$3,NOW())`,
-			identity.ActorID, id, afterJSON)
+			identity.ActorID, id, afterJSON); err != nil {
+			logger.Error("audit companion tip update", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit companion tip update", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "updated": true})
 	}
@@ -569,393 +722,48 @@ func adminCompanionTipDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			writeJSONError(w, "tip id required", http.StatusBadRequest)
 			return
 		}
+		if _, err := uuid.Parse(id); err != nil {
+			writeJSONError(w, "invalid tip id", http.StatusBadRequest)
+			return
+		}
 
-		var exists bool
-		db.QueryRow(r.Context(), "SELECT EXISTS(SELECT 1 FROM content.companion_tip WHERE id=$1)", id).Scan(&exists)
-		if !exists {
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin companion tip delete", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(r.Context())
+		result, err := tx.Exec(r.Context(), "DELETE FROM content.companion_tip WHERE id=$1", id)
+		if err != nil {
+			logger.Error("delete companion tip", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if result.RowsAffected() == 0 {
 			writeJSONError(w, "tip not found", http.StatusNotFound)
 			return
 		}
 
-		db.Exec(r.Context(), "DELETE FROM content.companion_tip WHERE id=$1", id)
-
-		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
-		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
+		beforeJSON, err := json.Marshal(map[string]any{"id": id})
+		if err != nil {
+			logger.Error("encode companion tip delete audit", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if _, err := tx.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
 			VALUES ('companion.tip.deleted',$1,$2,'companion_tip','delete',$3,NOW())`,
-			identity.ActorID, id, beforeJSON)
+			identity.ActorID, id, beforeJSON); err != nil {
+			logger.Error("audit companion tip delete", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit companion tip delete", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true})
-	}
-}
-
-// ── Privacy Admin ───────────────────────────────────────────────────────────
-
-// adminPrivacyRequestsListHandler implements GET /api/admin/privacy/requests.
-func adminPrivacyRequestsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		limit := queryInt(r, "limit", 50)
-		offset := queryInt(r, "offset", 0)
-		kind := r.URL.Query().Get("kind")
-		status := r.URL.Query().Get("status")
-
-		if limit < 1 || limit > 200 {
-			limit = 50
-		}
-		if offset < 0 {
-			offset = 0
-		}
-
-		whereParts := []string{}
-		args := []any{}
-		argIdx := 1
-
-		if kind != "" {
-			whereParts = append(whereParts, fmt.Sprintf("kind = $%d", argIdx))
-			args = append(args, kind)
-			argIdx++
-		}
-		if status != "" {
-			whereParts = append(whereParts, fmt.Sprintf("status = $%d", argIdx))
-			args = append(args, status)
-			argIdx++
-		}
-
-		whereClause := ""
-		if len(whereParts) > 0 {
-			whereClause = "WHERE " + strings.Join(whereParts, " AND ")
-		}
-
-		var total int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM profile.privacy_request "+whereClause, args...).Scan(&total)
-
-		dataQ := fmt.Sprintf(`SELECT id, user_id, kind, status, result_payload, last_error,
-			created_at, completed_at
-			FROM profile.privacy_request %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
-			whereClause, argIdx, argIdx+1)
-		args = append(args, limit, offset)
-
-		rows, err := db.Query(r.Context(), dataQ, args...)
-		if err != nil {
-			logger.Error("list privacy requests", "error", err)
-			writeJSONError(w, "internal error", http.StatusInternalServerError)
-			return
-		}
-		defer rows.Close()
-
-		type Request struct {
-			ID            string          `json:"id"`
-			UserID        string          `json:"userId"`
-			Kind          string          `json:"kind"`
-			Status        string          `json:"status"`
-			Reason        *string         `json:"reason,omitempty"`
-			ResultPayload json.RawMessage `json:"resultPayload,omitempty"`
-			LastError     *string         `json:"lastError,omitempty"`
-			CreatedAt     string          `json:"createdAt"`
-			UpdatedAt     string          `json:"updatedAt"`
-			CompletedAt   *string         `json:"completedAt,omitempty"`
-		}
-
-		var items []Request
-		for rows.Next() {
-			var pr Request
-			var ca, ua time.Time
-			var cat *time.Time
-			if rows.Scan(&pr.ID, &pr.UserID, &pr.Kind, &pr.Status, &pr.Reason, &pr.ResultPayload,
-				&pr.LastError, &ca, &ua, &cat) == nil {
-				pr.CreatedAt = ca.UTC().Format(time.RFC3339)
-				pr.UpdatedAt = ua.UTC().Format(time.RFC3339)
-				if cat != nil {
-					s := cat.UTC().Format(time.RFC3339)
-					pr.CompletedAt = &s
-				}
-				items = append(items, pr)
-			}
-		}
-		if items == nil {
-			items = []Request{}
-		}
-		writeJSON(w, http.StatusOK, map[string]any{
-			"items": items, "total": total, "limit": limit, "offset": offset,
-		})
-	}
-}
-
-// adminPrivacyRequestDetailHandler implements GET /api/admin/privacy/requests/{id}.
-func adminPrivacyRequestDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id := extractPathParam(r.URL.Path, "requests", 1)
-		if id == "" {
-			writeJSONError(w, "request id required", http.StatusBadRequest)
-			return
-		}
-
-		type Request struct {
-			ID            string            `json:"id"`
-			UserID        string            `json:"userId"`
-			Kind          string            `json:"kind"`
-			Status        string            `json:"status"`
-			Reason        *string           `json:"reason,omitempty"`
-			ResultPayload json.RawMessage   `json:"resultPayload,omitempty"`
-			LastError     *string           `json:"lastError,omitempty"`
-			CreatedAt     string            `json:"createdAt"`
-			UpdatedAt     string            `json:"updatedAt"`
-			CompletedAt   *string           `json:"completedAt,omitempty"`
-			Audit         []json.RawMessage `json:"audit"`
-		}
-
-		var pr Request
-		var ca, ua time.Time
-		var cat *time.Time
-		err := db.QueryRow(r.Context(), `SELECT id, user_id, kind, status, result_payload, last_error,
-			created_at, completed_at
-			FROM profile.privacy_request WHERE id=$1`, id).
-			Scan(&pr.ID, &pr.UserID, &pr.Kind, &pr.Status, &pr.Reason, &pr.ResultPayload,
-				&pr.LastError, &ca, &ua, &cat)
-		if err != nil {
-			writeJSONError(w, "privacy request not found", http.StatusNotFound)
-			return
-		}
-		pr.CreatedAt = ca.UTC().Format(time.RFC3339)
-		pr.UpdatedAt = ua.UTC().Format(time.RFC3339)
-		if cat != nil {
-			s := cat.UTC().Format(time.RFC3339)
-			pr.CompletedAt = &s
-		}
-
-		pr.Audit = []json.RawMessage{}
-		auditRows, _ := db.Query(r.Context(), `SELECT id, action, actor_id, reason, before, after, created_at
-			FROM ops.admin_audit_log WHERE target_id=$1 AND target_type='privacy.request'
-			ORDER BY created_at DESC LIMIT 30`, id)
-		if auditRows != nil {
-			for auditRows.Next() {
-				var aid, action, actorID string
-				var reason *string
-				var before, after json.RawMessage
-				var aca time.Time
-				if auditRows.Scan(&aid, &action, &actorID, &reason, &before, &after, &aca) == nil {
-					entry, _ := json.Marshal(map[string]any{
-						"id": aid, "action": action, "actorId": actorID,
-						"reason": reason, "before": before, "after": after,
-						"createdAt": aca.UTC().Format(time.RFC3339),
-					})
-					pr.Audit = append(pr.Audit, entry)
-				}
-			}
-			auditRows.Close()
-		}
-
-		writeJSON(w, http.StatusOK, pr)
-	}
-}
-
-// adminPrivacyRequestAcknowledgeHandler implements PATCH /api/admin/privacy/requests/{id}/acknowledge.
-func adminPrivacyRequestAcknowledgeHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		identity, ok := authn.GetAdminIdentity(r.Context())
-		if !ok {
-			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
-			return
-		}
-
-		id := extractPathParam(r.URL.Path, "requests", 1)
-		if id == "" {
-			writeJSONError(w, "request id required", http.StatusBadRequest)
-			return
-		}
-
-		var req struct {
-			Reason string `json:"reason"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, "invalid request body", http.StatusBadRequest)
-			return
-		}
-		if len(req.Reason) < 3 {
-			writeJSONError(w, "reason must be at least 3 characters", http.StatusBadRequest)
-			return
-		}
-
-		var beforeStatus string
-		err := db.QueryRow(r.Context(), "SELECT status FROM profile.privacy_request WHERE id=$1", id).Scan(&beforeStatus)
-		if err != nil {
-			writeJSONError(w, "privacy request not found", http.StatusNotFound)
-			return
-		}
-		if beforeStatus != "pending" {
-			writeJSONError(w, "only pending requests can be acknowledged", http.StatusBadRequest)
-			return
-		}
-
-		_, err = db.Exec(r.Context(), "UPDATE privacy.request SET status='processing', updated_at=NOW() WHERE id=$1", id)
-		if err != nil {
-			logger.Error("acknowledge privacy request", "error", err)
-			writeJSONError(w, "internal error", http.StatusInternalServerError)
-			return
-		}
-
-		beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus})
-		afterJSON, _ := json.Marshal(map[string]any{"status": "processing"})
-		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
-			VALUES ('privacy.request.acknowledged',$1,$2,'privacy.request',$3,$4,$5,NOW())`,
-			identity.ActorID, id, req.Reason, beforeJSON, afterJSON)
-
-		writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": "processing"})
-	}
-}
-
-// adminPrivacyRequestFulfillHandler implements POST /api/admin/privacy/requests/{id}/fulfill.
-func adminPrivacyRequestFulfillHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		identity, ok := authn.GetAdminIdentity(r.Context())
-		if !ok {
-			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
-			return
-		}
-
-		id := extractPathParam(r.URL.Path, "requests", 1)
-		if id == "" {
-			writeJSONError(w, "request id required", http.StatusBadRequest)
-			return
-		}
-
-		var req struct {
-			Reason      string  `json:"reason"`
-			DownloadURL *string `json:"downloadUrl"`
-			Notes       *string `json:"notes"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, "invalid request body", http.StatusBadRequest)
-			return
-		}
-		if len(req.Reason) < 3 {
-			writeJSONError(w, "reason must be at least 3 characters", http.StatusBadRequest)
-			return
-		}
-
-		resultPayload, _ := json.Marshal(map[string]any{
-			"downloadUrl": req.DownloadURL, "notes": req.Notes,
-		})
-
-		_, err := db.Exec(r.Context(), `UPDATE privacy.request SET
-			status='completed', result_payload=$1, completed_at=NOW(), updated_at=NOW() WHERE id=$2`,
-			resultPayload, id)
-		if err != nil {
-			logger.Error("fulfill privacy request", "error", err)
-			writeJSONError(w, "internal error", http.StatusInternalServerError)
-			return
-		}
-
-		afterJSON, _ := json.Marshal(map[string]any{"status": "completed", "reason": req.Reason})
-		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
-			VALUES ('privacy.request.fulfilled',$1,$2,'privacy.request',$3,$4,NOW())`,
-			identity.ActorID, id, req.Reason, afterJSON)
-
-		writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": "completed"})
-	}
-}
-
-// adminPrivacyRequestRejectHandler implements POST /api/admin/privacy/requests/{id}/reject.
-func adminPrivacyRequestRejectHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		identity, ok := authn.GetAdminIdentity(r.Context())
-		if !ok {
-			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
-			return
-		}
-
-		id := extractPathParam(r.URL.Path, "requests", 1)
-		if id == "" {
-			writeJSONError(w, "request id required", http.StatusBadRequest)
-			return
-		}
-
-		var req struct {
-			Reason string `json:"reason"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, "invalid request body", http.StatusBadRequest)
-			return
-		}
-		if len(req.Reason) < 3 {
-			writeJSONError(w, "reason must be at least 3 characters", http.StatusBadRequest)
-			return
-		}
-
-		_, err := db.Exec(r.Context(), `UPDATE privacy.request SET
-			status='failed', last_error=$1, updated_at=NOW() WHERE id=$2`,
-			req.Reason, id)
-		if err != nil {
-			logger.Error("reject privacy request", "error", err)
-			writeJSONError(w, "internal error", http.StatusInternalServerError)
-			return
-		}
-
-		afterJSON, _ := json.Marshal(map[string]any{"status": "failed", "reason": req.Reason})
-		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
-			VALUES ('privacy.request.rejected',$1,$2,'privacy.request',$3,$4,NOW())`,
-			identity.ActorID, id, req.Reason, afterJSON)
-
-		writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": "failed"})
-	}
-}
-
-// adminPrivacyErasureConfirmHandler implements POST /api/admin/privacy/requests/{id}/erasure-confirm.
-func adminPrivacyErasureConfirmHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		identity, ok := authn.GetAdminIdentity(r.Context())
-		if !ok {
-			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
-			return
-		}
-
-		id := extractPathParam(r.URL.Path, "requests", 1)
-		if id == "" {
-			writeJSONError(w, "request id required", http.StatusBadRequest)
-			return
-		}
-
-		var req struct {
-			Reason            string `json:"reason"`
-			ConfirmationToken string `json:"confirmationToken"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, "invalid request body", http.StatusBadRequest)
-			return
-		}
-		if len(req.Reason) < 3 {
-			writeJSONError(w, "reason must be at least 3 characters", http.StatusBadRequest)
-			return
-		}
-		if req.ConfirmationToken != id {
-			writeJSONError(w, "confirmationToken must match request id", http.StatusBadRequest)
-			return
-		}
-
-		var kind, status string
-		err := db.QueryRow(r.Context(), "SELECT kind, status FROM profile.privacy_request WHERE id=$1", id).
-			Scan(&kind, &status)
-		if err != nil {
-			writeJSONError(w, "privacy request not found", http.StatusNotFound)
-			return
-		}
-		if kind != "delete" {
-			writeJSONError(w, "only erasure (delete) requests can be confirmed", http.StatusBadRequest)
-			return
-		}
-
-		_, err = db.Exec(r.Context(), `UPDATE privacy.request SET
-			status='completed', completed_at=NOW(), updated_at=NOW() WHERE id=$1`, id)
-		if err != nil {
-			logger.Error("confirm erasure", "error", err)
-			writeJSONError(w, "internal error", http.StatusInternalServerError)
-			return
-		}
-
-		afterJSON, _ := json.Marshal(map[string]any{"status": "completed", "kind": "delete", "irreversible": true})
-		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
-			VALUES ('privacy.erasure.confirmed',$1,$2,'privacy.request',$3,$4,NOW())`,
-			identity.ActorID, id, req.Reason, afterJSON)
-
-		writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": "completed", "irreversible": true})
 	}
 }

@@ -1,0 +1,884 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-087",
+  "title": "Audit learner home screen",
+  "start_head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The authenticated Home renders no weekly report because its widget calls a missing API route and receives 404.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "AC1: Anonymous Home renders public navigation and published learning content; protected personal actions go through the localized real Login flow."
+      },
+      {
+        "id": "AC2",
+        "text": "AC2: An authenticated learner Home shows only real learner-bound data, and key home actions update their documented API-backed UI state."
+      },
+      {
+        "id": "AC3",
+        "text": "AC3: At 390x844, anonymous and authenticated Home have no horizontal overflow, clipped primary controls, page errors, or unexpected failed requests."
+      }
+    ],
+    "expected_behavior": "The route requires a learner session, chooses the latest analytics.weekly_report row using the session identity, returns the widget contract, returns 200 null when no report exists, and surfaces DB errors.",
+    "observed_behavior": "Clicking the Home Progress tab in the visible authenticated 390x844 browser issues GET /api/analytics/weekly-report/latest and receives 404; the widget silently hides, and no Go route is registered.",
+    "rollback_plan": "Revert the route registration, handler, regression test, and AUDIT-087 task changes; no canonical user data is modified."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DATABASE",
+      "AUTH_SECURITY",
+      "DOMAIN_LOGIC",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Repair the missing persisted weekly-report GET route and route anonymous focus-session actions through the localized login form."
+  },
+  "red_exception": {
+    "category": "new_component",
+    "reason": "The focus widget regression is new; test its anonymous-login condition with sensitivity, and update the SQL drift ratchet to remove the fixed missing focus_session references.",
+    "declared_before_red": true
+  },
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow",
+      "expect": "anonymous request should be unauthorized"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx",
+      "test": "FocusTimerWidget > sends an anonymous learner to the localized login flow",
+      "expect": "href=\"/ja/login?returnTo=%2Fja\""
+    }
+  ],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/web/app/[locale]/_components/homepage/focus-timer-widget.tsx",
+      "find": "isLoggedIn ? (",
+      "replace": "true ? ("
+    },
+    "targets": [
+      {
+        "runner": "vitest",
+        "file": "apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx",
+        "test": "FocusTimerWidget > sends an anonymous learner to the localized login flow",
+        "expect": "href=\"/ja/login?returnTo=%2Fja\""
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-09T16:06:10.209Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-09T16:06:29.998Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T16:09:52.639Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T16:10:35.501Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T16:11:20.384Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T16:18:33.313Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-09T16:18:59.496Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T16:19:31.834Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-09T16:31:33.627Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T16:43:08.635Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T16:43:28.158Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-09T16:51:00.903Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T16:57:18.483Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d"
+    },
+    {
+      "state": "EXCEPTION_APPROVED",
+      "at": "2026-10-09T16:57:56.609Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-09T16:58:05.242Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-09T16:09:53.041Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow)$ ./apps/api-go/internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow": "anonymous request should be unauthorized"
+      },
+      "fingerprint": "75f472c1f8ba314b0b214bd07efc8e3bb1c904fb60038106f604bcf5f6c1214b"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-09T16:10:02.807Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow)$ ./apps/api-go/internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow handler_weekly_report_test.go:15: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow": "anonymous request should be unauthorized",
+        "go:./internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow": "anonymous request should be unauthorized"
+      },
+      "fingerprint": "75f472c1f8ba314b0b214bd07efc8e3bb1c904fb60038106f604bcf5f6c1214b"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-09T16:10:14.798Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow)$ ./apps/api-go/internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow handler_weekly_report_test.go:47: anonymous request should be unauthorized, got 404: 404 page not found --- FAIL: TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow": "anonymous request should be unauthorized",
+        "go:./internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow": "anonymous request should be unauthorized"
+      },
+      "fingerprint": "75f472c1f8ba314b0b214bd07efc8e3bb1c904fb60038106f604bcf5f6c1214b"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-09T16:10:35.248Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow handler_weekly_report_test.go:47: anonymous request should be unauthorized, got 404: 404 page not found --- FAIL: TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow": "anonymous request should be unauthorized"
+      },
+      "fingerprint": "75f472c1f8ba314b0b214bd07efc8e3bb1c904fb60038106f604bcf5f6c1214b"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-09T16:11:02.321Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow",
+          "outcome": "BUILD_FAIL",
+          "valid": false,
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_final_batch.go:237:21: undefined: pgx FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [build failed]"
+        }
+      ],
+      "fingerprint": "4c555c553fd47ffb2b52da8a60fb8bda64e6e4eca35a6884a4ecdc82cae5b88a"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-09T16:11:20.023Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e39d4f2468124201fb6d1745ae4c1b742716ca88e39d56aff72b30e93ad8d4b3"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-09T16:11:48.890Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e39d4f2468124201fb6d1745ae4c1b742716ca88e39d56aff72b30e93ad8d4b3"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-09T16:14:37.795Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 732,
+        "executed": 732,
+        "passed": 732,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "732 passed, 0 allowed skip(s)",
+      "fingerprint": "e39d4f2468124201fb6d1745ae4c1b742716ca88e39d56aff72b30e93ad8d4b3"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-09T16:18:32.984Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow handler_weekly_report_test.go:15: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx::FocusTimerWidget > sends an anonymous learner to the localized login flow",
+          "outcome": "FAIL",
+          "excerpt": "expected '<div class=\"rounded-2xl border border…' to contain 'href=\"/ja/login?returnTo=%2Fja\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow": "anonymous request should be unauthorized",
+        "vitest:apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx::FocusTimerWidget > sends an anonymous learner to the localized login flow": "href=\"/ja/login?returnTo=%2Fja\""
+      },
+      "fingerprint": "5f2622170b6ab32d317f5b4a838c9dff7213951ade3b4e25d68869c5063e1f70"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-09T16:19:31.340Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx::FocusTimerWidget > sends an anonymous learner to the localized login flow",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "21640e5aa0c6edc97f0fe7b61543fdd5fd0843b03fa2148203d495fcdf6efa3f"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-09T16:19:50.070Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/web/app/[locale]/_components/homepage/focus-timer-widget.tsx",
+        "find": "isLoggedIn ? (",
+        "replace": "true ? ("
+      },
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx::FocusTimerWidget > sends an anonymous learner to the localized login flow",
+          "outcome": "FAIL",
+          "excerpt": "expected '<div class=\"rounded-2xl border border…' to contain 'href=\"/ja/login?returnTo=%2Fja\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx::FocusTimerWidget > sends an anonymous learner to the localized login flow": "href=\"/ja/login?returnTo=%2Fja\""
+      },
+      "fingerprint": "21640e5aa0c6edc97f0fe7b61543fdd5fd0843b03fa2148203d495fcdf6efa3f"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-09T16:24:12.136Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx::FocusTimerWidget > sends an anonymous learner to the localized login flow",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a749e669e73413549b9ecb04885d9a25614aa7fbf3834ea098fbef84f7a07a12"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-09T16:24:23.490Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/web/app/[locale]/_components/homepage/focus-timer-widget.tsx",
+        "find": "isLoggedIn ? (",
+        "replace": "true ? ("
+      },
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx::FocusTimerWidget > sends an anonymous learner to the localized login flow",
+          "outcome": "FAIL",
+          "excerpt": "expected '<div class=\"rounded-2xl border border…' to contain 'href=\"/ja/login?returnTo=%2Fja\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx::FocusTimerWidget > sends an anonymous learner to the localized login flow": "href=\"/ja/login?returnTo=%2Fja\""
+      },
+      "fingerprint": "a749e669e73413549b9ecb04885d9a25614aa7fbf3834ea098fbef84f7a07a12"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-09T16:29:12.814Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 404,
+        "executed": 404,
+        "passed": 404,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 773,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "a749e669e73413549b9ecb04885d9a25614aa7fbf3834ea098fbef84f7a07a12"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-09T16:29:59.130Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 733,
+        "executed": 733,
+        "passed": 732,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "a749e669e73413549b9ecb04885d9a25614aa7fbf3834ea098fbef84f7a07a12"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-09T16:30:27.089Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/audit-087-home-visible-e2e.sh",
+      "exit_code": 0,
+      "fingerprint": "a749e669e73413549b9ecb04885d9a25614aa7fbf3834ea098fbef84f7a07a12"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-09T16:33:37.499Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "c981d03e22a08267386fcb742e26ebecefa365c6d7498c1f5b99dea566506f65"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-09T16:36:18.221Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 733,
+        "executed": 733,
+        "passed": 733,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "733 passed, 0 allowed skip(s)",
+      "fingerprint": "c981d03e22a08267386fcb742e26ebecefa365c6d7498c1f5b99dea566506f65"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-09T16:42:47.394Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 404,
+        "executed": 404,
+        "passed": 404,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 773,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "c981d03e22a08267386fcb742e26ebecefa365c6d7498c1f5b99dea566506f65"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-09T16:42:55.749Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow handler_weekly_report_test.go:15: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow (0.00s)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx::FocusTimerWidget > sends an anonymous learner to the localized login flow",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c981d03e22a08267386fcb742e26ebecefa365c6d7498c1f5b99dea566506f65"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-09T16:43:08.043Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx::FocusTimerWidget > sends an anonymous learner to the localized login flow",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c981d03e22a08267386fcb742e26ebecefa365c6d7498c1f5b99dea566506f65"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-09T16:43:20.132Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/web/app/[locale]/_components/homepage/focus-timer-widget.tsx",
+        "find": "isLoggedIn ? (",
+        "replace": "true ? ("
+      },
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx::FocusTimerWidget > sends an anonymous learner to the localized login flow",
+          "outcome": "FAIL",
+          "excerpt": "expected '<div class=\"rounded-2xl border border…' to contain 'href=\"/ja/login?returnTo=%2Fja\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx::FocusTimerWidget > sends an anonymous learner to the localized login flow": "href=\"/ja/login?returnTo=%2Fja\""
+      },
+      "fingerprint": "c981d03e22a08267386fcb742e26ebecefa365c6d7498c1f5b99dea566506f65"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-09T16:43:27.603Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/audit-087-home-visible-e2e.sh",
+      "exit_code": 0,
+      "fingerprint": "c981d03e22a08267386fcb742e26ebecefa365c6d7498c1f5b99dea566506f65"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-09T16:51:00.314Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "2fc512c4e515c564a8d2a580e8ff994ed4db9f76a14a054453ba5ef13db6d511"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-09T16:53:40.193Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 733,
+        "executed": 733,
+        "passed": 733,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "733 passed, 0 allowed skip(s)",
+      "fingerprint": "2fc512c4e515c564a8d2a580e8ff994ed4db9f76a14a054453ba5ef13db6d511"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-09T16:56:51.052Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 404,
+        "executed": 404,
+        "passed": 404,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 773,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "2fc512c4e515c564a8d2a580e8ff994ed4db9f76a14a054453ba5ef13db6d511"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-09T16:57:17.876Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestWeeklyReportLatestIsAuthenticatedAndUsesLatestLearnerRow",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx::FocusTimerWidget > sends an anonymous learner to the localized login flow",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "2fc512c4e515c564a8d2a580e8ff994ed4db9f76a14a054453ba5ef13db6d511"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-09T16:57:32.899Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/web/app/[locale]/_components/homepage/focus-timer-widget.tsx",
+        "find": "isLoggedIn ? (",
+        "replace": "true ? ("
+      },
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx::FocusTimerWidget > sends an anonymous learner to the localized login flow",
+          "outcome": "FAIL",
+          "excerpt": "expected '<div class=\"rounded-2xl border border…' to contain 'href=\"/ja/login?returnTo=%2Fja\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx::FocusTimerWidget > sends an anonymous learner to the localized login flow": "href=\"/ja/login?returnTo=%2Fja\""
+      },
+      "fingerprint": "2fc512c4e515c564a8d2a580e8ff994ed4db9f76a14a054453ba5ef13db6d511"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-09T16:57:47.467Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a12192-abfe-73c2-be53-8412d18237ca",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "968174bb4350e9f3ca2e9591b9f095ef1a43c6b9a11721e03ae18fb1b969225c",
+      "attested": true,
+      "fingerprint": "2fc512c4e515c564a8d2a580e8ff994ed4db9f76a14a054453ba5ef13db6d511"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-09T16:57:56.047Z",
+      "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/audit-087-home-visible-e2e.sh",
+      "exit_code": 0,
+      "fingerprint": "2fc512c4e515c564a8d2a580e8ff994ed4db9f76a14a054453ba5ef13db6d511"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-09T16:58:05.225Z",
+    "head": "f39bf17bb3e6c16d4a8665334caa816b1d9cae6d",
+    "fingerprint": "2fc512c4e515c564a8d2a580e8ff994ed4db9f76a14a054453ba5ef13db6d511",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "green": "PASS",
+      "sensitivity": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/gamification/store.go": "9ff4556d7896dded13cc46013ba32daaef3ffd52",
+      "apps/api-go/internal/gamification/store_test.go": "aeafa6ab5df9641ff1ce2c28426db52f811cbda1",
+      "apps/api-go/internal/httpserver/handler_final_batch.go": "48a11b04d88f48c386478802606d46f9018face6",
+      "apps/api-go/internal/httpserver/handler_gamification.go": "3494487572fb8f5c235a9bbdfc4e3ed8fa1044e0",
+      "apps/api-go/internal/httpserver/handler_weekly_report_test.go": "079b5d39ecc9530f7f35a6c12adb1419a7a65c55",
+      "apps/api-go/internal/httpserver/server.go": "709067c6300b4f568957207c746cf3b4e6ed6cf9",
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "f5d4af830bad5b58b224f1f6f5dc5d7d0195e01c",
+      "apps/web/app/[locale]/_components/homepage/focus-timer-widget.test.tsx": "d6e0893a63adc6cf2147a3a7a2b19f390bdc273c",
+      "apps/web/app/[locale]/_components/homepage/focus-timer-widget.tsx": "7bce9c774cf86f7dd62f2e446f7bdc1f9771b7b8",
+      "apps/web/app/[locale]/_components/homepage/homepage-sections-tabs.tsx": "1d740d8fee2ac385ab62ed5c90fc009ed7694be6"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

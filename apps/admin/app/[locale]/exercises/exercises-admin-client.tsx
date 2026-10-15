@@ -24,8 +24,11 @@ type ExerciseConfig = {
   exerciseType: string;
   placement: string;
   enabled: boolean;
-  sortOrder: number;
-  level: string | null;
+  displayOrder: number;
+  minLevel: string | null;
+  maxLevel: string | null;
+  timeLimitSec: number | null;
+  pointsPerCorrect: number;
   updatedAt: string;
 };
 
@@ -33,8 +36,11 @@ type FormData = {
   exerciseType: string;
   placement: string;
   enabled: boolean;
-  sortOrder: number;
-  level: string;
+  displayOrder: number;
+  minLevel: string;
+  maxLevel: string;
+  timeLimitSec: number | null;
+  pointsPerCorrect: number;
 };
 
 const TYPES = ["meaning_match", "cloze", "word_order", "translation", "listening"];
@@ -60,8 +66,11 @@ export function ExercisesAdminClient({ labels }: { labels: Labels }) {
     exerciseType: "meaning_match",
     placement: "practice_tab",
     enabled: true,
-    sortOrder: 0,
-    level: ""
+    displayOrder: 0,
+    minLevel: "",
+    maxLevel: "",
+    timeLimitSec: null,
+    pointsPerCorrect: 10
   });
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
@@ -99,7 +108,7 @@ export function ExercisesAdminClient({ labels }: { labels: Labels }) {
 
   function openCreate() {
     setEditId(null);
-    setForm({ exerciseType: "meaning_match", placement: "practice_tab", enabled: true, sortOrder: 0, level: "" });
+    setForm({ exerciseType: "meaning_match", placement: "practice_tab", enabled: true, displayOrder: 0, minLevel: "", maxLevel: "", timeLimitSec: null, pointsPerCorrect: 10 });
     setModalOpen(true);
   }
 
@@ -109,8 +118,11 @@ export function ExercisesAdminClient({ labels }: { labels: Labels }) {
       exerciseType: cfg.exerciseType,
       placement: cfg.placement,
       enabled: cfg.enabled,
-      sortOrder: cfg.sortOrder,
-      level: cfg.level ?? ""
+      displayOrder: cfg.displayOrder,
+      minLevel: cfg.minLevel ?? "",
+      maxLevel: cfg.maxLevel ?? "",
+      timeLimitSec: cfg.timeLimitSec,
+      pointsPerCorrect: cfg.pointsPerCorrect
     });
     setModalOpen(true);
   }
@@ -121,8 +133,11 @@ export function ExercisesAdminClient({ labels }: { labels: Labels }) {
         exerciseType: form.exerciseType,
         placement: form.placement,
         enabled: form.enabled,
-        sortOrder: form.sortOrder,
-        ...(form.level ? { level: form.level } : {})
+        displayOrder: form.displayOrder,
+        minLevel: form.minLevel || null,
+        maxLevel: form.maxLevel || null,
+        timeLimitSec: form.timeLimitSec,
+        pointsPerCorrect: form.pointsPerCorrect
       };
       const r = await adminApiFetch("/api/admin/exercises/config", {
         method: "PUT",
@@ -195,41 +210,45 @@ export function ExercisesAdminClient({ labels }: { labels: Labels }) {
         ) : items.length === 0 ? (
           <AdminEmptyState title={t("empty")} />
         ) : (
-          <AdminDataTable>
-            <AdminDataTableHead>
-              <AdminDataTableTh>{t("exerciseType")}</AdminDataTableTh>
-              <AdminDataTableTh>{t("placement")}</AdminDataTableTh>
-              <AdminDataTableTh>{t("sortOrder")}</AdminDataTableTh>
-              <AdminDataTableTh>{t("level")}</AdminDataTableTh>
-              <AdminDataTableTh>{t("enabled")}</AdminDataTableTh>
-              <AdminDataTableTh>{t("updatedAt")}</AdminDataTableTh>
-              {canWrite && <AdminDataTableTh />}
-            </AdminDataTableHead>
-            <AdminDataTableBody>
-              {items.map((cfg) => (
-                <AdminDataTableRow key={cfg.id}>
-                  <AdminDataTableTd>{types[cfg.exerciseType] ?? cfg.exerciseType}</AdminDataTableTd>
-                  <AdminDataTableTd>{placements[cfg.placement] ?? cfg.placement}</AdminDataTableTd>
-                  <AdminDataTableTd>{cfg.sortOrder}</AdminDataTableTd>
-                  <AdminDataTableTd>{cfg.level ?? "—"}</AdminDataTableTd>
-                  <AdminDataTableTd>
-                    <AdminStatusBadge tone={cfg.enabled ? "neutral" : "danger"}>
-                      {cfg.enabled ? t("enabled") : t("disabled")}
-                    </AdminStatusBadge>
-                  </AdminDataTableTd>
-                  <AdminDataTableTd>{new Date(cfg.updatedAt).toLocaleDateString()}</AdminDataTableTd>
-                  {canWrite && (
-                    <AdminDataTableTd>
-                      <div className="flex gap-2">
-                        <button className="text-xs text-indigo-600 hover:underline" onClick={() => openEdit(cfg)} type="button">{t("edit")}</button>
-                        <button className="text-xs text-red-600 hover:underline" onClick={() => setDeleteConfirm(cfg.id)} type="button">{t("delete")}</button>
-                      </div>
-                    </AdminDataTableTd>
-                  )}
+          <div className="overflow-x-auto">
+            <AdminDataTable>
+              <AdminDataTableHead>
+                <AdminDataTableRow>
+                  <AdminDataTableTh>{t("exerciseType")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("placement")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("sortOrder")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("minLevel")} / {t("maxLevel")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("enabled")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("updatedAt")}</AdminDataTableTh>
+                  {canWrite && <AdminDataTableTh />}
                 </AdminDataTableRow>
-              ))}
-            </AdminDataTableBody>
-          </AdminDataTable>
+              </AdminDataTableHead>
+              <AdminDataTableBody>
+                {items.map((cfg) => (
+                  <AdminDataTableRow key={cfg.id}>
+                    <AdminDataTableTd>{types[cfg.exerciseType] ?? cfg.exerciseType}</AdminDataTableTd>
+                    <AdminDataTableTd>{placements[cfg.placement] ?? cfg.placement}</AdminDataTableTd>
+                    <AdminDataTableTd>{cfg.displayOrder}</AdminDataTableTd>
+                    <AdminDataTableTd>{cfg.minLevel ?? "—"}{cfg.maxLevel && cfg.maxLevel !== cfg.minLevel ? ` – ${cfg.maxLevel}` : ""}</AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <AdminStatusBadge tone={cfg.enabled ? "neutral" : "danger"}>
+                        {cfg.enabled ? t("enabled") : t("disabled")}
+                      </AdminStatusBadge>
+                    </AdminDataTableTd>
+                    <AdminDataTableTd>{new Date(cfg.updatedAt).toLocaleDateString()}</AdminDataTableTd>
+                    {canWrite && (
+                      <AdminDataTableTd>
+                        <div className="flex gap-2">
+                          <button className="text-xs text-indigo-600 hover:underline" onClick={() => openEdit(cfg)} type="button">{t("edit")}</button>
+                          <button className="text-xs text-red-600 hover:underline" onClick={() => setDeleteConfirm(cfg.id)} type="button">{t("delete")}</button>
+                        </div>
+                      </AdminDataTableTd>
+                    )}
+                  </AdminDataTableRow>
+                ))}
+              </AdminDataTableBody>
+            </AdminDataTable>
+          </div>
         )}
       </AdminSection>
 
@@ -266,14 +285,28 @@ export function ExercisesAdminClient({ labels }: { labels: Labels }) {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">{t("sortOrder")}</label>
-                <input type="number" className="w-full rounded border px-2 py-1.5 text-sm" value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) })} />
+                <input type="number" className="w-full rounded border px-2 py-1.5 text-sm" value={form.displayOrder} onChange={(e) => setForm({ ...form, displayOrder: Number(e.target.value) })} />
               </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">{t("level")}</label>
-                <select className="w-full rounded border px-2 py-1.5 text-sm" value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })}>
-                  <option value="">—</option>
-                  {["N5", "N4", "N3", "N2", "N1"].map((l) => <option key={l} value={l}>{l}</option>)}
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                {([['minLevel', 'minLevel'], ['maxLevel', 'maxLevel']] as const).map(([field, label]) => (
+                  <div key={field}>
+                    <label className="mb-1 block text-xs font-medium text-slate-600">{t(label)}</label>
+                    <select className="w-full rounded border px-2 py-1.5 text-sm" value={form[field]} onChange={(e) => setForm({ ...form, [field]: e.target.value })}>
+                      <option value="">—</option>
+                      {["N5", "N4", "N3", "N2", "N1"].map((l) => <option key={l} value={l}>{l}</option>)}
+                    </select>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-slate-600">{t("timeLimitSec")}</label>
+                  <input type="number" min="5" max="300" className="w-full rounded border px-2 py-1.5 text-sm" value={form.timeLimitSec ?? ""} onChange={(e) => setForm({ ...form, timeLimitSec: e.target.value === "" ? null : Number(e.target.value) })} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-slate-600">{t("pointsPerCorrect")}</label>
+                  <input type="number" min="1" max="100" className="w-full rounded border px-2 py-1.5 text-sm" value={form.pointsPerCorrect} onChange={(e) => setForm({ ...form, pointsPerCorrect: Number(e.target.value) })} />
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" checked={form.enabled} onChange={(e) => setForm({ ...form, enabled: e.target.checked })} id="cfg-enabled" />

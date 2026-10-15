@@ -483,61 +483,63 @@ export function MediaAdminClient({
         ) : pageRows.length === 0 ? (
           <AdminEmptyState title={t("empty")} />
         ) : (
-          <AdminDataTable>
-            <AdminDataTableHead>
-              <AdminDataTableRow>
-                <AdminDataTableTh>{t("colKey")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colMime")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colSize")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colRights")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colStatus")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colLicense")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colCreatedAt")}</AdminDataTableTh>
-              </AdminDataTableRow>
-            </AdminDataTableHead>
-            <AdminDataTableBody>
-              {pageRows.map((a) => (
-                <AdminDataTableRow
-                  className="cursor-pointer hover:bg-slate-50"
-                  key={a.id}
-                  onClick={() => setSelectedId(a.id)}
-                >
-                  <AdminDataTableTd>
-                    <div className="flex items-center gap-2">
-                      {thumb(a) ? (
-                        <img
-                          alt=""
-                          className="h-8 w-8 shrink-0 rounded border border-slate-200 object-cover"
-                          loading="lazy"
-                          onError={(e) => ((e.target as HTMLImageElement).style.display = "none")}
-                          src={thumb(a)!}
-                        />
-                      ) : (
-                        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded border border-slate-200 bg-slate-50 text-[10px] uppercase text-slate-500">
-                          {a.mimeType.split("/")[0]?.slice(0, 4) ?? "file"}
-                        </span>
-                      )}
-                      <span className="break-all font-mono text-xs">{a.objectKey}</span>
-                    </div>
-                  </AdminDataTableTd>
-                  <AdminDataTableTd>{a.mimeType}</AdminDataTableTd>
-                  <AdminDataTableTd>{fmtBytes(a.byteSize)}</AdminDataTableTd>
-                  <AdminDataTableTd>
-                    <AdminStatusBadge tone={RIGHTS_TONE[a.rightsStatus] ?? "neutral"}>{a.rightsStatus}</AdminStatusBadge>
-                  </AdminDataTableTd>
-                  <AdminDataTableTd>
-                    <AdminStatusBadge tone={STATUS_TONE[a.status] ?? "neutral"}>{a.status}</AdminStatusBadge>
-                  </AdminDataTableTd>
-                  <AdminDataTableTd>
-                    <span className="text-xs text-slate-600">{a.license ?? "—"}</span>
-                  </AdminDataTableTd>
-                  <AdminDataTableTd>
-                    <span className="text-xs text-slate-500">{fmtDate(a.createdAt, locale)}</span>
-                  </AdminDataTableTd>
+          <div className="w-full min-w-0 overflow-x-auto">
+            <AdminDataTable>
+              <AdminDataTableHead>
+                <AdminDataTableRow>
+                  <AdminDataTableTh>{t("colKey")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colMime")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colSize")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colRights")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colStatus")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colLicense")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colCreatedAt")}</AdminDataTableTh>
                 </AdminDataTableRow>
-              ))}
-            </AdminDataTableBody>
-          </AdminDataTable>
+              </AdminDataTableHead>
+              <AdminDataTableBody>
+                {pageRows.map((a) => (
+                  <AdminDataTableRow
+                    className="cursor-pointer hover:bg-slate-50"
+                    key={a.id}
+                    onClick={() => setSelectedId(a.id)}
+                  >
+                    <AdminDataTableTd>
+                      <div className="flex items-center gap-2">
+                        {thumb(a) ? (
+                          <img
+                            alt=""
+                            className="h-8 w-8 shrink-0 rounded border border-slate-200 object-cover"
+                            loading="lazy"
+                            onError={(e) => ((e.target as HTMLImageElement).style.display = "none")}
+                            src={thumb(a)!}
+                          />
+                        ) : (
+                          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded border border-slate-200 bg-slate-50 text-[10px] uppercase text-slate-500">
+                            {a.mimeType.split("/")[0]?.slice(0, 4) ?? "file"}
+                          </span>
+                        )}
+                        <span className="break-all font-mono text-xs">{a.objectKey}</span>
+                      </div>
+                    </AdminDataTableTd>
+                    <AdminDataTableTd>{a.mimeType}</AdminDataTableTd>
+                    <AdminDataTableTd>{fmtBytes(a.byteSize)}</AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <AdminStatusBadge tone={RIGHTS_TONE[a.rightsStatus] ?? "neutral"}>{a.rightsStatus}</AdminStatusBadge>
+                    </AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <AdminStatusBadge tone={STATUS_TONE[a.status] ?? "neutral"}>{a.status}</AdminStatusBadge>
+                    </AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <span className="text-xs text-slate-600">{a.license ?? "—"}</span>
+                    </AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <span className="text-xs text-slate-500">{fmtDate(a.createdAt, locale)}</span>
+                    </AdminDataTableTd>
+                  </AdminDataTableRow>
+                ))}
+              </AdminDataTableBody>
+            </AdminDataTable>
+          </div>
         )}
       </AdminSection>
 

@@ -1,0 +1,256 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-112",
+  "title": "Guard the learner subscription settings page with RequireAuth",
+  "start_head": "8732fe548e5d663d2b64e3d5a3dcd091129cbece",
+  "preexisting_changes": {
+    "apps/admin/tsconfig.tsbuildinfo": "1ebcbc1e512aaf84682dc85cbd10250c8d5ad6e3",
+    "apps/web/tsconfig.tsbuildinfo": "1aa596f82d2ab2a600f0a8ab9e86410958783e30"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "The subscription settings page renders inside RequireAuth with the requested locale for vi, en and ja."
+      },
+      {
+        "id": "AC2",
+        "text": "Anonymous visits to /vi/settings/subscription redirect to /vi/login with returnTo; the API stays 401."
+      },
+      {
+        "id": "AC3",
+        "text": "A signed-in learner still sees the plan summary at 390x844 in visible Chrome."
+      }
+    ],
+    "expected_behavior": "The page wraps its client in RequireAuth like the notifications settings page, so anonymous visitors are redirected to localized login.",
+    "observed_behavior": "Anonymous visitors to /vi/settings/subscription are not redirected; the page renders the client and shows 'Không thể tải thông tin đăng ký' instead of sending them to login (other learner settings pages redirect to localized login with returnTo).",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY",
+      "AUTH_SECURITY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/settings/subscription/page.test.tsx",
+      "test": "wraps the subscription client in the learner guard for every locale",
+      "expect": "to be"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-12T00:39:32.372Z",
+      "head": "8732fe548e5d663d2b64e3d5a3dcd091129cbece"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-12T00:39:32.744Z",
+      "head": "8732fe548e5d663d2b64e3d5a3dcd091129cbece"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-12T00:39:33.119Z",
+      "head": "8732fe548e5d663d2b64e3d5a3dcd091129cbece"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T00:39:43.754Z",
+      "head": "8732fe548e5d663d2b64e3d5a3dcd091129cbece"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T00:44:00.376Z",
+      "head": "8732fe548e5d663d2b64e3d5a3dcd091129cbece"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-12T00:48:30.654Z",
+      "head": "8732fe548e5d663d2b64e3d5a3dcd091129cbece"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-12T00:49:58.546Z",
+      "head": "8732fe548e5d663d2b64e3d5a3dcd091129cbece"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-12T00:49:59.433Z",
+      "head": "8732fe548e5d663d2b64e3d5a3dcd091129cbece"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-12T00:39:43.478Z",
+      "head": "8732fe548e5d663d2b64e3d5a3dcd091129cbece",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/settings/subscription/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/subscription/page.test.tsx::wraps the subscription client in the learner guard for every locale",
+          "outcome": "FAIL",
+          "excerpt": "expected [Function SubscriptionSettingsClient] to be [Function Mock] // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/settings/subscription/page.test.tsx::wraps the subscription client in the learner guard for every locale": "to be"
+      },
+      "fingerprint": "a7ffae534ab36766b14f42c7a585e1820c556c5d857baec05264f25ce1664de3"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-12T00:39:52.671Z",
+      "head": "8732fe548e5d663d2b64e3d5a3dcd091129cbece",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/settings/subscription/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/subscription/page.test.tsx::wraps the subscription client in the learner guard for every locale",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "04d2906eade3dc519cf3910e145629fd1f16950bee349f4e2a583818b691d529"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-12T00:43:45.581Z",
+      "head": "8732fe548e5d663d2b64e3d5a3dcd091129cbece",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 459,
+        "executed": 459,
+        "passed": 459,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 790,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "bb1a7c2d81c5edc72351294809e6af4cfa599696d835abd5b305c0891bb7e2e6"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-12T00:44:00.075Z",
+      "head": "8732fe548e5d663d2b64e3d5a3dcd091129cbece",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/settings/subscription/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/subscription/page.test.tsx::wraps the subscription client in the learner guard for every locale",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "be11668955bc61f259fe951e41674eb77d5faed520576d237a8ac257ea868f6e"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-12T00:48:12.222Z",
+      "head": "8732fe548e5d663d2b64e3d5a3dcd091129cbece",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 459,
+        "executed": 459,
+        "passed": 459,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 790,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "be11668955bc61f259fe951e41674eb77d5faed520576d237a8ac257ea868f6e"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-12T00:48:30.330Z",
+      "head": "8732fe548e5d663d2b64e3d5a3dcd091129cbece",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit112-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "be11668955bc61f259fe951e41674eb77d5faed520576d237a8ac257ea868f6e"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-12T00:49:58.224Z",
+      "head": "8732fe548e5d663d2b64e3d5a3dcd091129cbece",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "fresh-review-a9f7",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "87f7ed0d20ff41790036b269e9aebd8d2feb535d0f017f93060cbab9bb6a0d77",
+      "attested": true,
+      "fingerprint": "be11668955bc61f259fe951e41674eb77d5faed520576d237a8ac257ea868f6e"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-12T00:49:59.414Z",
+    "head": "8732fe548e5d663d2b64e3d5a3dcd091129cbece",
+    "fingerprint": "be11668955bc61f259fe951e41674eb77d5faed520576d237a8ac257ea868f6e",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/settings/subscription/page.test.tsx": "747920ecc2e4c0c1dea30345e647b24d05347040",
+      "apps/web/app/[locale]/settings/subscription/page.tsx": "203b95efcb5d570006e9221414d9cacec22ed9b0",
+      "e2e/audit/audit112-browser-check.sh": "ad6faba07bf4e7a8bb9b8e4949e20441a4af2e38"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

@@ -141,22 +141,23 @@ export function MePageClient({
     setLoading(true);
     setError(false);
     try {
-      const [profileRes, statsRes] = await Promise.all([
+      const [profileRes, statsRes, dueCardsRes] = await Promise.all([
         fetch("/api/auth/me", { cache: "no-store", credentials: "same-origin" }),
-        fetch("/api/learner/analytics?days=7", { credentials: "same-origin" }),
+        fetch("/api/analytics/learner?days=7", { credentials: "same-origin" }),
+        fetch("/api/flashcards/reviews/due?limit=500", { credentials: "same-origin" }),
       ]);
       if (profileRes.ok) {
         const body = await profileRes.json();
         setProfile(body);
       }
-      if (statsRes.ok) {
-        const body = await statsRes.json();
+      if (statsRes.ok && dueCardsRes.ok) {
+        const [body, dueCards] = await Promise.all([statsRes.json(), dueCardsRes.json()]);
         const totals = body?.totals ?? {};
         setStats({
           streakDays: totals.streakDays ?? 0,
           reviewCount: totals.reviewCount ?? 0,
           bjtAccuracyPct: totals.bjtAccuracyPct ?? 0,
-          dueFlashcards: body.dueFlashcards ?? 0,
+          dueFlashcards: Array.isArray(dueCards) ? dueCards.length : 0,
         });
       }
     } catch {
@@ -320,14 +321,14 @@ export function MePageClient({
 
       {/* ═══ TAB BAR (Sticky) ═══ */}
       <nav className="sticky top-0 z-20 -mx-4 mt-5 border-b border-ink/8 bg-white/90 px-4 backdrop-blur-md" role="tablist">
-        <div className="flex gap-1 overflow-x-auto scrollbar-none">
+        <div className="grid grid-cols-4 gap-0 sm:flex sm:gap-1">
           {(["overview", "progress", "achievements", "settings"] as Tab[]).map((t) => (
             <button
               key={t}
               role="tab"
               aria-selected={tab === t}
               onClick={() => setTab(t)}
-              className={`relative shrink-0 px-4 py-3 text-sm font-semibold transition-colors ${
+              className={`relative min-h-12 w-full min-w-0 whitespace-nowrap px-0 py-3 text-[11px] font-semibold transition-colors sm:w-auto sm:shrink-0 sm:px-4 sm:text-sm ${
                 tab === t
                   ? "text-accent"
                   : "text-muted hover:text-ink"

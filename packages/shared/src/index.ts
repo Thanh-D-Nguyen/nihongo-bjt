@@ -1750,7 +1750,7 @@ export const notificationPreferencesUpdateSchema = z.object({
 });
 
 export const inAppNotificationListQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(50).default(20),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
   userId: z.uuid()
 });
 

@@ -28,8 +28,9 @@ func AuthenticateRequest(ctx context.Context, r *http.Request, sessStore *sessio
 		sess, err := sessStore.LookupLearnerSession(ctx, cookie.Value)
 		if err == nil && sess != nil {
 			return &AuthenticatedUser{
-				UserID:  sess.UserID,
-				IsAdmin: false,
+				UserID:      sess.UserID,
+				DisplayName: sess.DisplayName,
+				IsAdmin:     false,
 			}
 		}
 	}
@@ -69,8 +70,9 @@ func AuthenticateBattleRequest(ctx context.Context, r *http.Request, sessStore *
 	}
 
 	return &AuthenticatedUser{
-		UserID:  sess.UserID,
-		IsAdmin: false,
+		UserID:      sess.UserID,
+		DisplayName: sess.DisplayName,
+		IsAdmin:     false,
 	}
 }
 

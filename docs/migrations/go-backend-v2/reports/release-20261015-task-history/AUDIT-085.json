@@ -1,0 +1,1006 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-085",
+  "title": "Audit learner magazine Loto screen",
+  "start_head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The learner Loto route crashes for a legitimate missing prediction (hero reads numbers.slice on undefined); the Go feed API returns a raw array although its UI caller requires {data,total}, and ignores pagination parameters.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Authorized learner can load Loto 6 and Loto 7 in vi/en/ja, render an explicit empty state when no draw exists, and use paginated feed data without crashing."
+      },
+      {
+        "id": "AC2",
+        "text": "Anonymous visitors receive the established login gate; valid feed results display and paginate; API and UI failures remain distinguishable and retryable."
+      },
+      {
+        "id": "AC3",
+        "text": "At 390x844 the screen has no horizontal overflow, error boundary, unexpected console errors, or failed requests; feed/stats contracts, invalid input, and database failures have regression tests."
+      }
+    ],
+    "expected_behavior": "A missing prediction is a valid empty state. The learner consumes the next-draw envelope correctly; feed and stats APIs reject unknown games and surface database errors, while feed returns its paginated envelope and honors bounded page/limit.",
+    "observed_behavior": "Visible Chrome console showed LotoHeroPrediction reading slice of undefined because the client stored the {nextDraw:null} response envelope. The feed returned a bare array while the client required {data,total}; pagination was ignored. Stats also returned HTTP 200 for invalid games and database errors.",
+    "rollback_plan": "Revert the single AUDIT-085 commit; tests use disposable PostgreSQL rows and clean them up, and no canonical Loto data is changed."
+  },
+  "classification": {
+    "classes": [
+      "DOMAIN_LOGIC",
+      "API_CONTRACT",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx",
+      "test": "LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero",
+      "expect": "to be null"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLotoFeedReturnsPagedEnvelope",
+      "expect": "cannot unmarshal array"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLotoStatsReportsDatabaseFailure",
+      "expect": "want 500"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLotoStatsRejectsUnknownGame",
+      "expect": "want 400"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-09T14:52:50.632Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-09T14:56:15.858Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T14:56:24.360Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T14:58:02.053Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T14:58:40.191Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T14:59:47.201Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T15:01:16.564Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-09T15:11:42.850Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T15:12:19.731Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T15:12:44.208Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T15:17:31.342Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T15:18:19.663Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T15:33:03.962Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T15:36:16.541Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T15:36:42.335Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T15:37:35.822Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T15:45:41.319Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-09T15:50:56.702Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-09T15:51:03.212Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-09T14:57:30.531Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination unwraps an absent next draw instead of passing the response envelope to the hero",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"LotoHubClient pagination unwraps an absent next draw instead of passing the response envelope to the hero\" in apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination unwraps an absent next draw instead of passing the response envelope to the hero": "null nextDraw is not rendered as a prediction"
+      },
+      "fingerprint": "7081e20bfc95da18d141276700f5c4ce58395ed187b6855bafffd4e12fb6e7f6"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-09T14:57:37.715Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination unwraps an absent next draw instead of passing the response envelope to the hero",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"LotoHubClient pagination unwraps an absent next draw instead of passing the response envelope to the hero\" in apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero",
+          "outcome": "FAIL",
+          "excerpt": "expected <div …(1)></div> to be null",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"null nextDraw is not rendered as a prediction\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination unwraps an absent next draw instead of passing the response envelope to the hero": "null nextDraw is not rendered as a prediction",
+        "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero": "null nextDraw is not rendered as a prediction"
+      },
+      "fingerprint": "7081e20bfc95da18d141276700f5c4ce58395ed187b6855bafffd4e12fb6e7f6"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-09T14:57:44.477Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination unwraps an absent next draw instead of passing the response envelope to the hero",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"LotoHubClient pagination unwraps an absent next draw instead of passing the response envelope to the hero\" in apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero",
+          "outcome": "FAIL",
+          "excerpt": "expected <div …(1)></div> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination unwraps an absent next draw instead of passing the response envelope to the hero": "null nextDraw is not rendered as a prediction",
+        "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero": "to be null"
+      },
+      "fingerprint": "7081e20bfc95da18d141276700f5c4ce58395ed187b6855bafffd4e12fb6e7f6"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-09T14:58:01.837Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero",
+          "outcome": "FAIL",
+          "excerpt": "expected <div …(1)></div> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero": "to be null"
+      },
+      "fingerprint": "7081e20bfc95da18d141276700f5c4ce58395ed187b6855bafffd4e12fb6e7f6"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-09T14:58:39.966Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLotoFeedReturnsPagedEnvelope)$ ./apps/api-go/internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero",
+          "outcome": "FAIL",
+          "excerpt": "expected <div …(1)></div> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestLotoFeedReturnsPagedEnvelope",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero": "to be null",
+        "go:./apps/api-go/internal/httpserver:TestLotoFeedReturnsPagedEnvelope": "want total"
+      },
+      "fingerprint": "de0b1281e450ae6a36684b7d125dc3bcd3ca4cb3b821f18649e621a96172cf56"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-09T14:59:11.068Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLotoFeedReturnsPagedEnvelope)$ ./apps/api-go/internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLotoFeedReturnsPagedEnvelope)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero",
+          "outcome": "FAIL",
+          "excerpt": "expected <div …(1)></div> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestLotoFeedReturnsPagedEnvelope",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoFeedReturnsPagedEnvelope",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLotoFeedReturnsPagedEnvelope handler_loto_test.go:54: page 1 status=200 body=[{\"id\":\"d5a21ac5-7f4e-4ae1-8cfe-37e260571f06\",\"game\":\"loto6\",\"drawNumber\":900002,\"drawDate\":\"2054-02-27\",\"mainNumbers\":[1,2,3,4,5,6],\"bonusNumbers\":[7]},{\"id\":\"76726351-7056-4b25-9842-d3212d95e6c2\",\"game\":\"loto6…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"want total\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero": "to be null",
+        "go:./apps/api-go/internal/httpserver:TestLotoFeedReturnsPagedEnvelope": "want total",
+        "go:./internal/httpserver:TestLotoFeedReturnsPagedEnvelope": "want total"
+      },
+      "fingerprint": "de0b1281e450ae6a36684b7d125dc3bcd3ca4cb3b821f18649e621a96172cf56"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-09T14:59:46.921Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLotoFeedReturnsPagedEnvelope)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero",
+          "outcome": "FAIL",
+          "excerpt": "expected <div …(1)></div> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoFeedReturnsPagedEnvelope",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLotoFeedReturnsPagedEnvelope handler_loto_test.go:57: decode paged feed envelope: json: cannot unmarshal array into Go value of type httpserver.feed --- FAIL: TestLotoFeedReturnsPagedEnvelope (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero": "to be null",
+        "go:./internal/httpserver:TestLotoFeedReturnsPagedEnvelope": "cannot unmarshal array"
+      },
+      "fingerprint": "d0c8560e8156cde8357c12f730e67075815872572d4c28d580aabdbf33d2eede"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-09T15:01:16.244Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLotoFeedReturnsPagedEnvelope)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoFeedReturnsPagedEnvelope",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "cfff84f4aed1501873a621f1267813a615232cd296ab52025078e7d70527f341"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-09T15:07:36.616Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLotoFeedReturnsPagedEnvelope)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoFeedReturnsPagedEnvelope",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "03632dc9e526e8a838ed82242598b4cd2c181bb16383d1a7b8490adb64651630"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-09T15:08:09.910Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 728,
+        "executed": 728,
+        "passed": 727,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "03632dc9e526e8a838ed82242598b4cd2c181bb16383d1a7b8490adb64651630"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-09T15:11:42.501Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 401,
+        "executed": 401,
+        "passed": 401,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 773,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "03632dc9e526e8a838ed82242598b4cd2c181bb16383d1a7b8490adb64651630"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-09T15:12:43.860Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLotoFeedReturnsPagedEnvelope)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoFeedReturnsPagedEnvelope",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8d18cc67fd80ad949b1de109a39157003b831ade20d08cedb01a404c22bf3747"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-09T15:14:53.446Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "8d18cc67fd80ad949b1de109a39157003b831ade20d08cedb01a404c22bf3747"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-09T15:17:30.894Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 728,
+        "executed": 728,
+        "passed": 728,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "8d18cc67fd80ad949b1de109a39157003b831ade20d08cedb01a404c22bf3747"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-09T15:18:19.261Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLotoFeedReturnsPagedEnvelope)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoFeedReturnsPagedEnvelope",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "fc1e2f02bab59b74352131bc0701d5d1ada29282bcc4baa6fcb19cfa4d1487b2"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-09T15:20:27.888Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "fc1e2f02bab59b74352131bc0701d5d1ada29282bcc4baa6fcb19cfa4d1487b2"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-09T15:22:33.370Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLotoFeedReturnsPagedEnvelope)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoFeedReturnsPagedEnvelope",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "104ae494e483ffe5c187c0ca5e5434dbd4678e155552f2c8b22ab2c4631c40e4"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-09T15:24:21.456Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLotoFeedReturnsPagedEnvelope)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoFeedReturnsPagedEnvelope",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d34b5e0b7b019f045a6895e0c9cfc477aa5117031c10835039bb876686253406"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-09T15:26:45.769Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "d34b5e0b7b019f045a6895e0c9cfc477aa5117031c10835039bb876686253406"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-09T15:29:31.044Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 728,
+        "executed": 728,
+        "passed": 728,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "728 passed, 0 allowed skip(s)",
+      "fingerprint": "d34b5e0b7b019f045a6895e0c9cfc477aa5117031c10835039bb876686253406"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-09T15:33:03.574Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 401,
+        "executed": 401,
+        "passed": 401,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 773,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "d34b5e0b7b019f045a6895e0c9cfc477aa5117031c10835039bb876686253406"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-09T15:36:16.077Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLotoFeedReturnsPagedEnvelope|TestLotoStatsReportsDatabaseFailure)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero",
+          "outcome": "FAIL",
+          "excerpt": "expected <div …(1)></div> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoFeedReturnsPagedEnvelope",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestLotoFeedReturnsPagedEnvelope handler_loto_test.go:15: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLotoFeedReturnsPagedEnvelope (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoStatsReportsDatabaseFailure",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestLotoStatsReportsDatabaseFailure handler_loto_test.go:116: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLotoStatsReportsDatabaseFailure (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero": "to be null",
+        "go:./internal/httpserver:TestLotoFeedReturnsPagedEnvelope": "cannot unmarshal array",
+        "go:./internal/httpserver:TestLotoStatsReportsDatabaseFailure": "want 500"
+      },
+      "fingerprint": "3c9b3c25e3884e321adc74df2f0de4445c67b8488ce0e8586dbc830acacf1f55"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-09T15:36:41.870Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLotoFeedReturnsPagedEnvelope|TestLotoStatsReportsDatabaseFailure)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero",
+          "outcome": "FAIL",
+          "excerpt": "expected <div …(1)></div> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoFeedReturnsPagedEnvelope",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLotoFeedReturnsPagedEnvelope handler_loto_test.go:80: decode paged feed envelope: json: cannot unmarshal array into Go value of type httpserver.feed --- FAIL: TestLotoFeedReturnsPagedEnvelope (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoStatsReportsDatabaseFailure",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLotoStatsReportsDatabaseFailure handler_loto_test.go:121: closed database stats status=200 body={\"game\":\"loto6\",\"totalDraws\":0} , want 500 --- FAIL: TestLotoStatsReportsDatabaseFailure (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero": "to be null",
+        "go:./internal/httpserver:TestLotoFeedReturnsPagedEnvelope": "cannot unmarshal array",
+        "go:./internal/httpserver:TestLotoStatsReportsDatabaseFailure": "want 500"
+      },
+      "fingerprint": "3c9b3c25e3884e321adc74df2f0de4445c67b8488ce0e8586dbc830acacf1f55"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-09T15:37:06.740Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLotoFeedReturnsPagedEnvelope|TestLotoStatsReportsDatabaseFailure|TestLotoStatsRejectsUnknownGame)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero",
+          "outcome": "FAIL",
+          "excerpt": "expected <div …(1)></div> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoFeedReturnsPagedEnvelope",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLotoFeedReturnsPagedEnvelope handler_loto_test.go:80: decode paged feed envelope: json: cannot unmarshal array into Go value of type httpserver.feed --- FAIL: TestLotoFeedReturnsPagedEnvelope (0.06s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoStatsReportsDatabaseFailure",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLotoStatsReportsDatabaseFailure handler_loto_test.go:121: closed database stats status=200 body={\"game\":\"loto6\",\"totalDraws\":0} , want 500 --- FAIL: TestLotoStatsReportsDatabaseFailure (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoStatsRejectsUnknownGame",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLotoStatsRejectsUnknownGame handler_loto_test.go:130: unknown game stats status=200 body={\"game\":\"other\",\"totalDraws\":0} , want 400 --- FAIL: TestLotoStatsRejectsUnknownGame (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero": "to be null",
+        "go:./internal/httpserver:TestLotoFeedReturnsPagedEnvelope": "cannot unmarshal array",
+        "go:./internal/httpserver:TestLotoStatsReportsDatabaseFailure": "want 500",
+        "go:./internal/httpserver:TestLotoStatsRejectsUnknownGame": "want 400"
+      },
+      "fingerprint": "3c9b3c25e3884e321adc74df2f0de4445c67b8488ce0e8586dbc830acacf1f55"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-09T15:37:35.358Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLotoFeedReturnsPagedEnvelope|TestLotoStatsReportsDatabaseFailure|TestLotoStatsRejectsUnknownGame)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient pagination > unwraps an absent next draw instead of passing the response envelope to the hero",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoFeedReturnsPagedEnvelope",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoStatsReportsDatabaseFailure",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoStatsRejectsUnknownGame",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8ff184eef2d01853b00e166dbed9418926c88bf9295530f70222f50ed0a18dba"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-09T15:39:55.087Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "8ff184eef2d01853b00e166dbed9418926c88bf9295530f70222f50ed0a18dba"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-09T15:42:32.965Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 730,
+        "executed": 730,
+        "passed": 730,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "730 passed, 0 allowed skip(s)",
+      "fingerprint": "8ff184eef2d01853b00e166dbed9418926c88bf9295530f70222f50ed0a18dba"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-09T15:45:40.929Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 401,
+        "executed": 401,
+        "passed": 401,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 773,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "8ff184eef2d01853b00e166dbed9418926c88bf9295530f70222f50ed0a18dba"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-09T15:50:56.299Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a12157-b973-77a3-8620-053e5eccf37b",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "8ff184eef2d01853b00e166dbed9418926c88bf9295530f70222f50ed0a18dba"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-09T15:51:03.196Z",
+    "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+    "fingerprint": "8ff184eef2d01853b00e166dbed9418926c88bf9295530f70222f50ed0a18dba",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_career_content_gamification_misc.go": "627b346ffb047211ce0cda834c9e5741123015b5",
+      "apps/api-go/internal/httpserver/handler_loto_test.go": "a01ce5819d061673fb622160d08106cc451dcf27",
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "a4dafa0b4dbc4dfbe608f53d8d6d1c988f14346a",
+      "apps/web/app/[locale]/_components/homepage/loto-teaser-widget.tsx": "517824367ccc6cefa779189d908448f57e986506",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx": "57e2a488260d461a36f850dd3e0f2022dfeb9504",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.tsx": "13590f859c4ea644f31f3a4af6af39bdd968ea67"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

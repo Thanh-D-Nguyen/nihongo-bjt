@@ -4,6 +4,7 @@ import Link from "next/link";
 import en from "../../../../messages/en.json";
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
+import { getServerApiBaseUrl } from "../../../../lib/server-api-url";
 import { BackNavigation } from "../../_components/back-navigation";
 import { DetailHeroHeader, themeGradients, defaultTheme } from "../../_components/detail-hero-header";
 import { VocabExpressionList } from "./_components/vocab-expression-list";
@@ -11,7 +12,7 @@ import type { VocabExpression } from "./_components/vocab-expression-list";
 
 const messagesMap = { en, ja, vi } as const;
 type Locale = keyof typeof messagesMap;
-const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
+const apiBaseUrl = getServerApiBaseUrl();
 
 /* ─── Types ─── */
 

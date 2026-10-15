@@ -1,0 +1,1069 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-149",
+  "title": "Add Admin postcard share-template preview route (SVG)",
+  "start_head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+  "preexisting_changes": {
+    "apps/admin/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/admin/tsconfig.tsbuildinfo": "3735c225d7c44f090d27c5807d67bcc30be3e998",
+    "apps/web/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/web/tsconfig.tsbuildinfo": "e16cf963ec5eeb9832ca0a54b78e7dca8e6be331"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "AC1: anonymous request gets 401; roleless Admin gets 403; admin.growth.read gets 200."
+      },
+      {
+        "id": "AC2",
+        "text": "AC2: invalid headline/sub/kind/color/pattern/badge bodies return 400 without writing rows."
+      },
+      {
+        "id": "AC3",
+        "text": "AC3: a valid request returns base64Svg that decodes to an SVG document in which user text is escaped (no raw script markup), and growth.share_template row count is unchanged."
+      },
+      {
+        "id": "AC4",
+        "text": "AC4: the Postcards preview in a headed 390x844 Admin browser shows the rendered SVG after a POST 200, with no console or page errors."
+      },
+      {
+        "id": "AC5",
+        "text": "AC5: the OpenAPI entry for the route matches the implemented request and response contract."
+      }
+    ],
+    "expected_behavior": "The route exists behind admin.growth.read with trusted-origin CSRF, validates headline/sub/kind/config strictly, renders a non-persisting SVG postcard with XML-escaped text and hex-validated colors, returns base64Svg, and the UI displays it.",
+    "observed_behavior": "POST /api/admin/growth/share-template/preview has no Go route; the Admin Postcards preview action gets 404 (verified: no route in server.go; UI call at growth-postcards-client.tsx). The UI expects a PNG (base64Png), but the Go share-image renderer is a deliberate 501 stub.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY",
+      "UI_ONLY"
+    ],
+    "change_kind": "add",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149",
+      "expect": "anonymous preview status=404"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149",
+      "expect": "invalid preview body"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149",
+      "expect": "valid preview status=404"
+    }
+  ],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/api-go/internal/httpserver/handler_admin_growth_share_preview.go",
+      "find": "\"sakura\": {}",
+      "replace": "\"sakura-off\": {}"
+    },
+    "targets": [
+      {
+        "runner": "go",
+        "package": "./internal/httpserver",
+        "test": "TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149",
+        "expect": "preview pattern sakura status=400"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-14T11:48:08.067Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-14T11:48:08.465Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-14T11:48:08.858Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T11:48:51.006Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T11:51:28.445Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T11:54:53.175Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T12:00:37.433Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-14T12:22:32.970Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-14T12:27:29.319Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T12:30:15.567Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T12:30:35.712Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T12:33:04.030Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-14T12:42:20.058Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T12:46:10.763Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T12:46:24.808Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-14T12:54:50.749Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-14T12:56:45.838Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-14T12:56:46.765Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-14T11:48:50.724Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149 2026/10/14 20:48:50 INFO request method=POST path=/api/admin/growth/share-template/preview status=404 duration=29.375µs bytes=19 handler_admin_growth_share_preview_test.go:34: anonymous preview status=404 body=404 page not found ; wan…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149": "anonymous preview status=404"
+      },
+      "fingerprint": "4dd39785f86179eaf30b9a2291e12d5ebd52cbe973a1a5607ae492804e25a09e"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-14T11:48:59.816Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149|TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149 2026/10/14 20:48:59 INFO request method=POST path=/api/admin/growth/share-template/preview status=404 duration=39.791µs bytes=19 handler_admin_growth_share_preview_test.go:34: anonymous preview status=404 body=404 page not found ; wan…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149 2026/10/14 20:48:59 INFO request method=POST path=/api/admin/growth/share-template/preview status=404 duration=14.083µs bytes=19 handler_admin_growth_share_preview_test.go:76: invalid preview body \"{\" status=404 body=404 page not found ;…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149": "anonymous preview status=404",
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149": "invalid preview body"
+      },
+      "fingerprint": "4dd39785f86179eaf30b9a2291e12d5ebd52cbe973a1a5607ae492804e25a09e"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-14T11:49:08.790Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149|TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149|TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149 2026/10/14 20:49:08 INFO request method=POST path=/api/admin/growth/share-template/preview status=404 duration=28.334µs bytes=19 handler_admin_growth_share_preview_test.go:34: anonymous preview status=404 body=404 page not found ; wan…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149 2026/10/14 20:49:08 INFO request method=POST path=/api/admin/growth/share-template/preview status=404 duration=13.584µs bytes=19 handler_admin_growth_share_preview_test.go:76: invalid preview body \"{\" status=404 body=404 page not found ;…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149 2026/10/14 20:49:08 INFO request method=POST path=/api/admin/growth/share-template/preview status=404 duration=12.125µs bytes=19 handler_admin_growth_share_preview_test.go:104: valid preview status=404 body=404 page not f…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149": "anonymous preview status=404",
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149": "invalid preview body",
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149": "valid preview status=404"
+      },
+      "fingerprint": "4dd39785f86179eaf30b9a2291e12d5ebd52cbe973a1a5607ae492804e25a09e"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-14T11:51:27.953Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149|TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149|TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "4c258e691f42f095adfb25ad963c9b94d81d3b7791d73fc0a82370aee42ac4a5"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-14T11:54:52.711Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 953,
+        "executed": 953,
+        "passed": 953,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "4c258e691f42f095adfb25ad963c9b94d81d3b7791d73fc0a82370aee42ac4a5"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-14T12:00:08.268Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 469,
+        "executed": 469,
+        "passed": 469,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 804,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "7ceaf6f4551738765214513893869f60ff87839929436dfc31f686da2c310c06"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-14T12:00:36.850Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149|TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149|TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "7ceaf6f4551738765214513893869f60ff87839929436dfc31f686da2c310c06"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-14T12:03:30.008Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 953,
+        "executed": 953,
+        "passed": 953,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "953 passed, 0 allowed skip(s)",
+      "fingerprint": "7ceaf6f4551738765214513893869f60ff87839929436dfc31f686da2c310c06"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-14T12:08:21.199Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 469,
+        "executed": 469,
+        "passed": 469,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 804,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "7ceaf6f4551738765214513893869f60ff87839929436dfc31f686da2c310c06"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-14T12:08:59.482Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit149-admin-postcard-preview.mjs",
+      "exit_code": 1,
+      "fingerprint": "7ceaf6f4551738765214513893869f60ff87839929436dfc31f686da2c310c06"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-14T12:22:32.458Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit149-admin-postcard-preview.mjs",
+      "exit_code": 0,
+      "fingerprint": "7ceaf6f4551738765214513893869f60ff87839929436dfc31f686da2c310c06"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-14T12:27:28.762Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149|TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149|TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149|TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149 2026/10/14 21:27:27 INFO request method=POST path=/api/admin/growth/share-template/preview status=404 duration=24.292µs bytes=19 handler_admin_growth_share_preview_test.go:37: anonymous preview status=404 body=404 page not found ; wan…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149 2026/10/14 21:27:27 INFO request method=POST path=/api/admin/growth/share-template/preview status=404 duration=16.667µs bytes=19 handler_admin_growth_share_preview_test.go:79: invalid preview body \"{\" status=404 body=404 page not found ;…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149 2026/10/14 21:27:27 INFO request method=POST path=/api/admin/growth/share-template/preview status=404 duration=13.208µs bytes=19 handler_admin_growth_share_preview_test.go:107: valid preview status=404 body=404 page not f…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149 2026/10/14 21:27:27 INFO request method=POST path=/api/admin/growth/share-template/preview status=404 duration=10.875µs bytes=19 handler_admin_growth_share_preview_test.go:159: preview pattern none status=404 body=404 page not found …",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"preview pattern sakura status=400\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149": "anonymous preview status=404",
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149": "invalid preview body",
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149": "valid preview status=404",
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149": "preview pattern sakura status=400"
+      },
+      "fingerprint": "04f61f046f64ccc88245ede3f419b8b0fe9a2c7ea97cc490db0d406a8e21911a"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-14T12:27:49.685Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149|TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149|TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149|TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149|TestAdminGrowthSharePreviewRendersWellFormedSVGAUDIT149)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149 2026/10/14 21:27:48 INFO request method=POST path=/api/admin/growth/share-template/preview status=404 duration=22.792µs bytes=19 handler_admin_growth_share_preview_test.go:37: anonymous preview status=404 body=404 page not found ; wan…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149 2026/10/14 21:27:48 INFO request method=POST path=/api/admin/growth/share-template/preview status=404 duration=9.5µs bytes=19 handler_admin_growth_share_preview_test.go:79: invalid preview body \"{\" status=404 body=404 page not found ; wa…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149 2026/10/14 21:27:48 INFO request method=POST path=/api/admin/growth/share-template/preview status=404 duration=15.458µs bytes=19 handler_admin_growth_share_preview_test.go:107: valid preview status=404 body=404 page not f…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149 2026/10/14 21:27:48 INFO request method=POST path=/api/admin/growth/share-template/preview status=404 duration=9.375µs bytes=19 handler_admin_growth_share_preview_test.go:159: preview pattern none status=404 body=404 page not found ;…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"preview pattern sakura status=400\""
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersWellFormedSVGAUDIT149",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewRendersWellFormedSVGAUDIT149 2026/10/14 21:27:48 INFO request method=POST path=/api/admin/growth/share-template/preview status=404 duration=10.792µs bytes=19 handler_admin_growth_share_preview_test.go:177: control-character preview status=404 body=404 page not foun…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"not well-formed XML\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149": "anonymous preview status=404",
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149": "invalid preview body",
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149": "valid preview status=404",
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149": "preview pattern sakura status=400",
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersWellFormedSVGAUDIT149": "not well-formed XML"
+      },
+      "fingerprint": "04f61f046f64ccc88245ede3f419b8b0fe9a2c7ea97cc490db0d406a8e21911a"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-14T12:30:15.013Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149|TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149|TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "21f45f591a56815bd741761132ae305010532b1202308ef60288f997d33e5985"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-14T12:30:35.185Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_admin_growth_share_preview.go",
+        "find": "\"sakura\": {}",
+        "replace": "\"sakura-off\": {}"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149 2026/10/14 21:30:33 INFO request method=POST path=/api/admin/growth/share-template/preview status=200 duration=3.496375ms bytes=901 2026/10/14 21:30:33 INFO request method=POST path=/api/admin/growth/share-template/preview status=200…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149": "preview pattern sakura status=400"
+      },
+      "fingerprint": "21f45f591a56815bd741761132ae305010532b1202308ef60288f997d33e5985"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-14T12:30:54.666Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "sensitivity",
+      "outcome": "INSENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_admin_growth_share_preview.go",
+        "find": "unicode.IsControl(r) || r == 0xFFFE",
+        "replace": "false || r == 0xFFFE"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149|TestAdminGrowthSharePreviewRendersWellFormedSVGAUDIT149)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_share_preview.go:11:2: \"unicode\" imported and not used FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [build …",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersWellFormedSVGAUDIT149",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_share_preview.go:11:2: \"unicode\" imported and not used FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [build …",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149": "preview pattern sakura status=400",
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersWellFormedSVGAUDIT149": "not well-formed XML"
+      },
+      "fingerprint": "21f45f591a56815bd741761132ae305010532b1202308ef60288f997d33e5985"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-14T12:31:25.766Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "sensitivity",
+      "outcome": "INSENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_admin_growth_share_preview.go",
+        "find": "unicode.IsControl(r) || r == 0xFFFE",
+        "replace": "unicode.IsSpace(r) || r == 0xFFFE"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149|TestAdminGrowthSharePreviewRendersWellFormedSVGAUDIT149)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149",
+          "outcome": "PASS",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149 2026/10/14 21:31:24 INFO request method=POST path=/api/admin/growth/share-template/preview status=200 duration=2.738292ms bytes=901 2026/10/14 21:31:24 INFO request method=POST path=/api/admin/growth/share-template/preview status=200…",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersWellFormedSVGAUDIT149",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewRendersWellFormedSVGAUDIT149 2026/10/14 21:31:24 INFO request method=POST path=/api/admin/growth/share-template/preview status=200 duration=2.110292ms bytes=925 handler_admin_growth_share_preview_test.go:195: rendered SVG is not well-formed XML: XML syntax error on…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149": "preview pattern sakura status=400",
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersWellFormedSVGAUDIT149": "not well-formed XML"
+      },
+      "fingerprint": "21f45f591a56815bd741761132ae305010532b1202308ef60288f997d33e5985"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-14T12:31:53.445Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "sensitivity",
+      "outcome": "INSENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_admin_growth_share_preview.go",
+        "find": "unicode.IsControl(r) || r == 0xFFFE",
+        "replace": "unicode.IsSpace(r) || r == 0xFFFE"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149|TestAdminGrowthSharePreviewRendersWellFormedSVGAUDIT149)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149",
+          "outcome": "PASS",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149 2026/10/14 21:31:52 INFO request method=POST path=/api/admin/growth/share-template/preview status=200 duration=2.60375ms bytes=901 2026/10/14 21:31:52 INFO request method=POST path=/api/admin/growth/share-template/preview status=200 …",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersWellFormedSVGAUDIT149",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewRendersWellFormedSVGAUDIT149 2026/10/14 21:31:52 INFO request method=POST path=/api/admin/growth/share-template/preview status=200 duration=2.713083ms bytes=925 handler_admin_growth_share_preview_test.go:195: rendered SVG is not well-formed XML: XML syntax error on…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149": "preview pattern sakura status=400",
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersWellFormedSVGAUDIT149": "not well-formed XML"
+      },
+      "fingerprint": "21f45f591a56815bd741761132ae305010532b1202308ef60288f997d33e5985"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-14T12:32:38.570Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_admin_growth_share_preview.go",
+        "find": "\"sakura\": {}",
+        "replace": "\"sakura-off\": {}"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149 2026/10/14 21:32:37 INFO request method=POST path=/api/admin/growth/share-template/preview status=200 duration=2.676708ms bytes=901 2026/10/14 21:32:37 INFO request method=POST path=/api/admin/growth/share-template/preview status=200…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149": "preview pattern sakura status=400"
+      },
+      "fingerprint": "21f45f591a56815bd741761132ae305010532b1202308ef60288f997d33e5985"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-14T12:33:03.460Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149|TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149|TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149|TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "21f45f591a56815bd741761132ae305010532b1202308ef60288f997d33e5985"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-14T12:36:25.585Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 956,
+        "executed": 956,
+        "passed": 956,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "956 passed, 0 allowed skip(s)",
+      "fingerprint": "21f45f591a56815bd741761132ae305010532b1202308ef60288f997d33e5985"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-14T12:41:31.007Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 469,
+        "executed": 469,
+        "passed": 469,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 804,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "21f45f591a56815bd741761132ae305010532b1202308ef60288f997d33e5985"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-14T12:42:19.579Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit149-admin-postcard-preview.mjs",
+      "exit_code": 0,
+      "fingerprint": "21f45f591a56815bd741761132ae305010532b1202308ef60288f997d33e5985"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-14T12:46:10.213Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149|TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149|TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149|TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149 handler_admin_growth_share_preview_test.go:31: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149 (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149 handler_admin_growth_share_preview_test.go:55: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149 (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149 handler_admin_growth_share_preview_test.go:92: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149 (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149 handler_admin_growth_share_preview_test.go:147: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149 (0.00s)"
+        }
+      ],
+      "fingerprint": "47703ee5563a7a16c6d0c6556d16f0c9352b296bd1afaf3e0102d27aecc39b78"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-14T12:46:24.264Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149|TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149|TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149|TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRequiresReadPermissionAUDIT149",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRejectsInvalidInputAUDIT149",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewRendersEscapedSVGWithoutPersistenceAUDIT149",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthSharePreviewAcceptsEveryFormPatternAUDIT149",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "47703ee5563a7a16c6d0c6556d16f0c9352b296bd1afaf3e0102d27aecc39b78"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-14T12:49:24.179Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 956,
+        "executed": 956,
+        "passed": 956,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "956 passed, 0 allowed skip(s)",
+      "fingerprint": "47703ee5563a7a16c6d0c6556d16f0c9352b296bd1afaf3e0102d27aecc39b78"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-14T12:54:22.127Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 469,
+        "executed": 469,
+        "passed": 469,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 804,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "47703ee5563a7a16c6d0c6556d16f0c9352b296bd1afaf3e0102d27aecc39b78"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-14T12:54:50.273Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit149-admin-postcard-preview.mjs",
+      "exit_code": 0,
+      "fingerprint": "47703ee5563a7a16c6d0c6556d16f0c9352b296bd1afaf3e0102d27aecc39b78"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-14T12:56:45.395Z",
+      "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude-fresh-reviewer-149",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "1266180c567a525e36e4da91798a00663264506de989b2bc98f70df9aede8e05",
+      "attested": true,
+      "fingerprint": "47703ee5563a7a16c6d0c6556d16f0c9352b296bd1afaf3e0102d27aecc39b78"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-14T12:56:46.747Z",
+    "head": "206d7e8e6a74005eafb21d9e1ddf9d2bdbb9f0f1",
+    "fingerprint": "47703ee5563a7a16c6d0c6556d16f0c9352b296bd1afaf3e0102d27aecc39b78",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/admin/app/[locale]/growth/postcards/growth-postcards-client.tsx": "b0f545d855d268adb53fdc996446c573cca08065",
+      "apps/api-go/internal/httpserver/handler_admin_growth_share_preview.go": "cbcd30020dbdb8676f96eff9401cef15acb86b82",
+      "apps/api-go/internal/httpserver/handler_admin_growth_share_preview_test.go": "6b6493a8729e032b2239b8cf1a20b16f805d98f9",
+      "apps/api-go/internal/httpserver/server.go": "6d06b210af080a592545e64c3cc32d987af16566",
+      "docs/openapi.json": "ebf5bb64ea57d9d03cd74cfd7d34d74342691c3b",
+      "e2e/audit/audit149-admin-postcard-preview.mjs": "11ba7fe5ffec9501b98f85d2773665acbd231d4f"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": [
+      {
+        "id": "f6b9c83b-acd4-4c5c-a181-2881ce43886a",
+        "task": "AUDIT-149",
+        "action": {
+          "kind": "external_mutation",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "b917716345e1b3115b1216053abe33d5c323bd299d7d4c64404a3f8d866fb31f",
+            "environment": "local"
+          },
+          "impact": "Publish or mutate an external service/account",
+          "command": "curl -s -o /dev/null -w \"anon preview %{http_code}\\n\" -m 10 -X POST -H \"Content-Type: application/json\" -d '{\"headline\":\"x\",\"sub\":\"y\",\"kind\":\"streak\"}' http://localhost:18081/api/admin/growth/share-template/preview"
+        },
+        "impact": "Publish or mutate an external service/account",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "b917716345e1b3115b1216053abe33d5c323bd299d7d4c64404a3f8d866fb31f",
+          "environment": "local"
+        },
+        "digest": "8da7bbaca3dca97874c44f18186efbe5a630ca733c43c783f440527212a768f5",
+        "continuation": {
+          "step": "native:toolu_01E9Am7tjrZnTkheSNhTQXRj",
+          "native_tool_use_id": "toolu_01E9Am7tjrZnTkheSNhTQXRj"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "native_permission_once",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-14T12:09:53.743Z"
+      }
+    ]
+  }
+}

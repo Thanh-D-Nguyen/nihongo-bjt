@@ -1,0 +1,553 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-104",
+  "title": "Audit learner linked accounts screen",
+  "start_head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The linked-accounts page exposes a Google OAuth action that targets /api/auth/google/start, but Google OAuth was explicitly retired and its Go route is not registered, so the real browser action returns 404.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Anonymous access redirects to localized login without exposing identity data or requesting identities."
+      },
+      {
+        "id": "AC2",
+        "text": "Authenticated learner can view linked identities and unlinking an existing identity removes it from PostgreSQL."
+      },
+      {
+        "id": "AC3",
+        "text": "Retired Google OAuth start and link-code exchange flows are absent from the UI; localized title, subtitle and empty state describe legacy account management."
+      },
+      {
+        "id": "AC4",
+        "text": "At 390x844 the page has no horizontal overflow and unlink controls are at least 48px high."
+      }
+    ],
+    "expected_behavior": "The page accurately reflects the retired OAuth capability while preserving authenticated viewing and unlinking of existing linked identities.",
+    "observed_behavior": "Visible Google CTA navigation returned 404 page not found from the local Go API.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Remove the retired OAuth UI flow and shrink the frontend debt baseline for the warning eliminated by that deletion."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx",
+      "test": "linked account error contract > omits the retired Google OAuth action on linked accounts",
+      "expect": "to be null"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx",
+      "test": "linked account error contract > does not exchange a retired link code on linked accounts",
+      "expect": "to not be called at all"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx",
+      "test": "linked account error contract > keeps the linked identity unlink action at a 48px mobile target",
+      "expect": "expected false to be true"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-11T12:11:22.137Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-11T12:12:24.014Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-11T12:12:24.373Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-11T12:12:29.253Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T12:13:21.298Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T12:14:52.262Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T12:15:08.123Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-11T12:23:18.098Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T12:24:00.011Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T12:27:23.365Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T12:30:40.097Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T12:34:45.139Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T12:34:55.090Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T12:35:09.482Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-11T12:40:54.506Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-11T12:44:06.836Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-11T12:44:13.458Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-11T12:13:39.690Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked accounts error contract > gives the linked accounts Google action a 48px mobile target",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"linked accounts error contract > gives the linked accounts Google action a 48px mobile target\" in apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked accounts error contract > gives the linked accounts Google action a 48px mobile target": "min-h-12"
+      },
+      "fingerprint": "aaf79ad7ff9e86201d87ccba0e36698b4f3b0d34c0a2a58e807c1afee9907471"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-11T12:14:33.113Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked accounts error contract > gives the linked accounts Google action a 48px mobile target",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"linked accounts error contract > gives the linked accounts Google action a 48px mobile target\" in apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > gives the linked accounts Google action a 48px mobile target",
+          "outcome": "FAIL",
+          "excerpt": "expected false to be true // Object.is equality",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"min-h-12\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked accounts error contract > gives the linked accounts Google action a 48px mobile target": "min-h-12",
+        "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > gives the linked accounts Google action a 48px mobile target": "min-h-12"
+      },
+      "fingerprint": "aaf79ad7ff9e86201d87ccba0e36698b4f3b0d34c0a2a58e807c1afee9907471"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-11T12:14:52.104Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > gives the linked accounts Google action a 48px mobile target",
+          "outcome": "FAIL",
+          "excerpt": "expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > gives the linked accounts Google action a 48px mobile target": "expected false to be true"
+      },
+      "fingerprint": "aaf79ad7ff9e86201d87ccba0e36698b4f3b0d34c0a2a58e807c1afee9907471"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-11T12:15:07.928Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > gives the linked accounts Google action a 48px mobile target",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c1abce3591d57313b86d1e1c3c8b11ddb09ad318582e5c03b0fccb76bbd7965a"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-11T12:23:17.896Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 446,
+        "executed": 446,
+        "passed": 446,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 787,
+        "lint_errors": 65,
+        "lint_warnings": 24,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "c1abce3591d57313b86d1e1c3c8b11ddb09ad318582e5c03b0fccb76bbd7965a"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-11T12:23:59.816Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > omits the retired Google OAuth action on linked accounts",
+          "outcome": "FAIL",
+          "excerpt": "expected <a …(2)><svg …(3)>…(4)</svg></a> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > omits the retired Google OAuth action on linked accounts": "to be null"
+      },
+      "fingerprint": "541d0290acbdd1090a9eda1bfca7bb70a8781e5eb671e473029a8d3252480faf"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-11T12:27:23.004Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > omits the retired Google OAuth action on linked accounts",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "08764b3cc5c2e7ff981db01286d61ac87f2da5fddd2bdd52d2afdbf7fa276c82"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-11T12:30:39.733Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 448,
+        "executed": 448,
+        "passed": 448,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 787,
+        "lint_errors": 65,
+        "lint_warnings": 23,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "08764b3cc5c2e7ff981db01286d61ac87f2da5fddd2bdd52d2afdbf7fa276c82"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-11T12:34:44.732Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > omits the retired Google OAuth action on linked accounts",
+          "outcome": "FAIL",
+          "excerpt": "expected <a …(2)><svg …(3)>…(4)</svg></a> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > does not exchange a retired link code on linked accounts",
+          "outcome": "FAIL",
+          "excerpt": "expected \"fetch\" to not be called at all, but actually been called 2 times Received: 1st fetch call: Array [ \"http://localhost:4000/api/auth/link/exchange\", Object { \"body\": \"{\"code\":\"retired\"}\", \"headers\": Object { \"Content-Type\": \"application/json\", }, \"method\": \"POST\", }, ] 2nd fetch call: Array …",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"to not have been called\""
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > keeps the linked identity unlink action at a 48px mobile target",
+          "outcome": "FAIL",
+          "excerpt": "expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > omits the retired Google OAuth action on linked accounts": "to be null",
+        "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > does not exchange a retired link code on linked accounts": "to not have been called",
+        "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > keeps the linked identity unlink action at a 48px mobile target": "expected false to be true"
+      },
+      "fingerprint": "a00a2ff7047e3b71d2e23e2879bd7ab301508f88360920e2a26cb27a6f148b23"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-11T12:34:54.692Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > omits the retired Google OAuth action on linked accounts",
+          "outcome": "FAIL",
+          "excerpt": "expected <a …(2)><svg …(3)>…(4)</svg></a> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > does not exchange a retired link code on linked accounts",
+          "outcome": "FAIL",
+          "excerpt": "expected \"fetch\" to not be called at all, but actually been called 2 times Received: 1st fetch call: Array [ \"http://localhost:4000/api/auth/link/exchange\", Object { \"body\": \"{\"code\":\"retired\"}\", \"headers\": Object { \"Content-Type\": \"application/json\", }, \"method\": \"POST\", }, ] 2nd fetch call: Array …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > keeps the linked identity unlink action at a 48px mobile target",
+          "outcome": "FAIL",
+          "excerpt": "expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > omits the retired Google OAuth action on linked accounts": "to be null",
+        "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > does not exchange a retired link code on linked accounts": "to not be called at all",
+        "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > keeps the linked identity unlink action at a 48px mobile target": "expected false to be true"
+      },
+      "fingerprint": "a00a2ff7047e3b71d2e23e2879bd7ab301508f88360920e2a26cb27a6f148b23"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-11T12:35:09.076Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > omits the retired Google OAuth action on linked accounts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > does not exchange a retired link code on linked accounts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > keeps the linked identity unlink action at a 48px mobile target",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a00a2ff7047e3b71d2e23e2879bd7ab301508f88360920e2a26cb27a6f148b23"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-11T12:37:12.106Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "a00a2ff7047e3b71d2e23e2879bd7ab301508f88360920e2a26cb27a6f148b23"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-11T12:40:54.080Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 448,
+        "executed": 448,
+        "passed": 448,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 787,
+        "lint_errors": 65,
+        "lint_warnings": 23,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "a00a2ff7047e3b71d2e23e2879bd7ab301508f88360920e2a26cb27a6f148b23"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-11T12:44:06.436Z",
+      "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Newton",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "a00a2ff7047e3b71d2e23e2879bd7ab301508f88360920e2a26cb27a6f148b23"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-11T12:44:13.438Z",
+    "head": "1688d39bb9062f037ac06fe0f218d11d38d8d50d",
+    "fingerprint": "a00a2ff7047e3b71d2e23e2879bd7ab301508f88360920e2a26cb27a6f148b23",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_harness": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx": "083fb0a4b8e6bb37a881bdc7eb2a41633df05a1b",
+      "apps/web/app/[locale]/settings/linked-accounts/_components/accounts-settings-client.tsx": "b5a0b336ac4354431a284c13bc989348d789528e",
+      "apps/web/app/[locale]/settings/linked-accounts/page.tsx": "1a6324ca7125749428c637604178b19a2cb72460",
+      "apps/web/messages/en.json": "af056c0728977ca252a70661628196af253270d5",
+      "apps/web/messages/ja.json": "a8deef54cc0d843b6c214f6d87cccd171f830fd8",
+      "apps/web/messages/vi.json": "9b5369f650c5deda0eabc1a2bf1f8b1778b0fbb4",
+      "scripts/quality/frontend-debt-baseline.json": "c6f73e2812dd371bd945685a1f8ee464fb0999f5"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

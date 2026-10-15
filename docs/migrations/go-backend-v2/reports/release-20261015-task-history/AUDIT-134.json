@@ -1,0 +1,495 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-134",
+  "title": "Enforce RBAC on Admin retention API and screen",
+  "start_head": "05ac22e9131bc5b1257c81f257071f593267150b",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Add a real-router PostgreSQL integration regression for anonymous 401, roleless 403, admin.legal.read 200 with all retention fields and seven unique domains, and iam.manage-only 200. Record RED before enforcing RequireAnyPermission for OpenAPI legal grants plus iam.manage and align OpenAPI. Rebuild/stabilize canonical local runtime; use visible Admin login form for anonymous/roleless/authorized 390x844 screen and API validation; run Go suite and independent AUTH_SECURITY review; update inventories and commit screen/API together."
+      }
+    ],
+    "expected_behavior": "Anonymous remains 401, authenticated Admin without permission gets 403, and Admin with admin.legal.read or iam.manage gets 200 with all seven documented retention domains and fields.",
+    "observed_behavior": "GET /api/admin/legal/retention is behind AdminGuard only even though OpenAPI requires admin.legal.read/admin.legal.write/legal.admin and the Admin retention page/nav is restricted to iam.manage.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "AUTH_SECURITY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "This enforces the missing backend role permission on a privacy/legal retention API and aligns its documented permission contract."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminLegalRetentionRequiresPermission",
+      "expect": "expected roleless Admin to return 403, got 200"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-13T02:24:06.960Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-13T02:24:07.297Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-13T02:24:07.640Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T02:24:38.515Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T02:26:57.278Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-13T02:49:45.292Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-13T02:50:58.197Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-13T02:51:12.136Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-13T02:24:38.355Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLegalRetentionRequiresPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLegalRetentionRequiresPermission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLegalRetentionRequiresPermission 2026/10/13 11:24:38 INFO request method=GET path=/api/admin/legal/retention status=401 duration=188.25µs bytes=25 2026/10/13 11:24:38 INFO request method=GET path=/api/admin/legal/retention status=200 duration=1.902292ms bytes=2160 handler_admin_lega…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminLegalRetentionRequiresPermission": "expected roleless Admin to return 403, got 200"
+      },
+      "fingerprint": "09060686088dd23c1e1e65bc179302314776dbd122981e879bd9ba802f125dfa"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-13T02:26:57.010Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLegalRetentionRequiresPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLegalRetentionRequiresPermission",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e49b0b3980a48b548a15e6b8e9e6cbaec88cd4e7b0a78584d3b835a9967e3fce"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-13T02:30:43.593Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLegalRetentionRequiresPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLegalRetentionRequiresPermission",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ac5fcbb1154502927d54afe67ff5be2d1518e7a25d394f98e59d8184be54dd59"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-13T02:30:54.479Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit134-browser-check.sh",
+      "exit_code": 1,
+      "fingerprint": "ac5fcbb1154502927d54afe67ff5be2d1518e7a25d394f98e59d8184be54dd59"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-13T02:32:02.583Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLegalRetentionRequiresPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLegalRetentionRequiresPermission",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "497382963aa46cc4e44b7a36dacd6c22ad21743f8cdf95e9935056b3aab85bff"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-13T02:32:13.707Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit134-browser-check.sh",
+      "exit_code": 1,
+      "fingerprint": "497382963aa46cc4e44b7a36dacd6c22ad21743f8cdf95e9935056b3aab85bff"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-13T02:33:07.279Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLegalRetentionRequiresPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLegalRetentionRequiresPermission",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f0038cfcacb9cbaf480ec61193efd69aba041fd71eaac7eab87279c5aa6c61aa"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-13T02:33:15.471Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit134-browser-check.sh",
+      "exit_code": 1,
+      "fingerprint": "f0038cfcacb9cbaf480ec61193efd69aba041fd71eaac7eab87279c5aa6c61aa"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-13T02:34:04.176Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLegalRetentionRequiresPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLegalRetentionRequiresPermission",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "b6a2b134fa2e49dc77b2eb643bebc83563de84e67f29433ad6035126d94c6943"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-13T02:34:12.497Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit134-browser-check.sh",
+      "exit_code": 1,
+      "fingerprint": "b6a2b134fa2e49dc77b2eb643bebc83563de84e67f29433ad6035126d94c6943"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-13T02:34:53.134Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLegalRetentionRequiresPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLegalRetentionRequiresPermission",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "17dbcd36f2ac677cd88747c5a28a3660778711f8a1db5feabd403537eb78359c"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-13T02:35:06.290Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit134-browser-check.sh",
+      "exit_code": 1,
+      "fingerprint": "17dbcd36f2ac677cd88747c5a28a3660778711f8a1db5feabd403537eb78359c"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-13T02:35:42.521Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLegalRetentionRequiresPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLegalRetentionRequiresPermission",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "249ab3e3420947ac9ac38b4e494a92a6e82e89a0afda232ca2f2b101eed0a088"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-13T02:35:53.557Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit134-browser-check.sh",
+      "exit_code": 1,
+      "fingerprint": "249ab3e3420947ac9ac38b4e494a92a6e82e89a0afda232ca2f2b101eed0a088"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-13T02:37:23.340Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLegalRetentionRequiresPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLegalRetentionRequiresPermission",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "79e0b6b62006eb4ace482c5e1b14f565460e980f2612233f21888410b0241baf"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-13T02:37:57.607Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit134-browser-check.sh",
+      "exit_code": 1,
+      "fingerprint": "79e0b6b62006eb4ace482c5e1b14f565460e980f2612233f21888410b0241baf"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-13T02:38:34.573Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLegalRetentionRequiresPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLegalRetentionRequiresPermission",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "994b24aea3871ceab976e077d712b00f728301e69ce834031151c5f816303c19"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-13T02:38:42.906Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit134-browser-check.sh",
+      "exit_code": 1,
+      "fingerprint": "994b24aea3871ceab976e077d712b00f728301e69ce834031151c5f816303c19"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-13T02:39:26.532Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLegalRetentionRequiresPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLegalRetentionRequiresPermission",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "7d4293f531ecf7c8f928b97c875affe8877ea722ab8539182b09d7865a1be05d"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-13T02:39:39.303Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit134-browser-check.sh",
+      "exit_code": 1,
+      "fingerprint": "7d4293f531ecf7c8f928b97c875affe8877ea722ab8539182b09d7865a1be05d"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-13T02:40:56.087Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLegalRetentionRequiresPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLegalRetentionRequiresPermission",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "2b4b7bfd23c7417eaef0f864152f5641ad2a0666c0ce577cca0943c31424810e"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-13T02:41:13.759Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit134-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "2b4b7bfd23c7417eaef0f864152f5641ad2a0666c0ce577cca0943c31424810e"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-13T02:44:41.455Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 846,
+        "executed": 846,
+        "passed": 846,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "846 passed, 0 allowed skip(s)",
+      "fingerprint": "2b4b7bfd23c7417eaef0f864152f5641ad2a0666c0ce577cca0943c31424810e"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-13T02:49:44.947Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 466,
+        "executed": 466,
+        "passed": 466,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 792,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "2b4b7bfd23c7417eaef0f864152f5641ad2a0666c0ce577cca0943c31424810e"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-13T02:50:57.873Z",
+      "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a13324-320e-7333-852b-572cd21791b5",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "3712b88fb547b9ce4548ff68476962b583dd8ccc9456a073a2ee3f7ab3dc0a4b",
+      "attested": true,
+      "fingerprint": "2b4b7bfd23c7417eaef0f864152f5641ad2a0666c0ce577cca0943c31424810e"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-13T02:51:12.117Z",
+    "head": "05ac22e9131bc5b1257c81f257071f593267150b",
+    "fingerprint": "2b4b7bfd23c7417eaef0f864152f5641ad2a0666c0ce577cca0943c31424810e",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/admin/app/[locale]/legal/retention/legal-retention-admin-client.tsx": "da87cfa350c64c4ea9abd7df39d7c691bac124a6",
+      "apps/api-go/internal/httpserver/handler_admin_legal_rbac_test.go": "fbff4562896beb1ed78170f7195d4d65c4912399",
+      "apps/api-go/internal/httpserver/server.go": "a50fbad81879c759de1052e50d7989daf1d5bcd0",
+      "docs/openapi.json": "75586dbc8935bf6528aebb65656c9ba343b377e6",
+      "e2e/audit/audit134-browser-check.sh": "9c198e94097f08cc66cf5995858044bfbb2c82b6"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

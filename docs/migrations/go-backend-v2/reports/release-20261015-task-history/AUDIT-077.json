@@ -1,0 +1,225 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-077",
+  "title": "Audit learner Help screen",
+  "start_head": "9de7b60ac0729a294931ddb699e9d808c7e21fe1",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Anonymous visible /:locale/help route renders localized content, all four FAQ disclosures expand, and the contact link reaches localized feedback in vi/en/ja."
+      },
+      {
+        "id": "AC2",
+        "text": "At 390x844, every FAQ disclosure and contact link has a minimum 48px touch target, with no horizontal overflow; browser console and network have no page errors."
+      }
+    ],
+    "expected_behavior": "Public localized static help page with four interactive accessible disclosures and a feedback route; no auth or mutable API dependency.",
+    "observed_behavior": "Route, links, FAQ disclosure, and translations work in all three locales; mobile viewport has no overflow, but FAQ summaries measure 24px and contact link 36px.",
+    "rollback_plan": "Revert only the Help page target-size classes and its regression; no persistent data or schema changes."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/help/page.test.tsx",
+      "test": "learner help page > keeps FAQ disclosures and the contact link reachable on mobile",
+      "expect": "all FAQ summaries and contact link carry min-h-12"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-09T00:17:53.611Z",
+      "head": "9de7b60ac0729a294931ddb699e9d808c7e21fe1"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-09T00:18:44.734Z",
+      "head": "9de7b60ac0729a294931ddb699e9d808c7e21fe1"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T00:18:57.926Z",
+      "head": "9de7b60ac0729a294931ddb699e9d808c7e21fe1"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T00:19:29.341Z",
+      "head": "9de7b60ac0729a294931ddb699e9d808c7e21fe1"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T00:19:43.913Z",
+      "head": "9de7b60ac0729a294931ddb699e9d808c7e21fe1"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-09T00:58:26.284Z",
+      "head": "9de7b60ac0729a294931ddb699e9d808c7e21fe1"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-09T01:01:57.919Z",
+      "head": "9de7b60ac0729a294931ddb699e9d808c7e21fe1"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-09T00:19:14.625Z",
+      "head": "9de7b60ac0729a294931ddb699e9d808c7e21fe1",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/help/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/help/page.test.tsx::learner help page > keeps FAQ disclosures and the contact link reachable on mobile",
+          "outcome": "FAIL",
+          "excerpt": "expected false to be true // Object.is equality",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"all FAQ summaries and contact link carry min-h-12\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/help/page.test.tsx::learner help page > keeps FAQ disclosures and the contact link reachable on mobile": "all FAQ summaries and contact link carry min-h-12"
+      },
+      "fingerprint": "67a02c318da087313b76e5044ca2be485c1b1c6a3aa8435728432e6e8b66bb43"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-09T00:19:29.134Z",
+      "head": "9de7b60ac0729a294931ddb699e9d808c7e21fe1",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/help/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/help/page.test.tsx::learner help page > keeps FAQ disclosures and the contact link reachable on mobile",
+          "outcome": "FAIL",
+          "excerpt": "all FAQ summaries and contact link carry min-h-12: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/help/page.test.tsx::learner help page > keeps FAQ disclosures and the contact link reachable on mobile": "all FAQ summaries and contact link carry min-h-12"
+      },
+      "fingerprint": "e964c7ccb87bd4e3f9a0acb2715a3711a1ccd68e853952dad601d0eea2e27416"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-09T00:19:43.669Z",
+      "head": "9de7b60ac0729a294931ddb699e9d808c7e21fe1",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/help/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/help/page.test.tsx::learner help page > keeps FAQ disclosures and the contact link reachable on mobile",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "dd9e267de556724f0ac9a893f41c76a320d89cc7bdb855eaf99ea5953dcbf630"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-09T00:38:45.606Z",
+      "head": "9de7b60ac0729a294931ddb699e9d808c7e21fe1",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "TOOL_FAILURE",
+      "accounting": null,
+      "message": "lint could not run: spawnSync pnpm ETIMEDOUT",
+      "fingerprint": "dd9e267de556724f0ac9a893f41c76a320d89cc7bdb855eaf99ea5953dcbf630"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-09T00:58:26.042Z",
+      "head": "9de7b60ac0729a294931ddb699e9d808c7e21fe1",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 377,
+        "executed": 377,
+        "passed": 377,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 762,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "dd9e267de556724f0ac9a893f41c76a320d89cc7bdb855eaf99ea5953dcbf630"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-09T01:01:49.197Z",
+      "head": "9de7b60ac0729a294931ddb699e9d808c7e21fe1",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Ptolemy independent reviewer 01a11e2b-d837-7043-880d-ed4255f08c95",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "441b5d0d558dfd9fb35cb2784e41809278d3e7023e0714f9bab02a0adb6c08b3",
+      "attested": true,
+      "fingerprint": "dd9e267de556724f0ac9a893f41c76a320d89cc7bdb855eaf99ea5953dcbf630"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-09T01:01:57.900Z",
+    "head": "9de7b60ac0729a294931ddb699e9d808c7e21fe1",
+    "fingerprint": "dd9e267de556724f0ac9a893f41c76a320d89cc7bdb855eaf99ea5953dcbf630",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/help/page.test.tsx": "59f67d882d49d8eb1b714ddc7f0ebe5b8bd78d3b",
+      "apps/web/app/[locale]/help/page.tsx": "12ab38585401ea580d1f328feb73897baee05113"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

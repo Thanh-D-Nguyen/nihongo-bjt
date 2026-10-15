@@ -1,0 +1,581 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-079",
+  "title": "Audit learner lesson detail screen",
+  "start_head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The active learner lesson detail page calls GET /api/levels/lessons/{slug}, but the Go router does not register that endpoint, so published canonical lessons render as not found; completion state is browser-local only.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "A real PostgreSQL integration test proves published lesson metadata, lessonContent, ordered active child content and previous/next links are returned; inactive/unpublished/missing links are omitted or 404 as appropriate."
+      },
+      {
+        "id": "AC2",
+        "text": "Authenticated PUT progress accepts only a boolean completed value, protects mutation with learner session and CSRF, persists idempotently per user+lesson, and GET reflects the saved state; anonymous mutation is denied."
+      },
+      {
+        "id": "AC3",
+        "text": "The lesson detail screen renders its canonical content, controls work, progress survives navigation and refresh, and mobile layout has no horizontal overflow; no vocabulary/kanji/grammar CRUD is introduced."
+      },
+      {
+        "id": "AC4",
+        "text": "Prisma schema/migration validation, Go PostgreSQL integration tests, frontend behavior tests, lifecycle gates and visible browser retest pass."
+      }
+    ],
+    "expected_behavior": "Published lessons render the canonical lesson document and active linked vocabulary/kanji/grammar from PostgreSQL; unpublished/missing lessons return 404. Signed-in learners can complete/uncomplete idempotently and see completion restored after refresh from PostgreSQL; anonymous visitors can read lesson content and are directed to login before saving progress. Content records stay read-only.",
+    "observed_behavior": "Opening /vi/levels/J1/lessons/j1-01-greetings-intro renders Không tìm thấy bài học and Network shows GET /api/levels/lessons/j1-01-greetings-intro = 404. The completion toggle reads/writes bjt_lesson_completed in localStorage.",
+    "rollback_plan": "The migration is additive: revert by deploying code that no longer reads/writes bjt_lesson_progress, retain learner rows until policy-approved cleanup, then remove the table in a separate reviewed migration. Revert the lesson screen/API change by reverting its commit; canonical curriculum/content rows are never modified."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DATABASE",
+      "AUTH_SECURITY",
+      "DOMAIN_LOGIC",
+      "UI_ONLY",
+      "CROSS_CUTTING"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLessonDetailPublishedRoute",
+      "expect": "expected published lesson detail 200"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-09T01:25:27.581Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-09T01:57:39.734Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T01:57:40.122Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T02:02:58.029Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T02:12:01.359Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T02:13:12.481Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T02:19:28.952Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T02:31:05.274Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T02:36:35.636Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T02:44:50.048Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T02:47:16.564Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T02:48:19.351Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T02:54:57.017Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-09T02:54:59.772Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-09T02:55:11.175Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-09T02:02:43.424Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLessonDetailPublishedRoute)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLessonDetailPublishedRoute",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestLessonDetailPublishedRoute handler_lesson_detail_test.go:15: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLessonDetailPublishedRoute (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLessonDetailPublishedRoute": "expected published lesson detail 200"
+      },
+      "fingerprint": "c4623fd6f7c3674d2a0b0062fa420d63c4b44ff1bcbbf4591aa4069d530e4d37"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-09T02:02:57.830Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLessonDetailPublishedRoute)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLessonDetailPublishedRoute",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLessonDetailPublishedRoute handler_lesson_detail_test.go:37: expected published lesson detail 200, got 404: 404 page not found --- FAIL: TestLessonDetailPublishedRoute (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLessonDetailPublishedRoute": "expected published lesson detail 200"
+      },
+      "fingerprint": "c4623fd6f7c3674d2a0b0062fa420d63c4b44ff1bcbbf4591aa4069d530e4d37"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-09T02:12:00.744Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLessonDetailPublishedRoute)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLessonDetailPublishedRoute",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "2209374b50274d18f6ad6e202f06fbec337d0b84177e2bb445980836e844990c"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-09T02:19:28.251Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLessonDetailPublishedRoute)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLessonDetailPublishedRoute",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ca648f18f491d6eed03b55b0c4b34bb64fb6a5349d424c25afe4a9fba5c22f18"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-09T02:22:40.719Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 704,
+        "executed": 704,
+        "passed": 704,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "704 passed, 0 allowed skip(s)",
+      "fingerprint": "ca648f18f491d6eed03b55b0c4b34bb64fb6a5349d424c25afe4a9fba5c22f18"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-09T02:22:51.684Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "ca648f18f491d6eed03b55b0c4b34bb64fb6a5349d424c25afe4a9fba5c22f18"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-09T02:23:17.315Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLessonDetailPublishedRoute)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLessonDetailPublishedRoute",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9b20b7908601f6343142ba47711ce8561345303092358db27c2da2180095c5d9"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-09T02:25:48.849Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 704,
+        "executed": 704,
+        "passed": 704,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "704 passed, 0 allowed skip(s)",
+      "fingerprint": "9b20b7908601f6343142ba47711ce8561345303092358db27c2da2180095c5d9"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-09T02:29:25.891Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 379,
+        "executed": 379,
+        "passed": 379,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 764,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "9b20b7908601f6343142ba47711ce8561345303092358db27c2da2180095c5d9"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-09T02:30:53.938Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "/tmp/kotobaworks-lesson-browser-check.sh",
+      "exit_code": 1,
+      "fingerprint": "9b20b7908601f6343142ba47711ce8561345303092358db27c2da2180095c5d9"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-09T02:31:04.673Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "/tmp/kotobaworks-lesson-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "9b20b7908601f6343142ba47711ce8561345303092358db27c2da2180095c5d9"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-09T02:36:35.027Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLessonDetailPublishedRoute|TestLessonProgressUncompleteMissingLessonReturnsNotFound)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLessonDetailPublishedRoute",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLessonDetailPublishedRoute handler_lesson_detail_test.go:39: expected published lesson detail 200, got 404: 404 page not found --- FAIL: TestLessonDetailPublishedRoute (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLessonProgressUncompleteMissingLessonReturnsNotFound",
+          "outcome": "PASS",
+          "excerpt": "=== RUN TestLessonProgressUncompleteMissingLessonReturnsNotFound --- PASS: TestLessonProgressUncompleteMissingLessonReturnsNotFound (0.02s)",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLessonDetailPublishedRoute": "expected published lesson detail 200",
+        "go:./internal/httpserver:TestLessonProgressUncompleteMissingLessonReturnsNotFound": "expected missing lesson uncomplete to return 404"
+      },
+      "fingerprint": "8b86ce28752febae44e8133ae635129270c278e887a52b5678ca7c903d2764ea"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-09T02:40:47.213Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 706,
+        "executed": 706,
+        "passed": 706,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "706 passed, 0 allowed skip(s)",
+      "fingerprint": "a1dfe423087a699ee569376dba95468ad35a7b08b096fd0e1aa9aa526c016b02"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-09T02:44:16.292Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 379,
+        "executed": 379,
+        "passed": 379,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 764,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "a1dfe423087a699ee569376dba95468ad35a7b08b096fd0e1aa9aa526c016b02"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-09T02:44:48.638Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLessonDetailPublishedRoute)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLessonDetailPublishedRoute",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a1dfe423087a699ee569376dba95468ad35a7b08b096fd0e1aa9aa526c016b02"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-09T02:47:15.217Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "/tmp/kotobaworks-lesson-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "a1dfe423087a699ee569376dba95468ad35a7b08b096fd0e1aa9aa526c016b02"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-09T02:48:17.959Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLessonDetailPublishedRoute)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLessonDetailPublishedRoute",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8ed28efdfe0c85f86d134de06179f06c7dbbd08e7fe65ca6018fa8d002f445b1"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-09T02:51:04.057Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 706,
+        "executed": 706,
+        "passed": 706,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "706 passed, 0 allowed skip(s)",
+      "fingerprint": "8ed28efdfe0c85f86d134de06179f06c7dbbd08e7fe65ca6018fa8d002f445b1"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-09T02:54:35.895Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 379,
+        "executed": 379,
+        "passed": 379,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 764,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "8ed28efdfe0c85f86d134de06179f06c7dbbd08e7fe65ca6018fa8d002f445b1"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-09T02:54:55.749Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "/tmp/kotobaworks-lesson-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "8ed28efdfe0c85f86d134de06179f06c7dbbd08e7fe65ca6018fa8d002f445b1"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-09T02:54:58.585Z",
+      "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+      "kind": "review",
+      "mode": "human",
+      "reviewer": "Newton (independent reviewer)",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "Reviewed the final diff after the three findings were fixed; verified 404 semantics, authenticated CSRF rejection, schema/migration/generated client alignment, and found no remaining correctness or security blockers.",
+      "attested": true,
+      "fingerprint": "8ed28efdfe0c85f86d134de06179f06c7dbbd08e7fe65ca6018fa8d002f445b1"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-09T02:55:11.158Z",
+    "head": "67a6fd1ebbdb21a6190d8f1373733bf898d3c183",
+    "fingerprint": "8ed28efdfe0c85f86d134de06179f06c7dbbd08e7fe65ca6018fa8d002f445b1",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_lesson_detail.go": "a40648f367551b1b66e41a8c6b487bef3b31f306",
+      "apps/api-go/internal/httpserver/handler_lesson_detail_test.go": "9877baf91d6c032fc07341022837b7f27b3534fd",
+      "apps/api-go/internal/httpserver/server.go": "9953f7f1e66629a514cbdd9fa066b91aa784caf4",
+      "apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx": "42a4a3e4ffd308dbeccf179928d899f4effc5c63",
+      "apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.tsx": "b13a00157970aebe50dcaa9120000c017b8c7fcb",
+      "apps/web/messages/en.json": "85a13ba94cf7d61df3b2c323b2d22b19c7cc14db",
+      "apps/web/messages/ja.json": "064162f79bff10bd7e0242a4f51eaaf37a89faad",
+      "apps/web/messages/vi.json": "ae9cedf6834375fbccceb0849e7cff3c9b85dfa5",
+      "packages/database/generated/client/edge.js": "7e370a490425f57c2cf0a4ae5bd8ac587167bd20",
+      "packages/database/generated/client/index-browser.js": "cc36b2fcad3cd51a4582b63d5f5b12ffdeadf45d",
+      "packages/database/generated/client/index.d.ts": "a948ed78aa2c4064a3f7673c0f06526b025f0df4",
+      "packages/database/generated/client/index.js": "0fe51cb7ca216b9da90a9cc09470b02e1ff5c697",
+      "packages/database/generated/client/package.json": "551c56d8d09e8a4b0e8bbfd1efa835dfdccab07a",
+      "packages/database/generated/client/schema.prisma": "a4834d5a8de5fd1be139f6fd83e6ab627b7580f4",
+      "packages/database/prisma/migrations/20261009110000_bjt_lesson_progress/migration.sql": "8147fa17c16b2f1a05b44ca50089230af0fa19ad",
+      "packages/database/prisma/schema.prisma": "a4834d5a8de5fd1be139f6fd83e6ab627b7580f4"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

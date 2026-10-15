@@ -110,7 +110,7 @@ func adminBattleAbuseListHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 
 		type AbuseSummary struct {
 			ID          string  `json:"id"`
-			ReporterID  string  `json:"reporterId"`
+			ReporterID  *string `json:"reporterId"`
 			SubjectID   string  `json:"subjectId"`
 			MatchID     *string `json:"matchId,omitempty"`
 			Severity    string  `json:"severity"`
@@ -187,22 +187,24 @@ func adminBattleAbuseDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 			CreatedAt   string  `json:"createdAt"`
 		}
 		type AbuseDetail struct {
-			ID                  string        `json:"id"`
-			ReporterID          string        `json:"reporterId"`
-			SubjectID           string        `json:"subjectId"`
-			MatchID             *string       `json:"matchId,omitempty"`
-			Severity            string        `json:"severity"`
-			Kind                string        `json:"kind"`
-			Status              string        `json:"status"`
-			ActionTaken         *string       `json:"actionTaken,omitempty"`
-			ResolutionNotes     *string       `json:"resolutionNotes,omitempty"`
-			ResolvedAt          *string       `json:"resolvedAt,omitempty"`
-			ResolvedByID        *string       `json:"resolvedById,omitempty"`
-			EscalatedAt         *string       `json:"escalatedAt,omitempty"`
-			CreatedAt           string        `json:"createdAt"`
-			UpdatedAt           string        `json:"updatedAt"`
-			PriorAgainstSubject []PriorReport `json:"priorAgainstSubject"`
-			Audit               []AuditEntry  `json:"audit"`
+			ID                  string         `json:"id"`
+			ReporterID          *string        `json:"reporterId"`
+			SubjectID           string         `json:"subjectId"`
+			MatchID             *string        `json:"matchId,omitempty"`
+			Severity            string         `json:"severity"`
+			Kind                string         `json:"kind"`
+			Description         string         `json:"description"`
+			Evidence            map[string]any `json:"evidence"`
+			Status              string         `json:"status"`
+			ActionTaken         *string        `json:"actionTaken,omitempty"`
+			ResolutionNotes     *string        `json:"resolutionNotes,omitempty"`
+			ResolvedAt          *string        `json:"resolvedAt,omitempty"`
+			ResolvedByID        *string        `json:"resolvedById,omitempty"`
+			EscalatedAt         *string        `json:"escalatedAt,omitempty"`
+			CreatedAt           string         `json:"createdAt"`
+			UpdatedAt           string         `json:"updatedAt"`
+			PriorAgainstSubject []PriorReport  `json:"priorAgainstSubject"`
+			Audit               []AuditEntry   `json:"audit"`
 		}
 
 		var ad AbuseDetail
@@ -211,12 +213,13 @@ func adminBattleAbuseDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		err := db.QueryRow(ctx, `
 			SELECT id, reporter_id, subject_id, match_id, severity, kind, status,
 			       action_taken, resolution_notes, resolved_at, resolved_by_id,
-			       escalated_at, created_at, updated_at
+			escalated_at, created_at, updated_at
+			, description, evidence
 			FROM learning.battle_abuse_report WHERE id = $1`, id).Scan(
 			&ad.ID, &ad.ReporterID, &ad.SubjectID, &ad.MatchID,
 			&ad.Severity, &ad.Kind, &ad.Status, &ad.ActionTaken,
 			&ad.ResolutionNotes, &resolvedAt, &ad.ResolvedByID,
-			&escalatedAt, &createdAt, &updatedAt)
+			&escalatedAt, &createdAt, &updatedAt, &ad.Description, &ad.Evidence)
 		if err != nil {
 			writeJSONError(w, "abuse report not found", http.StatusNotFound)
 			return
@@ -303,8 +306,9 @@ func adminBattleAbuseResolveHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		if req.Action != "dismissed" && req.Action != "warned" && req.Action != "banned" && req.Action != "other" {
-			writeJSONError(w, "action must be dismissed, warned, banned, or other", http.StatusBadRequest)
+		if req.Action != "dismissed" && req.Action != "warned" && req.Action != "banned" && req.Action != "other" &&
+			req.Action != "warning" && req.Action != "temp_ban" && req.Action != "perm_ban" {
+			writeJSONError(w, "action must be warning, temp_ban, perm_ban, dismissed, warned, banned, or other", http.StatusBadRequest)
 			return
 		}
 

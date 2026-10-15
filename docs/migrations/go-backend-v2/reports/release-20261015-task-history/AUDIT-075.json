@@ -1,0 +1,1434 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-075",
+  "title": "Audit learner Explore screen",
+  "start_head": "202b97908079d39468929546702991401470bdf3",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Explore displayed 0 because it interpreted canonical list arrays as {total}, even though the API only returns one 50-item page. On mobile the totals ribbon clipped, and light-gradient cards had white text in dark theme.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Explore renders localized discovery destinations for anonymous and signed-in learners; canonical vocabulary, kanji, and grammar totals come from their APIs and failures are not shown as real zero counts; key cards remain usable at 390x844."
+      }
+    ],
+    "expected_behavior": "The route displays exact active canonical totals from a read-only aggregate API, marks totals unavailable instead of showing false zeros, wraps totals on narrow screens, preserves all discovery links, and uses dark surfaces for light-gradient cards.",
+    "observed_behavior": "Visible /vi/explore showed 0 for all catalogs while the public APIs returned arrays; canonical database counts were 252175 lexemes, 5787 kanji and 2149 grammar. At 390x844 the ribbon clipped; in dark theme card text was pale over light gradients.",
+    "rollback_plan": "Revert the read-only summary route, client caller, translations and tests together; no data or schema migration is involved."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY",
+      "API_CONTRACT",
+      "DATABASE",
+      "DOMAIN_LOGIC"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/explore/_components/explore-client.test.tsx",
+      "test": "ExploreClient canonical content summary > renders complete active totals",
+      "expect": "to be called once with arguments"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestContentSummaryReturnsActiveCanonicalCounts",
+      "expect": "want 200"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/explore/_components/explore-client.test.tsx",
+      "test": "ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts",
+      "expect": "stats ribbon has mobile wrapping enabled"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/explore/_components/explore-client.test.tsx",
+      "test": "ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast",
+      "expect": "pale cards have a readable dark surface variant"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+      "expect": "want 3/4"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestExercisesDailyProgressUsesLearnerTimezoneBoundaries",
+      "expect": "want local date"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/explore/_components/explore-client.test.tsx",
+      "test": "ExploreClient canonical content summary > shows an unavailable marker instead of false zero totals after an API failure",
+      "expect": "unavailable totals are visibly marked"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestExercisesDailyProgressInvalidTimezoneFallsBackToUTC",
+      "expect": "want UTC date"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-08T15:00:34.585Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-08T15:00:57.216Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T15:00:57.570Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T15:04:36.523Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T15:05:41.938Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T15:06:16.896Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T15:07:52.453Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T15:10:45.219Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T15:11:28.610Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T15:12:08.335Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T15:13:11.144Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T15:20:20.214Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T15:29:10.336Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T15:32:00.771Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T15:38:39.459Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T15:39:19.352Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T15:40:20.806Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T15:48:10.131Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-08T15:51:27.825Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-08T15:51:42.320Z",
+      "head": "202b97908079d39468929546702991401470bdf3"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-08T15:03:06.573Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::renders the API",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"renders the API\" in apps/web/app/[locale]/explore/_components/explore-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::renders the API": "calls the summary endpoint and renders complete totals"
+      },
+      "fingerprint": "e0458d3ff68331d020a5e035dd9eedbda14570c0b1214ace536fefd9b5ea7627"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-08T15:03:18.460Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::renders the API",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"renders the API\" in apps/web/app/[locale]/explore/_components/explore-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary renders the API's complete active content totals",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"ExploreClient canonical content summary renders the API's complete active content totals\" in apps/web/app/[locale]/explore/_components/explore-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::renders the API": "calls the summary endpoint and renders complete totals",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary renders the API's complete active content totals": "renders canonical active totals from the content summary endpoint"
+      },
+      "fingerprint": "e0458d3ff68331d020a5e035dd9eedbda14570c0b1214ace536fefd9b5ea7627"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-08T15:03:29.053Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::renders the API",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"renders the API\" in apps/web/app/[locale]/explore/_components/explore-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary renders the API's complete active content totals",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"ExploreClient canonical content summary renders the API's complete active content totals\" in apps/web/app/[locale]/explore/_components/explore-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::renders complete active totals",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"renders complete active totals\" in apps/web/app/[locale]/explore/_components/explore-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::renders the API": "calls the summary endpoint and renders complete totals",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary renders the API's complete active content totals": "renders canonical active totals from the content summary endpoint",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::renders complete active totals": "renders canonical active totals from the content summary endpoint"
+      },
+      "fingerprint": "fb9ef7a2ccd580d792006c1df192ee218c73ea1c895ccc987efa71842bf2e1d4"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-08T15:03:44.036Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::renders the API",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"renders the API\" in apps/web/app/[locale]/explore/_components/explore-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary renders the API's complete active content totals",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"ExploreClient canonical content summary renders the API's complete active content totals\" in apps/web/app/[locale]/explore/_components/explore-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::renders complete active totals",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"renders complete active totals\" in apps/web/app/[locale]/explore/_components/explore-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called once with arguments: [ '/api/content/summary' ] Received: 1st vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/lexemes?limit=0\", ] 2nd vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/kanji?limit=0\", ] 3rd vi.fn() call: [ - \"/api/content/summary\", + …",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"renders canonical active totals from the content summary endpoint\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::renders the API": "calls the summary endpoint and renders complete totals",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary renders the API's complete active content totals": "renders canonical active totals from the content summary endpoint",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::renders complete active totals": "renders canonical active totals from the content summary endpoint",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals": "renders canonical active totals from the content summary endpoint"
+      },
+      "fingerprint": "fb9ef7a2ccd580d792006c1df192ee218c73ea1c895ccc987efa71842bf2e1d4"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-08T15:03:55.799Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::renders the API",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"renders the API\" in apps/web/app/[locale]/explore/_components/explore-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary renders the API's complete active content totals",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"ExploreClient canonical content summary renders the API's complete active content totals\" in apps/web/app/[locale]/explore/_components/explore-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::renders complete active totals",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"renders complete active totals\" in apps/web/app/[locale]/explore/_components/explore-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called once with arguments: [ '/api/content/summary' ] Received: 1st vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/lexemes?limit=0\", ] 2nd vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/kanji?limit=0\", ] 3rd vi.fn() call: [ - \"/api/content/summary\", + …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::renders the API": "calls the summary endpoint and renders complete totals",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary renders the API's complete active content totals": "renders canonical active totals from the content summary endpoint",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::renders complete active totals": "renders canonical active totals from the content summary endpoint",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals": "expected \"vi.fn()\" to be called once"
+      },
+      "fingerprint": "fb9ef7a2ccd580d792006c1df192ee218c73ea1c895ccc987efa71842bf2e1d4"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-08T15:04:36.342Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called once with arguments: [ '/api/content/summary' ] Received: 1st vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/lexemes?limit=0\", ] 2nd vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/kanji?limit=0\", ] 3rd vi.fn() call: [ - \"/api/content/summary\", + …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals": "expected \"vi.fn()\" to be called once"
+      },
+      "fingerprint": "fb9ef7a2ccd580d792006c1df192ee218c73ea1c895ccc987efa71842bf2e1d4"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-08T15:05:41.710Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestContentSummaryReturnsActiveCanonicalCounts)$ ./apps/api-go/internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called once with arguments: [ '/api/content/summary' ] Received: 1st vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/lexemes?limit=0\", ] 2nd vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/kanji?limit=0\", ] 3rd vi.fn() call: [ - \"/api/content/summary\", + …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals": "expected \"vi.fn()\" to be called once",
+        "go:./apps/api-go/internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts": "want 200"
+      },
+      "fingerprint": "ad4885db6a76e032601f1bf47f5f8da7c2f55a15899dc6aa212d43dfeca21650"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-08T15:06:01.729Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestContentSummaryReturnsActiveCanonicalCounts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called once with arguments: [ '/api/content/summary' ] Received: 1st vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/lexemes?limit=0\", ] 2nd vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/kanji?limit=0\", ] 3rd vi.fn() call: [ - \"/api/content/summary\", + …",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"expected \\\\\\\"vi.fn()\\\\\\\" to be called once\""
+        },
+        {
+          "id": "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestContentSummaryReturnsActiveCanonicalCounts handler_content_summary_test.go:53: status=404 body=404 page not found ; want 200 --- FAIL: TestContentSummaryReturnsActiveCanonicalCounts (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals": "expected \\\"vi.fn()\\\" to be called once",
+        "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts": "want 200"
+      },
+      "fingerprint": "ad4885db6a76e032601f1bf47f5f8da7c2f55a15899dc6aa212d43dfeca21650"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-08T15:06:16.661Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestContentSummaryReturnsActiveCanonicalCounts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called once with arguments: [ '/api/content/summary' ] Received: 1st vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/lexemes?limit=0\", ] 2nd vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/kanji?limit=0\", ] 3rd vi.fn() call: [ - \"/api/content/summary\", + …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestContentSummaryReturnsActiveCanonicalCounts handler_content_summary_test.go:53: status=404 body=404 page not found ; want 200 --- FAIL: TestContentSummaryReturnsActiveCanonicalCounts (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals": "to be called once with arguments",
+        "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts": "want 200"
+      },
+      "fingerprint": "ad4885db6a76e032601f1bf47f5f8da7c2f55a15899dc6aa212d43dfeca21650"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-08T15:07:51.743Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestContentSummaryReturnsActiveCanonicalCounts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e3e7865f1851cd88121e17a310a0b19b6ef8e2a50518ab1284fa97314e5b023e"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-08T15:10:44.685Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts",
+          "outcome": "FAIL",
+          "excerpt": "stats ribbon has mobile wrapping enabled: expected 'explore-stats-ribbon flex items-cente…' to contain 'flex-wrap'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts": "stats ribbon has mobile wrapping enabled"
+      },
+      "fingerprint": "011c2a2116a0a74f2f1faf2714b9154fbcba0e238dc9b5637e9bdb7e6531805e"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-08T15:11:28.110Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestContentSummaryReturnsActiveCanonicalCounts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "32b8a04b6c3ca474c5d69c2405798d0d1cc5a2e8d4d4dbc64b16bfd1489a7799"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-08T15:12:07.816Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast",
+          "outcome": "FAIL",
+          "excerpt": "pale cards have a readable dark surface variant: expected 'explore-card group relative flex flex…' to contain 'dark:from-orange-950/20'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast": "pale cards have a readable dark surface variant"
+      },
+      "fingerprint": "292e11cb60ed2693a424c91444d8a2526629e929a06163b56554ff7a6f9eabcf"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-08T15:12:55.285Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestContentSummaryReturnsActiveCanonicalCounts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestContentSummaryReturnsActiveCanonicalCounts handler_content_summary_test.go:15: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestContentSummaryReturnsActiveCanonicalCounts (0.00s)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "2af4345ec60b2a23f1fdc4b54ba1c596ffcdb918d9432f766570a8fae9750c58"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-08T15:13:10.616Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestContentSummaryReturnsActiveCanonicalCounts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "2af4345ec60b2a23f1fdc4b54ba1c596ffcdb918d9432f766570a8fae9750c58"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-08T15:15:41.240Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 695,
+        "executed": 695,
+        "passed": 694,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "2af4345ec60b2a23f1fdc4b54ba1c596ffcdb918d9432f766570a8fae9750c58"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-08T15:19:04.343Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 369,
+        "executed": 369,
+        "passed": 369,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 760,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "2af4345ec60b2a23f1fdc4b54ba1c596ffcdb918d9432f766570a8fae9750c58"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-08T15:20:19.665Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestContentSummaryReturnsActiveCanonicalCounts|TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "232c48c09d1c8dd66a8aed9350b359ee199a44a7cdd2e1bea65efbfc36e1d41c"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-08T15:23:10.459Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 695,
+        "executed": 695,
+        "passed": 695,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "695 passed, 0 allowed skip(s)",
+      "fingerprint": "232c48c09d1c8dd66a8aed9350b359ee199a44a7cdd2e1bea65efbfc36e1d41c"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-08T15:26:38.130Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 369,
+        "executed": 369,
+        "passed": 369,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 760,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "232c48c09d1c8dd66a8aed9350b359ee199a44a7cdd2e1bea65efbfc36e1d41c"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-08T15:28:43.097Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestContentSummaryReturnsActiveCanonicalCounts|TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called once with arguments: [ '/api/content/summary' ] Received: 1st vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/lexemes?limit=0\", ] 2nd vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/kanji?limit=0\", ] 3rd vi.fn() call: [ - \"/api/content/summary\", + …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestContentSummaryReturnsActiveCanonicalCounts handler_content_summary_test.go:15: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestContentSummaryReturnsActiveCanonicalCounts (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts",
+          "outcome": "FAIL",
+          "excerpt": "stats ribbon has mobile wrapping enabled: expected 'explore-stats-ribbon flex items-cente…' to contain 'flex-wrap'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast",
+          "outcome": "FAIL",
+          "excerpt": "pale cards have a readable dark surface variant: expected 'explore-card group relative flex flex…' to contain 'dark:from-orange-950/20'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion handler_exercise_progress_integration_test.go:17: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals": "to be called once with arguments",
+        "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts": "want 200",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts": "stats ribbon has mobile wrapping enabled",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast": "pale cards have a readable dark surface variant",
+        "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion": "want 3/4"
+      },
+      "fingerprint": "232c48c09d1c8dd66a8aed9350b359ee199a44a7cdd2e1bea65efbfc36e1d41c"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-08T15:29:09.806Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestContentSummaryReturnsActiveCanonicalCounts|TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called once with arguments: [ '/api/content/summary' ] Received: 1st vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/lexemes?limit=0\", ] 2nd vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/kanji?limit=0\", ] 3rd vi.fn() call: [ - \"/api/content/summary\", + …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestContentSummaryReturnsActiveCanonicalCounts handler_content_summary_test.go:52: status=404 body=404 page not found ; want 200 --- FAIL: TestContentSummaryReturnsActiveCanonicalCounts (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts",
+          "outcome": "FAIL",
+          "excerpt": "stats ribbon has mobile wrapping enabled: expected 'explore-stats-ribbon flex items-cente…' to contain 'flex-wrap'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast",
+          "outcome": "FAIL",
+          "excerpt": "pale cards have a readable dark surface variant: expected 'explore-card group relative flex flex…' to contain 'dark:from-orange-950/20'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion handler_exercise_progress_integration_test.go:67: daily progress = {Completed:0 Goal:4 Progress:0 IsComplete:false SessionCount:0 TotalQuestions:0}; want 3/4 (0.75), incomplete, two sessions --- FAIL: TestExercisesDailyProgressRetur…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals": "to be called once with arguments",
+        "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts": "want 200",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts": "stats ribbon has mobile wrapping enabled",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast": "pale cards have a readable dark surface variant",
+        "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion": "want 3/4"
+      },
+      "fingerprint": "232c48c09d1c8dd66a8aed9350b359ee199a44a7cdd2e1bea65efbfc36e1d41c"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-08T15:32:00.194Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestContentSummaryReturnsActiveCanonicalCounts|TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "232c48c09d1c8dd66a8aed9350b359ee199a44a7cdd2e1bea65efbfc36e1d41c"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-08T15:38:38.772Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestContentSummaryReturnsActiveCanonicalCounts|TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion|TestExercisesDailyProgressUsesLearnerTimezoneBoundaries)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called once with arguments: [ '/api/content/summary' ] Received: 1st vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/lexemes?limit=0\", ] 2nd vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/kanji?limit=0\", ] 3rd vi.fn() call: [ - \"/api/content/summary\", + …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestContentSummaryReturnsActiveCanonicalCounts handler_content_summary_test.go:52: status=404 body=404 page not found ; want 200 --- FAIL: TestContentSummaryReturnsActiveCanonicalCounts (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts",
+          "outcome": "FAIL",
+          "excerpt": "stats ribbon has mobile wrapping enabled: expected 'explore-stats-ribbon flex items-cente…' to contain 'flex-wrap'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast",
+          "outcome": "FAIL",
+          "excerpt": "pale cards have a readable dark surface variant: expected 'explore-card group relative flex flex…' to contain 'dark:from-orange-950/20'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion handler_exercise_progress_integration_test.go:67: daily progress = {Completed:0 Goal:4 Progress:0 IsComplete:false SessionCount:0 TotalQuestions:0}; want 3/4 (0.75), incomplete, two sessions --- FAIL: TestExercisesDailyProgressRetur…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressUsesLearnerTimezoneBoundaries",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExercisesDailyProgressUsesLearnerTimezoneBoundaries handler_exercise_progress_integration_test.go:167: daily progress = {Date:2026-10-09 Completed:33 Goal:10 Progress:1 IsComplete:true SessionCount:2 TotalQuestions:33}; want local date 2026-10-08, 5/10 across two sessions --- FAIL: TestE…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals": "to be called once with arguments",
+        "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts": "want 200",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts": "stats ribbon has mobile wrapping enabled",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast": "pale cards have a readable dark surface variant",
+        "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion": "want 3/4",
+        "go:./internal/httpserver:TestExercisesDailyProgressUsesLearnerTimezoneBoundaries": "want local date"
+      },
+      "fingerprint": "22e6a21a7536a66504d5bc85b20fd537205d5d415e893c56b2b3b22a58d89519"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-08T15:39:18.730Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestContentSummaryReturnsActiveCanonicalCounts|TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion|TestExercisesDailyProgressUsesLearnerTimezoneBoundaries)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called once with arguments: [ '/api/content/summary' ] Received: 1st vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/lexemes?limit=0\", ] 2nd vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/kanji?limit=0\", ] 3rd vi.fn() call: [ - \"/api/content/summary\", + …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestContentSummaryReturnsActiveCanonicalCounts handler_content_summary_test.go:52: status=404 body=404 page not found ; want 200 --- FAIL: TestContentSummaryReturnsActiveCanonicalCounts (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts",
+          "outcome": "FAIL",
+          "excerpt": "stats ribbon has mobile wrapping enabled: expected 'explore-stats-ribbon flex items-cente…' to contain 'flex-wrap'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast",
+          "outcome": "FAIL",
+          "excerpt": "pale cards have a readable dark surface variant: expected 'explore-card group relative flex flex…' to contain 'dark:from-orange-950/20'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion handler_exercise_progress_integration_test.go:67: daily progress = {Completed:0 Goal:4 Progress:0 IsComplete:false SessionCount:0 TotalQuestions:0}; want 3/4 (0.75), incomplete, two sessions --- FAIL: TestExercisesDailyProgressRetur…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressUsesLearnerTimezoneBoundaries",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExercisesDailyProgressUsesLearnerTimezoneBoundaries handler_exercise_progress_integration_test.go:167: daily progress = {Date:2026-10-09 Completed:33 Goal:10 Progress:1 IsComplete:true SessionCount:2 TotalQuestions:33}; want local date 2026-10-08, 5/10 across two sessions --- FAIL: TestE…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > shows an unavailable marker instead of false zero totals after an API failure",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Khám pháTra cứu từ vựng, kanji, ngữ p…' to contain '—'",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"stats unavailable label is concise\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals": "to be called once with arguments",
+        "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts": "want 200",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts": "stats ribbon has mobile wrapping enabled",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast": "pale cards have a readable dark surface variant",
+        "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion": "want 3/4",
+        "go:./internal/httpserver:TestExercisesDailyProgressUsesLearnerTimezoneBoundaries": "want local date",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > shows an unavailable marker instead of false zero totals after an API failure": "stats unavailable label is concise"
+      },
+      "fingerprint": "587aa260455d14cd4511f09340fb9381765cdcf693481b0794d8e62434119c45"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-08T15:40:20.230Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestContentSummaryReturnsActiveCanonicalCounts|TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion|TestExercisesDailyProgressUsesLearnerTimezoneBoundaries)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called once with arguments: [ '/api/content/summary' ] Received: 1st vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/lexemes?limit=0\", ] 2nd vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/kanji?limit=0\", ] 3rd vi.fn() call: [ - \"/api/content/summary\", + …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestContentSummaryReturnsActiveCanonicalCounts handler_content_summary_test.go:52: status=404 body=404 page not found ; want 200 --- FAIL: TestContentSummaryReturnsActiveCanonicalCounts (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts",
+          "outcome": "FAIL",
+          "excerpt": "stats ribbon has mobile wrapping enabled: expected 'explore-stats-ribbon flex items-cente…' to contain 'flex-wrap'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast",
+          "outcome": "FAIL",
+          "excerpt": "pale cards have a readable dark surface variant: expected 'explore-card group relative flex flex…' to contain 'dark:from-orange-950/20'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion handler_exercise_progress_integration_test.go:67: daily progress = {Completed:0 Goal:4 Progress:0 IsComplete:false SessionCount:0 TotalQuestions:0}; want 3/4 (0.75), incomplete, two sessions --- FAIL: TestExercisesDailyProgressRetur…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressUsesLearnerTimezoneBoundaries",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExercisesDailyProgressUsesLearnerTimezoneBoundaries handler_exercise_progress_integration_test.go:167: daily progress = {Date:2026-10-09 Completed:33 Goal:10 Progress:1 IsComplete:true SessionCount:2 TotalQuestions:33}; want local date 2026-10-08, 5/10 across two sessions --- FAIL: TestE…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > shows an unavailable marker instead of false zero totals after an API failure",
+          "outcome": "FAIL",
+          "excerpt": "unavailable totals are visibly marked: expected 'Khám pháTra cứu từ vựng, kanji, ngữ p…' to contain '—'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals": "to be called once with arguments",
+        "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts": "want 200",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts": "stats ribbon has mobile wrapping enabled",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast": "pale cards have a readable dark surface variant",
+        "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion": "want 3/4",
+        "go:./internal/httpserver:TestExercisesDailyProgressUsesLearnerTimezoneBoundaries": "want local date",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > shows an unavailable marker instead of false zero totals after an API failure": "unavailable totals are visibly marked"
+      },
+      "fingerprint": "36ed0a5d503c23cc60f7df820ec53f8a99ee916e3f2d58b2539a5acc66b4c4e3"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-08T15:41:30.391Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestContentSummaryReturnsActiveCanonicalCounts|TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion|TestExercisesDailyProgressUsesLearnerTimezoneBoundaries|TestExercisesDailyProgressInvalidTimezoneFallsBackToUTC)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called once with arguments: [ '/api/content/summary' ] Received: 1st vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/lexemes?limit=0\", ] 2nd vi.fn() call: [ - \"/api/content/summary\", + \"/api/content/kanji?limit=0\", ] 3rd vi.fn() call: [ - \"/api/content/summary\", + …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestContentSummaryReturnsActiveCanonicalCounts handler_content_summary_test.go:52: status=404 body=404 page not found ; want 200 --- FAIL: TestContentSummaryReturnsActiveCanonicalCounts (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts",
+          "outcome": "FAIL",
+          "excerpt": "stats ribbon has mobile wrapping enabled: expected 'explore-stats-ribbon flex items-cente…' to contain 'flex-wrap'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast",
+          "outcome": "FAIL",
+          "excerpt": "pale cards have a readable dark surface variant: expected 'explore-card group relative flex flex…' to contain 'dark:from-orange-950/20'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion handler_exercise_progress_integration_test.go:67: daily progress = {Completed:0 Goal:4 Progress:0 IsComplete:false SessionCount:0 TotalQuestions:0}; want 3/4 (0.75), incomplete, two sessions --- FAIL: TestExercisesDailyProgressRetur…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressUsesLearnerTimezoneBoundaries",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExercisesDailyProgressUsesLearnerTimezoneBoundaries handler_exercise_progress_integration_test.go:167: daily progress = {Date:2026-10-09 Completed:33 Goal:10 Progress:1 IsComplete:true SessionCount:2 TotalQuestions:33}; want local date 2026-10-08, 5/10 across two sessions --- FAIL: TestE…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > shows an unavailable marker instead of false zero totals after an API failure",
+          "outcome": "FAIL",
+          "excerpt": "unavailable totals are visibly marked: expected 'Khám pháTra cứu từ vựng, kanji, ngữ p…' to contain '—'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressInvalidTimezoneFallsBackToUTC",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExercisesDailyProgressInvalidTimezoneFallsBackToUTC handler_exercise_progress_integration_test.go:231: daily progress = {Date:2026-10-09 Completed:0 SessionCount:0 TotalQuestions:0}; want UTC date 2026-10-08 with 3 questions in two sessions --- FAIL: TestExercisesDailyProgressInvalidTime…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals": "to be called once with arguments",
+        "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts": "want 200",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts": "stats ribbon has mobile wrapping enabled",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast": "pale cards have a readable dark surface variant",
+        "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion": "want 3/4",
+        "go:./internal/httpserver:TestExercisesDailyProgressUsesLearnerTimezoneBoundaries": "want local date",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > shows an unavailable marker instead of false zero totals after an API failure": "unavailable totals are visibly marked",
+        "go:./internal/httpserver:TestExercisesDailyProgressInvalidTimezoneFallsBackToUTC": "want UTC date"
+      },
+      "fingerprint": "9fb5032d5d1a7b08a1254321bf6168c96bd060b01b1641dc6c238b224298cb98"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-08T15:44:20.172Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 697,
+        "executed": 697,
+        "passed": 697,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "697 passed, 0 allowed skip(s)",
+      "fingerprint": "491c069b0e1a57c64751a3e4cf569771941b2804b8d58633892454cf008a8db7"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-08T15:47:43.756Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 369,
+        "executed": 369,
+        "passed": 369,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 760,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "491c069b0e1a57c64751a3e4cf569771941b2804b8d58633892454cf008a8db7"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-08T15:48:09.553Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestContentSummaryReturnsActiveCanonicalCounts|TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion|TestExercisesDailyProgressUsesLearnerTimezoneBoundaries|TestExercisesDailyProgressInvalidTimezoneFallsBackToUTC)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > renders complete active totals",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestContentSummaryReturnsActiveCanonicalCounts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > wraps the content totals ribbon on narrow layouts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses dark card surfaces when light gradients would be low contrast",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressReturnsCanonicalGoalAndCompletion",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressUsesLearnerTimezoneBoundaries",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > shows an unavailable marker instead of false zero totals after an API failure",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExercisesDailyProgressInvalidTimezoneFallsBackToUTC",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "491c069b0e1a57c64751a3e4cf569771941b2804b8d58633892454cf008a8db7"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-08T15:51:27.260Z",
+      "head": "202b97908079d39468929546702991401470bdf3",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "eb1903ac-648d-4742-a3b5-935a5186d264",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "491c069b0e1a57c64751a3e4cf569771941b2804b8d58633892454cf008a8db7"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-08T15:51:42.303Z",
+    "head": "202b97908079d39468929546702991401470bdf3",
+    "fingerprint": "491c069b0e1a57c64751a3e4cf569771941b2804b8d58633892454cf008a8db7",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_content_summary.go": "c4853eb8d0e4c9f8f3ece09852903779c84811eb",
+      "apps/api-go/internal/httpserver/handler_content_summary_test.go": "a84619787ac6b2475760ea5c03b03c835625c10c",
+      "apps/api-go/internal/httpserver/handler_exercise_progress_integration_test.go": "7043b9027e662ef35b4f6d0ae82bc87e1d634009",
+      "apps/api-go/internal/httpserver/handler_final_batch.go": "9fc0f8bce94ecc8fb84f7e53c9454e5bf780a4e4",
+      "apps/api-go/internal/httpserver/server.go": "8994d3a2021a19ac3382321856eaf6027e81ecd4",
+      "apps/web/app/[locale]/explore/_components/explore-client.test.tsx": "985652f3da3d3751ee5fadf1244a7b2b4b2696b8",
+      "apps/web/app/[locale]/explore/_components/explore-client.tsx": "38e890b0b8bc419245debb6392fd3f2df7536352",
+      "apps/web/messages/en.json": "2c9e69587e7fa214da54891ff8104512e45279bc",
+      "apps/web/messages/ja.json": "f17f9a3a1ca5750fb1e80799f6e3ef149f8bc20f",
+      "apps/web/messages/vi.json": "66ae94931bcfbedecc9940424516aa57de619b65"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"nhooyr.io/websocket"
@@ -27,11 +28,13 @@ const (
 
 // Server manages WebSocket connections for battle and presence namespaces.
 type Server struct {
-	hub       *Hub
-	sessStore *session.Store
-	battle    *BattleHandler
-	presence  *PresenceHandler
-	logger    *slog.Logger
+	presenceLocksMu sync.Mutex
+	presenceLocks   map[string]*presenceLifecycleLock
+	hub             *Hub
+	sessStore       *session.Store
+	battle          *BattleHandler
+	presence        *PresenceHandler
+	logger          *slog.Logger
 
 	// originPatterns are the hosts (from the CSRF trusted origins) allowed to
 	// open cross-origin WebSockets. Same-host and Origin-less (non-browser)
@@ -41,15 +44,47 @@ type Server struct {
 	originPatterns []string
 }
 
+type presenceLifecycleLock struct {
+	sync.Mutex
+	refs int
+}
+
 // NewServer creates a new realtime WebSocket server.
 func NewServer(sessStore *session.Store, logger *slog.Logger) *Server {
 	hub := NewHub()
 	return &Server{
-		hub:       hub,
-		sessStore: sessStore,
-		battle:    NewBattleHandler(hub, logger),
-		presence:  NewPresenceHandler(hub, logger),
-		logger:    logger,
+		presenceLocks: make(map[string]*presenceLifecycleLock),
+		hub:           hub,
+		sessStore:     sessStore,
+		battle:        NewBattleHandler(hub, logger),
+		presence:      NewPresenceHandler(hub, logger),
+		logger:        logger,
+	}
+}
+
+// SetPresenceService attaches the Redis-backed lifecycle and query service.
+func (s *Server) SetPresenceService(service *PresenceService) {
+	s.presence.SetService(service)
+}
+
+func (s *Server) lockPresence(userID string) func() {
+	s.presenceLocksMu.Lock()
+	lock := s.presenceLocks[userID]
+	if lock == nil {
+		lock = &presenceLifecycleLock{}
+		s.presenceLocks[userID] = lock
+	}
+	lock.refs++
+	s.presenceLocksMu.Unlock()
+	lock.Lock()
+	return func() {
+		lock.Unlock()
+		s.presenceLocksMu.Lock()
+		lock.refs--
+		if lock.refs == 0 {
+			delete(s.presenceLocks, userID)
+		}
+		s.presenceLocksMu.Unlock()
 	}
 }
 
@@ -68,10 +103,12 @@ func (s *Server) HandleBattleUpgrade(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c := &Conn{
-		ID:     fmt.Sprintf("battle-%d", time.Now().UnixNano()),
-		UserID: user.UserID,
-		Send:   make(chan []byte, sendBufferSize),
-		done:   make(chan struct{}),
+		ID:          fmt.Sprintf("battle-%d", time.Now().UnixNano()),
+		UserID:      user.UserID,
+		DisplayName: user.DisplayName,
+		Namespace:   "battle",
+		Send:        make(chan []byte, sendBufferSize),
+		done:        make(chan struct{}),
 	}
 
 	s.hub.Register(c)
@@ -96,14 +133,18 @@ func (s *Server) HandlePresenceUpgrade(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c := &Conn{
-		ID:     fmt.Sprintf("presence-%d", time.Now().UnixNano()),
-		UserID: user.UserID,
-		Send:   make(chan []byte, sendBufferSize),
-		done:   make(chan struct{}),
+		ID:          fmt.Sprintf("presence-%d", time.Now().UnixNano()),
+		UserID:      user.UserID,
+		DisplayName: user.DisplayName,
+		Namespace:   "presence",
+		Send:        make(chan []byte, sendBufferSize),
+		done:        make(chan struct{}),
 	}
 
+	unlockPresence := s.lockPresence(c.UserID)
 	s.hub.Register(c)
 	s.presence.OnConnect(c)
+	unlockPresence()
 
 	go s.readLoop(c, conn, s.presence.HandleMessage)
 	go s.writeLoop(c, conn)
@@ -185,12 +226,16 @@ func (s *Server) writeLoop(c *Conn, ws *websocket.Conn) {
 // and writeLoop defer it, so teardown must run exactly once per connection.
 func (s *Server) closeConn(c *Conn, ws *websocket.Conn) {
 	c.closeOnce.Do(func() {
-		userID, lastForUser := s.hub.Unregister(c.ID)
+		if c.Namespace == "presence" {
+			defer s.lockPresence(c.UserID)()
+		}
+		userID, _ := s.hub.Unregister(c.ID)
+		s.battle.OnDisconnect(c)
 		close(c.done)
 		_ = ws.Close(websocket.StatusNormalClosure, "")
 
-		// Notify presence handler if this was the last connection for the user.
-		if lastForUser {
+		// Keep a reconnect from being overwritten by this last disconnect.
+		if c.Namespace == "presence" && s.hub.UserNamespaceConnCount(userID, "presence") == 0 {
 			s.presence.OnDisconnect(c, userID, true)
 		}
 	})

@@ -1,0 +1,1371 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-053",
+  "title": "Audit Admin dictionary screen",
+  "start_head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+  "preexisting_changes": {
+    ".quality/tasks/ctx-resume-1791168424.json": "39fe89f3617bfb95a702c09ce4aabffcaeb8f7bb",
+    "apps/admin/app/[locale]/access-denied/page.tsx": "c68e8af2a6f0746cd0e318a8de0db38e4b2f60b0",
+    "apps/admin/app/[locale]/assessment/quiz-templates/quiz-templates-client.test.ts": "ba8137994990cd85057a816928533ab037371c19",
+    "apps/admin/app/[locale]/assessment/quiz-templates/quiz-templates-client.tsx": "aacac2858e5bedca22f6cd03fbcdbfa3cf991c40",
+    "apps/admin/app/[locale]/battle/leaderboard/battle-leaderboard-client.test.ts": "f742443b5959cd5699857d86fa0a26580809364c",
+    "apps/admin/app/[locale]/cardgen/cardgen-admin-client.tsx": "8ddafa4fca8fc169f4bf25c9947b7a3c03ce9048",
+    "apps/admin/app/[locale]/daily-radar/daily-radar-admin-client.test.tsx": "40822bfa48ab81a7d519072e2653b5650d577f30",
+    "apps/admin/app/[locale]/daily-radar/daily-radar-admin-client.tsx": "e3cbdac910636655f89d989bdc0aa58eeeb27ea5",
+    "apps/admin/app/[locale]/decks/deck-admin-client.test.tsx": "51e3ce5caad249f067ed1e3e8791829e648378a6",
+    "apps/admin/app/[locale]/decks/deck-admin-client.tsx": "aca235fe761a7f903dbfffd183c807d06d4dbcbb",
+    "apps/admin/app/[locale]/login/_components/admin-login-form-client.tsx": "b82c38674e498f144d717ff592ac5dc4c5c54c19",
+    "apps/admin/app/[locale]/login/admin-login.regression.test.tsx": "5b11d85a87934d8ed3680c1754d03b34fc030a68",
+    "apps/admin/app/[locale]/login/page.tsx": "8c33a7b540c4ebf9de86a6d1dd8f9f3e5bc1f92c",
+    "apps/admin/app/auth/logout/page.tsx": "d86ad68fb3dfa9bdbac704899c04f131ab2fc0b3",
+    "apps/admin/lib/admin-api.ts": "e19f64369f0723fa79326a86f6ae83ea8c095bbc",
+    "apps/admin/lib/admin-nav-data.ts": "02fab3c921f9d379b6a4ae3f252a387783c7a48e",
+    "apps/admin/lib/admin-overview-fetch.test.ts": "c551ec079ff3a0e04cb06d72801ee9eb59559234",
+    "apps/admin/lib/admin-overview-fetch.ts": "c2267b606100d8faae7be2c6bf6c5968402cd6c4",
+    "apps/admin/lib/admin-shell.regression.test.tsx": "55b1e94d273dca2be418c6026c6a879f045c0dd0",
+    "apps/admin/lib/quiz-template-admin-utils.ts": "10ba1c341661f40c38d1afef6f4d69d51129ad8f",
+    "apps/admin/lib/resolve-admin-nav.ts": "54024b5d6443067d48eb4f771443046cc4f0256d",
+    "apps/admin/messages/en.json": "1dd651ff03b7353a7281ddab40587971cc6a93b5",
+    "apps/admin/messages/ja.json": "f70f1c875e06896405b8607d97642b385747522f",
+    "apps/admin/messages/vi.json": "2cba22f9b11963c1893c952a4a567ea2786545ea",
+    "apps/admin/next-env.d.ts": "c4b7818fbb2c2c34c24feb1b627ee824507c5600",
+    "apps/admin/next.config.mjs": "a29e69ddd1777373ddc577abfd3ce85cce649af7",
+    "apps/admin/tsconfig.tsbuildinfo": "413ee01dd94cf683c586ae42d1cb9e5f9b183037",
+    "apps/api-go/cmd/create-test-creds/main.go": "eae3b397a5f12f5c5401c3484da23e845686aabd",
+    "apps/api-go/cmd/reset-admin-cred/main.go": "c39d53f0ce4fa29c2a3ef6b813b1abfe9af28cad",
+    "apps/api-go/deploy/local/Caddyfile": "880720642204d8f7afb53bf961224b25afac9016",
+    "apps/api-go/internal/authn/guard.go": "599ac3a287a01dae542a2a1a939317149eb6dbd3",
+    "apps/api-go/internal/authn/guard_test.go": "bd68d8e82a35eec1c96d07040b54cdff0d064fe0",
+    "apps/api-go/internal/httpserver/handler_admin_ads.go": "079e708b10af9fff5de7707fb525ac1b53ace481",
+    "apps/api-go/internal/httpserver/handler_admin_analytics.go": "1b6248374040a38c57f9463fcd1139c79a44ea26",
+    "apps/api-go/internal/httpserver/handler_admin_assessment_mock_exams.go": "15ab736563f516d2b832728b1be917102432668a",
+    "apps/api-go/internal/httpserver/handler_admin_assessment_mock_exams_duplicate_test.go": "0bf275dfaf651c1ce94119c81b7d605934adcdce",
+    "apps/api-go/internal/httpserver/handler_admin_assessment_mock_exams_publish_test.go": "a9c81a75fe875373d15ca5931f497425d891f2b5",
+    "apps/api-go/internal/httpserver/handler_admin_assessment_mock_exams_test.go": "a6b6ae21254e337f0bf6c76691b9f12687e0e032",
+    "apps/api-go/internal/httpserver/handler_admin_assessment_question_bank.go": "646ed6495f22212dc1c15af457161929ab4eb73b",
+    "apps/api-go/internal/httpserver/handler_admin_assessment_question_bank_create_test.go": "8a6f94872bf660205a73feed4bb250fdf606ecab",
+    "apps/api-go/internal/httpserver/handler_admin_battle_abuse.go": "bafe35b7247a22ec4f521988efff34ff99cea882",
+    "apps/api-go/internal/httpserver/handler_admin_battle_abuse_escalate_rbac_test.go": "6b9510a77efbf7e38352208bd0b82b64d8bade99",
+    "apps/api-go/internal/httpserver/handler_admin_battle_abuse_rbac_test.go": "1c44bcdf53df84931ca89e51fcfb63edd2215622",
+    "apps/api-go/internal/httpserver/handler_admin_battle_abuse_resolve_contract_test.go": "5d262ecebb6a8cc1ababcf3a8f951e32879d12c3",
+    "apps/api-go/internal/httpserver/handler_admin_battle_bots_rbac_test.go": "f60203e4a635cb846871a862a92a850ed6424cd8",
+    "apps/api-go/internal/httpserver/handler_admin_battle_configs.go": "4eb84d4d59a66f7cafe48734f7c678122825b3bc",
+    "apps/api-go/internal/httpserver/handler_admin_battle_configs_create_test.go": "003ee3917f93d39f1d78e6477381b976c35ce0ae",
+    "apps/api-go/internal/httpserver/handler_admin_battle_matches_test.go": "197ab112abe82a4ad16e104b6bf7e5dd87452955",
+    "apps/api-go/internal/httpserver/handler_admin_battle_misc.go": "fe8ecf3004efa80133b2853e5073cf9bd1bbdc5e",
+    "apps/api-go/internal/httpserver/handler_admin_cardgen.go": "f5bee840ef0ce32648b9306dd75cc8dc9cd85dcd",
+    "apps/api-go/internal/httpserver/handler_admin_cardgen_test.go": "7c20f0a48050a39befa5ea6378ebee2d4e24157f",
+    "apps/api-go/internal/httpserver/handler_admin_companion_config_test.go": "0b679a88aa97df177a702777ec28ae38709e93a6",
+    "apps/api-go/internal/httpserver/handler_admin_content_create_test.go": "9277a7bac0353c1de585bb6d47dc47b757aedeb1",
+    "apps/api-go/internal/httpserver/handler_admin_content_patch_test.go": "bdaf07d7245d4bb16eabb2edfa1004433f903093",
+    "apps/api-go/internal/httpserver/handler_admin_content_status_test.go": "a9a27df93b284f3abb7987e14c75b5276840b276",
+    "apps/api-go/internal/httpserver/handler_admin_content_summary_test.go": "213e7aecdb0a9bf0dd6a34f18596b69520fc4674",
+    "apps/api-go/internal/httpserver/handler_admin_core.go": "ae4bca25bf0ced0dac83dac53255908736f99fdf",
+    "apps/api-go/internal/httpserver/handler_admin_dailyradar_card_archive_test.go": "e7cf10b52aab43b811ac5d7744d0a76aedddb5ef",
+    "apps/api-go/internal/httpserver/handler_admin_dailyradar_card_create_test.go": "a27d7eaeef1b6dcb27eb39124d4f87d1206349b7",
+    "apps/api-go/internal/httpserver/handler_admin_dailyradar_card_detail_test.go": "85c07feb719c485c0ca7493eb417f1c379651d85",
+    "apps/api-go/internal/httpserver/handler_admin_dailyradar_card_patch_test.go": "0f06e4bd9392db296d2dc7adbc87c851b63be741",
+    "apps/api-go/internal/httpserver/handler_admin_dailyradar_cards_list_test.go": "d1c352e2430411ef2e1a61eb231b4998797c014f",
+    "apps/api-go/internal/httpserver/handler_admin_dailyradar_exercises.go": "b7ef724c8804fa10eb2709f1b9ef34f738d6605f",
+    "apps/api-go/internal/httpserver/handler_admin_dailyradar_modules_crud_test.go": "645f960fe719881c54a2661f5e6cb7757a5f8fa0",
+    "apps/api-go/internal/httpserver/handler_admin_dailyradar_modules_list_test.go": "230c14e5fe5e0ffb2fe88cf67f0ab14444611316",
+    "apps/api-go/internal/httpserver/handler_admin_flashcard_decks_contract_test.go": "5bd12ad5c0d23d6245303c67fd7fa15ff9ee6303",
+    "apps/api-go/internal/httpserver/handler_admin_flashcards.go": "9cb831cd2aa0c6c8de0989f97c4423677d801677",
+    "apps/api-go/internal/httpserver/handler_admin_i18n_quiz.go": "0b26d0458abbb69115122592c57e490c72af6daf",
+    "apps/api-go/internal/httpserver/handler_admin_me_test.go": "702bbebb362a7b4924e50e5e7fc2db18b09eca4f",
+    "apps/api-go/internal/httpserver/handler_admin_media_companion_privacy.go": "2ff1a27706a551e3d3cc384bca3a5c13e93cae62",
+    "apps/api-go/internal/httpserver/handler_admin_quiz_session_detail_test.go": "f6a63032ba64ed96153c95df1d76642df1ec083e",
+    "apps/api-go/internal/httpserver/handler_admin_rbac.go": "edcf8f767ba33fa949309f2bfbd7456af9378556",
+    "apps/api-go/internal/httpserver/handler_admin_rbac_test.go": "3bf721268d6ad6a1b35d43879ed3f68a0621cf38",
+    "apps/api-go/internal/httpserver/handler_ads_decision_test.go": "3a92f4f78f9e58888c881539e449f9a92cd3bb1d",
+    "apps/api-go/internal/httpserver/handler_ads_impression_test.go": "fb5836169a91676abfe32ec35c946ec76a5a460a",
+    "apps/api-go/internal/httpserver/handler_analytics_auth_test.go": "9d65c94d9972f6e4498ea28b523ac3a11f40fa24",
+    "apps/api-go/internal/httpserver/handler_analytics_learner_test.go": "01503757a89d2b1058908b9ef7b50e03733ed7d2",
+    "apps/api-go/internal/httpserver/handler_announcement_dismiss_test.go": "1e763b7b5f6bd1d9c185428fc11c77119ad3a88a",
+    "apps/api-go/internal/httpserver/handler_announcements_test.go": "8857e726a5931a193fe745832948a8206a73f4b7",
+    "apps/api-go/internal/httpserver/handler_dailyradar_announcement.go": "8b4eafe91f516b735e7965141247d25563781251",
+    "apps/api-go/internal/httpserver/handler_final_batch.go": "8f407a9e5c37e7a3a12f999e046ed9bf95d7c734",
+    "apps/api-go/internal/httpserver/handler_final_batch_test.go": "19e6144fe1b895509ada05c4ee3a74f638eff0ec",
+    "apps/api-go/internal/httpserver/handler_public_content.go": "19bd31a9eeefaa487a99cd3fee8bef1f0bc1dfd4",
+    "apps/api-go/internal/httpserver/handler_quiz.go": "0cb4f89fa3fe44b25bc0564c933de25db659713f",
+    "apps/api-go/internal/httpserver/handler_study_feed_test.go": "a1e9da063ed6d1d083be495926d4ea159d391a4a",
+    "apps/api-go/internal/httpserver/server.go": "3a9068d1b4ccab2b284047855c6fbbc753dfe931",
+    "apps/api-go/internal/onboarding/store.go": "48c19592ef4012165d6b010f2763aa5ebfaebaa0",
+    "apps/api-go/internal/onboarding/store_test.go": "9f5a1ab847bdd26d7ede15081049197f63e7b387",
+    "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "1a910e1813c7dcc9ffa361619a9f5d9f0dfdad99",
+    "apps/web/app/[locale]/_components/homepage/learning-heatmap.tsx": "101a3dc56965f674947fd7f68160a159afda7c3e",
+    "apps/web/app/[locale]/login/auth-pages.regression.test.tsx": "4dd7a5db264e70ef930ec4f1579b34eabbfbbec6",
+    "apps/web/app/[locale]/login/page.tsx": "654fc22c46535743d2f08cd76715e44690140a95",
+    "apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx": "cb1815eb69382837308fa3f642e8d4d7edca27c8",
+    "apps/web/app/[locale]/register/page.tsx": "2aa45faeea0da3a919c884dc6b95f7f367cda8b2",
+    "apps/web/next-env.d.ts": "c4b7818fbb2c2c34c24feb1b627ee824507c5600",
+    "apps/web/public/__local-audit-api-probe.html": "825f3a16cd883b2376c4a6f7b26cd6186826764b",
+    "apps/web/tsconfig.tsbuildinfo": "a4704f5f180c399eeef95d8ad730d0f8b6e2cc74",
+    "deploy/local/Caddyfile": "72470e3b466c4a48dd7a573271d8458479e27266",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "623868e23efcb93ce372a649b6ac2b58826a405f",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "78930eff7f5c4c657b348f9a1e6f1f8972a4ff2e",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "38f38f283783e64b84924516ebbeba2abb7a597f",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "3f7eb20c66ee9b7defa0135722046a1065382977",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "3e0a4ed17965dce6819cafabf123ba9706e6d1a5",
+    "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "d64c49d96473ea4b659cd230a0c113cf92ca19fd",
+    "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "4317d0cf1bf5cdb6c9c69892815b5cf5e25f4deb",
+    "e2e/smoke.spec.ts": "ee6be3829f24958c80ff7242c3be8805f9c79cab",
+    "packages/database/prisma/migrations/20261006100000_onboarding_profile_preferences/migration.sql": "3da2325aa59c04dc632a7a515f4fdff2a6b1dd65",
+    "packages/database/prisma/migrations/20261006120000_repair_bjt_question_section_fk/migration.sql": "baaca82df79c979c39789e6dc804bfc514eb16a3",
+    "packages/database/prisma/migrations/20261006130000_question_bank_permissions/migration.sql": "4b59d3b69d125be1cd3e42fd7190eb52f6bfb408",
+    "packages/database/prisma/schema.prisma": "0646140a9869abc692fbda4414286194ae581ff5",
+    "packages/shared/src/admin-rbac.js": "57fd29d340e2600ef19540745d1d71df7c8f0aff",
+    "packages/shared/src/admin-rbac.test.ts": "48fb31734f8136438d7d751495f804c8405fc790",
+    "packages/shared/src/admin-rbac.ts": "dd078fd2a3ea720ec8f9527044a5d2d79e162186",
+    "packages/ui/src/admin-shell.tsx": "ba1339c8c34da6b93fe433bbe260f2928ffa867e",
+    "prisma.config.ts": "02db95a7ee97e32ead17e9e82602c0e78e38924e",
+    "scripts/local-audit-status.mjs": "d0f98373f463c744dc6d03e40f4ef588c7490ab4",
+    "scripts/local-audit-up.mjs": "d68ac30f32a1113b3e9958508757667267dd90e8",
+    "scripts/quality/frontend-debt-baseline.json": "df8b62b088f1714071cff3d62bf2dcad22fbba16",
+    "scripts/quality/harness/cli.mjs": "d4f1d82156acbc82ad4d3d2a5ec528d9bb051ee5",
+    "scripts/quality/harness/lib/context-policy.mjs": "e036e4054970f0d6ec81d0d651b76147201ecdca",
+    "vitest.config.ts": "6005b173d044361db56bbbb0451151fff6f33d35"
+  },
+  "spec": {
+    "problem": "Admin Dictionary reuses the shared OperationsResourceClient for canonical lexeme management; the live page, filters, detail/examples, mutations, RBAC and audit behavior have not yet been verified against the local runtime.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "The Admin Dictionary route renders through a real authorized browser session; anonymous and insufficient-role behavior is verified in the UI and backend."
+      },
+      {
+        "id": "AC2",
+        "text": "List, search, JLPT and reading filters, pagination, details/examples, create/edit/review/publish/archive, validation, persistence and audit behavior are exercised against the local API where supported."
+      },
+      {
+        "id": "AC3",
+        "text": "Every active METHOD+PATH used by the screen receives an individual status/contract and appropriate unauthorized/invalid-input check; locally reproducible defects are fixed with regression coverage and retested in the visible browser."
+      }
+    ],
+    "expected_behavior": "Dictionary presents canonical lexemes and routes management actions through authenticated, permission-checked Go APIs with durable changes and audit evidence.",
+    "observed_behavior": "The route delegates to OperationsResourceClient and requests /api/admin/content?type=lexeme, but the visible screen/API contract and mutation paths have not yet been tested in the current runtime.",
+    "rollback_plan": "Revert only Dictionary-specific client/backend/test changes; preserve unrelated staged changes and audit checkpoints."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminContentReadsRequireReadPermission",
+      "expect": "status=200"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminContentListFiltersLexemesByReading",
+      "expect": "reading filter returned total="
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList",
+      "expect": "create status=500"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit",
+      "expect": "status=400"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically",
+      "expect": "link count=1"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "VALID_RED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-07T02:53:15.776Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-07T02:54:58.137Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-07T02:54:58.543Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-07T02:58:10.499Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-07T02:58:48.906Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-07T03:00:56.274Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-07T03:01:30.449Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-07T03:02:09.112Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-07T03:07:12.596Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-07T03:07:44.579Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-07T03:08:04.744Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-07T03:13:39.366Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-07T03:15:19.695Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-07T03:15:34.230Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-07T03:23:09.990Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-07T03:23:34.321Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-07T03:30:14.608Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-07T03:37:58.689Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-07T03:53:08.243Z",
+      "head": "58627b8f59912bd87b57f5c389c15632fed23b7e"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-07T03:56:14.598Z",
+      "head": "ae79ad564c19407f4b847d87338a445f37565666"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-07T03:59:47.216Z",
+      "head": "ae79ad564c19407f4b847d87338a445f37565666"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-07T02:57:23.943Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver internal/httpserver/handler_admin_content_read_rbac_test.go:3:2: expected declaration, found \"net/http\" FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission": "status=200 body=.*want 403"
+      },
+      "fingerprint": "258f5f097aaa16ee63e27a5aa8abfd4bde237f80cc14076f278201d1035aa3c7"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-07T02:57:43.275Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminContentReadsRequireReadPermission handler_admin_content_read_rbac_test.go:10: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminContentReadsRequireReadPermission (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission": "status=200 body=.*want 403"
+      },
+      "fingerprint": "d1363bb661658791beddadb7756b30a6591e56db9fc30d9cbaddb762349804d0"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-07T02:57:55.931Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminContentReadsRequireReadPermission 2026/10/07 11:57:55 INFO request method=GET path=/api/admin/content status=200 duration=203.332042ms bytes=272 handler_admin_content_read_rbac_test.go:26: GET /api/admin/content?type=lexeme&page=1&pageSize=1 status=200 body={\"items\":[{\"id\":\"1f1935d8…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"status=200 body=.*want 403\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission": "status=200 body=.*want 403"
+      },
+      "fingerprint": "d1363bb661658791beddadb7756b30a6591e56db9fc30d9cbaddb762349804d0"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-07T02:58:10.140Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminContentReadsRequireReadPermission 2026/10/07 11:58:10 INFO request method=GET path=/api/admin/content status=200 duration=237.977375ms bytes=253 handler_admin_content_read_rbac_test.go:26: GET /api/admin/content?type=lexeme&page=1&pageSize=1 status=200 body={\"items\":[{\"id\":\"618f8d06…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission": "status=200"
+      },
+      "fingerprint": "d1363bb661658791beddadb7756b30a6591e56db9fc30d9cbaddb762349804d0"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-07T02:58:48.479Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9736d170c2750ff207ebff704170dcb1da4bd2977a1f1eabdc61c2635542a215"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-07T03:00:55.869Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission|TestAdminContentListFiltersLexemesByReading)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/server.go:306:55: not enough arguments in call to announcementsListHandler have (*slog.Logger) want (*pgxpool.Pool, *slog.Logger) internal/httpserver…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/server.go:306:55: not enough arguments in call to announcementsListHandler have (*slog.Logger) want (*pgxpool.Pool, *slog.Logger) internal/httpserver…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission": "status=200",
+        "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading": "reading filter returned total="
+      },
+      "fingerprint": "34bc4bf80111eb5e593853199532fb25f9c5e541c58def8e2ba357f6b4ee187f"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-07T03:01:30.013Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission|TestAdminContentListFiltersLexemesByReading)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminContentReadsRequireReadPermission 2026/10/07 12:01:28 INFO request method=GET path=/api/admin/content status=200 duration=210.546292ms bytes=258 handler_admin_content_read_rbac_test.go:29: GET /api/admin/content?type=lexeme&page=1&pageSize=1 status=200 body={\"items\":[{\"id\":\"1fd1b343…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminContentListFiltersLexemesByReading handler_admin_content_read_rbac_test.go:70: reading filter returned total=252176 items=[{Headword:audit-headword-2ffe5061-6ff7-43c5-b374-0a3f6184bacb Reading:audit-reading-f4b2caac-34d1-4535-8fed-85419378fd08} {Headword:替アンビル式アナログ外側マイクロメータ Reading:…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission": "status=200",
+        "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading": "reading filter returned total="
+      },
+      "fingerprint": "976e872e285d34af674baa4ac7dc1d26555444fb12d8d7aede7ad64772a4cfe1"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-07T03:02:08.632Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission|TestAdminContentListFiltersLexemesByReading)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c388b23ce5d1d654b68dc900d70f599acd92f3c63e1c09fcf4e845643d6e5756"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-07T03:07:12.053Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission|TestAdminContentListFiltersLexemesByReading|TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminContentReadsRequireReadPermission 2026/10/07 12:07:11 INFO request method=GET path=/api/admin/content status=200 duration=62.181833ms bytes=275 handler_admin_content_read_rbac_test.go:29: GET /api/admin/content?type=lexeme&page=1&pageSize=1 status=200 body={\"items\":[{\"id\":\"4c6f1449-…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminContentListFiltersLexemesByReading handler_admin_content_read_rbac_test.go:70: reading filter returned total=252177 items=[{Headword:audit-headword-c34c48fc-b1e9-4e60-ba7f-ef10c70e59e4 Reading:audit-reading-9ef765ac-ac64-480c-bf20-cb2c33be6e91} {Headword:AUDIT-053-lexeme-20261007-12…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList 2026/10/07 12:07:11 ERROR create lexeme example error=\"ERROR: column \\\"lexeme_id\\\" of relation \\\"lexeme_sense_example\\\" does not exist (SQLSTATE 42703)\" 2026/10/07 12:07:11 INFO request method=POST path=/api/admin/lexemes/203cc6…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission": "status=200",
+        "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading": "reading filter returned total=",
+        "go:./internal/httpserver:TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList": "create status=500"
+      },
+      "fingerprint": "1c5e25ea1bb0b828431a3801f116289fe8e3404fc35053f6c2c764eaa8406337"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-07T03:07:44.025Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission|TestAdminContentListFiltersLexemesByReading|TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList|TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminContentReadsRequireReadPermission 2026/10/07 12:07:43 INFO request method=GET path=/api/admin/content status=200 duration=52.512916ms bytes=275 handler_admin_content_read_rbac_test.go:29: GET /api/admin/content?type=lexeme&page=1&pageSize=1 status=200 body={\"items\":[{\"id\":\"4c6f1449-…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminContentListFiltersLexemesByReading handler_admin_content_read_rbac_test.go:70: reading filter returned total=252177 items=[{Headword:audit-headword-0b23d7b5-16c9-4332-af70-09c21cf97e22 Reading:audit-reading-095197b3-da57-4852-a4da-381f9cbab3c9} {Headword:AUDIT-053-lexeme-20261007-12…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList 2026/10/07 12:07:43 ERROR create lexeme example error=\"ERROR: column \\\"lexeme_id\\\" of relation \\\"lexeme_sense_example\\\" does not exist (SQLSTATE 42703)\" 2026/10/07 12:07:43 INFO request method=POST path=/api/admin/lexemes/2c4109…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit 2026/10/07 12:07:43 INFO request method=PATCH path=/api/admin/lexemes/d850c98e-8109-4b8b-9516-72f627e29fc5/examples/f576a0d8-edfd-449b-a443-5068ae9feb34 status=400 duration=1.024125ms bytes=53 handler_admin_lexeme_examples_contract_…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"patch status=500\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission": "status=200",
+        "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading": "reading filter returned total=",
+        "go:./internal/httpserver:TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList": "create status=500",
+        "go:./internal/httpserver:TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit": "patch status=500"
+      },
+      "fingerprint": "1c5e25ea1bb0b828431a3801f116289fe8e3404fc35053f6c2c764eaa8406337"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-07T03:08:04.199Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission|TestAdminContentListFiltersLexemesByReading|TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList|TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminContentReadsRequireReadPermission 2026/10/07 12:08:03 INFO request method=GET path=/api/admin/content status=200 duration=47.862917ms bytes=275 handler_admin_content_read_rbac_test.go:29: GET /api/admin/content?type=lexeme&page=1&pageSize=1 status=200 body={\"items\":[{\"id\":\"4c6f1449-…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminContentListFiltersLexemesByReading handler_admin_content_read_rbac_test.go:70: reading filter returned total=252177 items=[{Headword:audit-headword-574b34e5-7246-4199-8709-fa46cbbdafc8 Reading:audit-reading-1bbc8855-5f3a-4045-9b86-938625b5393a} {Headword:AUDIT-053-lexeme-20261007-12…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList 2026/10/07 12:08:03 ERROR create lexeme example error=\"ERROR: column \\\"lexeme_id\\\" of relation \\\"lexeme_sense_example\\\" does not exist (SQLSTATE 42703)\" 2026/10/07 12:08:03 INFO request method=POST path=/api/admin/lexemes/47a085…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit 2026/10/07 12:08:03 INFO request method=PATCH path=/api/admin/lexemes/d5dd9f36-0962-428d-9095-bfad08fca895/examples/994ef9ae-1cf8-4487-9c41-4138092c4643 status=400 duration=1.554625ms bytes=53 handler_admin_lexeme_examples_contract_…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission": "status=200",
+        "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading": "reading filter returned total=",
+        "go:./internal/httpserver:TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList": "create status=500",
+        "go:./internal/httpserver:TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit": "status=400"
+      },
+      "fingerprint": "1c5e25ea1bb0b828431a3801f116289fe8e3404fc35053f6c2c764eaa8406337"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-07T03:08:23.161Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission|TestAdminContentListFiltersLexemesByReading|TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList|TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit|TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminContentReadsRequireReadPermission 2026/10/07 12:08:22 INFO request method=GET path=/api/admin/content status=200 duration=43.885084ms bytes=275 handler_admin_content_read_rbac_test.go:29: GET /api/admin/content?type=lexeme&page=1&pageSize=1 status=200 body={\"items\":[{\"id\":\"4c6f1449-…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminContentListFiltersLexemesByReading handler_admin_content_read_rbac_test.go:70: reading filter returned total=252177 items=[{Headword:audit-headword-74ee2669-a0d2-40bb-bb1a-85dea2f07325 Reading:audit-reading-4a015b38-f6b7-46f9-afe0-bd06d8867844} {Headword:AUDIT-053-lexeme-20261007-12…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList 2026/10/07 12:08:22 ERROR create lexeme example error=\"ERROR: column \\\"lexeme_id\\\" of relation \\\"lexeme_sense_example\\\" does not exist (SQLSTATE 42703)\" 2026/10/07 12:08:22 INFO request method=POST path=/api/admin/lexemes/1c4989…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit 2026/10/07 12:08:22 INFO request method=PATCH path=/api/admin/lexemes/f7674066-ab0c-4b4b-9a42-54310a6a415e/examples/d627b0f0-1a70-4e77-8d00-f5147a9875a1 status=400 duration=1.151125ms bytes=53 handler_admin_lexeme_examples_contract_…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically 2026/10/07 12:08:22 INFO request method=DELETE path=/api/admin/lexemes/36a7ff27-e704-425e-8da0-aacbf961bc42/examples/ba629b29-7b8d-4b19-a119-fa0fdb7bd6ba status=200 duration=2.732833ms bytes=61 handler_admin_lexeme_examples_contract_…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission": "status=200",
+        "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading": "reading filter returned total=",
+        "go:./internal/httpserver:TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList": "create status=500",
+        "go:./internal/httpserver:TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit": "status=400",
+        "go:./internal/httpserver:TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically": "link count=1"
+      },
+      "fingerprint": "1c5e25ea1bb0b828431a3801f116289fe8e3404fc35053f6c2c764eaa8406337"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-07T03:13:38.828Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission|TestAdminContentListFiltersLexemesByReading|TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList|TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit|TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0e9340435cf570b7a07eef054c3f80857b5c0fa18cfe1b8821033fb1c94b37a2"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-07T03:15:18.859Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission|TestAdminContentListFiltersLexemesByReading|TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList|TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit|TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminContentReadsRequireReadPermission handler_admin_content_read_rbac_test.go:13: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminContentReadsRequireReadPermission (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminContentListFiltersLexemesByReading handler_admin_content_read_rbac_test.go:54: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminContentListFiltersLexemesByReading (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList handler_admin_lexeme_examples_contract_test.go:17: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit handler_admin_lexeme_examples_contract_test.go:63: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically handler_admin_lexeme_examples_contract_test.go:89: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically (0.00s)"
+        }
+      ],
+      "fingerprint": "8b94a0cb53543de75bd2a5dc07e6d5afb946b9703174cf805ae9af9975b9ea0b"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-07T03:15:33.673Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission|TestAdminContentListFiltersLexemesByReading|TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList|TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit|TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8b94a0cb53543de75bd2a5dc07e6d5afb946b9703174cf805ae9af9975b9ea0b"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-07T03:23:09.471Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission|TestAdminContentListFiltersLexemesByReading|TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList|TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit|TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminContentReadsRequireReadPermission 2026/10/07 12:23:08 INFO request method=GET path=/api/admin/content status=401 duration=99.875µs bytes=25 2026/10/07 12:23:08 INFO request method=GET path=/api/admin/content/summary status=401 duration=5.25µs bytes=25 2026/10/07 12:23:08 INFO reques…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminContentListFiltersLexemesByReading handler_admin_content_read_rbac_test.go:80: reading filter returned total=252177 items=[{Headword:audit-headword-50b9418b-c97e-4e4b-999a-22c00e3a2c16 Reading:audit-reading-f52bed14-8876-4229-a474-bc22a85d81e3 ShortMeaningVi:} {Headword:AUDIT-053-le…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList 2026/10/07 12:23:08 ERROR create lexeme example error=\"ERROR: column \\\"lexeme_id\\\" of relation \\\"lexeme_sense_example\\\" does not exist (SQLSTATE 42703)\" 2026/10/07 12:23:08 INFO request method=POST path=/api/admin/lexemes/46d3b1…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit 2026/10/07 12:23:08 INFO request method=PATCH path=/api/admin/lexemes/1d72ba37-60c5-49e9-9d4e-801d573390a5/examples/6e0581ee-3b03-4177-b2e9-902c5b6ea5d7 status=400 duration=896.875µs bytes=53 handler_admin_lexeme_examples_contract_t…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically 2026/10/07 12:23:08 INFO request method=DELETE path=/api/admin/lexemes/a00f85a4-554b-4a61-a4b6-d2119f891af0/examples/8fb49339-6e40-42a1-9564-d72eb51863a8 status=200 duration=2.162584ms bytes=61 handler_admin_lexeme_examples_contract_…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission": "status=200",
+        "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading": "reading filter returned total=",
+        "go:./internal/httpserver:TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList": "create status=500",
+        "go:./internal/httpserver:TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit": "status=400",
+        "go:./internal/httpserver:TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically": "link count=1"
+      },
+      "fingerprint": "c82f7a716d2322d86c1056554589b4f27cfd7c6b0469054ea6ff77befd1071ea"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-07T03:23:33.788Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission|TestAdminContentListFiltersLexemesByReading|TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList|TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit|TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c82f7a716d2322d86c1056554589b4f27cfd7c6b0469054ea6ff77befd1071ea"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-07T03:30:14.038Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 597,
+        "executed": 591,
+        "passed": 583,
+        "failed": 8,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 8 failing test(s), 3 failing package(s))",
+      "fingerprint": "d2ab1103230a2d46176ab484c2950d889439758858702528325ee4d814f2b842"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-07T03:32:06.908Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 243,
+        "executed": 243,
+        "passed": 243,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 718,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "d2ab1103230a2d46176ab484c2950d889439758858702528325ee4d814f2b842"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-07T03:37:58.107Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission|TestAdminContentListFiltersLexemesByReading|TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList|TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit|TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "06d360cc8dde5c9562bd317351e020e18b4ed878af6d7a41bcdbb1a84028a845"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-07T03:40:09.492Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 243,
+        "executed": 243,
+        "passed": 243,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 718,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "06d360cc8dde5c9562bd317351e020e18b4ed878af6d7a41bcdbb1a84028a845"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-07T03:40:58.018Z",
+      "head": "5f98948a17690ae3358404c707dd6bfe735abb0a",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 597,
+        "executed": 591,
+        "passed": 583,
+        "failed": 8,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 8 failing test(s), 3 failing package(s))",
+      "fingerprint": "06d360cc8dde5c9562bd317351e020e18b4ed878af6d7a41bcdbb1a84028a845"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-07T03:43:32.956Z",
+      "head": "58627b8f59912bd87b57f5c389c15632fed23b7e",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission|TestAdminContentListFiltersLexemesByReading|TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList|TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit|TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "dcd1886bfc8b8b0e636875a74afa8e030437c199d0d469af8076be0ba696e544"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-07T03:44:07.288Z",
+      "head": "58627b8f59912bd87b57f5c389c15632fed23b7e",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 597,
+        "executed": 591,
+        "passed": 584,
+        "failed": 7,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 7 failing test(s), 2 failing package(s))",
+      "fingerprint": "dcd1886bfc8b8b0e636875a74afa8e030437c199d0d469af8076be0ba696e544"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-07T03:48:39.727Z",
+      "head": "58627b8f59912bd87b57f5c389c15632fed23b7e",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 597,
+        "executed": 591,
+        "passed": 591,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "591 passed, 6 allowed skip(s)",
+      "fingerprint": "dcd1886bfc8b8b0e636875a74afa8e030437c199d0d469af8076be0ba696e544"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-07T03:50:20.389Z",
+      "head": "58627b8f59912bd87b57f5c389c15632fed23b7e",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 243,
+        "executed": 243,
+        "passed": 243,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 718,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "dcd1886bfc8b8b0e636875a74afa8e030437c199d0d469af8076be0ba696e544"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-07T03:50:30.343Z",
+      "head": "58627b8f59912bd87b57f5c389c15632fed23b7e",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "python3 /tmp/kotobawork-dictionary-browser-smoke.py",
+      "exit_code": 1,
+      "fingerprint": "dcd1886bfc8b8b0e636875a74afa8e030437c199d0d469af8076be0ba696e544"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-07T03:53:07.684Z",
+      "head": "58627b8f59912bd87b57f5c389c15632fed23b7e",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "python3 /tmp/kotobawork-dictionary-browser-smoke.py",
+      "exit_code": 0,
+      "fingerprint": "dcd1886bfc8b8b0e636875a74afa8e030437c199d0d469af8076be0ba696e544"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-07T03:56:14.018Z",
+      "head": "ae79ad564c19407f4b847d87338a445f37565666",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission|TestAdminContentListFiltersLexemesByReading|TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList|TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit|TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ac92b22b67a386bd6d86156c398c3dddaf0a1b243e096f19aa66e8b7a1768661"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-07T03:58:19.256Z",
+      "head": "ae79ad564c19407f4b847d87338a445f37565666",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 597,
+        "executed": 591,
+        "passed": 591,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "591 passed, 6 allowed skip(s)",
+      "fingerprint": "ac92b22b67a386bd6d86156c398c3dddaf0a1b243e096f19aa66e8b7a1768661"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-07T03:59:46.654Z",
+      "head": "ae79ad564c19407f4b847d87338a445f37565666",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminContentReadsRequireReadPermission|TestAdminContentListFiltersLexemesByReading|TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList|TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit|TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminContentReadsRequireReadPermission",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminContentReadsRequireReadPermission handler_admin_content_read_rbac_test.go:13: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminContentReadsRequireReadPermission (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminContentListFiltersLexemesByReading",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminContentListFiltersLexemesByReading handler_admin_content_read_rbac_test.go:54: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminContentListFiltersLexemesByReading (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList handler_admin_lexeme_examples_contract_test.go:17: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit handler_admin_lexeme_examples_contract_test.go:63: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminLexemeExamplePatchUpdatesCanonicalSentenceAndAudit (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically handler_admin_lexeme_examples_contract_test.go:89: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminLexemeExampleDeleteRemovesLinkAndAuditsAtomically (0.00s)"
+        }
+      ],
+      "fingerprint": "ac92b22b67a386bd6d86156c398c3dddaf0a1b243e096f19aa66e8b7a1768661"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-07T04:03:06.729Z",
+      "head": "9b195ff63a2ef763f807ad284a5bf4acdea83aee",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 243,
+        "executed": 243,
+        "passed": 243,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 718,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "e02be1e430f951796ed498ef63df12127cb2a821e27e2dfc7f415c3a6d17afe5"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-07T04:09:45.546Z",
+      "head": "9b195ff63a2ef763f807ad284a5bf4acdea83aee",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "python3 /tmp/kotobawork-dictionary-browser-smoke.py",
+      "exit_code": 1,
+      "fingerprint": "e02be1e430f951796ed498ef63df12127cb2a821e27e2dfc7f415c3a6d17afe5"
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-07T04:11:53.224Z",
+      "head": "9b195ff63a2ef763f807ad284a5bf4acdea83aee",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 598,
+        "executed": 592,
+        "passed": 592,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "592 passed, 6 allowed skip(s)",
+      "fingerprint": "e02be1e430f951796ed498ef63df12127cb2a821e27e2dfc7f415c3a6d17afe5"
+    }
+  ],
+  "closed": null,
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md",
+    "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json",
+    "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md",
+    "apps/api-go/internal/httpserver/server.go",
+    "apps/api-go/internal/httpserver/handler_public_content.go",
+    "apps/api-go/internal/httpserver/handler_admin_core.go"
+  ]
+}

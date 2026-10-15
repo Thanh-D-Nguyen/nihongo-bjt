@@ -1,0 +1,396 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUTH-002",
+  "title": "Repair localized real learner authentication and session refresh",
+  "start_head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+  "preexisting_changes": {
+    ".quality/tasks/ctx-resume-1791168424.json": "39fe89f3617bfb95a702c09ce4aabffcaeb8f7bb",
+    "apps/admin/app/[locale]/login/_components/admin-login-form-client.tsx": "92dbef195520e5fde8a2cf956fb7898713eed217",
+    "apps/admin/lib/admin-api.ts": "e19f64369f0723fa79326a86f6ae83ea8c095bbc",
+    "apps/admin/next-env.d.ts": "c4b7818fbb2c2c34c24feb1b627ee824507c5600",
+    "apps/admin/next.config.mjs": "a29e69ddd1777373ddc577abfd3ce85cce649af7",
+    "apps/api-go/cmd/create-test-creds/main.go": "eae3b397a5f12f5c5401c3484da23e845686aabd",
+    "apps/api-go/cmd/reset-admin-cred/main.go": "c39d53f0ce4fa29c2a3ef6b813b1abfe9af28cad",
+    "apps/api-go/deploy/local/Caddyfile": "880720642204d8f7afb53bf961224b25afac9016",
+    "apps/web/next-env.d.ts": "c4b7818fbb2c2c34c24feb1b627ee824507c5600",
+    "deploy/local/Caddyfile": "72470e3b466c4a48dd7a573271d8458479e27266",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "a36fe8e92c2556f58e045e1364919a4c6370de30",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "9f32370e17c5a87fc94c4c58be6134837e442298",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "79bd48842b9f3b97216fbfb1b35bb0814e4420dc",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "1ab6b12e9beed3dfa58bf71431586b5462e86d92",
+    "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "f25cc0206d75762e1ea11897a1564d6aa7c33aab",
+    "scripts/local-audit-up.mjs": "d68ac30f32a1113b3e9958508757667267dd90e8"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Vietnamese registration/login copy and confirm-password errors are localized"
+      },
+      {
+        "id": "AC2",
+        "text": "Successful real email/password login or registration refreshes auth state"
+      }
+    ],
+    "expected_behavior": "Localized real auth and immediately authenticated navigation",
+    "observed_behavior": "Hardcoded English, missing confirmation, raw errors, stale anonymous state after successful form submit",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "AUTH_SECURITY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/login/auth-pages.regression.test.tsx",
+      "test": "learner auth pages regression > rejects mismatched confirmation locally with Vietnamese copy",
+      "expect": "Expected field #confirmPassword"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/admin/app/[locale]/login/admin-login.regression.test.tsx",
+      "test": "AUTH-002 Admin login regression > gives each locale Link a unique React key",
+      "expect": "to deeply equal"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/admin/lib/admin-shell.regression.test.tsx",
+      "test": "Admin shell basePath regression > keeps nested navigation expanded and active with the Admin prefix",
+      "expect": "/admin/vi/dictionary"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/admin/app/[locale]/login/admin-login.regression.test.tsx",
+      "test": "AUTH-002 Admin login regression > describes native authentication without obsolete identity-provider instructions",
+      "expect": "Keycloak"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "RED_REQUIRED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-05T09:44:14.824Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-05T09:44:15.253Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-05T09:44:15.689Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-05T09:52:10.276Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-05T09:52:28.751Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-05T09:53:10.463Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-05T10:01:39.091Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-05T10:04:18.212Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-05T09:45:37.520Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/login/auth-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > renders vi message copy and native email/password fields",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Sign in to KotobaWorks' to be 'Chào mừng quay lại' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > renders vi message copy and native email/password fields": "Chào mừng quay lại"
+      },
+      "fingerprint": "95657ecccf36998be5d7d09f2743d015168543d53eba4ecba3a35249f8f76976"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-05T09:50:55.057Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/login/auth-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/admin/app/[locale]/login/admin-login.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > rejects mismatched confirmation locally with Vietnamese copy",
+          "outcome": "FAIL",
+          "excerpt": "Expected field #confirmPassword: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/login/admin-login.regression.test.tsx::AUTH-002 Admin login regression > gives each locale Link a unique React key",
+          "outcome": "FAIL",
+          "excerpt": "expected [ null, null, null ] to deeply equal [ 'vi', 'ja', 'en' ]",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"expected false to be true\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > rejects mismatched confirmation locally with Vietnamese copy": "Expected field #confirmPassword",
+        "vitest:apps/admin/app/[locale]/login/admin-login.regression.test.tsx::AUTH-002 Admin login regression > gives each locale Link a unique React key": "expected false to be true"
+      },
+      "fingerprint": "b568128bdb779efe8351489509c4ba635b80d460e0898e1279915ce604064528"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-05T09:52:09.617Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/login/auth-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/admin/app/[locale]/login/admin-login.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > rejects mismatched confirmation locally with Vietnamese copy",
+          "outcome": "FAIL",
+          "excerpt": "Expected field #confirmPassword: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/login/admin-login.regression.test.tsx::AUTH-002 Admin login regression > gives each locale Link a unique React key",
+          "outcome": "FAIL",
+          "excerpt": "expected [ null, null, null ] to deeply equal [ 'vi', 'ja', 'en' ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > rejects mismatched confirmation locally with Vietnamese copy": "Expected field #confirmPassword",
+        "vitest:apps/admin/app/[locale]/login/admin-login.regression.test.tsx::AUTH-002 Admin login regression > gives each locale Link a unique React key": "to deeply equal"
+      },
+      "fingerprint": "418feeba193558137b62f20e5b0e23b2a33993c7f585dbf5f2ed6e5b41522e91"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-05T09:52:28.058Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/login/auth-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/admin/app/[locale]/login/admin-login.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/admin/lib/admin-shell.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > rejects mismatched confirmation locally with Vietnamese copy",
+          "outcome": "FAIL",
+          "excerpt": "Expected field #confirmPassword: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/login/admin-login.regression.test.tsx::AUTH-002 Admin login regression > gives each locale Link a unique React key",
+          "outcome": "FAIL",
+          "excerpt": "expected [ null, null, null ] to deeply equal [ 'vi', 'ja', 'en' ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/admin/lib/admin-shell.regression.test.tsx::Admin shell basePath regression",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"Admin shell basePath regression\" in apps/admin/lib/admin-shell.regression.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > rejects mismatched confirmation locally with Vietnamese copy": "Expected field #confirmPassword",
+        "vitest:apps/admin/app/[locale]/login/admin-login.regression.test.tsx::AUTH-002 Admin login regression > gives each locale Link a unique React key": "to deeply equal",
+        "vitest:apps/admin/lib/admin-shell.regression.test.tsx::Admin shell basePath regression": "to be called with arguments"
+      },
+      "fingerprint": "418feeba193558137b62f20e5b0e23b2a33993c7f585dbf5f2ed6e5b41522e91"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-05T09:53:09.771Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/login/auth-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/admin/app/[locale]/login/admin-login.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/admin/lib/admin-shell.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > rejects mismatched confirmation locally with Vietnamese copy",
+          "outcome": "FAIL",
+          "excerpt": "Expected field #confirmPassword: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/login/admin-login.regression.test.tsx::AUTH-002 Admin login regression > gives each locale Link a unique React key",
+          "outcome": "FAIL",
+          "excerpt": "expected [ null, null, null ] to deeply equal [ 'vi', 'ja', 'en' ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/admin/lib/admin-shell.regression.test.tsx::Admin shell basePath regression > keeps nested navigation expanded and active with the Admin prefix",
+          "outcome": "FAIL",
+          "excerpt": "expected '/vi/dictionary' to be '/admin/vi/dictionary' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > rejects mismatched confirmation locally with Vietnamese copy": "Expected field #confirmPassword",
+        "vitest:apps/admin/app/[locale]/login/admin-login.regression.test.tsx::AUTH-002 Admin login regression > gives each locale Link a unique React key": "to deeply equal",
+        "vitest:apps/admin/lib/admin-shell.regression.test.tsx::Admin shell basePath regression > keeps nested navigation expanded and active with the Admin prefix": "/admin/vi/dictionary"
+      },
+      "fingerprint": "ef0b54a65e61325ead87bf52a47c286aad260a795e4c51363740e64b76fc8d02"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-05T10:01:38.138Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/login/auth-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/admin/app/[locale]/login/admin-login.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/admin/lib/admin-shell.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > rejects mismatched confirmation locally with Vietnamese copy",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/login/admin-login.regression.test.tsx::AUTH-002 Admin login regression > gives each locale Link a unique React key",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/admin/lib/admin-shell.regression.test.tsx::Admin shell basePath regression > keeps nested navigation expanded and active with the Admin prefix",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "7ae2b92ec7a2003baa99162357dafc947bced00c10bc42d93fe65f6c0064f2cd"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-05T10:04:17.175Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 12,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/login/auth-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/admin/app/[locale]/login/admin-login.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/admin/lib/admin-shell.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > rejects mismatched confirmation locally with Vietnamese copy",
+          "outcome": "FAIL",
+          "excerpt": "Expected field #confirmPassword: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/login/admin-login.regression.test.tsx::AUTH-002 Admin login regression > gives each locale Link a unique React key",
+          "outcome": "FAIL",
+          "excerpt": "expected [ null, null, null ] to deeply equal [ 'vi', 'ja', 'en' ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/admin/lib/admin-shell.regression.test.tsx::Admin shell basePath regression > keeps nested navigation expanded and active with the Admin prefix",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "Failed to resolve import \"../app/auth/logout/page\" from \"apps/admin/lib/admin-shell.regression.test.tsx\". Does the file exist?",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/login/admin-login.regression.test.tsx::AUTH-002 Admin login regression > describes native authentication without obsolete identity-provider instructions",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Keycloak từ chối tên đăng nhập hoặc m…' not to match /Keycloak/i",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > rejects mismatched confirmation locally with Vietnamese copy": "Expected field #confirmPassword",
+        "vitest:apps/admin/app/[locale]/login/admin-login.regression.test.tsx::AUTH-002 Admin login regression > gives each locale Link a unique React key": "to deeply equal",
+        "vitest:apps/admin/lib/admin-shell.regression.test.tsx::Admin shell basePath regression > keeps nested navigation expanded and active with the Admin prefix": "/admin/vi/dictionary",
+        "vitest:apps/admin/app/[locale]/login/admin-login.regression.test.tsx::AUTH-002 Admin login regression > describes native authentication without obsolete identity-provider instructions": "Keycloak"
+      },
+      "fingerprint": "ae7730595055a22a19567fece3a65d9fc8f6c843b9d77b19bb65e8177fc673b0"
+    }
+  ],
+  "closed": null,
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [
+    "apps/admin/app/[locale]/login/_components/admin-login-form-client.tsx"
+  ]
+}

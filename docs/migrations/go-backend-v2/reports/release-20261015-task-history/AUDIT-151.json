@@ -1,0 +1,509 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-151",
+  "title": "Audit 20 Admin growth, i18n and IAM APIs",
+  "start_head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+  "preexisting_changes": {
+    "apps/admin/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/admin/tsconfig.tsbuildinfo": "6b0c7bc84ee49d33491f829cb00b397b9e0b3723",
+    "apps/web/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/web/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/web/tsconfig.tsbuildinfo": "91d48d855b4f16f10809b5e9d91bae8ed06c76dc"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "All 20 API inventory records receive evidence-based verdicts; related Admin screens are checked through headed UI where browser access works; quality gates and independent review are recorded."
+      }
+    ],
+    "expected_behavior": "Each of the 20 METHOD+PATH contracts has individual request, response and authorization evidence; any defect is recorded and repaired with regression coverage.",
+    "observed_behavior": "The canonical API inventory lists 20 consecutive unverified Admin endpoints, from Postcards detail through IAM role revoke; their router entries and UI callers exist.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions",
+      "expect": "roleless authenticated Admin received"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAudit151AdminI18nContractsAUDIT151",
+      "expect": "want 200"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAudit151SocialEventsListUsesPersistedContractAUDIT151",
+      "expect": "want 200"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAudit151PostcardArchiveRollsBackWithoutAuditAUDIT151",
+      "expect": "want 500 on audit failure"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAudit151ReferralListAndDetailMatchAdminScreenAUDIT151",
+      "expect": "referral list contract="
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "VERIFYING",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-14T22:37:47.067Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-14T22:37:47.538Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-14T22:38:01.299Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-14T22:38:59.537Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T22:40:03.271Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T22:44:37.300Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T22:45:24.968Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T22:47:03.753Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T22:48:33.320Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T22:57:01.122Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-14T22:38:31.891Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit149-admin-postcard-preview.mjs",
+      "exit_code": 0,
+      "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-14T22:40:02.987Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions === RUN TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions/GET_/api/admin/growth/postcards/94a149b2-694c-45a8-af05-7fe47e3db98d 2026/10/15 07:40:02 INFO request method=GET path=/api/admin/growth/postcards/94a149b2-694c-45a8-af0…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions": "roleless authenticated Admin received"
+      },
+      "fingerprint": "93b8aea0c8fabc9562ce3715a5403f26999650b0959464cfdea3b244f98b63a0"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-14T22:42:11.503Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions|TestAudit151AdminI18nContractsAUDIT151)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions === RUN TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions/GET_/api/admin/growth/postcards/54550efd-519b-4919-94f6-cde5b17f8359 2026/10/15 07:42:10 INFO request method=GET path=/api/admin/growth/postcards/54550efd-519b-4919-94f…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151AdminI18nContractsAUDIT151",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit151AdminI18nContractsAUDIT151 2026/10/15 07:42:10 INFO request method=GET path=/api/admin/i18n/keys status=404 duration=14.792µs bytes=19 handler_admin_audit151_rbac_test.go:101: i18n list status=404 body=404 page not found ; want 200 --- FAIL: TestAudit151AdminI18nContractsAUDIT151…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions": "roleless authenticated Admin received",
+        "go:./internal/httpserver:TestAudit151AdminI18nContractsAUDIT151": "want 200"
+      },
+      "fingerprint": "64aca0e3ef13ef8eb3824c8a4814b578d0a06df43171e578a5d45597aebdfea0"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-14T22:42:34.279Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions|TestAudit151AdminI18nContractsAUDIT151|TestAudit151SocialEventsListUsesPersistedContractAUDIT151)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions === RUN TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions/GET_/api/admin/growth/postcards/5f7ef310-c7e4-4aea-8c7b-6b2e17e252f0 2026/10/15 07:42:32 INFO request method=GET path=/api/admin/growth/postcards/5f7ef310-c7e4-4aea-8c7…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151AdminI18nContractsAUDIT151",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit151AdminI18nContractsAUDIT151 2026/10/15 07:42:33 INFO request method=GET path=/api/admin/i18n/keys status=404 duration=11.375µs bytes=19 handler_admin_audit151_rbac_test.go:101: i18n list status=404 body=404 page not found ; want 200 --- FAIL: TestAudit151AdminI18nContractsAUDIT151…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151SocialEventsListUsesPersistedContractAUDIT151",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit151SocialEventsListUsesPersistedContractAUDIT151 2026/10/15 07:42:33 ERROR list social events error=\"ERROR: column \\\"payload\\\" does not exist (SQLSTATE 42703)\" 2026/10/15 07:42:33 INFO request method=GET path=/api/admin/growth/social/events status=500 duration=2.985125ms bytes=27 ha…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions": "roleless authenticated Admin received",
+        "go:./internal/httpserver:TestAudit151AdminI18nContractsAUDIT151": "want 200",
+        "go:./internal/httpserver:TestAudit151SocialEventsListUsesPersistedContractAUDIT151": "want 200"
+      },
+      "fingerprint": "64aca0e3ef13ef8eb3824c8a4814b578d0a06df43171e578a5d45597aebdfea0"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-14T22:44:36.874Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions|TestAudit151AdminI18nContractsAUDIT151|TestAudit151SocialEventsListUsesPersistedContractAUDIT151)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151AdminI18nContractsAUDIT151",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151SocialEventsListUsesPersistedContractAUDIT151",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e95b10ef44c521a747cfd2308b14e1bb384103d1a08f88adf2c81bebd18cfd96"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-14T22:45:24.557Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions|TestAudit151AdminI18nContractsAUDIT151|TestAudit151SocialEventsListUsesPersistedContractAUDIT151|TestAudit151PostcardArchiveRollsBackWithoutAuditAUDIT151)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions === RUN TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions/GET_/api/admin/growth/postcards/24dee46b-a9af-4c3c-9266-dd54ef4c223f 2026/10/15 07:45:23 INFO request method=GET path=/api/admin/growth/postcards/24dee46b-a9af-4c3c-926…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151AdminI18nContractsAUDIT151",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit151AdminI18nContractsAUDIT151 2026/10/15 07:45:23 INFO request method=GET path=/api/admin/i18n/keys status=404 duration=12.875µs bytes=19 handler_admin_audit151_rbac_test.go:101: i18n list status=404 body=404 page not found ; want 200 --- FAIL: TestAudit151AdminI18nContractsAUDIT151…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151SocialEventsListUsesPersistedContractAUDIT151",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit151SocialEventsListUsesPersistedContractAUDIT151 2026/10/15 07:45:23 ERROR list social events error=\"ERROR: column \\\"payload\\\" does not exist (SQLSTATE 42703)\" 2026/10/15 07:45:23 INFO request method=GET path=/api/admin/growth/social/events status=500 duration=2.394708ms bytes=27 ha…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151PostcardArchiveRollsBackWithoutAuditAUDIT151",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit151PostcardArchiveRollsBackWithoutAuditAUDIT151 2026/10/15 07:45:23 INFO request method=POST path=/api/admin/growth/postcards/0ed1b636-08c7-4de8-a0ed-9767d8f23e8f/archive status=200 duration=6.902375ms bytes=422 handler_admin_audit151_rbac_test.go:205: archive status=200 body={\"id\":…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions": "roleless authenticated Admin received",
+        "go:./internal/httpserver:TestAudit151AdminI18nContractsAUDIT151": "want 200",
+        "go:./internal/httpserver:TestAudit151SocialEventsListUsesPersistedContractAUDIT151": "want 200",
+        "go:./internal/httpserver:TestAudit151PostcardArchiveRollsBackWithoutAuditAUDIT151": "want 500 on audit failure"
+      },
+      "fingerprint": "24a2c9c1edb8c47b553d43f4b1ec58f092e1d0a5ee5243af5afd1492c2be4e9c"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-14T22:47:03.175Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions|TestAudit151AdminI18nContractsAUDIT151|TestAudit151SocialEventsListUsesPersistedContractAUDIT151|TestAudit151PostcardArchiveRollsBackWithoutAuditAUDIT151)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151AdminI18nContractsAUDIT151",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151SocialEventsListUsesPersistedContractAUDIT151",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151PostcardArchiveRollsBackWithoutAuditAUDIT151",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c8de03126bd083ea35c505600a512be67a6f975c4141346fb9f48c37050dab88"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-14T22:48:32.764Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions|TestAudit151AdminI18nContractsAUDIT151|TestAudit151SocialEventsListUsesPersistedContractAUDIT151|TestAudit151PostcardArchiveRollsBackWithoutAuditAUDIT151|TestAudit151ReferralListAndDetailMatchAdminScreenAUDIT151)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions === RUN TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions/GET_/api/admin/growth/postcards/cd0cfd80-de31-4f51-bee9-4ba2d641fd10 2026/10/15 07:48:31 INFO request method=GET path=/api/admin/growth/postcards/cd0cfd80-de31-4f51-bee…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151AdminI18nContractsAUDIT151",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit151AdminI18nContractsAUDIT151 2026/10/15 07:48:31 INFO request method=GET path=/api/admin/i18n/keys status=404 duration=11.542µs bytes=19 handler_admin_audit151_rbac_test.go:101: i18n list status=404 body=404 page not found ; want 200 --- FAIL: TestAudit151AdminI18nContractsAUDIT151…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151SocialEventsListUsesPersistedContractAUDIT151",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit151SocialEventsListUsesPersistedContractAUDIT151 2026/10/15 07:48:31 ERROR list social events error=\"ERROR: column \\\"payload\\\" does not exist (SQLSTATE 42703)\" 2026/10/15 07:48:31 INFO request method=GET path=/api/admin/growth/social/events status=500 duration=2.732417ms bytes=27 ha…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151PostcardArchiveRollsBackWithoutAuditAUDIT151",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit151PostcardArchiveRollsBackWithoutAuditAUDIT151 2026/10/15 07:48:31 INFO request method=POST path=/api/admin/growth/postcards/27873f80-20a2-4db0-9ab9-8f3899c8bf70/archive status=200 duration=8.378709ms bytes=422 handler_admin_audit151_rbac_test.go:205: archive status=200 body={\"id\":…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151ReferralListAndDetailMatchAdminScreenAUDIT151",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit151ReferralListAndDetailMatchAdminScreenAUDIT151 2026/10/15 07:48:31 INFO request method=GET path=/api/admin/growth/referrals status=200 duration=4.254833ms bytes=309 handler_admin_audit151_rbac_test.go:260: referral list contract={\"items\":[{\"id\":\"23ff79d9-653c-454c-8762-ceae705689a…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions": "roleless authenticated Admin received",
+        "go:./internal/httpserver:TestAudit151AdminI18nContractsAUDIT151": "want 200",
+        "go:./internal/httpserver:TestAudit151SocialEventsListUsesPersistedContractAUDIT151": "want 200",
+        "go:./internal/httpserver:TestAudit151PostcardArchiveRollsBackWithoutAuditAUDIT151": "want 500 on audit failure",
+        "go:./internal/httpserver:TestAudit151ReferralListAndDetailMatchAdminScreenAUDIT151": "referral list contract="
+      },
+      "fingerprint": "875133709f45623439613b34415859e97077c823b63ed48eecb2b9c64ef1c39a"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-14T22:50:32.683Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions|TestAudit151AdminI18nContractsAUDIT151|TestAudit151SocialEventsListUsesPersistedContractAUDIT151|TestAudit151PostcardArchiveRollsBackWithoutAuditAUDIT151|TestAudit151ReferralListAndDetailMatchAdminScreenAUDIT151)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151AdminI18nContractsAUDIT151",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151SocialEventsListUsesPersistedContractAUDIT151",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151PostcardArchiveRollsBackWithoutAuditAUDIT151",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151ReferralListAndDetailMatchAdminScreenAUDIT151",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestAudit151ReferralListAndDetailMatchAdminScreenAUDIT151 2026/10/15 07:50:32 INFO request method=GET path=/api/admin/growth/referrals status=200 duration=5.032625ms bytes=309 handler_admin_audit151_rbac_test.go:260: referral list contract={\"items\":[{\"id\":\"6e04cf05-28d9-43f1-8a86-5e6e99026d8…"
+        }
+      ],
+      "fingerprint": "875133709f45623439613b34415859e97077c823b63ed48eecb2b9c64ef1c39a"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-14T22:57:00.282Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions|TestAudit151AdminI18nContractsAUDIT151|TestAudit151SocialEventsListUsesPersistedContractAUDIT151|TestAudit151PostcardArchiveRollsBackWithoutAuditAUDIT151|TestAudit151ReferralListAndDetailMatchAdminScreenAUDIT151)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAudit151AdminGrowthI18nAndIAMRoutesRequirePermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151AdminI18nContractsAUDIT151",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151SocialEventsListUsesPersistedContractAUDIT151",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151PostcardArchiveRollsBackWithoutAuditAUDIT151",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit151ReferralListAndDetailMatchAdminScreenAUDIT151",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "60f22f055413d9ba8aa83a5b9e13f66d7b1a4bfeab62b6f6dc49734b29d0b081"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-14T22:58:31.223Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 987,
+        "executed": 985,
+        "passed": 984,
+        "failed": 1,
+        "skipped": 2,
+        "expected_skips": 0,
+        "unexpected_skips": 2,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "60f22f055413d9ba8aa83a5b9e13f66d7b1a4bfeab62b6f6dc49734b29d0b081"
+    }
+  ],
+  "closed": null,
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

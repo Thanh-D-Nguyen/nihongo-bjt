@@ -52,10 +52,10 @@ export function BjtFormatGuidePanel({ labels }: { labels: BjtFormatGuideLabels; 
 
   return (
     <section className="overflow-hidden rounded-[1.75rem] border border-ink/10 bg-surface shadow-sm">
-      <div className="grid gap-4 border-b border-ink/10 bg-ink p-4 text-white sm:grid-cols-[1fr_auto] sm:items-center sm:p-5">
+      <div className="grid gap-4 border-b border-ink/10 bg-paper p-4 text-ink sm:grid-cols-[1fr_auto] sm:items-center sm:p-5">
         <div>
           <h2 className="text-lg font-black">{labels.summary}</h2>
-          <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-white/68">
+          <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-muted">
             {labels.intro}
           </p>
         </div>
@@ -63,9 +63,9 @@ export function BjtFormatGuidePanel({ labels }: { labels: BjtFormatGuideLabels; 
           {stats.map((item) => {
             const [value, label] = item.split("|");
             return (
-              <div className="rounded-2xl border border-white/10 bg-white/8 p-3" key={item}>
+              <div className="rounded-2xl border border-ink/10 bg-surface p-3" key={item}>
                 <p className="text-lg font-black leading-none">{value}</p>
-                <p className="mt-1 text-[11px] font-bold text-white/60">{label}</p>
+                <p className="mt-1 text-[11px] font-bold text-muted">{label}</p>
               </div>
             );
           })}

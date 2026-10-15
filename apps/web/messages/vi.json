@@ -73,6 +73,7 @@
       "authDisabledHint": "Đăng ký chưa được bật trên hệ thống này. Vui lòng liên hệ quản trị viên."
     },
     "forgotPassword": {
+      "languageLabel": "Ngôn ngữ",
       "metaTitle": "Quên mật khẩu — KotobaWorks",
       "title": "Quên mật khẩu",
       "subtitle": "Nhập email đã đăng ký, chúng tôi sẽ gửi link đặt lại mật khẩu.",
@@ -84,6 +85,24 @@
       "backToLogin": "Quay lại đăng nhập",
       "genericError": "Đã xảy ra lỗi. Vui lòng thử lại sau.",
       "validationError": "Vui lòng nhập địa chỉ email hợp lệ."
+    },
+    "resetPassword": {
+      "languageLabel": "Ngôn ngữ",
+      "metaTitle": "Đặt lại mật khẩu — KotobaWorks",
+      "title": "Đặt mật khẩu mới",
+      "subtitle": "Chọn mật khẩu mới để tiếp tục học tập.",
+      "passwordLabel": "Mật khẩu mới",
+      "confirmPasswordLabel": "Xác nhận mật khẩu mới",
+      "passwordHint": "Mật khẩu cần tối thiểu 8 ký tự.",
+      "passwordTooLong": "Mật khẩu vượt quá giới hạn cho phép.",
+      "preparing": "Đang chuẩn bị biểu mẫu đặt lại mật khẩu…",
+      "primaryCta": "Lưu mật khẩu mới",
+      "submitting": "Đang lưu…",
+      "successMessage": "Mật khẩu đã được đổi. Hãy đăng nhập bằng mật khẩu mới.",
+      "backToLogin": "Quay lại đăng nhập",
+      "genericError": "Không thể đổi mật khẩu lúc này. Vui lòng thử lại.",
+      "invalidToken": "Liên kết đặt lại không hợp lệ hoặc đã hết hạn. Hãy yêu cầu liên kết mới.",
+      "mismatch": "Hai mật khẩu không khớp."
     }
   },
   "nav": {
@@ -378,7 +397,8 @@
       "viewAll": "Xem tất cả",
       "vocab": "từ vựng",
       "kanji": "kanji",
-      "grammar": "ngữ pháp"
+      "grammar": "ngữ pháp",
+      "error": "Không thể tải lộ trình BJT."
     },
     "tabs": {
       "today": "Hôm nay",
@@ -424,6 +444,7 @@
     "bookmarkAdd": "Lưu bài",
     "bookmarkRemove": "Đã lưu",
     "summaryNote": "Đây là bản tóm tắt. Nội dung đầy đủ chỉ có trên trang NHK gốc.",
+    "contentUnavailable": "Bài này hiện chỉ có tiêu đề. Mở bài gốc trên NHK để đọc nội dung đầy đủ.",
     "readFullArticle": "Đọc bài viết đầy đủ trên NHK",
     "furiganaToggle": "Hiển thị furigana",
     "furiganaOn": "Furigana",
@@ -1431,6 +1452,53 @@
       "descriptionLabel": "Mô tả ảnh",
       "pendingLabel": "Ảnh đang chờ tạo",
       "promptLabel": "Prompt tạo ảnh"
+    },
+    "print": {
+      "loading": "Đang tải đề thi…",
+      "loadError": "Không thể tải đề thi này. Hãy thử lại hoặc quay về bài luyện.",
+      "retry": "Thử tải lại",
+      "back": "Quay lại",
+      "showAnswers": "Hiện đáp án",
+      "printButton": "In đề thi",
+      "coverKicker": "KotobaWorks · Đề luyện tập",
+      "practiceTitle": "Đề luyện tập",
+      "level": "Trình độ",
+      "questionCount": "Tổng số câu",
+      "questionUnit": "câu",
+      "timeLimit": "Thời gian",
+      "minuteUnit": "phút",
+      "structure": "Cấu trúc đề",
+      "sectionCount": "phần",
+      "total": "Tổng cộng",
+      "instructions": "Hướng dẫn",
+      "chooseAnswer": "Chọn phương án phù hợp nhất trong các lựa chọn.",
+      "independentNotice": "Đây là đề luyện tập độc lập của KotobaWorks, không phải đề thi chính thức.",
+      "listeningNotice": "Phần nghe được in dưới dạng kịch bản văn bản; bản in không phát audio.",
+      "answerSheet": "Phiếu trả lời",
+      "answerSheetHint": "Chọn đáp án trên phiếu, rồi bật “Hiện đáp án” để tự đối chiếu.",
+      "scoreTitle": "Tham khảo cấp độ BJT",
+      "scoreDescription": "Khoảng điểm và mô tả cấp độ chỉ mang tính tham khảo.",
+      "rank": "Cấp độ",
+      "scoreRange": "Khoảng điểm",
+      "description": "Mô tả",
+      "footerTitle": "KotobaWorks · Tài liệu luyện tập độc lập",
+      "footerDisclaimer": "Không phải đề thi chính thức của BJT. Kết quả luyện tập không dự đoán điểm thi thật.",
+      "levelDescriptions": {
+        "J1+": "Năng lực giao tiếp kinh doanh xuất sắc",
+        "J1": "Năng lực giao tiếp kinh doanh tốt",
+        "J2": "Năng lực giao tiếp kinh doanh khá",
+        "J3": "Năng lực giao tiếp kinh doanh trung bình",
+        "J4": "Năng lực giao tiếp kinh doanh cơ bản",
+        "J5": "Năng lực giao tiếp kinh doanh nền tảng"
+      },
+      "examTitle": "BJTビジネス日本語能力テスト",
+      "part": "Phần",
+      "section": "Mục",
+      "partNames": {
+        "LC": "Nghe hiểu",
+        "LR": "Nghe và đọc hiểu",
+        "RC": "Đọc hiểu"
+      }
     }
   },
   "onboarding": {
@@ -1487,6 +1555,8 @@
     "error": "Không tải hoặc gửi yêu cầu được.",
     "userId": "Mã người học",
     "export": "Xin bản sao dữ liệu",
+    "download": "Tải bản xuất dữ liệu",
+    "exportExpired": "Liên kết tải bản xuất đã hết hạn. Hãy yêu cầu xuất dữ liệu mới.",
     "delete": "Yêu cầu xoá tài khoản",
     "listTitle": "Yêu cầu gần đây",
     "empty": "Chưa có yêu cầu.",
@@ -1600,6 +1670,9 @@
     }
   },
   "accounts": {
+    "linkedAccountsEmpty": "Không có tài khoản nào đã liên kết để quản lý.",
+    "linkedAccountsSubtitle": "Quản lý các tài khoản đã liên kết trước đây. Hiện chưa hỗ trợ liên kết tài khoản mạng xã hội mới.",
+    "linkedAccountsTitle": "Tài khoản đã liên kết",
     "connected": "Đã liên kết",
     "exchangeError": "Không đổi được mã đăng nhập.",
     "exchangeOk": "Đã đồng bộ tài khoản từ Google.",
@@ -1633,7 +1706,7 @@
     "accuracy": "Độ chính xác BJT",
     "completedSessions": "Phiên BJT hoàn tất",
     "empty": "Chưa có dữ liệu tiến độ cho khoảng thời gian này.",
-    "emptyTitle": "Chưa có đủ dữ liệu 7 ngày",
+    "emptyTitleDynamic": "Chưa có đủ dữ liệu {n} ngày",
     "emptyDescription": "Ôn vài thẻ hoặc làm bài luyện BJT — biểu đồ sẽ phản ánh tiến bộ dần.",
     "emptyCtaFlashcards": "Ôn thẻ",
     "emptyCtaQuiz": "Luyện đề BJT",
@@ -1669,10 +1742,10 @@
     "nudgeStreak": "Chuỗi {n} ngày đang chạy — đều đặn quan trọng hơn tốc độ.",
     "nudgeCalm": "Không cần vội — chọn một hoạt động ngắn phù hợp hôm nay.",
     "activityTitle": "Hoạt động theo ngày",
-    "activityDescription": "Cột: ôn SRS (xanh lá), câu BJT (chàm), phiên BJT hoàn tất (cam) — dữ liệu thật trong khoảng đã chọn.",
-    "activityReviewsShort": "SRS",
-    "activityQuizShort": "BJT",
-    "activitySessionsShort": "Phiên",
+    "activityDescription": "Cột thể hiện số phút học mỗi ngày; thông tin chi tiết gồm XP và số buổi học trong khoảng đã chọn.",
+    "activityLessonsShort": "Buổi học",
+    "activityMinutesShort": "Phút học",
+    "activityXpShort": "XP",
     "activityEmpty": "Chưa ghi nhận hoạt động trong các ngày này.",
     "activityTableCaption": "Hoạt động học tập theo ngày (UTC)",
     "activityColDateUtc": "Ngày (UTC)",
@@ -1681,7 +1754,7 @@
     "learningPathsEmpty": "Chưa có lộ trình công khai.",
     "learningPathsCta": "Đi tới luyện BJT",
     "learningPathsLevel": "Mục tiêu: {level}",
-    "heatmapLabel": "Bản đồ nhiệt hoạt động (12 tuần)",
+    "heatmapLabel": "Bản đồ nhiệt hoạt động",
     "shareProgress": "Chia sẻ tiến bộ",
     "viewAchievements": "Xem thành tích",
     "trendVsPrevious": "So với {n} ngày trước đó"
@@ -1700,7 +1773,7 @@
     "faq4q": "Dữ liệu học của tôi có an toàn không?",
     "faq4a": "Có. Dữ liệu được lưu trữ bảo mật và bạn có thể yêu cầu xuất hoặc xóa bất kỳ lúc nào trong phần Cài đặt.",
     "contactTitle": "Liên hệ hỗ trợ",
-    "contactDesc": "Nếu bạn không tìm thấy câu trả lời, hãy gửi góp ý qua trang Góp ý hoặc liên hệ email hỗ trợ.",
+    "contactDesc": "Nếu bạn không tìm thấy câu trả lời, hãy gửi góp ý qua trang Góp ý.",
     "contactLink": "Gửi góp ý"
   },
   "termsPage": {
@@ -1731,7 +1804,9 @@
     "section4Title": "4. Quyền của bạn",
     "section4Body": "Bạn có quyền yêu cầu xuất dữ liệu hoặc xóa tài khoản bất kỳ lúc nào trong phần Cài đặt > Quyền riêng tư.",
     "section5Title": "5. Liên hệ",
-    "section5Body": "Nếu có thắc mắc về chính sách quyền riêng tư, vui lòng liên hệ qua trang Góp ý."
+    "section5Body": "Nếu có thắc mắc về chính sách quyền riêng tư, vui lòng liên hệ qua trang Góp ý.",
+    "settingsPrivacyLink": "Mở Cài đặt quyền riêng tư",
+    "feedbackLink": "Gửi góp ý"
   },
   "feedbackPage": {
     "metaTitle": "Góp ý — KotobaWorks",
@@ -1749,6 +1824,8 @@
     "messageLabel": "Nội dung góp ý",
     "messagePlaceholder": "Mô tả chi tiết...",
     "submit": "Gửi góp ý",
+    "submitting": "Đang gửi…",
+    "rateLimit": "Bạn gửi quá nhanh. Vui lòng đợi một chút rồi thử lại.",
     "success": "Cảm ơn bạn đã góp ý! Chúng tôi sẽ xem xét sớm nhất.",
     "error": "Chưa thể gửi. Vui lòng thử lại sau."
   },
@@ -1772,6 +1849,7 @@
     "statsWords": "từ vựng",
     "statsKanji": "kanji",
     "statsGrammar": "ngữ pháp",
+    "statsUnavailable": "Chưa thể tải số liệu",
     "recentTitle": "Tra cứu gần đây",
     "recentEmpty": "Chưa có lịch sử tra cứu",
     "progressTitle": "Tiến độ của tôi",
@@ -1971,6 +2049,7 @@
       "daily_auto": "Tự động hàng ngày"
     },
     "sourceType": "Nguồn",
+    "topic": "Chủ đề hoặc từ khóa",
     "sources": {
       "lexeme": "Từ vựng",
       "grammar": "Ngữ pháp",
@@ -1985,7 +2064,7 @@
     "count": "Số thẻ",
     "generating": "Đang tạo thẻ...",
     "success": "Đã tạo {count} thẻ thành công!",
-    "viewDeck": "Xem bộ thẻ",
+    "viewDeck": "Ôn tập thẻ vừa tạo",
     "previewResult": "Ước tính: {count} thẻ",
     "jobs": "Lịch sử tạo thẻ",
     "error": "Có lỗi xảy ra. Vui lòng thử lại."
@@ -2017,11 +2096,17 @@
       "eyebrow": "社員ファイル",
       "title": "Hồ sơ sự nghiệp",
       "subtitle": "Cấp bậc, kỹ năng và quan hệ trong công ty.",
+      "loading": "Đang tải hồ sơ sự nghiệp…",
+      "loadError": "Không thể tải dữ liệu hồ sơ sự nghiệp. Vui lòng thử lại.",
+      "retry": "Thử lại",
+      "loginLink": "Đăng nhập",
       "rankBadgeStamp": "辞令",
       "nextRankLabel": "Cấp tiếp theo:",
       "rankProgressLabel": "Rank XP",
       "skillsTitle": "Bản đồ kỹ năng",
       "skillsSubtitle": "6 trục năng lực business Japanese.",
+      "skillsEmpty": "Chưa có dữ liệu kỹ năng.",
+      "ranksEmpty": "Chưa có dữ liệu thứ hạng.",
       "skillsAxisLabels": {
         "keigo": "敬語",
         "written": "ビジネス文書",
@@ -2032,6 +2117,7 @@
       },
       "relationsTitle": "社内・社外関係",
       "relationsSubtitle": "Mức độ tin tưởng (信頼度) thay đổi theo hành động trong từng chương.",
+      "relationsEmpty": "Chưa có dữ liệu quan hệ.",
       "trustLabel": "信頼度",
       "relationUchi": "内 (uchi)",
       "relationSoto": "外 (soto)",
@@ -2117,6 +2203,10 @@
       "eyebrow": "振り返り トレイ",
       "title": "Review Inbox",
       "subtitle": "Memo phản hồi từ 先輩 — không phải flashcard, mà là thư phản hồi sau mỗi sai sót.",
+      "empty": "Hộp thư của bạn hiện chưa có memo.",
+      "loadError": "Không thể tải Review Inbox.",
+      "retry": "Thử lại",
+      "feedbackError": "Không thể lưu phản hồi. Vui lòng thử lại.",
       "fromLabel": "From",
       "surfaceLabel": "Bề mặt",
       "realIntentLabel": "真意 / Ý thật",
@@ -2235,7 +2325,15 @@
     "kanji": "kanji",
     "grammar": "ngữ pháp",
     "loading": "Đang tải...",
-    "error": "Không thể tải dữ liệu."
+    "error": "Không thể tải dữ liệu.",
+    "assessmentIntro": "Hãy làm bài đánh giá BJT để xác định trình độ và theo dõi lộ trình học.",
+    "assessmentCta": "Làm bài đánh giá",
+    "readinessTitle": "Sẵn sàng thi thử",
+    "readinessSubtitle": "Dựa trên kết quả gần đây",
+    "readinessCta": "Thi thử ngay",
+    "accuracyAcross": "độ chính xác qua {count} bài thi",
+    "noSessions": "Chưa có bài thi hoàn tất",
+    "analyticsError": "Không thể tải thống kê thi thử. Hãy thử lại sau."
   },
   "levelDetail": {
     "back": "Trình độ BJT",
@@ -2285,6 +2383,9 @@
     "expandSection": "Mở rộng",
     "completed": "Đã hoàn thành",
     "markComplete": "Đánh dấu hoàn thành",
+    "loginToSave": "Đăng nhập để lưu tiến độ",
+    "savingProgress": "Đang lưu...",
+    "progressError": "Không thể lưu tiến độ. Vui lòng thử lại.",
     "close": "Đóng",
     "posLabel": "Từ loại",
     "onyomiLabel": "Âm on",
@@ -2373,6 +2474,7 @@
     "densityCompact": "Gọn",
     "densityComfortable": "Thoải mái",
     "saved": "Đã lưu.",
+    "saveError": "Không thể đồng bộ cài đặt. Thiết bị này vẫn đang áp dụng lựa chọn của bạn.",
     "preview": "Xem trước",
     "previewText": "Trong môi trường kinh doanh Nhật Bản, việc sử dụng kính ngữ và khiêm nhường ngữ đúng cách là rất quan trọng."
   },
@@ -2396,7 +2498,11 @@
     "backHome": "← Về trang chủ",
     "enforcementOff": "Hệ thống đang ở chế độ miễn phí toàn diện. Tất cả tính năng đều mở.",
     "checkoutLoading": "Đang xử lý...",
-    "checkoutError": "Không thể thực hiện thanh toán. Vui lòng thử lại."
+    "checkoutError": "Không thể tạo yêu cầu đăng ký. Vui lòng thử lại.",
+    "checkoutPending": "Yêu cầu nâng cấp đang chờ xác nhận. Gói chỉ có hiệu lực sau khi thanh toán được xác nhận.",
+    "checkoutPendingShort": "Chờ xác nhận",
+    "retry": "Thử lại",
+    "signInToUpgrade": "Đăng nhập để nâng cấp"
   },
   "subscription": {
     "title": "Gói đăng ký",
@@ -2444,6 +2550,9 @@
   "magazine": {
     "title": "Daily Magazine",
     "subtitle": "Học tiếng Nhật mỗi ngày qua nội dung thú vị",
+    "loadErrorTitle": "Chưa tải được tạp chí",
+    "loadErrorDescription": "Dịch vụ đang tạm thời không khả dụng. Hãy thử tải lại.",
+    "retry": "Thử lại",
     "filterAll": "Tất cả",
     "filterVocab": "Từ vựng",
     "filterWeather": "Thời tiết",
@@ -2462,6 +2571,16 @@
     "quizPerfect": "Xuất sắc! Bạn trả lời đúng hết!",
     "quizGood": "Tốt lắm! Tiếp tục cố gắng nhé!",
     "quizTryAgain": "Cố gắng thêm nhé! Xem lại từ vựng ở trên.",
+    "quizSaveFailed": "Chưa lưu được kết quả. Hãy đăng nhập rồi thử lại.",
+    "addFlashcard": "Thêm vào flashcard",
+    "addedFlashcard": "Đã thêm vào flashcard",
+    "signInHint": "Đăng nhập để sử dụng",
+    "chooseDeck": "Chọn bộ thẻ",
+    "createDeck": "Tạo bộ thẻ mới",
+    "newDeckPlaceholder": "Tên bộ thẻ mới...",
+    "nDecks": "Chưa có bộ thẻ nào",
+    "flashcardError": "Chưa thêm được từ này vào bộ thẻ. Vui lòng thử lại.",
+    "backToMagazine": "Quay lại tạp chí",
     "todayTitle": "Hôm nay",
     "todayViewAll": "Xem tất cả →",
     "readMore": "Đọc tiếp",
@@ -2626,5 +2745,36 @@
     "selfPreview": "Đây là cách người khác nhìn thấy hồ sơ của bạn",
     "copyUrl": "Sao chép link",
     "editProfile": "Sửa hồ sơ"
+  },
+  "scenarios": {
+    "list": {
+      "title": "Tình huống kinh doanh",
+      "description": "Luyện tập ứng xử trong môi trường làm việc Nhật Bản",
+      "difficulty": { "beginner": "Cơ bản", "intermediate": "Trung cấp", "advanced": "Nâng cao" },
+      "duration": "⏱️ ~{count} phút",
+      "steps": "📋 {count} bước",
+      "attempts": "🎮 {count} lượt chơi",
+      "empty": "Chưa có tình huống nào.",
+      "loadError": "Chưa tải được danh sách tình huống.",
+      "retry": "Thử lại"
+    },
+    "play": {
+      "loadError": "Không thể tải tình huống. Hãy thử tải lại trang.",
+      "answerError": "Chưa gửi được lựa chọn. Bạn có thể chọn lại.",
+      "completeError": "Chưa lưu được kết quả. Hãy thử lại.",
+      "notFound": "Không tìm thấy tình huống.",
+      "score": "{total}/{max} điểm",
+      "replay": "Chơi lại",
+      "back": "Quay lại",
+      "step": "Bước {current}/{total}",
+      "stepLabel": "Bước {step}:",
+      "optimal": "{count}/{total} câu tối ưu · {percent}%",
+      "optimalAnswer": "Tuyệt vời!",
+      "suboptimalAnswer": "Chưa tối ưu",
+      "points": "điểm",
+      "showResult": "Xem kết quả",
+      "continue": "Tiếp tục →",
+      "retry": "Thử lại"
+    }
   }
 }

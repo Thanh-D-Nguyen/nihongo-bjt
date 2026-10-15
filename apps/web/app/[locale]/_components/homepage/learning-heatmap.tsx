@@ -78,7 +78,7 @@ export function LearningHeatmap() {
     );
   }
 
-  if (!data || data.days.length === 0) return null;
+  if (!data || data.totalDaysActive === 0) return null;
 
   // Build grid: 7 rows × N weeks
   // Pad start to align with weekday

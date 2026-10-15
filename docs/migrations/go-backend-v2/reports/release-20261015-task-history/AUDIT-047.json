@@ -1,0 +1,488 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-047",
+  "title": "Audit Admin Daily Radar card archive",
+  "start_head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+  "preexisting_changes": {
+    ".quality/tasks/ctx-resume-1791168424.json": "39fe89f3617bfb95a702c09ce4aabffcaeb8f7bb",
+    "apps/admin/app/[locale]/access-denied/page.tsx": "c68e8af2a6f0746cd0e318a8de0db38e4b2f60b0",
+    "apps/admin/app/[locale]/assessment/quiz-templates/quiz-templates-client.test.ts": "ba8137994990cd85057a816928533ab037371c19",
+    "apps/admin/app/[locale]/assessment/quiz-templates/quiz-templates-client.tsx": "aacac2858e5bedca22f6cd03fbcdbfa3cf991c40",
+    "apps/admin/app/[locale]/battle/leaderboard/battle-leaderboard-client.test.ts": "f742443b5959cd5699857d86fa0a26580809364c",
+    "apps/admin/app/[locale]/cardgen/cardgen-admin-client.tsx": "8ddafa4fca8fc169f4bf25c9947b7a3c03ce9048",
+    "apps/admin/app/[locale]/login/_components/admin-login-form-client.tsx": "b82c38674e498f144d717ff592ac5dc4c5c54c19",
+    "apps/admin/app/[locale]/login/admin-login.regression.test.tsx": "5b11d85a87934d8ed3680c1754d03b34fc030a68",
+    "apps/admin/app/[locale]/login/page.tsx": "8c33a7b540c4ebf9de86a6d1dd8f9f3e5bc1f92c",
+    "apps/admin/app/auth/logout/page.tsx": "d86ad68fb3dfa9bdbac704899c04f131ab2fc0b3",
+    "apps/admin/lib/admin-api.ts": "e19f64369f0723fa79326a86f6ae83ea8c095bbc",
+    "apps/admin/lib/admin-nav-data.ts": "02fab3c921f9d379b6a4ae3f252a387783c7a48e",
+    "apps/admin/lib/admin-overview-fetch.test.ts": "c551ec079ff3a0e04cb06d72801ee9eb59559234",
+    "apps/admin/lib/admin-overview-fetch.ts": "c2267b606100d8faae7be2c6bf6c5968402cd6c4",
+    "apps/admin/lib/admin-shell.regression.test.tsx": "55b1e94d273dca2be418c6026c6a879f045c0dd0",
+    "apps/admin/lib/quiz-template-admin-utils.ts": "10ba1c341661f40c38d1afef6f4d69d51129ad8f",
+    "apps/admin/lib/resolve-admin-nav.ts": "54024b5d6443067d48eb4f771443046cc4f0256d",
+    "apps/admin/messages/en.json": "1dd651ff03b7353a7281ddab40587971cc6a93b5",
+    "apps/admin/messages/ja.json": "f70f1c875e06896405b8607d97642b385747522f",
+    "apps/admin/messages/vi.json": "2cba22f9b11963c1893c952a4a567ea2786545ea",
+    "apps/admin/next-env.d.ts": "c4b7818fbb2c2c34c24feb1b627ee824507c5600",
+    "apps/admin/next.config.mjs": "a29e69ddd1777373ddc577abfd3ce85cce649af7",
+    "apps/admin/tsconfig.tsbuildinfo": "8c7872bfb38de2f6b23c31dae730d082b60d4731",
+    "apps/api-go/cmd/create-test-creds/main.go": "eae3b397a5f12f5c5401c3484da23e845686aabd",
+    "apps/api-go/cmd/reset-admin-cred/main.go": "c39d53f0ce4fa29c2a3ef6b813b1abfe9af28cad",
+    "apps/api-go/deploy/local/Caddyfile": "880720642204d8f7afb53bf961224b25afac9016",
+    "apps/api-go/internal/authn/guard.go": "599ac3a287a01dae542a2a1a939317149eb6dbd3",
+    "apps/api-go/internal/authn/guard_test.go": "bd68d8e82a35eec1c96d07040b54cdff0d064fe0",
+    "apps/api-go/internal/httpserver/handler_admin_ads.go": "079e708b10af9fff5de7707fb525ac1b53ace481",
+    "apps/api-go/internal/httpserver/handler_admin_analytics.go": "1b6248374040a38c57f9463fcd1139c79a44ea26",
+    "apps/api-go/internal/httpserver/handler_admin_analytics_executive_test.go": "1d78fa48e0fbf965087b8a6bec1b89f4ec5a0a00",
+    "apps/api-go/internal/httpserver/handler_admin_assessment_mock_exams.go": "15ab736563f516d2b832728b1be917102432668a",
+    "apps/api-go/internal/httpserver/handler_admin_assessment_mock_exams_duplicate_test.go": "0bf275dfaf651c1ce94119c81b7d605934adcdce",
+    "apps/api-go/internal/httpserver/handler_admin_assessment_mock_exams_publish_test.go": "a9c81a75fe875373d15ca5931f497425d891f2b5",
+    "apps/api-go/internal/httpserver/handler_admin_assessment_mock_exams_test.go": "a6b6ae21254e337f0bf6c76691b9f12687e0e032",
+    "apps/api-go/internal/httpserver/handler_admin_assessment_question_bank.go": "646ed6495f22212dc1c15af457161929ab4eb73b",
+    "apps/api-go/internal/httpserver/handler_admin_assessment_question_bank_create_test.go": "8a6f94872bf660205a73feed4bb250fdf606ecab",
+    "apps/api-go/internal/httpserver/handler_admin_battle_abuse.go": "bafe35b7247a22ec4f521988efff34ff99cea882",
+    "apps/api-go/internal/httpserver/handler_admin_battle_abuse_escalate_rbac_test.go": "6b9510a77efbf7e38352208bd0b82b64d8bade99",
+    "apps/api-go/internal/httpserver/handler_admin_battle_abuse_rbac_test.go": "1c44bcdf53df84931ca89e51fcfb63edd2215622",
+    "apps/api-go/internal/httpserver/handler_admin_battle_abuse_resolve_contract_test.go": "5d262ecebb6a8cc1ababcf3a8f951e32879d12c3",
+    "apps/api-go/internal/httpserver/handler_admin_battle_bots_rbac_test.go": "f60203e4a635cb846871a862a92a850ed6424cd8",
+    "apps/api-go/internal/httpserver/handler_admin_battle_configs.go": "4eb84d4d59a66f7cafe48734f7c678122825b3bc",
+    "apps/api-go/internal/httpserver/handler_admin_battle_configs_create_test.go": "003ee3917f93d39f1d78e6477381b976c35ce0ae",
+    "apps/api-go/internal/httpserver/handler_admin_battle_matches_test.go": "197ab112abe82a4ad16e104b6bf7e5dd87452955",
+    "apps/api-go/internal/httpserver/handler_admin_battle_misc.go": "fe8ecf3004efa80133b2853e5073cf9bd1bbdc5e",
+    "apps/api-go/internal/httpserver/handler_admin_cardgen.go": "f5bee840ef0ce32648b9306dd75cc8dc9cd85dcd",
+    "apps/api-go/internal/httpserver/handler_admin_cardgen_test.go": "7c20f0a48050a39befa5ea6378ebee2d4e24157f",
+    "apps/api-go/internal/httpserver/handler_admin_companion_config_test.go": "0b679a88aa97df177a702777ec28ae38709e93a6",
+    "apps/api-go/internal/httpserver/handler_admin_content_create_test.go": "9277a7bac0353c1de585bb6d47dc47b757aedeb1",
+    "apps/api-go/internal/httpserver/handler_admin_content_patch_test.go": "bdaf07d7245d4bb16eabb2edfa1004433f903093",
+    "apps/api-go/internal/httpserver/handler_admin_content_status_test.go": "a9a27df93b284f3abb7987e14c75b5276840b276",
+    "apps/api-go/internal/httpserver/handler_admin_content_summary_test.go": "213e7aecdb0a9bf0dd6a34f18596b69520fc4674",
+    "apps/api-go/internal/httpserver/handler_admin_core.go": "ae4bca25bf0ced0dac83dac53255908736f99fdf",
+    "apps/api-go/internal/httpserver/handler_admin_dailyradar_card_create_test.go": "a27d7eaeef1b6dcb27eb39124d4f87d1206349b7",
+    "apps/api-go/internal/httpserver/handler_admin_dailyradar_card_detail_test.go": "85c07feb719c485c0ca7493eb417f1c379651d85",
+    "apps/api-go/internal/httpserver/handler_admin_dailyradar_card_patch_test.go": "77a5b97545d6aa218fe7f605d39f57d7fb2aab0b",
+    "apps/api-go/internal/httpserver/handler_admin_dailyradar_cards_list_test.go": "d1c352e2430411ef2e1a61eb231b4998797c014f",
+    "apps/api-go/internal/httpserver/handler_admin_dailyradar_exercises.go": "90638f1ad4c8111c4d4d160a57ffd44505523877",
+    "apps/api-go/internal/httpserver/handler_admin_dailyradar_modules_list_test.go": "230c14e5fe5e0ffb2fe88cf67f0ab14444611316",
+    "apps/api-go/internal/httpserver/handler_admin_i18n_quiz.go": "0b26d0458abbb69115122592c57e490c72af6daf",
+    "apps/api-go/internal/httpserver/handler_admin_me_test.go": "702bbebb362a7b4924e50e5e7fc2db18b09eca4f",
+    "apps/api-go/internal/httpserver/handler_admin_media_companion_privacy.go": "2ff1a27706a551e3d3cc384bca3a5c13e93cae62",
+    "apps/api-go/internal/httpserver/handler_admin_quiz_session_detail_test.go": "f6a63032ba64ed96153c95df1d76642df1ec083e",
+    "apps/api-go/internal/httpserver/handler_admin_rbac.go": "edcf8f767ba33fa949309f2bfbd7456af9378556",
+    "apps/api-go/internal/httpserver/handler_admin_rbac_test.go": "3bf721268d6ad6a1b35d43879ed3f68a0621cf38",
+    "apps/api-go/internal/httpserver/handler_ads_decision_test.go": "3a92f4f78f9e58888c881539e449f9a92cd3bb1d",
+    "apps/api-go/internal/httpserver/handler_ads_impression_test.go": "fb5836169a91676abfe32ec35c946ec76a5a460a",
+    "apps/api-go/internal/httpserver/handler_analytics_auth_test.go": "9d65c94d9972f6e4498ea28b523ac3a11f40fa24",
+    "apps/api-go/internal/httpserver/handler_analytics_learner_test.go": "01503757a89d2b1058908b9ef7b50e03733ed7d2",
+    "apps/api-go/internal/httpserver/handler_announcement_dismiss_test.go": "1e763b7b5f6bd1d9c185428fc11c77119ad3a88a",
+    "apps/api-go/internal/httpserver/handler_announcements_test.go": "8857e726a5931a193fe745832948a8206a73f4b7",
+    "apps/api-go/internal/httpserver/handler_dailyradar_announcement.go": "8b4eafe91f516b735e7965141247d25563781251",
+    "apps/api-go/internal/httpserver/handler_final_batch.go": "8f407a9e5c37e7a3a12f999e046ed9bf95d7c734",
+    "apps/api-go/internal/httpserver/handler_final_batch_test.go": "19e6144fe1b895509ada05c4ee3a74f638eff0ec",
+    "apps/api-go/internal/httpserver/handler_public_content.go": "19bd31a9eeefaa487a99cd3fee8bef1f0bc1dfd4",
+    "apps/api-go/internal/httpserver/handler_quiz.go": "0cb4f89fa3fe44b25bc0564c933de25db659713f",
+    "apps/api-go/internal/httpserver/handler_study_feed_test.go": "a1e9da063ed6d1d083be495926d4ea159d391a4a",
+    "apps/api-go/internal/httpserver/server.go": "c08dc022764d9b0d3893f6ab554b637ec084a6ee",
+    "apps/api-go/internal/onboarding/store.go": "48c19592ef4012165d6b010f2763aa5ebfaebaa0",
+    "apps/api-go/internal/onboarding/store_test.go": "9f5a1ab847bdd26d7ede15081049197f63e7b387",
+    "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "7ec0cce9aeb32367ac3cf15825f3f0cd06ab7e24",
+    "apps/web/app/[locale]/_components/homepage/learning-heatmap.tsx": "101a3dc56965f674947fd7f68160a159afda7c3e",
+    "apps/web/app/[locale]/login/auth-pages.regression.test.tsx": "4dd7a5db264e70ef930ec4f1579b34eabbfbbec6",
+    "apps/web/app/[locale]/login/page.tsx": "654fc22c46535743d2f08cd76715e44690140a95",
+    "apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx": "cb1815eb69382837308fa3f642e8d4d7edca27c8",
+    "apps/web/app/[locale]/register/page.tsx": "2aa45faeea0da3a919c884dc6b95f7f367cda8b2",
+    "apps/web/next-env.d.ts": "c4b7818fbb2c2c34c24feb1b627ee824507c5600",
+    "apps/web/public/__local-audit-api-probe.html": "825f3a16cd883b2376c4a6f7b26cd6186826764b",
+    "apps/web/tsconfig.tsbuildinfo": "a4704f5f180c399eeef95d8ad730d0f8b6e2cc74",
+    "deploy/local/Caddyfile": "72470e3b466c4a48dd7a573271d8458479e27266",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "13e81d75f27a88ec5d4ffd4bd1b427d5fb628e7d",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "2930534426e89848e5ba940dcb8b96ff332b1bf2",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "27cecdbd769253396516c361dcf6a7d68ed18853",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "7243cfd8104e0651049379dd1837180d89c31319",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "276bfdef793b1d22df5476f156045dfa67f0df3d",
+    "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "0bce901d60e626337b2b201f2d7b52f2765d1838",
+    "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "10dcb526bb33c73f06ca40c9b0ebe99bfe993565",
+    "e2e/smoke.spec.ts": "ee6be3829f24958c80ff7242c3be8805f9c79cab",
+    "packages/database/prisma/migrations/20261006100000_onboarding_profile_preferences/migration.sql": "3da2325aa59c04dc632a7a515f4fdff2a6b1dd65",
+    "packages/database/prisma/migrations/20261006120000_repair_bjt_question_section_fk/migration.sql": "baaca82df79c979c39789e6dc804bfc514eb16a3",
+    "packages/database/prisma/migrations/20261006130000_question_bank_permissions/migration.sql": "4b59d3b69d125be1cd3e42fd7190eb52f6bfb408",
+    "packages/database/prisma/schema.prisma": "0646140a9869abc692fbda4414286194ae581ff5",
+    "packages/shared/src/admin-rbac.js": "57fd29d340e2600ef19540745d1d71df7c8f0aff",
+    "packages/shared/src/admin-rbac.test.ts": "48fb31734f8136438d7d751495f804c8405fc790",
+    "packages/shared/src/admin-rbac.ts": "dd078fd2a3ea720ec8f9527044a5d2d79e162186",
+    "packages/ui/src/admin-shell.tsx": "ba1339c8c34da6b93fe433bbe260f2928ffa867e",
+    "prisma.config.ts": "02db95a7ee97e32ead17e9e82602c0e78e38924e",
+    "scripts/local-audit-status.mjs": "d0f98373f463c744dc6d03e40f4ef588c7490ab4",
+    "scripts/local-audit-up.mjs": "d68ac30f32a1113b3e9958508757667267dd90e8",
+    "scripts/quality/frontend-debt-baseline.json": "df8b62b088f1714071cff3d62bf2dcad22fbba16",
+    "scripts/quality/harness/cli.mjs": "d4f1d82156acbc82ad4d3d2a5ec528d9bb051ee5",
+    "scripts/quality/harness/lib/context-policy.mjs": "e036e4054970f0d6ec81d0d651b76147201ecdca"
+  },
+  "spec": {
+    "problem": "The Daily Radar archive action is user-facing and mutates canonical card status plus audit state.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Authenticated Admin without admin.content.write receives 403 from the archive route and the persisted card remains draft."
+      },
+      {
+        "id": "AC2",
+        "text": "Authorized Admin archives a disposable card through the visible card action, receives 200, persists archived status, and writes exactly one audit row."
+      }
+    ],
+    "expected_behavior": "Only content writers may archive; status mutation and audit commit atomically, missing IDs return 404, unexpected database errors return logged 500.",
+    "observed_behavior": "Registered archive route and handler must be exercised through the real Admin browser session; database state and audit log must match the UI outcome.",
+    "rollback_plan": "Revert route permission/CSRF middleware and archive transaction/test as a unit; leave persisted card and audit unchanged on denial or failure."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DATABASE",
+      "AUTH_SECURITY",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminDailyRadarCardArchiveRequiresContentWrite",
+      "expect": "want 403"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminDailyRadarCardArchivePersistsStatusAndAudit",
+      "expect": "want 200"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "VERIFYING",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-06T17:54:28.849Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-06T17:54:35.360Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-06T17:54:35.788Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-06T17:55:14.583Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-06T19:36:10.703Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-06T19:36:16.987Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-06T19:36:51.296Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-06T20:38:08.653Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-07T00:13:53.871Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-07T00:14:12.734Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-06T17:55:14.386Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardArchiveRequiresContentWrite|TestAdminDailyRadarCardArchivePersistsStatusAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardArchiveRequiresContentWrite",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminDailyRadarCardArchiveRequiresContentWrite handler_admin_dailyradar_card_archive_test.go:26: status=404 body={\"error\":\"card not found\"} ; want 403 --- FAIL: TestAdminDailyRadarCardArchiveRequiresContentWrite (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardArchivePersistsStatusAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminDailyRadarCardArchivePersistsStatusAndAudit handler_admin_dailyradar_card_archive_test.go:49: status=404 body={\"error\":\"card not found\"} ; want 200 --- FAIL: TestAdminDailyRadarCardArchivePersistsStatusAndAudit (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminDailyRadarCardArchiveRequiresContentWrite": "want 403",
+        "go:./internal/httpserver:TestAdminDailyRadarCardArchivePersistsStatusAndAudit": "want 200"
+      },
+      "fingerprint": "a34fbaa361a0a64976352b1758b5535612c952c9790352875ee4eae54fcc952c"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-06T19:36:10.436Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardArchiveRequiresContentWrite|TestAdminDailyRadarCardArchivePersistsStatusAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardArchiveRequiresContentWrite",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardArchivePersistsStatusAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "293e0a1eb1001e5ff3bb9f9cb59177111d192a501be1958d1a66cfca680d5566"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-06T20:04:49.602Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 584,
+        "executed": 578,
+        "passed": 577,
+        "failed": 1,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "bece41a1801de1e0967095469538caaa658d63e6df99abba02b3c3b2ea43949c"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-06T20:38:08.355Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardArchiveRequiresContentWrite|TestAdminDailyRadarCardArchivePersistsStatusAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardArchiveRequiresContentWrite",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardArchivePersistsStatusAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "bece41a1801de1e0967095469538caaa658d63e6df99abba02b3c3b2ea43949c"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-06T21:22:44.785Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 584,
+        "executed": 578,
+        "passed": 578,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "a later step of bash scripts/quality/verify-go.sh failed (exit 1)",
+      "fingerprint": "bece41a1801de1e0967095469538caaa658d63e6df99abba02b3c3b2ea43949c"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-07T00:05:03.065Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardArchiveRequiresContentWrite|TestAdminDailyRadarCardArchivePersistsStatusAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardArchiveRequiresContentWrite",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardArchivePersistsStatusAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "37ea1bd3bfaa31f950d14e06de3bd4b6da3c8eead3ca07b9f2d9546725996459"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-07T00:07:23.083Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "37ea1bd3bfaa31f950d14e06de3bd4b6da3c8eead3ca07b9f2d9546725996459"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-07T00:09:44.220Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 584,
+        "executed": 578,
+        "passed": 578,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "578 passed, 6 allowed skip(s)",
+      "fingerprint": "37ea1bd3bfaa31f950d14e06de3bd4b6da3c8eead3ca07b9f2d9546725996459"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-07T00:14:12.317Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardArchiveRequiresContentWrite|TestAdminDailyRadarCardArchivePersistsStatusAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardArchiveRequiresContentWrite",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardArchivePersistsStatusAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c47a5ac378c07b14a9f961c5eda9a4a20907b4e20ff30220645ec7459b922c5a"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-07T00:16:36.279Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "c47a5ac378c07b14a9f961c5eda9a4a20907b4e20ff30220645ec7459b922c5a"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-07T00:18:40.969Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 584,
+        "executed": 578,
+        "passed": 578,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "578 passed, 6 allowed skip(s)",
+      "fingerprint": "c47a5ac378c07b14a9f961c5eda9a4a20907b4e20ff30220645ec7459b922c5a"
+    }
+  ],
+  "closed": null,
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [
+    "apps/api-go/internal/httpserver/handler_admin_dailyradar_exercises.go",
+    "apps/api-go/internal/httpserver/server.go",
+    "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md"
+  ]
+}

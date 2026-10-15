@@ -30,11 +30,11 @@ export interface AnalyticsLabels {
   activityColDateUtc: string;
   activityDescription: string;
   activityEmpty: string;
+  activityLessonsShort: string;
+  activityMinutesShort: string;
   activityTableCaption: string;
-  activityQuizShort: string;
-  activityReviewsShort: string;
-  activitySessionsShort: string;
   activityTitle: string;
+  activityXpShort: string;
   completedSessions: string;
   dataRangeHint: string;
   dueCardsLabel: string;
@@ -42,7 +42,7 @@ export interface AnalyticsLabels {
   emptyCtaFlashcards: string;
   emptyCtaQuiz: string;
   emptyDescription: string;
-  emptyTitle: string;
+  emptyTitleDynamic: string;
   error: string;
   eyebrow: string;
   heatmapLabel: string;
@@ -95,9 +95,9 @@ export interface AnalyticsLabels {
 
 interface DailyActivityPoint {
   date: string;
-  quizAnswers: number;
-  quizSessionsCompleted: number;
-  reviews: number;
+  lessonsCount: number;
+  minutes: number;
+  xpEarned: number;
 }
 
 interface LearningPathRow {
@@ -117,8 +117,12 @@ interface PreviousTotals {
 }
 
 interface LearnerAnalyticsPayload {
-  dailyActivity: DailyActivityPoint[];
+  dailyStats: DailyActivityPoint[];
   dueFlashcards: number | null;
+  hasInsight: boolean;
+  hasLearningPaths: boolean;
+  hasRangeSummary: boolean;
+  hasWeakSkills: boolean;
   insight: string;
   learningPaths: LearningPathRow[];
   previousTotals: PreviousTotals | null;
@@ -139,14 +143,14 @@ interface LearnerAnalyticsPayload {
 
 /* ─────────────────────────── Helpers ─────────────────────────── */
 
-function normalizeLearnerAnalyticsPayload(raw: unknown): LearnerAnalyticsPayload {
+function normalizeLearnerAnalyticsPayload(raw: unknown, days: number): LearnerAnalyticsPayload {
   const r = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
   const totalsRaw =
     r.totals && typeof r.totals === "object" ? (r.totals as Record<string, unknown>) : {};
   const rangeRaw =
     r.range && typeof r.range === "object" ? (r.range as Record<string, unknown>) : {};
 
-  const dailyActivity = Array.isArray(r.dailyActivity) ? r.dailyActivity : [];
+  const rawDailyStats = Array.isArray(r.dailyStats) ? r.dailyStats : [];
   const weakSkills = Array.isArray(r.weakSkills) ? r.weakSkills : [];
   const learningPaths = Array.isArray(r.learningPaths) ? r.learningPaths : [];
 
@@ -157,14 +161,42 @@ function normalizeLearnerAnalyticsPayload(raw: unknown): LearnerAnalyticsPayload
     ? (r.previousTotals as Record<string, unknown>)
     : null;
 
+  const dailyStats = rawDailyStats.flatMap((value) => {
+      if (!value || typeof value !== "object") return [];
+      const point = value as Record<string, unknown>;
+      if (typeof point.date !== "string") return [];
+      return [{
+        date: point.date,
+        lessonsCount: n(point.lessonsCount, 0),
+        minutes: n(point.minutes, 0),
+        xpEarned: n(point.xpEarned, 0)
+      }];
+    });
+  const statsByDate = new Map(dailyStats.map((point) => [point.date, point]));
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  const completeDailyStats = Array.from({ length: days }, (_, index) => {
+    const date = new Date(today.getTime() - (days - index - 1) * 86_400_000).toISOString().slice(0, 10);
+    return statsByDate.get(date) ?? { date, lessonsCount: 0, minutes: 0, xpEarned: 0 };
+  });
+  const completeDates = new Set(completeDailyStats.map((point) => point.date));
+  for (const point of dailyStats) {
+    if (!completeDates.has(point.date)) completeDailyStats.push(point);
+  }
+  completeDailyStats.sort((left, right) => left.date.localeCompare(right.date));
+
   return {
-    dailyActivity: dailyActivity as DailyActivityPoint[],
+    dailyStats: completeDailyStats,
     dueFlashcards:
       r.dueFlashcards === undefined || r.dueFlashcards === null
         ? null
         : typeof r.dueFlashcards === "number" && !Number.isNaN(r.dueFlashcards)
           ? r.dueFlashcards
-          : null,
+        : null,
+    hasInsight: typeof r.insight === "string" && Boolean(r.insight.trim()),
+    hasLearningPaths: Array.isArray(r.learningPaths),
+    hasRangeSummary: Boolean(r.range && r.previousTotals),
+    hasWeakSkills: Array.isArray(r.weakSkills),
     insight: typeof r.insight === "string" ? r.insight : "",
     learningPaths: learningPaths as LearningPathRow[],
     previousTotals: prevRaw
@@ -254,7 +286,7 @@ export function LearnerAnalyticsClient({
         `/api/analytics/learner?days=${days}&userId=${encodeURIComponent(uid)}&locale=${locale}`
       );
       if (!response.ok) throw new Error("Learner analytics request failed");
-      setAnalytics(normalizeLearnerAnalyticsPayload(await response.json()));
+      setAnalytics(normalizeLearnerAnalyticsPayload(await response.json(), days));
     } catch {
       setError(true);
     } finally {
@@ -266,9 +298,14 @@ export function LearnerAnalyticsClient({
     void loadAnalytics();
   }, [loadAnalytics]);
 
-  const hasData = analytics
-    ? (analytics.totals?.reviewCount ?? 0) + (analytics.totals?.completedBjtSessions ?? 0) > 0
+  const hasSummaryData = analytics
+    ? analytics.hasRangeSummary &&
+      (analytics.totals?.reviewCount ?? 0) + (analytics.totals?.completedBjtSessions ?? 0) > 0
     : false;
+  const hasData = Boolean(analytics && (hasSummaryData || analytics.dailyStats.some(
+    (point) => point.minutes > 0 || point.xpEarned > 0 || point.lessonsCount > 0
+  ) || analytics.hasWeakSkills && analytics.weakSkills.length > 0 ||
+    analytics.hasLearningPaths && analytics.learningPaths.length > 0 || analytics.hasInsight));
 
   const primaryKind = useMemo(() => {
     if (!analytics?.totals || analytics.dueFlashcards == null) return "flashcards" as const;
@@ -373,7 +410,7 @@ export function LearnerAnalyticsClient({
       )}
 
       {/* ─── Primary Action Card ─── */}
-      {analytics && hasData && (
+      {analytics && hasSummaryData && (
         <section
           aria-labelledby="analytics-primary-step"
           className="relative overflow-hidden rounded-2xl border border-accent/15 bg-gradient-to-br from-accent/5 via-surface to-accent/3 p-5 shadow-sm dark:border-accent/25 dark:from-accent/10 dark:via-gray-900 dark:to-accent/5"
@@ -399,7 +436,7 @@ export function LearnerAnalyticsClient({
       )}
 
       {/* ─── Nudge Card ─── */}
-      {analytics && hasData && nudgeLine && (
+      {analytics && hasSummaryData && nudgeLine && (
         <div className="rounded-2xl border border-emerald-200/40 bg-gradient-to-r from-emerald-50/80 to-emerald-50/40 p-4 dark:border-emerald-700/30 dark:from-emerald-950/30 dark:to-emerald-950/10">
           <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/80 dark:text-emerald-400/80">
             {labels.nudgeTitle}
@@ -415,7 +452,7 @@ export function LearnerAnalyticsClient({
             <CardTitle className="text-base font-semibold text-ink">
               {labels.summaryTitleDynamic.replace("{n}", String(days))}
             </CardTitle>
-            {!hasData && <CardDescription>{labels.emptyTitle}</CardDescription>}
+            {!hasData && <CardDescription>{labels.emptyTitleDynamic.replace("{n}", String(days))}</CardDescription>}
           </CardHeader>
           <CardContent className="space-y-8 pt-2">
             {!hasData ? (
@@ -437,12 +474,12 @@ export function LearnerAnalyticsClient({
                   </div>
                 }
                 description={labels.emptyDescription}
-                title={labels.emptyTitle}
+                title={labels.emptyTitleDynamic.replace("{n}", String(days))}
               />
             ) : (
               <>
                 {/* ─── Bento Metric Cards ─── */}
-                <section>
+                {hasSummaryData && <section>
                   <SectionHeader heading="h3" title={labels.metricsTitle} variant="overline" />
                   {analytics.previousTotals && (
                     <p className="mb-3 text-[10px] font-medium text-muted">
@@ -486,13 +523,14 @@ export function LearnerAnalyticsClient({
                       />
                     )}
                   </div>
-                </section>
+                </section>}
 
                 {/* ─── Activity Heatmap ─── */}
                 <section className="rounded-2xl border border-ink/8 bg-paper/50 p-4 dark:border-ink/15 dark:bg-gray-800/30">
                   <ActivityHeatmap
-                    dailyActivity={analytics.dailyActivity}
+                    dailyStats={analytics.dailyStats}
                     label={labels.heatmapLabel}
+                    minuteLabel={labels.activityMinutesShort}
                   />
                 </section>
 
@@ -500,19 +538,18 @@ export function LearnerAnalyticsClient({
                 <section className="rounded-2xl border border-ink/8 bg-paper/50 p-5 dark:border-ink/15 dark:bg-gray-800/30">
                   <SectionHeader heading="h3" title={labels.activityTitle} variant="overline" />
                   <p className="mb-5 text-xs text-muted">{labels.activityDescription}</p>
-                  {analytics.dailyActivity.length === 0 ||
-                  analytics.dailyActivity.every(
-                    (p) => p.reviews + p.quizAnswers + p.quizSessionsCompleted === 0
+                  {analytics.dailyStats.every(
+                    (p) => p.minutes + p.xpEarned + p.lessonsCount === 0
                   ) ? (
                     <p className="text-sm text-muted">{labels.activityEmpty}</p>
                   ) : (
                     <>
                       <ActivityBarChart
-                        data={analytics.dailyActivity}
+                        data={analytics.dailyStats}
                         labels={{
-                          reviews: labels.activityReviewsShort,
-                          quiz: labels.activityQuizShort,
-                          sessions: labels.activitySessionsShort
+                          lessons: labels.activityLessonsShort,
+                          minutes: labels.activityMinutesShort,
+                          xp: labels.activityXpShort
                         }}
                       />
 
@@ -529,23 +566,23 @@ export function LearnerAnalyticsClient({
                                   {labels.activityColDateUtc}
                                 </th>
                                 <th className="px-3 py-2 font-semibold text-ink" scope="col">
-                                  {labels.activityReviewsShort}
+                                  {labels.activityMinutesShort}
                                 </th>
                                 <th className="px-3 py-2 font-semibold text-ink" scope="col">
-                                  {labels.activityQuizShort}
+                                  {labels.activityXpShort}
                                 </th>
                                 <th className="px-3 py-2 font-semibold text-ink" scope="col">
-                                  {labels.activitySessionsShort}
+                                  {labels.activityLessonsShort}
                                 </th>
                               </tr>
                             </thead>
                             <tbody>
-                              {analytics.dailyActivity.map((p) => (
+                              {analytics.dailyStats.map((p) => (
                                 <tr className="border-b border-ink/5 dark:border-ink/10" key={p.date}>
                                   <td className="px-3 py-2 tabular-nums text-muted">{p.date}</td>
-                                  <td className="px-3 py-2 tabular-nums">{p.reviews}</td>
-                                  <td className="px-3 py-2 tabular-nums">{p.quizAnswers}</td>
-                                  <td className="px-3 py-2 tabular-nums">{p.quizSessionsCompleted}</td>
+                                  <td className="px-3 py-2 tabular-nums">{p.minutes}</td>
+                                  <td className="px-3 py-2 tabular-nums">{p.xpEarned}</td>
+                                  <td className="px-3 py-2 tabular-nums">{p.lessonsCount}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -557,14 +594,15 @@ export function LearnerAnalyticsClient({
                 </section>
 
                 {/* ─── Coaching Insight ─── */}
-                <section className="rounded-2xl border border-amber-200/40 bg-gradient-to-r from-amber-50/60 to-amber-50/30 p-5 dark:border-amber-700/30 dark:from-amber-950/20 dark:to-amber-950/10">
+                {analytics.hasInsight && <section className="rounded-2xl border border-amber-200/40 bg-gradient-to-r from-amber-50/60 to-amber-50/30 p-5 dark:border-amber-700/30 dark:from-amber-950/20 dark:to-amber-950/10">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700/70 dark:text-amber-400/80">
                     {labels.insight}
                   </p>
                   <p className="mt-2 text-sm leading-relaxed text-ink">{analytics.insight}</p>
-                </section>
+                </section>}
 
                 {/* ─── Weak Skills ─── */}
+                {analytics.hasWeakSkills && <>
                 <section className="rounded-2xl border border-ink/8 bg-surface p-5 dark:border-ink/15 dark:bg-gray-800/40">
                   <SectionHeader
                     description={labels.weakSkillsHint}
@@ -623,9 +661,12 @@ export function LearnerAnalyticsClient({
                     </>
                   )}
                 </section>
+                </>}
 
                 {/* ─── Learning Paths ─── */}
-                <LearningPathsPanel labels={labels} locale={locale} paths={analytics.learningPaths} />
+                {analytics.hasLearningPaths && (
+                  <LearningPathsPanel labels={labels} locale={locale} paths={analytics.learningPaths} />
+                )}
               </>
             )}
           </CardContent>
@@ -646,7 +687,7 @@ export function LearnerAnalyticsClient({
       )}
 
       {/* ─── Share Button (sticky mobile) ─── */}
-      {analytics && hasData && (
+      {analytics && hasSummaryData && (
         <div className="fixed bottom-20 right-4 z-40 sm:static sm:flex sm:justify-end">
           <button
             className="inline-flex min-h-11 items-center gap-2 rounded-full bg-ink px-5 text-sm font-bold text-white shadow-lg transition-all hover:shadow-xl hover:scale-105 focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.97] dark:bg-white dark:text-gray-900"

@@ -1,0 +1,227 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-068",
+  "title": "Restore data-backed learner Daily hub",
+  "start_head": "2b802794814f2a2bb3a6593d376abf783953a170",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The public Daily Radar API always returns empty arrays, leaving the home Daily section blank despite PostgreSQL content tables and canonical seed data.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "GET /api/daily-radar/home returns enabled published modules, their published cards, category list and spotlight using the existing frontend DTO."
+      },
+      {
+        "id": "AC2",
+        "text": "Draft, disabled, future and expired content is excluded; database errors return stable JSON 5xx."
+      },
+      {
+        "id": "AC3",
+        "text": "The learner Daily route redirects to the home Daily section, which renders real seeded cards anonymously and at 390x844 without browser errors."
+      },
+      {
+        "id": "AC4",
+        "text": "No vocabulary, kanji or grammar canonical data is changed."
+      }
+    ],
+    "expected_behavior": "The public endpoint returns enabled published modules and currently published cards from PostgreSQL in the DailyRadarHomePayload contract.",
+    "observed_behavior": "GET /api/daily-radar/home returns 200 with empty modules/cards; /:locale/daily redirects to home and DailyRadarSection has no real cards.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DOMAIN_LOGIC"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Replace hard-coded empty public response with a filtered PostgreSQL projection used by learner Daily Radar; regression tests assert the DTO and publication gates."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestDailyRadarHomeReturnsPublishedDatabaseContent",
+      "expect": "published modules contract"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-08T04:27:29.386Z",
+      "head": "2b802794814f2a2bb3a6593d376abf783953a170"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-08T04:27:48.115Z",
+      "head": "2b802794814f2a2bb3a6593d376abf783953a170"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T04:27:48.463Z",
+      "head": "2b802794814f2a2bb3a6593d376abf783953a170"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T04:29:53.405Z",
+      "head": "2b802794814f2a2bb3a6593d376abf783953a170"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T04:30:44.557Z",
+      "head": "2b802794814f2a2bb3a6593d376abf783953a170"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T04:33:26.024Z",
+      "head": "2b802794814f2a2bb3a6593d376abf783953a170"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-08T04:33:39.368Z",
+      "head": "2b802794814f2a2bb3a6593d376abf783953a170"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-08T04:37:23.148Z",
+      "head": "2b802794814f2a2bb3a6593d376abf783953a170"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-08T04:29:19.809Z",
+      "head": "2b802794814f2a2bb3a6593d376abf783953a170",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDailyRadarHomeReturnsPublishedDatabaseContent)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDailyRadarHomeReturnsPublishedDatabaseContent",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDailyRadarHomeReturnsPublishedDatabaseContent handler_daily_radar_home_test.go:21: insert Daily Radar modules: ERROR: null value in column \"updated_at\" of relation \"daily_radar_module_config\" violates not-null constraint (SQLSTATE 23502) --- FAIL: TestDailyRadarHomeReturnsPublishedDataba…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"published modules contract\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDailyRadarHomeReturnsPublishedDatabaseContent": "published modules contract"
+      },
+      "fingerprint": "be5541e0023eb74f84ed146c714f685190259a6300c241609fa2c8ce65a1350c"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-08T04:29:53.231Z",
+      "head": "2b802794814f2a2bb3a6593d376abf783953a170",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDailyRadarHomeReturnsPublishedDatabaseContent)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDailyRadarHomeReturnsPublishedDatabaseContent",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDailyRadarHomeReturnsPublishedDatabaseContent handler_daily_radar_home_test.go:69: published modules contract: [] --- FAIL: TestDailyRadarHomeReturnsPublishedDatabaseContent (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDailyRadarHomeReturnsPublishedDatabaseContent": "published modules contract"
+      },
+      "fingerprint": "7edca7609ed6b511e20a710b30598477f4092f625ba83a92e2ba5ba5c8427091"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-08T04:30:44.285Z",
+      "head": "2b802794814f2a2bb3a6593d376abf783953a170",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDailyRadarHomeReturnsPublishedDatabaseContent)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDailyRadarHomeReturnsPublishedDatabaseContent",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "98c20ca263425105262b43ecfa7130954f55153163aadb514d7ba27dbb1fdac3"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-08T04:33:25.760Z",
+      "head": "2b802794814f2a2bb3a6593d376abf783953a170",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 664,
+        "executed": 664,
+        "passed": 664,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "664 passed, 0 allowed skip(s)",
+      "fingerprint": "4974c1082d5db3e20e3a138bc612cbf5a9a8a36c693bc0ff5c5cb8e8c706fb7f"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-08T04:33:39.118Z",
+      "head": "2b802794814f2a2bb3a6593d376abf783953a170",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDailyRadarHomeReturnsPublishedDatabaseContent)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDailyRadarHomeReturnsPublishedDatabaseContent",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "4974c1082d5db3e20e3a138bc612cbf5a9a8a36c693bc0ff5c5cb8e8c706fb7f"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-08T04:37:23.130Z",
+    "head": "2b802794814f2a2bb3a6593d376abf783953a170",
+    "fingerprint": "4974c1082d5db3e20e3a138bc612cbf5a9a8a36c693bc0ff5c5cb8e8c706fb7f",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_daily_radar_home_test.go": "77406f73ee2bca766294078b5079825eae2a9688",
+      "apps/api-go/internal/httpserver/handler_public_content.go": "6bed91a06d5ee59111875cd7af4f8455a3408231",
+      "apps/api-go/internal/httpserver/server.go": "60dd86ecbd57d86f52e22a30ed4348ffeeb1025b"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

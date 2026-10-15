@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import en from "../../../../messages/en.json";
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
+import { RequireAuth } from "../../../../components/auth/require-auth";
 import { SubscriptionSettingsClient } from "./_components/subscription-settings-client";
 
 const messages: Record<string, typeof vi> = { ja, vi, en };
@@ -25,5 +26,9 @@ export default async function SubscriptionPage({
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
 
-  return <SubscriptionSettingsClient labels={t.subscription} locale={locale} />;
+  return (
+    <RequireAuth locale={locale}>
+      <SubscriptionSettingsClient labels={t.subscription} locale={locale} />
+    </RequireAuth>
+  );
 }

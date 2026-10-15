@@ -1,0 +1,383 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-115",
+  "title": "Hide expired subscriptions from learner summary",
+  "start_head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "A PostgreSQL-backed regression creates a cancelled-at-period-end subscription with a past current_period_end and proves it is absent from the summary; a future/current period remains summarized; visible learner subscription screen reflects expired state."
+      },
+      {
+        "id": "AC2",
+        "text": "The subscription object, plan summary, entitlements, and quotas use the same eligibility rules as official quiz access (active plan; started period; unexpired current period; trial_end valid when trialing); regression fixtures cover period-start, period-end, expired-trial, and inactive-plan cases."
+      }
+    ],
+    "expected_behavior": "Only subscriptions attached to an active plan and within their current period are shown as current: period start has passed, period end is null or future, and a trial has not ended. Expired or otherwise ineligible rows produce the Free summary and subscription:null.",
+    "observed_behavior": "GET /api/learner/monetization/subscription continues to report plan entitlements after current_period_end has passed, even though quiz access correctly checks period expiry.",
+    "rollback_plan": "Revert the activeQ current_period_end predicate to restore the previous plan summary behavior; no schema or data migration is involved."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DATABASE",
+      "AUTH_SECURITY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLearnerSubscriptionSummaryExcludesExpiredPeriod",
+      "expect": "expired subscription must be absent"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-12T06:20:23.368Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-12T06:20:23.753Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-12T06:20:33.582Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T06:21:00.691Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T06:21:26.597Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T06:25:33.517Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T06:26:34.485Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-12T06:29:32.892Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T06:34:28.556Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T06:35:17.812Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T06:39:29.062Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T06:39:52.943Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-12T06:42:22.913Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-12T06:44:54.764Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-12T06:44:55.496Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-12T06:21:00.364Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerSubscriptionSummaryExcludesExpiredPeriod)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerSubscriptionSummaryExcludesExpiredPeriod",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerSubscriptionSummaryExcludesExpiredPeriod handler_learner_subscription_summary_test.go:173: expired subscription must be excluded, got: {\"cancelAtPeriodEnd\":true,\"currentPeriodEnd\":\"2026-10-11 06:21:00.282559+00\",\"entitlements\":[],\"pendingSubscription\":null,\"planName\":\"Expired Plus…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLearnerSubscriptionSummaryExcludesExpiredPeriod": "expired subscription must be excluded"
+      },
+      "fingerprint": "bc64142d0edd2096ee775b2c3c64683cfd5013c625ebbe3f04f0cb4e4959add8"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-12T06:21:26.279Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerSubscriptionSummaryExcludesExpiredPeriod)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerSubscriptionSummaryExcludesExpiredPeriod",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "98bef5e26171e823b76b002cb7bb4b5c613e3a063ea1e9555a985699c502f9df"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-12T06:26:34.120Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerSubscriptionSummaryExcludesExpiredPeriod)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerSubscriptionSummaryExcludesExpiredPeriod",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "231f4a498be0df9679bb5bac9c076674afa29a5063aae9615d14984a11216af2"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-12T06:29:29.798Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 784,
+        "executed": 784,
+        "passed": 784,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "784 passed, 0 allowed skip(s)",
+      "fingerprint": "231f4a498be0df9679bb5bac9c076674afa29a5063aae9615d14984a11216af2"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-12T06:29:32.618Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env AGENT_BROWSER_SESSION=audit115 AGENT_BROWSER_ENGINE=chrome sh e2e/audit/audit115-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "231f4a498be0df9679bb5bac9c076674afa29a5063aae9615d14984a11216af2"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-12T06:34:28.235Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerSubscriptionSummaryExcludesExpiredPeriod)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerSubscriptionSummaryExcludesExpiredPeriod",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerSubscriptionSummaryExcludesExpiredPeriod handler_learner_subscription_summary_test.go:174: expired subscription must be absent from response, got: {\"cancelAtPeriodEnd\":true,\"currentPeriodEnd\":\"2026-10-11 06:34:28.150603+00\",\"entitlements\":[],\"pendingSubscription\":null,\"planName\":\"…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLearnerSubscriptionSummaryExcludesExpiredPeriod": "expired subscription must be absent"
+      },
+      "fingerprint": "816e47d9a39118a87016f8d948443843e41b4aabeaf52eb34509126453eae65a"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-12T06:35:17.402Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerSubscriptionSummaryExcludesExpiredPeriod)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerSubscriptionSummaryExcludesExpiredPeriod",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8bb8f485e076fa723fbe7d0a1e5abb18c3e6254b6e1f23d8e92676112915b277"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-12T06:38:13.037Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 788,
+        "executed": 788,
+        "passed": 788,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "788 passed, 0 allowed skip(s)",
+      "fingerprint": "8bb8f485e076fa723fbe7d0a1e5abb18c3e6254b6e1f23d8e92676112915b277"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-12T06:39:09.979Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env AGENT_BROWSER_SESSION=audit115 AGENT_BROWSER_ENGINE=chrome AUDIT_USER_ID=02260b87-f29f-46c5-92c9-7a8370854ca4 sh e2e/audit/audit115-browser-check.sh",
+      "exit_code": 1,
+      "fingerprint": "8bb8f485e076fa723fbe7d0a1e5abb18c3e6254b6e1f23d8e92676112915b277"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-12T06:39:28.750Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env AGENT_BROWSER_SESSION=audit115 AGENT_BROWSER_ENGINE=chrome AUDIT_USER_ID=02260b87-f29f-46c5-92c9-7a8370854ca4 sh e2e/audit/audit115-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "4975c38cb723b3147bf7e669bace8f8d05fc10b9fd76621ba4343ba7c90f622a"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-12T06:39:52.527Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerSubscriptionSummaryExcludesExpiredPeriod)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerSubscriptionSummaryExcludesExpiredPeriod",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "4975c38cb723b3147bf7e669bace8f8d05fc10b9fd76621ba4343ba7c90f622a"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-12T06:42:22.575Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 788,
+        "executed": 788,
+        "passed": 788,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "788 passed, 0 allowed skip(s)",
+      "fingerprint": "4975c38cb723b3147bf7e669bace8f8d05fc10b9fd76621ba4343ba7c90f622a"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-12T06:44:54.451Z",
+      "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a12ed9-70a8-70e0-a31b-ede8bded585d",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "4975c38cb723b3147bf7e669bace8f8d05fc10b9fd76621ba4343ba7c90f622a"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-12T06:44:55.477Z",
+    "head": "7ed3ae0a29661710ea0a6be580a12387a89a56f6",
+    "fingerprint": "4975c38cb723b3147bf7e669bace8f8d05fc10b9fd76621ba4343ba7c90f622a",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_learner_subscription_summary.go": "bde0a64b2344c1782b86728b6adfa22a47ed9e51",
+      "apps/api-go/internal/httpserver/handler_learner_subscription_summary_test.go": "97c36538df76dbf09de8252305aeaba156e526ed",
+      "apps/api-go/internal/httpserver/handler_monetization_reading_onboarding.go": "8b27d704760f9216e81d262ffed52a61abd29e04",
+      "e2e/audit/audit115-browser-check.sh": "29dc01c0b8383aae428faaf4d26c428ab4e40c79"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

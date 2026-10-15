@@ -18,6 +18,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/career"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/email"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/exercisereview"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcarddeck"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardreview"
@@ -33,6 +34,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/privacy"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/quiztemplate"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/realtime"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/redisx"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/scenario"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/search"
@@ -42,17 +44,20 @@ import (
 
 // App holds all application dependencies and manages lifecycle.
 type App struct {
-	Config       *config.Config
-	Logger       *slog.Logger
-	DB           *pgxpool.Pool
-	Redis        *redis.Client
-	SessionStore *session.Store
-	ProfileStore *profile.Store
-	RBACStore    *authz.Store
-	RateLimiter  *authn.RateLimiter
-	Server       *httpserver.Server
-	Scheduler    *jobs.Scheduler
-	Version      string
+	Config                *config.Config
+	Logger                *slog.Logger
+	DB                    *pgxpool.Pool
+	Redis                 *redis.Client
+	SessionStore          *session.Store
+	ProfileStore          *profile.Store
+	RBACStore             *authz.Store
+	RateLimiter           *authn.RateLimiter
+	PublicReadRateLimiter *authn.RateLimiter
+	PasswordResetMailer   *email.SMTP
+	PasswordResetQueue    *httpserver.PasswordResetQueue
+	Server                *httpserver.Server
+	Scheduler             *jobs.Scheduler
+	Version               string
 }
 
 // New creates and initializes the application with all dependencies.
@@ -104,6 +109,26 @@ func New(version string) (*App, error) {
 		dbPool.Close()
 		return nil, fmt.Errorf("app: rate limiter: %w", err)
 	}
+	publicReadRateLimiter, err := authn.NewRateLimiter(authn.DefaultPublicReadRateLimiterConfig())
+	if err != nil {
+		rateLimiter.Stop()
+		dbPool.Close()
+		return nil, fmt.Errorf("app: public read rate limiter: %w", err)
+	}
+	var resetMailer *email.SMTP
+	if cfg.SMTPAddress != "" {
+		resetMailer, err = email.NewSMTP(cfg.SMTPAddress, cfg.SMTPFrom, cfg.SMTPUsername, cfg.SMTPPassword, cfg.WebPublicURL, cfg.SMTPRequireStartTLS)
+		if err != nil {
+			publicReadRateLimiter.Stop()
+			rateLimiter.Stop()
+			dbPool.Close()
+			return nil, fmt.Errorf("app: password reset mailer: %w", err)
+		}
+	}
+	var resetQueue *httpserver.PasswordResetQueue
+	if resetMailer != nil {
+		resetQueue = httpserver.NewPasswordResetQueue(dbPool, resetMailer, logger)
+	}
 
 	// M11: Initialize Meilisearch client when configured.
 	searchClient := search.NewClient(cfg.MeilisearchURL, cfg.MeilisearchAPIKey)
@@ -123,33 +148,36 @@ func New(version string) (*App, error) {
 	}
 
 	deps := httpserver.Dependencies{
-		Config:               cfg,
-		Logger:               logger,
-		DB:                   dbPool,
-		DBPool:               dbPool,
-		SessionStore:         sessionStore,
-		ProfileStore:         profileStore,
-		RBACStore:            rbacStore,
-		CredentialStore:      credentialStore,
-		RateLimiter:          rateLimiter,
-		SearchClient:         searchClient,
-		MediaStore:           mediaStore,
-		MediaBucket:          mediaBucket,
-		OnboardingStore:      onboardingStore,
-		NotificationStore:    notificationStore,
-		PrivacyStore:         privacyStore,
-		AuthLinkStore:        authLinkStore,
-		PlacementStore:       placementStore,
-		GamificationStore:    gamificationStore,
-		ExerciseReviewStore:  exerciseReviewStore,
-		FlashcardStyleStore:  flashcardStyleStore,
-		FlashcardReviewStore: flashcardReviewStore,
-		FlashcardDeckStore:   flashcardDeckStore,
-		QuizTemplateStore:    quizTemplateStore,
-		StudyPlanStore:       studyPlanStore,
-		ScenarioStore:        scenarioStore,
-		CareerStore:          careerStore,
-		Version:              version,
+		Config:                cfg,
+		Logger:                logger,
+		DB:                    dbPool,
+		DBPool:                dbPool,
+		SessionStore:          sessionStore,
+		ProfileStore:          profileStore,
+		RBACStore:             rbacStore,
+		CredentialStore:       credentialStore,
+		RateLimiter:           rateLimiter,
+		PublicReadRateLimiter: publicReadRateLimiter,
+		PresenceService:       realtime.NewPresenceService(redisClient),
+		PasswordResetQueue:    resetQueue,
+		SearchClient:          searchClient,
+		MediaStore:            mediaStore,
+		MediaBucket:           mediaBucket,
+		OnboardingStore:       onboardingStore,
+		NotificationStore:     notificationStore,
+		PrivacyStore:          privacyStore,
+		AuthLinkStore:         authLinkStore,
+		PlacementStore:        placementStore,
+		GamificationStore:     gamificationStore,
+		ExerciseReviewStore:   exerciseReviewStore,
+		FlashcardStyleStore:   flashcardStyleStore,
+		FlashcardReviewStore:  flashcardReviewStore,
+		FlashcardDeckStore:    flashcardDeckStore,
+		QuizTemplateStore:     quizTemplateStore,
+		StudyPlanStore:        studyPlanStore,
+		ScenarioStore:         scenarioStore,
+		CareerStore:           careerStore,
+		Version:               version,
 	}
 	// Guard against typed-nil interface: only assign Redis if the concrete
 	// client is non-nil. A typed-nil *redis.Client assigned to a
@@ -166,23 +194,28 @@ func New(version string) (*App, error) {
 	scheduler := jobs.NewScheduler(dbPool, logger, jobsCfg)
 	handlers := jobs.NewHandlers(dbPool, logger, jobsCfg)
 	if err := jobs.RegisterAll(scheduler, handlers); err != nil {
+		publicReadRateLimiter.Stop()
+		rateLimiter.Stop()
 		dbPool.Close()
 		return nil, fmt.Errorf("app: jobs registration: %w", err)
 	}
 	scheduler.Start()
 
 	return &App{
-		Config:       cfg,
-		Logger:       logger,
-		DB:           dbPool,
-		Redis:        redisClient,
-		SessionStore: sessionStore,
-		ProfileStore: profileStore,
-		RBACStore:    rbacStore,
-		RateLimiter:  rateLimiter,
-		Server:       server,
-		Scheduler:    scheduler,
-		Version:      version,
+		Config:                cfg,
+		Logger:                logger,
+		DB:                    dbPool,
+		Redis:                 redisClient,
+		SessionStore:          sessionStore,
+		ProfileStore:          profileStore,
+		RBACStore:             rbacStore,
+		RateLimiter:           rateLimiter,
+		PublicReadRateLimiter: publicReadRateLimiter,
+		PasswordResetMailer:   resetMailer,
+		PasswordResetQueue:    resetQueue,
+		Server:                server,
+		Scheduler:             scheduler,
+		Version:               version,
 	}, nil
 }
 
@@ -198,6 +231,19 @@ func (a *App) Shutdown(ctx context.Context) {
 	}
 	if a.RateLimiter != nil {
 		a.RateLimiter.Stop()
+	}
+	if a.PublicReadRateLimiter != nil {
+		a.PublicReadRateLimiter.Stop()
+	}
+	if a.PasswordResetQueue != nil {
+		if err := a.PasswordResetQueue.Close(ctx); err != nil {
+			a.Logger.Error("password reset queue shutdown error", "error", err)
+		}
+	}
+	if a.PasswordResetMailer != nil {
+		if err := a.PasswordResetMailer.Close(ctx); err != nil {
+			a.Logger.Error("password reset mailer shutdown error", "error", err)
+		}
 	}
 	if a.Redis != nil {
 		if err := a.Redis.Close(); err != nil {

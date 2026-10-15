@@ -16,10 +16,7 @@ import {
   cn,
   useAdminToast
 } from "@nihongo-bjt/ui";
-import {
-  GROWTH_POSTCARD_EVENT_KINDS,
-  GROWTH_TEMPLATE_PRIVACY_CLASSES
-} from "@nihongo-bjt/shared";
+import { GROWTH_POSTCARD_EVENT_KINDS, GROWTH_TEMPLATE_PRIVACY_CLASSES } from "@nihongo-bjt/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
@@ -107,13 +104,36 @@ const DEFAULT_FORM: FormState = {
 };
 
 /** Kind-specific color presets so the preview matches the renderer defaults */
-const KIND_COLOR_PRESETS: Record<Kind, Pick<FormState, "brandBg" | "brandBgEnd" | "brandFg" | "brandAccent">> = {
+const KIND_COLOR_PRESETS: Record<
+  Kind,
+  Pick<FormState, "brandBg" | "brandBgEnd" | "brandFg" | "brandAccent">
+> = {
   streak: { brandBg: "#1a0a00", brandBgEnd: "#7c2d12", brandFg: "#e2e8f0", brandAccent: "#f97316" },
-  level_up: { brandBg: "#1a0a00", brandBgEnd: "#7c2d12", brandFg: "#e2e8f0", brandAccent: "#38bdf8" },
-  bjt_pass: { brandBg: "#0f172a", brandBgEnd: "#1e293b", brandFg: "#e2e8f0", brandAccent: "#38bdf8" },
-  bjt_result: { brandBg: "#0f172a", brandBgEnd: "#1e293b", brandFg: "#e2e8f0", brandAccent: "#38bdf8" },
-  battle_win: { brandBg: "#1e1b4b", brandBgEnd: "#312e81", brandFg: "#e2e8f0", brandAccent: "#a78bfa" },
-  daily_phrase: { brandBg: "#fefce8", brandBgEnd: "", brandFg: "#1c1917", brandAccent: "#38bdf8" },
+  level_up: {
+    brandBg: "#1a0a00",
+    brandBgEnd: "#7c2d12",
+    brandFg: "#e2e8f0",
+    brandAccent: "#38bdf8"
+  },
+  bjt_pass: {
+    brandBg: "#0f172a",
+    brandBgEnd: "#1e293b",
+    brandFg: "#e2e8f0",
+    brandAccent: "#38bdf8"
+  },
+  bjt_result: {
+    brandBg: "#0f172a",
+    brandBgEnd: "#1e293b",
+    brandFg: "#e2e8f0",
+    brandAccent: "#38bdf8"
+  },
+  battle_win: {
+    brandBg: "#1e1b4b",
+    brandBgEnd: "#312e81",
+    brandFg: "#e2e8f0",
+    brandAccent: "#a78bfa"
+  },
+  daily_phrase: { brandBg: "#fefce8", brandBgEnd: "", brandFg: "#1c1917", brandAccent: "#38bdf8" }
 };
 
 const PAGE_SIZE = 25;
@@ -121,13 +141,16 @@ const PAGE_SIZE = 25;
 function formatWhen(iso: string | null, locale: string): string {
   if (!iso) return "—";
   try {
-    return new Intl.DateTimeFormat(locale === "ja" ? "ja-JP" : locale === "en" ? "en-US" : "vi-VN", {
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      month: "short",
-      year: "numeric"
-    }).format(new Date(iso));
+    return new Intl.DateTimeFormat(
+      locale === "ja" ? "ja-JP" : locale === "en" ? "en-US" : "vi-VN",
+      {
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        month: "short",
+        year: "numeric"
+      }
+    ).format(new Date(iso));
   } catch {
     return iso;
   }
@@ -162,7 +185,10 @@ function buildConfig(form: FormState) {
     surface: "postcard" as const,
     thumbnailKey: form.thumbnailKey || undefined,
     variables: form.variables
-      ? form.variables.split(",").map((s) => s.trim()).filter(Boolean)
+      ? form.variables
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
       : undefined
   };
 }
@@ -295,12 +321,35 @@ export function GrowthPostcardsClient({
     if (!canManage) return;
     fe.clearAll();
     const errs = validateFields([
-      { field: "slug", value: form.slug, message: t("slugRequired"), validate: validators.required },
-      { field: "name", value: form.name, message: t("nameRequired"), validate: validators.required },
-      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.required },
-      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.minLength(3) },
+      {
+        field: "slug",
+        value: form.slug,
+        message: t("slugRequired"),
+        validate: validators.required
+      },
+      {
+        field: "name",
+        value: form.name,
+        message: t("nameRequired"),
+        validate: validators.required
+      },
+      {
+        field: "reason",
+        value: reason,
+        message: t("reasonRequired"),
+        validate: validators.required
+      },
+      {
+        field: "reason",
+        value: reason,
+        message: t("reasonRequired"),
+        validate: validators.minLength(3)
+      }
     ]);
-    if (Object.keys(errs).length > 0) { fe.setFieldErrors(errs); return; }
+    if (Object.keys(errs).length > 0) {
+      fe.setFieldErrors(errs);
+      return;
+    }
     setMutating(true);
     try {
       const r = await adminApiFetch("/api/admin/growth/postcards", {
@@ -336,12 +385,35 @@ export function GrowthPostcardsClient({
     if (!canManage || !detail) return;
     fe.clearAll();
     const errs = validateFields([
-      { field: "slug", value: form.slug, message: t("slugRequired"), validate: validators.required },
-      { field: "name", value: form.name, message: t("nameRequired"), validate: validators.required },
-      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.required },
-      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.minLength(3) },
+      {
+        field: "slug",
+        value: form.slug,
+        message: t("slugRequired"),
+        validate: validators.required
+      },
+      {
+        field: "name",
+        value: form.name,
+        message: t("nameRequired"),
+        validate: validators.required
+      },
+      {
+        field: "reason",
+        value: reason,
+        message: t("reasonRequired"),
+        validate: validators.required
+      },
+      {
+        field: "reason",
+        value: reason,
+        message: t("reasonRequired"),
+        validate: validators.minLength(3)
+      }
     ]);
-    if (Object.keys(errs).length > 0) { fe.setFieldErrors(errs); return; }
+    if (Object.keys(errs).length > 0) {
+      fe.setFieldErrors(errs);
+      return;
+    }
     setMutating(true);
     try {
       const r = await adminApiFetch(`/api/admin/growth/postcards/${detail.id}`, {
@@ -414,7 +486,7 @@ export function GrowthPostcardsClient({
         score: "85",
         rank: "1",
         wins: "5",
-        phrase: "お疲れ様です",
+        phrase: "お疲れ様です"
       };
       const renderedBody = form.bodyTemplate
         ? renderPreview(form.bodyTemplate, sampleVars)
@@ -425,7 +497,7 @@ export function GrowthPostcardsClient({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           headline: renderedBody.slice(0, 200) || "Sample Headline",
-          sub: form.description || form.name || "Sample subtitle",
+          sub: (form.description || form.name || "Sample subtitle").slice(0, 200),
           kind: form.kind,
           config: {
             brandBg: form.brandBg,
@@ -433,16 +505,16 @@ export function GrowthPostcardsClient({
             brandFg: form.brandFg,
             brandAccent: form.brandAccent,
             badgeKey: "KotobaWorks",
-            pattern: form.pattern !== "none" ? form.pattern : undefined,
-          },
-        }),
+            pattern: form.pattern !== "none" ? form.pattern : undefined
+          }
+        })
       });
       if (!r.ok) {
         toast.error(t("previewFailed") || "Preview failed");
         return;
       }
-      const body = await r.json() as { base64Png: string };
-      setPreviewSrc(`data:image/png;base64,${body.base64Png}`);
+      const body = (await r.json()) as { base64Svg: string };
+      setPreviewSrc(`data:image/svg+xml;base64,${body.base64Svg}`);
     } catch {
       toast.error(t("previewFailed") || "Preview failed");
     } finally {
@@ -462,11 +534,33 @@ export function GrowthPostcardsClient({
       if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [creating, editing, form.name, form.bodyTemplate, form.description, form.kind, form.brandBg, form.brandBgEnd, form.brandFg, form.brandAccent, form.pattern]);
+  }, [
+    creating,
+    editing,
+    form.name,
+    form.bodyTemplate,
+    form.description,
+    form.kind,
+    form.brandBg,
+    form.brandBgEnd,
+    form.brandFg,
+    form.brandAccent,
+    form.pattern
+  ]);
 
   function exportCsv() {
     if (!list) return;
-    const header = ["id", "slug", "kind", "name", "privacyClass", "noPiiVerified", "active", "version", "updatedAt"];
+    const header = [
+      "id",
+      "slug",
+      "kind",
+      "name",
+      "privacyClass",
+      "noPiiVerified",
+      "active",
+      "version",
+      "updatedAt"
+    ];
     const rows = list.items.map((it) => [
       it.id,
       it.slug,
@@ -524,7 +618,11 @@ export function GrowthPostcardsClient({
             <option value="published">{t("status_published")}</option>
             <option value="archived">{t("status_archived")}</option>
           </select>
-          <button className="rounded border px-3 py-1 text-sm" onClick={() => void loadList()} type="button">
+          <button
+            className="rounded border px-3 py-1 text-sm"
+            onClick={() => void loadList()}
+            type="button"
+          >
             {t("actionRefresh")}
           </button>
           <button className="rounded border px-3 py-1 text-sm" onClick={exportCsv} type="button">
@@ -550,65 +648,75 @@ export function GrowthPostcardsClient({
       </AdminSection>
 
       {listError ? (
-        <div role="alert" className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-900">
+        <div
+          role="alert"
+          className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-900"
+        >
           {listError}
         </div>
       ) : null}
 
       <AdminSection>
-        <AdminDataTable>
-          <AdminDataTableHead>
-            <AdminDataTableRow>
-              <AdminDataTableTh>{t("colSlug")}</AdminDataTableTh>
-              <AdminDataTableTh>{t("colKind")}</AdminDataTableTh>
-              <AdminDataTableTh>{t("colName")}</AdminDataTableTh>
-              <AdminDataTableTh>{t("colPrivacyClass")}</AdminDataTableTh>
-              <AdminDataTableTh>{t("colStatus")}</AdminDataTableTh>
-              <AdminDataTableTh>{t("colUpdated")}</AdminDataTableTh>
-            </AdminDataTableRow>
-          </AdminDataTableHead>
-          <AdminDataTableBody>
-            {list && list.items.length > 0 ? (
-              list.items.map((it) => (
-                <AdminDataTableRow
-                  key={it.id}
-                  className={cn("cursor-pointer", selectedId === it.id ? "bg-indigo-50" : "")}
-                  onClick={() => {
-                    setSelectedId(it.id);
-                    setEditing(false);
-                    setCreating(false);
-                  }}
-                >
-                  <AdminDataTableTd>
-                    <code className="text-xs">{it.slug}</code>
-                  </AdminDataTableTd>
-                  <AdminDataTableTd>{t(`kind_${it.kind}`)}</AdminDataTableTd>
-                  <AdminDataTableTd>{it.name}</AdminDataTableTd>
-                  <AdminDataTableTd>
-                    <AdminStatusBadge tone={it.privacyClass === "public" ? "warning" : "neutral"}>
-                      {t(`privacy_${it.privacyClass}`)}
-                    </AdminStatusBadge>
-                    {it.privacyClass === "public" && !it.noPiiVerified ? (
-                      <span className="ml-1 text-xs text-amber-600">⚠ {t("noPiiPending")}</span>
-                    ) : null}
-                  </AdminDataTableTd>
-                  <AdminDataTableTd>
-                    <AdminStatusBadge tone={it.active ? "good" : "neutral"}>
-                      {it.active ? t("status_published") : t("status_archived")}
-                    </AdminStatusBadge>
-                  </AdminDataTableTd>
-                  <AdminDataTableTd>{formatWhen(it.updatedAt, locale)}</AdminDataTableTd>
-                </AdminDataTableRow>
-              ))
-            ) : (
+        <div
+          className="max-w-full overflow-x-auto"
+          role="region"
+          aria-label={t("title")}
+          tabIndex={0}
+        >
+          <AdminDataTable>
+            <AdminDataTableHead>
               <AdminDataTableRow>
-                <AdminDataTableTd colSpan={6}>
-                  <AdminEmptyState title={common.empty} />
-                </AdminDataTableTd>
+                <AdminDataTableTh>{t("colSlug")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("colKind")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("colName")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("colPrivacyClass")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("colStatus")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("colUpdated")}</AdminDataTableTh>
               </AdminDataTableRow>
-            )}
-          </AdminDataTableBody>
-        </AdminDataTable>
+            </AdminDataTableHead>
+            <AdminDataTableBody>
+              {list && list.items.length > 0 ? (
+                list.items.map((it) => (
+                  <AdminDataTableRow
+                    key={it.id}
+                    className={cn("cursor-pointer", selectedId === it.id ? "bg-indigo-50" : "")}
+                    onClick={() => {
+                      setSelectedId(it.id);
+                      setEditing(false);
+                      setCreating(false);
+                    }}
+                  >
+                    <AdminDataTableTd>
+                      <code className="text-xs">{it.slug}</code>
+                    </AdminDataTableTd>
+                    <AdminDataTableTd>{t(`kind_${it.kind}`)}</AdminDataTableTd>
+                    <AdminDataTableTd>{it.name}</AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <AdminStatusBadge tone={it.privacyClass === "public" ? "warning" : "neutral"}>
+                        {t(`privacy_${it.privacyClass}`)}
+                      </AdminStatusBadge>
+                      {it.privacyClass === "public" && !it.noPiiVerified ? (
+                        <span className="ml-1 text-xs text-amber-600">⚠ {t("noPiiPending")}</span>
+                      ) : null}
+                    </AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <AdminStatusBadge tone={it.active ? "good" : "neutral"}>
+                        {it.active ? t("status_published") : t("status_archived")}
+                      </AdminStatusBadge>
+                    </AdminDataTableTd>
+                    <AdminDataTableTd>{formatWhen(it.updatedAt, locale)}</AdminDataTableTd>
+                  </AdminDataTableRow>
+                ))
+              ) : (
+                <AdminDataTableRow>
+                  <AdminDataTableTd colSpan={6}>
+                    <AdminEmptyState title={common.empty} />
+                  </AdminDataTableTd>
+                </AdminDataTableRow>
+              )}
+            </AdminDataTableBody>
+          </AdminDataTable>
+        </div>
         {list ? (
           <div className="mt-2 flex items-center justify-between text-sm">
             <span>
@@ -641,7 +749,9 @@ export function GrowthPostcardsClient({
 
       {creating || editing ? (
         <AdminSection>
-          <h3 className="text-lg font-semibold">{creating ? t("createHeading") : t("editHeading")}</h3>
+          <h3 className="text-lg font-semibold">
+            {creating ? t("createHeading") : t("editHeading")}
+          </h3>
           <div className="mb-3 flex items-center justify-between">
             <FormError message={fe.errors.form} className="flex-1" />
             <AdminAutoFill
@@ -657,13 +767,15 @@ export function GrowthPostcardsClient({
                   ...(f.bodyTemplate !== undefined && { bodyTemplate: String(f.bodyTemplate) }),
                   ...(f.variables !== undefined && { variables: String(f.variables) }),
                   ...(f.thumbnailKey !== undefined && { thumbnailKey: String(f.thumbnailKey) }),
-                  ...(f.privacyClass !== undefined && { privacyClass: f.privacyClass as FormState["privacyClass"] }),
+                  ...(f.privacyClass !== undefined && {
+                    privacyClass: f.privacyClass as FormState["privacyClass"]
+                  }),
                   ...(f.noPiiVerified !== undefined && { noPiiVerified: Boolean(f.noPiiVerified) }),
                   ...(f.brandBg !== undefined && { brandBg: String(f.brandBg) }),
                   ...(f.brandBgEnd !== undefined && { brandBgEnd: String(f.brandBgEnd) }),
                   ...(f.brandFg !== undefined && { brandFg: String(f.brandFg) }),
                   ...(f.brandAccent !== undefined && { brandAccent: String(f.brandAccent) }),
-                  ...(f.pattern !== undefined && { pattern: String(f.pattern) }),
+                  ...(f.pattern !== undefined && { pattern: String(f.pattern) })
                 }));
               }}
               labels={{ button: t("autoFill") || "Auto Fill" }}
@@ -674,12 +786,20 @@ export function GrowthPostcardsClient({
             <label className="text-sm">
               {t("formSlug")} <span className="text-red-500">*</span>
               <input
-                className={cn("mt-1 w-full rounded border px-2 py-1", fe.fieldError("slug") ? "border-red-400 bg-red-50/50" : "border-slate-300")}
-                onChange={(e) => { setForm((f) => ({ ...f, slug: e.target.value })); fe.clearFieldError("slug"); }}
+                className={cn(
+                  "mt-1 w-full rounded border px-2 py-1",
+                  fe.fieldError("slug") ? "border-red-400 bg-red-50/50" : "border-slate-300"
+                )}
+                onChange={(e) => {
+                  setForm((f) => ({ ...f, slug: e.target.value }));
+                  fe.clearFieldError("slug");
+                }}
                 pattern="[a-zA-Z0-9_\-]+"
                 value={form.slug}
               />
-              {fe.fieldError("slug") && <p className="text-xs text-red-600">{fe.fieldError("slug")}</p>}
+              {fe.fieldError("slug") && (
+                <p className="text-xs text-red-600">{fe.fieldError("slug")}</p>
+              )}
             </label>
             <label className="text-sm">
               {t("formKind")}
@@ -702,11 +822,19 @@ export function GrowthPostcardsClient({
             <label className="text-sm md:col-span-2">
               {t("formName")} <span className="text-red-500">*</span>
               <input
-                className={cn("mt-1 w-full rounded border px-2 py-1", fe.fieldError("name") ? "border-red-400 bg-red-50/50" : "border-slate-300")}
-                onChange={(e) => { setForm((f) => ({ ...f, name: e.target.value })); fe.clearFieldError("name"); }}
+                className={cn(
+                  "mt-1 w-full rounded border px-2 py-1",
+                  fe.fieldError("name") ? "border-red-400 bg-red-50/50" : "border-slate-300"
+                )}
+                onChange={(e) => {
+                  setForm((f) => ({ ...f, name: e.target.value }));
+                  fe.clearFieldError("name");
+                }}
                 value={form.name}
               />
-              {fe.fieldError("name") && <p className="text-xs text-red-600">{fe.fieldError("name")}</p>}
+              {fe.fieldError("name") && (
+                <p className="text-xs text-red-600">{fe.fieldError("name")}</p>
+              )}
             </label>
             <label className="text-sm md:col-span-2">
               {t("formDescription")}
@@ -748,7 +876,9 @@ export function GrowthPostcardsClient({
               {t("formPrivacyClass")}
               <select
                 className="mt-1 w-full rounded border px-2 py-1"
-                onChange={(e) => setForm((f) => ({ ...f, privacyClass: e.target.value as PrivacyClass }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, privacyClass: e.target.value as PrivacyClass }))
+                }
                 value={form.privacyClass}
                 title={t("privacyClassTooltip")}
               >
@@ -758,7 +888,9 @@ export function GrowthPostcardsClient({
                   </option>
                 ))}
               </select>
-              <span className="text-xs text-muted-foreground">{t(`privacyDesc_${form.privacyClass}`)}</span>
+              <span className="text-xs text-muted-foreground">
+                {t(`privacyDesc_${form.privacyClass}`)}
+              </span>
             </label>
             {form.privacyClass === "public" ? (
               <label className="flex items-center gap-2 text-sm md:col-span-2">
@@ -853,7 +985,11 @@ export function GrowthPostcardsClient({
                 >
                   {previewLoading ? "⟳" : "↻"} {t("actionRefresh") || "Refresh"}
                 </button>
-                {previewLoading && <span className="text-xs text-muted-foreground animate-pulse">{t("loading") || "Loading..."}</span>}
+                {previewLoading && (
+                  <span className="text-xs text-muted-foreground animate-pulse">
+                    {t("loading") || "Loading..."}
+                  </span>
+                )}
               </div>
               {previewSrc ? (
                 <img
@@ -876,11 +1012,19 @@ export function GrowthPostcardsClient({
             <label className="text-sm md:col-span-2">
               {t("formReason")} <span className="text-red-500">*</span>
               <input
-                className={cn("mt-1 w-full rounded border px-2 py-1", fe.fieldError("reason") ? "border-red-400 bg-red-50/50" : "border-slate-300")}
-                onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
+                className={cn(
+                  "mt-1 w-full rounded border px-2 py-1",
+                  fe.fieldError("reason") ? "border-red-400 bg-red-50/50" : "border-slate-300"
+                )}
+                onChange={(e) => {
+                  setReason(e.target.value);
+                  fe.clearFieldError("reason");
+                }}
                 value={reason}
               />
-              {fe.fieldError("reason") && <p className="text-xs text-red-600">{fe.fieldError("reason")}</p>}
+              {fe.fieldError("reason") && (
+                <p className="text-xs text-red-600">{fe.fieldError("reason")}</p>
+              )}
             </label>
           </div>
           <div className="mt-3 flex gap-2">
@@ -941,7 +1085,10 @@ export function GrowthPostcardsClient({
                 {!detail.active ? (
                   <button
                     className="rounded border px-2 py-1 text-xs"
-                    onClick={() => { fe.clearFieldError("reason"); setConfirm({ kind: "publish" }); }}
+                    onClick={() => {
+                      fe.clearFieldError("reason");
+                      setConfirm({ kind: "publish" });
+                    }}
                     type="button"
                   >
                     {t("actionPublish")}
@@ -949,7 +1096,10 @@ export function GrowthPostcardsClient({
                 ) : (
                   <button
                     className="rounded border px-2 py-1 text-xs"
-                    onClick={() => { fe.clearFieldError("reason"); setConfirm({ kind: "archive" }); }}
+                    onClick={() => {
+                      fe.clearFieldError("reason");
+                      setConfirm({ kind: "archive" });
+                    }}
                     type="button"
                   >
                     {t("actionArchive")}
@@ -963,7 +1113,9 @@ export function GrowthPostcardsClient({
           ) : null}
           <details className="mt-2 text-sm">
             <summary>{t("bodyTemplate")}</summary>
-            <pre className="mt-2 whitespace-pre-wrap rounded bg-slate-50 p-2 text-xs">{detail.config.bodyTemplate}</pre>
+            <pre className="mt-2 whitespace-pre-wrap rounded bg-slate-50 p-2 text-xs">
+              {detail.config.bodyTemplate}
+            </pre>
           </details>
           <h4 className="mt-3 text-sm font-semibold">{t("detailAudit")}</h4>
           {detail.audit.length > 0 ? (
@@ -993,12 +1145,22 @@ export function GrowthPostcardsClient({
             <p className="mt-1 text-sm">{t(`confirmBody_${confirm.kind}`)}</p>
             <input
               aria-label={t("formReason")}
-              className={cn("mt-3 w-full rounded border px-2 py-1 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")}
-              onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
+              className={cn(
+                "mt-3 w-full rounded border px-2 py-1 text-sm",
+                fe.fieldError("reason")
+                  ? "border-red-400 bg-red-50/50 text-red-900"
+                  : "border-slate-300"
+              )}
+              onChange={(e) => {
+                setReason(e.target.value);
+                fe.clearFieldError("reason");
+              }}
               placeholder={t("formReason")}
               value={reason}
             />
-            {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
+            {fe.fieldError("reason") && (
+              <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>
+            )}
             <div className="mt-3 flex justify-end gap-2">
               <button
                 className="rounded border px-3 py-1 text-sm"

@@ -1,0 +1,2919 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-091",
+  "title": "Audit learner quiz screen",
+  "start_head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The learner Quiz screen receives incompatible template DTOs and invokes unregistered session/official-availability routes; the real practice journey does not reach question/result state.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Anonymous /:locale/quiz follows the real localized login gate and leaks no private sessions."
+      },
+      {
+        "id": "AC2",
+        "text": "Authenticated templates render localized titles and actual section counts from GET /api/quiz/templates; no card displays zero due to a field-name mismatch."
+      },
+      {
+        "id": "AC3",
+        "text": "Through visible UI, a learner starts a published practice template, answers a question, advances/completes, and sees persisted result/feedback."
+      },
+      {
+        "id": "AC4",
+        "text": "Active session, history, question and result endpoints enforce current learner identity and return documented contracts without 404s."
+      },
+      {
+        "id": "AC5",
+        "text": "Official availability is read from the feature flag and server entitlement state; official question content stays protected."
+      },
+      {
+        "id": "AC6",
+        "text": "390x844 and desktop Quiz layouts have no horizontal overflow, and BJT guide text meets readable light/dark contrast."
+      },
+      {
+        "id": "AC7",
+        "text": "When a session has no calibrated estimated score, the result view displays an unavailable placeholder instead of 0/800."
+      },
+      {
+        "id": "AC8",
+        "text": "An active timed session uses a focused mobile layout without learner chrome or promotional content and has no horizontal overflow at 390x844."
+      },
+      {
+        "id": "AC9",
+        "text": "If the server expires a timed answer with 409 session expired, the learner automatically loads the persisted completed result; unrelated 409 conflicts retain the error state."
+      },
+      {
+        "id": "AC10",
+        "text": "The paid official simulation availability and start gate recognize the canonical quiz.official_simulation entitlement from an active subscription; the feature flag remains a separate server-side gate."
+      },
+      {
+        "id": "AC11",
+        "text": "Quiz completion records its associated bjt_quiz daily-study-plan progress atomically in the canonical persisted gamification schema; the updated task remains visible after a subsequent read, and the independent progress endpoint continues to work."
+      },
+      {
+        "id": "AC12",
+        "text": "The authenticated homepage StudyGoalWidget renders the normalized study-plan response accurately, including target minutes, aggregate progress, and per-task completion."
+      },
+      {
+        "id": "AC13",
+        "text": "An expired timed session is finalized and its daily quiz progress is recorded exactly once when active-session recovery runs."
+      },
+      {
+        "id": "AC14",
+        "text": "Question and answer endpoints reject abandoned sessions and recheck official feature and entitlement access before serving or mutating a session."
+      },
+      {
+        "id": "AC15",
+        "text": "Study-goal API distinguishes the default from persisted settings, and the learner sees goal choices until one is saved."
+      },
+      {
+        "id": "AC16",
+        "text": "Reading Assist loads the learner deck list from the canonical /api/flashcards/decks endpoint without an unexplained 404."
+      },
+      {
+        "id": "AC17",
+        "text": "Completed official quiz breakdowns recheck the server feature flag and subscription entitlement before returning prompts or explanations."
+      }
+    ],
+    "expected_behavior": "The visible localized quiz hub renders canonical localized template metadata with readable BJT guidance; server-authenticated learner practice supports start, question, answer, resume, result and history using persisted assessment records, while official availability is server-authoritative and unavailable integrations do not produce unexplained 404s.",
+    "observed_behavior": "Visible /vi/quiz returns 200 for templates but cards show no titles and 0 sections; official status, session history and active-session calls return 404, and no question/result handlers are registered.",
+    "rollback_plan": "Revert only the AUDIT-091 Quiz UI, API handler/test changes, and screen/API audit evidence; do not alter authored question content or learner data."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY",
+      "API_CONTRACT",
+      "AUTH_SECURITY",
+      "DATABASE",
+      "DOMAIN_LOGIC",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": {
+    "category": "new_component",
+    "reason": "Timer regression is in the newly added Go quiz-session handler, which is absent from the task base; use the policy-required sensitivity mutation instead of treating the base compile failure as RED.",
+    "declared_before_red": true
+  },
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestQuizSessionRemainingSecondsUsesSecondUnits",
+      "expect": "remaining quiz seconds must be within the 900-second limit"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestOfficialQuizStatusUsesCanonicalEntitlement",
+      "expect": "revoked official entitlement or feature access denies question, answer and completed breakdown content"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestStudyPlanProgressUsesCanonicalSchema",
+      "expect": "study progress: want completed bjt_quiz task"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestQuizAssessmentJourneyAndOwnership",
+      "expect": "completion must persist daily quiz progress in its server transaction"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx",
+      "test": "StudyGoalWidget API contract > renders normalized persisted plan fields without inventing completed tasks",
+      "expect": "25%"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestQuizActiveSessionExpiresAndRecordsStudyPlanProgress",
+      "expect": "first active read completes session and records exactly one bjt_quiz task"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestQuizQuestionRejectsAbandonedSession",
+      "expect": "abandoned session must not serve a question"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestStudyGoalReportsWhetherLearnerHasSetGoal",
+      "expect": "default goal response reports isSet=false and persisted goal reports isSet=true"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx",
+      "test": "StudyGoalWidget API contract > shows the goal picker when the API reports its default is not persisted",
+      "expect": "5/10/20 phút"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/components/reading-assist/annotated-japanese-text.a11y-and-network.test.tsx",
+      "test": "AnnotatedJapaneseText a11y and network behavior > supports Enter open, Escape close, and focus restore in bottom sheet",
+      "expect": "/api/flashcards/decks"
+    }
+  ],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/api-go/internal/httpserver/handler_quiz_session.go",
+      "find": "remaining = int((remainingDuration + time.Second - 1) / time.Second)",
+      "replace": "remaining = int(remainingDuration)"
+    },
+    "targets": [
+      {
+        "runner": "go",
+        "package": "./internal/httpserver",
+        "test": "TestQuizSessionRemainingSecondsUsesSecondUnits",
+        "expect": "remaining quiz seconds must be within the 900-second limit"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-10T03:12:49.560Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-10T03:18:57.783Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-10T03:18:58.146Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-10T03:22:20.271Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T03:27:07.061Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-10T03:37:11.778Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T03:37:18.133Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-10T03:43:45.146Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T03:45:20.140Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-10T03:56:57.765Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-10T04:01:00.345Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T04:01:50.708Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-10T04:15:18.573Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T04:17:12.033Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-10T04:34:34.331Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T04:35:02.995Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-10T04:42:07.111Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-10T04:49:48.418Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T04:50:47.693Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-10T05:01:22.598Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T05:04:51.943Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-10T05:11:21.962Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-10T05:17:19.705Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T05:20:00.859Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-10T05:27:23.243Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T05:31:27.729Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-10T05:36:26.718Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T05:36:49.529Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-10T05:49:29.394Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T05:52:16.304Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-10T06:00:52.262Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-10T06:12:36.593Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T06:12:50.184Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-10T06:27:18.200Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-10T06:33:38.002Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T06:34:26.447Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-10T06:40:20.761Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T08:17:15.873Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-10T09:42:47.380Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T09:44:18.452Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-10T09:49:23.968Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T09:50:02.457Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-10T09:51:25.760Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T10:01:47.526Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-10T10:02:16.900Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-10T10:07:55.496Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T10:09:13.378Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-10T10:11:17.716Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T10:11:41.830Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-10T10:21:19.497Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "EXCEPTION_APPROVED",
+      "at": "2026-10-10T10:25:28.774Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-10T10:25:41.553Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-10T03:21:49.366Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx::\"published template API contract > renders the localized title and section count returned by Go\"",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"\\\"published template API contract > renders the localized title and section count returned by Go\\\"\" in apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx::\"published template API contract > renders the localized title and section count returned by Go\"": "Đề luyện BJT J2"
+      },
+      "fingerprint": "9aaf058524bc14bd3dad16258ae251055190262cda5c745026383b5e1bf1f6f8"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-10T03:21:56.768Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx::\"published template API contract > renders the localized title and section count returned by Go\"",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"\\\"published template API contract > renders the localized title and section count returned by Go\\\"\" in apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx::published template API contract > renders the localized title and section count returned by Go",
+          "outcome": "FAIL",
+          "excerpt": "expected '<form class=\"\\n group relative…' to contain 'Đề luyện BJT J2'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx::\"published template API contract > renders the localized title and section count returned by Go\"": "Đề luyện BJT J2",
+        "vitest:apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx::published template API contract > renders the localized title and section count returned by Go": "Đề luyện BJT J2"
+      },
+      "fingerprint": "9aaf058524bc14bd3dad16258ae251055190262cda5c745026383b5e1bf1f6f8"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-10T03:22:20.112Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx::published template API contract > renders the localized title and section count returned by Go",
+          "outcome": "FAIL",
+          "excerpt": "expected '<form class=\"\\n group relative…' to contain 'Đề luyện BJT J2'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx::published template API contract > renders the localized title and section count returned by Go": "Đề luyện BJT J2"
+      },
+      "fingerprint": "9aaf058524bc14bd3dad16258ae251055190262cda5c745026383b5e1bf1f6f8"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-10T03:27:06.606Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx::published template API contract > renders the localized title and section count returned by Go",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e84caab7a14ba9492eb04d3dc8063c13122100908579b9f3e8520c26fa8ceab5"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-10T03:37:11.285Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx::published template API contract > renders the localized title and section count returned by Go",
+          "outcome": "FAIL",
+          "excerpt": "expected '<form class=\"\\n group relative…' to contain 'Đề luyện BJT J2'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx::published template API contract > renders the localized title and section count returned by Go": "Đề luyện BJT J2"
+      },
+      "fingerprint": "ae9607753fc960094fe9a7e8ef854145e5dfa0e498004ce542bccfa232d82089"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-10T03:37:17.707Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx::published template API contract > renders the localized title and section count returned by Go",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ae9607753fc960094fe9a7e8ef854145e5dfa0e498004ce542bccfa232d82089"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-10T03:40:13.690Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 733,
+        "executed": 733,
+        "passed": 733,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "733 passed, 0 allowed skip(s)",
+      "fingerprint": "ae9607753fc960094fe9a7e8ef854145e5dfa0e498004ce542bccfa232d82089"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-10T03:43:44.678Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 416,
+        "executed": 416,
+        "passed": 416,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 776,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "ae9607753fc960094fe9a7e8ef854145e5dfa0e498004ce542bccfa232d82089"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-10T03:44:55.132Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizTemplateListExcludesTemplatesWithoutPublishedQuestions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx::published template API contract > renders the localized title and section count returned by Go",
+          "outcome": "FAIL",
+          "excerpt": "expected '<form class=\"\\n group relative…' to contain 'Đề luyện BJT J2'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizTemplateListExcludesTemplatesWithoutPublishedQuestions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizTemplateListExcludesTemplatesWithoutPublishedQuestions handler_quiz_test.go:170: non-playable published template must not appear in learner list: [{\"id\":\"b29a60c5-f2f3-41a8-bb7f-059a5f5fa46e\",\"title\":\"Disposable quiz test\",\"type\":\"practice\",\"status\":\"published\",\"sectionCount\":1,\"sess…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx::published template API contract > renders the localized title and section count returned by Go": "Đề luyện BJT J2",
+        "go:./internal/httpserver:TestQuizTemplateListExcludesTemplatesWithoutPublishedQuestions": "non-playable published template"
+      },
+      "fingerprint": "410db6a430e96dfafd73a49a330f44d8b613b46b84ab29be4782934a62c1c593"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-10T03:45:19.630Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizTemplateListExcludesTemplatesWithoutPublishedQuestions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx::published template API contract > renders the localized title and section count returned by Go",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizTemplateListExcludesTemplatesWithoutPublishedQuestions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "82c96d753e4eb6c9e0604b66b0203bfa0151deb1d16fd24eb9ab57662a55fe49"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-10T03:48:20.112Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 734,
+        "executed": 734,
+        "passed": 734,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "734 passed, 0 allowed skip(s)",
+      "fingerprint": "82c96d753e4eb6c9e0604b66b0203bfa0151deb1d16fd24eb9ab57662a55fe49"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-10T03:51:55.658Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 416,
+        "executed": 416,
+        "passed": 416,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 776,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "82c96d753e4eb6c9e0604b66b0203bfa0151deb1d16fd24eb9ab57662a55fe49"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-10T03:56:57.199Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizTemplateListExcludesTemplatesWithoutPublishedQuestions|TestQuizAssessmentJourneyAndOwnership)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx::published template API contract > renders the localized title and section count returned by Go",
+          "outcome": "FAIL",
+          "excerpt": "expected '<form class=\"\\n group relative…' to contain 'Đề luyện BJT J2'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizTemplateListExcludesTemplatesWithoutPublishedQuestions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizTemplateListExcludesTemplatesWithoutPublishedQuestions handler_quiz_test.go:185: non-playable published template must not appear in learner list: [{\"id\":\"1fae0c22-d0ce-4df6-87ea-4ae59134d561\",\"title\":\"Disposable quiz test\",\"type\":\"practice\",\"status\":\"published\",\"sectionCount\":1,\"sess…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizAssessmentJourneyAndOwnership",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizAssessmentJourneyAndOwnership handler_quiz_test.go:42: active session must be scoped to the cookie identity: 404 404 page not found --- FAIL: TestQuizAssessmentJourneyAndOwnership (0.04s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"active session timer must use seconds\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx::published template API contract > renders the localized title and section count returned by Go": "Đề luyện BJT J2",
+        "go:./internal/httpserver:TestQuizTemplateListExcludesTemplatesWithoutPublishedQuestions": "non-playable published template",
+        "go:./internal/httpserver:TestQuizAssessmentJourneyAndOwnership": "active session timer must use seconds"
+      },
+      "fingerprint": "fe8a3c7c6213bcf80dfd08a58e0f2984cc8ab72b83fa4c9e66d8b7be3dc70772"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-10T03:58:12.476Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizTemplateListExcludesTemplatesWithoutPublishedQuestions|TestQuizAssessmentJourneyAndOwnership)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx::published template API contract > renders the localized title and section count returned by Go",
+          "outcome": "FAIL",
+          "excerpt": "expected '<form class=\"\\n group relative…' to contain 'Đề luyện BJT J2'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizTemplateListExcludesTemplatesWithoutPublishedQuestions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizTemplateListExcludesTemplatesWithoutPublishedQuestions handler_quiz_test.go:185: non-playable published template must not appear in learner list: [{\"id\":\"e94f5552-c089-409c-a8d2-f2e6f144fe16\",\"title\":\"Disposable quiz test\",\"type\":\"practice\",\"status\":\"published\",\"sectionCount\":1,\"sess…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizAssessmentJourneyAndOwnership",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizAssessmentJourneyAndOwnership handler_quiz_test.go:42: active session must be scoped to the cookie identity: 404 404 page not found --- FAIL: TestQuizAssessmentJourneyAndOwnership (0.05s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"active session timer must use seconds\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx::published template API contract > renders the localized title and section count returned by Go": "Đề luyện BJT J2",
+        "go:./internal/httpserver:TestQuizTemplateListExcludesTemplatesWithoutPublishedQuestions": "non-playable published template",
+        "go:./internal/httpserver:TestQuizAssessmentJourneyAndOwnership": "active session timer must use seconds"
+      },
+      "fingerprint": "fe8a3c7c6213bcf80dfd08a58e0f2984cc8ab72b83fa4c9e66d8b7be3dc70772"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-10T04:00:19.755Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_quiz_test.go:204:15: undefined: loadQuizSession FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [build failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits": "remaining quiz seconds must be within the 900-second limit"
+      },
+      "fingerprint": "25857fac0765ceefaa24f4af47f5ef614abd16d59c008b550d4287d30f26afed"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-10T04:01:33.385Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_quiz_session.go",
+        "find": "remaining = int((remainingDuration + time.Second - 1) / time.Second)",
+        "replace": "remaining = int(remainingDuration)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizSessionRemainingSecondsUsesSecondUnits handler_quiz_test.go:213: remaining quiz seconds must be within the 900-second limit, got 894997921000 --- FAIL: TestQuizSessionRemainingSecondsUsesSecondUnits (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits": "remaining quiz seconds must be within the 900-second limit"
+      },
+      "fingerprint": "f77911f0d4f9a9bbefecef64f56ad2517cfe0aad232e23dff04b09b6e8f14939"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-10T04:01:50.178Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f77911f0d4f9a9bbefecef64f56ad2517cfe0aad232e23dff04b09b6e8f14939"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-10T04:16:37.439Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestQuizSessionRemainingSecondsUsesSecondUnits handler_quiz_test.go:191: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestQuizSessionRemainingSecondsUsesSecondUnits (0.00s)"
+        }
+      ],
+      "fingerprint": "34de3be284578390b515818b624d4a83a9ad65f855f7e29201d4b69bd6b47237"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-10T04:17:11.414Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "34de3be284578390b515818b624d4a83a9ad65f855f7e29201d4b69bd6b47237"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-10T04:17:30.253Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_quiz_session.go",
+        "find": "remaining = int((remainingDuration + time.Second - 1) / time.Second)",
+        "replace": "remaining = int(remainingDuration)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizSessionRemainingSecondsUsesSecondUnits handler_quiz_test.go:213: remaining quiz seconds must be within the 900-second limit, got 894998410000 --- FAIL: TestQuizSessionRemainingSecondsUsesSecondUnits (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits": "remaining quiz seconds must be within the 900-second limit"
+      },
+      "fingerprint": "34de3be284578390b515818b624d4a83a9ad65f855f7e29201d4b69bd6b47237"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-10T04:20:19.845Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 735,
+        "executed": 735,
+        "passed": 735,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "735 passed, 0 allowed skip(s)",
+      "fingerprint": "34de3be284578390b515818b624d4a83a9ad65f855f7e29201d4b69bd6b47237"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-10T04:23:50.625Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 418,
+        "executed": 418,
+        "passed": 418,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 776,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "34de3be284578390b515818b624d4a83a9ad65f855f7e29201d4b69bd6b47237"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-10T04:34:33.596Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/kotoba-quiz-browser-e2e.sh",
+      "exit_code": 0,
+      "fingerprint": "03f59e26863c68dc274706fb31d7f1076200aef90f421567d3b7a15df27cb38e"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-10T04:35:02.193Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "cfb284c094e2e6166293a8c24be9e4006df0f17290200956a6d8f35bf0f4f889"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-10T04:35:15.094Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_quiz_session.go",
+        "find": "remaining = int((remainingDuration + time.Second - 1) / time.Second)",
+        "replace": "remaining = int(remainingDuration)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizSessionRemainingSecondsUsesSecondUnits handler_quiz_test.go:213: remaining quiz seconds must be within the 900-second limit, got 894997024000 --- FAIL: TestQuizSessionRemainingSecondsUsesSecondUnits (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits": "remaining quiz seconds must be within the 900-second limit"
+      },
+      "fingerprint": "cfb284c094e2e6166293a8c24be9e4006df0f17290200956a6d8f35bf0f4f889"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-10T04:37:57.195Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 735,
+        "executed": 735,
+        "passed": 735,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "735 passed, 0 allowed skip(s)",
+      "fingerprint": "cfb284c094e2e6166293a8c24be9e4006df0f17290200956a6d8f35bf0f4f889"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-10T04:41:38.003Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 418,
+        "executed": 418,
+        "passed": 418,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 776,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "cfb284c094e2e6166293a8c24be9e4006df0f17290200956a6d8f35bf0f4f889"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-10T04:42:06.386Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/kotoba-quiz-browser-e2e.sh",
+      "exit_code": 0,
+      "fingerprint": "cfb284c094e2e6166293a8c24be9e4006df0f17290200956a6d8f35bf0f4f889"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-10T04:47:55.535Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Anscombe (independent reviewer)",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "notes": "",
+      "output_sha256": "2b796f6a3ad3045c91598c547002560a130843c87154fd44809c1ef1d2a16d3a",
+      "attested": true,
+      "fingerprint": "cfb284c094e2e6166293a8c24be9e4006df0f17290200956a6d8f35bf0f4f889"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-10T04:50:46.917Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8f3573d373d7d931c4a37ae34d7a89cfeab24a21fe163de3f3aae7e93aa2fa7b"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-10T04:50:59.064Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_quiz_session.go",
+        "find": "remaining = int((remainingDuration + time.Second - 1) / time.Second)",
+        "replace": "remaining = int(remainingDuration)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizSessionRemainingSecondsUsesSecondUnits handler_quiz_test.go:259: remaining quiz seconds must be within the 900-second limit, got 894998875000 --- FAIL: TestQuizSessionRemainingSecondsUsesSecondUnits (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits": "remaining quiz seconds must be within the 900-second limit"
+      },
+      "fingerprint": "8f3573d373d7d931c4a37ae34d7a89cfeab24a21fe163de3f3aae7e93aa2fa7b"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-10T04:53:40.020Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 736,
+        "executed": 736,
+        "passed": 736,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "736 passed, 0 allowed skip(s)",
+      "fingerprint": "8f3573d373d7d931c4a37ae34d7a89cfeab24a21fe163de3f3aae7e93aa2fa7b"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-10T04:57:11.671Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 419,
+        "executed": 419,
+        "passed": 419,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 776,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "8f3573d373d7d931c4a37ae34d7a89cfeab24a21fe163de3f3aae7e93aa2fa7b"
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-10T04:57:30.327Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/kotoba-quiz-browser-e2e.sh",
+      "exit_code": 1,
+      "fingerprint": "8f3573d373d7d931c4a37ae34d7a89cfeab24a21fe163de3f3aae7e93aa2fa7b"
+    },
+    {
+      "seq": 35,
+      "at": "2026-10-10T04:58:59.043Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/kotoba-quiz-browser-e2e.sh",
+      "exit_code": 1,
+      "fingerprint": "8f3573d373d7d931c4a37ae34d7a89cfeab24a21fe163de3f3aae7e93aa2fa7b"
+    },
+    {
+      "seq": 36,
+      "at": "2026-10-10T04:59:43.280Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/kotoba-quiz-browser-e2e.sh",
+      "exit_code": 1,
+      "fingerprint": "8f3573d373d7d931c4a37ae34d7a89cfeab24a21fe163de3f3aae7e93aa2fa7b"
+    },
+    {
+      "seq": 37,
+      "at": "2026-10-10T05:01:21.908Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/kotoba-quiz-browser-e2e.sh",
+      "exit_code": 0,
+      "fingerprint": "8f3573d373d7d931c4a37ae34d7a89cfeab24a21fe163de3f3aae7e93aa2fa7b"
+    },
+    {
+      "seq": 38,
+      "at": "2026-10-10T05:04:51.162Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "6e7f9523c7d28349daf8f9932ac4f30baf9c07a4522a7f4ff491d70c037222d9"
+    },
+    {
+      "seq": 39,
+      "at": "2026-10-10T05:05:03.247Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_quiz_session.go",
+        "find": "remaining = int((remainingDuration + time.Second - 1) / time.Second)",
+        "replace": "remaining = int(remainingDuration)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizSessionRemainingSecondsUsesSecondUnits handler_quiz_test.go:259: remaining quiz seconds must be within the 900-second limit, got 894998696000 --- FAIL: TestQuizSessionRemainingSecondsUsesSecondUnits (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits": "remaining quiz seconds must be within the 900-second limit"
+      },
+      "fingerprint": "6e7f9523c7d28349daf8f9932ac4f30baf9c07a4522a7f4ff491d70c037222d9"
+    },
+    {
+      "seq": 40,
+      "at": "2026-10-10T05:07:28.818Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 736,
+        "executed": 736,
+        "passed": 736,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "736 passed, 0 allowed skip(s)",
+      "fingerprint": "6e7f9523c7d28349daf8f9932ac4f30baf9c07a4522a7f4ff491d70c037222d9"
+    },
+    {
+      "seq": 41,
+      "at": "2026-10-10T05:10:50.424Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 419,
+        "executed": 419,
+        "passed": 419,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 776,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "6e7f9523c7d28349daf8f9932ac4f30baf9c07a4522a7f4ff491d70c037222d9"
+    },
+    {
+      "seq": 42,
+      "at": "2026-10-10T05:11:20.547Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/kotoba-quiz-browser-e2e.sh",
+      "exit_code": 0,
+      "fingerprint": "6e7f9523c7d28349daf8f9932ac4f30baf9c07a4522a7f4ff491d70c037222d9"
+    },
+    {
+      "seq": 43,
+      "at": "2026-10-10T05:15:04.784Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Dalton (independent reviewer)",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "notes": "",
+      "output_sha256": "f1e8c0b0e2b8cc515a326ecfa63aae7e9e31e9bf1ab48015bb4a994d222c17b9",
+      "attested": true,
+      "fingerprint": "6e7f9523c7d28349daf8f9932ac4f30baf9c07a4522a7f4ff491d70c037222d9"
+    },
+    {
+      "seq": 44,
+      "at": "2026-10-10T05:20:00.086Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits|TestOfficialQuizStatusUsesCanonicalEntitlement)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestOfficialQuizStatusUsesCanonicalEntitlement",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "96e0b9db29b7bb64419ca4299c497aea5cb40709bfbcde0abd37447d6351a280"
+    },
+    {
+      "seq": 45,
+      "at": "2026-10-10T05:20:22.484Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_quiz_session.go",
+        "find": "remaining = int((remainingDuration + time.Second - 1) / time.Second)",
+        "replace": "remaining = int(remainingDuration)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizSessionRemainingSecondsUsesSecondUnits handler_quiz_test.go:302: remaining quiz seconds must be within the 900-second limit, got 894997734000 --- FAIL: TestQuizSessionRemainingSecondsUsesSecondUnits (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits": "remaining quiz seconds must be within the 900-second limit"
+      },
+      "fingerprint": "96e0b9db29b7bb64419ca4299c497aea5cb40709bfbcde0abd37447d6351a280"
+    },
+    {
+      "seq": 46,
+      "at": "2026-10-10T05:23:18.067Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 737,
+        "executed": 737,
+        "passed": 737,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "737 passed, 0 allowed skip(s)",
+      "fingerprint": "96e0b9db29b7bb64419ca4299c497aea5cb40709bfbcde0abd37447d6351a280"
+    },
+    {
+      "seq": 47,
+      "at": "2026-10-10T05:26:47.851Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 419,
+        "executed": 419,
+        "passed": 419,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 776,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "96e0b9db29b7bb64419ca4299c497aea5cb40709bfbcde0abd37447d6351a280"
+    },
+    {
+      "seq": 48,
+      "at": "2026-10-10T05:27:22.513Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/kotoba-quiz-browser-e2e.sh",
+      "exit_code": 0,
+      "fingerprint": "96e0b9db29b7bb64419ca4299c497aea5cb40709bfbcde0abd37447d6351a280"
+    },
+    {
+      "seq": 49,
+      "at": "2026-10-10T05:31:26.948Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits|TestOfficialQuizStatusUsesCanonicalEntitlement|TestStudyPlanProgressUsesCanonicalSchema)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestOfficialQuizStatusUsesCanonicalEntitlement",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStudyPlanProgressUsesCanonicalSchema",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "6e72cc3983ebe95954ee7f42605522ea2a9354c3df8cd8ff2e751ec28aeeba09"
+    },
+    {
+      "seq": 50,
+      "at": "2026-10-10T05:31:51.058Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_quiz_session.go",
+        "find": "remaining = int((remainingDuration + time.Second - 1) / time.Second)",
+        "replace": "remaining = int(remainingDuration)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizSessionRemainingSecondsUsesSecondUnits handler_quiz_test.go:327: remaining quiz seconds must be within the 900-second limit, got 894996803000 --- FAIL: TestQuizSessionRemainingSecondsUsesSecondUnits (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits": "remaining quiz seconds must be within the 900-second limit"
+      },
+      "fingerprint": "6e72cc3983ebe95954ee7f42605522ea2a9354c3df8cd8ff2e751ec28aeeba09"
+    },
+    {
+      "seq": 51,
+      "at": "2026-10-10T05:32:32.416Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 738,
+        "executed": 738,
+        "passed": 737,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "6e72cc3983ebe95954ee7f42605522ea2a9354c3df8cd8ff2e751ec28aeeba09"
+    },
+    {
+      "seq": 52,
+      "at": "2026-10-10T05:35:56.647Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 419,
+        "executed": 419,
+        "passed": 419,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 776,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "6e72cc3983ebe95954ee7f42605522ea2a9354c3df8cd8ff2e751ec28aeeba09"
+    },
+    {
+      "seq": 53,
+      "at": "2026-10-10T05:36:48.694Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits|TestOfficialQuizStatusUsesCanonicalEntitlement|TestStudyPlanProgressUsesCanonicalSchema)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestOfficialQuizStatusUsesCanonicalEntitlement",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStudyPlanProgressUsesCanonicalSchema",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "7bcfdabdec444b4d781a6ea3bee1ab00956dc96cec8f15663c8cc91392bda1f4"
+    },
+    {
+      "seq": 54,
+      "at": "2026-10-10T05:37:07.879Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_quiz_session.go",
+        "find": "remaining = int((remainingDuration + time.Second - 1) / time.Second)",
+        "replace": "remaining = int(remainingDuration)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizSessionRemainingSecondsUsesSecondUnits handler_quiz_test.go:327: remaining quiz seconds must be within the 900-second limit, got 894997738000 --- FAIL: TestQuizSessionRemainingSecondsUsesSecondUnits (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits": "remaining quiz seconds must be within the 900-second limit"
+      },
+      "fingerprint": "7bcfdabdec444b4d781a6ea3bee1ab00956dc96cec8f15663c8cc91392bda1f4"
+    },
+    {
+      "seq": 55,
+      "at": "2026-10-10T05:39:10.704Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "7bcfdabdec444b4d781a6ea3bee1ab00956dc96cec8f15663c8cc91392bda1f4"
+    },
+    {
+      "seq": 56,
+      "at": "2026-10-10T05:41:53.248Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 738,
+        "executed": 738,
+        "passed": 738,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "738 passed, 0 allowed skip(s)",
+      "fingerprint": "7bcfdabdec444b4d781a6ea3bee1ab00956dc96cec8f15663c8cc91392bda1f4"
+    },
+    {
+      "seq": 57,
+      "at": "2026-10-10T05:45:29.221Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 419,
+        "executed": 419,
+        "passed": 419,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 776,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "7bcfdabdec444b4d781a6ea3bee1ab00956dc96cec8f15663c8cc91392bda1f4"
+    },
+    {
+      "seq": 58,
+      "at": "2026-10-10T05:48:47.322Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/kotoba-quiz-browser-e2e.sh",
+      "exit_code": 1,
+      "fingerprint": "7bcfdabdec444b4d781a6ea3bee1ab00956dc96cec8f15663c8cc91392bda1f4"
+    },
+    {
+      "seq": 59,
+      "at": "2026-10-10T05:49:28.608Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/kotoba-quiz-browser-e2e.sh",
+      "exit_code": 0,
+      "fingerprint": "7bcfdabdec444b4d781a6ea3bee1ab00956dc96cec8f15663c8cc91392bda1f4"
+    },
+    {
+      "seq": 60,
+      "at": "2026-10-10T05:52:15.455Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits|TestOfficialQuizStatusUsesCanonicalEntitlement|TestStudyPlanProgressUsesCanonicalSchema)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestOfficialQuizStatusUsesCanonicalEntitlement",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStudyPlanProgressUsesCanonicalSchema",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "2cb47eb87cc210109daa1ac84857c6f14b267b022134506e9fe235e5e6fcb5ce"
+    },
+    {
+      "seq": 61,
+      "at": "2026-10-10T05:52:35.467Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_quiz_session.go",
+        "find": "remaining = int((remainingDuration + time.Second - 1) / time.Second)",
+        "replace": "remaining = int(remainingDuration)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizSessionRemainingSecondsUsesSecondUnits handler_quiz_test.go:327: remaining quiz seconds must be within the 900-second limit, got 894996280000 --- FAIL: TestQuizSessionRemainingSecondsUsesSecondUnits (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits": "remaining quiz seconds must be within the 900-second limit"
+      },
+      "fingerprint": "2cb47eb87cc210109daa1ac84857c6f14b267b022134506e9fe235e5e6fcb5ce"
+    },
+    {
+      "seq": 62,
+      "at": "2026-10-10T05:54:38.506Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "2cb47eb87cc210109daa1ac84857c6f14b267b022134506e9fe235e5e6fcb5ce"
+    },
+    {
+      "seq": 63,
+      "at": "2026-10-10T05:57:03.651Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 738,
+        "executed": 738,
+        "passed": 738,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "738 passed, 0 allowed skip(s)",
+      "fingerprint": "2cb47eb87cc210109daa1ac84857c6f14b267b022134506e9fe235e5e6fcb5ce"
+    },
+    {
+      "seq": 64,
+      "at": "2026-10-10T06:00:07.595Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 419,
+        "executed": 419,
+        "passed": 419,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 776,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "2cb47eb87cc210109daa1ac84857c6f14b267b022134506e9fe235e5e6fcb5ce"
+    },
+    {
+      "seq": 65,
+      "at": "2026-10-10T06:00:51.490Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/kotoba-quiz-browser-e2e.sh",
+      "exit_code": 0,
+      "fingerprint": "2cb47eb87cc210109daa1ac84857c6f14b267b022134506e9fe235e5e6fcb5ce"
+    },
+    {
+      "seq": 66,
+      "at": "2026-10-10T06:12:35.702Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits|TestOfficialQuizStatusUsesCanonicalEntitlement|TestStudyPlanProgressUsesCanonicalSchema|TestQuizAssessmentJourneyAndOwnership)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestQuizSessionRemainingSecondsUsesSecondUnits handler_quiz_test.go:355: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestQuizSessionRemainingSecondsUsesSecondUnits (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestOfficialQuizStatusUsesCanonicalEntitlement",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestOfficialQuizStatusUsesCanonicalEntitlement handler_quiz_test.go:238: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestOfficialQuizStatusUsesCanonicalEntitlement (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestStudyPlanProgressUsesCanonicalSchema",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestStudyPlanProgressUsesCanonicalSchema handler_quiz_test.go:20: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestStudyPlanProgressUsesCanonicalSchema (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizAssessmentJourneyAndOwnership",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestQuizAssessmentJourneyAndOwnership handler_quiz_test.go:44: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestQuizAssessmentJourneyAndOwnership (0.00s)"
+        }
+      ],
+      "fingerprint": "dbab2166919f14075270af9513ded2cf3f5fb89fc38f62e58abfb1ff27aa5dd7"
+    },
+    {
+      "seq": 67,
+      "at": "2026-10-10T06:12:49.356Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits|TestOfficialQuizStatusUsesCanonicalEntitlement|TestStudyPlanProgressUsesCanonicalSchema|TestQuizAssessmentJourneyAndOwnership)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestOfficialQuizStatusUsesCanonicalEntitlement",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStudyPlanProgressUsesCanonicalSchema",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizAssessmentJourneyAndOwnership",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "dbab2166919f14075270af9513ded2cf3f5fb89fc38f62e58abfb1ff27aa5dd7"
+    },
+    {
+      "seq": 68,
+      "at": "2026-10-10T06:13:14.670Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_quiz_session.go",
+        "find": "remaining = int((remainingDuration + time.Second - 1) / time.Second)",
+        "replace": "remaining = int(remainingDuration)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizSessionRemainingSecondsUsesSecondUnits handler_quiz_test.go:377: remaining quiz seconds must be within the 900-second limit, got 894998018000 --- FAIL: TestQuizSessionRemainingSecondsUsesSecondUnits (0.05s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits": "remaining quiz seconds must be within the 900-second limit"
+      },
+      "fingerprint": "dbab2166919f14075270af9513ded2cf3f5fb89fc38f62e58abfb1ff27aa5dd7"
+    },
+    {
+      "seq": 69,
+      "at": "2026-10-10T06:20:43.241Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "dbab2166919f14075270af9513ded2cf3f5fb89fc38f62e58abfb1ff27aa5dd7"
+    },
+    {
+      "seq": 70,
+      "at": "2026-10-10T06:23:11.627Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 739,
+        "executed": 739,
+        "passed": 739,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "739 passed, 0 allowed skip(s)",
+      "fingerprint": "dbab2166919f14075270af9513ded2cf3f5fb89fc38f62e58abfb1ff27aa5dd7"
+    },
+    {
+      "seq": 71,
+      "at": "2026-10-10T06:26:37.042Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 419,
+        "executed": 419,
+        "passed": 419,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 776,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "dbab2166919f14075270af9513ded2cf3f5fb89fc38f62e58abfb1ff27aa5dd7"
+    },
+    {
+      "seq": 72,
+      "at": "2026-10-10T06:27:17.435Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/kotoba-quiz-browser-e2e.sh",
+      "exit_code": 0,
+      "fingerprint": "dbab2166919f14075270af9513ded2cf3f5fb89fc38f62e58abfb1ff27aa5dd7"
+    },
+    {
+      "seq": 73,
+      "at": "2026-10-10T06:34:25.503Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits|TestOfficialQuizStatusUsesCanonicalEntitlement|TestStudyPlanProgressUsesCanonicalSchema|TestQuizAssessmentJourneyAndOwnership)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestOfficialQuizStatusUsesCanonicalEntitlement",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStudyPlanProgressUsesCanonicalSchema",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizAssessmentJourneyAndOwnership",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx::StudyGoalWidget API contract > renders normalized persisted plan fields without inventing completed tasks",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "30e0a285fdeb768640d469ff69bde9b239f18e8b77bc1c8848ae03e8fcb638e1"
+    },
+    {
+      "seq": 74,
+      "at": "2026-10-10T06:38:51.562Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/kotoba-quiz-browser-e2e.sh",
+      "exit_code": 0,
+      "fingerprint": "30e0a285fdeb768640d469ff69bde9b239f18e8b77bc1c8848ae03e8fcb638e1"
+    },
+    {
+      "seq": 75,
+      "at": "2026-10-10T06:40:19.817Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_quiz_session.go",
+        "find": "remaining = int((remainingDuration + time.Second - 1) / time.Second)",
+        "replace": "remaining = int(remainingDuration)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizSessionRemainingSecondsUsesSecondUnits handler_quiz_test.go:377: remaining quiz seconds must be within the 900-second limit, got 894996627000 --- FAIL: TestQuizSessionRemainingSecondsUsesSecondUnits (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits": "remaining quiz seconds must be within the 900-second limit"
+      },
+      "fingerprint": "cf10d0fbee652038ccfa9bd0dc5c8dfc7c813bfb8d0ebc9d9bcdf78068a56d10"
+    },
+    {
+      "seq": 76,
+      "at": "2026-10-10T06:42:33.256Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "cf10d0fbee652038ccfa9bd0dc5c8dfc7c813bfb8d0ebc9d9bcdf78068a56d10"
+    },
+    {
+      "seq": 77,
+      "at": "2026-10-10T07:01:00.829Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 739,
+        "executed": 739,
+        "passed": 739,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "739 passed, 0 allowed skip(s)",
+      "fingerprint": "cf10d0fbee652038ccfa9bd0dc5c8dfc7c813bfb8d0ebc9d9bcdf78068a56d10"
+    },
+    {
+      "seq": 78,
+      "at": "2026-10-10T07:18:54.739Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "TOOL_FAILURE",
+      "accounting": null,
+      "message": "lint could not run: spawnSync pnpm ETIMEDOUT",
+      "fingerprint": "cf10d0fbee652038ccfa9bd0dc5c8dfc7c813bfb8d0ebc9d9bcdf78068a56d10"
+    },
+    {
+      "seq": 79,
+      "at": "2026-10-10T07:40:13.486Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "TOOL_FAILURE",
+      "accounting": null,
+      "message": "Vitest reported 4 unhandled error(s): [vitest-pool]: Failed to start forks worker for test files /Users/thanhnguyen/Documents/Projects/nihongo-bjt/archive/phase-00-data-import/scripts/import/__tests__/transform-core.test.ts. | [vitest-pool]: Failed to start forks worker for test files /Users/thanhnguyen/Documents/Projects/nihongo-bjt/packages/shared/src/analytics.test.ts. | [vitest-pool]: Failed t…",
+      "fingerprint": "cf10d0fbee652038ccfa9bd0dc5c8dfc7c813bfb8d0ebc9d9bcdf78068a56d10"
+    },
+    {
+      "seq": 80,
+      "at": "2026-10-10T08:00:07.285Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 420,
+        "executed": 420,
+        "passed": 420,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 778,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "cf10d0fbee652038ccfa9bd0dc5c8dfc7c813bfb8d0ebc9d9bcdf78068a56d10"
+    },
+    {
+      "seq": 81,
+      "at": "2026-10-10T08:17:15.056Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits|TestOfficialQuizStatusUsesCanonicalEntitlement|TestStudyPlanProgressUsesCanonicalSchema|TestQuizAssessmentJourneyAndOwnership)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestOfficialQuizStatusUsesCanonicalEntitlement",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStudyPlanProgressUsesCanonicalSchema",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizAssessmentJourneyAndOwnership",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx::StudyGoalWidget API contract > renders normalized persisted plan fields without inventing completed tasks",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "cf10d0fbee652038ccfa9bd0dc5c8dfc7c813bfb8d0ebc9d9bcdf78068a56d10"
+    },
+    {
+      "seq": 82,
+      "at": "2026-10-10T09:42:46.221Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/kotoba-quiz-browser-e2e.sh",
+      "exit_code": -1,
+      "fingerprint": "cf10d0fbee652038ccfa9bd0dc5c8dfc7c813bfb8d0ebc9d9bcdf78068a56d10"
+    },
+    {
+      "seq": 83,
+      "at": "2026-10-10T09:44:17.477Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits|TestOfficialQuizStatusUsesCanonicalEntitlement|TestStudyPlanProgressUsesCanonicalSchema|TestQuizAssessmentJourneyAndOwnership)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestOfficialQuizStatusUsesCanonicalEntitlement",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStudyPlanProgressUsesCanonicalSchema",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizAssessmentJourneyAndOwnership",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx::StudyGoalWidget API contract > renders normalized persisted plan fields without inventing completed tasks",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f7e33a050e62cbc432cadf69a804bd06c8fe4d4d5cacb3ef5a7c8312c819b3c8"
+    },
+    {
+      "seq": 84,
+      "at": "2026-10-10T09:45:01.934Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_quiz_session.go",
+        "find": "remaining = int((remainingDuration + time.Second - 1) / time.Second)",
+        "replace": "remaining = int(remainingDuration)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizSessionRemainingSecondsUsesSecondUnits handler_quiz_test.go:512: remaining quiz seconds must be within the 900-second limit, got 894996673000 --- FAIL: TestQuizSessionRemainingSecondsUsesSecondUnits (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits": "remaining quiz seconds must be within the 900-second limit"
+      },
+      "fingerprint": "f7e33a050e62cbc432cadf69a804bd06c8fe4d4d5cacb3ef5a7c8312c819b3c8"
+    },
+    {
+      "seq": 85,
+      "at": "2026-10-10T09:50:01.054Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits|TestOfficialQuizStatusUsesCanonicalEntitlement|TestStudyPlanProgressUsesCanonicalSchema|TestQuizAssessmentJourneyAndOwnership|TestQuizActiveSessionExpiresAndRecordsStudyPlanProgress|TestQuizQuestionRejectsAbandonedSession|TestStudyGoalReportsWhetherLearnerHasSetGoal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/components/reading-assist/annotated-japanese-text.a11y-and-network.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestOfficialQuizStatusUsesCanonicalEntitlement",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStudyPlanProgressUsesCanonicalSchema",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizAssessmentJourneyAndOwnership",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx::StudyGoalWidget API contract > renders normalized persisted plan fields without inventing completed tasks",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizActiveSessionExpiresAndRecordsStudyPlanProgress",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizQuestionRejectsAbandonedSession",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStudyGoalReportsWhetherLearnerHasSetGoal",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx::StudyGoalWidget API contract > shows the goal picker when the API reports its default is not persisted",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/components/reading-assist/annotated-japanese-text.a11y-and-network.test.tsx::AnnotatedJapaneseText a11y and network behavior > supports Enter open, Escape close, and focus restore in bottom sheet",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3177befcebf080ba24a6a50b4dc37068a36843d5ccbeeab718389dc478b89942"
+    },
+    {
+      "seq": 86,
+      "at": "2026-10-10T09:51:24.772Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/kotoba-quiz-browser-e2e.sh",
+      "exit_code": 0,
+      "fingerprint": "8a4875d19ecf4551ce0fbdef809e9c4cb91fe8b866fee5a79ad60635ca6dbfa8"
+    },
+    {
+      "seq": 87,
+      "at": "2026-10-10T09:53:52.774Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "8a4875d19ecf4551ce0fbdef809e9c4cb91fe8b866fee5a79ad60635ca6dbfa8"
+    },
+    {
+      "seq": 88,
+      "at": "2026-10-10T09:56:51.780Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 742,
+        "executed": 742,
+        "passed": 742,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "742 passed, 0 allowed skip(s)",
+      "fingerprint": "8a4875d19ecf4551ce0fbdef809e9c4cb91fe8b866fee5a79ad60635ca6dbfa8"
+    },
+    {
+      "seq": 89,
+      "at": "2026-10-10T10:01:03.266Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 421,
+        "executed": 421,
+        "passed": 421,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 778,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "8a4875d19ecf4551ce0fbdef809e9c4cb91fe8b866fee5a79ad60635ca6dbfa8"
+    },
+    {
+      "seq": 90,
+      "at": "2026-10-10T10:01:46.444Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits|TestOfficialQuizStatusUsesCanonicalEntitlement|TestStudyPlanProgressUsesCanonicalSchema|TestQuizAssessmentJourneyAndOwnership|TestQuizActiveSessionExpiresAndRecordsStudyPlanProgress|TestQuizQuestionRejectsAbandonedSession|TestStudyGoalReportsWhetherLearnerHasSetGoal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/components/reading-assist/annotated-japanese-text.a11y-and-network.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestOfficialQuizStatusUsesCanonicalEntitlement",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStudyPlanProgressUsesCanonicalSchema",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizAssessmentJourneyAndOwnership",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx::StudyGoalWidget API contract > renders normalized persisted plan fields without inventing completed tasks",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizActiveSessionExpiresAndRecordsStudyPlanProgress",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizQuestionRejectsAbandonedSession",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStudyGoalReportsWhetherLearnerHasSetGoal",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx::StudyGoalWidget API contract > shows the goal picker when the API reports its default is not persisted",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/components/reading-assist/annotated-japanese-text.a11y-and-network.test.tsx::AnnotatedJapaneseText a11y and network behavior > supports Enter open, Escape close, and focus restore in bottom sheet",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8a4875d19ecf4551ce0fbdef809e9c4cb91fe8b866fee5a79ad60635ca6dbfa8"
+    },
+    {
+      "seq": 91,
+      "at": "2026-10-10T10:02:15.725Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_quiz_session.go",
+        "find": "remaining = int((remainingDuration + time.Second - 1) / time.Second)",
+        "replace": "remaining = int(remainingDuration)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizSessionRemainingSecondsUsesSecondUnits handler_quiz_test.go:512: remaining quiz seconds must be within the 900-second limit, got 894997771000 --- FAIL: TestQuizSessionRemainingSecondsUsesSecondUnits (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits": "remaining quiz seconds must be within the 900-second limit"
+      },
+      "fingerprint": "8a4875d19ecf4551ce0fbdef809e9c4cb91fe8b866fee5a79ad60635ca6dbfa8"
+    },
+    {
+      "seq": 92,
+      "at": "2026-10-10T10:09:12.293Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits|TestOfficialQuizStatusUsesCanonicalEntitlement|TestStudyPlanProgressUsesCanonicalSchema|TestQuizAssessmentJourneyAndOwnership|TestQuizActiveSessionExpiresAndRecordsStudyPlanProgress|TestQuizQuestionRejectsAbandonedSession|TestStudyGoalReportsWhetherLearnerHasSetGoal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/components/reading-assist/annotated-japanese-text.a11y-and-network.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestOfficialQuizStatusUsesCanonicalEntitlement",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStudyPlanProgressUsesCanonicalSchema",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizAssessmentJourneyAndOwnership",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx::StudyGoalWidget API contract > renders normalized persisted plan fields without inventing completed tasks",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizActiveSessionExpiresAndRecordsStudyPlanProgress",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizQuestionRejectsAbandonedSession",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStudyGoalReportsWhetherLearnerHasSetGoal",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx::StudyGoalWidget API contract > shows the goal picker when the API reports its default is not persisted",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/components/reading-assist/annotated-japanese-text.a11y-and-network.test.tsx::AnnotatedJapaneseText a11y and network behavior > supports Enter open, Escape close, and focus restore in bottom sheet",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e6c6e69b64c89abf23bd3c686ba664de9187ed0d18826cdaac6fa46ab6633a0c"
+    },
+    {
+      "seq": 93,
+      "at": "2026-10-10T10:09:38.874Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_quiz_session.go",
+        "find": "remaining = int((remainingDuration + time.Second - 1) / time.Second)",
+        "replace": "remaining = int(remainingDuration)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizSessionRemainingSecondsUsesSecondUnits handler_quiz_test.go:526: remaining quiz seconds must be within the 900-second limit, got 894996806000 --- FAIL: TestQuizSessionRemainingSecondsUsesSecondUnits (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits": "remaining quiz seconds must be within the 900-second limit"
+      },
+      "fingerprint": "e6c6e69b64c89abf23bd3c686ba664de9187ed0d18826cdaac6fa46ab6633a0c"
+    },
+    {
+      "seq": 94,
+      "at": "2026-10-10T10:11:16.684Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/kotoba-quiz-browser-e2e.sh",
+      "exit_code": 0,
+      "fingerprint": "8ed2f94cf6382dbe30d5866e63ab3bff616bad99ccf2d8867450e76549a9c9f2"
+    },
+    {
+      "seq": 95,
+      "at": "2026-10-10T10:11:40.827Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits|TestOfficialQuizStatusUsesCanonicalEntitlement|TestStudyPlanProgressUsesCanonicalSchema|TestQuizAssessmentJourneyAndOwnership|TestQuizActiveSessionExpiresAndRecordsStudyPlanProgress|TestQuizQuestionRejectsAbandonedSession|TestStudyGoalReportsWhetherLearnerHasSetGoal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/components/reading-assist/annotated-japanese-text.a11y-and-network.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestOfficialQuizStatusUsesCanonicalEntitlement",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStudyPlanProgressUsesCanonicalSchema",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizAssessmentJourneyAndOwnership",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx::StudyGoalWidget API contract > renders normalized persisted plan fields without inventing completed tasks",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizActiveSessionExpiresAndRecordsStudyPlanProgress",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestQuizQuestionRejectsAbandonedSession",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStudyGoalReportsWhetherLearnerHasSetGoal",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx::StudyGoalWidget API contract > shows the goal picker when the API reports its default is not persisted",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/components/reading-assist/annotated-japanese-text.a11y-and-network.test.tsx::AnnotatedJapaneseText a11y and network behavior > supports Enter open, Escape close, and focus restore in bottom sheet",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8ed2f94cf6382dbe30d5866e63ab3bff616bad99ccf2d8867450e76549a9c9f2"
+    },
+    {
+      "seq": 96,
+      "at": "2026-10-10T10:12:09.337Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_quiz_session.go",
+        "find": "remaining = int((remainingDuration + time.Second - 1) / time.Second)",
+        "replace": "remaining = int(remainingDuration)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionRemainingSecondsUsesSecondUnits)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizSessionRemainingSecondsUsesSecondUnits handler_quiz_test.go:526: remaining quiz seconds must be within the 900-second limit, got 894992908000 --- FAIL: TestQuizSessionRemainingSecondsUsesSecondUnits (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestQuizSessionRemainingSecondsUsesSecondUnits": "remaining quiz seconds must be within the 900-second limit"
+      },
+      "fingerprint": "8ed2f94cf6382dbe30d5866e63ab3bff616bad99ccf2d8867450e76549a9c9f2"
+    },
+    {
+      "seq": 97,
+      "at": "2026-10-10T10:15:16.663Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 742,
+        "executed": 742,
+        "passed": 742,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "742 passed, 0 allowed skip(s)",
+      "fingerprint": "8ed2f94cf6382dbe30d5866e63ab3bff616bad99ccf2d8867450e76549a9c9f2"
+    },
+    {
+      "seq": 98,
+      "at": "2026-10-10T10:17:25.579Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "8ed2f94cf6382dbe30d5866e63ab3bff616bad99ccf2d8867450e76549a9c9f2"
+    },
+    {
+      "seq": 99,
+      "at": "2026-10-10T10:21:18.489Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 421,
+        "executed": 421,
+        "passed": 421,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 778,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "8ed2f94cf6382dbe30d5866e63ab3bff616bad99ccf2d8867450e76549a9c9f2"
+    },
+    {
+      "seq": 100,
+      "at": "2026-10-10T10:25:27.776Z",
+      "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a12555-6ee3-7233-ba74-fd5397213193",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "8ed2f94cf6382dbe30d5866e63ab3bff616bad99ccf2d8867450e76549a9c9f2"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-10T10:25:41.534Z",
+    "head": "afbfdc74fc0ea88009659858de6c29be281acceb",
+    "fingerprint": "8ed2f94cf6382dbe30d5866e63ab3bff616bad99ccf2d8867450e76549a9c9f2",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "green": "PASS",
+      "sensitivity": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_career_content_gamification_misc.go": "593e92d3ae759c75b765a1ce6d7dad47c3a2c974",
+      "apps/api-go/internal/httpserver/handler_quiz_session.go": "0b6141c41eb16e08a38b55e4a27aea3ca076ce6c",
+      "apps/api-go/internal/httpserver/handler_quiz_test.go": "dfd4da4e7db0a87794b6903602bdeaa9c6bb3cc5",
+      "apps/api-go/internal/httpserver/server.go": "c4953d790bd6fc565330ca9888fbea41b85528db",
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "838bbdfe0cc172df8833c2bb636e71c412989557",
+      "apps/api-go/internal/quiztemplate/store.go": "b7d3f7fcea6a0c3d33330674d249f311557769e9",
+      "apps/api-go/internal/studyplan/store.go": "c761100e4791f9a0421cdef19d716205157e46a8",
+      "apps/web/app/[locale]/_components/homepage/study-goal-widget.test.tsx": "c33d7c7ed518ee52812f1d9d58b94167c437dcb2",
+      "apps/web/app/[locale]/_components/homepage/study-goal-widget.tsx": "ef98c2035ab2175ded9eb2c1143357f7c8d92158",
+      "apps/web/app/[locale]/quiz/_components/bjt-format-guide.tsx": "69975eb806d2ccf0595b64a16b995fd1fb02c107",
+      "apps/web/app/[locale]/quiz/_components/quiz-client.reading-assist.integration.test.tsx": "c38e263c6561b3b70c12a3676d87283123ab43bf",
+      "apps/web/app/[locale]/quiz/_components/quiz-client.tsx": "f77b9dcc23e496758268357a0852b81dddf06523",
+      "apps/web/app/[locale]/quiz/_components/quiz-hub-availability.test.tsx": "29962fde1743bfab55faf3e77f6d238e911e5270",
+      "apps/web/app/[locale]/quiz/session/page.tsx": "61898d6b62a819ee6b4760017e7397a46ede21b4",
+      "apps/web/app/_components/learner-app-frame.tsx": "18575f566735d0acbb8b623f813ebfd20a3edb3c",
+      "apps/web/components/reading-assist/annotated-japanese-text.a11y-and-network.test.tsx": "e32ef3085d50244bc8dca7212fe3969e6ac41d9e",
+      "apps/web/components/reading-assist/annotated-japanese-text.tsx": "b67c26166895608c8fa083057c30a7e621f99cc6",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "56f1d1c4ff77019ff49cce6674bbe2bd52da6e73",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "b7e5b945fb0480b0c6b46473d1ea86e2b3c22b9d",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "f9ae9c85042c732c60e6a5a412982cf9ab3f4469",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "eb508636a9aafcd8c5c4d622be5c7d22d4a3a888",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "ec44b94c7cea44ea48bc3b1853a0a81dd0c36077",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "1f1c466ecf3a6e9320f2ed8a900e64a75cabfcd6",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "c759828f286bb3b33dc27127b3ee2ee838abe760"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

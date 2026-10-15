@@ -8,6 +8,9 @@ import "fmt"
 // with their migration metadata.
 func RegisterAll(s *Scheduler, h *Handlers) error {
 	// --- Asia/Ho_Chi_Minh (ICT, UTC+7) jobs ---
+	if err := s.Register("privacy_export_artifact_cleanup", "0 0 * * * *", h.PrivacyExportArtifactCleanup); err != nil {
+		return fmt.Errorf("register privacy_export_artifact_cleanup: %w", err)
+	}
 
 	if err := s.Register("comeback_experience", "0 0 10 * * *", h.ComebackExperience); err != nil {
 		return fmt.Errorf("register comeback_experience: %w", err)

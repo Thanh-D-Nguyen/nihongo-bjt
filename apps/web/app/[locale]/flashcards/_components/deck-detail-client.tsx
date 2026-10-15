@@ -118,7 +118,7 @@ export function DeckDetailClient({
     setError(null);
     try {
       const r = await learnerApiFetch(
-        `/api/decks/${encodeURIComponent(deckId)}?userId=${encodeURIComponent(userId)}`
+        `/api/flashcards/decks/${encodeURIComponent(deckId)}`
       );
       if (!r.ok) {
         setDeck(null);

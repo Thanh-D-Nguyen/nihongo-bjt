@@ -74,6 +74,7 @@ services:
       MEILI_HOST: "http://meilisearch:7700"
       MEILI_MASTER_KEY: "${MEILI_MASTER_KEY}"
       CORS_ORIGINS: "http://localhost:13000,http://localhost:13001,http://192.168.1.8:13000,http://192.168.1.8:13001"
+      TRUSTED_PROXY_CIDRS: "172.29.254.3/32"
       MEDIA_ROOT: "/srv/kotobawork/data/media"
       SESSION_SECRET: "${SESSION_SECRET}"
       OAUTH_STATE_SECRET: "${OAUTH_STATE_SECRET}"
@@ -84,6 +85,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      default: {}
+      caddy_api:
+        ipv4_address: 172.29.254.2
+        aliases:
+          - api-proxy
 
   web:
     build:
@@ -128,5 +135,16 @@ services:
       - api
       - web
       - admin
+    networks:
+      default: {}
+      caddy_api:
+        ipv4_address: 172.29.254.3
+
+networks:
+  default: {}
+  caddy_api:
+    ipam:
+      config:
+        - subnet: 172.29.254.0/29
 
 volumes: {}

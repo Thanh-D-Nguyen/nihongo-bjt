@@ -1,0 +1,560 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUTONOMY-001",
+  "title": "Autonomy-first recovery and resumable scoped decisions",
+  "start_head": "c24ba033efe0b999a966a1018381efa03553e394",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Recoverable local environment failures can currently satisfy BLOCKED, and consequential decisions have no durable resumable execution state.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "AUTO/DECISION_REQUIRED/FORBIDDEN action policy preserves all existing quality gates and fingerprints."
+      },
+      {
+        "id": "AC2",
+        "text": "Durable recovery evidence rejects local missing/stopped tooling as immediate BLOCKED and retries the original goal after verified recovery."
+      },
+      {
+        "id": "AC3",
+        "text": "Identity-bound ONCE/TASK/WORKSPACE_CLASS decisions use native question, permission, then structured fallback and preserve WAITING_FOR_DECISION continuation."
+      },
+      {
+        "id": "AC4",
+        "text": "Hook and CLI adversarial tests cover cases A-K, guard bypass/secret exposure, stale identity, pending close, cancellation alternatives, and existing lifecycle regressions."
+      }
+    ],
+    "expected_behavior": "Recover safe local failures autonomously, require identity-bound consequential decisions, resume the suspended action, and reserve BLOCKED for exhausted external recovery.",
+    "observed_behavior": "A stopped local runtime can be reported BLOCKED after one failed alternative; safe recovery and scoped interactive continuation are absent.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Recoverable local environment failures and missing durable consequential-decision continuation are harness defects; quality gates remain intact."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "scripts/autonomy-regression.test.ts",
+      "test": "autonomy regression > rejects stopped Docker as an immediate human blocker",
+      "expect": "recoverable local"
+    },
+    {
+      "runner": "vitest",
+      "file": "scripts/autonomy-regression.test.ts",
+      "test": "autonomy regression > asks before deleting unverified persistent Docker data",
+      "expect": "ask"
+    }
+  ],
+  "sensitivity": {
+    "mutation": {
+      "file": "scripts/quality/harness/lib/guard.mjs",
+      "find": "if (classification?.class === \"DECISION_REQUIRED\") return { decision: \"ask\"",
+      "replace": "if (classification?.class === \"DECISION_REQUIRED\") return { decision: \"allow\""
+    },
+    "targets": [
+      {
+        "runner": "vitest",
+        "file": "scripts/autonomy-regression.test.ts",
+        "test": "autonomy regression > asks before deleting unverified persistent Docker data",
+        "expect": "ask"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [
+    {
+      "finding": "test_registration_changed:scripts/quality/harness/vitest.config.mjs",
+      "reason": "Adds the two bootstrap VALID_RED regressions to permanent canonical self-test discovery; retains all prior includes, forbids skips, and adds three required files so missing collection fails closed."
+    }
+  ],
+  "state": "REVIEW_REQUIRED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-03T10:18:54.775Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-03T10:19:27.573Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-03T10:19:49.207Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-03T10:25:54.919Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-03T11:17:17.454Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-03T11:29:26.246Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-03T11:32:12.020Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-03T11:45:55.113Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-03T11:48:24.065Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-03T10:20:47.892Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/autonomy.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/autonomy.test.ts::autonomy regression > rejects stopped Docker as an immediate human blocker",
+          "outcome": "NOT_FOUND",
+          "excerpt": "test file scripts/quality/harness/autonomy.test.ts was not collected",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:scripts/quality/harness/autonomy.test.ts::autonomy regression > asks before deleting unverified persistent Docker data",
+          "outcome": "NOT_FOUND",
+          "excerpt": "test file scripts/quality/harness/autonomy.test.ts was not collected",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/autonomy.test.ts::autonomy regression > rejects stopped Docker as an immediate human blocker": "recoverable local",
+        "vitest:scripts/quality/harness/autonomy.test.ts::autonomy regression > asks before deleting unverified persistent Docker data": "ask"
+      },
+      "fingerprint": "289c8f3f23fde0e99cc1a466b336f585e7fd65df5bbb9360d967609d4c4ef978"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-03T10:23:24.345Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/autonomy.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/autonomy.test.ts::autonomy regression > rejects stopped Docker as an immediate human blocker",
+          "outcome": "NOT_FOUND",
+          "excerpt": "test file scripts/quality/harness/autonomy.test.ts was not collected",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:scripts/quality/harness/autonomy.test.ts::autonomy regression > asks before deleting unverified persistent Docker data",
+          "outcome": "NOT_FOUND",
+          "excerpt": "test file scripts/quality/harness/autonomy.test.ts was not collected",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/autonomy.test.ts::autonomy regression > rejects stopped Docker as an immediate human blocker": "recoverable local",
+        "vitest:scripts/quality/harness/autonomy.test.ts::autonomy regression > asks before deleting unverified persistent Docker data": "ask"
+      },
+      "fingerprint": "289c8f3f23fde0e99cc1a466b336f585e7fd65df5bbb9360d967609d4c4ef978"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-03T10:25:34.348Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/autonomy.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run scripts/autonomy-regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/autonomy.test.ts::autonomy regression > rejects stopped Docker as an immediate human blocker",
+          "outcome": "NOT_FOUND",
+          "excerpt": "test file scripts/quality/harness/autonomy.test.ts was not collected",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:scripts/quality/harness/autonomy.test.ts::autonomy regression > asks before deleting unverified persistent Docker data",
+          "outcome": "NOT_FOUND",
+          "excerpt": "test file scripts/quality/harness/autonomy.test.ts was not collected",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:scripts/autonomy-regression.test.ts::autonomy regression > rejects stopped Docker as an immediate human blocker",
+          "outcome": "FAIL",
+          "excerpt": "expected '' to contain 'recoverable local'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:scripts/autonomy-regression.test.ts::autonomy regression > asks before deleting unverified persistent Docker data",
+          "outcome": "FAIL",
+          "excerpt": "expected 'allow' to be 'ask' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/autonomy.test.ts::autonomy regression > rejects stopped Docker as an immediate human blocker": "recoverable local",
+        "vitest:scripts/quality/harness/autonomy.test.ts::autonomy regression > asks before deleting unverified persistent Docker data": "ask",
+        "vitest:scripts/autonomy-regression.test.ts::autonomy regression > rejects stopped Docker as an immediate human blocker": "recoverable local",
+        "vitest:scripts/autonomy-regression.test.ts::autonomy regression > asks before deleting unverified persistent Docker data": "ask"
+      },
+      "fingerprint": "493c828ec88bdd6795837ce2a9550bd1d1244970d3f364c159e29e0f7cd7587b"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-03T10:25:54.736Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/autonomy-regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/autonomy-regression.test.ts::autonomy regression > rejects stopped Docker as an immediate human blocker",
+          "outcome": "FAIL",
+          "excerpt": "expected '' to contain 'recoverable local'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:scripts/autonomy-regression.test.ts::autonomy regression > asks before deleting unverified persistent Docker data",
+          "outcome": "FAIL",
+          "excerpt": "expected 'allow' to be 'ask' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/autonomy-regression.test.ts::autonomy regression > rejects stopped Docker as an immediate human blocker": "recoverable local",
+        "vitest:scripts/autonomy-regression.test.ts::autonomy regression > asks before deleting unverified persistent Docker data": "ask"
+      },
+      "fingerprint": "493c828ec88bdd6795837ce2a9550bd1d1244970d3f364c159e29e0f7cd7587b"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-03T10:55:22.030Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/autonomy-regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/autonomy-regression.test.ts::autonomy regression > rejects stopped Docker as an immediate human blocker",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:scripts/autonomy-regression.test.ts::autonomy regression > asks before deleting unverified persistent Docker data",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "de88e72cd7c6e485d8943e32da0d24c91e83000053f12e746d97d625664c0d0b"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-03T10:57:24.500Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "recovery",
+      "id": "c23798d0-429b-4408-9b9e-a603dd106990",
+      "request": {
+        "kind": "missing-history"
+      },
+      "fingerprint": "22cd18d8a6061226fd5042f2f99674078afe79c046a810ee49a9295048d9832c",
+      "outcome": "RECOVERED",
+      "attempts": [
+        {
+          "recipe": "durable-task-history",
+          "command": [
+            "git",
+            "cat-file",
+            "-e",
+            "c24ba033efe0b999a966a1018381efa03553e394^{commit}"
+          ],
+          "exit_code": 0,
+          "verification_exit": 0,
+          "verified": true
+        }
+      ],
+      "retry": {
+        "exit_code": 0
+      },
+      "records": [
+        {
+          "kind": "recovery_started",
+          "recipe": "durable-task-history",
+          "command": [
+            "git",
+            "cat-file",
+            "-e",
+            "c24ba033efe0b999a966a1018381efa03553e394^{commit}"
+          ],
+          "at": "2026-10-03T10:57:23.028Z"
+        },
+        {
+          "kind": "recovery_attempt",
+          "recipe": "durable-task-history",
+          "command": [
+            "git",
+            "cat-file",
+            "-e",
+            "c24ba033efe0b999a966a1018381efa03553e394^{commit}"
+          ],
+          "exit_code": 0,
+          "verification_exit": 0,
+          "verified": true,
+          "verification_command": [
+            "git",
+            "show",
+            "--no-patch",
+            "--format=%H",
+            "c24ba033efe0b999a966a1018381efa03553e394"
+          ],
+          "message": "",
+          "at": "2026-10-03T10:57:23.072Z"
+        },
+        {
+          "kind": "recovery_retry",
+          "exit_code": 0,
+          "recipe": "durable-task-history",
+          "at": "2026-10-03T10:57:24.411Z"
+        }
+      ]
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-03T11:00:59.848Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 233,
+        "executed": 233,
+        "passed": 233,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "0700910458b4566e992aa1b6280d2284f5d7a262ec76d8ac48f065807046ec86"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-03T11:17:16.427Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/autonomy-regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/autonomy-regression.test.ts::autonomy regression > rejects stopped Docker as an immediate human blocker",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:scripts/autonomy-regression.test.ts::autonomy regression > asks before deleting unverified persistent Docker data",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "28c5af5c8e16bfde587a9746c27e8bd647d694ef429a6c8e2e44919797374565"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-03T11:29:25.417Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 246,
+        "executed": 246,
+        "passed": 246,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "92393ebecdd121e69a41421408e4104b0eefc0a6f039b104261ea03d47a1e758"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-03T11:30:59.751Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "scripts/quality/harness/lib/guard.mjs",
+        "find": "if (classification?.class === \"DECISION_REQUIRED\") return { decision: \"ask\"",
+        "replace": "if (classification?.class === \"DECISION_REQUIRED\") return { decision: \"allow\""
+      },
+      "commands": [
+        "pnpm exec vitest run scripts/autonomy-regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/autonomy-regression.test.ts::autonomy regression > asks before deleting unverified persistent Docker data",
+          "outcome": "FAIL",
+          "excerpt": "expected 'allow' to be 'ask' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/autonomy-regression.test.ts::autonomy regression > asks before deleting unverified persistent Docker data": "ask"
+      },
+      "fingerprint": "92393ebecdd121e69a41421408e4104b0eefc0a6f039b104261ea03d47a1e758"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-03T11:32:10.617Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/autonomy-regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/autonomy-regression.test.ts::autonomy regression > rejects stopped Docker as an immediate human blocker",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:scripts/autonomy-regression.test.ts::autonomy regression > asks before deleting unverified persistent Docker data",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "92393ebecdd121e69a41421408e4104b0eefc0a6f039b104261ea03d47a1e758"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-03T11:45:54.312Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/autonomy-regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/autonomy-regression.test.ts::autonomy regression > rejects stopped Docker as an immediate human blocker",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:scripts/autonomy-regression.test.ts::autonomy regression > asks before deleting unverified persistent Docker data",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3d54b99e10ef6f221723142e6abc08124ab6a55aedd901e0a6b54eb0f62eac7d"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-03T11:46:10.713Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "scripts/quality/harness/lib/guard.mjs",
+        "find": "if (classification?.class === \"DECISION_REQUIRED\") return { decision: \"ask\"",
+        "replace": "if (classification?.class === \"DECISION_REQUIRED\") return { decision: \"allow\""
+      },
+      "commands": [
+        "pnpm exec vitest run scripts/autonomy-regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/autonomy-regression.test.ts::autonomy regression > asks before deleting unverified persistent Docker data",
+          "outcome": "FAIL",
+          "excerpt": "expected 'allow' to be 'ask' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/autonomy-regression.test.ts::autonomy regression > asks before deleting unverified persistent Docker data": "ask"
+      },
+      "fingerprint": "3d54b99e10ef6f221723142e6abc08124ab6a55aedd901e0a6b54eb0f62eac7d"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-03T11:48:23.217Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 249,
+        "executed": 249,
+        "passed": 249,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "3d54b99e10ef6f221723142e6abc08124ab6a55aedd901e0a6b54eb0f62eac7d"
+    }
+  ],
+  "closed": null
+}

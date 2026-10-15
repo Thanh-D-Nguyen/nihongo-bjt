@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/authz"
 )
 
 // ── P1-A1.11: Admin Operations — Import Batches Sub-Domain (1 route) ────────
@@ -15,11 +16,21 @@ import (
 
 // adminOpsImportBatchesListHandler implements GET /api/admin/operations/import-batches.
 func adminOpsImportBatchesListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return importAdminPermission(db, "admin.content.read", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		statusFilter := r.URL.Query().Get("status")
 		limit := queryInt(r, "limit", 50)
+		if limit < 1 {
+			limit = 1
+		}
+		if limit > 200 {
+			limit = 200
+		}
 		offset := queryInt(r, "offset", 0)
+		if offset < 0 {
+			writeJSONError(w, "offset must be non-negative", http.StatusBadRequest)
+			return
+		}
 
 		whereClause := ""
 		args := []any{}
@@ -72,7 +83,11 @@ FROM content.content_import_batch` + whereClause + ` ORDER BY created_at DESC LI
 			var startedAt, completedAt *time.Time
 			if err := rows.Scan(&b.ID, &b.SourceType, &b.SourceDir, &b.Status,
 				&b.FileCount, &b.ItemCount, &b.ErrorCount,
-				&startedAt, &completedAt, &createdAt); err == nil {
+				&startedAt, &completedAt, &createdAt); err != nil {
+				logger.Error("scan import batches", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			} else {
 				b.CreatedAt = createdAt.UTC().Format(time.RFC3339)
 				if startedAt != nil {
 					s := startedAt.UTC().Format(time.RFC3339)
@@ -85,11 +100,20 @@ FROM content.content_import_batch` + whereClause + ` ORDER BY created_at DESC LI
 				items = append(items, b)
 			}
 		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate import batches", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		if items == nil {
 			items = []Batch{}
 		}
 
 		writeJSON(w, http.StatusOK, map[string]any{"items": items, "total": total})
-	}
+	})
+}
+
+func importAdminPermission(db *pgxpool.Pool, permission string, handler http.HandlerFunc) http.HandlerFunc {
+	return authz.RequirePermission(authz.NewStore(db), permission)(handler).ServeHTTP
 }

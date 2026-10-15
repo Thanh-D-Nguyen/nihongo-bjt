@@ -1,0 +1,349 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-139",
+  "title": "Fix Admin Magazine mobile overflow",
+  "start_head": "3d2ce7b0318f136786f9a147eaaa75c763418882",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "At narrow mobile viewport, the Magazine articles table widens the Admin document beyond the viewport.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "At 390x844, Admin Magazine content stays within the viewport; any wide table scrolls within its own accessible region rather than expanding the document."
+      },
+      {
+        "id": "AC2",
+        "text": "Visible headed-browser verification covers the authenticated Magazine list and generate flow with no page overflow or unexpected console errors."
+      },
+      {
+        "id": "AC3",
+        "text": "Desktop layout and the separate API inventory verdicts remain unchanged; update the screen inventory and report this screen as PASS only after retesting."
+      },
+      {
+        "id": "AC4",
+        "text": "At 390x844, Admin Magazine content stays within the viewport; any wide table scrolls within its own accessible region rather than expanding the document."
+      },
+      {
+        "id": "AC5",
+        "text": "Visible headed-browser verification covers the authenticated Magazine list and generate flow with no page overflow or unexpected console errors."
+      },
+      {
+        "id": "AC6",
+        "text": "Desktop layout and separate API inventory verdicts remain unchanged; report this screen PASS only after retesting."
+      }
+    ],
+    "expected_behavior": "The table is horizontally scrollable inside a keyboard-accessible region and the document width stays within the viewport.",
+    "observed_behavior": "Headed browser at 390x844 measured document scrollWidth about 498-500px due to the uncontained table.",
+    "rollback_plan": "Remove the table container and its regression test; no data or API changes are involved."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY",
+      "TEST_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Fix the Admin Magazine mobile table and keep its headed-browser audit harness lint-clean."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/admin/app/[locale]/magazine/magazine-admin-client.test.tsx",
+      "test": "Magazine mobile layout > keeps the article table inside a keyboard-accessible horizontal scroll region",
+      "expect": "overflow-x-auto"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-13T08:00:12.259Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-13T08:00:12.620Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-13T08:00:12.987Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T08:02:40.428Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T08:02:53.655Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T08:08:41.574Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T08:09:48.029Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T11:10:56.492Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T11:11:22.284Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-13T11:16:39.802Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-13T11:16:54.375Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-13T08:02:40.238Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/[locale]/magazine/magazine-admin-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/[locale]/magazine/magazine-admin-client.test.tsx::Magazine mobile layout > keeps the article table inside a keyboard-accessible horizontal scroll region",
+          "outcome": "FAIL",
+          "excerpt": "expected 'space-y-3' to contain 'overflow-x-auto'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/admin/app/[locale]/magazine/magazine-admin-client.test.tsx::Magazine mobile layout > keeps the article table inside a keyboard-accessible horizontal scroll region": "overflow-x-auto"
+      },
+      "fingerprint": "4819a2b0aaaab6b447a828ec2996b84e5e955c6e92294b4290e8831645d4daa6"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-13T08:02:53.437Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/[locale]/magazine/magazine-admin-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/[locale]/magazine/magazine-admin-client.test.tsx::Magazine mobile layout > keeps the article table inside a keyboard-accessible horizontal scroll region",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8bd2d4014bda87d2872f3519b886e2b5b0b556d8e7b4f83a2a15b2a65a0996fe"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-13T08:08:41.238Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 466,
+        "executed": 466,
+        "passed": 466,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 794,
+        "lint_errors": 77,
+        "lint_warnings": 22,
+        "new_debt": 3
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "8bd2d4014bda87d2872f3519b886e2b5b0b556d8e7b4f83a2a15b2a65a0996fe"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-13T08:09:47.621Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/[locale]/magazine/magazine-admin-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/[locale]/magazine/magazine-admin-client.test.tsx::Magazine mobile layout > keeps the article table inside a keyboard-accessible horizontal scroll region",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "152ecb7693701640f697bcf15571f9357bbf9f1302c3665748eb78bc855bdb5b"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-13T08:14:32.453Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 466,
+        "executed": 466,
+        "passed": 466,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 794,
+        "lint_errors": 66,
+        "lint_warnings": 22,
+        "new_debt": 1
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "359b16a1a037599ec7c849cd3efa4b794a09cdc0800ece329735131ccb19e77e"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-13T11:05:36.779Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/[locale]/magazine/magazine-admin-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/[locale]/magazine/magazine-admin-client.test.tsx::Magazine mobile layout > keeps the article table inside a keyboard-accessible horizontal scroll region",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8373dcf9e775100382ecefc658a723c1293a2f0879944dc802102795cba0b502"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-13T11:10:56.064Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 466,
+        "executed": 466,
+        "passed": 466,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 794,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "8373dcf9e775100382ecefc658a723c1293a2f0879944dc802102795cba0b502"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-13T11:11:21.856Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/[locale]/magazine/magazine-admin-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/[locale]/magazine/magazine-admin-client.test.tsx::Magazine mobile layout > keeps the article table inside a keyboard-accessible horizontal scroll region",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "4c6c03c894359d7fd1d73899bd0a37a5004112627e7ce03b9ee0f03685ae14ea"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-13T11:16:39.370Z",
+      "head": "3d2ce7b0318f136786f9a147eaaa75c763418882",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 466,
+        "executed": 466,
+        "passed": 466,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 794,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "4c6c03c894359d7fd1d73899bd0a37a5004112627e7ce03b9ee0f03685ae14ea"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-13T11:16:54.356Z",
+    "head": "3d2ce7b0318f136786f9a147eaaa75c763418882",
+    "fingerprint": "4c6c03c894359d7fd1d73899bd0a37a5004112627e7ce03b9ee0f03685ae14ea",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/admin/app/[locale]/magazine/magazine-admin-client.test.tsx": "596a6715f89d6f076d9ccdaf426cf29b11e1877a",
+      "apps/admin/app/[locale]/magazine/magazine-admin-client.tsx": "889771d5d981662cd85ee926d3673f42981fa127",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "ef8b37e9ecc36245c2e54df8efdb324ad820185b",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "1ee4f910acbd416520c7a00ca9ade35f83d6b06d",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "321c27e8013cba0beed6b39f53556894c9b0a180",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "65fa4fd462387197fedb1321ad811365dd11f0a5",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "7939abf427f32c4e27b10e1cfa0cf0c94985b70d",
+      "docs/migrations/go-backend-v2/reports/HANDOFF_NEXT_AUDIT.md": "d4301c32365b42ec6108e21a1db2139a5842f655",
+      "e2e/audit/audit138-admin-apis.mjs": "897dad4afe5907eae0b1b0727ea04e0248b42620",
+      "e2e/audit/audit138-fixture.mjs": "49225e1c14c8b65e095a2c44e3e88b64c32a0836"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

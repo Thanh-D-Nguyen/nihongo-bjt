@@ -4,6 +4,7 @@ package authn
 import (
 	"errors"
 	"net"
+	"strings"
 	"sync"
 	"time"
 )
@@ -11,11 +12,12 @@ import (
 // Default rate-limiter tuning. Exported so tests and wiring can reference them
 // without re-declaring magic numbers. Production may override via NewRateLimiter.
 const (
-	DefaultLoginLimit    = 10              // requests per window per key
-	DefaultLoginWindow   = 1 * time.Minute // token-bucket reset period
-	DefaultLoginTTL      = 5 * time.Minute // idle-key eviction horizon
-	DefaultLoginMaxKeys  = 10_000          // hard cap on distinct keys in memory
-	DefaultEvictInterval = 30 * time.Second
+	DefaultLoginLimit      = 10              // requests per window per key
+	DefaultLoginWindow     = 1 * time.Minute // token-bucket reset period
+	DefaultLoginTTL        = 5 * time.Minute // idle-key eviction horizon
+	DefaultLoginMaxKeys    = 10_000          // hard cap on distinct keys in memory
+	DefaultEvictInterval   = 30 * time.Second
+	DefaultPublicReadLimit = 120 // public reads per window per key
 )
 
 // ErrLimiterFull is returned by Allow when the bucket map is at capacity and
@@ -68,6 +70,14 @@ func DefaultRateLimiterConfig() RateLimiterConfig {
 		MaxKeys:    DefaultLoginMaxKeys,
 		EvictEvery: DefaultEvictInterval,
 	}
+}
+
+// DefaultPublicReadRateLimiterConfig bounds unauthenticated catalog/search reads
+// without applying the stricter login-abuse budget to normal browsing.
+func DefaultPublicReadRateLimiterConfig() RateLimiterConfig {
+	config := DefaultRateLimiterConfig()
+	config.Limit = DefaultPublicReadLimit
+	return config
 }
 
 // ValidateRateLimiterConfig checks that all fields are positive and that
@@ -228,6 +238,34 @@ func NormalizePeerIP(remoteAddr string) string {
 		return host
 	}
 	return "unknown"
+}
+
+// NormalizeClientIP uses the rightmost X-Forwarded-For address only when the
+// direct peer is loopback or belongs to an explicitly configured trusted proxy
+// CIDR. Other peers cannot spoof rate-limit keys with forwarding headers.
+func NormalizeClientIP(remoteAddr, forwardedFor string, trustedProxyCIDRs ...[]*net.IPNet) string {
+	peerIP := NormalizePeerIP(remoteAddr)
+	peer := net.ParseIP(peerIP)
+	trusted := peer != nil && peer.IsLoopback()
+	if peer != nil && !trusted && len(trustedProxyCIDRs) > 0 {
+		for _, network := range trustedProxyCIDRs[0] {
+			if network != nil && network.Contains(peer) {
+				trusted = true
+				break
+			}
+		}
+	}
+	if !trusted {
+		return peerIP
+	}
+
+	forwarded := strings.Split(forwardedFor, ",")
+	for i := len(forwarded) - 1; i >= 0; i-- {
+		if ip := net.ParseIP(strings.TrimSpace(forwarded[i])); ip != nil {
+			return ip.String()
+		}
+	}
+	return peerIP
 }
 
 // isValidHostname reports whether s looks like a plausible DNS hostname.

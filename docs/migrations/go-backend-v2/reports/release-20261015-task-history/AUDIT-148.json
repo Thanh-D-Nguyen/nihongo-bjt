@@ -1,0 +1,88 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-148",
+  "title": "Checkpoint AUDIT-146 and AUDIT-147 audit state",
+  "start_head": "2b33ed3f79f868f3788cf90788bd4472998daa91",
+  "preexisting_changes": {
+    "apps/admin/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/admin/tsconfig.tsbuildinfo": "3735c225d7c44f090d27c5807d67bcc30be3e998",
+    "apps/web/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/web/tsconfig.tsbuildinfo": "e16cf963ec5eeb9832ca0a54b78e7dca8e6be331"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "AC1: the ten AUDIT-146 METHOD+PATH rows are PASS with evidence and fix commit f6355eab; totals equal the record counts and the invariant holds."
+      },
+      {
+        "id": "AC2",
+        "text": "AC2: the Postcards screen is recorded FAIL with the unregistered share-template preview route; Campaigns records the AUDIT-147 corrected return path."
+      },
+      {
+        "id": "AC3",
+        "text": "AC3: handoff and browser audit documents name the next item and the open defects."
+      }
+    ],
+    "expected_behavior": "Inventories, state and handoff record the verified AUDIT-146 API verdicts, AUDIT-147 fix, screen states and recomputed totals.",
+    "observed_behavior": "Durable audit inventories and handoff still show AUDIT-145 as the latest checkpoint; AUDIT-146 and AUDIT-147 results are committed but unrecorded.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "DOC_ONLY"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-14T10:10:13.768Z",
+      "head": "2b33ed3f79f868f3788cf90788bd4472998daa91"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-14T10:10:14.166Z",
+      "head": "2b33ed3f79f868f3788cf90788bd4472998daa91"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-14T10:10:14.547Z",
+      "head": "2b33ed3f79f868f3788cf90788bd4472998daa91"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-14T10:11:58.006Z",
+      "head": "2b33ed3f79f868f3788cf90788bd4472998daa91"
+    }
+  ],
+  "evidence": [],
+  "closed": {
+    "at": "2026-10-14T10:11:57.986Z",
+    "head": "2b33ed3f79f868f3788cf90788bd4472998daa91",
+    "fingerprint": "5089ad43baeeee730b3e6278ff7a3206c5501bfdc88ebec6542ea30c93905a23",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS"
+    },
+    "files": {
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "de6ec1a4653c48695f7bfd707d800e4d3e73a477",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "9ba9bac655757cc8120d8a2942028f9e2b94a088",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "0ba5c3992f499404203c234dec538afd43fd85ea",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "d5d312e66bce58d8d4f53a90e20ba446f498fece",
+      "docs/migrations/go-backend-v2/reports/HANDOFF_NEXT_AUDIT.md": "7ad518ce1b207b4377588931084edefd1ffaa687"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

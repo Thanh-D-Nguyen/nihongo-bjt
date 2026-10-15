@@ -3,7 +3,7 @@
 **Status**: ACTIVE  
 **Effective**: 2026-10-02  
 **Scope**: All behavior-changing work in this repository  
-**Authority**: This document is the canonical engineering workflow. Repository-level instructions (`CLAUDE.md`, `AGENTS.md`, `AI_CONTEXT.md`) reference it. CI enforces the gates (§11–§13); the lifecycle and classification (§1–§5) are enforced in review — CI cannot prove a test was written first.
+**Authority**: This document is the canonical engineering workflow. Its machine-readable half is [`engineering-policy.json`](engineering-policy.json) (classes, change kinds, gate derivation, path rules, risk rules), consumed by the lifecycle harness (§16). Agent entrypoints (`CLAUDE.md`, `AGENTS.md`, `AI_CONTEXT.md`, `.github/copilot-instructions.md`) only point here. Which rule is enforced where (repo / local hook / CI / platform / review) is listed in §16.6 — nothing below is claimed as machine-enforced unless it appears there.
 
 ---
 
@@ -64,12 +64,19 @@ Classify every nontrivial change before implementation. A change may have multip
 | `CACHE` | Redis/cache behavior, TTL changes, invalidation logic |
 | `SEARCH` | Meilisearch indexing, query behavior, relevance tuning |
 | `REALTIME` | WebSocket protocol, message handling, connection lifecycle |
-| `INFRASTRUCTURE` | Build, deployment, Caddy config, Docker, CI pipeline changes |
-| `CROSS_CUTTING` | Changes spanning multiple classifications |
+| `INFRASTRUCTURE` | Build, deployment, Caddy config, Docker |
+| `CI_QUALITY_SYSTEM` | CI workflows, quality scripts, debt baselines, the lifecycle harness, write guard, this policy, agent entrypoints |
+| `FORMAT_ONLY` / `GENERATED` / `DEPENDENCY_METADATA` | No semantic change: formatter output, generated code, lockfiles/manifests |
+| `FUNCTION_DELETION` | Removing an endpoint, event, function or feature (change kind `delete`, §5) |
+| `CROSS_CUTTING` | Changes spanning multiple classifications (adds review; does not replace the specific classes) |
+
+Classification is declared with `pnpm quality classify` and checked by machine: changed paths force classes (`path_rules` in `engineering-policy.json`) — e.g. any file under `apps/api-go/internal/realtime/` requires `REALTIME`, `.github/**` and `scripts/quality/**` require `CI_QUALITY_SYSTEM`. A change kind (`add`, `modify`, `bugfix`, `delete`, `characterization`, `refactor`, `non_behavioral`) is declared alongside.
 
 ---
 
 ## 3. Risk-Based Quality Gate Matrix
+
+The authoritative gate derivation is `requiredGates()` over `engineering-policy.json`: gates = `acceptance` + class gates + change-kind gates (`red`+`green` for add/modify/bugfix/delete unless a declared `red_exception`; `sensitivity`+`green` for characterization; `review` for refactor) + suites for the changed areas (`suite_go`, `suite_frontend`, `suite_harness`) + `review` for high-risk classes, exceptions and high-risk diff findings. The table is the human summary.
 
 | Classification | Required Gates |
 |---------------|----------------|
@@ -83,8 +90,10 @@ Classify every nontrivial change before implementation. A change may have multip
 | `CACHE` | VALID_RED + relevant Redis integration |
 | `SEARCH` | VALID_RED + relevant Meilisearch integration |
 | `REALTIME` | VALID_RED + protocol/component tests + real-upgrade tests (`internal/realtime/upgrade_integration_test.go`) + race verification |
-| `INFRASTRUCTURE` | Config validation + build/deployment test + health/readiness + smoke |
-| `CROSS_CUTTING` | Union of all affected gates |
+| `INFRASTRUCTURE` | Config validation + build/deployment test + health/readiness + smoke (`infra_validation`) + independent review |
+| `CI_QUALITY_SYSTEM` | `suite_harness` (invariants + adversarial mutation suite) + independent review |
+| `FUNCTION_DELETION` | removal RED + `deletion_audit` (consumer audit + stale-reference scan) |
+| `CROSS_CUTTING` | Union of all affected gates + independent review |
 
 ---
 
@@ -216,6 +225,7 @@ A change is Done when ALL applicable conditions are met:
 - [ ] No weakened/deleted assertions without contract reasoning
 - [ ] CI passes all enforced gates
 - [ ] Documentation updated where contracts/interfaces changed
+- [ ] `pnpm quality close` succeeded (VERIFIED, or PARTIAL reported as PARTIAL) and `tasks/<ID>.json` is committed with the change (§16)
 
 ---
 
@@ -230,6 +240,8 @@ CI (`.github/workflows/ci.yml`) runs exactly these scripts; there is no separate
 | `scripts/quality/verify-go.sh` | gofmt · vet · `go test` with PostgreSQL integration + skip audit · race · ARM64 build. Requires `TEST_DATABASE_URL`; `--unit-only` is explicitly PARTIAL |
 | `scripts/quality/verify-frontend.sh` | typecheck · lint + unit-test debt ratchet · build |
 | `node scripts/quality/check-frontend-debt.mjs` | Frontend debt ratchet alone (§13) |
+| `scripts/quality/verify-harness.sh` | Quality-system invariants + harness adversarial self-test (§16) |
+| `pnpm quality verify` / `pnpm quality check` | Run the suites a task requires (with execution accounting) / the CI lifecycle check locally (§16) |
 | `pnpm test:e2e` / `playwright test -c playwright.staging.config.ts` | Browser E2E — **manual only** (see below) |
 
 Running `pnpm lint` or `pnpm test` directly shows the pre-existing debt and exits non-zero; the ratchet is what decides PASS/FAIL.
@@ -256,16 +268,20 @@ When reporting test/gate status, use these precise definitions:
 |------|---------|
 | **COVERED** | An adequate executable automated test exists for this behavior in the repository |
 | **VERIFIED** | The test/gate was executed against the current HEAD and passed — skipped tests are not verified |
-| **BLOCKED** | Adequate executable verification exists but cannot currently run due to an external/environment dependency (missing service, credentials, device) |
+| **BLOCKED** | Adequate executable verification exists but cannot currently run due to an external/environment dependency, **after the blocker protocol** (§16.4). A task with a BLOCKED gate closes as **PARTIAL**, never VERIFIED |
+| **PARTIAL** | Some but not all required gates are VERIFIED; the rest are BLOCKED with a valid protocol |
 | **UNTESTED** | No adequate executable coverage exists for this behavior |
 | **PR_HEAD_VERIFIED** | All CI gates (§11, excluding browser E2E) passed for the head commit |
 | **FULL_SYSTEM_VERIFIED** | PR_HEAD_VERIFIED **and** the browser E2E journeys passed against a live stack built from the same commit |
+| **RELEASE_VERIFIED** | The deployed commit is exactly the SHA CI validated on `main` (`scripts/quality/verify-ci-passed.sh` in `deploy-gcp.yml`) and post-deploy health checks passed for it |
 
 **Rules:**
 - Do NOT report an existing-but-not-executed (or skipped) test as VERIFIED. `go test` printing `ok` while tests `t.Skip` is not verification; CI fails any skip not in `scripts/quality/go-test-skips-baseline.json`.
 - Do NOT report BLOCKED as UNTESTED if the test code exists and is correct; do NOT report UNTESTED as BLOCKED.
 - Loopback testing (`httptest.NewServer`, Docker on 127.0.0.1) is not an external dependency; "the sandbox cannot bind ports" must be demonstrated, not assumed.
 - Do NOT call a commit FULL_SYSTEM_VERIFIED while browser E2E is manual and has not been run against that commit.
+- Characterization tests are labeled characterization (change kind), never TDD; no historical RED is fabricated.
+- Report task status from `pnpm quality status` / the CI lifecycle job, not from memory.
 
 ---
 
@@ -309,11 +325,85 @@ See [`docs/migrations/MIGRATION_CLOSURE.md`](../migrations/MIGRATION_CLOSURE.md)
 
 ## 15. Agent Discoverability
 
-`CLAUDE.md`, `AGENTS.md` and `AI_CONTEXT.md` all point here; this document is the single source of truth for workflow and gates. Future coding agents MUST:
+`CLAUDE.md`, `AGENTS.md`, `AI_CONTEXT.md` and `.github/copilot-instructions.md` all point here (checked by the `ENTRYPOINT_POINTER` invariant); this document is the single source of truth for workflow and gates. Future coding agents — Claude Code, GhostCLI, Codex, IDE agents — and humans MUST run every non-doc change through the lifecycle harness (§16): `pnpm quality begin` … `pnpm quality close`. A fresh session resumes from `pnpm quality status` + the task record + the diff; no conversation history is needed.
 
-1. Classify the change (§2) and pick the gates (§3)
-2. Follow the lifecycle (§1) — VALID_RED where §1 says it applies; ADD/MODIFY/DELETE per §5
-3. Run the canonical commands (§11) — never report skipped or unexecuted checks as VERIFIED (§12)
-4. Document exceptions (§9) in the commit/PR
+---
 
-This workflow survives any individual AI session. The repository is the source of truth.
+## 16. Lifecycle Harness (enforcement)
+
+Prose is advisory; the harness makes the process executable. Code: `scripts/quality/harness/`; usage: [`scripts/quality/README.md`](../../scripts/quality/README.md).
+
+### 16.1 Task records
+
+Each change is a task `tasks/<ID>.json` (committed with the change): `start_head`, pre-existing uncommitted changes (never owned unless explicitly claimed with `pnpm quality claim`; `pnpm quality disown` hands a file back), spec/acceptance, classification, red targets, exceptions, risk acknowledgements, and **harness-written evidence** (each entry with `seq`, HEAD and the content fingerprint). Gate status is never stored as truth — it is recomputed from evidence, locally and in CI.
+
+**Identity**: the fingerprint is a sha256 over the git blob ids of the task's changed files. Evidence counts only if its fingerprint equals the fingerprint at close, and CI checks that the merged blobs equal the closed ones. Branch names are never artifact identity. Tracked build artifacts that the gate tools rewrite on every run (`volatile_paths` in the policy JSON: `tsconfig.tsbuildinfo`, `next-env.d.ts`) are excluded from ownership and fingerprints.
+
+### 16.2 States
+
+`CREATED → SPECIFIED → CLASSIFIED → RED_REQUIRED → VALID_RED → IMPLEMENTING → GREEN → VERIFYING → REVIEW_REQUIRED → REVIEWED | EXCEPTION_APPROVED → READY_TO_CLOSE → CLOSED`, plus `BLOCKED`. Not every task passes every state: DOC_ONLY goes `CLASSIFIED → READY_TO_CLOSE`; characterization replaces RED with sensitivity. States are derived from evidence (`deriveState`), so a state cannot be skipped by editing the record.
+
+### 16.3 VALID_RED, GREEN, sensitivity
+
+- `pnpm quality red --go ./pkg:TestX --expect "<text>"` (or `--vitest <file>::"<suite > test>"`) runs the target with the task's production files at their **start_head state** (in place, or in a scratch worktree if production already changed). VALID only if the target executed and failed, the failure contains `expect`, and shows no infrastructure signature. PASS (behavior already exists), SKIP, NOT_FOUND, compile/import failure and runner/tool failure are rejected and recorded as such.
+- Brand-new code whose tests cannot compile against the base declares `--red-exception new_component` at classification time; sensitivity replaces RED: `pnpm quality sensitivity --file F --find S --replace R --go ./pkg:TestX --expect "<assertion text>"` proves the tests fail **with their own assertion** when the production implementation is changed (the mutation must target a production file, may not inject a crash, and runs in a scratch worktree; the working tree is never mutated).
+- CI **replays** RED (the task's production files reverted to the task's start, or the range base when that start is not in history), GREEN and sensitivity for every task in the range, each at the first commit matching its closed fingerprint and file blobs. Later task-record edits cannot move that historical replay. Retained production files also require GREEN on the final tree; sensitivity is repeated with the final tests when its production file remains unchanged. Go runtime panics and non-assertion Vitest exceptions cannot satisfy RED or sensitivity.
+
+### 16.4 BLOCKED protocol
+
+`pnpm quality block <gate> --protocol blocker.json` requires: `reproduced: true`, the exact `error`, every gate `known_alternatives` entry addressed (`attempted`, `result`), `workaround_attempted`, `why_not_viable`, `remaining.kind` from the external-blocker allowlist, and the exact `capability_required`. `recovery_ids` reference current-fingerprint EXHAUSTED recovery records with at least two distinct executed failed paths. A first failure, missing tooling/history or stopped local service cannot justify BLOCKED. A pending decision stays WAITING_FOR_DECISION. Only gates marked `blockable` can be BLOCKED; RED/GREEN/sensitivity/harness/review cannot. Recovery facts/external impossibility remain attested, not cryptographic proof of execution.
+
+### 16.5 CI lifecycle job (`lifecycle` in `.github/workflows/ci.yml`)
+
+1. `cli.mjs check --ci`: quality-system invariants; every changed non-doc file owned by a CLOSED task in the range (`UNOWNED` otherwise); classes forced by paths; gates recomputed from policy; evidence fingerprints = closed fingerprint; merged blobs = closed blobs (`STALE` otherwise); `closed.status` = what the evidence supports (PARTIAL cannot be relabeled VERIFIED); forbidden diff patterns (`.only`, `continue-on-error`, `|| true` in workflows, CI baseline writes) fail outright; high-risk patterns (`.skip`/`t.Skip`, deleted tests, fewer assertions, suppressions, swallowed failures in scripts, test-discovery config changes, weakened baselines) must be acknowledged in the task and force independent review.
+2. `verify-harness.sh`: invariants + harness unit/e2e/adversarial mutation suite (zero skips; required files must run).
+3. `cli.mjs replay --ci`: RED/GREEN/sensitivity re-execution against real PostgreSQL.
+
+Suites record execution accounting (`discovered/executed/passed/failed/skipped/expected_skips/unexpected_skips`); missing accounting, zero executed tests, unexpected skips or a tool failure are never PASS. Exit codes everywhere: `0` PASS · `1` VIOLATION · `2` TOOL_FAILURE.
+
+### 16.6 Enforcement map (honest)
+
+| Rule | Where enforced | Bypass conditions |
+|------|----------------|-------------------|
+| Classification forced by paths; gates derived from policy | CI (`check`), LOCAL (`close`, hook) | none in CI |
+| Every changed non-doc file owned by a CLOSED task | CI | pure docs are exempt by design (agent-instruction files under `.claude/`, `.cursor/`, `.github/` are not docs) |
+| VALID_RED: target fails against the pre-task code for the declared reason, passes on the task's code | CI (`replay`, each task at the commit that closed it), LOCAL (`red`) | a declared `red_exception`: `new_component` is replaced by a CI-replayed sensitivity mutation of production code; `config_only`, `not_reproducible` (bugfix only), `visual_only`, `schema_only` and change kind `refactor` rest on **attested review** (see below). Chronological test-first ordering is LOCAL (hook) + REVIEW |
+| Sensitivity mutation breaks production code (never the test itself) | CI (`check` + `replay`) | none |
+| Deletion stale-reference scan | CI (recomputed on the merged tree) | `allowed_references` entries need a reason and are visible in the diff |
+| Production edits wait for SPECIFIED/CLASSIFIED/VALID_RED | LOCAL (Claude Code `PreToolUse` hook) | sessions without project hooks (`--bare`, other CLIs), any program writing files (`node -e`, scripts), `QUALITY_GUARD=off` set by a human |
+| Evidence fields written only by the harness | LOCAL (hook denies tool edits) | hand-written JSON. CI then recomputes what it can: classes, gates, fingerprints, freshness, RED/GREEN/sensitivity replay, deletion scan, suite results (CI re-runs every suite) |
+| No unexpected skips / tool failure ≠ pass / zero tests ≠ pass | CI (suites + accounting) | none |
+| Debt identity ratchets; baselines never written by CI; canonical baseline path | CI | baseline expansion with acknowledgement + review |
+| BLOCKED needs the blocker protocol; PARTIAL never reported as VERIFIED | LOCAL + CI | — |
+| A PARTIAL task merges only when accepted | CI (`QUALITY_ACCEPT_PARTIAL` from PR label `quality:accept-partial`) | PLATFORM: who may label PRs |
+| Deploy only the CI-validated SHA | CI (`verify-ci-passed.sh` + invariants) | PLATFORM: who may edit workflows / environments |
+| Unknown CI diff base (force push) | CI fails closed (TOOL_FAILURE) | — |
+| **Attested gates**: `review`, command gates (`browser_e2e`, `infra_validation`, `search_integration`), `rollback_analysis`, BLOCKED claims | REVIEW. CI validates structure and fingerprint binding, lists them as *ATTESTED* in the job summary, but cannot prove who reviewed or that a command ran | an agent can write these records. Independent human approval for tasks with attested gates is **PLATFORM_SETTING_REQUIRED** (branch protection: required review, CODEOWNERS on `tasks/`, `.github/`, `scripts/quality/`) |
+| Required checks block merge | PLATFORM_SETTING_REQUIRED (branch protection on `main`: require `checks`, `go-checks`, `lifecycle`; disallow direct pushes) | repository admins |
+
+Limitations: replay of *dependent* tasks in one PR needs their intermediate commits (merge or rebase merge). If no historical commit matches a task's closed artifacts, replay fails closed; supersession never skips an entire task. Production files rewritten by a later task are validated by that task's replay and the suites on the final tree; unchanged files retain their final GREEN/sensitivity checks. Keep dependent tasks in separate PRs, or do not squash.
+
+## 17. Autonomy-first execution, recovery, and decisions
+
+The human is a decision maker, not a machine operator. Agents MUST repair ordinary local reversible problems themselves: discover the repository tool/version, prefer existing/project/user-local tooling, otherwise use a trusted nonprivileged package manager, verify health, then retry the original goal. This includes stopped Docker/Compose/PostgreSQL/Redis/Meilisearch/Caddy/API/frontend, missing dependencies/CLIs/Playwright browsers, stale artifacts, proven project-owned stale processes, disposable infrastructure, stopped local tools and missing conversation history. Reconstruct durable task/Git/evidence state. Never ask the human to run commands, start services, inspect logs, open a browser or restore context when the agent can do it.
+
+`engineering-policy.json.autonomy` defines AUTO, DECISION_REQUIRED, FORBIDDEN and consent scopes. AUTO is normal local reversible work. Consequential privilege, valuable-data destruction, remote mutations, public exposure, paid actions, credential/security changes, published-history rewrites and irreversible work outside the workspace need a decision. Known-secret exposure, gate bypass, fabricated/deleted unverified evidence and out-of-scope production destruction are FORBIDDEN: ordinary consent cannot authorize them.
+
+Recovery is DETECT → DIAGNOSE → RECOVER → VERIFY → RETRY ORIGINAL GOAL; failure means diagnose and try a reasonable alternative. `pnpm quality recover --request file.json` executes bounded recipes for local Docker, pinned/user-local tools, frozen dependencies, Chromium, validated Compose services, existing generation scripts and durable task/Git reconstruction. It health-checks, retries and durably records traces before effects. EXHAUSTED is recovery evidence, not a task BLOCKED transition. NEEDS_DIAGNOSIS means missing local inputs/recipe coverage: keep RUNNING and try another safe local tool/path, never ask the human merely because a recipe is unavailable. Only a proven consequential action returns DECISION_REQUIRED. Other safe recovery strategies remain the agent's responsibility.
+
+Decisions are an execution overlay; quality gates do not change. WAITING_FOR_DECISION preserves action, target, impact, choices, suspended step and continuation, and prevents closure/BLOCKED. Prefer native AskUserQuestion with 2–4 meaningful options, then native permission, then a structured pending request. Do not issue a final report or terminate merely to ask. Continue independent safe work. After selection resume the saved operation immediately; cancellation applies only to that operation and invokes its safe alternative if supplied.
+
+`lib/autonomy.mjs` provides client callbacks for interactive question/permission/structured transport and continuation. CLI inspect/request/answer/resume supports live path/database identity; answering runs saved argv without shell evaluation. Consent binds policy, worktree, exact target (including nested identity), operation and continuation. ONCE is consumed durably before the effect. TASK/WORKSPACE_CLASS reuse only that exact operation/identity within scope. Another DB, remote environment, changed server startup/DB identity, policy or copied worktree journal invalidates consent. Records reject secret values: use environment references. Authority stays in ignored `tasks/.logs/autonomy/`; committed task summaries carry no grants. Interrupted effects become UNKNOWN_OUTCOME, stay waiting and require diagnosis/reconciliation before retry. Never delete locks or uncertain evidence to get green.
+
+Installed Claude Code 2.1.285 was inspected. Standard project hooks/permissions/AskUserQuestion are used; Anthropic Auto mode is neither assumed nor required for GhostCLI/providers. PreToolUse allows recognized ordinary local work, asks about obvious consequences and denies obvious forbidden operations. Native post-success resolves only its original tool call and mints no reusable grant. Denial without a post event remains waiting: cancel with the recorded CLI choice and continue safe alternatives. Post-failure remains uncertain. Headless clients without a question host use the broker's structured waiting request; absent UI is neither failure nor consent.
+
+| Boundary | Enforcement |
+|---|---|
+| Action/consent/identity checks, secret rejection, durable ONCE consumption, waiting prevents closure | REPO_ENFORCED by broker/CLI; adversarial self-tests run in CI |
+| Obvious shell consequences/forbidden operations and protected task execution/evidence fields | LOCAL hook when project hooks load; host permission authorizes only the exact native call |
+| Recovery execution, health verification and original-goal retry before RECOVERED | REPO_ENFORCED for supported recovery recipes |
+| Choose/attempt reasonable repairs, inspect arbitrary programs, continue parallel work, call native questions, reconcile uncertain effects | MODEL_POLICY_ENFORCED; this guard is heuristic, not a shell parser or sandbox |
+| Authenticity of human answers/external blocker facts | Host/client identity + REVIEW_ENFORCED; journals/CLI are not cryptographic human-identity proof |
+| Mandatory hooks and merge checks/reviews | PLATFORM_SETTING_REQUIRED; other CLIs, arbitrary program writes, disabled hooks and `--bare` bypass local hooks |
+
+VALID_RED, replay, CI recomputation, debt ratchets, independent review, fingerprints and closure remain mandatory. Autonomy never authorizes weakening gates.

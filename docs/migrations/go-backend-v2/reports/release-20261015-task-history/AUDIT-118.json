@@ -1,0 +1,108 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-118",
+  "title": "Reconcile audit ledger totals and evidence attribution",
+  "start_head": "06fb072dd5ad5fc14de0c559ab99d9f3db4b6fab",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Defect summary counters match the embedded defect ledger, and the morning report attributes notification screen browser PASS only to recorded AUDIT-110 evidence while disclosing AUDIT-116 browser-gate failures."
+      },
+      {
+        "id": "AC2",
+        "text": "Handoff enumerates all four non-FIXED defect records and identifies GET /ws/presence as the next source-verified API item; absent REST presence paths are documented as non-active candidates."
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "DOC_ONLY"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-12T07:13:03.518Z",
+      "head": "06fb072dd5ad5fc14de0c559ab99d9f3db4b6fab"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-12T07:13:03.881Z",
+      "head": "06fb072dd5ad5fc14de0c559ab99d9f3db4b6fab"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-12T07:13:04.355Z",
+      "head": "06fb072dd5ad5fc14de0c559ab99d9f3db4b6fab"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-12T07:25:33.925Z",
+      "head": "06fb072dd5ad5fc14de0c559ab99d9f3db4b6fab"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-12T07:16:44.425Z",
+      "head": "06fb072dd5ad5fc14de0c559ab99d9f3db4b6fab",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Sartre",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 2,
+      "notes": "",
+      "output_sha256": "3dc33415fed214a6bf5fafc199535af99d01b9e58ca9bfdab4f4bc597632b03d",
+      "attested": true,
+      "fingerprint": "d619f37bf6d0221fe584ec46f85ca444dbe5121f0106edce56c894715afc31b9"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-12T07:25:28.555Z",
+      "head": "06fb072dd5ad5fc14de0c559ab99d9f3db4b6fab",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Averroes",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "97a3e56327a31846a88626670900b5c909f207d703152cd9097b5ce48ad9f446"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-12T07:25:33.905Z",
+    "head": "06fb072dd5ad5fc14de0c559ab99d9f3db4b6fab",
+    "fingerprint": "97a3e56327a31846a88626670900b5c909f207d703152cd9097b5ce48ad9f446",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS"
+    },
+    "files": {
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "752e6cba6334f22286f6bb6333db85cc44313449",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "a621395469fe75f3bee60f1aba26e6aff9cdfbc8",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "06e655daf6bac0554a7e1a74ebd444911adc8c62",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "217b042049f6df47ac7b272939f369691ea768a4",
+      "docs/migrations/go-backend-v2/reports/HANDOFF_NEXT_AUDIT.md": "7602999eeff9cc8608b62e95d9a28ee86df90881"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

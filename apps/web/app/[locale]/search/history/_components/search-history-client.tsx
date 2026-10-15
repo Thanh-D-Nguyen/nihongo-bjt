@@ -49,7 +49,7 @@ export function SearchHistoryClient({ labels, locale }: { labels: HistoryLabels;
               </button>
               <button
                 type="button"
-                className="opacity-0 group-hover:opacity-100 text-xs text-muted hover:text-sakura transition-all"
+                className="flex h-11 w-11 shrink-0 items-center justify-center text-xs text-muted opacity-100 hover:text-sakura transition-all md:h-auto md:w-auto md:opacity-0 md:group-hover:opacity-100"
                 onClick={() => removeSearch(term)}
                 title={labels.remove}
               >

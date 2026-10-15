@@ -1,0 +1,73 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-097",
+  "title": "Complete learner Register screen state matrix",
+  "start_head": "a010e646f275f63a8a42633b79cbcb222e79567c",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "The visible Register screen is verified for anonymous form validation, authenticated visit behavior, and the 390x844 mobile viewport; record the evidence without changing runtime behavior."
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "DOC_ONLY"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-11T05:02:58.519Z",
+      "head": "a010e646f275f63a8a42633b79cbcb222e79567c"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-11T05:02:58.861Z",
+      "head": "a010e646f275f63a8a42633b79cbcb222e79567c"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-11T05:02:59.210Z",
+      "head": "a010e646f275f63a8a42633b79cbcb222e79567c"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-11T05:07:05.580Z",
+      "head": "a010e646f275f63a8a42633b79cbcb222e79567c"
+    }
+  ],
+  "evidence": [],
+  "closed": {
+    "at": "2026-10-11T05:07:05.563Z",
+    "head": "a010e646f275f63a8a42633b79cbcb222e79567c",
+    "fingerprint": "c1074e3177b7cb197ee07e6f9e1bb5aef30cc8662cba12fa38d5032afe517a3d",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS"
+    },
+    "files": {
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "299c3e2dc511f30c8a7ea1f9b65eec7af2585427",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "230cbb23105173b950a72a690a19155824df23cd",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "810ce4b8e8edc096f1fc67f4ec439839fa6c02e8"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

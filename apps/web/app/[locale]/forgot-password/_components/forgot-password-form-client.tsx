@@ -33,7 +33,7 @@ export function ForgotPasswordFormClient({
     setLoading(true);
     try {
       const res = await fetch("/api/auth/forgot-password", {
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, locale: localePrefix.slice(1) }),
         credentials: "same-origin",
         headers: { "content-type": "application/json" },
         method: "POST"
@@ -48,10 +48,12 @@ export function ForgotPasswordFormClient({
         return;
       }
       setSent(true);
+    } catch {
+      setError(copy.genericError);
     } finally {
       setLoading(false);
     }
-  }, [copy, email]);
+  }, [copy, email, localePrefix]);
 
   const fieldClass =
     "w-full rounded-xl border border-ink/15 bg-white px-4 py-3 text-sm text-ink outline-none transition placeholder:text-muted/50 focus:border-accent focus:ring-2 focus:ring-accent/20";
@@ -80,7 +82,7 @@ export function ForgotPasswordFormClient({
     <div className="space-y-5">
       <p className="text-center text-sm leading-relaxed text-muted">{copy.subtitle}</p>
 
-      <form className="space-y-4" noValidate onSubmit={onSubmit}>
+      <form className="space-y-4" onSubmit={onSubmit}>
         <div>
           <label className="mb-1.5 block text-sm font-medium text-ink" htmlFor="forgot-email">
             {copy.emailLabel}

@@ -12,6 +12,7 @@ loadDotenv({ path: path.join(monorepoRoot, ".env.local"), override: true });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
   outputFileTracingRoot: monorepoRoot,
   // basePath required for correct /admin/* routing and locale redirects.
   // NO assetPrefix: the container serves chunks at root-relative /_next/*
@@ -20,11 +21,14 @@ const nextConfig = {
   // but both are served correctly by Caddy, enabling React hydration.
   basePath: "/admin",
   async rewrites() {
-    return [{ destination: "/pwa-icon.svg", source: "/favicon.ico" }];
+    return [
+      { source: "/api/:path*", destination: "http://127.0.0.1:4001/api/:path*" },
+      { source: "/admin/api/:path*", destination: "http://127.0.0.1:4001/api/:path*" },
+      { source: "/favicon.ico", destination: "/pwa-icon.svg" },
+    ];
   },
-  turbopack: {
-    root: monorepoRoot
-  },
+  allowedDevOrigins: ['127.0.0.1', 'localhost'],
+
   transpilePackages: [
     "@nihongo-bjt/config",
     "@nihongo-bjt/shared",

@@ -115,19 +115,19 @@ LEFT JOIN assessment.bjt_mock_test t ON t.id = s.test_id
 		defer rows.Close()
 
 		type QuestionSummary struct {
-			ID                string          `json:"id"`
-			SectionID         string          `json:"sectionId"`
-			Prompt            string          `json:"prompt"`
-			Scenario          *string         `json:"scenario,omitempty"`
-			SkillTag          string          `json:"skillTag"`
-			Difficulty        string          `json:"difficulty"`
-			Tags              json.RawMessage `json:"tags"`
-			Status            string          `json:"status"`
-			RemediationCardID *string         `json:"remediationCardId,omitempty"`
-			CreatedAt         string          `json:"createdAt"`
-			UpdatedAt         string          `json:"updatedAt"`
-			OptionCount       int             `json:"optionCount"`
-			AnswerCount       int             `json:"answerCount"`
+			ID                string   `json:"id"`
+			SectionID         string   `json:"sectionId"`
+			Prompt            string   `json:"prompt"`
+			Scenario          *string  `json:"scenario,omitempty"`
+			SkillTag          string   `json:"skillTag"`
+			Difficulty        string   `json:"difficulty"`
+			Tags              []string `json:"tags"`
+			Status            string   `json:"status"`
+			RemediationCardID *string  `json:"remediationCardId,omitempty"`
+			CreatedAt         string   `json:"createdAt"`
+			UpdatedAt         string   `json:"updatedAt"`
+			OptionCount       int      `json:"optionCount"`
+			AnswerCount       int      `json:"answerCount"`
 			Section           *struct {
 				ID      string `json:"id"`
 				Code    string `json:"code"`
@@ -148,18 +148,15 @@ LEFT JOIN assessment.bjt_mock_test t ON t.id = s.test_id
 			var createdAt, updatedAt time.Time
 			var sectionCode, sectionTitleVi *string
 			var testID, testSlug, testTitleVi, testLevel, testType *string
-			var tagsBytes []byte
 			if err := rows.Scan(&qs.ID, &qs.SectionID, &qs.Prompt, &qs.Scenario, &qs.SkillTag,
-				&qs.Difficulty, &tagsBytes, &qs.Status, &qs.RemediationCardID,
+				&qs.Difficulty, &qs.Tags, &qs.Status, &qs.RemediationCardID,
 				&createdAt, &updatedAt, &sectionCode, &sectionTitleVi,
 				&testID, &testSlug, &testTitleVi, &testLevel, &testType,
 				&qs.OptionCount, &qs.AnswerCount); err == nil {
 				qs.CreatedAt = createdAt.UTC().Format(time.RFC3339)
 				qs.UpdatedAt = updatedAt.UTC().Format(time.RFC3339)
-				if tagsBytes != nil {
-					qs.Tags = tagsBytes
-				} else {
-					qs.Tags = json.RawMessage("[]")
+				if qs.Tags == nil {
+					qs.Tags = []string{}
 				}
 				if sectionCode != nil {
 					qs.Section = &struct {
@@ -237,40 +234,39 @@ func adminAssessmentQuestionBankDetailHandler(db *pgxpool.Pool, logger *slog.Log
 			CreatedAt  string          `json:"createdAt"`
 		}
 		type QuestionDetail struct {
-			ID                string          `json:"id"`
-			SectionID         string          `json:"sectionId"`
-			Prompt            string          `json:"prompt"`
-			Scenario          *string         `json:"scenario,omitempty"`
-			ExplanationVi     string          `json:"explanationVi"`
-			SkillTag          string          `json:"skillTag"`
-			Difficulty        string          `json:"difficulty"`
-			Tags              json.RawMessage `json:"tags"`
-			Status            string          `json:"status"`
-			SourceType        *string         `json:"sourceType,omitempty"`
-			SourceID          *string         `json:"sourceId,omitempty"`
-			ImageURL          *string         `json:"imageUrl,omitempty"`
-			ImageAlt          *string         `json:"imageAlt,omitempty"`
-			ImagePrompt       *string         `json:"imagePrompt,omitempty"`
-			AudioURL          *string         `json:"audioUrl,omitempty"`
-			AudioScript       *string         `json:"audioScript,omitempty"`
-			RemediationCardID *string         `json:"remediationCardId,omitempty"`
-			CreatedAt         string          `json:"createdAt"`
-			UpdatedAt         string          `json:"updatedAt"`
-			Options           []Option        `json:"options"`
-			AnswerCount       int             `json:"answerCount"`
-			Audit             []AuditEntry    `json:"audit"`
+			ID                string       `json:"id"`
+			SectionID         string       `json:"sectionId"`
+			Prompt            string       `json:"prompt"`
+			Scenario          *string      `json:"scenario,omitempty"`
+			ExplanationVi     string       `json:"explanationVi"`
+			SkillTag          string       `json:"skillTag"`
+			Difficulty        string       `json:"difficulty"`
+			Tags              []string     `json:"tags"`
+			Status            string       `json:"status"`
+			SourceType        *string      `json:"sourceType,omitempty"`
+			SourceID          *string      `json:"sourceId,omitempty"`
+			ImageURL          *string      `json:"imageUrl,omitempty"`
+			ImageAlt          *string      `json:"imageAlt,omitempty"`
+			ImagePrompt       *string      `json:"imagePrompt,omitempty"`
+			AudioURL          *string      `json:"audioUrl,omitempty"`
+			AudioScript       *string      `json:"audioScript,omitempty"`
+			RemediationCardID *string      `json:"remediationCardId,omitempty"`
+			CreatedAt         string       `json:"createdAt"`
+			UpdatedAt         string       `json:"updatedAt"`
+			Options           []Option     `json:"options"`
+			AnswerCount       int          `json:"answerCount"`
+			Audit             []AuditEntry `json:"audit"`
 		}
 
 		var qd QuestionDetail
 		var createdAt, updatedAt time.Time
-		var tagsBytes []byte
 		err := db.QueryRow(ctx, `
 SELECT id, section_id, prompt, scenario, explanation_vi, skill_tag, difficulty,
        tags, status, source_type, source_id, image_url, image_alt, image_prompt,
        audio_url, audio_script, remediation_card_id, created_at, updated_at
 FROM assessment.bjt_question WHERE id = $1`, id).Scan(
 			&qd.ID, &qd.SectionID, &qd.Prompt, &qd.Scenario, &qd.ExplanationVi,
-			&qd.SkillTag, &qd.Difficulty, &tagsBytes, &qd.Status,
+			&qd.SkillTag, &qd.Difficulty, &qd.Tags, &qd.Status,
 			&qd.SourceType, &qd.SourceID, &qd.ImageURL, &qd.ImageAlt, &qd.ImagePrompt,
 			&qd.AudioURL, &qd.AudioScript, &qd.RemediationCardID,
 			&createdAt, &updatedAt)
@@ -280,10 +276,8 @@ FROM assessment.bjt_question WHERE id = $1`, id).Scan(
 		}
 		qd.CreatedAt = createdAt.UTC().Format(time.RFC3339)
 		qd.UpdatedAt = updatedAt.UTC().Format(time.RFC3339)
-		if tagsBytes != nil {
-			qd.Tags = tagsBytes
-		} else {
-			qd.Tags = json.RawMessage("[]")
+		if qd.Tags == nil {
+			qd.Tags = []string{}
 		}
 
 		// Options
@@ -343,20 +337,20 @@ func adminAssessmentQuestionBankCreateHandler(db *pgxpool.Pool, logger *slog.Log
 			return
 		}
 		var req struct {
-			SectionID     string          `json:"sectionId"`
-			Prompt        string          `json:"prompt"`
-			Scenario      *string         `json:"scenario,omitempty"`
-			ExplanationVi string          `json:"explanationVi"`
-			SkillTag      string          `json:"skillTag"`
-			Difficulty    string          `json:"difficulty"`
-			Tags          json.RawMessage `json:"tags"`
-			SourceType    *string         `json:"sourceType,omitempty"`
-			SourceID      *string         `json:"sourceId,omitempty"`
-			ImageURL      *string         `json:"imageUrl,omitempty"`
-			ImageAlt      *string         `json:"imageAlt,omitempty"`
-			ImagePrompt   *string         `json:"imagePrompt,omitempty"`
-			AudioURL      *string         `json:"audioUrl,omitempty"`
-			AudioScript   *string         `json:"audioScript,omitempty"`
+			SectionID     string   `json:"sectionId"`
+			Prompt        string   `json:"prompt"`
+			Scenario      *string  `json:"scenario,omitempty"`
+			ExplanationVi string   `json:"explanationVi"`
+			SkillTag      string   `json:"skillTag"`
+			Difficulty    string   `json:"difficulty"`
+			Tags          []string `json:"tags"`
+			SourceType    *string  `json:"sourceType,omitempty"`
+			SourceID      *string  `json:"sourceId,omitempty"`
+			ImageURL      *string  `json:"imageUrl,omitempty"`
+			ImageAlt      *string  `json:"imageAlt,omitempty"`
+			ImagePrompt   *string  `json:"imagePrompt,omitempty"`
+			AudioURL      *string  `json:"audioUrl,omitempty"`
+			AudioScript   *string  `json:"audioScript,omitempty"`
 			Options       []struct {
 				OptionKey string `json:"optionKey"`
 				Text      string `json:"text"`
@@ -375,20 +369,26 @@ func adminAssessmentQuestionBankCreateHandler(db *pgxpool.Pool, logger *slog.Log
 		}
 
 		ctx := r.Context()
-		tagsJSON := req.Tags
-		if tagsJSON == nil {
-			tagsJSON = json.RawMessage("[]")
+		if req.Tags == nil {
+			req.Tags = []string{}
 		}
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin question create", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 
 		var createdID string
-		err := db.QueryRow(ctx, `
+		err = tx.QueryRow(ctx, `
 INSERT INTO assessment.bjt_question (section_id, prompt, scenario, explanation_vi, skill_tag, difficulty,
        tags, status, source_type, source_id, image_url, image_alt, image_prompt,
        audio_url, audio_script, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
 RETURNING id`,
 			req.SectionID, req.Prompt, req.Scenario, req.ExplanationVi, req.SkillTag,
-			req.Difficulty, tagsJSON, req.SourceType, req.SourceID,
+			req.Difficulty, req.Tags, req.SourceType, req.SourceID,
 			req.ImageURL, req.ImageAlt, req.ImagePrompt,
 			req.AudioURL, req.AudioScript).Scan(&createdID)
 		if err != nil {
@@ -399,8 +399,12 @@ RETURNING id`,
 
 		// Create options
 		for _, o := range req.Options {
-			db.Exec(ctx, `INSERT INTO assessment.bjt_question_option (question_id, option_key, text, is_correct)
-VALUES ($1, $2, $3, $4)`, createdID, o.OptionKey, o.Text, o.IsCorrect)
+			if _, err := tx.Exec(ctx, `INSERT INTO assessment.bjt_question_option (question_id, option_key, text, is_correct)
+VALUES ($1, $2, $3, $4)`, createdID, o.OptionKey, o.Text, o.IsCorrect); err != nil {
+				logger.Error("create question option", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		// Write audit
@@ -409,9 +413,18 @@ VALUES ($1, $2, $3, $4)`, createdID, o.OptionKey, o.Text, o.IsCorrect)
 			"explanationVi": req.ExplanationVi, "skillTag": req.SkillTag,
 			"difficulty": req.Difficulty, "tags": req.Tags, "status": "draft",
 		})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		if _, err := tx.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('admin.assessment.question.created', $1, $2, 'assessment.question', $3, $4, NOW())`,
-			identity.ActorID, createdID, req.Reason, afterJSON)
+			identity.ActorID, createdID, req.Reason, afterJSON); err != nil {
+			logger.Error("audit question create", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit question create", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		// Return detail view
 		r.URL.Path = "/api/admin/assessment/question-bank/" + createdID
@@ -434,20 +447,20 @@ func adminAssessmentQuestionBankPatchHandler(db *pgxpool.Pool, logger *slog.Logg
 			return
 		}
 		var req struct {
-			SectionID     *string         `json:"sectionId,omitempty"`
-			Prompt        *string         `json:"prompt,omitempty"`
-			Scenario      *string         `json:"scenario,omitempty"`
-			ExplanationVi *string         `json:"explanationVi,omitempty"`
-			SkillTag      *string         `json:"skillTag,omitempty"`
-			Difficulty    *string         `json:"difficulty,omitempty"`
-			Tags          json.RawMessage `json:"tags,omitempty"`
-			SourceType    *string         `json:"sourceType,omitempty"`
-			SourceID      *string         `json:"sourceId,omitempty"`
-			ImageURL      *string         `json:"imageUrl,omitempty"`
-			ImageAlt      *string         `json:"imageAlt,omitempty"`
-			ImagePrompt   *string         `json:"imagePrompt,omitempty"`
-			AudioURL      *string         `json:"audioUrl,omitempty"`
-			AudioScript   *string         `json:"audioScript,omitempty"`
+			SectionID     *string   `json:"sectionId,omitempty"`
+			Prompt        *string   `json:"prompt,omitempty"`
+			Scenario      *string   `json:"scenario,omitempty"`
+			ExplanationVi *string   `json:"explanationVi,omitempty"`
+			SkillTag      *string   `json:"skillTag,omitempty"`
+			Difficulty    *string   `json:"difficulty,omitempty"`
+			Tags          *[]string `json:"tags,omitempty"`
+			SourceType    *string   `json:"sourceType,omitempty"`
+			SourceID      *string   `json:"sourceId,omitempty"`
+			ImageURL      *string   `json:"imageUrl,omitempty"`
+			ImageAlt      *string   `json:"imageAlt,omitempty"`
+			ImagePrompt   *string   `json:"imagePrompt,omitempty"`
+			AudioURL      *string   `json:"audioUrl,omitempty"`
+			AudioScript   *string   `json:"audioScript,omitempty"`
 			Options       []struct {
 				OptionKey string `json:"optionKey"`
 				Text      string `json:"text"`
@@ -464,30 +477,27 @@ func adminAssessmentQuestionBankPatchHandler(db *pgxpool.Pool, logger *slog.Logg
 
 		// Fetch before state
 		type Before struct {
-			SectionID     string          `json:"sectionId"`
-			Prompt        string          `json:"prompt"`
-			Scenario      *string         `json:"scenario,omitempty"`
-			ExplanationVi string          `json:"explanationVi"`
-			SkillTag      string          `json:"skillTag"`
-			Difficulty    string          `json:"difficulty"`
-			Tags          json.RawMessage `json:"tags"`
-			Status        string          `json:"status"`
+			SectionID     string   `json:"sectionId"`
+			Prompt        string   `json:"prompt"`
+			Scenario      *string  `json:"scenario,omitempty"`
+			ExplanationVi string   `json:"explanationVi"`
+			SkillTag      string   `json:"skillTag"`
+			Difficulty    string   `json:"difficulty"`
+			Tags          []string `json:"tags"`
+			Status        string   `json:"status"`
 		}
 		var before Before
-		var tagsBytes []byte
 		err := db.QueryRow(ctx, `
 SELECT section_id, prompt, scenario, explanation_vi, skill_tag, difficulty, tags, status
 FROM assessment.bjt_question WHERE id = $1`, id).Scan(
 			&before.SectionID, &before.Prompt, &before.Scenario, &before.ExplanationVi,
-			&before.SkillTag, &before.Difficulty, &tagsBytes, &before.Status)
+			&before.SkillTag, &before.Difficulty, &before.Tags, &before.Status)
 		if err != nil {
 			writeJSONError(w, "question not found", http.StatusNotFound)
 			return
 		}
-		if tagsBytes != nil {
-			before.Tags = tagsBytes
-		} else {
-			before.Tags = json.RawMessage("[]")
+		if before.Tags == nil {
+			before.Tags = []string{}
 		}
 
 		// Build dynamic UPDATE
@@ -526,7 +536,7 @@ FROM assessment.bjt_question WHERE id = $1`, id).Scan(
 		}
 		if req.Tags != nil {
 			setClauses = append(setClauses, "tags = $"+itoa(argIdx))
-			args = append(args, req.Tags)
+			args = append(args, *req.Tags)
 			argIdx++
 		}
 		if req.SourceType != nil {
@@ -631,7 +641,7 @@ func adminAssessmentQuestionBankBulkHandler(db *pgxpool.Pool, logger *slog.Logge
 
 		for _, qid := range req.IDs {
 			var currentStatus string
-			var currentTags []byte
+			var currentTags []string
 			err := db.QueryRow(ctx, "SELECT status, tags FROM assessment.bjt_question WHERE id = $1", qid).Scan(&currentStatus, &currentTags)
 			if err != nil {
 				continue
@@ -660,25 +670,24 @@ func adminAssessmentQuestionBankBulkHandler(db *pgxpool.Pool, logger *slog.Logge
 					continue
 				}
 				// Merge tags using PostgreSQL array operations
-				db.Exec(ctx, `UPDATE assessment.bjt_question SET tags = (
-					SELECT jsonb_agg(DISTINCT elem) FROM (
-						SELECT jsonb_array_elements_text(COALESCE(tags, '[]'::jsonb)) as elem
-						UNION
-						SELECT unnest($2::text[])
-					) sub
-				), updated_at = NOW() WHERE id = $1`, qid, req.Tags)
+				if _, err := db.Exec(ctx, `UPDATE assessment.bjt_question SET tags = ARRAY(
+					SELECT DISTINCT tag FROM unnest(COALESCE(tags, ARRAY[]::text[]) || $2::text[]) AS merged(tag) ORDER BY tag
+				), updated_at = NOW() WHERE id = $1`, qid, req.Tags); err != nil {
+					logger.Error("tag questions", "error", err, "question_id", qid)
+					continue
+				}
 				after = map[string]any{"tags": req.Tags}
 				action = "admin.assessment.question.tagged"
 			case "untag":
 				if len(req.Tags) == 0 {
 					continue
 				}
-				db.Exec(ctx, `UPDATE assessment.bjt_question SET tags = (
-					SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb) FROM (
-						SELECT jsonb_array_elements_text(COALESCE(tags, '[]'::jsonb)) as elem
-						WHERE jsonb_array_elements_text(COALESCE(tags, '[]'::jsonb)) != ALL($2::text[])
-					) sub
-				), updated_at = NOW() WHERE id = $1`, qid, req.Tags)
+				if _, err := db.Exec(ctx, `UPDATE assessment.bjt_question SET tags = ARRAY(
+					SELECT tag FROM unnest(COALESCE(tags, ARRAY[]::text[])) AS existing(tag) WHERE tag <> ALL($2::text[])
+				), updated_at = NOW() WHERE id = $1`, qid, req.Tags); err != nil {
+					logger.Error("untag questions", "error", err, "question_id", qid)
+					continue
+				}
 				after = map[string]any{"tags": req.Tags}
 				action = "admin.assessment.question.untagged"
 			default:
@@ -787,24 +796,21 @@ func adminAssessmentQuestionBankDeleteHandler(db *pgxpool.Pool, logger *slog.Log
 
 		// Capture before state for audit
 		type Before struct {
-			SectionID     string          `json:"sectionId"`
-			Prompt        string          `json:"prompt"`
-			Scenario      *string         `json:"scenario,omitempty"`
-			ExplanationVi string          `json:"explanationVi"`
-			SkillTag      string          `json:"skillTag"`
-			Difficulty    string          `json:"difficulty"`
-			Tags          json.RawMessage `json:"tags"`
-			Status        string          `json:"status"`
+			SectionID     string   `json:"sectionId"`
+			Prompt        string   `json:"prompt"`
+			Scenario      *string  `json:"scenario,omitempty"`
+			ExplanationVi string   `json:"explanationVi"`
+			SkillTag      string   `json:"skillTag"`
+			Difficulty    string   `json:"difficulty"`
+			Tags          []string `json:"tags"`
+			Status        string   `json:"status"`
 		}
 		var before Before
-		var tagsBytes []byte
 		db.QueryRow(ctx, `SELECT section_id, prompt, scenario, explanation_vi, skill_tag, difficulty, tags, status
 FROM assessment.bjt_question WHERE id = $1`, id).Scan(&before.SectionID, &before.Prompt, &before.Scenario,
-			&before.ExplanationVi, &before.SkillTag, &before.Difficulty, &tagsBytes, &before.Status)
-		if tagsBytes != nil {
-			before.Tags = tagsBytes
-		} else {
-			before.Tags = json.RawMessage("[]")
+			&before.ExplanationVi, &before.SkillTag, &before.Difficulty, &before.Tags, &before.Status)
+		if before.Tags == nil {
+			before.Tags = []string{}
 		}
 
 		db.Exec(ctx, "DELETE FROM assessment.bjt_question WHERE id = $1", id)

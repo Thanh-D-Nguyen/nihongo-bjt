@@ -5,27 +5,23 @@ import { useState } from "react";
 interface ActivityBarChartProps {
   data: Array<{
     date: string;
-    reviews: number;
-    quizAnswers: number;
-    quizSessionsCompleted: number;
+    lessonsCount: number;
+    minutes: number;
+    xpEarned: number;
   }>;
   labels: {
-    reviews: string;
-    quiz: string;
-    sessions: string;
+    lessons: string;
+    minutes: string;
+    xp: string;
   };
 }
 
 /**
- * Animated stacked bar chart with hover tooltip.
- * Uses CSS animations for bar grow-in and a floating tooltip on hover.
+ * Daily study minutes with a hover tooltip for the API's other study stats.
  */
 export function ActivityBarChart({ data, labels }: ActivityBarChartProps) {
   const [hovered, setHovered] = useState<number | null>(null);
-  const max = Math.max(
-    1,
-    ...data.map((p) => p.reviews + p.quizAnswers + p.quizSessionsCompleted)
-  );
+  const max = Math.max(1, ...data.map((p) => p.minutes));
 
   // For mobile: show max ~14 bars with labels, rest just bars
   const showLabels = data.length <= 14;
@@ -45,18 +41,18 @@ export function ActivityBarChart({ data, labels }: ActivityBarChartProps) {
           <div className="mt-1 space-y-0.5">
             <p className="flex items-center gap-1.5">
               <span className="inline-block size-2 rounded-sm bg-emerald-500" />
-              <span className="text-muted">{labels.reviews}:</span>
-              <span className="font-semibold text-ink">{data[hovered].reviews}</span>
+              <span className="text-muted">{labels.minutes}:</span>
+              <span className="font-semibold text-ink">{data[hovered].minutes}</span>
             </p>
             <p className="flex items-center gap-1.5">
               <span className="inline-block size-2 rounded-sm bg-accent" />
-              <span className="text-muted">{labels.quiz}:</span>
-              <span className="font-semibold text-ink">{data[hovered].quizAnswers}</span>
+              <span className="text-muted">{labels.xp}:</span>
+              <span className="font-semibold text-ink">{data[hovered].xpEarned}</span>
             </p>
             <p className="flex items-center gap-1.5">
               <span className="inline-block size-2 rounded-sm bg-amber-500" />
-              <span className="text-muted">{labels.sessions}:</span>
-              <span className="font-semibold text-ink">{data[hovered].quizSessionsCompleted}</span>
+              <span className="text-muted">{labels.lessons}:</span>
+              <span className="font-semibold text-ink">{data[hovered].lessonsCount}</span>
             </p>
           </div>
         </div>
@@ -66,10 +62,10 @@ export function ActivityBarChart({ data, labels }: ActivityBarChartProps) {
       <div
         className="flex h-36 items-end gap-[2px] sm:gap-1"
         role="img"
-        aria-label="Daily activity chart"
+        aria-label={labels.minutes}
       >
         {data.map((p, i) => {
-          const total = p.reviews + p.quizAnswers + p.quizSessionsCompleted;
+          const total = p.minutes;
           const heightPct = Math.max(total === 0 ? 0 : 3, (total / max) * 100);
 
           return (
@@ -88,30 +84,9 @@ export function ActivityBarChart({ data, labels }: ActivityBarChartProps) {
                   animationDelay: `${i * 20}ms`
                 }}
               >
-                {total === 0 ? (
-                  <div className="h-full w-full bg-ink/5 dark:bg-ink/10" />
-                ) : (
-                  <div className="flex h-full w-full flex-col justify-end">
-                    {p.reviews > 0 && (
-                      <div
-                        className="w-full bg-emerald-500/85 dark:bg-emerald-400/80"
-                        style={{ flexGrow: p.reviews }}
-                      />
-                    )}
-                    {p.quizAnswers > 0 && (
-                      <div
-                        className="w-full bg-accent/80 dark:bg-accent/70"
-                        style={{ flexGrow: p.quizAnswers }}
-                      />
-                    )}
-                    {p.quizSessionsCompleted > 0 && (
-                      <div
-                        className="w-full bg-amber-500/75 dark:bg-amber-400/70"
-                        style={{ flexGrow: p.quizSessionsCompleted }}
-                      />
-                    )}
-                  </div>
-                )}
+                <div
+                  className={`h-full w-full ${total === 0 ? "bg-ink/5 dark:bg-ink/10" : "bg-emerald-500/85 dark:bg-emerald-400/80"}`}
+                />
               </div>
 
               {/* Date label (only for small data sets) */}
@@ -129,15 +104,7 @@ export function ActivityBarChart({ data, labels }: ActivityBarChartProps) {
       <div className="mt-3 flex flex-wrap items-center gap-3 text-[10px] text-muted sm:text-xs">
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block size-2.5 rounded-sm bg-emerald-500/85" />
-          {labels.reviews}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block size-2.5 rounded-sm bg-accent/80" />
-          {labels.quiz}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block size-2.5 rounded-sm bg-amber-500/75" />
-          {labels.sessions}
+          {labels.minutes}
         </span>
       </div>
     </div>

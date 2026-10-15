@@ -1,0 +1,467 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-144",
+  "title": "Secure Admin pet and streak APIs",
+  "start_head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Five active Admin pet/streak APIs have incomplete authorization, database error contracts, validation, and persistence/audit semantics.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "GET pet stats returns accurate aggregate contract and surfaces DB/row errors; anonymous and roleless Admin are denied."
+      },
+      {
+        "id": "AC2",
+        "text": "GET pet detail distinguishes missing id (404) from database failure (500), enforces read permission, and exposes only the existing detail contract."
+      },
+      {
+        "id": "AC3",
+        "text": "PUT pet update validates all supplied fields, reports missing row as 404, records audit atomically, and denies roleless/read-only/untrusted-origin requests."
+      },
+      {
+        "id": "AC4",
+        "text": "POST pet reset checks row existence, records actor audit atomically, returns accurate errors, and denies roleless/read-only/untrusted-origin requests."
+      },
+      {
+        "id": "AC5",
+        "text": "GET streak configs enforces admin.content.read and surfaces scan/iteration errors."
+      }
+    ],
+    "expected_behavior": "Each of the five METHOD+PATH APIs enforces its required RBAC/CSRF, returns accurate 4xx/5xx contracts, validates inputs, and returns consistent persisted state; reset/update audit mutations atomically; integration tests cover unauthorized, invalid, missing, database-failure, and persistence cases; headed 390x844 UI remains functional.",
+    "observed_behavior": "Pet statistics ignores count, aggregate, query and row scan errors; pet detail converts all DB errors to 404; pet updates silently ignore invalid fields and don't check missing rows; reset reports success without checking affected rows; the streak list ignores scan failures. Routes need explicit content permissions and CSRF on writes.",
+    "rollback_plan": "Revert the isolated AUDIT-144 code commit. No schema migration is expected; pet updates/resets use disposable local pet rows and cleanup; streak config is read-only in this wave."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY",
+      "DATABASE"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Repair existing Admin gamification API authorization and response/persistence contracts without changing schemas."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminPetAndStreakRoutesEnforceContentPermissions",
+      "expect": "roleless status="
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-14T02:24:30.856Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-14T02:25:04.563Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-14T02:25:05.183Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T02:27:01.151Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T02:28:52.801Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T02:34:51.100Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T05:12:10.496Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T05:15:08.562Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T05:15:29.486Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-14T05:19:03.405Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T05:22:54.763Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-14T05:26:10.354Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T05:26:49.180Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-14T05:29:57.596Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-14T05:30:12.797Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-14T05:30:24.081Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-14T02:27:00.936Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminPetAndStreakRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminPetAndStreakRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminPetAndStreakRoutesEnforceContentPermissions === RUN TestAdminPetAndStreakRoutesEnforceContentPermissions/GET_/api/admin/gamification/pets/stats 2026/10/14 11:27:00 INFO request method=GET path=/api/admin/gamification/pets/stats status=401 duration=101.25µs bytes=25 2026/10/14 11:27:…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminPetAndStreakRoutesEnforceContentPermissions": "roleless status="
+      },
+      "fingerprint": "a30c2770eb27fcf166621345dab7308b7a621d809bdfccd769c918938b46eb28"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-14T02:28:52.453Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminPetAndStreakRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminPetAndStreakRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8f74924decdc4aae4e458e72c888dfdc004384ba13d8e47d4753e1cb8d2b2505"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-14T02:31:26.786Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminPetAndStreakRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminPetAndStreakRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9437681288c9d5606d739726d6771f5f059318397da5a83611f8be19ccab4fc7"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-14T02:34:50.778Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 925,
+        "executed": 925,
+        "passed": 925,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "9437681288c9d5606d739726d6771f5f059318397da5a83611f8be19ccab4fc7"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-14T05:11:53.492Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit144-admin-pets-streaks.mjs",
+      "exit_code": 0,
+      "fingerprint": "514dc8ad04cda87640b96e0ce0ca39af797308c278ccff00ad44aeccdb651b53"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-14T05:12:10.162Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminPetAndStreakRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminPetAndStreakRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "514dc8ad04cda87640b96e0ce0ca39af797308c278ccff00ad44aeccdb651b53"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-14T05:15:08.245Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 925,
+        "executed": 925,
+        "passed": 925,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "514dc8ad04cda87640b96e0ce0ca39af797308c278ccff00ad44aeccdb651b53"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-14T05:15:29.071Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminPetAndStreakRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminPetAndStreakRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "4d47a14609a3aef55988306ab99e093f4749698d4960ee59f3293b0c625f6224"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-14T05:18:42.632Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 925,
+        "executed": 925,
+        "passed": 925,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "925 passed, 0 allowed skip(s)",
+      "fingerprint": "4d47a14609a3aef55988306ab99e093f4749698d4960ee59f3293b0c625f6224"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-14T05:19:03.053Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit144-admin-pets-streaks.mjs",
+      "exit_code": 0,
+      "fingerprint": "4d47a14609a3aef55988306ab99e093f4749698d4960ee59f3293b0c625f6224"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-14T05:22:54.270Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminPetAndStreakRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminPetAndStreakRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3d43d721c2fd9c6c781d5f634d3a50b56c60da1ee07b2684ef41d45966c3518f"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-14T05:23:05.022Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit144-admin-pets-streaks.mjs",
+      "exit_code": 0,
+      "fingerprint": "3d43d721c2fd9c6c781d5f634d3a50b56c60da1ee07b2684ef41d45966c3518f"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-14T05:26:09.951Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 930,
+        "executed": 930,
+        "passed": 930,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "930 passed, 0 allowed skip(s)",
+      "fingerprint": "3d43d721c2fd9c6c781d5f634d3a50b56c60da1ee07b2684ef41d45966c3518f"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-14T05:26:48.703Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminPetAndStreakRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminPetAndStreakRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "821ee76c2ad6d5ffd98842ae35c038be3a5586e44758188a281d8f9bf91ad8fc"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-14T05:26:59.356Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit144-admin-pets-streaks.mjs",
+      "exit_code": 0,
+      "fingerprint": "821ee76c2ad6d5ffd98842ae35c038be3a5586e44758188a281d8f9bf91ad8fc"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-14T05:29:57.213Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 930,
+        "executed": 930,
+        "passed": 930,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "930 passed, 0 allowed skip(s)",
+      "fingerprint": "821ee76c2ad6d5ffd98842ae35c038be3a5586e44758188a281d8f9bf91ad8fc"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-14T05:30:12.438Z",
+      "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a138e1-2001-7623-8c83-fb927abbd5d5",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "821ee76c2ad6d5ffd98842ae35c038be3a5586e44758188a281d8f9bf91ad8fc"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-14T05:30:24.062Z",
+    "head": "a2f2a6e31868f4bd7a5c4d2cef7e728049dbfe99",
+    "fingerprint": "821ee76c2ad6d5ffd98842ae35c038be3a5586e44758188a281d8f9bf91ad8fc",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_admin_gamification.go": "60fd26bc15f96de6dc609da48a33444bd79cd68e",
+      "apps/api-go/internal/httpserver/handler_admin_pets_streaks_audit144_test.go": "87d824074f2c743aa22d6f37f9855cc9a29063b7",
+      "apps/api-go/internal/httpserver/server.go": "d4d24d7caa650bf798db33119304d5684ba2a719",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "8105225fcef0c8a9befc9dff595b3b0fa6e847e9",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "a23b4f45e159b04ce116deeca8224cc4edcfb946",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "bc4f4099e3bf10d9563436dec9a7d398fcf00fc3",
+      "e2e/audit/audit144-admin-pets-streaks.mjs": "b76880d1e771a0fe6b53d897fe6ad95f3a65db57"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

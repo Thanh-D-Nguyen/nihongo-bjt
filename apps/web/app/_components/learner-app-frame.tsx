@@ -218,7 +218,7 @@ export function LearnerAppFrame({
     };
   }, [userMenuOpen, exploreMenuOpen, mobileMenuOpen]);
 
-  const hideChrome = pathname === `${base}/login` || pathname === `${base}/register`;
+  const hideChrome = pathname === `${base}/login` || pathname === `${base}/register` || pathname === `${base}/quiz/session`;
 
   /* ── Primary nav: learner IA from the Claude v2 handoff ── */
   const primaryNavItems = useMemo(

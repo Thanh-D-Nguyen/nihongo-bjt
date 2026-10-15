@@ -2,12 +2,14 @@
 package httpserver
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/search"
 )
 
@@ -25,6 +27,7 @@ const (
 // searchHandler implements GET /api/search.
 // Unified search across questions, vocabulary, and lessons with type filters.
 func searchHandler(
+	db *pgxpool.Pool,
 	searchClient *search.Client,
 	logger *slog.Logger,
 ) http.HandlerFunc {
@@ -41,7 +44,11 @@ func searchHandler(
 		}
 
 		query := strings.TrimSpace(r.URL.Query().Get("q"))
-		typeFilter := strings.TrimSpace(r.URL.Query().Get("type"))
+		scope := strings.TrimSpace(r.URL.Query().Get("scope"))
+		if scope == "" {
+			// Keep the older API parameter working for existing clients.
+			scope = strings.TrimSpace(r.URL.Query().Get("type"))
+		}
 		limitStr := r.URL.Query().Get("limit")
 		offsetStr := r.URL.Query().Get("offset")
 
@@ -75,46 +82,106 @@ func searchHandler(
 			}
 		}
 
-		// Validate type filter.
-		validTypes := map[string]bool{
-			"question":   true,
-			"vocabulary": true,
-			"lesson":     true,
-		}
-		index := ""
-		if typeFilter != "" {
-			if !validTypes[typeFilter] {
-				writeJSONError(w, "invalid type filter; must be question, vocabulary, or lesson", http.StatusBadRequest)
+		// Validate against kinds in the canonical content_search projection.
+		if scope != "" {
+			validKinds := map[string]bool{"lexeme": true, "kanji": true, "grammar": true, "example": true, "lesson": true}
+			if !validKinds[scope] {
+				writeJSONError(w, "invalid search scope", http.StatusBadRequest)
 				return
-			}
-			// Map type to Meilisearch index.
-			switch typeFilter {
-			case "question":
-				index = search.IndexQuestions
-			case "vocabulary":
-				index = search.IndexVocabulary
-			case "lesson":
-				index = search.IndexLessons
 			}
 		}
 
 		ctx := r.Context()
-		resp, err := searchClient.Search(ctx, query, index, limit, offset)
+		resp, err := searchClient.Search(ctx, query, scope, limit, offset)
 		if err != nil {
 			logger.Error("search: query failed", "error", err)
+			writeJSONError(w, "search failed", http.StatusInternalServerError)
+			return
+		}
+		if db == nil {
+			writeJSONError(w, "search service unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		if err := enrichSearchResultLevels(r.Context(), db, &resp.Results); err != nil {
+			logger.Error("search: validate canonical content and enrich JLPT levels", "error", err)
 			writeJSONError(w, "search failed", http.StatusInternalServerError)
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp.Results)
 	}
+}
+
+func enrichSearchResultLevels(ctx context.Context, db *pgxpool.Pool, results *[]search.SearchResult) error {
+	ids := make([]string, 0, len(*results))
+	for _, result := range *results {
+		if result.Kind == "lexeme" || result.Kind == "kanji" || result.Kind == "grammar" || result.Kind == "example" || result.Kind == "lesson" {
+			ids = append(ids, result.ID)
+		}
+	}
+	if len(ids) == 0 {
+		*results = []search.SearchResult{}
+		return nil
+	}
+	rows, err := db.Query(ctx, `
+		SELECT id::text, 'lexeme'::text, jlpt_level
+		FROM content.lexeme WHERE id::text = ANY($1::text[]) AND status = 'active'
+		UNION ALL
+		SELECT id::text, 'kanji'::text, CASE WHEN level BETWEEN 1 AND 5 THEN 'N' || level::text END
+		FROM content.kanji WHERE id::text = ANY($1::text[]) AND status = 'active'
+		UNION ALL
+		SELECT id::text, 'grammar'::text, jlpt_level
+		FROM content.grammar_point WHERE id::text = ANY($1::text[]) AND status = 'active'
+		UNION ALL
+		SELECT id::text, 'example'::text, NULL::text
+		FROM content.example_sentence WHERE id::text = ANY($1::text[]) AND status = 'active'
+		UNION ALL
+		SELECT id::text, 'lesson'::text, NULL::text
+		FROM curriculum.bjt_lesson
+		WHERE id::text = ANY($1::text[])
+			AND status IN ('active', 'published')
+			AND (published_at IS NULL OR published_at <= NOW())
+	`, ids)
+	if err != nil {
+		return fmt.Errorf("query canonical search levels: %w", err)
+	}
+	defer rows.Close()
+	type contentKey struct{ id, kind string }
+	levels := make(map[contentKey]*string, len(ids))
+	for rows.Next() {
+		var id string
+		var kind string
+		var level *string
+		if err := rows.Scan(&id, &kind, &level); err != nil {
+			return fmt.Errorf("scan canonical search level: %w", err)
+		}
+		levels[contentKey{id: id, kind: kind}] = level
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate canonical search levels: %w", err)
+	}
+	active := (*results)[:0]
+	for i := range *results {
+		result := &(*results)[i]
+		if result.Kind == "grammar" {
+			// The existing Meilisearch projection puts grammar JLPT level in its reading slot.
+			result.Reading = nil
+		}
+		if level, ok := levels[contentKey{id: result.ID, kind: result.Kind}]; ok {
+			result.JLPTLevel = level
+			active = append(active, *result)
+		}
+	}
+	*results = active
+	return nil
 }
 
 // reindexHandler implements POST /api/search/index.
 // Admin-only trigger for full reindex.
 func reindexHandler(
+	db *pgxpool.Pool,
 	searchClient *search.Client,
 	logger *slog.Logger,
 ) http.HandlerFunc {
@@ -131,14 +198,48 @@ func reindexHandler(
 		}
 
 		ctx := r.Context()
-		if err := searchClient.Reindex(ctx); err != nil {
+		documents, err := loadSearchDocuments(ctx, db, "")
+		if err != nil {
+			logger.Error("reindex: load canonical search projection", "error", err)
+			writeJSONError(w, "search projection unavailable", http.StatusInternalServerError)
+			return
+		}
+		result, err := searchClient.ReindexDocuments(ctx, documents, "")
+		if err != nil {
 			logger.Error("reindex: failed", "error", err)
-			writeJSONError(w, "reindex failed", http.StatusInternalServerError)
+			writeJSONError(w, "reindex failed", http.StatusBadGateway)
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]string{"status": "reindex triggered"})
+		_ = json.NewEncoder(w).Encode(result)
 	}
+}
+
+func loadSearchDocuments(ctx context.Context, db *pgxpool.Pool, kind string) ([]search.Document, error) {
+	if db == nil {
+		return nil, fmt.Errorf("database unavailable")
+	}
+	rows, err := db.Query(ctx, `
+		SELECT id::text, kind, title, reading, description
+		FROM reporting.v_content_search_documents
+		WHERE ($1 = '' OR kind = $1)
+		ORDER BY kind, id`, kind)
+	if err != nil {
+		return nil, fmt.Errorf("query canonical search projection: %w", err)
+	}
+	defer rows.Close()
+	documents := make([]search.Document, 0)
+	for rows.Next() {
+		var document search.Document
+		if err := rows.Scan(&document.ID, &document.Kind, &document.Title, &document.Reading, &document.Description); err != nil {
+			return nil, fmt.Errorf("scan canonical search projection: %w", err)
+		}
+		documents = append(documents, document)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate canonical search projection: %w", err)
+	}
+	return documents, nil
 }

@@ -1,11 +1,16 @@
 package httpserver
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
 	"log/slog"
 	"net/http"
+	"strings"
+	"unicode/utf8"
 
+	"github.com/google/uuid"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
 )
@@ -52,12 +57,13 @@ func syncAuthProfileHandler(profileStore *profile.Store, logger *slog.Logger) ht
 // updateAuthProfileRequest mirrors authProfileUpdateSchema from @nihongo-bjt/shared.
 // Only mutable fields are accepted; immutable fields are silently ignored.
 type updateAuthProfileRequest struct {
-	DisplayName        *string `json:"displayName"`
-	ThemeMode          *string `json:"themeMode"`
-	FontSizePreference *string `json:"fontSizePreference"`
-	DensityPreference  *string `json:"densityPreference"`
-	CoverAssetID       *string `json:"coverAssetId"`
-	SharePostcardOptIn *bool   `json:"sharePostcardOptIn"`
+	DisplayName        *string         `json:"displayName"`
+	ThemeMode          *string         `json:"themeMode"`
+	FontSizePreference *string         `json:"fontSizePreference"`
+	DensityPreference  *string         `json:"densityPreference"`
+	AvatarAssetID      json.RawMessage `json:"avatarAssetId"`
+	CoverAssetID       json.RawMessage `json:"coverAssetId"`
+	SharePostcardOptIn *bool           `json:"sharePostcardOptIn"`
 }
 
 // putAuthProfileHandler implements PUT /api/auth/profile.
@@ -70,8 +76,31 @@ func putAuthProfileHandler(profileStore *profile.Store, logger *slog.Logger) htt
 			return
 		}
 		var req updateAuthProfileRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxLifecycleBodyBytes))
+		if err := dec.Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+		var trailing json.RawMessage
+		if err := dec.Decode(&trailing); !errors.Is(err, io.EOF) {
+			writeJSONError(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+		if utf8.RuneCountInString(strings.TrimSpace(authProfileDerefString(req.DisplayName))) > 120 ||
+			req.DisplayName != nil && strings.TrimSpace(*req.DisplayName) == "" {
+			writeJSONError(w, "invalid displayName", http.StatusBadRequest)
+			return
+		}
+		if req.ThemeMode != nil && !authProfileOneOf(*req.ThemeMode, "light", "dark", "system") {
+			writeJSONError(w, "invalid themeMode", http.StatusBadRequest)
+			return
+		}
+		if req.FontSizePreference != nil && !authProfileOneOf(*req.FontSizePreference, "small", "default", "large", "xl") {
+			writeJSONError(w, "invalid fontSizePreference", http.StatusBadRequest)
+			return
+		}
+		if req.DensityPreference != nil && !authProfileOneOf(*req.DensityPreference, "compact", "comfortable") {
+			writeJSONError(w, "invalid densityPreference", http.StatusBadRequest)
 			return
 		}
 		params := profile.UpdateProfileParams{
@@ -81,11 +110,36 @@ func putAuthProfileHandler(profileStore *profile.Store, logger *slog.Logger) htt
 			DensityPreference:  req.DensityPreference,
 			SharePostcardOptIn: req.SharePostcardOptIn,
 		}
+		if req.AvatarAssetID != nil {
+			if bytes.Equal(bytes.TrimSpace(req.AvatarAssetID), []byte("null")) {
+				params.ClearAvatarAssetID = true
+			} else {
+				var avatarAssetID string
+				if err := json.Unmarshal(req.AvatarAssetID, &avatarAssetID); err != nil {
+					writeJSONError(w, "invalid avatarAssetId", http.StatusBadRequest)
+					return
+				}
+				if _, err := uuid.Parse(avatarAssetID); err != nil {
+					writeJSONError(w, "invalid avatarAssetId", http.StatusBadRequest)
+					return
+				}
+				params.AvatarAssetID = &avatarAssetID
+			}
+		}
 		if req.CoverAssetID != nil {
-			if *req.CoverAssetID == "" {
+			if bytes.Equal(bytes.TrimSpace(req.CoverAssetID), []byte("null")) {
 				params.ClearCoverAssetID = true
 			} else {
-				params.CoverAssetID = req.CoverAssetID
+				var coverAssetID string
+				if err := json.Unmarshal(req.CoverAssetID, &coverAssetID); err != nil {
+					writeJSONError(w, "invalid coverAssetId", http.StatusBadRequest)
+					return
+				}
+				if _, err := uuid.Parse(coverAssetID); err != nil {
+					writeJSONError(w, "invalid coverAssetId", http.StatusBadRequest)
+					return
+				}
+				params.CoverAssetID = &coverAssetID
 			}
 		}
 		p, err := profileStore.UpdateLearnerProfile(r.Context(), identity.UserID, params)
@@ -102,4 +156,20 @@ func putAuthProfileHandler(profileStore *profile.Store, logger *slog.Logger) htt
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(learnerProfileEnvelope{Profile: p})
 	}
+}
+
+func authProfileDerefString(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
+}
+
+func authProfileOneOf(value string, allowed ...string) bool {
+	for _, candidate := range allowed {
+		if value == candidate {
+			return true
+		}
+	}
+	return false
 }

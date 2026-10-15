@@ -246,7 +246,7 @@ export function FlashcardVariantsAdminClient({
         toast.error(parsed.form || t("updateFailed"));
         return;
       }
-      setDetail((await r.json()) as Detail);
+      await loadDetail(detail.id);
       setEditForm(null);
       setReason("");
       toast.success(t("updateOk"));
@@ -274,7 +274,7 @@ export function FlashcardVariantsAdminClient({
         toast.error(parsed.form || t("transitionFailed"));
         return;
       }
-      setDetail((await r.json()) as Detail);
+      await loadDetail(detail.id);
       setTransitioning(null);
       setReason("");
       toast.success(t("transitionOk"));
@@ -318,7 +318,7 @@ export function FlashcardVariantsAdminClient({
         toast.error(parsed.form || t("sourceRemapFailed"));
         return;
       }
-      setDetail((await r.json()) as Detail);
+      await loadDetail(detail.id);
       setSourceForm(null);
       setReason("");
       toast.success(t("sourceRemapOk"));
@@ -405,6 +405,7 @@ export function FlashcardVariantsAdminClient({
         ) : list.items.length === 0 ? (
           <AdminEmptyState title={common.empty} />
         ) : (
+          <div aria-label={t("title")} className="w-full min-w-0 overflow-x-auto" role="region" tabIndex={0}>
           <AdminDataTable>
             <AdminDataTableHead>
               <AdminDataTableRow>
@@ -449,6 +450,7 @@ export function FlashcardVariantsAdminClient({
               ))}
             </AdminDataTableBody>
           </AdminDataTable>
+          </div>
         )}
 
         {list && list.total > PAGE_SIZE ? (
@@ -479,12 +481,12 @@ export function FlashcardVariantsAdminClient({
       {selected ? (
         <div
           aria-modal
-          className="fixed inset-0 z-50 flex justify-end bg-black/40"
+          className="fixed inset-0 z-50 flex w-screen min-w-0 justify-end overflow-x-hidden bg-black/40"
           onClick={closeDrawer}
           role="dialog"
         >
           <div
-            className="h-full w-full max-w-2xl overflow-y-auto bg-white p-5 shadow-xl"
+            className="h-full w-full min-w-0 max-w-2xl overflow-y-auto bg-white p-5 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between">
@@ -681,7 +683,7 @@ export function FlashcardVariantsAdminClient({
                   <div className="grid gap-2 text-xs sm:grid-cols-2">
                     <div className="rounded border border-slate-200 bg-white p-2">
                       <div className="font-medium text-slate-600">{t("sourceStored")}</div>
-                      <div className="mt-1 font-mono text-slate-900">
+                      <div className="mt-1 break-all font-mono text-slate-900">
                         {detail.sourceType} / {detail.sourceId}
                       </div>
                     </div>
@@ -690,7 +692,7 @@ export function FlashcardVariantsAdminClient({
                       {detail.canonical ? (
                         <div className="mt-1 space-y-0.5">
                           <div className="font-medium text-slate-900">{detail.canonical.label}</div>
-                          <div className="font-mono text-slate-600">
+                          <div className="break-all font-mono text-slate-600">
                             {detail.canonical.sourceType} / {detail.canonical.sourceId}
                           </div>
                         </div>

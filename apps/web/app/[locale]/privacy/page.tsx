@@ -1,5 +1,6 @@
 import { isSupportedLocale } from "@nihongo-bjt/config";
 import type { Metadata } from "next";
+import Link from "next/link";
 import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
@@ -29,8 +30,16 @@ export default async function PrivacyPolicyPage({
     { title: t.section1Title, body: t.section1Body },
     { title: t.section2Title, body: t.section2Body },
     { title: t.section3Title, body: t.section3Body },
-    { title: t.section4Title, body: t.section4Body },
-    { title: t.section5Title, body: t.section5Body },
+    {
+      title: t.section4Title,
+      body: t.section4Body,
+      link: { href: `/${loc}/settings/privacy`, label: t.settingsPrivacyLink }
+    },
+    {
+      title: t.section5Title,
+      body: t.section5Body,
+      link: { href: `/${loc}/feedback`, label: t.feedbackLink }
+    },
   ];
 
   return (
@@ -47,6 +56,11 @@ export default async function PrivacyPolicyPage({
             <p className="mt-1 text-sm leading-relaxed text-muted">
               {s.body}
             </p>
+            {s.link ? (
+              <Link className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-accent underline-offset-4 hover:underline" href={s.link.href}>
+                {s.link.label}
+              </Link>
+            ) : null}
           </section>
         ))}
       </div>

@@ -31,7 +31,7 @@ type StreakConfig = {
   id: string;
   name: string;
   activityType: string;
-  minActions: number;
+  minActionsPerDay: number;
   freezesAllowed: number;
   enabled: boolean;
 };
@@ -167,7 +167,7 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
 
   function openStreakEdit(s: StreakConfig) {
     setStreakEditId(s.id);
-    setStreakForm({ name: s.name, activityType: s.activityType, minActions: s.minActions, freezesAllowed: s.freezesAllowed, enabled: s.enabled });
+    setStreakForm({ name: s.name, activityType: s.activityType, minActions: s.minActionsPerDay, freezesAllowed: s.freezesAllowed, enabled: s.enabled });
     streakFe.clearAll();
     setStreakModal(true);
   }
@@ -185,7 +185,7 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
       const r = await adminApiFetch(url, {
         method: streakEditId ? "PUT" : "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(streakForm)
+        body: JSON.stringify({ ...streakForm, minActionsPerDay: streakForm.minActions })
       });
       if (!r.ok) {
         const apiErr = await parseApiError(r, "Lưu streak thất bại");
@@ -308,37 +308,40 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
               {streakConfigs.length === 0 ? (
                 <AdminEmptyState title={t("empty")} />
               ) : (
-                <AdminDataTable>
-                  <AdminDataTableHead>
-                    <AdminDataTableTh>{t("name")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("activityType")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("minActions")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("freezesAllowed")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("enabled")}</AdminDataTableTh>
-                    {canWrite && <AdminDataTableTh />}
-                  </AdminDataTableHead>
-                  <AdminDataTableBody>
-                    {streakConfigs.map((s) => (
-                      <AdminDataTableRow key={s.id}>
-                        <AdminDataTableTd>{s.name}</AdminDataTableTd>
-                        <AdminDataTableTd>{s.activityType}</AdminDataTableTd>
-                        <AdminDataTableTd>{s.minActions}</AdminDataTableTd>
-                        <AdminDataTableTd>{s.freezesAllowed}</AdminDataTableTd>
-                        <AdminDataTableTd>
-                          <AdminStatusBadge tone={s.enabled ? "neutral" : "danger"}>{s.enabled ? t("enabled") : t("disabled")}</AdminStatusBadge>
-                        </AdminDataTableTd>
-                        {canWrite && (
+                <div className="max-w-full overflow-x-auto" role="region" aria-label={t("streaks")} tabIndex={0}>
+                  <AdminDataTable>
+                    <AdminDataTableHead><AdminDataTableRow>
+                      <AdminDataTableTh>{t("name")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("activityType")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("minActions")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("freezesAllowed")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("enabled")}</AdminDataTableTh>
+                      {canWrite && <AdminDataTableTh />}
+                    </AdminDataTableRow></AdminDataTableHead>
+                    <AdminDataTableBody>
+                      {streakConfigs.map((s) => (
+                        <AdminDataTableRow key={s.id}>
+                          <AdminDataTableTd>{s.name}</AdminDataTableTd>
+                          <AdminDataTableTd>{s.activityType}</AdminDataTableTd>
+                          <AdminDataTableTd>{s.minActionsPerDay}</AdminDataTableTd>
+                          <AdminDataTableTd>{s.freezesAllowed}</AdminDataTableTd>
                           <AdminDataTableTd>
-                            <div className="flex gap-2">
-                              <button className="text-xs text-indigo-600 hover:underline" onClick={() => openStreakEdit(s)} type="button">{t("edit")}</button>
-                              <button className="text-xs text-red-600 hover:underline" onClick={() => setDeleteConfirm({ type: "streaks", id: s.id })} type="button">{t("delete")}</button>
-                            </div>
+                            <AdminStatusBadge tone={s.enabled ? "neutral" : "danger"}>{s.enabled ? t("enabled") : t("disabled")}</AdminStatusBadge>
                           </AdminDataTableTd>
-                        )}
-                      </AdminDataTableRow>
-                    ))}
-                  </AdminDataTableBody>
-                </AdminDataTable>
+                          {canWrite && (
+                            <AdminDataTableTd>
+                              <div className="flex gap-2">
+                                <button className="text-xs text-indigo-600 hover:underline" onClick={() => openStreakEdit(s)} type="button">{t("edit")}</button>
+                                <button className="text-xs text-red-600 hover:underline" onClick={() => setDeleteConfirm({ type: "streaks", id: s.id })} type="button">{t("delete")}</button>
+                              </div>
+                            </AdminDataTableTd>
+                          )}
+                        </AdminDataTableRow>
+                      ))}
+                    </AdminDataTableBody>
+
+                  </AdminDataTable>
+                </div>
               )}
             </AdminSection>
           )}
@@ -350,32 +353,35 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
               {achievements.length === 0 ? (
                 <AdminEmptyState title={t("empty")} />
               ) : (
-                <AdminDataTable>
-                  <AdminDataTableHead>
-                    <AdminDataTableTh>{t("slug")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("category")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("metric")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("tier")}</AdminDataTableTh>
-                  </AdminDataTableHead>
-                  <AdminDataTableBody>
-                    {achievements.map((a) => (
-                      <AdminDataTableRow key={a.id}>
-                        <AdminDataTableTd className="font-mono text-xs">{a.slug}</AdminDataTableTd>
-                        <AdminDataTableTd>{a.category}</AdminDataTableTd>
-                        <AdminDataTableTd>{a.metric}</AdminDataTableTd>
-                        <AdminDataTableTd>
-                          <div className="flex gap-1">
-                            {a.tiers.map((tr) => (
-                              <span key={tr.id} className="rounded bg-slate-100 px-2 py-0.5 text-xs">
-                                {tiers[tr.tier] ?? tr.tier}: {tr.threshold}
-                              </span>
-                            ))}
-                          </div>
-                        </AdminDataTableTd>
-                      </AdminDataTableRow>
-                    ))}
-                  </AdminDataTableBody>
-                </AdminDataTable>
+                <div className="max-w-full overflow-x-auto" role="region" aria-label={t("achievements")} tabIndex={0}>
+                  <AdminDataTable>
+                    <AdminDataTableHead><AdminDataTableRow>
+                      <AdminDataTableTh>{t("slug")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("category")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("metric")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("tier")}</AdminDataTableTh>
+                    </AdminDataTableRow></AdminDataTableHead>
+                    <AdminDataTableBody>
+                      {achievements.map((a) => (
+                        <AdminDataTableRow key={a.id}>
+                          <AdminDataTableTd className="font-mono text-xs">{a.slug}</AdminDataTableTd>
+                          <AdminDataTableTd>{a.category}</AdminDataTableTd>
+                          <AdminDataTableTd>{a.metric}</AdminDataTableTd>
+                          <AdminDataTableTd>
+                            <div className="flex gap-1">
+                              {a.tiers.map((tr) => (
+                                <span key={tr.id} className="rounded bg-slate-100 px-2 py-0.5 text-xs">
+                                  {tiers[tr.tier] ?? tr.tier}: {tr.threshold}
+                                </span>
+                              ))}
+                            </div>
+                          </AdminDataTableTd>
+                        </AdminDataTableRow>
+                      ))}
+                    </AdminDataTableBody>
+
+                  </AdminDataTable>
+                </div>
               )}
             </AdminSection>
           )}
@@ -392,37 +398,40 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
               {leaderboards.length === 0 ? (
                 <AdminEmptyState title={t("empty")} />
               ) : (
-                <AdminDataTable>
-                  <AdminDataTableHead>
-                    <AdminDataTableTh>{t("name")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("metricType")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("period")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("maxEntries")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("enabled")}</AdminDataTableTh>
-                    {canWrite && <AdminDataTableTh />}
-                  </AdminDataTableHead>
-                  <AdminDataTableBody>
-                    {leaderboards.map((lb) => (
-                      <AdminDataTableRow key={lb.id}>
-                        <AdminDataTableTd>{lb.name}</AdminDataTableTd>
-                        <AdminDataTableTd>{lb.metricType}</AdminDataTableTd>
-                        <AdminDataTableTd>{lb.period}</AdminDataTableTd>
-                        <AdminDataTableTd>{lb.maxEntries}</AdminDataTableTd>
-                        <AdminDataTableTd>
-                          <AdminStatusBadge tone={lb.enabled ? "neutral" : "danger"}>{lb.enabled ? t("enabled") : t("disabled")}</AdminStatusBadge>
-                        </AdminDataTableTd>
-                        {canWrite && (
+                <div className="max-w-full overflow-x-auto" role="region" aria-label={t("leaderboards")} tabIndex={0}>
+                  <AdminDataTable>
+                    <AdminDataTableHead><AdminDataTableRow>
+                      <AdminDataTableTh>{t("name")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("metricType")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("period")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("maxEntries")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("enabled")}</AdminDataTableTh>
+                      {canWrite && <AdminDataTableTh />}
+                    </AdminDataTableRow></AdminDataTableHead>
+                    <AdminDataTableBody>
+                      {leaderboards.map((lb) => (
+                        <AdminDataTableRow key={lb.id}>
+                          <AdminDataTableTd>{lb.name}</AdminDataTableTd>
+                          <AdminDataTableTd>{lb.metricType}</AdminDataTableTd>
+                          <AdminDataTableTd>{lb.period}</AdminDataTableTd>
+                          <AdminDataTableTd>{lb.maxEntries}</AdminDataTableTd>
                           <AdminDataTableTd>
-                            <div className="flex gap-2">
-                              <button className="text-xs text-indigo-600 hover:underline" onClick={() => openLbEdit(lb)} type="button">{t("edit")}</button>
-                              <button className="text-xs text-red-600 hover:underline" onClick={() => setDeleteConfirm({ type: "leaderboards", id: lb.id })} type="button">{t("delete")}</button>
-                            </div>
+                            <AdminStatusBadge tone={lb.enabled ? "neutral" : "danger"}>{lb.enabled ? t("enabled") : t("disabled")}</AdminStatusBadge>
                           </AdminDataTableTd>
-                        )}
-                      </AdminDataTableRow>
-                    ))}
-                  </AdminDataTableBody>
-                </AdminDataTable>
+                          {canWrite && (
+                            <AdminDataTableTd>
+                              <div className="flex gap-2">
+                                <button className="text-xs text-indigo-600 hover:underline" onClick={() => openLbEdit(lb)} type="button">{t("edit")}</button>
+                                <button className="text-xs text-red-600 hover:underline" onClick={() => setDeleteConfirm({ type: "leaderboards", id: lb.id })} type="button">{t("delete")}</button>
+                              </div>
+                            </AdminDataTableTd>
+                          )}
+                        </AdminDataTableRow>
+                      ))}
+                    </AdminDataTableBody>
+
+                  </AdminDataTable>
+                </div>
               )}
             </AdminSection>
           )}
@@ -484,63 +493,66 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
               {pets.length === 0 ? (
                 <AdminEmptyState title={t("empty")} />
               ) : (
-                <AdminDataTable>
-                  <AdminDataTableHead>
-                    <AdminDataTableTh>{t("petName")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("petStage")}</AdminDataTableTh>
-                    <AdminDataTableTh>XP</AdminDataTableTh>
-                    <AdminDataTableTh>{t("petHappiness")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("petMood")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("petFeedings")}</AdminDataTableTh>
-                    {canWrite && <AdminDataTableTh />}
-                  </AdminDataTableHead>
-                  <AdminDataTableBody>
-                    {pets
-                      .filter((p) => {
-                        if (petStageFilter && p.stage !== petStageFilter) return false;
-                        if (petFilter && !p.name.toLowerCase().includes(petFilter.toLowerCase()) && !p.userId.toLowerCase().includes(petFilter.toLowerCase())) return false;
-                        return true;
-                      })
-                      .map((p) => (
-                        <AdminDataTableRow key={p.id}>
-                          <AdminDataTableTd>
-                            <div className="flex items-center gap-1.5">
-                              <span>{STAGE_EMOJI[p.stage] ?? "?"}</span>
-                              <span className="font-medium">{p.name}</span>
-                            </div>
-                            <div className="text-[10px] text-slate-400 font-mono">{p.userId.slice(0, 8)}…</div>
-                          </AdminDataTableTd>
-                          <AdminDataTableTd>
-                            <AdminStatusBadge tone={p.stage === "master" ? "good" : p.stage === "adult" ? "neutral" : "warning"}>
-                              {p.stage}
-                            </AdminStatusBadge>
-                          </AdminDataTableTd>
-                          <AdminDataTableTd>{p.xp}</AdminDataTableTd>
-                          <AdminDataTableTd>
-                            <div className="flex items-center gap-1">
-                              <div className="h-2 w-16 overflow-hidden rounded-full bg-slate-200">
-                                <div
-                                  className={`h-full rounded-full ${p.happiness >= 70 ? "bg-green-500" : p.happiness >= 40 ? "bg-yellow-500" : "bg-red-500"}`}
-                                  style={{ width: `${p.happiness}%` }}
-                                />
-                              </div>
-                              <span className="text-xs">{p.happiness}%</span>
-                            </div>
-                          </AdminDataTableTd>
-                          <AdminDataTableTd>{MOOD_EMOJI[p.mood] ?? p.mood} {p.mood}</AdminDataTableTd>
-                          <AdminDataTableTd>{p.totalFeedings}</AdminDataTableTd>
-                          {canWrite && (
+                <div className="max-w-full overflow-x-auto" role="region" aria-label={t("pets")} tabIndex={0}>
+                  <AdminDataTable>
+                    <AdminDataTableHead><AdminDataTableRow>
+                      <AdminDataTableTh>{t("petName")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("petStage")}</AdminDataTableTh>
+                      <AdminDataTableTh>XP</AdminDataTableTh>
+                      <AdminDataTableTh>{t("petHappiness")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("petMood")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("petFeedings")}</AdminDataTableTh>
+                      {canWrite && <AdminDataTableTh />}
+                    </AdminDataTableRow></AdminDataTableHead>
+                    <AdminDataTableBody>
+                      {pets
+                        .filter((p) => {
+                          if (petStageFilter && p.stage !== petStageFilter) return false;
+                          if (petFilter && !p.name.toLowerCase().includes(petFilter.toLowerCase()) && !p.userId.toLowerCase().includes(petFilter.toLowerCase())) return false;
+                          return true;
+                        })
+                        .map((p) => (
+                          <AdminDataTableRow key={p.id}>
                             <AdminDataTableTd>
-                              <div className="flex gap-2">
-                                <button className="text-xs text-indigo-600 hover:underline" onClick={() => { setPetEditTarget(p); setPetEditForm({ name: p.name, stage: p.stage, xp: p.xp, happiness: p.happiness }); setPetEditModal(true); }} type="button">{t("edit")}</button>
-                                <button className="text-xs text-red-600 hover:underline" onClick={() => setDeleteConfirm({ type: "pets/reset", id: p.id })} type="button">{t("petReset")}</button>
+                              <div className="flex items-center gap-1.5">
+                                <span>{STAGE_EMOJI[p.stage] ?? "?"}</span>
+                                <span className="font-medium">{p.name}</span>
+                              </div>
+                              <div className="text-[10px] text-slate-400 font-mono">{p.userId.slice(0, 8)}…</div>
+                            </AdminDataTableTd>
+                            <AdminDataTableTd>
+                              <AdminStatusBadge tone={p.stage === "master" ? "good" : p.stage === "adult" ? "neutral" : "warning"}>
+                                {p.stage}
+                              </AdminStatusBadge>
+                            </AdminDataTableTd>
+                            <AdminDataTableTd>{p.xp}</AdminDataTableTd>
+                            <AdminDataTableTd>
+                              <div className="flex items-center gap-1">
+                                <div className="h-2 w-16 overflow-hidden rounded-full bg-slate-200">
+                                  <div
+                                    className={`h-full rounded-full ${p.happiness >= 70 ? "bg-green-500" : p.happiness >= 40 ? "bg-yellow-500" : "bg-red-500"}`}
+                                    style={{ width: `${p.happiness}%` }}
+                                  />
+                                </div>
+                                <span className="text-xs">{p.happiness}%</span>
                               </div>
                             </AdminDataTableTd>
-                          )}
-                        </AdminDataTableRow>
-                      ))}
-                  </AdminDataTableBody>
-                </AdminDataTable>
+                            <AdminDataTableTd>{MOOD_EMOJI[p.mood] ?? p.mood} {p.mood}</AdminDataTableTd>
+                            <AdminDataTableTd>{p.totalFeedings}</AdminDataTableTd>
+                            {canWrite && (
+                              <AdminDataTableTd>
+                                <div className="flex gap-2">
+                                  <button className="text-xs text-indigo-600 hover:underline" onClick={() => { setPetEditTarget(p); setPetEditForm({ name: p.name, stage: p.stage, xp: p.xp, happiness: p.happiness }); setPetEditModal(true); }} type="button">{t("edit")}</button>
+                                  <button className="text-xs text-red-600 hover:underline" onClick={() => setDeleteConfirm({ type: "pets/reset", id: p.id })} type="button">{t("petReset")}</button>
+                                </div>
+                              </AdminDataTableTd>
+                            )}
+                          </AdminDataTableRow>
+                        ))}
+                    </AdminDataTableBody>
+
+                  </AdminDataTable>
+                </div>
               )}
             </AdminSection>
           )}

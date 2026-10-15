@@ -10,6 +10,7 @@ interface Scenario {
   id: string;
   slug: string;
   titleVi: string;
+  titleJa?: string | null;
   descriptionVi: string | null;
   difficulty: string;
   category: string;
@@ -18,31 +19,43 @@ interface Scenario {
   _count: { steps: number; attempts: number };
 }
 
+interface ScenarioListCopy {
+  title: string;
+  description: string;
+  difficulty: Record<string, string>;
+  duration: string;
+  steps: string;
+  attempts: string;
+  empty: string;
+  loadError: string;
+  retry: string;
+}
+
 const DIFFICULTY_COLORS: Record<string, string> = {
   beginner: "bg-[var(--color-matcha)]/15 text-[var(--color-matcha)]",
   intermediate: "bg-[var(--color-gold,#f59e0b)]/15 text-[var(--color-gold,#f59e0b)]",
   advanced: "bg-[var(--color-sakura)]/15 text-[var(--color-sakura)]",
 };
 
-const DIFFICULTY_LABELS: Record<string, string> = {
-  beginner: "Cơ bản",
-  intermediate: "Trung cấp",
-  advanced: "Nâng cao",
-};
-
-export function ScenarioListClient({ locale }: { locale: string }) {
+export function ScenarioListClient({ locale, copy }: { locale: string; copy: ScenarioListCopy }) {
   const { userId } = useGoAuth();
   const router = useRouter();
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
     if (!userId) return;
+    setLoading(true);
+    setError(false);
     try {
       const r = await learnerApiFetch("/api/scenarios");
-      if (r.ok) setScenarios(await r.json());
+      if (!r.ok) throw new Error("load scenarios");
+      const data: unknown = await r.json();
+      if (!Array.isArray(data)) throw new Error("invalid scenarios response");
+      setScenarios(data);
     } catch {
-      /* no-op */
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -66,10 +79,10 @@ export function ScenarioListClient({ locale }: { locale: string }) {
   return (
     <div className="mx-auto max-w-3xl p-4">
       <h1 className="text-xl font-black text-ink mb-1">
-        💼 Tình huống kinh doanh
+        💼 {copy.title}
       </h1>
       <p className="text-sm text-muted mb-6">
-        Luyện tập ứng xử trong môi trường làm việc Nhật Bản
+        {copy.description}
       </p>
 
       <div className="space-y-3">
@@ -84,7 +97,7 @@ export function ScenarioListClient({ locale }: { locale: string }) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-bold text-ink truncate">
-                    {s.titleVi}
+                    {locale === "vi" ? s.titleVi : s.titleJa || s.titleVi}
                   </h3>
                   <span
                     className={cn(
@@ -92,18 +105,18 @@ export function ScenarioListClient({ locale }: { locale: string }) {
                       DIFFICULTY_COLORS[s.difficulty],
                     )}
                   >
-                    {DIFFICULTY_LABELS[s.difficulty] ?? s.difficulty}
+                    {copy.difficulty[s.difficulty] ?? s.difficulty}
                   </span>
                 </div>
-                {s.descriptionVi && (
+                {locale === "vi" && s.descriptionVi && (
                   <p className="mt-1 text-xs text-muted line-clamp-2">
                     {s.descriptionVi}
                   </p>
                 )}
                 <div className="mt-2 flex gap-3 text-[10px] text-muted">
-                  <span>⏱️ ~{s.estimatedMin} phút</span>
-                  <span>📋 {s._count.steps} bước</span>
-                  <span>🎮 {s._count.attempts} lượt chơi</span>
+                  <span>{copy.duration.replace("{count}", String(s.estimatedMin))}</span>
+                  <span>{copy.steps.replace("{count}", String(s._count.steps))}</span>
+                  <span>{copy.attempts.replace("{count}", String(s._count.attempts))}</span>
                 </div>
               </div>
               <span className="text-muted text-sm">→</span>
@@ -112,10 +125,19 @@ export function ScenarioListClient({ locale }: { locale: string }) {
         ))}
       </div>
 
-      {scenarios.length === 0 && (
+      {error && (
+        <div role="alert" className="text-center py-8">
+          <p className="text-sm text-muted">{copy.loadError}</p>
+          <button type="button" onClick={() => void load()} className="mt-3 min-h-12 rounded-xl px-4 font-semibold">
+            {copy.retry}
+          </button>
+        </div>
+      )}
+
+      {!error && scenarios.length === 0 && (
         <div className="text-center py-12">
           <p className="text-4xl">💼</p>
-          <p className="mt-3 text-sm text-muted">Chưa có tình huống nào.</p>
+          <p className="mt-3 text-sm text-muted">{copy.empty}</p>
         </div>
       )}
     </div>

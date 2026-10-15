@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { io, type Socket } from "socket.io-client";
-
 import { useGoAuth } from "../lib/go-auth-provider";
+import { createGoRealtimeClient, type GoRealtimeClient } from "../lib/go-realtime-client";
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
+const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/u, "");
 const HEARTBEAT_INTERVAL_MS = 60_000; // 60s (server TTL is 90s)
 
 export type ChallengeReceivedPayload = {
@@ -29,7 +28,7 @@ type PresenceOptions = {
  */
 export function usePresence(options?: PresenceOptions) {
   const { isAuthenticated, userId } = useGoAuth();
-  const socketRef = useRef<Socket | null>(null);
+  const socketRef = useRef<GoRealtimeClient | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const onChallengeRef = useRef(options?.onChallengeReceived);
   onChallengeRef.current = options?.onChallengeReceived;
@@ -49,13 +48,7 @@ export function usePresence(options?: PresenceOptions) {
     // Already connected
     if (socketRef.current?.connected) return;
 
-    const socket = io(`${API_URL}/presence`, {
-      transports: ["websocket"],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 3000,
-      withCredentials: true,
-    });
+    const socket = createGoRealtimeClient(API_URL, "/ws/presence");
 
     socket.on("connect", () => {
       // Start heartbeat

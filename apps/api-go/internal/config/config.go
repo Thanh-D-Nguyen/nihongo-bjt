@@ -3,6 +3,7 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 	"strconv"
@@ -29,6 +30,10 @@ type Config struct {
 	// rejects all unsafe requests until configured.
 	CORSOrigins []string
 
+	// TrustedProxyCIDRs contains only proxy peers allowed to supply client IPs
+	// through X-Forwarded-For. Loopback proxies are trusted separately.
+	TrustedProxyCIDRs []*net.IPNet
+
 	// MediaBasePath is the filesystem path for media file storage.
 	// Sourced from MEDIA_BASE_PATH env var. Defaults to /srv/kotobawork/data/media.
 	MediaBasePath string
@@ -48,7 +53,13 @@ type Config struct {
 	// CookieSecure controls whether session cookies are marked Secure.
 	// Sourced from COOKIE_SECURE env var. Defaults to true (production HTTPS).
 	// Set to "false" for HTTP-only staging environments (e.g., LAN testing).
-	CookieSecure bool
+	CookieSecure        bool
+	SMTPAddress         string
+	SMTPFrom            string
+	SMTPUsername        string
+	SMTPPassword        string
+	SMTPRequireStartTLS bool
+	WebPublicURL        string
 }
 
 // Load reads configuration from environment variables and validates required fields.
@@ -108,8 +119,28 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("config: CORS_ORIGINS %w", err)
 	}
+	trustedProxyCIDRs, err := parseTrustedProxyCIDRs(os.Getenv("TRUSTED_PROXY_CIDRS"))
+	if err != nil {
+		return nil, fmt.Errorf("config: TRUSTED_PROXY_CIDRS %w", err)
+	}
 
 	mediaBasePath := getEnv("MEDIA_BASE_PATH", "/srv/kotobawork/data/media")
+	smtpAddress := os.Getenv("SMTP_ADDRESS")
+	webPublicURL := strings.TrimSpace(os.Getenv("WEB_PUBLIC_URL"))
+	smtpRequireStartTLS := strings.ToLower(getEnv("SMTP_REQUIRE_STARTTLS", "true")) != "false"
+	if smtpAddress != "" && webPublicURL == "" {
+		return nil, fmt.Errorf("config: WEB_PUBLIC_URL is required when SMTP_ADDRESS is configured")
+	}
+	if smtpAddress != "" {
+		host, _, err := net.SplitHostPort(smtpAddress)
+		if err != nil {
+			return nil, fmt.Errorf("config: SMTP_ADDRESS must include a valid host and port")
+		}
+		ip := net.ParseIP(host)
+		if !smtpRequireStartTLS && host != "localhost" && (ip == nil || !ip.IsLoopback()) {
+			return nil, fmt.Errorf("config: SMTP_REQUIRE_STARTTLS may be disabled only for loopback SMTP")
+		}
+	}
 
 	cfg := &Config{
 		Port:                 port,
@@ -124,11 +155,18 @@ func Load() (*Config, error) {
 		DBPoolMinConns:       minConns,
 		DBConnAcquireTimeout: acquireTimeout,
 		CORSOrigins:          corsOrigins,
+		TrustedProxyCIDRs:    trustedProxyCIDRs,
 		MediaBasePath:        mediaBasePath,
 		MeilisearchURL:       os.Getenv("MEILISEARCH_URL"),
 		MeilisearchAPIKey:    os.Getenv("MEILISEARCH_API_KEY"),
 		StripeWebhookSecret:  os.Getenv("STRIPE_WEBHOOK_SECRET"),
 		CookieSecure:         strings.ToLower(os.Getenv("COOKIE_SECURE")) != "false",
+		SMTPAddress:          smtpAddress,
+		SMTPFrom:             getEnv("SMTP_FROM", "no-reply@kotobawork.local"),
+		SMTPUsername:         os.Getenv("SMTP_USERNAME"),
+		SMTPPassword:         os.Getenv("SMTP_PASSWORD"),
+		SMTPRequireStartTLS:  smtpRequireStartTLS,
+		WebPublicURL:         webPublicURL,
 	}
 	return cfg, nil
 }
@@ -171,6 +209,39 @@ func parseCORSOrigins(raw string) ([]string, error) {
 			return nil, fmt.Errorf("origin[%d]: fragment not allowed", i)
 		}
 		out = append(out, p)
+	}
+	return out, nil
+}
+
+func parseTrustedProxyCIDRs(raw string) ([]*net.IPNet, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil, nil
+	}
+	parts := strings.Split(raw, ",")
+	out := make([]*net.IPNet, 0, len(parts))
+	for i, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		if ip := net.ParseIP(part); ip != nil {
+			if ip4 := ip.To4(); ip4 != nil {
+				ip = ip4
+			}
+			bits := 128
+			if ip.To4() != nil {
+				bits = 32
+			}
+			_, network, _ := net.ParseCIDR(fmt.Sprintf("%s/%d", ip, bits))
+			out = append(out, network)
+			continue
+		}
+		_, network, err := net.ParseCIDR(part)
+		if err != nil {
+			return nil, fmt.Errorf("entry[%d]: must be an IP address or CIDR", i)
+		}
+		out = append(out, network)
 	}
 	return out, nil
 }

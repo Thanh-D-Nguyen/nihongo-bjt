@@ -1,6 +1,7 @@
 package config
 
 import (
+	"net"
 	"os"
 	"strings"
 	"testing"
@@ -63,6 +64,34 @@ func TestLoad_Defaults(t *testing.T) {
 	}
 	if cfg.RedisURL != "" {
 		t.Errorf("expected empty redis url, got %s", cfg.RedisURL)
+	}
+}
+
+func TestLoad_SMTPRequiresSTARTTLSOutsideLoopback(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://localhost/test")
+	t.Setenv("WEB_PUBLIC_URL", "https://example.com")
+	t.Setenv("SMTP_ADDRESS", "smtp.example.com:587")
+	t.Setenv("SMTP_REQUIRE_STARTTLS", "false")
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "loopback SMTP") {
+		t.Fatalf("expected insecure remote SMTP to be rejected, got %v", err)
+	}
+
+	t.Setenv("SMTP_ADDRESS", "127.0.0.1:1025")
+	if _, err := Load(); err != nil {
+		t.Fatalf("expected loopback Mailpit configuration to be accepted, got %v", err)
+	}
+}
+
+func TestLoad_SMTPRequiresExplicitPublicResetURL(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://localhost/test")
+	t.Setenv("SMTP_ADDRESS", "127.0.0.1:1025")
+	t.Setenv("WEB_PUBLIC_URL", "")
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "WEB_PUBLIC_URL is required") {
+		t.Fatalf("configured mail delivery must require its public reset URL, got %v", err)
+	}
+	t.Setenv("WEB_PUBLIC_URL", "http://localhost:18081")
+	if _, err := Load(); err != nil {
+		t.Fatalf("explicit local audit URL should be accepted, got %v", err)
 	}
 }
 
@@ -260,5 +289,30 @@ func TestLoad_CORSOrigins_UserinfoNotAllowed(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "userinfo not allowed") {
 		t.Errorf("expected userinfo error, got: %v", err)
+	}
+}
+
+func TestParseTrustedProxyCIDRs(t *testing.T) {
+	networks, err := parseTrustedProxyCIDRs("172.29.254.3, 192.0.2.0/24")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(networks) != 2 || !networks[0].Contains(net.ParseIP("172.29.254.3")) || networks[0].Contains(net.ParseIP("172.29.254.4")) {
+		t.Fatalf("trusted proxy list did not preserve the single-IP boundary: %v", networks)
+	}
+	if _, err := parseTrustedProxyCIDRs("172.29.254.3/garbage"); err == nil {
+		t.Fatal("expected invalid trusted proxy entry to be rejected")
+	}
+}
+
+func TestLoad_TrustedProxyCIDRs(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://localhost/test")
+	t.Setenv("TRUSTED_PROXY_CIDRS", "172.29.254.3/32")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(cfg.TrustedProxyCIDRs) != 1 || !cfg.TrustedProxyCIDRs[0].Contains(net.ParseIP("172.29.254.3")) {
+		t.Fatalf("trusted proxy configuration not loaded: %v", cfg.TrustedProxyCIDRs)
 	}
 }

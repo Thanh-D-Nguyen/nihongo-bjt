@@ -36,6 +36,15 @@ var growthSocialKinds = []string{
 
 var validSocialSlugRe = regexp.MustCompile(`^[a-z0-9_-]+$`)
 
+func validGrowthSocialKind(kind string) bool {
+	for _, allowed := range growthSocialKinds {
+		if kind == allowed {
+			return true
+		}
+	}
+	return false
+}
+
 // adminGrowthSocialTemplatesListHandler implements GET /api/admin/growth/social/templates.
 func adminGrowthSocialTemplatesListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -178,15 +187,20 @@ func adminGrowthSocialTemplatesDetailHandler(db *pgxpool.Pool, logger *slog.Logg
 		ctx := r.Context()
 
 		type AuditEntry struct {
-			ID         string          `json:"id"`
-			Action     string          `json:"action"`
-			ActorID    string          `json:"actorId"`
-			ActorName  *string         `json:"actorName,omitempty"`
-			ActorEmail *string         `json:"actorEmail,omitempty"`
-			Reason     string          `json:"reason"`
-			After      json.RawMessage `json:"after,omitempty"`
-			Before     json.RawMessage `json:"before,omitempty"`
-			CreatedAt  string          `json:"createdAt"`
+			ID         string  `json:"id"`
+			Action     string  `json:"action"`
+			ActorID    string  `json:"actorId"`
+			ActorName  *string `json:"actorName,omitempty"`
+			ActorEmail *string `json:"actorEmail,omitempty"`
+			Actor      *struct {
+				ID          string `json:"id"`
+				DisplayName string `json:"displayName"`
+				Email       string `json:"email"`
+			} `json:"actor"`
+			Reason    string          `json:"reason"`
+			After     json.RawMessage `json:"after,omitempty"`
+			Before    json.RawMessage `json:"before,omitempty"`
+			CreatedAt string          `json:"createdAt"`
 		}
 		type TemplateDetail struct {
 			ID            string          `json:"id"`
@@ -267,6 +281,13 @@ func adminGrowthSocialTemplatesDetailHandler(db *pgxpool.Pool, logger *slog.Logg
 				var ts time.Time
 				if err := aRows.Scan(&ae.ID, &ae.Action, &ae.ActorID, &ae.ActorName,
 					&ae.ActorEmail, &ae.Reason, &ae.After, &ae.Before, &ts); err == nil {
+					if ae.ActorName != nil && ae.ActorEmail != nil {
+						ae.Actor = &struct {
+							ID          string `json:"id"`
+							DisplayName string `json:"displayName"`
+							Email       string `json:"email"`
+						}{ID: ae.ActorID, DisplayName: *ae.ActorName, Email: *ae.ActorEmail}
+					}
 					ae.CreatedAt = ts.UTC().Format(time.RFC3339)
 					td.Audit = append(td.Audit, ae)
 				}
@@ -298,7 +319,11 @@ func adminGrowthSocialTemplatesCreateHandler(db *pgxpool.Pool, logger *slog.Logg
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		if req.Slug == "" || req.Kind == "" {
+		if len(strings.TrimSpace(req.Reason)) < 3 {
+			writeJSONError(w, "reason is required", http.StatusBadRequest)
+			return
+		}
+		if req.Slug == "" || !validGrowthSocialKind(req.Kind) {
 			writeJSONError(w, "slug and kind are required", http.StatusBadRequest)
 			return
 		}
@@ -312,12 +337,19 @@ func adminGrowthSocialTemplatesCreateHandler(db *pgxpool.Pool, logger *slog.Logg
 		}
 
 		ctx := r.Context()
+		tx, err := db.BeginTx(ctx, pgx.TxOptions{})
+		if err != nil {
+			logger.Error("begin social template create", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 		configJSON := req.Config
 		if configJSON == nil {
 			configJSON = json.RawMessage("{}")
 		}
 		var createdID string
-		err := db.QueryRow(ctx, `
+		err = tx.QueryRow(ctx, `
 			INSERT INTO growth.share_template (slug, kind, version, active, config, created_at, updated_at)
 			VALUES ($1, $2, 1, false, $3, NOW(), NOW()) RETURNING id`,
 			req.Slug, req.Kind, configJSON).Scan(&createdID)
@@ -330,9 +362,16 @@ func adminGrowthSocialTemplatesCreateHandler(db *pgxpool.Pool, logger *slog.Logg
 		afterJSON, _ := json.Marshal(map[string]any{
 			"config": req.Config, "kind": req.Kind, "slug": req.Slug,
 		})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
-			VALUES ('admin.growth.social_template.created', $1, $2, 'growth.social_template', $3, $4, NOW())`,
-			identity.ActorID, createdID, req.Reason, afterJSON)
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.growth.social_template.created", "growth.social_template", createdID, req.Reason, nil, json.RawMessage(afterJSON)); err != nil {
+			logger.Error("audit social template create", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit social template create", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		r.URL.Path = "/api/admin/growth/social/templates/" + createdID
 		detailHandler := adminGrowthSocialTemplatesDetailHandler(db, logger)
@@ -365,13 +404,20 @@ func adminGrowthSocialTemplatesPatchHandler(db *pgxpool.Pool, logger *slog.Logge
 		}
 
 		ctx := r.Context()
+		tx, err := db.BeginTx(ctx, pgx.TxOptions{})
+		if err != nil {
+			logger.Error("begin social template update", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 		var beforeSlug, beforeKind string
 		var beforeVersion int
 		var beforeActive bool
 		var beforeConfig []byte
-		err := db.QueryRow(ctx, `
+		err = tx.QueryRow(ctx, `
 			SELECT slug, kind, version, active, config
-			FROM growth.share_template WHERE id = $1 AND kind = ANY($2)`,
+			FROM growth.share_template WHERE id = $1 AND kind = ANY($2) FOR UPDATE`,
 			id, growthSocialKinds).Scan(&beforeSlug, &beforeKind, &beforeVersion, &beforeActive, &beforeConfig)
 		if err != nil {
 			writeJSONError(w, "social template not found", http.StatusNotFound)
@@ -400,6 +446,10 @@ func adminGrowthSocialTemplatesPatchHandler(db *pgxpool.Pool, logger *slog.Logge
 			argIdx++
 		}
 		if req.Kind != nil {
+			if !validGrowthSocialKind(*req.Kind) {
+				writeJSONError(w, "invalid social template kind", http.StatusBadRequest)
+				return
+			}
 			setClauses = append(setClauses, "kind = $"+itoa(argIdx))
 			args = append(args, *req.Kind)
 			argIdx++
@@ -419,7 +469,7 @@ func adminGrowthSocialTemplatesPatchHandler(db *pgxpool.Pool, logger *slog.Logge
 		query := "UPDATE growth.share_template SET " + joinStrings(setClauses, ", ") +
 			" WHERE id = $" + itoa(argIdx)
 		args = append(args, id)
-		if _, err := db.Exec(ctx, query, args...); err != nil {
+		if _, err := tx.Exec(ctx, query, args...); err != nil {
 			logger.Error("patch social template", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
@@ -429,10 +479,31 @@ func adminGrowthSocialTemplatesPatchHandler(db *pgxpool.Pool, logger *slog.Logge
 			"config": json.RawMessage(beforeConfig), "kind": beforeKind,
 			"slug": beforeSlug, "version": beforeVersion,
 		})
-		afterJSON, _ := json.Marshal(map[string]any{"updated": true, "fields": setClauses})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
-			VALUES ('admin.growth.social_template.updated', $1, $2, 'growth.social_template', $3, $4, $5, NOW())`,
-			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
+		afterSlug, afterKind, afterConfig, afterVersion := beforeSlug, beforeKind, beforeConfig, beforeVersion
+		if req.Slug != nil {
+			afterSlug = *req.Slug
+		}
+		if req.Kind != nil {
+			afterKind = *req.Kind
+		}
+		if req.Config != nil {
+			afterConfig = req.Config
+			afterVersion++
+		}
+		afterJSON, _ := json.Marshal(map[string]any{
+			"config": json.RawMessage(afterConfig), "kind": afterKind,
+			"slug": afterSlug, "version": afterVersion,
+		})
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.growth.social_template.updated", "growth.social_template", id, req.Reason, json.RawMessage(beforeJSON), json.RawMessage(afterJSON)); err != nil {
+			logger.Error("audit social template update", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit social template update", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		detailHandler := adminGrowthSocialTemplatesDetailHandler(db, logger)
 		detailHandler(w, r)
@@ -455,14 +526,24 @@ func adminGrowthSocialTemplatesPublishHandler(db *pgxpool.Pool, logger *slog.Log
 		var req struct {
 			Reason string `json:"reason"`
 		}
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || len(strings.TrimSpace(req.Reason)) < 3 {
+			writeJSONError(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
 
 		ctx := r.Context()
+		tx, err := db.BeginTx(ctx, pgx.TxOptions{})
+		if err != nil {
+			logger.Error("begin social template publish", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 		var beforeActive bool
 		var configBytes []byte
-		err := db.QueryRow(ctx, `
+		err = tx.QueryRow(ctx, `
 			SELECT active, config FROM growth.share_template
-			WHERE id = $1 AND kind = ANY($2)`, id, growthSocialKinds).Scan(&beforeActive, &configBytes)
+			WHERE id = $1 AND kind = ANY($2) FOR UPDATE`, id, growthSocialKinds).Scan(&beforeActive, &configBytes)
 		if err != nil {
 			writeJSONError(w, "social template not found", http.StatusNotFound)
 			return
@@ -474,7 +555,11 @@ func adminGrowthSocialTemplatesPublishHandler(db *pgxpool.Pool, logger *slog.Log
 		}
 
 		if !beforeActive {
-			db.Exec(ctx, "UPDATE growth.share_template SET active = true, updated_at = NOW() WHERE id = $1", id)
+			if _, err := tx.Exec(ctx, "UPDATE growth.share_template SET active = true, updated_at = NOW() WHERE id = $1", id); err != nil {
+				logger.Error("publish social template", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		privClass := "learner_private"
@@ -488,9 +573,16 @@ func adminGrowthSocialTemplatesPublishHandler(db *pgxpool.Pool, logger *slog.Log
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"active": true, "privacyClass": privClass})
 		beforeJSON, _ := json.Marshal(map[string]any{"active": beforeActive})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
-			VALUES ('admin.growth.social_template.published', $1, $2, 'growth.social_template', $3, $4, $5, NOW())`,
-			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.growth.social_template.published", "growth.social_template", id, req.Reason, json.RawMessage(beforeJSON), json.RawMessage(afterJSON)); err != nil {
+			logger.Error("audit social template publish", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit social template publish", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		detailHandler := adminGrowthSocialTemplatesDetailHandler(db, logger)
 		detailHandler(w, r)
@@ -513,27 +605,48 @@ func adminGrowthSocialTemplatesArchiveHandler(db *pgxpool.Pool, logger *slog.Log
 		var req struct {
 			Reason string `json:"reason"`
 		}
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || len(strings.TrimSpace(req.Reason)) < 3 {
+			writeJSONError(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
 
 		ctx := r.Context()
+		tx, err := db.BeginTx(ctx, pgx.TxOptions{})
+		if err != nil {
+			logger.Error("begin social template archive", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 		var beforeActive bool
-		err := db.QueryRow(ctx, `
+		err = tx.QueryRow(ctx, `
 			SELECT active FROM growth.share_template
-			WHERE id = $1 AND kind = ANY($2)`, id, growthSocialKinds).Scan(&beforeActive)
+			WHERE id = $1 AND kind = ANY($2) FOR UPDATE`, id, growthSocialKinds).Scan(&beforeActive)
 		if err != nil {
 			writeJSONError(w, "social template not found", http.StatusNotFound)
 			return
 		}
 
 		if beforeActive {
-			db.Exec(ctx, "UPDATE growth.share_template SET active = false, updated_at = NOW() WHERE id = $1", id)
+			if _, err := tx.Exec(ctx, "UPDATE growth.share_template SET active = false, updated_at = NOW() WHERE id = $1", id); err != nil {
+				logger.Error("archive social template", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"active": false})
 		beforeJSON, _ := json.Marshal(map[string]any{"active": beforeActive})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
-			VALUES ('admin.growth.social_template.archived', $1, $2, 'growth.social_template', $3, $4, $5, NOW())`,
-			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.growth.social_template.archived", "growth.social_template", id, req.Reason, json.RawMessage(beforeJSON), json.RawMessage(afterJSON)); err != nil {
+			logger.Error("audit social template archive", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit social template archive", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		detailHandler := adminGrowthSocialTemplatesDetailHandler(db, logger)
 		detailHandler(w, r)
@@ -544,6 +657,7 @@ func adminGrowthSocialTemplatesArchiveHandler(db *pgxpool.Pool, logger *slog.Log
 func adminGrowthSocialEventsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		hiddenFilter := r.URL.Query().Get("hidden")
 		page := queryInt(r, "page", 1)
 		pageSize := queryInt(r, "pageSize", 20)
 		if page < 1 {
@@ -554,7 +668,13 @@ func adminGrowthSocialEventsListHandler(db *pgxpool.Pool, logger *slog.Logger) h
 		}
 		offset := (page - 1) * pageSize
 
-		countQuery := "SELECT COUNT(*) FROM growth.share_item"
+		whereClause := `WHERE NOT EXISTS (SELECT 1 FROM ops.admin_audit_log a WHERE a.target_type='growth.share_item' AND a.target_id=s.id::text AND a.action='admin.growth.share_item.dismiss')`
+		if hiddenFilter == "active" {
+			whereClause += ` AND (s.expires_at IS NULL OR s.expires_at > NOW())`
+		} else if hiddenFilter == "hidden" {
+			whereClause += ` AND s.expires_at <= NOW()`
+		}
+		countQuery := `SELECT COUNT(*) FROM growth.share_item s ` + whereClause
 		var total int
 		if err := db.QueryRow(ctx, countQuery).Scan(&total); err != nil {
 			logger.Error("count social events", "error", err)
@@ -563,9 +683,14 @@ func adminGrowthSocialEventsListHandler(db *pgxpool.Pool, logger *slog.Logger) h
 		}
 
 		dataQuery := fmt.Sprintf(`
-			SELECT id, user_id, template_id, payload, expires_at, created_at
-			FROM growth.share_item
-			ORDER BY created_at DESC LIMIT $%d OFFSET $%d`, 1, 2)
+			SELECT s.id, s.public_token, s.kind,
+			       (s.expires_at IS NOT NULL AND s.expires_at <= NOW()), s.expires_at, s.created_at,
+			       s.summary_payload, st.id, st.kind, st.slug, u.id, COALESCE(u.display_name, '')
+			FROM growth.share_item s
+			LEFT JOIN growth.share_template st ON st.id = s.template_id
+			JOIN profile.user_profile u ON u.id = s.user_id
+			%s
+			ORDER BY s.created_at DESC LIMIT $1 OFFSET $2`, whereClause)
 		rows, err := db.Query(ctx, dataQuery, pageSize, offset)
 		if err != nil {
 			logger.Error("list social events", "error", err)
@@ -575,12 +700,25 @@ func adminGrowthSocialEventsListHandler(db *pgxpool.Pool, logger *slog.Logger) h
 		defer rows.Close()
 
 		type EventSummary struct {
-			ID         string          `json:"id"`
-			UserID     string          `json:"userId"`
-			TemplateID *string         `json:"templateId,omitempty"`
-			Payload    json.RawMessage `json:"payload,omitempty"`
-			ExpiresAt  *string         `json:"expiresAt,omitempty"`
-			CreatedAt  string          `json:"createdAt"`
+			ID          string  `json:"id"`
+			PublicToken string  `json:"publicToken"`
+			Kind        string  `json:"kind"`
+			Hidden      bool    `json:"hidden"`
+			ExpiresAt   *string `json:"expiresAt"`
+			CreatedAt   string  `json:"createdAt"`
+			Template    *struct {
+				ID   string `json:"id"`
+				Kind string `json:"kind"`
+				Slug string `json:"slug"`
+			} `json:"template"`
+			User struct {
+				ID          string `json:"id"`
+				DisplayName string `json:"displayName"`
+			} `json:"user"`
+			SummaryPreview struct {
+				Headline string `json:"headline,omitempty"`
+				Sub      string `json:"sub,omitempty"`
+			} `json:"summaryPreview"`
 		}
 		var items []EventSummary
 		for rows.Next() {
@@ -588,17 +726,39 @@ func adminGrowthSocialEventsListHandler(db *pgxpool.Pool, logger *slog.Logger) h
 			var createdAt time.Time
 			var expiresAt *time.Time
 			var payloadBytes []byte
-			if err := rows.Scan(&e.ID, &e.UserID, &e.TemplateID, &payloadBytes, &expiresAt, &createdAt); err == nil {
-				e.CreatedAt = createdAt.UTC().Format(time.RFC3339)
-				if expiresAt != nil {
-					s := expiresAt.UTC().Format(time.RFC3339)
-					e.ExpiresAt = &s
-				}
-				if payloadBytes != nil {
-					e.Payload = payloadBytes
-				}
-				items = append(items, e)
+			var templateID, templateKind, templateSlug *string
+			if err := rows.Scan(&e.ID, &e.PublicToken, &e.Kind, &e.Hidden, &expiresAt, &createdAt,
+				&payloadBytes, &templateID, &templateKind, &templateSlug, &e.User.ID, &e.User.DisplayName); err != nil {
+				logger.Error("scan social event", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			e.CreatedAt = createdAt.UTC().Format(time.RFC3339)
+			if expiresAt != nil {
+				s := expiresAt.UTC().Format(time.RFC3339)
+				e.ExpiresAt = &s
+			}
+			if templateID != nil {
+				e.Template = &struct {
+					ID   string `json:"id"`
+					Kind string `json:"kind"`
+					Slug string `json:"slug"`
+				}{ID: *templateID, Kind: *templateKind, Slug: *templateSlug}
+			}
+			var summary struct {
+				Headline string `json:"headline"`
+				Sub      string `json:"sub"`
+			}
+			if err := json.Unmarshal(payloadBytes, &summary); err == nil {
+				e.SummaryPreview.Headline = summary.Headline
+				e.SummaryPreview.Sub = summary.Sub
+			}
+			items = append(items, e)
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate social events", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if items == nil {
 			items = []EventSummary{}
@@ -633,14 +793,25 @@ func adminGrowthSocialEventsModerateHandler(db *pgxpool.Pool, logger *slog.Logge
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
+		if len(strings.TrimSpace(req.Reason)) < 3 {
+			writeJSONError(w, "reason is required", http.StatusBadRequest)
+			return
+		}
 		if req.Action != "dismiss" && req.Action != "hide_from_public" && req.Action != "report_to_legal" {
 			writeJSONError(w, "action must be dismiss, hide_from_public, or report_to_legal", http.StatusBadRequest)
 			return
 		}
 
 		ctx := r.Context()
+		tx, err := db.BeginTx(ctx, pgx.TxOptions{})
+		if err != nil {
+			logger.Error("begin social event moderation", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 		var beforeExpiresAt *time.Time
-		err := db.QueryRow(ctx, "SELECT expires_at FROM growth.share_item WHERE id = $1", id).Scan(&beforeExpiresAt)
+		err = tx.QueryRow(ctx, "SELECT expires_at FROM growth.share_item WHERE id = $1 FOR UPDATE", id).Scan(&beforeExpiresAt)
 		if err != nil {
 			writeJSONError(w, "share item not found", http.StatusNotFound)
 			return
@@ -649,7 +820,11 @@ func adminGrowthSocialEventsModerateHandler(db *pgxpool.Pool, logger *slog.Logge
 		var afterJSON json.RawMessage
 		if req.Action == "hide_from_public" || req.Action == "report_to_legal" {
 			now := time.Now().UTC()
-			db.Exec(ctx, "UPDATE growth.share_item SET expires_at = $1 WHERE id = $2", now, id)
+			if _, err := tx.Exec(ctx, "UPDATE growth.share_item SET expires_at = $1 WHERE id = $2", now, id); err != nil {
+				logger.Error("moderate social event", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
 			if req.Action == "report_to_legal" {
 				afterJSON, _ = json.Marshal(map[string]any{"expiresAt": now.Format(time.RFC3339), "reportedToLegal": true})
 			} else {
@@ -667,9 +842,16 @@ func adminGrowthSocialEventsModerateHandler(db *pgxpool.Pool, logger *slog.Logge
 		beforeJSON, _ := json.Marshal(map[string]any{"expiresAt": beforeExpiresStr})
 
 		auditAction := "admin.growth.share_item." + req.Action
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
-			VALUES ($1, $2, $3, 'growth.share_item', $4, $5, $6, NOW())`,
-			auditAction, identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, auditAction, "growth.share_item", id, req.Reason, json.RawMessage(beforeJSON), json.RawMessage(afterJSON)); err != nil {
+			logger.Error("audit social event moderation", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit social event moderation", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		writeJSON(w, http.StatusOK, map[string]any{"action": req.Action, "id": id, "ok": true})
 	}

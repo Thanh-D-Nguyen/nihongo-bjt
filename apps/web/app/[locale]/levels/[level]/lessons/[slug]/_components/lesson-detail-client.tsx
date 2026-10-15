@@ -173,28 +173,9 @@ interface Labels {
   playAudio: string;
   stopAudio: string;
   audioPlaybackError: string;
-}
-
-/* ── localStorage helpers for lesson progress ── */
-
-function getCompletedLessons(): Set<string> {
-  try {
-    const raw = localStorage.getItem("bjt_lesson_completed");
-    return raw ? new Set(JSON.parse(raw)) : new Set();
-  } catch {
-    return new Set();
-  }
-}
-
-function toggleLessonComplete(slug: string): boolean {
-  const set = getCompletedLessons();
-  if (set.has(slug)) {
-    set.delete(slug);
-  } else {
-    set.add(slug);
-  }
-  localStorage.setItem("bjt_lesson_completed", JSON.stringify([...set]));
-  return set.has(slug);
+  loginToSave: string;
+  savingProgress: string;
+  progressError: string;
 }
 
 /* ── Main Component ────────────────────────── */
@@ -219,20 +200,26 @@ export function LessonDetailClient({
     content: VocabItem | KanjiItem | GrammarItem;
   } | null>(null);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [canSaveProgress, setCanSaveProgress] = useState(false);
+  const [savingProgress, setSavingProgress] = useState(false);
+  const [progressError, setProgressError] = useState(false);
 
   useEffect(() => {
     void (async () => {
       try {
         const res = await learnerApiFetchOptional(`/api/levels/lessons/${slug}`);
-        if (res.ok) setLesson(await res.json());
-        else setError(true);
+        if (res.ok) {
+          const data: LessonData & { isCompleted: boolean; canSaveProgress: boolean } = await res.json();
+          setLesson(data);
+          setIsCompleted(data.isCompleted);
+          setCanSaveProgress(data.canSaveProgress);
+        } else setError(true);
       } catch {
         setError(true);
       } finally {
         setLoading(false);
       }
     })();
-    setIsCompleted(getCompletedLessons().has(slug));
   }, [slug]);
 
   const toggleSection = useCallback((key: string) => {
@@ -244,9 +231,24 @@ export function LessonDetailClient({
     });
   }, []);
 
-  const handleToggleComplete = useCallback(() => {
-    setIsCompleted(toggleLessonComplete(slug));
-  }, [slug]);
+  const handleToggleComplete = useCallback(async () => {
+    setSavingProgress(true);
+    setProgressError(false);
+    try {
+      const res = await learnerApiFetchOptional(`/api/levels/lessons/${slug}/progress`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ completed: !isCompleted })
+      });
+      if (!res.ok) throw new Error("lesson progress update failed");
+      const data: { isCompleted: boolean } = await res.json();
+      setIsCompleted(data.isCompleted);
+    } catch {
+      setProgressError(true);
+    } finally {
+      setSavingProgress(false);
+    }
+  }, [isCompleted, slug]);
 
   if (loading) {
     return (
@@ -377,13 +379,14 @@ export function LessonDetailClient({
                 <LessonMetric label={labels.kanjiSection} value={kanjis.length} />
                 <LessonMetric label={labels.grammarSection} value={grammars.length} />
               </div>
-              <button
-                className={`mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition-all ${
+              {canSaveProgress ? <button
+                className={`mt-3 flex min-h-12 w-full items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition-all disabled:cursor-wait disabled:opacity-60 ${
                   isCompleted
                     ? "bg-[#D1FAE5] text-[#065F46]"
                     : "border border-[#CBD5E1] bg-white text-[#475569] hover:border-[#10B981] hover:text-[#065F46]"
                 }`}
                 onClick={handleToggleComplete}
+                disabled={savingProgress}
                 type="button"
               >
                 {isCompleted ? (
@@ -405,8 +408,14 @@ export function LessonDetailClient({
                     />
                   </svg>
                 )}
-                {isCompleted ? labels.completed : labels.markComplete}
-              </button>
+                {savingProgress ? labels.savingProgress : isCompleted ? labels.completed : labels.markComplete}
+              </button> : <Link
+                className="mt-3 flex min-h-12 w-full items-center justify-center rounded-lg border border-[#CBD5E1] bg-white px-3 py-2 text-center text-xs font-bold text-[#475569] hover:border-[#10B981] hover:text-[#065F46]"
+                href={`/${locale}/login?returnTo=${encodeURIComponent(`/${locale}/levels/${levelCode}/lessons/${slug}`)}`}
+              >
+                {labels.loginToSave}
+              </Link>}
+              {progressError ? <p className="mt-2 text-xs text-rose-700" role="alert">{labels.progressError}</p> : null}
               <div className="mt-3 flex items-center justify-between text-xs text-[#64748B]">
                 <span>
                   {totalItems + richActivityCount} {labels.itemsInLesson}

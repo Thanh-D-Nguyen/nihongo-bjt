@@ -3,6 +3,7 @@ package httpserver
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
@@ -30,9 +32,51 @@ var growthPostcardKinds = []string{
 	"postcard_exam_result",
 	"postcard_welcome",
 	"postcard_seasonal",
+	"streak",
+	"level_up",
+	"bjt_pass",
+	"battle_win",
+	"daily_phrase",
+	"bjt_result",
 }
 
 var validSlugRe = regexp.MustCompile(`^[a-z0-9_-]+$`)
+
+type adminGrowthPostcardActor struct {
+	ID          string  `json:"id"`
+	DisplayName *string `json:"displayName,omitempty"`
+	Email       *string `json:"email,omitempty"`
+}
+
+type adminGrowthPostcardAuditEntry struct {
+	ID         string                    `json:"id"`
+	Action     string                    `json:"action"`
+	ActorID    string                    `json:"actorId"`
+	ActorName  *string                   `json:"actorName,omitempty"`
+	ActorEmail *string                   `json:"actorEmail,omitempty"`
+	Actor      *adminGrowthPostcardActor `json:"actor,omitempty"`
+	Reason     string                    `json:"reason"`
+	After      json.RawMessage           `json:"after,omitempty"`
+	Before     json.RawMessage           `json:"before,omitempty"`
+	CreatedAt  string                    `json:"createdAt"`
+}
+
+type adminGrowthPostcardDetail struct {
+	ID            string                          `json:"id"`
+	Slug          string                          `json:"slug"`
+	Name          string                          `json:"name"`
+	Kind          string                          `json:"kind"`
+	Version       int                             `json:"version"`
+	Active        bool                            `json:"active"`
+	PrivacyClass  string                          `json:"privacyClass"`
+	NoPIIVerified bool                            `json:"noPiiVerified"`
+	Surface       string                          `json:"surface"`
+	ThumbnailKey  *string                         `json:"thumbnailKey,omitempty"`
+	Config        json.RawMessage                 `json:"config,omitempty"`
+	CreatedAt     string                          `json:"createdAt"`
+	UpdatedAt     string                          `json:"updatedAt"`
+	Audit         []adminGrowthPostcardAuditEntry `json:"audit"`
+}
 
 // adminGrowthPostcardsListHandler implements GET /api/admin/growth/postcards.
 func adminGrowthPostcardsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
@@ -43,14 +87,26 @@ func adminGrowthPostcardsListHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		statusFilter := r.URL.Query().Get("status")
 		page := queryInt(r, "page", 1)
 		pageSize := queryInt(r, "pageSize", 20)
+		if len(q) > 200 || (statusFilter != "" && statusFilter != "published" && statusFilter != "archived") {
+			writeJSONError(w, "invalid postcard filters", http.StatusBadRequest)
+			return
+		}
+		if kindFilter != "" {
+			valid := false
+			for _, kind := range growthPostcardKinds {
+				valid = valid || kind == kindFilter
+			}
+			if !valid {
+				writeJSONError(w, "invalid postcard kind", http.StatusBadRequest)
+				return
+			}
+		}
 		if page < 1 {
 			page = 1
 		}
 		if pageSize < 1 || pageSize > 100 {
 			pageSize = 20
 		}
-		offset := (page - 1) * pageSize
-
 		whereParts := []string{"kind = ANY($1)"}
 		args := []any{growthPostcardKinds}
 		argIdx := 2
@@ -81,6 +137,11 @@ func adminGrowthPostcardsListHandler(db *pgxpool.Pool, logger *slog.Logger) http
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+		if page > 1 && page-1 > int(^uint(0)>>1)/pageSize {
+			writeJSON(w, http.StatusOK, map[string]any{"items": []any{}, "page": page, "pageSize": pageSize, "total": total})
+			return
+		}
+		offset := (page - 1) * pageSize
 
 		dataQuery := fmt.Sprintf(`
 			SELECT id, slug, kind, version, active, config, created_at, updated_at
@@ -118,47 +179,51 @@ func adminGrowthPostcardsListHandler(db *pgxpool.Pool, logger *slog.Logger) http
 			var configBytes []byte
 			var createdAt, updatedAt time.Time
 			if err := rows.Scan(&ps.ID, &ps.Slug, &ps.Kind, &ps.Version, &ps.Active,
-				&configBytes, &createdAt, &updatedAt); err == nil {
-				ps.CreatedAt = createdAt.UTC().Format(time.RFC3339)
-				ps.UpdatedAt = updatedAt.UTC().Format(time.RFC3339)
-				// Extract summary fields from config JSON
-				if len(configBytes) > 0 {
-					var cfg map[string]any
-					if json.Unmarshal(configBytes, &cfg) == nil {
-						if v, ok := cfg["name"].(string); ok {
-							ps.Name = v
-						} else {
-							ps.Name = ps.Slug
-						}
-						if v, ok := cfg["privacyClass"].(string); ok {
-							ps.PrivacyClass = v
-						} else {
-							ps.PrivacyClass = "learner_private"
-						}
-						if v, ok := cfg["noPiiVerified"].(bool); ok {
-							ps.NoPIIVerified = v
-						}
-						if v, ok := cfg["surface"].(string); ok {
-							ps.Surface = v
-						} else {
-							ps.Surface = "postcard"
-						}
-						if v, ok := cfg["thumbnailKey"].(string); ok && v != "" {
-							ps.ThumbnailKey = &v
-						}
-					}
-				}
-				if ps.Name == "" {
-					ps.Name = ps.Slug
-				}
-				if ps.PrivacyClass == "" {
-					ps.PrivacyClass = "learner_private"
-				}
-				if ps.Surface == "" {
-					ps.Surface = "postcard"
-				}
-				items = append(items, ps)
+				&configBytes, &createdAt, &updatedAt); err != nil {
+				logger.Error("scan growth postcards", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			ps.CreatedAt = createdAt.UTC().Format(time.RFC3339)
+			ps.UpdatedAt = updatedAt.UTC().Format(time.RFC3339)
+			if len(configBytes) > 0 {
+				var cfg map[string]any
+				if err := json.Unmarshal(configBytes, &cfg); err != nil {
+					logger.Error("decode growth postcard config", "error", err)
+					writeJSONError(w, "internal error", http.StatusInternalServerError)
+					return
+				}
+				if v, ok := cfg["name"].(string); ok {
+					ps.Name = v
+				}
+				if v, ok := cfg["privacyClass"].(string); ok {
+					ps.PrivacyClass = v
+				}
+				if v, ok := cfg["noPiiVerified"].(bool); ok {
+					ps.NoPIIVerified = v
+				}
+				if v, ok := cfg["surface"].(string); ok {
+					ps.Surface = v
+				}
+				if v, ok := cfg["thumbnailKey"].(string); ok && v != "" {
+					ps.ThumbnailKey = &v
+				}
+			}
+			if ps.Name == "" {
+				ps.Name = ps.Slug
+			}
+			if ps.PrivacyClass == "" {
+				ps.PrivacyClass = "learner_private"
+			}
+			if ps.Surface == "" {
+				ps.Surface = "postcard"
+			}
+			items = append(items, ps)
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate growth postcards", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if items == nil {
 			items = []PostcardSummary{}
@@ -180,38 +245,13 @@ func adminGrowthPostcardsDetailHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			writeJSONError(w, "postcard id required", http.StatusBadRequest)
 			return
 		}
+		if !isValidUUID(id) {
+			writeJSONError(w, "invalid postcard id", http.StatusBadRequest)
+			return
+		}
 		ctx := r.Context()
 
-		type AuditEntry struct {
-			ID         string          `json:"id"`
-			Action     string          `json:"action"`
-			ActorID    string          `json:"actorId"`
-			ActorName  *string         `json:"actorName,omitempty"`
-			ActorEmail *string         `json:"actorEmail,omitempty"`
-			Reason     string          `json:"reason"`
-			After      json.RawMessage `json:"after,omitempty"`
-			Before     json.RawMessage `json:"before,omitempty"`
-			CreatedAt  string          `json:"createdAt"`
-		}
-
-		type PostcardDetail struct {
-			ID            string          `json:"id"`
-			Slug          string          `json:"slug"`
-			Name          string          `json:"name"`
-			Kind          string          `json:"kind"`
-			Version       int             `json:"version"`
-			Active        bool            `json:"active"`
-			PrivacyClass  string          `json:"privacyClass"`
-			NoPIIVerified bool            `json:"noPiiVerified"`
-			Surface       string          `json:"surface"`
-			ThumbnailKey  *string         `json:"thumbnailKey,omitempty"`
-			Config        json.RawMessage `json:"config,omitempty"`
-			CreatedAt     string          `json:"createdAt"`
-			UpdatedAt     string          `json:"updatedAt"`
-			Audit         []AuditEntry    `json:"audit"`
-		}
-
-		var pd PostcardDetail
+		var pd adminGrowthPostcardDetail
 		var configBytes []byte
 		var createdAt, updatedAt time.Time
 		err := db.QueryRow(ctx, `
@@ -219,8 +259,13 @@ func adminGrowthPostcardsDetailHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			FROM growth.share_template WHERE id = $1 AND kind = ANY($2)`,
 			id, growthPostcardKinds).Scan(&pd.ID, &pd.Slug, &pd.Kind, &pd.Version,
 			&pd.Active, &configBytes, &createdAt, &updatedAt)
-		if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
 			writeJSONError(w, "postcard not found", http.StatusNotFound)
+			return
+		}
+		if err != nil {
+			logger.Error("read growth postcard", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 		pd.CreatedAt = createdAt.UTC().Format(time.RFC3339)
@@ -271,20 +316,34 @@ func adminGrowthPostcardsDetailHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			LEFT JOIN authz.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_id = $1 AND a.target_type = 'growth.postcard_template'
 			ORDER BY a.created_at DESC LIMIT 20`, id)
-		if err == nil {
-			for aRows.Next() {
-				var ae AuditEntry
-				var ts time.Time
-				if err := aRows.Scan(&ae.ID, &ae.Action, &ae.ActorID, &ae.ActorName,
-					&ae.ActorEmail, &ae.Reason, &ae.After, &ae.Before, &ts); err == nil {
-					ae.CreatedAt = ts.UTC().Format(time.RFC3339)
-					pd.Audit = append(pd.Audit, ae)
-				}
-			}
-			aRows.Close()
+		if err != nil {
+			logger.Error("query growth postcard audit", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
+		for aRows.Next() {
+			var ae adminGrowthPostcardAuditEntry
+			var ts time.Time
+			if err := aRows.Scan(&ae.ID, &ae.Action, &ae.ActorID, &ae.ActorName,
+				&ae.ActorEmail, &ae.Reason, &ae.After, &ae.Before, &ts); err != nil {
+				aRows.Close()
+				logger.Error("scan growth postcard audit", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			ae.CreatedAt = ts.UTC().Format(time.RFC3339)
+			ae.Actor = &adminGrowthPostcardActor{ID: ae.ActorID, DisplayName: ae.ActorName, Email: ae.ActorEmail}
+			pd.Audit = append(pd.Audit, ae)
+		}
+		if err := aRows.Err(); err != nil {
+			aRows.Close()
+			logger.Error("iterate growth postcard audit", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		aRows.Close()
 		if pd.Audit == nil {
-			pd.Audit = []AuditEntry{}
+			pd.Audit = []adminGrowthPostcardAuditEntry{}
 		}
 
 		writeJSON(w, http.StatusOK, pd)
@@ -310,50 +369,121 @@ func adminGrowthPostcardsCreateHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		if req.Slug == "" || req.Kind == "" {
-			writeJSONError(w, "slug and kind are required", http.StatusBadRequest)
-			return
-		}
+		req.Slug = strings.TrimSpace(req.Slug)
+		req.Kind = strings.TrimSpace(req.Kind)
+		req.Reason = strings.TrimSpace(req.Reason)
 		// Validate slug format
 		if !validSlugRe.MatchString(req.Slug) || len(req.Slug) < 2 || len(req.Slug) > 64 {
 			writeJSONError(w, "invalid slug format", http.StatusBadRequest)
 			return
 		}
-		// Validate privacy before create
-		if err := assertPostcardPrivacy(req.Config, false); err != nil {
-			writeJSONError(w, err.Error(), http.StatusBadRequest)
+		validKind := false
+		for _, kind := range growthPostcardKinds {
+			validKind = validKind || kind == req.Kind
+		}
+		if !validKind {
+			writeJSONError(w, "invalid postcard kind", http.StatusBadRequest)
 			return
 		}
-
+		if len([]rune(req.Reason)) < 3 || len([]rune(req.Reason)) > 500 {
+			writeJSONError(w, "valid reason is required", http.StatusBadRequest)
+			return
+		}
 		ctx := r.Context()
 		configJSON := req.Config
 		if configJSON == nil {
 			configJSON = json.RawMessage("{}")
 		}
-
-		var createdID string
-		err := db.QueryRow(ctx, `
-			INSERT INTO growth.share_template (slug, kind, version, active, config, created_at, updated_at)
-			VALUES ($1, $2, 1, false, $3, NOW(), NOW()) RETURNING id`,
-			req.Slug, req.Kind, configJSON).Scan(&createdID)
-		if err != nil {
-			logger.Error("create growth postcard", "error", err)
-			writeJSONError(w, "internal error", http.StatusInternalServerError)
+		var config map[string]any
+		if err := json.Unmarshal(configJSON, &config); err != nil || config == nil {
+			writeJSONError(w, "config must be a JSON object", http.StatusBadRequest)
+			return
+		}
+		if err := validateGrowthPostcardConfig(config); err != nil {
+			writeJSONError(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if err := assertPostcardPrivacy(req.Config, false); err != nil {
+			writeJSONError(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		// Write audit
-		afterJSON, _ := json.Marshal(map[string]any{
-			"config": req.Config, "kind": req.Kind, "slug": req.Slug,
-		})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
-			VALUES ('admin.growth.postcard_template.created', $1, $2, 'growth.postcard_template', $3, $4, NOW())`,
-			identity.ActorID, createdID, req.Reason, afterJSON)
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin create growth postcard", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
+		var createdID string
+		var createdAt, updatedAt time.Time
+		err = tx.QueryRow(ctx, `
+			INSERT INTO growth.share_template (slug, kind, version, active, config, created_at, updated_at)
+			VALUES ($1, $2, 1, false, $3, NOW(), NOW()) RETURNING id, created_at, updated_at`,
+			req.Slug, req.Kind, configJSON).Scan(&createdID, &createdAt, &updatedAt)
+		if err != nil {
+			logger.Error("create growth postcard", "error", err)
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+				writeJSONError(w, "postcard slug already exists", http.StatusConflict)
+			} else {
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+			}
+			return
+		}
 
-		// Return detail view
-		r.URL.Path = "/api/admin/growth/postcards/" + createdID
-		detailHandler := adminGrowthPostcardsDetailHandler(db, logger)
-		detailHandler(w, r)
+		afterJSON, err := json.Marshal(map[string]any{"config": configJSON, "kind": req.Kind, "slug": req.Slug})
+		if err != nil {
+			logger.Error("encode growth postcard audit", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		var auditID string
+		var auditCreatedAt time.Time
+		if err := tx.QueryRow(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+			VALUES ('admin.growth.postcard_template.created', $1, $2, 'growth.postcard_template', $3, $4, NOW()) RETURNING id, created_at`,
+			identity.ActorID, createdID, req.Reason, afterJSON).Scan(&auditID, &auditCreatedAt); err != nil {
+			logger.Error("audit create growth postcard", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		var actorName, actorEmail *string
+		if err := tx.QueryRow(ctx, `SELECT display_name,email FROM authz.admin_actor WHERE id=$1`, identity.ActorID).Scan(&actorName, &actorEmail); err != nil {
+			logger.Error("read growth postcard actor", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit create growth postcard", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		privacyClass, noPII := extractPrivacyFromConfig(configJSON)
+		name, _ := config["name"].(string)
+		if name == "" {
+			name = req.Slug
+		}
+		surface, _ := config["surface"].(string)
+		if surface == "" {
+			surface = "postcard"
+		}
+		thumbnail, _ := config["thumbnailKey"].(string)
+		var thumbnailKey *string
+		if thumbnail != "" {
+			thumbnailKey = &thumbnail
+		}
+		actorID := identity.ActorID
+		writeJSON(w, http.StatusCreated, adminGrowthPostcardDetail{
+			ID: createdID, Slug: req.Slug, Name: name, Kind: req.Kind, Version: 1, Active: false,
+			PrivacyClass: privacyClass, NoPIIVerified: noPII, Surface: surface, ThumbnailKey: thumbnailKey,
+			Config: configJSON, CreatedAt: createdAt.UTC().Format(time.RFC3339), UpdatedAt: updatedAt.UTC().Format(time.RFC3339),
+			Audit: []adminGrowthPostcardAuditEntry{{
+				ID: auditID, Action: "admin.growth.postcard_template.created", ActorID: actorID,
+				ActorName: actorName, ActorEmail: actorEmail,
+				Actor:  &adminGrowthPostcardActor{ID: actorID, DisplayName: actorName, Email: actorEmail},
+				Reason: req.Reason, After: afterJSON, CreatedAt: auditCreatedAt.UTC().Format(time.RFC3339),
+			}},
+		})
 	}
 }
 
@@ -383,13 +513,20 @@ func adminGrowthPostcardsPatchHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		}
 
 		ctx := r.Context()
+		tx, err := db.BeginTx(ctx, pgx.TxOptions{})
+		if err != nil {
+			logger.Error("begin postcard update", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 
 		// Fetch existing
 		var beforeSlug, beforeKind string
 		var beforeVersion int
 		var beforeActive bool
 		var beforeConfig []byte
-		err := db.QueryRow(ctx, `
+		err = tx.QueryRow(ctx, `
 			SELECT slug, kind, version, active, config
 			FROM growth.share_template WHERE id = $1 AND kind = ANY($2)`,
 			id, growthPostcardKinds).Scan(&beforeSlug, &beforeKind, &beforeVersion, &beforeActive, &beforeConfig)
@@ -407,6 +544,15 @@ func adminGrowthPostcardsPatchHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		}
 		// Validate privacy if config changes
 		if req.Config != nil {
+			var config map[string]any
+			if err := json.Unmarshal(req.Config, &config); err != nil || config == nil {
+				writeJSONError(w, "config must be a JSON object", http.StatusBadRequest)
+				return
+			}
+			if err := validateGrowthPostcardConfig(config); err != nil {
+				writeJSONError(w, err.Error(), http.StatusBadRequest)
+				return
+			}
 			if err := assertPostcardPrivacyWithActive(req.Config, beforeActive); err != nil {
 				writeJSONError(w, err.Error(), http.StatusBadRequest)
 				return
@@ -444,7 +590,7 @@ func adminGrowthPostcardsPatchHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 			" WHERE id = $" + itoa(argIdx)
 		args = append(args, id)
 
-		if _, err := db.Exec(ctx, query, args...); err != nil {
+		if _, err := tx.Exec(ctx, query, args...); err != nil {
 			logger.Error("patch growth postcard", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
@@ -456,9 +602,16 @@ func adminGrowthPostcardsPatchHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 			"slug": beforeSlug, "version": beforeVersion,
 		})
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true, "fields": setClauses})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
-			VALUES ('admin.growth.postcard_template.updated', $1, $2, 'growth.postcard_template', $3, $4, $5, NOW())`,
-			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.growth.postcard_template.updated", "growth.postcard_template", id, req.Reason, json.RawMessage(beforeJSON), json.RawMessage(afterJSON)); err != nil {
+			logger.Error("audit growth postcard update", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit postcard update", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		// Return detail view
 		detailHandler := adminGrowthPostcardsDetailHandler(db, logger)
@@ -483,16 +636,26 @@ func adminGrowthPostcardsPublishHandler(db *pgxpool.Pool, logger *slog.Logger) h
 		var req struct {
 			Reason string `json:"reason"`
 		}
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || len(strings.TrimSpace(req.Reason)) < 3 {
+			writeJSONError(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
 
 		ctx := r.Context()
+		tx, err := db.BeginTx(ctx, pgx.TxOptions{})
+		if err != nil {
+			logger.Error("begin postcard publish", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 
 		// Fetch current state and validate privacy for publish
 		var beforeActive bool
 		var configBytes []byte
-		err := db.QueryRow(ctx, `
+		err = tx.QueryRow(ctx, `
 			SELECT active, config FROM growth.share_template
-			WHERE id = $1 AND kind = ANY($2)`, id, growthPostcardKinds).Scan(&beforeActive, &configBytes)
+			WHERE id = $1 AND kind = ANY($2) FOR UPDATE`, id, growthPostcardKinds).Scan(&beforeActive, &configBytes)
 		if err != nil {
 			writeJSONError(w, "postcard not found", http.StatusNotFound)
 			return
@@ -505,7 +668,11 @@ func adminGrowthPostcardsPublishHandler(db *pgxpool.Pool, logger *slog.Logger) h
 		}
 
 		if !beforeActive {
-			db.Exec(ctx, "UPDATE growth.share_template SET active = true, updated_at = NOW() WHERE id = $1", id)
+			if _, err := tx.Exec(ctx, "UPDATE growth.share_template SET active = true, updated_at = NOW() WHERE id = $1", id); err != nil {
+				logger.Error("publish growth postcard", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		privacyClass := "learner_private"
@@ -520,9 +687,16 @@ func adminGrowthPostcardsPublishHandler(db *pgxpool.Pool, logger *slog.Logger) h
 
 		afterJSON, _ := json.Marshal(map[string]any{"active": true, "privacyClass": privacyClass})
 		beforeJSON, _ := json.Marshal(map[string]any{"active": beforeActive})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
-			VALUES ('admin.growth.postcard_template.published', $1, $2, 'growth.postcard_template', $3, $4, $5, NOW())`,
-			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.growth.postcard_template.published", "growth.postcard_template", id, req.Reason, json.RawMessage(beforeJSON), json.RawMessage(afterJSON)); err != nil {
+			logger.Error("audit growth postcard publish", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit postcard publish", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		// Return detail view
 		detailHandler := adminGrowthPostcardsDetailHandler(db, logger)
@@ -547,28 +721,49 @@ func adminGrowthPostcardsArchiveHandler(db *pgxpool.Pool, logger *slog.Logger) h
 		var req struct {
 			Reason string `json:"reason"`
 		}
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || len(strings.TrimSpace(req.Reason)) < 3 {
+			writeJSONError(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
 
 		ctx := r.Context()
+		tx, err := db.BeginTx(ctx, pgx.TxOptions{})
+		if err != nil {
+			logger.Error("begin postcard archive", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 
 		var beforeActive bool
-		err := db.QueryRow(ctx, `
+		err = tx.QueryRow(ctx, `
 			SELECT active FROM growth.share_template
-			WHERE id = $1 AND kind = ANY($2)`, id, growthPostcardKinds).Scan(&beforeActive)
+			WHERE id = $1 AND kind = ANY($2) FOR UPDATE`, id, growthPostcardKinds).Scan(&beforeActive)
 		if err != nil {
 			writeJSONError(w, "postcard not found", http.StatusNotFound)
 			return
 		}
 
 		if beforeActive {
-			db.Exec(ctx, "UPDATE growth.share_template SET active = false, updated_at = NOW() WHERE id = $1", id)
+			if _, err := tx.Exec(ctx, "UPDATE growth.share_template SET active = false, updated_at = NOW() WHERE id = $1", id); err != nil {
+				logger.Error("archive growth postcard", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"active": false})
 		beforeJSON, _ := json.Marshal(map[string]any{"active": beforeActive})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
-			VALUES ('admin.growth.postcard_template.archived', $1, $2, 'growth.postcard_template', $3, $4, $5, NOW())`,
-			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.growth.postcard_template.archived", "growth.postcard_template", id, req.Reason, json.RawMessage(beforeJSON), json.RawMessage(afterJSON)); err != nil {
+			logger.Error("audit growth postcard archive", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit postcard archive", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		// Return detail view
 		detailHandler := adminGrowthPostcardsDetailHandler(db, logger)
@@ -578,7 +773,66 @@ func adminGrowthPostcardsArchiveHandler(db *pgxpool.Pool, logger *slog.Logger) h
 
 // ── Postcard Helpers ────────────────────────────────────────────────────────
 
-var validPrivacyClasses = []string{"learner_private", "community_visible", "public"}
+func validateGrowthPostcardConfig(config map[string]any) error {
+	text := func(key string, required bool, max int) (string, error) {
+		value, exists := config[key]
+		if !exists && !required {
+			return "", nil
+		}
+		str, ok := value.(string)
+		if !ok {
+			return "", fmt.Errorf("invalid postcard %s", key)
+		}
+		str = strings.TrimSpace(str)
+		if (required && str == "") || len([]rune(str)) > max {
+			return "", fmt.Errorf("invalid postcard %s", key)
+		}
+		return str, nil
+	}
+	surface, err := text("surface", true, 16)
+	if err != nil || surface != "postcard" {
+		return fmt.Errorf("config.surface must be postcard")
+	}
+	name, err := text("name", true, 200)
+	if err != nil || len([]rune(name)) < 2 {
+		return fmt.Errorf("invalid postcard name")
+	}
+	if _, err := text("description", false, 2000); err != nil {
+		return err
+	}
+	if _, err := text("bodyTemplate", true, 20000); err != nil {
+		return err
+	}
+	for key, max := range map[string]int{"thumbnailKey": 255, "brandBg": 32, "brandFg": 32, "brandAccent": 32, "badgeKey": 64} {
+		if _, err := text(key, false, max); err != nil {
+			return err
+		}
+	}
+	privacyClass, err := text("privacyClass", true, 32)
+	if err != nil || (privacyClass != "public" && privacyClass != "learner_private" && privacyClass != "anonymized") {
+		return fmt.Errorf("invalid postcard privacy class")
+	}
+	if value, ok := config["noPiiVerified"]; ok {
+		if _, valid := value.(bool); !valid {
+			return fmt.Errorf("invalid postcard noPiiVerified")
+		}
+	}
+	if value, ok := config["variables"]; ok {
+		variables, valid := value.([]any)
+		if !valid || len(variables) > 32 {
+			return fmt.Errorf("invalid postcard variables")
+		}
+		for _, item := range variables {
+			variable, valid := item.(string)
+			if !valid || len([]rune(strings.TrimSpace(variable))) == 0 || len([]rune(strings.TrimSpace(variable))) > 64 {
+				return fmt.Errorf("invalid postcard variables")
+			}
+		}
+	}
+	return nil
+}
+
+var validPrivacyClasses = []string{"learner_private", "community_visible", "public", "anonymized"}
 
 func isValidPrivacyClass(pc string) bool {
 	for _, v := range validPrivacyClasses {

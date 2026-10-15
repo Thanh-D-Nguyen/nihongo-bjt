@@ -1,0 +1,1619 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-142",
+  "title": "Secure and verify Admin achievement APIs",
+  "start_head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Five Admin achievement endpoints rely on session-only protection, mutation handlers skip CSRF/RBAC at routing, SQL errors/zero-row mutations can be reported as success, and list scanning can silently return incomplete data.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Anonymous requests to all nine METHOD+PATH achievement and tier endpoints return 401; Admin without content permissions returns 403."
+      },
+      {
+        "id": "AC2",
+        "text": "GET endpoints require admin.content.read; POST/PUT/DELETE require admin.content.write and trusted-origin CSRF across the achievement definition and tier routes."
+      },
+      {
+        "id": "AC3",
+        "text": "All achievement and tier writes validate input, return accurate not-found responses, persist their results, and write audit entries atomically."
+      },
+      {
+        "id": "AC4",
+        "text": "Missing records return 404, payload validation matches the shared achievement/tier schemas, and database/row iteration failures do not produce successful partial responses."
+      },
+      {
+        "id": "AC5",
+        "text": "Admin gamification list remains usable from its existing UI caller; all nine API verdicts are individually recorded with headed-browser/session evidence where applicable."
+      },
+      {
+        "id": "AC6",
+        "text": "Gamification admin screens render at a 390px viewport without invalid table markup, hydration warnings, console errors, or horizontal overflow."
+      }
+    ],
+    "expected_behavior": "Permission-checked reads and CSRF-protected, audited writes with complete database error handling and accurate not-found responses.",
+    "observed_behavior": "Router registers all five under Admin session only; handlers lack route-level permission/CSRF, mutations ignore affected-row counts/audit, and list ignores row/secondary query errors.",
+    "rollback_plan": "Revert the isolated AUDIT-142 code commit; no schema migration or canonical content changes are required; disposable fixtures are cleaned by test cleanup."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY",
+      "DATABASE",
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Restore achievement API RBAC/CSRF, audited database contracts, and fix Gamification hydration markup discovered by headed acceptance."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminAchievementRoutesEnforceContentPermissions",
+      "expect": "want 403"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement",
+      "expect": "missing parent tiers status=200"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminAchievementDefinitionAndTierMutationContracts",
+      "expect": "achievement update audit count=0"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminAchievementValidationMatchesSharedSchema",
+      "expect": "want 400"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-13T13:48:00.193Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-13T13:50:50.343Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-13T13:50:50.690Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T13:52:51.449Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T13:57:19.000Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T14:04:09.341Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T14:06:11.377Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T14:13:56.477Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T14:14:29.970Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-13T14:22:34.377Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T14:32:00.479Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T14:32:33.673Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-13T14:41:35.090Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-14T00:16:09.496Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T00:19:54.288Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T00:21:07.977Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-14T00:30:11.835Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T00:31:00.128Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T00:31:16.007Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-14T00:39:34.178Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T00:41:27.873Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T00:42:32.432Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T00:44:16.256Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T00:44:34.133Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T00:45:44.516Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T00:56:58.348Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T01:07:01.716Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T01:07:52.471Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-14T01:18:54.727Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-14T01:19:26.177Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-13T13:52:09.882Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementRoutesEnforceContentPermissions === RUN TestAdminAchievementRoutesEnforceContentPermissions/GET_/api/admin/gamification/achievements 2026/10/13 22:52:09 INFO request method=GET path=/api/admin/gamification/achievements status=401 duration=104.083µs bytes=25 2026/10/13 22:…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"roleless status=403\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions": "roleless status=403"
+      },
+      "fingerprint": "35d9fa403a654b2a9ba92e6dad98ccac3c0d75d5b94d5b9e2ee71e7109d7034b"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-13T13:52:33.754Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminAchievementRoutesEnforceContentPermissions handler_admin_achievements_rbac_test.go:13: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminAchievementRoutesEnforceContentPermissions (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions": "want 403"
+      },
+      "fingerprint": "35d9fa403a654b2a9ba92e6dad98ccac3c0d75d5b94d5b9e2ee71e7109d7034b"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-13T13:52:51.265Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementRoutesEnforceContentPermissions === RUN TestAdminAchievementRoutesEnforceContentPermissions/GET_/api/admin/gamification/achievements 2026/10/13 22:52:51 INFO request method=GET path=/api/admin/gamification/achievements status=401 duration=116.25µs bytes=25 2026/10/13 22:5…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions": "want 403"
+      },
+      "fingerprint": "35d9fa403a654b2a9ba92e6dad98ccac3c0d75d5b94d5b9e2ee71e7109d7034b"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-13T13:56:39.650Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminAchievementRoutesEnforceContentPermissions === RUN TestAdminAchievementRoutesEnforceContentPermissions/GET_/api/admin/gamification/achievements 2026/10/13 22:56:39 INFO request method=GET path=/api/admin/gamification/achievements status=401 duration=96µs bytes=25 2026/10/13 22:56:39…"
+        }
+      ],
+      "fingerprint": "a243ec86ed28c43f1f4a7b5bee89571b50c07c792c1392b380e2be40bf73a876"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-13T13:57:18.730Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ed16489e0a46d3848f818b8ed1569b3c8015d506bcaece913a1c518ce0ca37eb"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-13T13:58:39.735Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 905,
+        "executed": 903,
+        "passed": 903,
+        "failed": 0,
+        "skipped": 2,
+        "expected_skips": 0,
+        "unexpected_skips": 2,
+        "min_passed_tests": 431
+      },
+      "message": "2 test(s) skipped that are not in go-test-skips-baseline.json — skipped tests are not verification",
+      "fingerprint": "ed16489e0a46d3848f818b8ed1569b3c8015d506bcaece913a1c518ce0ca37eb"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-13T14:01:54.282Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 905,
+        "executed": 905,
+        "passed": 905,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "905 passed, 0 allowed skip(s)",
+      "fingerprint": "ed16489e0a46d3848f818b8ed1569b3c8015d506bcaece913a1c518ce0ca37eb"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-13T14:04:08.984Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit142-admin-achievements.mjs",
+      "exit_code": 1,
+      "fingerprint": "580c71ae6c621acc7e75a3aacef04c95dd99bf513812f08de15c4bbe056ab17f"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-13T14:05:49.158Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit142-admin-achievements.mjs",
+      "exit_code": 0,
+      "fingerprint": "1720d11a47d3065acfba3071a7aa0864940fda2dedd30ec4c0c8947acb77739e"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-13T14:06:11.042Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1720d11a47d3065acfba3071a7aa0864940fda2dedd30ec4c0c8947acb77739e"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-13T14:08:52.680Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 905,
+        "executed": 905,
+        "passed": 905,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "905 passed, 0 allowed skip(s)",
+      "fingerprint": "1720d11a47d3065acfba3071a7aa0864940fda2dedd30ec4c0c8947acb77739e"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-13T14:13:56.116Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 797,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "1720d11a47d3065acfba3071a7aa0864940fda2dedd30ec4c0c8947acb77739e"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-13T14:14:05.008Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit142-admin-achievements.mjs",
+      "exit_code": 0,
+      "fingerprint": "809031ea34659ce7b017b3861a0f2eb7a4124c6907101477536dc97d7d580b0a"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-13T14:14:29.622Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "809031ea34659ce7b017b3861a0f2eb7a4124c6907101477536dc97d7d580b0a"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-13T14:17:09.918Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 905,
+        "executed": 905,
+        "passed": 905,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "905 passed, 0 allowed skip(s)",
+      "fingerprint": "809031ea34659ce7b017b3861a0f2eb7a4124c6907101477536dc97d7d580b0a"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-13T14:22:34.043Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 797,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "809031ea34659ce7b017b3861a0f2eb7a4124c6907101477536dc97d7d580b0a"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-13T14:27:21.540Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 797,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "809031ea34659ce7b017b3861a0f2eb7a4124c6907101477536dc97d7d580b0a"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-13T14:32:00.065Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions|TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementRoutesEnforceContentPermissions === RUN TestAdminAchievementRoutesEnforceContentPermissions/GET_/api/admin/gamification/achievements 2026/10/13 23:31:58 INFO request method=GET path=/api/admin/gamification/achievements status=401 duration=135.084µs bytes=25 2026/10/13 23:…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement 2026/10/13 23:31:58 INFO request method=GET path=/api/admin/gamification/achievements/70dcf717-9ef1-42b0-802f-4c97e80b7749/tiers status=200 duration=1.944792ms bytes=3 handler_admin_achievements_rbac_test.go:178: missing paren…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions": "want 403",
+        "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement": "missing parent tiers status=200"
+      },
+      "fingerprint": "0b1613c6a9f307ecc48a2203ed6e7320cf807ec1a951b4256a9d38dce919e192"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-13T14:32:33.331Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions|TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c5f0fd07ce063ed4a7e676606020c56daa27f427536ea02c62ebeee86a4fd4b7"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-13T14:33:13.219Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit142-admin-achievements.mjs",
+      "exit_code": 0,
+      "fingerprint": "c5f0fd07ce063ed4a7e676606020c56daa27f427536ea02c62ebeee86a4fd4b7"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-13T14:36:30.119Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 906,
+        "executed": 906,
+        "passed": 906,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "906 passed, 0 allowed skip(s)",
+      "fingerprint": "c5f0fd07ce063ed4a7e676606020c56daa27f427536ea02c62ebeee86a4fd4b7"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-13T14:41:34.727Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 797,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "c5f0fd07ce063ed4a7e676606020c56daa27f427536ea02c62ebeee86a4fd4b7"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-14T00:16:09.042Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions|TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement)$ ./internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions)$ ./apps/api-go/internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementRoutesEnforceContentPermissions === RUN TestAdminAchievementRoutesEnforceContentPermissions/GET_/api/admin/gamification/achievements 2026/10/14 09:16:07 INFO request method=GET path=/api/admin/gamification/achievements status=401 duration=114.833µs bytes=25 2026/10/14 09:…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement 2026/10/14 09:16:07 INFO request method=GET path=/api/admin/gamification/achievements/08aadb95-3200-4de2-a32c-9c2c3a548f9f/tiers status=200 duration=3.179375ms bytes=3 handler_admin_achievements_rbac_test.go:182: missing paren…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-Tj86F6/tree/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions": "want 403",
+        "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement": "missing parent tiers status=200",
+        "go:./apps/api-go/internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions": "roleless status=403"
+      },
+      "fingerprint": "79403ad687e6288721c802afbb5dbe9056478ace5e4d068bc4d240876f329ce5"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-14T00:16:37.237Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions|TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement)$ ./internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions)$ ./apps/api-go/internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementRoutesEnforceContentPermissions === RUN TestAdminAchievementRoutesEnforceContentPermissions/GET_/api/admin/gamification/achievements 2026/10/14 09:16:36 INFO request method=GET path=/api/admin/gamification/achievements status=401 duration=94µs bytes=25 2026/10/14 09:16:36…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"roleless status=403\""
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement 2026/10/14 09:16:36 INFO request method=GET path=/api/admin/gamification/achievements/c5ec0fa8-1cf5-4bd2-b573-853f84e86207/tiers status=200 duration=2.564792ms bytes=3 handler_admin_achievements_rbac_test.go:182: missing paren…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-eJoVFd/tree/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions": "roleless status=403",
+        "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement": "missing parent tiers status=200",
+        "go:./apps/api-go/internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions": "roleless status=403"
+      },
+      "fingerprint": "79403ad687e6288721c802afbb5dbe9056478ace5e4d068bc4d240876f329ce5"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-14T00:17:04.422Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions|TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement)$ ./internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions)$ ./apps/api-go/internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementRoutesEnforceContentPermissions === RUN TestAdminAchievementRoutesEnforceContentPermissions/GET_/api/admin/gamification/achievements 2026/10/14 09:17:03 INFO request method=GET path=/api/admin/gamification/achievements status=401 duration=128.458µs bytes=25 2026/10/14 09:…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement 2026/10/14 09:17:03 INFO request method=GET path=/api/admin/gamification/achievements/3962ec89-13f5-46ba-baa0-16e6e51c9a14/tiers status=200 duration=1.97225ms bytes=3 handler_admin_achievements_rbac_test.go:182: missing parent…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-JNVsnd/tree/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions": "want 403",
+        "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement": "missing parent tiers status=200",
+        "go:./apps/api-go/internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions": "roleless status=403"
+      },
+      "fingerprint": "79403ad687e6288721c802afbb5dbe9056478ace5e4d068bc4d240876f329ce5"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-14T00:17:25.877Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions|TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement)$ ./internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions)$ ./apps/api-go/internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminAchievementRoutesEnforceContentPermissions handler_admin_achievements_rbac_test.go:14: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminAchievementRoutesEnforceContentPermissions (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement handler_admin_achievements_rbac_test.go:170: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-wvuCnu/tree/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions": "want 403",
+        "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement": "missing parent tiers status=200",
+        "go:./apps/api-go/internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions": "roleless status=403"
+      },
+      "fingerprint": "79403ad687e6288721c802afbb5dbe9056478ace5e4d068bc4d240876f329ce5"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-14T00:19:53.755Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions|TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementRoutesEnforceContentPermissions === RUN TestAdminAchievementRoutesEnforceContentPermissions/GET_/api/admin/gamification/achievements 2026/10/14 09:19:52 INFO request method=GET path=/api/admin/gamification/achievements status=401 duration=116.458µs bytes=25 2026/10/14 09:…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement 2026/10/14 09:19:52 INFO request method=GET path=/api/admin/gamification/achievements/5e49f384-cb23-4ba9-8a07-6d9239874687/tiers status=200 duration=2.439917ms bytes=3 handler_admin_achievements_rbac_test.go:182: missing paren…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions": "want 403",
+        "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement": "missing parent tiers status=200"
+      },
+      "fingerprint": "79403ad687e6288721c802afbb5dbe9056478ace5e4d068bc4d240876f329ce5"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-14T00:21:07.594Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions|TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ce99f2a8c64e8e3fe71ccb28dc057d15f37e56431af92f898bdae0ae4c520f95"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-14T00:21:51.664Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit142-admin-achievements.mjs",
+      "exit_code": 0,
+      "fingerprint": "ce99f2a8c64e8e3fe71ccb28dc057d15f37e56431af92f898bdae0ae4c520f95"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-14T00:25:16.454Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 910,
+        "executed": 910,
+        "passed": 910,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "910 passed, 0 allowed skip(s)",
+      "fingerprint": "ce99f2a8c64e8e3fe71ccb28dc057d15f37e56431af92f898bdae0ae4c520f95"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-14T00:30:11.472Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 797,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "ce99f2a8c64e8e3fe71ccb28dc057d15f37e56431af92f898bdae0ae4c520f95"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-14T00:30:59.720Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions|TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementRoutesEnforceContentPermissions === RUN TestAdminAchievementRoutesEnforceContentPermissions/GET_/api/admin/gamification/achievements 2026/10/14 09:30:58 INFO request method=GET path=/api/admin/gamification/achievements status=401 duration=106.291µs bytes=25 2026/10/14 09:…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement 2026/10/14 09:30:58 INFO request method=GET path=/api/admin/gamification/achievements/ed04afc8-12a5-439d-b5ed-d3a8b2b6ad8b/tiers status=200 duration=1.729791ms bytes=3 handler_admin_achievements_rbac_test.go:189: missing paren…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions": "want 403",
+        "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement": "missing parent tiers status=200"
+      },
+      "fingerprint": "7e4df7b94fcb798956d241483336c78680220cd4141b2275c57864f476808f9b"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-14T00:31:15.636Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions|TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "7e4df7b94fcb798956d241483336c78680220cd4141b2275c57864f476808f9b"
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-14T00:31:19.805Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit142-admin-achievements.mjs",
+      "exit_code": 0,
+      "fingerprint": "7e4df7b94fcb798956d241483336c78680220cd4141b2275c57864f476808f9b"
+    },
+    {
+      "seq": 35,
+      "at": "2026-10-14T00:34:33.369Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 910,
+        "executed": 910,
+        "passed": 910,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "910 passed, 0 allowed skip(s)",
+      "fingerprint": "7e4df7b94fcb798956d241483336c78680220cd4141b2275c57864f476808f9b"
+    },
+    {
+      "seq": 36,
+      "at": "2026-10-14T00:39:33.709Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 797,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "7e4df7b94fcb798956d241483336c78680220cd4141b2275c57864f476808f9b"
+    },
+    {
+      "seq": 37,
+      "at": "2026-10-14T00:41:27.404Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions|TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement|TestAdminAchievementDefinitionAndTierMutationContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementRoutesEnforceContentPermissions === RUN TestAdminAchievementRoutesEnforceContentPermissions/GET_/api/admin/gamification/achievements 2026/10/14 09:41:25 INFO request method=GET path=/api/admin/gamification/achievements status=401 duration=144.75µs bytes=25 2026/10/14 09:4…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement 2026/10/14 09:41:25 INFO request method=GET path=/api/admin/gamification/achievements/c508464d-058b-4d68-848a-4fa8df86a312/tiers status=200 duration=2.588583ms bytes=3 handler_admin_achievements_rbac_test.go:240: missing paren…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementDefinitionAndTierMutationContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementDefinitionAndTierMutationContracts 2026/10/14 09:41:25 INFO request method=PUT path=/api/admin/gamification/achievements/4aa8f1a3-e483-480c-aec7-963ca8b19542 status=200 duration=2.350208ms bytes=61 handler_admin_achievements_rbac_test.go:285: achievement update audit coun…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions": "want 403",
+        "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement": "missing parent tiers status=200",
+        "go:./internal/httpserver:TestAdminAchievementDefinitionAndTierMutationContracts": "achievement update audit count=0"
+      },
+      "fingerprint": "ffbf91849677626d3f02ac35119fef160d3ea66874fc0e177d37d36146dacd6f"
+    },
+    {
+      "seq": 38,
+      "at": "2026-10-14T00:42:31.929Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions|TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement|TestAdminAchievementDefinitionAndTierMutationContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementDefinitionAndTierMutationContracts",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c4e53829ed6442faedde42ef2ed7e83734e67f2880668e11f7692e415283711b"
+    },
+    {
+      "seq": 39,
+      "at": "2026-10-14T00:44:15.757Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions|TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement|TestAdminAchievementDefinitionAndTierMutationContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementRoutesEnforceContentPermissions === RUN TestAdminAchievementRoutesEnforceContentPermissions/GET_/api/admin/gamification/achievements 2026/10/14 09:44:13 INFO request method=GET path=/api/admin/gamification/achievements status=401 duration=118.292µs bytes=25 2026/10/14 09:…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement 2026/10/14 09:44:13 INFO request method=GET path=/api/admin/gamification/achievements/a2b6c37c-1758-44b7-8627-70c3e5e5c85e/tiers status=200 duration=2.062916ms bytes=3 handler_admin_achievements_rbac_test.go:240: missing paren…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementDefinitionAndTierMutationContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementDefinitionAndTierMutationContracts 2026/10/14 09:44:13 INFO request method=PUT path=/api/admin/gamification/achievements/b189e2b9-c956-4261-967c-d0d251f70195 status=200 duration=1.801459ms bytes=61 handler_admin_achievements_rbac_test.go:285: achievement update audit coun…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions": "want 403",
+        "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement": "missing parent tiers status=200",
+        "go:./internal/httpserver:TestAdminAchievementDefinitionAndTierMutationContracts": "achievement update audit count=0"
+      },
+      "fingerprint": "d3de41d437f9e69cea3015cdc77eea03c0c7fdd9b9d5c478f1fd97f18fd64960"
+    },
+    {
+      "seq": 40,
+      "at": "2026-10-14T00:44:33.633Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions|TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement|TestAdminAchievementDefinitionAndTierMutationContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementDefinitionAndTierMutationContracts",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d3de41d437f9e69cea3015cdc77eea03c0c7fdd9b9d5c478f1fd97f18fd64960"
+    },
+    {
+      "seq": 41,
+      "at": "2026-10-14T00:45:30.385Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit142-admin-achievements.mjs",
+      "exit_code": 1,
+      "fingerprint": "d3de41d437f9e69cea3015cdc77eea03c0c7fdd9b9d5c478f1fd97f18fd64960"
+    },
+    {
+      "seq": 42,
+      "at": "2026-10-14T00:45:44.118Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit142-admin-achievements.mjs",
+      "exit_code": 0,
+      "fingerprint": "0e4e1e2014c417cba7f4dcbc4787fd1b9e3ce0f4297a89db7de51abdfaecba1b"
+    },
+    {
+      "seq": 43,
+      "at": "2026-10-14T00:49:05.061Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 911,
+        "executed": 911,
+        "passed": 911,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "911 passed, 0 allowed skip(s)",
+      "fingerprint": "0e4e1e2014c417cba7f4dcbc4787fd1b9e3ce0f4297a89db7de51abdfaecba1b"
+    },
+    {
+      "seq": 44,
+      "at": "2026-10-14T00:54:12.736Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 797,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "0e4e1e2014c417cba7f4dcbc4787fd1b9e3ce0f4297a89db7de51abdfaecba1b"
+    },
+    {
+      "seq": 45,
+      "at": "2026-10-14T00:55:44.032Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions|TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement|TestAdminAchievementDefinitionAndTierMutationContracts|TestAdminAchievementValidationMatchesSharedSchema)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementRoutesEnforceContentPermissions === RUN TestAdminAchievementRoutesEnforceContentPermissions/GET_/api/admin/gamification/achievements 2026/10/14 09:55:42 INFO request method=GET path=/api/admin/gamification/achievements status=401 duration=116.417µs bytes=25 2026/10/14 09:…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement 2026/10/14 09:55:42 INFO request method=GET path=/api/admin/gamification/achievements/0ae8e7c4-a254-4e26-a4be-922d65724fe4/tiers status=200 duration=2.421167ms bytes=3 handler_admin_achievements_rbac_test.go:240: missing paren…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementDefinitionAndTierMutationContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementDefinitionAndTierMutationContracts 2026/10/14 09:55:42 INFO request method=PUT path=/api/admin/gamification/achievements/551be2d2-166d-41e0-af36-2947df8707af status=200 duration=2.840583ms bytes=61 handler_admin_achievements_rbac_test.go:285: achievement update audit coun…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementValidationMatchesSharedSchema",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementValidationMatchesSharedSchema 2026/10/14 09:55:42 INFO request method=POST path=/api/admin/gamification/achievements status=201 duration=2.414666ms bytes=64 handler_admin_achievements_rbac_test.go:381: invalid achievement slug via POST status=201; want 400 --- FAIL: TestA…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions": "want 403",
+        "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement": "missing parent tiers status=200",
+        "go:./internal/httpserver:TestAdminAchievementDefinitionAndTierMutationContracts": "achievement update audit count=0",
+        "go:./internal/httpserver:TestAdminAchievementValidationMatchesSharedSchema": "want 400"
+      },
+      "fingerprint": "a9aee7511588a2c29a83f02f0a3c4dc0962b5597bcddd88ffea2cfc5fedb1e75"
+    },
+    {
+      "seq": 46,
+      "at": "2026-10-14T00:56:57.844Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions|TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement|TestAdminAchievementDefinitionAndTierMutationContracts|TestAdminAchievementValidationMatchesSharedSchema)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementDefinitionAndTierMutationContracts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementValidationMatchesSharedSchema",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "766e9c8c92b70567be2adc10ce1f5b8be04565fdd4bafbcd5f87a0610ed4dc01"
+    },
+    {
+      "seq": 47,
+      "at": "2026-10-14T01:00:38.121Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 912,
+        "executed": 912,
+        "passed": 912,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "912 passed, 0 allowed skip(s)",
+      "fingerprint": "766e9c8c92b70567be2adc10ce1f5b8be04565fdd4bafbcd5f87a0610ed4dc01"
+    },
+    {
+      "seq": 48,
+      "at": "2026-10-14T01:06:23.626Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 797,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "766e9c8c92b70567be2adc10ce1f5b8be04565fdd4bafbcd5f87a0610ed4dc01"
+    },
+    {
+      "seq": 49,
+      "at": "2026-10-14T01:07:01.197Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions|TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement|TestAdminAchievementDefinitionAndTierMutationContracts|TestAdminAchievementValidationMatchesSharedSchema)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementRoutesEnforceContentPermissions === RUN TestAdminAchievementRoutesEnforceContentPermissions/GET_/api/admin/gamification/achievements 2026/10/14 10:06:59 INFO request method=GET path=/api/admin/gamification/achievements status=401 duration=121.583µs bytes=25 2026/10/14 10:…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement 2026/10/14 10:06:59 INFO request method=GET path=/api/admin/gamification/achievements/0897e134-ed7d-4368-8691-e5fe8a8b45e1/tiers status=200 duration=2.313625ms bytes=3 handler_admin_achievements_rbac_test.go:240: missing paren…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementDefinitionAndTierMutationContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementDefinitionAndTierMutationContracts 2026/10/14 10:06:59 INFO request method=PUT path=/api/admin/gamification/achievements/6a568144-f2a9-4224-b6eb-6cc8a49f0f48 status=200 duration=3.004291ms bytes=61 handler_admin_achievements_rbac_test.go:285: achievement update audit coun…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementValidationMatchesSharedSchema",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAchievementValidationMatchesSharedSchema 2026/10/14 10:06:59 INFO request method=POST path=/api/admin/gamification/achievements status=201 duration=2.432292ms bytes=64 handler_admin_achievements_rbac_test.go:381: invalid achievement slug via POST status=201; want 400 --- FAIL: TestA…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions": "want 403",
+        "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement": "missing parent tiers status=200",
+        "go:./internal/httpserver:TestAdminAchievementDefinitionAndTierMutationContracts": "achievement update audit count=0",
+        "go:./internal/httpserver:TestAdminAchievementValidationMatchesSharedSchema": "want 400"
+      },
+      "fingerprint": "e43eb346914c4ed09a4b73c51c99513fc8d91723860d78d0d5ecf5e62e341695"
+    },
+    {
+      "seq": 50,
+      "at": "2026-10-14T01:07:51.970Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAchievementRoutesEnforceContentPermissions|TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement|TestAdminAchievementDefinitionAndTierMutationContracts|TestAdminAchievementValidationMatchesSharedSchema)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementRoutesEnforceContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementTiersListReturnsNotFoundForMissingAchievement",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementDefinitionAndTierMutationContracts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAchievementValidationMatchesSharedSchema",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ede8008d310a5719e6da141c46a909faa1562bbd3d1b62720085309cb9773c33"
+    },
+    {
+      "seq": 51,
+      "at": "2026-10-14T01:11:31.277Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 912,
+        "executed": 912,
+        "passed": 912,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "912 passed, 0 allowed skip(s)",
+      "fingerprint": "ede8008d310a5719e6da141c46a909faa1562bbd3d1b62720085309cb9773c33"
+    },
+    {
+      "seq": 52,
+      "at": "2026-10-14T01:16:50.422Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 797,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "ede8008d310a5719e6da141c46a909faa1562bbd3d1b62720085309cb9773c33"
+    },
+    {
+      "seq": 53,
+      "at": "2026-10-14T01:17:31.165Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Epicurus",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "5b65e57a5630391ebb64acb4a7e11c49bc5ad8b3f41537609e1f039c78a9ffd7",
+      "attested": true,
+      "fingerprint": "ede8008d310a5719e6da141c46a909faa1562bbd3d1b62720085309cb9773c33"
+    },
+    {
+      "seq": 54,
+      "at": "2026-10-14T01:18:54.287Z",
+      "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit142-admin-achievements.mjs",
+      "exit_code": 0,
+      "fingerprint": "ede8008d310a5719e6da141c46a909faa1562bbd3d1b62720085309cb9773c33"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-14T01:19:26.156Z",
+    "head": "8e5739d4b7266a5b5c0bf3db7335f0b3fe6cee6b",
+    "fingerprint": "ede8008d310a5719e6da141c46a909faa1562bbd3d1b62720085309cb9773c33",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/admin/app/[locale]/gamification/gamification-admin-client.tsx": "4019f9d9031b5fc84cdf8eb1ed7305dc4ab0a20b",
+      "apps/api-go/internal/httpserver/handler_admin_achievements_rbac_test.go": "ca4b628b00e0b9c5f2d4c86ac0fb3d35759fdac0",
+      "apps/api-go/internal/httpserver/handler_admin_gamification.go": "2f0d77a7fad0c8baae938799212b3129428aa476",
+      "apps/api-go/internal/httpserver/server.go": "7e48758efc764aa97315bfa607c425b90cc5f5d7",
+      "e2e/audit/audit142-admin-achievements.mjs": "6483aa86a681cd9f15b63fb2e0a46cf84dc23fcf"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

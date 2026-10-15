@@ -125,7 +125,7 @@ export const ADMIN_NAV_DATA: AdminNavGroupDefinition[] = [
     items: [
       item({ href: "/bjt", icon: "academic", id: "as.bjt", labelKey: "shell.navItems.bjt", permissions: ["admin.content.read"], status: "implemented" }),
       item({ href: "/assessment/quiz-templates", icon: "book", id: "as.quizTemplates", labelKey: "shell.navItems.quizTemplates", permissions: ["admin.content.read"], status: "implemented" }),
-      item({ href: "/assessment/question-bank", icon: "book", id: "as.qbank", labelKey: "shell.navItems.questionBank", permissions: ["admin.content.read"], status: "implemented" }),
+      item({ href: "/assessment/question-bank", icon: "book", id: "as.qbank", labelKey: "shell.navItems.questionBank", permissions: ["admin.content.read", "assessment.manage", "assessment.review"], status: "implemented" }),
       item({ href: "/assessment/quiz-sessions", icon: "queue", id: "as.sessions", labelKey: "shell.navItems.quizSessions", permissions: ["admin.content.read", "admin.analytics.view", "viewer.analytics"], status: "implemented" }),
       item({ href: "/assessment/mock-exams", icon: "academic", id: "as.mock", labelKey: "shell.navItems.mockExams", permissions: ["admin.content.read"], status: "implemented" }),
       item({ href: "/assessment/remediation", icon: "bolt", id: "as.remediation", labelKey: "shell.navItems.remediation", permissions: ["admin.content.read"], status: "implemented" })

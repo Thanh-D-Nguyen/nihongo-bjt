@@ -8,23 +8,30 @@
 //   - fewer passed tests than the baseline floor (tests silently not compiled/collected)
 //   - unparseable output
 //
-// Usage: node scripts/quality/check-go-test-report.mjs <go-test.json> <go-test-exit-status>
+// Usage: node scripts/quality/check-go-test-report.mjs <go-test.json> <go-test-exit-status> [--baseline <file>]
 // Exit codes: 0 PASS · 1 violation · 2 tool failure.
+// With QUALITY_SUMMARY_DIR set, also writes $QUALITY_SUMMARY_DIR/go.json (execution accounting).
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { writeSuiteSummary } from "./harness/lib/summary.mjs";
+
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const baselinePath = path.join(repoRoot, "scripts/quality/go-test-skips-baseline.json");
 const modulePrefix = "github.com/kotobawork/nihongo-bjt/api-go/";
+let accounting = null;
 
 function fail(code, message) {
+  writeSuiteSummary("go", code === 2 ? "TOOL_FAILURE" : "VIOLATION", accounting, message.split("\n")[0]);
   console.error(`\nRESULT: ${code === 2 ? "TOOL_FAILURE" : "VIOLATION"} — ${message}`);
   if (process.env.GITHUB_ACTIONS) console.log(`::error title=go-test-audit::${message.split("\n")[0]}`);
   process.exit(code);
 }
 
-const [reportPath, statusArg] = process.argv.slice(2);
+const [reportPath, statusArg, ...rest] = process.argv.slice(2);
+const baselineFlag = rest.indexOf("--baseline");
+if (process.env.GITHUB_ACTIONS === "true" && baselineFlag !== -1) fail(2, "CI must use the canonical go-test-skips-baseline.json; --baseline overrides are forbidden");
+const baselinePath = baselineFlag === -1 ? path.join(repoRoot, "scripts/quality/go-test-skips-baseline.json") : path.resolve(rest[baselineFlag + 1] ?? "");
 if (!reportPath || statusArg === undefined) fail(2, "usage: check-go-test-report.mjs <go-test.json> <exit-status>");
 if (!existsSync(reportPath)) fail(2, `go test report not found: ${reportPath}`);
 const goStatus = Number(statusArg);
@@ -69,6 +76,17 @@ const failed = byState("fail");
 const skipped = byState("skip");
 const passed = byState("pass");
 console.log(`go test: passed=${passed.length} failed=${failed.length} skipped=${skipped.length} exit=${goStatus}`);
+const allowedSkipIds = new Set(Object.keys(baseline.allowed_skips));
+accounting = {
+  discovered: passed.length + failed.length + skipped.length,
+  executed: passed.length + failed.length,
+  passed: passed.length,
+  failed: failed.length,
+  skipped: skipped.length,
+  expected_skips: skipped.filter((id) => allowedSkipIds.has(id)).length,
+  unexpected_skips: skipped.filter((id) => !allowedSkipIds.has(id)).length,
+  min_passed_tests: baseline.min_passed_tests
+};
 
 if (goStatus !== 0 || failed.length || failedPackages.size) {
   for (const id of failed) console.error(`\n--- FAIL ${id}\n${(output.get(id) ?? []).join("")}`);
@@ -90,4 +108,6 @@ if (staleSkips.length) {
 if (passed.length < baseline.min_passed_tests) {
   fail(1, `only ${passed.length} tests passed, baseline floor is ${baseline.min_passed_tests} (tests not compiled/collected? deliberate removals need a reviewed baseline update)`);
 }
+if (accounting.executed === 0) fail(2, "zero Go tests executed");
+writeSuiteSummary("go", "PASS", accounting, `${passed.length} passed, ${skipped.length} allowed skip(s)`);
 console.log(`RESULT: PASS — ${passed.length} passed, ${skipped.length} allowed skip(s).`);

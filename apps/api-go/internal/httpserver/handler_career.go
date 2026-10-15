@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/career"
 )
@@ -114,5 +116,41 @@ func getCareerInboxHandler(store *career.Store, logger *slog.Logger) http.Handle
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(memos)
+	}
+}
+
+// updateCareerInboxFeedbackHandler stores feedback only for the authenticated learner's memo.
+func updateCareerInboxFeedbackHandler(store *career.Store, logger *slog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		identity, ok := authn.GetLearnerIdentity(r.Context())
+		if !ok {
+			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		memoID := chi.URLParam(r, "memoID")
+		if _, err := uuid.Parse(memoID); err != nil {
+			writeJSONError(w, "invalid memo id", http.StatusBadRequest)
+			return
+		}
+		var req struct {
+			Feedback string `json:"feedback"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || (req.Feedback != "useful" && req.Feedback != "fuzzy" && req.Feedback != "lost") {
+			writeJSONError(w, "invalid feedback", http.StatusBadRequest)
+			return
+		}
+		updated, err := store.SetInboxFeedback(r.Context(), identity.UserID, memoID, req.Feedback)
+		if err != nil {
+			logger.Error("update career inbox feedback", "error", err, "user_id", identity.UserID, "memo_id", memoID)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if !updated {
+			writeJSONError(w, "memo not found", http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]bool{"success": true})
 	}
 }

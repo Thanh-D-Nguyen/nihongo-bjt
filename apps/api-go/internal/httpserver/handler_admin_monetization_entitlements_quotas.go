@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
@@ -23,6 +24,9 @@ import (
 // adminMonetizationEntitlementsListHandler implements GET /api/admin/monetization/entitlements.
 func adminMonetizationEntitlementsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.read", "billing.plan.view") {
+			return
+		}
 		ctx := r.Context()
 		type Entitlement struct {
 			ID          string  `json:"id"`
@@ -47,7 +51,16 @@ func adminMonetizationEntitlementsListHandler(db *pgxpool.Pool, logger *slog.Log
 			var e Entitlement
 			if err := rows.Scan(&e.ID, &e.Key, &e.Category, &e.Description, &e.PlansCount); err == nil {
 				items = append(items, e)
+			} else {
+				logger.Error("scan entitlements", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate entitlements", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if items == nil {
 			items = []Entitlement{}
@@ -59,6 +72,9 @@ func adminMonetizationEntitlementsListHandler(db *pgxpool.Pool, logger *slog.Log
 // adminMonetizationEntitlementsCreateHandler implements POST /api/admin/monetization/entitlements.
 func adminMonetizationEntitlementsCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.write", "billing.plan.manage") {
+			return
+		}
 		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
@@ -73,13 +89,20 @@ func adminMonetizationEntitlementsCreateHandler(db *pgxpool.Pool, logger *slog.L
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		if req.Key == "" {
-			writeJSONError(w, "key is required", http.StatusBadRequest)
+		if strings.TrimSpace(req.Key) == "" || len(req.Key) > 120 || (req.Category != nil && len(*req.Category) > 40) {
+			writeJSONError(w, "invalid entitlement fields", http.StatusBadRequest)
 			return
 		}
 		ctx := r.Context()
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin create entitlement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 		var createdID string
-		err := db.QueryRow(ctx, `
+		err = tx.QueryRow(ctx, `
 			INSERT INTO monetization.entitlement_definition (key, category, description)
 			VALUES ($1, $2, $3) RETURNING id`,
 			req.Key, req.Category, req.Description).Scan(&createdID)
@@ -89,9 +112,18 @@ func adminMonetizationEntitlementsCreateHandler(db *pgxpool.Pool, logger *slog.L
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"key": req.Key})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		if _, err := tx.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.monetization.entitlement.created', $1, $2, 'monetization.entitlement_definition', $3, $4, NOW())`,
-			identity.ActorID, createdID, "entitlement created", afterJSON)
+			identity.ActorID, createdID, "entitlement created", afterJSON); err != nil {
+			logger.Error("audit create entitlement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit create entitlement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusCreated, map[string]any{"id": createdID, "key": req.Key})
 	}
 }
@@ -99,14 +131,17 @@ func adminMonetizationEntitlementsCreateHandler(db *pgxpool.Pool, logger *slog.L
 // adminMonetizationPlanEntitlementLinkHandler implements POST /api/admin/monetization/plans/{planId}/entitlements.
 func adminMonetizationPlanEntitlementLinkHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.write", "billing.plan.manage") {
+			return
+		}
 		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
-		planID := extractPathParam(r.URL.Path, "plans", 2) // .../plans/{planId}/entitlements
-		if planID == "" {
-			writeJSONError(w, "plan id required", http.StatusBadRequest)
+		planID, validPlanID := parseMonetizationUUID(extractPathParam(r.URL.Path, "plans", 1))
+		if !validPlanID {
+			writeJSONError(w, "invalid plan id", http.StatusBadRequest)
 			return
 		}
 		var req struct {
@@ -116,56 +151,107 @@ func adminMonetizationPlanEntitlementLinkHandler(db *pgxpool.Pool, logger *slog.
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		if req.EntitlementID == "" {
-			writeJSONError(w, "entitlementId is required", http.StatusBadRequest)
+		entitlementID, validEntitlementID := parseMonetizationUUID(req.EntitlementID)
+		if !validEntitlementID {
+			writeJSONError(w, "invalid entitlementId", http.StatusBadRequest)
 			return
 		}
 		ctx := r.Context()
-		_, err := db.Exec(ctx, `
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin link plan entitlement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
+		var planExists, entitlementExists bool
+		if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM monetization.plan WHERE id=$1)`, planID).Scan(&planExists); err != nil {
+			logger.Error("check plan for entitlement link", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM monetization.entitlement_definition WHERE id=$1)`, entitlementID).Scan(&entitlementExists); err != nil {
+			logger.Error("check entitlement for plan link", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if !planExists || !entitlementExists {
+			writeJSONError(w, "plan or entitlement not found", http.StatusNotFound)
+			return
+		}
+		_, err = tx.Exec(ctx, `
 			INSERT INTO monetization.plan_entitlement (plan_id, entitlement_id)
-			VALUES ($1, $2) ON CONFLICT DO NOTHING`, planID, req.EntitlementID)
+			VALUES ($1, $2) ON CONFLICT DO NOTHING`, planID, entitlementID)
 		if err != nil {
 			logger.Error("link plan entitlement", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-		afterJSON, _ := json.Marshal(map[string]any{"planId": planID, "entitlementId": req.EntitlementID})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		afterJSON, _ := json.Marshal(map[string]any{"planId": planID, "entitlementId": entitlementID})
+		if _, err := tx.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.monetization.plan_entitlement.linked', $1, $2, 'monetization.plan_entitlement', $3, $4, NOW())`,
-			identity.ActorID, planID, "plan entitlement linked", afterJSON)
-		writeJSON(w, http.StatusOK, map[string]any{"linked": true, "planId": planID, "entitlementId": req.EntitlementID})
+			identity.ActorID, planID, "plan entitlement linked", afterJSON); err != nil {
+			logger.Error("audit link plan entitlement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit link plan entitlement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"linked": true, "planId": planID, "entitlementId": entitlementID})
 	}
 }
 
 // adminMonetizationPlanEntitlementUnlinkHandler implements DELETE /api/admin/monetization/plans/{planId}/entitlements/{entitlementId}.
 func adminMonetizationPlanEntitlementUnlinkHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.write", "billing.plan.manage") {
+			return
+		}
 		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
-		// Extract planId and entitlementId from path: .../plans/{planId}/entitlements/{entitlementId}
-		parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-		var planID, entitlementID string
-		for i, p := range parts {
-			if p == "plans" && i+1 < len(parts) {
-				planID = parts[i+1]
-			}
-			if p == "entitlements" && i+1 < len(parts) {
-				entitlementID = parts[i+1]
-			}
-		}
-		if planID == "" || entitlementID == "" {
-			writeJSONError(w, "plan id and entitlement id required", http.StatusBadRequest)
+		planID, validPlanID := parseMonetizationUUID(extractPathParam(r.URL.Path, "plans", 1))
+		entitlementID, validEntitlementID := parseMonetizationUUID(extractPathParam(r.URL.Path, "entitlements", 1))
+		if !validPlanID || !validEntitlementID {
+			writeJSONError(w, "invalid plan or entitlement id", http.StatusBadRequest)
 			return
 		}
 		ctx := r.Context()
-		db.Exec(ctx, `DELETE FROM monetization.plan_entitlement WHERE plan_id = $1 AND entitlement_id = $2`, planID, entitlementID)
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin unlink plan entitlement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
+		tag, err := tx.Exec(ctx, `DELETE FROM monetization.plan_entitlement WHERE plan_id = $1 AND entitlement_id = $2`, planID, entitlementID)
+		if err != nil {
+			logger.Error("unlink plan entitlement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if tag.RowsAffected() == 0 {
+			writeJSONError(w, "plan entitlement not found", http.StatusNotFound)
+			return
+		}
 		afterJSON, _ := json.Marshal(map[string]any{"planId": planID, "entitlementId": entitlementID})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		if _, err := tx.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.monetization.plan_entitlement.unlinked', $1, $2, 'monetization.plan_entitlement', $3, $4, NOW())`,
-			identity.ActorID, planID, "plan entitlement unlinked", afterJSON)
+			identity.ActorID, planID, "plan entitlement unlinked", afterJSON); err != nil {
+			logger.Error("audit unlink plan entitlement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit unlink plan entitlement", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"unlinked": true, "planId": planID, "entitlementId": entitlementID})
 	}
 }
@@ -173,6 +259,9 @@ func adminMonetizationPlanEntitlementUnlinkHandler(db *pgxpool.Pool, logger *slo
 // adminMonetizationQuotasListHandler implements GET /api/admin/monetization/quotas.
 func adminMonetizationQuotasListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.read", "billing.quota.view") {
+			return
+		}
 		ctx := r.Context()
 		type QuotaPolicy struct {
 			ID                   string  `json:"id"`
@@ -198,9 +287,17 @@ func adminMonetizationQuotasListHandler(db *pgxpool.Pool, logger *slog.Logger) h
 		var policies []QuotaPolicy
 		for policyRows.Next() {
 			var qp QuotaPolicy
-			if err := policyRows.Scan(&qp.ID, &qp.Key, &qp.Description, &qp.WindowCode, &qp.WarnThresholdPercent); err == nil {
-				policies = append(policies, qp)
+			if err := policyRows.Scan(&qp.ID, &qp.Key, &qp.Description, &qp.WindowCode, &qp.WarnThresholdPercent); err != nil {
+				logger.Error("scan quota policies", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			policies = append(policies, qp)
+		}
+		if err := policyRows.Err(); err != nil {
+			logger.Error("iterate quota policies", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if policies == nil {
 			policies = []QuotaPolicy{}
@@ -219,9 +316,17 @@ func adminMonetizationQuotasListHandler(db *pgxpool.Pool, logger *slog.Logger) h
 		var planQuotas []PlanQuota
 		for pqRows.Next() {
 			var pq PlanQuota
-			if err := pqRows.Scan(&pq.ID, &pq.PlanID, &pq.PlanSlug, &pq.QuotaPolicyID, &pq.LimitValue); err == nil {
-				planQuotas = append(planQuotas, pq)
+			if err := pqRows.Scan(&pq.ID, &pq.PlanID, &pq.PlanSlug, &pq.QuotaPolicyID, &pq.LimitValue); err != nil {
+				logger.Error("scan plan quotas", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			planQuotas = append(planQuotas, pq)
+		}
+		if err := pqRows.Err(); err != nil {
+			logger.Error("iterate plan quotas", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if planQuotas == nil {
 			planQuotas = []PlanQuota{}
@@ -233,6 +338,9 @@ func adminMonetizationQuotasListHandler(db *pgxpool.Pool, logger *slog.Logger) h
 // adminMonetizationQuotaPoliciesCreateHandler implements POST /api/admin/monetization/quotas/policies.
 func adminMonetizationQuotaPoliciesCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.write", "billing.quota.manage") {
+			return
+		}
 		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
@@ -243,18 +351,26 @@ func adminMonetizationQuotaPoliciesCreateHandler(db *pgxpool.Pool, logger *slog.
 			Description          *string `json:"description,omitempty"`
 			WindowCode           string  `json:"windowCode"`
 			WarnThresholdPercent *int    `json:"warnThresholdPercent,omitempty"`
+			Reason               string  `json:"reason,omitempty"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		if req.Key == "" || req.WindowCode == "" {
-			writeJSONError(w, "key and windowCode are required", http.StatusBadRequest)
+		if strings.TrimSpace(req.Key) == "" || len(req.Key) > 120 || strings.TrimSpace(req.WindowCode) == "" || len(req.WindowCode) > 32 || (req.WarnThresholdPercent != nil && (*req.WarnThresholdPercent < 0 || *req.WarnThresholdPercent > 100)) {
+			writeJSONError(w, "invalid quota policy fields", http.StatusBadRequest)
 			return
 		}
 		ctx := r.Context()
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin create quota policy", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 		var createdID string
-		err := db.QueryRow(ctx, `
+		err = tx.QueryRow(ctx, `
 			INSERT INTO monetization.quota_policy (key, description, window_code, warn_threshold_percent)
 			VALUES ($1, $2, $3, $4) RETURNING id`,
 			req.Key, req.Description, req.WindowCode, req.WarnThresholdPercent).Scan(&createdID)
@@ -264,9 +380,22 @@ func adminMonetizationQuotaPoliciesCreateHandler(db *pgxpool.Pool, logger *slog.
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"key": req.Key, "windowCode": req.WindowCode})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		reason := strings.TrimSpace(req.Reason)
+		if reason == "" {
+			reason = "quota policy created"
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.monetization.quota_policy.created', $1, $2, 'monetization.quota_policy', $3, $4, NOW())`,
-			identity.ActorID, createdID, "quota policy created", afterJSON)
+			identity.ActorID, createdID, reason, afterJSON); err != nil {
+			logger.Error("audit create quota policy", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit create quota policy", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusCreated, map[string]any{"id": createdID, "key": req.Key})
 	}
 }
@@ -274,32 +403,34 @@ func adminMonetizationQuotaPoliciesCreateHandler(db *pgxpool.Pool, logger *slog.
 // adminMonetizationQuotaPoliciesPatchHandler implements PATCH /api/admin/monetization/quotas/policies/{id}.
 func adminMonetizationQuotaPoliciesPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.write", "billing.quota.manage") {
+			return
+		}
 		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
-		id := extractPathParam(r.URL.Path, "policies", 1)
-		if id == "" {
-			writeJSONError(w, "policy id required", http.StatusBadRequest)
+		id, validID := parseMonetizationUUID(extractPathParam(r.URL.Path, "policies", 1))
+		if !validID {
+			writeJSONError(w, "invalid policy id", http.StatusBadRequest)
 			return
 		}
 		var req struct {
 			Description          *string `json:"description,omitempty"`
 			WindowCode           *string `json:"windowCode,omitempty"`
 			WarnThresholdPercent *int    `json:"warnThresholdPercent,omitempty"`
+			Reason               string  `json:"reason,omitempty"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		ctx := r.Context()
-		var exists bool
-		db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM monetization.quota_policy WHERE id = $1)", id).Scan(&exists)
-		if !exists {
-			writeJSONError(w, "quota policy not found", http.StatusNotFound)
+		if (req.WindowCode != nil && (strings.TrimSpace(*req.WindowCode) == "" || len(*req.WindowCode) > 32)) || (req.WarnThresholdPercent != nil && (*req.WarnThresholdPercent < 0 || *req.WarnThresholdPercent > 100)) {
+			writeJSONError(w, "invalid quota policy fields", http.StatusBadRequest)
 			return
 		}
+		ctx := r.Context()
 		setClauses := []string{}
 		args := []any{}
 		argIdx := 1
@@ -322,19 +453,44 @@ func adminMonetizationQuotaPoliciesPatchHandler(db *pgxpool.Pool, logger *slog.L
 			writeJSONError(w, "at least one field to update is required", http.StatusBadRequest)
 			return
 		}
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin patch quota policy", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 		query := "UPDATE monetization.quota_policy SET " + joinStrings(setClauses, ", ") +
 			" WHERE id = $" + itoa(argIdx)
 		args = append(args, id)
-		if _, err := db.Exec(ctx, query, args...); err != nil {
+		result, err := tx.Exec(ctx, query, args...)
+		if err != nil {
 			logger.Error("patch quota policy", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+		if result.RowsAffected() == 0 {
+			writeJSONError(w, "quota policy not found", http.StatusNotFound)
+			return
+		}
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true})
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		reason := strings.TrimSpace(req.Reason)
+		if reason == "" {
+			reason = "quota policy updated"
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.monetization.quota_policy.updated', $1, $2, 'monetization.quota_policy', $3, $4, $5, NOW())`,
-			identity.ActorID, id, "quota policy updated", afterJSON, beforeJSON)
+			identity.ActorID, id, reason, afterJSON, beforeJSON); err != nil {
+			logger.Error("audit patch quota policy", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit patch quota policy", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "updated": true})
 	}
 }
@@ -342,6 +498,9 @@ func adminMonetizationQuotaPoliciesPatchHandler(db *pgxpool.Pool, logger *slog.L
 // adminMonetizationQuotaPlanLinksCreateHandler implements POST /api/admin/monetization/quotas/plan-links.
 func adminMonetizationQuotaPlanLinksCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.write", "billing.quota.manage") {
+			return
+		}
 		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
@@ -351,37 +510,78 @@ func adminMonetizationQuotaPlanLinksCreateHandler(db *pgxpool.Pool, logger *slog
 			PlanID        string `json:"planId"`
 			QuotaPolicyID string `json:"quotaPolicyId"`
 			LimitValue    int    `json:"limitValue"`
+			Reason        string `json:"reason,omitempty"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		if req.PlanID == "" || req.QuotaPolicyID == "" {
-			writeJSONError(w, "planId and quotaPolicyId are required", http.StatusBadRequest)
+		planID, validPlanID := parseMonetizationUUID(req.PlanID)
+		policyID, validPolicyID := parseMonetizationUUID(req.QuotaPolicyID)
+		if !validPlanID || !validPolicyID || req.LimitValue < 0 || (req.Reason != "" && len(req.Reason) > 500) {
+			writeJSONError(w, "invalid plan quota fields", http.StatusBadRequest)
 			return
 		}
 		ctx := r.Context()
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin create plan quota link", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
+		var planExists, policyExists bool
+		if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM monetization.plan WHERE id=$1)`, planID).Scan(&planExists); err != nil {
+			logger.Error("check plan for quota link", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM monetization.quota_policy WHERE id=$1)`, policyID).Scan(&policyExists); err != nil {
+			logger.Error("check quota policy for plan link", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if !planExists || !policyExists {
+			writeJSONError(w, "plan or quota policy not found", http.StatusNotFound)
+			return
+		}
 		var createdID string
-		err := db.QueryRow(ctx, `
+		err = tx.QueryRow(ctx, `
 			INSERT INTO monetization.plan_quota (plan_id, quota_policy_id, limit_value)
 			VALUES ($1, $2, $3) RETURNING id`,
-			req.PlanID, req.QuotaPolicyID, req.LimitValue).Scan(&createdID)
+			planID, policyID, req.LimitValue).Scan(&createdID)
 		if err != nil {
 			logger.Error("create plan quota link", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-		afterJSON, _ := json.Marshal(map[string]any{"planId": req.PlanID, "quotaPolicyId": req.QuotaPolicyID, "limitValue": req.LimitValue})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		afterJSON, _ := json.Marshal(map[string]any{"planId": planID, "quotaPolicyId": policyID, "limitValue": req.LimitValue})
+		reason := strings.TrimSpace(req.Reason)
+		if reason == "" {
+			reason = "plan quota linked"
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.monetization.plan_quota.created', $1, $2, 'monetization.plan_quota', $3, $4, NOW())`,
-			identity.ActorID, createdID, "plan quota linked", afterJSON)
-		writeJSON(w, http.StatusCreated, map[string]any{"id": createdID, "planId": req.PlanID, "quotaPolicyId": req.QuotaPolicyID})
+			identity.ActorID, createdID, reason, afterJSON); err != nil {
+			logger.Error("audit create plan quota link", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit create plan quota link", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		writeJSON(w, http.StatusCreated, map[string]any{"id": createdID, "planId": planID, "quotaPolicyId": policyID})
 	}
 }
 
 // adminMonetizationQuotaOverridesListHandler implements GET /api/admin/monetization/quota-overrides.
 func adminMonetizationQuotaOverridesListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.read", "billing.quota.view", "billing.quota.override") {
+			return
+		}
 		ctx := r.Context()
 		type Override struct {
 			ID               string  `json:"id"`
@@ -422,7 +622,16 @@ func adminMonetizationQuotaOverridesListHandler(db *pgxpool.Pool, logger *slog.L
 					o.ExpiresAt = &s
 				}
 				items = append(items, o)
+			} else {
+				logger.Error("scan quota overrides", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate quota overrides", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if items == nil {
 			items = []Override{}
@@ -434,6 +643,9 @@ func adminMonetizationQuotaOverridesListHandler(db *pgxpool.Pool, logger *slog.L
 // adminMonetizationQuotaOverridesCreateHandler implements POST /api/admin/monetization/quota-overrides.
 func adminMonetizationQuotaOverridesCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.write", "billing.quota.override") {
+			return
+		}
 		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
@@ -450,50 +662,101 @@ func adminMonetizationQuotaOverridesCreateHandler(db *pgxpool.Pool, logger *slog
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		if req.UserID == "" || req.QuotaKey == "" || req.Reason == "" {
-			writeJSONError(w, "userId, quotaKey, and reason are required", http.StatusBadRequest)
+		userID, validUserID := parseMonetizationUUID(req.UserID)
+		if !validUserID || strings.TrimSpace(req.QuotaKey) == "" || len(req.QuotaKey) > 120 || strings.TrimSpace(req.Reason) == "" || len(req.Reason) > 500 || (req.ExpiresAt != nil && !validCouponDate(req.ExpiresAt)) || req.LimitValue < 0 {
+			writeJSONError(w, "invalid quota override fields", http.StatusBadRequest)
 			return
 		}
 		ctx := r.Context()
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin create quota override", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 		var createdID string
-		err := db.QueryRow(ctx, `
+		err = tx.QueryRow(ctx, `
 			INSERT INTO monetization.quota_user_override (user_id, quota_key, limit_value, reason, created_by_actor_id, expires_at, created_at)
 			VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id`,
-			req.UserID, req.QuotaKey, req.LimitValue, req.Reason, identity.ActorID, req.ExpiresAt).Scan(&createdID)
+			userID, req.QuotaKey, req.LimitValue, req.Reason, identity.ActorID, req.ExpiresAt).Scan(&createdID)
 		if err != nil {
 			logger.Error("create quota override", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-		afterJSON, _ := json.Marshal(map[string]any{"userId": req.UserID, "quotaKey": req.QuotaKey, "limitValue": req.LimitValue})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		afterJSON, _ := json.Marshal(map[string]any{"userId": userID, "quotaKey": req.QuotaKey, "limitValue": req.LimitValue})
+		if _, err := tx.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.monetization.quota_override.created', $1, $2, 'monetization.quota_user_override', $3, $4, NOW())`,
-			identity.ActorID, createdID, req.Reason, afterJSON)
-		writeJSON(w, http.StatusCreated, map[string]any{"id": createdID, "userId": req.UserID, "quotaKey": req.QuotaKey})
+			identity.ActorID, createdID, req.Reason, afterJSON); err != nil {
+			logger.Error("audit create quota override", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit create quota override", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		writeJSON(w, http.StatusCreated, map[string]any{"id": createdID, "userId": userID, "quotaKey": req.QuotaKey})
 	}
 }
 
 // adminMonetizationQuotaOverridesDeleteHandler implements DELETE /api/admin/monetization/quota-overrides/{id}.
 func adminMonetizationQuotaOverridesDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.write", "billing.quota.override") {
+			return
+		}
 		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
-		id := extractPathParam(r.URL.Path, "quota-overrides", 1)
-		if id == "" {
-			writeJSONError(w, "override id required", http.StatusBadRequest)
+		id, validID := parseMonetizationUUID(extractPathParam(r.URL.Path, "quota-overrides", 1))
+		if !validID {
+			writeJSONError(w, "invalid override id", http.StatusBadRequest)
 			return
 		}
 		ctx := r.Context()
-		var reason string
-		db.QueryRow(ctx, "SELECT reason FROM monetization.quota_user_override WHERE id = $1", id).Scan(&reason)
-		db.Exec(ctx, "DELETE FROM monetization.quota_user_override WHERE id = $1", id)
-		beforeJSON, _ := json.Marshal(map[string]any{"id": id, "reason": reason})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin delete quota override", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
+		var beforeReason string
+		if err := tx.QueryRow(ctx, `DELETE FROM monetization.quota_user_override WHERE id=$1 RETURNING reason`, id).Scan(&beforeReason); err != nil {
+			if err == pgx.ErrNoRows {
+				writeJSONError(w, "quota override not found", http.StatusNotFound)
+				return
+			}
+			logger.Error("delete quota override", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		beforeJSON, _ := json.Marshal(map[string]any{"id": id, "reason": beforeReason})
+		reason := strings.TrimSpace(r.URL.Query().Get("reason"))
+		if reason == "" {
+			reason = "quota override deleted"
+		}
+		if len(reason) > 500 {
+			writeJSONError(w, "invalid deletion reason", http.StatusBadRequest)
+			return
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.monetization.quota_override.deleted', $1, $2, 'monetization.quota_user_override', $3, NULL, $4, NOW())`,
-			identity.ActorID, id, "quota override deleted", beforeJSON)
+			identity.ActorID, id, reason, beforeJSON); err != nil {
+			logger.Error("audit delete quota override", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit delete quota override", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true, "id": id})
 	}
 }

@@ -73,14 +73,14 @@ export function AutoGenDialog({ open, onClose, locale, labels }: Props) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          level,
+          levels: [level],
           sourceTypes: [...sourceTypes],
           userId
         })
       });
       if (res.ok) {
-        const data = (await res.json()) as { total: number };
-        setPreview(data.total);
+        const data = (await res.json()) as { availableCount: number };
+        setPreview(data.availableCount);
       }
     } catch {
       /* silent */
@@ -106,10 +106,11 @@ export function AutoGenDialog({ open, onClose, locale, labels }: Props) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          level,
+          name: `${labels.title} ${level}`,
+          levels: [level],
           sourceTypes: [...sourceTypes],
           direction,
-          cardCount,
+          limit: cardCount,
           adaptive,
           userId
         })

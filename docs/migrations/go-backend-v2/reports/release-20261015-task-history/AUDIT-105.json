@@ -1,0 +1,407 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-105",
+  "title": "Retire obsolete OAuth entry points from learner account settings",
+  "start_head": "9a777c4ecd7663a5b859f2a3ff785c5274429ab5",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The learner /settings/accounts screen still exposes Google OAuth and link-code exchange even though the canonical migration decision retires that OAuth flow; clicking the CTA returns 404.",
+    "acceptance": [
+      {
+        "id": "AC-1",
+        "text": "Authenticated /settings/accounts keeps session-scoped identity list and unlink behavior but renders no Google OAuth start CTA."
+      },
+      {
+        "id": "AC-2",
+        "text": "A linkCode query does not call the retired /api/auth/link/exchange endpoint or display obsolete exchange status."
+      },
+      {
+        "id": "AC-3",
+        "text": "The visible account screen communicates the retired linked-account capability in Vietnamese, English, and Japanese and remains usable at 390x844."
+      },
+      {
+        "id": "AC-4",
+        "text": "Anonymous access continues to redirect to localized login; identity GET/DELETE contracts remain unchanged."
+      }
+    ],
+    "expected_behavior": "Legacy linked identity management works without entry points into retired OAuth routes; localized page copy explains the unavailable new linking flow.",
+    "observed_behavior": "Visible Google CTA navigates to /api/auth/google/start and returns 404; linkCode triggers retired exchange handler. Existing identity list/unlink works.",
+    "rollback_plan": "Revert only the AUDIT-105 screen commit; keep the preceding linked-accounts screen and server identity API unchanged."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Remove retired OAuth entry points from learner account settings and remove its obsolete frontend lint baseline entry."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx",
+      "test": "linked account error contract > omits the retired Google OAuth action on account settings",
+      "expect": "expected <a"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx",
+      "test": "linked account error contract > does not exchange a retired link code on account settings",
+      "expect": "expected \"fetch\" to not be called at all"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-11T12:45:52.010Z",
+      "head": "9a777c4ecd7663a5b859f2a3ff785c5274429ab5"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-11T12:46:37.001Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T12:46:37.368Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T12:47:42.387Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T12:48:43.748Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T12:51:09.685Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T12:51:11.535Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-11T13:03:12.573Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-11T13:03:22.754Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-11T13:03:24.046Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-11T12:47:32.537Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > omits the retired Google OAuth action on account settings",
+          "outcome": "FAIL",
+          "excerpt": "expected <a …(2)></a> to be null",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"expected null, received retired Google start link\""
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > does not exchange a retired link code on account settings",
+          "outcome": "FAIL",
+          "excerpt": "expected \"fetch\" to not be called at all, but actually been called 2 times Received: 1st fetch call: Array [ \"http://localhost:4000/api/auth/link/exchange\", Object { \"body\": \"{\"code\":\"retired\"}\", \"headers\": Object { \"Content-Type\": \"application/json\", }, \"method\": \"POST\", }, ] 2nd fetch call: Array …",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"retired OAuth exchange fetch was called\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > omits the retired Google OAuth action on account settings": "expected null, received retired Google start link",
+        "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > does not exchange a retired link code on account settings": "retired OAuth exchange fetch was called"
+      },
+      "fingerprint": "3bddaf3356f92269eec325dac1ac0c646e597cbec3fcc926d9b05bbfc4fe25cd"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-11T12:47:42.233Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > omits the retired Google OAuth action on account settings",
+          "outcome": "FAIL",
+          "excerpt": "expected <a …(2)></a> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > does not exchange a retired link code on account settings",
+          "outcome": "FAIL",
+          "excerpt": "expected \"fetch\" to not be called at all, but actually been called 2 times Received: 1st fetch call: Array [ \"http://localhost:4000/api/auth/link/exchange\", Object { \"body\": \"{\"code\":\"retired\"}\", \"headers\": Object { \"Content-Type\": \"application/json\", }, \"method\": \"POST\", }, ] 2nd fetch call: Array …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > omits the retired Google OAuth action on account settings": "expected <a",
+        "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > does not exchange a retired link code on account settings": "expected \"fetch\" to not be called at all"
+      },
+      "fingerprint": "3bddaf3356f92269eec325dac1ac0c646e597cbec3fcc926d9b05bbfc4fe25cd"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-11T12:48:43.517Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > omits the retired Google OAuth action on account settings",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > does not exchange a retired link code on account settings",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8bd0e7823a1a3380cbe6c86ee71646fb1534de2d0bcf534868e33536410d4efe"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-11T12:50:26.831Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "8bd0e7823a1a3380cbe6c86ee71646fb1534de2d0bcf534868e33536410d4efe"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-11T12:51:09.448Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > omits the retired Google OAuth action on account settings",
+          "outcome": "FAIL",
+          "excerpt": "expected <a …(2)></a> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > does not exchange a retired link code on account settings",
+          "outcome": "FAIL",
+          "excerpt": "expected \"fetch\" to not be called at all, but actually been called 2 times Received: 1st fetch call: Array [ \"http://localhost:4000/api/auth/link/exchange\", Object { \"body\": \"{\"code\":\"retired\"}\", \"headers\": Object { \"Content-Type\": \"application/json\", }, \"method\": \"POST\", }, ] 2nd fetch call: Array …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > omits the retired Google OAuth action on account settings": "expected <a",
+        "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > does not exchange a retired link code on account settings": "expected \"fetch\" to not be called at all"
+      },
+      "fingerprint": "18858da861c13b7b7688d954264438e9e5b53bd5de016aaf1fe433a148fa5606"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-11T12:51:11.300Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > omits the retired Google OAuth action on account settings",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > does not exchange a retired link code on account settings",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "18858da861c13b7b7688d954264438e9e5b53bd5de016aaf1fe433a148fa5606"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-11T12:54:18.731Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 451,
+        "executed": 451,
+        "passed": 451,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 787,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "BASELINE_STALE: 1 fixed item(s) still in the baseline",
+      "fingerprint": "18858da861c13b7b7688d954264438e9e5b53bd5de016aaf1fe433a148fa5606"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-11T12:57:49.960Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > omits the retired Google OAuth action on account settings",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > does not exchange a retired link code on account settings",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "266e65de2e2156c55971af08a812ca78d71ee8fcac1670a4ed9302bbd5420ee0"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-11T12:59:52.872Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "266e65de2e2156c55971af08a812ca78d71ee8fcac1670a4ed9302bbd5420ee0"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-11T13:03:12.290Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 451,
+        "executed": 451,
+        "passed": 451,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 787,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "266e65de2e2156c55971af08a812ca78d71ee8fcac1670a4ed9302bbd5420ee0"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-11T13:03:22.488Z",
+      "head": "d8ea28b3ac9e8634c248866e188613226abf6274",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Heisenberg",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "266e65de2e2156c55971af08a812ca78d71ee8fcac1670a4ed9302bbd5420ee0"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-11T13:03:24.028Z",
+    "head": "d8ea28b3ac9e8634c248866e188613226abf6274",
+    "fingerprint": "266e65de2e2156c55971af08a812ca78d71ee8fcac1670a4ed9302bbd5420ee0",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_harness": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/settings/accounts/_components/accounts-settings-client.tsx": "741b4fb9633c929acd4dc58eba95e5678b09f4be",
+      "apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx": "6d982bb6cae5dcf73bc5d40c8ff5922fd089633e",
+      "apps/web/app/[locale]/settings/accounts/page.tsx": "8be389870d7919bd11309808500147c39eeb1684",
+      "scripts/quality/frontend-debt-baseline.json": "75c63d131b8b3e5db117cad0d49299dbdc32cc37"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

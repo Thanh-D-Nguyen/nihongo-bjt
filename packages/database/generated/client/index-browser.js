@@ -163,6 +163,7 @@ exports.Prisma.ContentImportErrorScalarFieldEnum = {
   code: 'code',
   message: 'message',
   sample: 'sample',
+  status: 'status',
   createdAt: 'createdAt'
 };
 
@@ -175,6 +176,18 @@ exports.Prisma.ContentImportMappingScalarFieldEnum = {
   status: 'status',
   mapping: 'mapping',
   notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ContentImportOperationRequestScalarFieldEnum = {
+  id: 'id',
+  importErrorId: 'importErrorId',
+  importMappingId: 'importMappingId',
+  operation: 'operation',
+  status: 'status',
+  reason: 'reason',
+  requestedBy: 'requestedBy',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -844,6 +857,8 @@ exports.Prisma.UserProfileScalarFieldEnum = {
   dailyGoalCards: 'dailyGoalCards',
   dailyGoalExercises: 'dailyGoalExercises',
   dailyStudyMinutes: 'dailyStudyMinutes',
+  onboardingCurrentLevel: 'onboardingCurrentLevel',
+  onboardingTopics: 'onboardingTopics',
   learningPurpose: 'learningPurpose',
   learningPersonality: 'learningPersonality',
   lowPressureMode: 'lowPressureMode',
@@ -892,6 +907,17 @@ exports.Prisma.CareerSkillStatScalarFieldEnum = {
   userId: 'userId',
   axisCode: 'axisCode',
   value: 'value',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ContextMemoScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  memoType: 'memoType',
+  payload: 'payload',
+  feedback: 'feedback',
+  createdAt: 'createdAt',
+  readAt: 'readAt',
   updatedAt: 'updatedAt'
 };
 
@@ -1471,6 +1497,16 @@ exports.Prisma.LoginEventScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.PasswordResetRequestScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  locale: 'locale',
+  attempts: 'attempts',
+  availableAt: 'availableAt',
+  claimedAt: 'claimedAt',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.AuthLinkCodeScalarFieldEnum = {
   id: 'id',
   codeHash: 'codeHash',
@@ -1619,6 +1655,15 @@ exports.Prisma.DeadLetterEntryScalarFieldEnum = {
   resolvedAt: 'resolvedAt'
 };
 
+exports.Prisma.FeedbackSubmissionScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  email: 'email',
+  category: 'category',
+  message: 'message',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.BillingWebhookEventScalarFieldEnum = {
   id: 'id',
   provider: 'provider',
@@ -1753,6 +1798,7 @@ exports.Prisma.ExerciseConfigScalarFieldEnum = {
 
 exports.Prisma.ExerciseScalarFieldEnum = {
   id: 'id',
+  generationKey: 'generationKey',
   exerciseType: 'exerciseType',
   sourceType: 'sourceType',
   sourceId: 'sourceId',
@@ -1769,6 +1815,7 @@ exports.Prisma.ExerciseScalarFieldEnum = {
 exports.Prisma.ExerciseSessionScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
+  exerciseIds: 'exerciseIds',
   sessionType: 'sessionType',
   exerciseType: 'exerciseType',
   level: 'level',
@@ -1827,6 +1874,27 @@ exports.Prisma.ExerciseReviewStateScalarFieldEnum = {
   dueAt: 'dueAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.UserReviewDeckScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  title: 'title',
+  kind: 'kind',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ExerciseReviewQueueScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  exerciseId: 'exerciseId',
+  dueAt: 'dueAt',
+  priority: 'priority',
+  completed: 'completed',
+  completedAt: 'completedAt',
+  correct: 'correct',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.StreakConfigScalarFieldEnum = {
@@ -2142,6 +2210,13 @@ exports.Prisma.BjtLessonItemScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.BjtLessonProgressScalarFieldEnum = {
+  userId: 'userId',
+  lessonId: 'lessonId',
+  completedAt: 'completedAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.NhkArticleScalarFieldEnum = {
   id: 'id',
   sourceType: 'sourceType',
@@ -2156,6 +2231,17 @@ exports.Prisma.NhkArticleScalarFieldEnum = {
   vocabulary: 'vocabulary',
   publishedAt: 'publishedAt',
   fetchedAt: 'fetchedAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.NhkNewsConfigScalarFieldEnum = {
+  locale: 'locale',
+  defaultType: 'defaultType',
+  easyEnabled: 'easyEnabled',
+  easyFeedUrl: 'easyFeedUrl',
+  normalEnabled: 'normalEnabled',
+  normalFeedUrl: 'normalFeedUrl',
+  createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
 
@@ -2317,6 +2403,58 @@ exports.Prisma.UserSocialConnectionScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PasswordCredentialScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  algorithm: 'algorithm',
+  algorithmVersion: 'algorithmVersion',
+  hashIterations: 'hashIterations',
+  memoryKib: 'memoryKib',
+  parallelism: 'parallelism',
+  hashLength: 'hashLength',
+  salt: 'salt',
+  hashedValue: 'hashedValue',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AdminPasswordCredentialScalarFieldEnum = {
+  id: 'id',
+  actorId: 'actorId',
+  algorithm: 'algorithm',
+  algorithmVersion: 'algorithmVersion',
+  hashIterations: 'hashIterations',
+  memoryKib: 'memoryKib',
+  parallelism: 'parallelism',
+  hashLength: 'hashLength',
+  salt: 'salt',
+  hashedValue: 'hashedValue',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SessionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  tokenDigest: 'tokenDigest',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt',
+  createdAt: 'createdAt',
+  userAgent: 'userAgent',
+  ipAddress: 'ipAddress'
+};
+
+exports.Prisma.AdminSessionScalarFieldEnum = {
+  id: 'id',
+  actorId: 'actorId',
+  tokenDigest: 'tokenDigest',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt',
+  createdAt: 'createdAt',
+  userAgent: 'userAgent',
+  ipAddress: 'ipAddress'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -2353,6 +2491,7 @@ exports.Prisma.ModelName = {
   ContentRawItem: 'ContentRawItem',
   ContentImportError: 'ContentImportError',
   ContentImportMapping: 'ContentImportMapping',
+  ContentImportOperationRequest: 'ContentImportOperationRequest',
   Lexeme: 'Lexeme',
   LexemeReverseProjection: 'LexemeReverseProjection',
   Kanji: 'Kanji',
@@ -2409,6 +2548,7 @@ exports.Prisma.ModelName = {
   CareerRank: 'CareerRank',
   UserCareerState: 'UserCareerState',
   CareerSkillStat: 'CareerSkillStat',
+  ContextMemo: 'ContextMemo',
   RankProgressionEvent: 'RankProgressionEvent',
   MissionArc: 'MissionArc',
   MissionChapter: 'MissionChapter',
@@ -2455,6 +2595,7 @@ exports.Prisma.ModelName = {
   AdImpression: 'AdImpression',
   IdentityProviderAccount: 'IdentityProviderAccount',
   LoginEvent: 'LoginEvent',
+  PasswordResetRequest: 'PasswordResetRequest',
   AuthLinkCode: 'AuthLinkCode',
   GrowthCampaign: 'GrowthCampaign',
   ShareTemplate: 'ShareTemplate',
@@ -2469,6 +2610,7 @@ exports.Prisma.ModelName = {
   FeatureFlag: 'FeatureFlag',
   FeatureFlagAudit: 'FeatureFlagAudit',
   DeadLetterEntry: 'DeadLetterEntry',
+  FeedbackSubmission: 'FeedbackSubmission',
   BillingWebhookEvent: 'BillingWebhookEvent',
   LearningPath: 'LearningPath',
   Competency: 'Competency',
@@ -2483,6 +2625,8 @@ exports.Prisma.ModelName = {
   ExerciseRemediation: 'ExerciseRemediation',
   UserExercisePerformance: 'UserExercisePerformance',
   ExerciseReviewState: 'ExerciseReviewState',
+  UserReviewDeck: 'UserReviewDeck',
+  ExerciseReviewQueue: 'ExerciseReviewQueue',
   StreakConfig: 'StreakConfig',
   UserStreak: 'UserStreak',
   AchievementDefinition: 'AchievementDefinition',
@@ -2508,7 +2652,9 @@ exports.Prisma.ModelName = {
   FlashcardGenJob: 'FlashcardGenJob',
   BjtLesson: 'BjtLesson',
   BjtLessonItem: 'BjtLessonItem',
+  BjtLessonProgress: 'BjtLessonProgress',
   NhkArticle: 'NhkArticle',
+  NhkNewsConfig: 'NhkNewsConfig',
   NhkReadingProgress: 'NhkReadingProgress',
   NhkBookmark: 'NhkBookmark',
   CompanionTip: 'CompanionTip',
@@ -2522,7 +2668,11 @@ exports.Prisma.ModelName = {
   StudyGroup: 'StudyGroup',
   StudyGroupMember: 'StudyGroupMember',
   StudyGroupChallenge: 'StudyGroupChallenge',
-  UserSocialConnection: 'UserSocialConnection'
+  UserSocialConnection: 'UserSocialConnection',
+  PasswordCredential: 'PasswordCredential',
+  AdminPasswordCredential: 'AdminPasswordCredential',
+  Session: 'Session',
+  AdminSession: 'AdminSession'
 };
 
 /**

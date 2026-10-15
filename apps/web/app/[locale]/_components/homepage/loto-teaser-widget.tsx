@@ -29,8 +29,8 @@ export function LotoTeaserWidget({ locale }: { locale: string }) {
         credentials: "same-origin",
       });
       if (res.ok) {
-        const data = await res.json();
-        setTeaser(data);
+        const data: { nextDraw: LotoTeaser | null } = await res.json();
+        setTeaser(data.nextDraw);
       }
     } catch {
       // silently ignore — widget is optional

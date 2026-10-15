@@ -1,0 +1,75 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-127",
+  "title": "Record AUDIT-126 inventory and follow-up",
+  "start_head": "e3b2f23ff51352e76011269f980583c4d66e32fd",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "FULL_PRODUCT_AUDIT_STATE.json, FULL_SCREEN_INVENTORY.json, FULL_API_INVENTORY.json, and FULL_PRODUCT_BROWSER_AUDIT.md are updated from verified AUDIT-126 evidence; HANDOFF_NEXT_AUDIT.md points to the learner style table mismatch; all pass/fail/remaining totals reconcile."
+      }
+    ],
+    "expected_behavior": "Durable state reports the new one-screen/six-API pass, current head, commit, and learner style schema follow-up with valid accounting invariants.",
+    "observed_behavior": "AUDIT-126 passed on commit e3b2f23f and covers one Admin screen plus six API method-path entries.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "DOC_ONLY"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-13T00:36:39.340Z",
+      "head": "e3b2f23ff51352e76011269f980583c4d66e32fd"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-13T00:36:48.509Z",
+      "head": "e3b2f23ff51352e76011269f980583c4d66e32fd"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-13T00:36:53.015Z",
+      "head": "e3b2f23ff51352e76011269f980583c4d66e32fd"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-13T00:40:37.945Z",
+      "head": "e3b2f23ff51352e76011269f980583c4d66e32fd"
+    }
+  ],
+  "evidence": [],
+  "closed": {
+    "at": "2026-10-13T00:40:37.927Z",
+    "head": "e3b2f23ff51352e76011269f980583c4d66e32fd",
+    "fingerprint": "6462350e60c73bdc3eae5e77e6e15ff6570dabbd788c23e306bf6d2a79798522",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS"
+    },
+    "files": {
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "d3d1328039b401bc05b190c69760396fe0ae7f6d",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "6c56abae68d2eaf3e672b355072cdc732605a412",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "23f776a2eaede014794d8e375546f14734d0f688",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "bd34602146b2f5381de0d5620919bf562d79eee7",
+      "docs/migrations/go-backend-v2/reports/HANDOFF_NEXT_AUDIT.md": "367c7324512ab898c001b904b57784c0a3ed0b76"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

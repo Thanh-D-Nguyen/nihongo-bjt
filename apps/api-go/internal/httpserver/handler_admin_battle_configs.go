@@ -184,7 +184,8 @@ func adminBattleConfigsDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		var cd ConfigDetail
 		var createdAt, updatedAt time.Time
 		var publishedAt, archivedAt, scheduleStart, scheduleEnd *time.Time
-		var scoringBytes, botDiffBytes []byte
+		var scoringBytes []byte
+		var botDifficulties []string
 		err := db.QueryRow(ctx, `
 			SELECT id, name, description, level, status, question_pool_key,
 			       question_count, time_per_question_sec, max_participants,
@@ -194,7 +195,7 @@ func adminBattleConfigsDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http
 			FROM learning.battle_config WHERE id = $1`, id).Scan(
 			&cd.ID, &cd.Name, &cd.Description, &cd.Level, &cd.Status,
 			&cd.QuestionPoolKey, &cd.QuestionCount, &cd.TimePerQuestionSec,
-			&cd.MaxParticipants, &botDiffBytes, &scoringBytes,
+			&cd.MaxParticipants, &botDifficulties, &scoringBytes,
 			&scheduleStart, &scheduleEnd, &publishedAt, &archivedAt,
 			&cd.CreatedByID, &cd.UpdatedByID, &createdAt, &updatedAt)
 		if err != nil {
@@ -222,9 +223,7 @@ func adminBattleConfigsDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		if scoringBytes != nil {
 			cd.ScoringRules = scoringBytes
 		}
-		if botDiffBytes != nil {
-			_ = json.Unmarshal(botDiffBytes, &cd.BotDifficulties)
-		}
+		cd.BotDifficulties = botDifficulties
 		if cd.BotDifficulties == nil {
 			cd.BotDifficulties = []string{}
 		}
@@ -291,7 +290,9 @@ func adminBattleConfigsCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		if scoringJSON == nil {
 			scoringJSON = json.RawMessage("{}")
 		}
-		botDiffJSON, _ := json.Marshal(req.BotDifficulties)
+		if req.BotDifficulties == nil {
+			req.BotDifficulties = []string{}
+		}
 
 		var createdID string
 		err := db.QueryRow(ctx, `
@@ -303,7 +304,7 @@ func adminBattleConfigsCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http
 			RETURNING id`,
 			req.Name, req.Description, req.Level, req.QuestionPoolKey,
 			req.QuestionCount, req.TimePerQuestionSec, req.MaxParticipants,
-			botDiffJSON, scoringJSON, req.ScheduleStart, req.ScheduleEnd,
+			req.BotDifficulties, scoringJSON, req.ScheduleStart, req.ScheduleEnd,
 			identity.ActorID).Scan(&createdID)
 		if err != nil {
 			logger.Error("create battle config", "error", err)
@@ -402,9 +403,8 @@ func adminBattleConfigsPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			argIdx++
 		}
 		if req.BotDifficulties != nil {
-			botDiffJSON, _ := json.Marshal(req.BotDifficulties)
 			setClauses = append(setClauses, "bot_difficulties = $"+itoa(argIdx))
-			args = append(args, botDiffJSON)
+			args = append(args, req.BotDifficulties)
 			argIdx++
 		}
 		if req.ScoringRules != nil {
@@ -562,7 +562,7 @@ func adminBattleConfigsDuplicateHandler(db *pgxpool.Pool, logger *slog.Logger) h
 			QuestionCount      int
 			TimePerQuestionSec int
 			MaxParticipants    int
-			BotDifficulties    []byte
+			BotDifficulties    []string
 			ScoringRules       []byte
 			ScheduleStart      *string
 			ScheduleEnd        *string
@@ -589,9 +589,8 @@ func adminBattleConfigsDuplicateHandler(db *pgxpool.Pool, logger *slog.Logger) h
 		if scoringJSON == nil {
 			scoringJSON = []byte("{}")
 		}
-		botDiffJSON := src.BotDifficulties
-		if botDiffJSON == nil {
-			botDiffJSON = []byte("[]")
+		if src.BotDifficulties == nil {
+			src.BotDifficulties = []string{}
 		}
 
 		var createdID string
@@ -604,7 +603,7 @@ func adminBattleConfigsDuplicateHandler(db *pgxpool.Pool, logger *slog.Logger) h
 			RETURNING id`,
 			newName, src.Description, src.Level, src.QuestionPoolKey,
 			src.QuestionCount, src.TimePerQuestionSec, src.MaxParticipants,
-			botDiffJSON, scoringJSON, src.ScheduleStart, src.ScheduleEnd,
+			src.BotDifficulties, scoringJSON, src.ScheduleStart, src.ScheduleEnd,
 			identity.ActorID).Scan(&createdID)
 		if err != nil {
 			logger.Error("duplicate battle config", "error", err)

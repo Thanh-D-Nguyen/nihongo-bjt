@@ -11,7 +11,7 @@ interface LexemeItem {
   reading: string | null;
   jlptLevel: string | null;
   shortMeaningVi: string | null;
-  senses: Array<{ id: string; meaningVi: string | null; partOfSpeech: string | null }>;
+  senses?: Array<{ id: string; meaningVi: string | null; partOfSpeech: string | null }>;
 }
 
 interface Labels {
@@ -46,7 +46,7 @@ export function DictionaryClient({ labels, locale }: { labels: Labels; locale: s
       const res = await learnerApiFetchOptional(`/api/content/lexemes?${params}`);
       if (res.ok) {
         const data: LexemeItem[] = await res.json();
-        setItems((prev) => append ? [...prev, ...data] : data);
+        setItems((prev) => (append ? [...prev, ...data] : data));
         setHasMore(data.length === PAGE_SIZE);
         setOffset(nextOffset);
       } else setError(true);
@@ -112,7 +112,7 @@ export function DictionaryClient({ labels, locale }: { labels: Labels; locale: s
                       </span>
                     ) : null}
                   </div>
-                  {item.senses.length > 0 ? (
+                  {item.senses?.length ? (
                     <p className="mt-1 text-sm text-[#4B5563]">
                       {item.senses
                         .slice(0, 3)
@@ -133,7 +133,7 @@ export function DictionaryClient({ labels, locale }: { labels: Labels; locale: s
               onClick={() => void load(query, offset + PAGE_SIZE, true)}
               type="button"
             >
-              {loadingMore ? labels.loading : labels.loadMore ?? "Tải thêm"}
+              {loadingMore ? labels.loading : (labels.loadMore ?? "Tải thêm")}
             </button>
           ) : null}
         </>

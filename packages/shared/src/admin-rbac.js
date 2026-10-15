@@ -21,7 +21,7 @@ export const CANONICAL_ADMIN_ROLE_PERMISSIONS = {
     "editor.lexeme": ["admin.content.read", "admin.content.write"],
     "editor.kanji": ["admin.content.read", "admin.content.write"],
     "editor.grammar": ["admin.content.read", "admin.content.write"],
-    "editor.exam": ["admin.quiz.read", "admin.quiz.write"],
+    "editor.exam": ["admin.quiz.read", "admin.quiz.write", "assessment.manage", "assessment.review"],
     "editor.media": ["admin.media.read", "admin.media.write"],
     "editor.i18n": ["admin.i18n.read", "admin.i18n.write"],
     "editor.enrichment": ["admin.enrichment.read", "admin.enrichment.write"],

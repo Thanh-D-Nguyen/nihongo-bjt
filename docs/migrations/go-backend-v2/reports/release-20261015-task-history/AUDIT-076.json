@@ -1,0 +1,1146 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-076",
+  "title": "Audit learner Feedback screen",
+  "start_head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The learner Feedback form posts to /api/feedback, but no local route or Go handler exists, so valid feedback returns 404 and cannot persist.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Visible anonymous and authenticated feedback forms submit through the browser to a real POST endpoint; valid text is persisted, invalid payloads and rate-limit overflow are rejected, and success is rendered only for a persisted 201 response."
+      },
+      {
+        "id": "AC2",
+        "text": "Feedback fields expose associated localized accessible names; failures preserve entered values, loading prevents duplicate submits, and the form fits a 390x844 viewport."
+      }
+    ],
+    "expected_behavior": "Public feedback submissions are validated, rate limited, persisted in PostgreSQL, and return a success response only after persistence. The localized UI preserves entered values after failure, shows success after a saved response, associates labels with fields, and remains usable at 390x844.",
+    "observed_behavior": "Visible /vi/feedback renders the form, but a real submit returned HTTP 404 and displayed the generic send failure. Labels are not programmatically associated with fields.",
+    "rollback_plan": "Revert the feedback table migration/model, Go handler/router/tests, and page changes together; no existing learner content rows are modified."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY",
+      "API_CONTRACT",
+      "DATABASE",
+      "DOMAIN_LOGIC"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestFeedbackPostPersistsSubmission",
+      "expect": "feedback status=404 want 201"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/feedback/feedback-page.test.tsx",
+      "test": "learner feedback form > associates every localized field label and prevents duplicate submits while saving",
+      "expect": "mobile feedback controls must be at least 48px tall"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow",
+      "expect": "feedback invalid status=404 want 400"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/feedback/feedback-page.test.tsx",
+      "test": "learner feedback form > keeps entered values and shows an error when the server did not return persisted status 201",
+      "expect": "feedback success requires HTTP 201"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/feedback/feedback-page.test.tsx",
+      "test": "learner feedback form > explains when feedback is rate limited",
+      "expect": "feedback 429 requires rate limit guidance"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestFeedbackRejectsEmptyMessage",
+      "expect": "feedback empty message status=404 want 400"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/feedback/feedback-page.test.tsx",
+      "test": "learner feedback form > uses clear English success copy",
+      "expect": "English feedback confirmation should be grammatical"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-08T15:54:26.655Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-08T15:56:21.704Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T15:56:22.064Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T15:58:26.781Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T15:58:44.408Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T15:58:57.634Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T16:00:07.118Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T16:00:46.704Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T16:01:04.168Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T16:04:41.684Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T16:05:33.516Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T16:08:20.730Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T16:13:24.519Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T16:13:56.703Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T16:14:09.521Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T16:20:40.096Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T16:22:00.634Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T16:29:15.690Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T16:29:36.210Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-09T00:10:52.023Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-09T00:11:02.357Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-08T15:58:26.599Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestFeedbackPostPersistsSubmission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestFeedbackPostPersistsSubmission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestFeedbackPostPersistsSubmission handler_feedback_test.go:28: feedback status=404 want 201 body=404 page not found --- FAIL: TestFeedbackPostPersistsSubmission (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestFeedbackPostPersistsSubmission": "feedback status=404 want 201"
+      },
+      "fingerprint": "6daef072bd8741ad593ba1163d37e8e6515aea89f6e115125b0288fb5df79e04"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-08T15:58:44.174Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestFeedbackPostPersistsSubmission)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/feedback/feedback-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestFeedbackPostPersistsSubmission",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestFeedbackPostPersistsSubmission handler_feedback_test.go:16: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestFeedbackPostPersistsSubmission (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving",
+          "outcome": "FAIL",
+          "excerpt": "all feedback fields must have associated labels: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestFeedbackPostPersistsSubmission": "feedback status=404 want 201",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving": "all feedback fields must have associated labels"
+      },
+      "fingerprint": "bfd2173ae717fc9a015cee11015df36399e1ca417a586dda710aad9e6c65bde5"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-08T15:58:57.392Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestFeedbackPostPersistsSubmission)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/feedback/feedback-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestFeedbackPostPersistsSubmission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestFeedbackPostPersistsSubmission handler_feedback_test.go:28: feedback status=404 want 201 body=404 page not found --- FAIL: TestFeedbackPostPersistsSubmission (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving",
+          "outcome": "FAIL",
+          "excerpt": "all feedback fields must have associated labels: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestFeedbackPostPersistsSubmission": "feedback status=404 want 201",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving": "all feedback fields must have associated labels"
+      },
+      "fingerprint": "bfd2173ae717fc9a015cee11015df36399e1ca417a586dda710aad9e6c65bde5"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-08T16:00:06.510Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestFeedbackPostPersistsSubmission)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/feedback/feedback-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestFeedbackPostPersistsSubmission",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9ee01f9d6cf5532605de636c0c5f92ee0009a1ae7ec706d0dcd30dc799a3e296"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-08T16:00:46.100Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestFeedbackPostPersistsSubmission|TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/feedback/feedback-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestFeedbackPostPersistsSubmission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestFeedbackPostPersistsSubmission handler_feedback_test.go:28: feedback status=404 want 201 body=404 page not found --- FAIL: TestFeedbackPostPersistsSubmission (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving",
+          "outcome": "FAIL",
+          "excerpt": "all feedback fields must have associated labels: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow handler_feedback_test.go:68: feedback invalid status=404 want 400 body=404 page not found --- FAIL: TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestFeedbackPostPersistsSubmission": "feedback status=404 want 201",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving": "all feedback fields must have associated labels",
+        "go:./internal/httpserver:TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow": "feedback invalid status=404 want 400"
+      },
+      "fingerprint": "fc5a98f7e349ee8b93c1171dfad021d8fba0bd02a02eec84f0691856d348e747"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-08T16:01:03.576Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestFeedbackPostPersistsSubmission|TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/feedback/feedback-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestFeedbackPostPersistsSubmission",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "fc5a98f7e349ee8b93c1171dfad021d8fba0bd02a02eec84f0691856d348e747"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-08T16:04:41.085Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 699,
+        "executed": 699,
+        "passed": 699,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "fc5a98f7e349ee8b93c1171dfad021d8fba0bd02a02eec84f0691856d348e747"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-08T16:04:50.585Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "TOOL_FAILURE",
+      "accounting": null,
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "d2bc618f43c29aee858cefa2c61ecf7cf721f9e5c481f694c3144eb02cd1b6f6"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-08T16:05:11.934Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestFeedbackPostPersistsSubmission|TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/feedback/feedback-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestFeedbackPostPersistsSubmission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestFeedbackPostPersistsSubmission handler_feedback_test.go:28: feedback status=404 want 201 body=404 page not found --- FAIL: TestFeedbackPostPersistsSubmission (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving",
+          "outcome": "FAIL",
+          "excerpt": "all feedback fields must have associated labels: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow handler_feedback_test.go:68: feedback invalid status=404 want 400 body=404 page not found --- FAIL: TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > keeps entered values and shows an error when the server did not return persisted status 201",
+          "outcome": "FAIL",
+          "excerpt": "feedback success requires HTTP 201: expected 'Gửi góp ýÝ kiến của bạn giúp chúng tô…' not to contain 'Cảm ơn bạn đã góp ý!'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestFeedbackPostPersistsSubmission": "feedback status=404 want 201",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving": "all feedback fields must have associated labels",
+        "go:./internal/httpserver:TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow": "feedback invalid status=404 want 400",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > keeps entered values and shows an error when the server did not return persisted status 201": "feedback success requires HTTP 201"
+      },
+      "fingerprint": "0b4aef68d3fb4e5de49d7e28eaafff892f148ea04aab2e4ccb82280b743ee111"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-08T16:05:32.905Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestFeedbackPostPersistsSubmission|TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/feedback/feedback-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestFeedbackPostPersistsSubmission",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > keeps entered values and shows an error when the server did not return persisted status 201",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "22ac976292de594a036698cd020710969fabdabeaed44c1d140668cddadb8743"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-08T16:08:20.029Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 699,
+        "executed": 699,
+        "passed": 699,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "22ac976292de594a036698cd020710969fabdabeaed44c1d140668cddadb8743"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-08T16:13:08.743Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 373,
+        "executed": 373,
+        "passed": 373,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 761,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "a9cf85dfb89c4259a5e597e9299da00fbb8e445d6571df3981e4754148760131"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-08T16:13:23.926Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestFeedbackPostPersistsSubmission|TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/feedback/feedback-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestFeedbackPostPersistsSubmission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestFeedbackPostPersistsSubmission handler_feedback_test.go:28: feedback status=404 want 201 body=404 page not found --- FAIL: TestFeedbackPostPersistsSubmission (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving",
+          "outcome": "FAIL",
+          "excerpt": "mobile feedback controls must be at least 48px tall: expected false to be true // Object.is equality",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"all feedback fields must have associated labels\""
+        },
+        {
+          "id": "go:./internal/httpserver:TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow handler_feedback_test.go:69: feedback invalid status=404 want 400 body=404 page not found --- FAIL: TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > keeps entered values and shows an error when the server did not return persisted status 201",
+          "outcome": "FAIL",
+          "excerpt": "feedback success requires HTTP 201: expected 'Gửi góp ýÝ kiến của bạn giúp chúng tô…' not to contain 'Cảm ơn bạn đã góp ý!'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > explains when feedback is rate limited",
+          "outcome": "FAIL",
+          "excerpt": "feedback 429 requires rate limit guidance: expected 'Chưa thể gửi. Vui lòng thử lại sau.' to be 'Bạn gửi quá nhanh. Vui lòng đợi một c…' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestFeedbackPostPersistsSubmission": "feedback status=404 want 201",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving": "all feedback fields must have associated labels",
+        "go:./internal/httpserver:TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow": "feedback invalid status=404 want 400",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > keeps entered values and shows an error when the server did not return persisted status 201": "feedback success requires HTTP 201",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > explains when feedback is rate limited": "feedback 429 requires rate limit guidance"
+      },
+      "fingerprint": "66166e6fecea2ec9eb7c6197b932e856582609a9100d078b6b2c4df240f798d6"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-08T16:13:56.099Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestFeedbackPostPersistsSubmission|TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow|TestFeedbackRejectsEmptyMessage)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/feedback/feedback-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestFeedbackPostPersistsSubmission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestFeedbackPostPersistsSubmission handler_feedback_test.go:28: feedback status=404 want 201 body=404 page not found --- FAIL: TestFeedbackPostPersistsSubmission (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving",
+          "outcome": "FAIL",
+          "excerpt": "mobile feedback controls must be at least 48px tall: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow handler_feedback_test.go:69: feedback invalid status=404 want 400 body=404 page not found --- FAIL: TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > keeps entered values and shows an error when the server did not return persisted status 201",
+          "outcome": "FAIL",
+          "excerpt": "feedback success requires HTTP 201: expected 'Gửi góp ýÝ kiến của bạn giúp chúng tô…' not to contain 'Cảm ơn bạn đã góp ý!'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > explains when feedback is rate limited",
+          "outcome": "FAIL",
+          "excerpt": "feedback 429 requires rate limit guidance: expected 'Chưa thể gửi. Vui lòng thử lại sau.' to be 'Bạn gửi quá nhanh. Vui lòng đợi một c…' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestFeedbackRejectsEmptyMessage",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestFeedbackRejectsEmptyMessage handler_feedback_test.go:100: feedback empty message status=404 want 400 body=404 page not found --- FAIL: TestFeedbackRejectsEmptyMessage (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestFeedbackPostPersistsSubmission": "feedback status=404 want 201",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving": "mobile feedback controls must be at least 48px tall",
+        "go:./internal/httpserver:TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow": "feedback invalid status=404 want 400",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > keeps entered values and shows an error when the server did not return persisted status 201": "feedback success requires HTTP 201",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > explains when feedback is rate limited": "feedback 429 requires rate limit guidance",
+        "go:./internal/httpserver:TestFeedbackRejectsEmptyMessage": "feedback empty message status=404 want 400"
+      },
+      "fingerprint": "66166e6fecea2ec9eb7c6197b932e856582609a9100d078b6b2c4df240f798d6"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-08T16:14:08.933Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestFeedbackPostPersistsSubmission|TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow|TestFeedbackRejectsEmptyMessage)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/feedback/feedback-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestFeedbackPostPersistsSubmission",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > keeps entered values and shows an error when the server did not return persisted status 201",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > explains when feedback is rate limited",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestFeedbackRejectsEmptyMessage",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "66166e6fecea2ec9eb7c6197b932e856582609a9100d078b6b2c4df240f798d6"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-08T16:17:10.588Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 700,
+        "executed": 700,
+        "passed": 700,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "a later step of bash scripts/quality/verify-go.sh failed (exit 1)",
+      "fingerprint": "66166e6fecea2ec9eb7c6197b932e856582609a9100d078b6b2c4df240f798d6"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-08T16:20:39.501Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 373,
+        "executed": 373,
+        "passed": 373,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 761,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "66166e6fecea2ec9eb7c6197b932e856582609a9100d078b6b2c4df240f798d6"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-08T16:21:01.456Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestFeedbackPostPersistsSubmission|TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow|TestFeedbackRejectsEmptyMessage)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/feedback/feedback-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestFeedbackPostPersistsSubmission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestFeedbackPostPersistsSubmission handler_feedback_test.go:28: feedback status=404 want 201 body=404 page not found --- FAIL: TestFeedbackPostPersistsSubmission (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving",
+          "outcome": "FAIL",
+          "excerpt": "mobile feedback controls must be at least 48px tall: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow handler_feedback_test.go:69: feedback invalid status=404 want 400 body=404 page not found --- FAIL: TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > keeps entered values and shows an error when the server did not return persisted status 201",
+          "outcome": "FAIL",
+          "excerpt": "feedback success requires HTTP 201: expected 'Gửi góp ýÝ kiến của bạn giúp chúng tô…' not to contain 'Cảm ơn bạn đã góp ý!'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > explains when feedback is rate limited",
+          "outcome": "FAIL",
+          "excerpt": "feedback 429 requires rate limit guidance: expected 'Chưa thể gửi. Vui lòng thử lại sau.' to be 'Bạn gửi quá nhanh. Vui lòng đợi một c…' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestFeedbackRejectsEmptyMessage",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestFeedbackRejectsEmptyMessage handler_feedback_test.go:100: feedback empty message status=404 want 400 body=404 page not found --- FAIL: TestFeedbackRejectsEmptyMessage (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > uses clear English success copy",
+          "outcome": "FAIL",
+          "excerpt": "English feedback confirmation should be grammatical: expected 'Thank you for your feedback!Please ch…' to be 'Thank you for your feedback! We\\'ll r…' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestFeedbackPostPersistsSubmission": "feedback status=404 want 201",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving": "mobile feedback controls must be at least 48px tall",
+        "go:./internal/httpserver:TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow": "feedback invalid status=404 want 400",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > keeps entered values and shows an error when the server did not return persisted status 201": "feedback success requires HTTP 201",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > explains when feedback is rate limited": "feedback 429 requires rate limit guidance",
+        "go:./internal/httpserver:TestFeedbackRejectsEmptyMessage": "feedback empty message status=404 want 400",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > uses clear English success copy": "English feedback confirmation should be grammatical"
+      },
+      "fingerprint": "6194d51dad9023706e19c7b5b5c415e0b55ac67aecb44bdb5c823e72b6b74fdc"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-08T16:21:59.999Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestFeedbackPostPersistsSubmission|TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow|TestFeedbackRejectsEmptyMessage)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/feedback/feedback-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestFeedbackPostPersistsSubmission",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > keeps entered values and shows an error when the server did not return persisted status 201",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > explains when feedback is rate limited",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestFeedbackRejectsEmptyMessage",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > uses clear English success copy",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "59e4e2d70190835912975b0bc935c1f07f504af28666b144ae5188365c46ac90"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-08T16:25:39.074Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Claude Code independent review 1a9035c6-0713-44ed-9c7c-77bd321d94c1",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "8cc8f07f6c314810ab1d82fe4d64840d95493907a54be3858615d8426beebcf1",
+      "attested": true,
+      "fingerprint": "59e4e2d70190835912975b0bc935c1f07f504af28666b144ae5188365c46ac90"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-08T16:27:58.864Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 700,
+        "executed": 700,
+        "passed": 700,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "a later step of bash scripts/quality/verify-go.sh failed (exit 1)",
+      "fingerprint": "59e4e2d70190835912975b0bc935c1f07f504af28666b144ae5188365c46ac90"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-08T16:29:15.059Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestFeedbackPostPersistsSubmission|TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow|TestFeedbackRejectsEmptyMessage)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/feedback/feedback-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestFeedbackPostPersistsSubmission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestFeedbackPostPersistsSubmission handler_feedback_test.go:28: feedback status=404 want 201 body=404 page not found --- FAIL: TestFeedbackPostPersistsSubmission (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving",
+          "outcome": "FAIL",
+          "excerpt": "mobile feedback controls must be at least 48px tall: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow handler_feedback_test.go:73: feedback invalid status=404 want 400 body=404 page not found --- FAIL: TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > keeps entered values and shows an error when the server did not return persisted status 201",
+          "outcome": "FAIL",
+          "excerpt": "feedback success requires HTTP 201: expected 'Gửi góp ýÝ kiến của bạn giúp chúng tô…' not to contain 'Cảm ơn bạn đã góp ý!'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > explains when feedback is rate limited",
+          "outcome": "FAIL",
+          "excerpt": "feedback 429 requires rate limit guidance: expected 'Chưa thể gửi. Vui lòng thử lại sau.' to be 'Bạn gửi quá nhanh. Vui lòng đợi một c…' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestFeedbackRejectsEmptyMessage",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestFeedbackRejectsEmptyMessage handler_feedback_test.go:104: feedback empty message status=404 want 400 body=404 page not found --- FAIL: TestFeedbackRejectsEmptyMessage (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > uses clear English success copy",
+          "outcome": "FAIL",
+          "excerpt": "English feedback confirmation should be grammatical: expected 'Thank you for your feedback!Please ch…' to be 'Thank you for your feedback! We\\'ll r…' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestFeedbackPostPersistsSubmission": "feedback status=404 want 201",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving": "mobile feedback controls must be at least 48px tall",
+        "go:./internal/httpserver:TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow": "feedback invalid status=404 want 400",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > keeps entered values and shows an error when the server did not return persisted status 201": "feedback success requires HTTP 201",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > explains when feedback is rate limited": "feedback 429 requires rate limit guidance",
+        "go:./internal/httpserver:TestFeedbackRejectsEmptyMessage": "feedback empty message status=404 want 400",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > uses clear English success copy": "English feedback confirmation should be grammatical"
+      },
+      "fingerprint": "f1c3868f2de48ac19d2bb754c231404f2bda6432b9fedd14d0ae5b03d3dbac53"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-08T16:29:35.635Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestFeedbackPostPersistsSubmission|TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow|TestFeedbackRejectsEmptyMessage)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/feedback/feedback-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestFeedbackPostPersistsSubmission",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > associates every localized field label and prevents duplicate submits while saving",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestFeedbackRejectsInvalidPayloadAndRateLimitOverflow",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > keeps entered values and shows an error when the server did not return persisted status 201",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > explains when feedback is rate limited",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestFeedbackRejectsEmptyMessage",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > uses clear English success copy",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f1c3868f2de48ac19d2bb754c231404f2bda6432b9fedd14d0ae5b03d3dbac53"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-08T16:31:24.586Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Claude Code independent review 1a9035c6-0713-44ed-9c7c-77bd321d94c1",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "a8afb32775ab07352e68636e16ea540f27a39bc9437b07d221d86f4ed0645453",
+      "attested": true,
+      "fingerprint": "f1c3868f2de48ac19d2bb754c231404f2bda6432b9fedd14d0ae5b03d3dbac53"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-09T00:03:08.119Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 700,
+        "executed": 700,
+        "passed": 700,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "700 passed, 0 allowed skip(s)",
+      "fingerprint": "f1c3868f2de48ac19d2bb754c231404f2bda6432b9fedd14d0ae5b03d3dbac53"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-09T00:10:51.360Z",
+      "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 373,
+        "executed": 373,
+        "passed": 373,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 761,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "f1c3868f2de48ac19d2bb754c231404f2bda6432b9fedd14d0ae5b03d3dbac53"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-09T00:11:02.339Z",
+    "head": "a0869c2cb7d373f7dcdad627f3b60952a425b50b",
+    "fingerprint": "f1c3868f2de48ac19d2bb754c231404f2bda6432b9fedd14d0ae5b03d3dbac53",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_feedback.go": "71a60d5e46a0d600d0891d941cd4a04baa3ea35c",
+      "apps/api-go/internal/httpserver/handler_feedback_test.go": "cf37e365e7fc63951f9a5a47d0131134d4573e56",
+      "apps/api-go/internal/httpserver/server.go": "43bdb1cf468dd82357896ef03e72a0a7871cac13",
+      "apps/web/app/[locale]/feedback/feedback-page.test.tsx": "db25c510dcb911bcc48ee19bdc551e69c67e2493",
+      "apps/web/app/[locale]/feedback/page.tsx": "fbe75ec7ad6a7a78127956f6079e570ac36bceb6",
+      "apps/web/messages/en.json": "b7f2fd40102c12e0a7e51fe27864b625520ae256",
+      "apps/web/messages/ja.json": "1ce00e72449d944fa3a1da0173358e81bbc0e81c",
+      "apps/web/messages/vi.json": "05f84cfc64fb5961a221bf839ad27aa81b42a919",
+      "packages/database/prisma/migrations/20261009100000_feedback_submission/migration.sql": "f6bb3be65e40e8da52ea10b45457151f1ab2580b",
+      "packages/database/prisma/schema.prisma": "f34b3fe99594f95bb8cf7bde86792d2b442d75cd"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

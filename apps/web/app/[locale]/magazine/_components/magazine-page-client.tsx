@@ -132,6 +132,8 @@ const kindGradients: Record<string, string> = {
   bjt_phrase: "from-blue-500/10 to-indigo-500/5",
 };
 
+const dateLocales: Record<string, string> = { vi: "vi-VN", en: "en-US", ja: "ja-JP" };
+
 function BentoCard({
   article,
   locale,
@@ -147,7 +149,7 @@ function BentoCard({
   const gradient = kindGradients[article.widgetKind] ?? "from-primary/10 to-accent/5";
   const isToday = new Date(article.publishDate).toDateString() === new Date().toDateString();
 
-  const formattedDate = new Date(article.publishDate).toLocaleDateString("vi-VN", {
+  const formattedDate = new Date(article.publishDate).toLocaleDateString(dateLocales[locale] ?? "vi-VN", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",

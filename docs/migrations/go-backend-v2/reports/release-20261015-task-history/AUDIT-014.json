@@ -1,0 +1,176 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-014",
+  "title": "Use canonical events for system analytics",
+  "start_head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+  "preexisting_changes": {
+    ".quality/tasks/ctx-resume-1791168424.json": "39fe89f3617bfb95a702c09ce4aabffcaeb8f7bb",
+    "apps/admin/app/[locale]/access-denied/page.tsx": "c68e8af2a6f0746cd0e318a8de0db38e4b2f60b0",
+    "apps/admin/app/[locale]/login/_components/admin-login-form-client.tsx": "b82c38674e498f144d717ff592ac5dc4c5c54c19",
+    "apps/admin/app/[locale]/login/admin-login.regression.test.tsx": "5b11d85a87934d8ed3680c1754d03b34fc030a68",
+    "apps/admin/app/[locale]/login/page.tsx": "8c33a7b540c4ebf9de86a6d1dd8f9f3e5bc1f92c",
+    "apps/admin/app/auth/logout/page.tsx": "d86ad68fb3dfa9bdbac704899c04f131ab2fc0b3",
+    "apps/admin/lib/admin-api.ts": "e19f64369f0723fa79326a86f6ae83ea8c095bbc",
+    "apps/admin/lib/admin-overview-fetch.test.ts": "c551ec079ff3a0e04cb06d72801ee9eb59559234",
+    "apps/admin/lib/admin-overview-fetch.ts": "c2267b606100d8faae7be2c6bf6c5968402cd6c4",
+    "apps/admin/lib/admin-shell.regression.test.tsx": "55b1e94d273dca2be418c6026c6a879f045c0dd0",
+    "apps/admin/lib/resolve-admin-nav.ts": "54024b5d6443067d48eb4f771443046cc4f0256d",
+    "apps/admin/messages/en.json": "69bdc28b22618f0c3a5be64b5be770f56bcdc053",
+    "apps/admin/messages/ja.json": "8c371c5c05bfde3e8a37c84341de226e88b46e7e",
+    "apps/admin/messages/vi.json": "fd886017500b5ad3666721edfe15a31e5dd6311a",
+    "apps/admin/next-env.d.ts": "c4b7818fbb2c2c34c24feb1b627ee824507c5600",
+    "apps/admin/next.config.mjs": "a29e69ddd1777373ddc577abfd3ce85cce649af7",
+    "apps/admin/tsconfig.tsbuildinfo": "20868aaaf05dd14b127250d119cbda97e473f205",
+    "apps/api-go/cmd/create-test-creds/main.go": "eae3b397a5f12f5c5401c3484da23e845686aabd",
+    "apps/api-go/cmd/reset-admin-cred/main.go": "c39d53f0ce4fa29c2a3ef6b813b1abfe9af28cad",
+    "apps/api-go/deploy/local/Caddyfile": "880720642204d8f7afb53bf961224b25afac9016",
+    "apps/api-go/internal/httpserver/handler_admin_ads.go": "079e708b10af9fff5de7707fb525ac1b53ace481",
+    "apps/api-go/internal/httpserver/handler_admin_analytics.go": "4f6559275a566c623b1eaa48d09bb8618dc3f4f6",
+    "apps/api-go/internal/httpserver/handler_admin_analytics_executive_test.go": "1d78fa48e0fbf965087b8a6bec1b89f4ec5a0a00",
+    "apps/api-go/internal/httpserver/handler_admin_core.go": "f17d7b7d4a0f96932d605765c50c96bf1922048d",
+    "apps/api-go/internal/httpserver/handler_admin_me_test.go": "702bbebb362a7b4924e50e5e7fc2db18b09eca4f",
+    "apps/api-go/internal/httpserver/handler_admin_rbac.go": "edcf8f767ba33fa949309f2bfbd7456af9378556",
+    "apps/api-go/internal/httpserver/handler_admin_rbac_test.go": "39f5a6a174a9ff0dddcb4dbce5b64a05cc7b5b84",
+    "apps/api-go/internal/httpserver/handler_final_batch.go": "e43d747c10a5117fe413b69812627ef899812f32",
+    "apps/api-go/internal/httpserver/handler_quiz.go": "0cb4f89fa3fe44b25bc0564c933de25db659713f",
+    "apps/api-go/internal/httpserver/handler_study_feed_test.go": "a1e9da063ed6d1d083be495926d4ea159d391a4a",
+    "apps/api-go/internal/httpserver/server.go": "5699a5e983617866e4c0d716bee2be936da04a8f",
+    "apps/api-go/internal/onboarding/store.go": "48c19592ef4012165d6b010f2763aa5ebfaebaa0",
+    "apps/api-go/internal/onboarding/store_test.go": "9f5a1ab847bdd26d7ede15081049197f63e7b387",
+    "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "3cdb0c2ec933263247f3c8d61cea091cadacc79b",
+    "apps/web/app/[locale]/login/auth-pages.regression.test.tsx": "4dd7a5db264e70ef930ec4f1579b34eabbfbbec6",
+    "apps/web/app/[locale]/login/page.tsx": "654fc22c46535743d2f08cd76715e44690140a95",
+    "apps/web/app/[locale]/register/page.tsx": "2aa45faeea0da3a919c884dc6b95f7f367cda8b2",
+    "apps/web/next-env.d.ts": "c4b7818fbb2c2c34c24feb1b627ee824507c5600",
+    "apps/web/public/__local-audit-api-probe.html": "5698fee7077de4433c4062b33a4a46bef0cfc9ee",
+    "deploy/local/Caddyfile": "72470e3b466c4a48dd7a573271d8458479e27266",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "4ea9bc3b474f40974cd6f352ced685bc5fff0a65",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "8487728d2aac033244e52e9e2ea67c51069b9110",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "cb859c0310a89f6b871c3d3ffbc431f633e5e73a",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "9cde135cae4e26adc1eac9947bed1944422e11f9",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "b632415009cedddff90750bf088b0eab4088793d",
+    "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "aad8f5a79cca5fc3e43f63ba7891d238e7938115",
+    "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "10dcb526bb33c73f06ca40c9b0ebe99bfe993565",
+    "packages/database/prisma/migrations/20261006100000_onboarding_profile_preferences/migration.sql": "3da2325aa59c04dc632a7a515f4fdff2a6b1dd65",
+    "packages/database/prisma/schema.prisma": "0646140a9869abc692fbda4414286194ae581ff5",
+    "packages/ui/src/admin-shell.tsx": "ba1339c8c34da6b93fe433bbe260f2928ffa867e",
+    "prisma.config.ts": "02db95a7ee97e32ead17e9e82602c0e78e38924e",
+    "scripts/local-audit-status.mjs": "d0f98373f463c744dc6d03e40f4ef588c7490ab4",
+    "scripts/local-audit-up.mjs": "d68ac30f32a1113b3e9958508757667267dd90e8"
+  },
+  "spec": {
+    "problem": "System analytics references an absent analytics.event table and would hide the resulting query failure.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "System analytics uses analytics.analytics_event for summary, timeseries, event-name breakdown and export; PostgreSQL fixtures verify persisted counts and unsupported error-rate availability."
+      }
+    ],
+    "expected_behavior": "System analytics aggregates canonical analytics_event rows and event names, and reports error-rate as unavailable unless the event schema tracks errors.",
+    "observed_behavior": "Visible GET /api/admin/analytics/system/breakdown returns HTTP 500; PostgreSQL and Prisma define analytics.analytics_event with created_at, event_name and user/anonymous identity columns.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "DOMAIN_LOGIC",
+      "API_CONTRACT"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminSystemAnalyticsConfigUsesPersistedEvents",
+      "expect": "expected system analytics to use analytics.analytics_event.created_at grouped by event_name"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "VERIFYING",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-06T00:33:47.897Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-06T00:33:48.296Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-06T00:33:48.773Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-06T00:33:54.927Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-06T00:35:09.259Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-06T00:33:54.753Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminSystemAnalyticsConfigUsesPersistedEvents)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminSystemAnalyticsConfigUsesPersistedEvents",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminSystemAnalyticsConfigUsesPersistedEvents handler_admin_rbac_test.go:826: expected system analytics to use analytics.analytics_event.created_at grouped by event_name, got table=analytics.event time=created_at dimension=by_event_name --- FAIL: TestAdminSystemAnalyticsConfigUsesPersist…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminSystemAnalyticsConfigUsesPersistedEvents": "expected system analytics to use analytics.analytics_event.created_at grouped by event_name"
+      },
+      "fingerprint": "4b7eda97c23e8054fd30a96036d9c40462b551aa6b50007873cbb05eec25b5f5"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-06T00:35:09.050Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminSystemAnalyticsConfigUsesPersistedEvents)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminSystemAnalyticsConfigUsesPersistedEvents",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a6413d62080f6abd0d38e15abd862f2300f320623f3001136cf831a9b4ec55ee"
+    }
+  ],
+  "closed": null,
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [
+    "apps/api-go/internal/httpserver/handler_admin_rbac_test.go",
+    "apps/api-go/internal/httpserver/handler_admin_analytics.go"
+  ]
+}

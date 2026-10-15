@@ -5,6 +5,7 @@ import { cn } from "./cn";
 export function AdminPageHeader({
   actions,
   breadcrumbs,
+  children,
   className,
   description,
   help,
@@ -32,7 +33,7 @@ export function AdminPageHeader({
             <p className="max-w-3xl text-sm leading-6 text-slate-600">{description}</p>
           ) : null}
         </div>
-        {actions ? <div className="flex shrink-0 flex-wrap gap-2">{actions}</div> : null}
+        {actions || children ? <div className="flex shrink-0 flex-wrap gap-2">{actions}{children}</div> : null}
       </div>
     </header>
   );

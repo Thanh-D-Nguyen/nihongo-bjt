@@ -13,8 +13,10 @@ export type PrivacyLabels = {
   consentTitle: string;
   consentToggle: string;
   delete: string;
+  download: string;
   empty: string;
   error: string;
+  exportExpired: string;
   export: string;
   listTitle: string;
   load: string;
@@ -28,8 +30,18 @@ type Row = {
   createdAt: string;
   id: string;
   kind: string;
+  resultPayload?: string | null;
   status: string;
 };
+
+function exportExpiresAt(row: Row): number {
+  try {
+    const value = JSON.parse(row.resultPayload ?? "{}").expiresAt;
+    return typeof value === "string" ? Date.parse(value) : 0;
+  } catch {
+    return 0;
+  }
+}
 
 export function PrivacySettingsClient({ labels }: { labels: PrivacyLabels }) {
   const { userId } = useGoAuth();
@@ -121,6 +133,30 @@ export function PrivacySettingsClient({ labels }: { labels: PrivacyLabels }) {
     }
   }
 
+  async function downloadExport(id: string) {
+    setError(null);
+    try {
+      const response = await learnerApiFetch(`/api/learner/privacy/requests/${encodeURIComponent(id)}/export`);
+      if (response.status === 410) {
+        setError(labels.exportExpired);
+        return;
+      }
+      if (!response.ok) {
+        throw new Error("download");
+      }
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `kotobaworks-export-${id}.json`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      setError(labels.error);
+    }
+  }
+
   return (
     <main className="w-full space-y-6 pb-12">
       <PageHeader description={labels.subtitle} title={labels.title} />
@@ -177,6 +213,13 @@ export function PrivacySettingsClient({ labels }: { labels: PrivacyLabels }) {
                 {row.kind} — {row.status}
                 <br />
                 <span className="text-xs text-muted">{row.createdAt}</span>
+                {row.kind === "export" && row.status === "completed" && exportExpiresAt(row) > Date.now() ? (
+                  <div className="mt-2">
+                    <button className="rounded-lg border border-ink/15 px-3 py-1 text-xs font-semibold text-ink" onClick={() => void downloadExport(row.id)} type="button">
+                      {labels.download}
+                    </button>
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>

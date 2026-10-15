@@ -1,0 +1,270 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-114",
+  "title": "Port privacy-filtered public profile API",
+  "start_head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Public learner profile pages currently fail because the Go API does not expose the compatibility profile GET endpoint.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Valid active UUID: return typed profile fields and presence; return profile aggregate only when privacy allows; support self/friend/stranger/blocked and anonymous identity; invalid UUID is 400, missing/inactive user is 404; DB/session lookup failures fail closed; integration proves sensitive fields never leak; UI caller renders actual response."
+      }
+    ],
+    "expected_behavior": "Return the legacy PublicProfileData shape with optional identity, privacy-filtered aggregate stats and achievements, relationship, and Redis presence; never serialize private auth fields.",
+    "observed_behavior": "GET /api/users/{userId}/profile is absent from the Go router; the existing /u/[userId] page receives 404.",
+    "rollback_plan": "Remove the new route, handler, DTO and store query; no schema or data migrations are needed."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY",
+      "DATABASE"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Restore a missing public profile contract using existing PostgreSQL/Redis schema while preserving privacy boundaries."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestPublicProfileRouteReturnsAllowlistedProfile",
+      "expect": "expected public profile 200, got 404"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-12T05:52:12.545Z",
+      "head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-12T05:52:23.488Z",
+      "head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-12T05:52:27.575Z",
+      "head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T05:55:35.532Z",
+      "head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T05:57:01.256Z",
+      "head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T06:03:03.221Z",
+      "head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T06:11:03.971Z",
+      "head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-12T06:13:50.682Z",
+      "head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-12T06:16:54.171Z",
+      "head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-12T06:16:55.029Z",
+      "head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-12T05:55:35.214Z",
+      "head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicProfileRouteReturnsAllowlistedProfile)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicProfileRouteReturnsAllowlistedProfile",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPublicProfileRouteReturnsAllowlistedProfile handler_public_profile_test.go:44: expected public profile 200, got 404: 404 page not found --- FAIL: TestPublicProfileRouteReturnsAllowlistedProfile (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestPublicProfileRouteReturnsAllowlistedProfile": "expected public profile 200, got 404"
+      },
+      "fingerprint": "5c7e03ab274be636b18f84c3acfe7a43af3e6eda52626d0c890b4caf1a0e3b95"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-12T05:57:00.725Z",
+      "head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicProfileRouteReturnsAllowlistedProfile)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicProfileRouteReturnsAllowlistedProfile",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d40e375eec81a683127b3910dc2016b75367a8ae3703eee110960c45aec2e74a"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-12T05:58:21.375Z",
+      "head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicProfileRouteReturnsAllowlistedProfile)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicProfileRouteReturnsAllowlistedProfile",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "b7912eff17897360f764b55e2c99d20ad5a6113ef9b9a57619c818285bf5bf5d"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-12T06:03:02.747Z",
+      "head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 783,
+        "executed": 783,
+        "passed": 783,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "783 passed, 0 allowed skip(s)",
+      "fingerprint": "f25dbbfc08b54d3152cd9d452b5493ef24a4189ccd7114ace618c4be0eea6e92"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-12T06:10:00.251Z",
+      "head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env AGENT_BROWSER_SESSION=audit114 PROFILE_ID=4e4ef376-426d-46e7-9dd3-f39efe27935f sh e2e/audit/audit114-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "902d52eae9a1ab01f34dc694a724f3be7f06fb6296f7bc2568f4684554cb8ceb"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-12T06:11:03.422Z",
+      "head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicProfileRouteReturnsAllowlistedProfile)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicProfileRouteReturnsAllowlistedProfile",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "902d52eae9a1ab01f34dc694a724f3be7f06fb6296f7bc2568f4684554cb8ceb"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-12T06:13:50.216Z",
+      "head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 783,
+        "executed": 783,
+        "passed": 783,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "783 passed, 0 allowed skip(s)",
+      "fingerprint": "902d52eae9a1ab01f34dc694a724f3be7f06fb6296f7bc2568f4684554cb8ceb"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-12T06:16:53.728Z",
+      "head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a12ebf-1f39-7dc1-adc9-86bbf52d2860",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "902d52eae9a1ab01f34dc694a724f3be7f06fb6296f7bc2568f4684554cb8ceb"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-12T06:16:55.008Z",
+    "head": "2e1ff535f0365d865a1853dcb3286d34cbf3b317",
+    "fingerprint": "902d52eae9a1ab01f34dc694a724f3be7f06fb6296f7bc2568f4684554cb8ceb",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/app/app.go": "05a14c5a567cca7a48b00cc82798ce56c50b7002",
+      "apps/api-go/internal/httpserver/handler_public_profile.go": "f8e11c8d544210fd2937ed784a0c439a303f1585",
+      "apps/api-go/internal/httpserver/handler_public_profile_test.go": "214213e2717ebfa0c5e4edfbe5142876fa8c5664",
+      "apps/api-go/internal/httpserver/server.go": "21d455d2f70cdf5d182a5204801eaec2c3586a2a",
+      "apps/api-go/internal/profile/store.go": "ed43a8ba7b665243332d61691a8db3912621addf",
+      "e2e/audit/audit114-browser-check.sh": "7fe3b304dafffbc600b3955b46b2637ab58bc30f"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

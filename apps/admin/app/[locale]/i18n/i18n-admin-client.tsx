@@ -74,13 +74,7 @@ function downloadCsv(filename: string, header: string[], rows: string[][]) {
 
 const PAGE_SIZE = 50;
 
-export function I18nAdminClient({
-  common,
-  labels
-}: {
-  common: CommonLabels;
-  labels: Labels;
-}) {
+export function I18nAdminClient({ common, labels }: { common: CommonLabels; labels: Labels }) {
   const t = (k: string) => labels[k] ?? k;
   const [perms, setPerms] = useState<Set<string> | null>(null);
   const canWrite = perms != null && perms.has("admin.content.write");
@@ -259,17 +253,27 @@ export function I18nAdminClient({
         <AdminSection>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-md border border-amber-300 bg-amber-50 p-3">
-              <div className="text-xs uppercase tracking-wide text-amber-700">{t("kpiPending")}</div>
-              <div className="mt-1 text-2xl font-semibold text-amber-900">{pending.pending.toLocaleString()}</div>
+              <div className="text-xs uppercase tracking-wide text-amber-700">
+                {t("kpiPending")}
+              </div>
+              <div className="mt-1 text-2xl font-semibold text-amber-900">
+                {pending.pending.toLocaleString()}
+              </div>
               <div className="text-xs text-amber-800">{t("kpiPendingHint")}</div>
             </div>
             <div className="rounded-md border bg-white p-3">
-              <div className="text-xs uppercase tracking-wide text-gray-500">{t("kpiComplete")}</div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">
+                {t("kpiComplete")}
+              </div>
               <div className="mt-1 text-2xl font-semibold">{pending.complete.toLocaleString()}</div>
-              <div className="text-xs text-gray-500">/ {pending.total.toLocaleString()} {t("kpiTotalKeys")}</div>
+              <div className="text-xs text-gray-500">
+                / {pending.total.toLocaleString()} {t("kpiTotalKeys")}
+              </div>
             </div>
             <div className="rounded-md border bg-white p-3">
-              <div className="text-xs uppercase tracking-wide text-gray-500">{t("kpiTopPending")}</div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">
+                {t("kpiTopPending")}
+              </div>
               <ul className="mt-1 max-h-20 overflow-auto text-sm">
                 {pending.namespaces.slice(0, 5).map((n) => (
                   <li key={n.namespace} className="flex justify-between gap-2">
@@ -312,7 +316,11 @@ export function I18nAdminClient({
             <option value="untranslated">{t("filterStatusUntranslated")}</option>
             <option value="complete">{t("filterStatusComplete")}</option>
           </select>
-          <button className="rounded border px-3 py-1 text-sm" onClick={() => void loadList()} type="button">
+          <button
+            className="rounded border px-3 py-1 text-sm"
+            onClick={() => void loadList()}
+            type="button"
+          >
             {t("actionRefresh")}
           </button>
           <button className="rounded border px-3 py-1 text-sm" onClick={exportCsv} type="button">
@@ -322,7 +330,10 @@ export function I18nAdminClient({
       </AdminSection>
 
       {listError ? (
-        <div role="alert" className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-900">
+        <div
+          role="alert"
+          className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-900"
+        >
           {listError}
         </div>
       ) : null}
@@ -333,51 +344,61 @@ export function I18nAdminClient({
         ) : list.items.length === 0 ? (
           <AdminEmptyState title={common.empty} />
         ) : (
-          <AdminDataTable>
-            <AdminDataTableHead>
-              <AdminDataTableRow>
-                <AdminDataTableTh>{t("colNamespace")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colKey")}</AdminDataTableTh>
-                {LOCALES.map((loc) => (
-                  <AdminDataTableTh key={loc}>{loc.toUpperCase()}</AdminDataTableTh>
-                ))}
-                <AdminDataTableTh>{t("colUpdated")}</AdminDataTableTh>
-              </AdminDataTableRow>
-            </AdminDataTableHead>
-            <AdminDataTableBody>
-              {list.items.map((item) => (
-                <AdminDataTableRow
-                  key={item.id}
-                  className="cursor-pointer hover:bg-indigo-50/40"
-                  onClick={() => openDrawer(item)}
-                >
-                  <AdminDataTableTd>
-                    <span className="font-mono text-xs text-gray-600">{item.namespace}</span>
-                  </AdminDataTableTd>
-                  <AdminDataTableTd>
-                    <span className="font-mono text-xs">{item.key}</span>
-                  </AdminDataTableTd>
-                  {LOCALES.map((loc) => {
-                    const status = item.status[loc];
-                    const tone =
-                      status === "translated" ? "neutral" : status === "empty" ? "warning" : "danger";
-                    const label =
-                      status === "translated" ? "✓" : status === "empty" ? "∅" : "✗";
-                    return (
-                      <AdminDataTableTd key={loc}>
-                        <AdminStatusBadge tone={tone}>{label}</AdminStatusBadge>
-                      </AdminDataTableTd>
-                    );
-                  })}
-                  <AdminDataTableTd>
-                    <span className="text-xs text-gray-500">
-                      {new Date(item.updatedAt).toLocaleString()}
-                    </span>
-                  </AdminDataTableTd>
+          <div
+            className="max-w-full overflow-x-auto"
+            role="region"
+            aria-label={t("title")}
+            tabIndex={0}
+          >
+            <AdminDataTable>
+              <AdminDataTableHead>
+                <AdminDataTableRow>
+                  <AdminDataTableTh>{t("colNamespace")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colKey")}</AdminDataTableTh>
+                  {LOCALES.map((loc) => (
+                    <AdminDataTableTh key={loc}>{loc.toUpperCase()}</AdminDataTableTh>
+                  ))}
+                  <AdminDataTableTh>{t("colUpdated")}</AdminDataTableTh>
                 </AdminDataTableRow>
-              ))}
-            </AdminDataTableBody>
-          </AdminDataTable>
+              </AdminDataTableHead>
+              <AdminDataTableBody>
+                {list.items.map((item) => (
+                  <AdminDataTableRow
+                    key={item.id}
+                    className="cursor-pointer hover:bg-indigo-50/40"
+                    onClick={() => openDrawer(item)}
+                  >
+                    <AdminDataTableTd>
+                      <span className="font-mono text-xs text-gray-600">{item.namespace}</span>
+                    </AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <span className="font-mono text-xs">{item.key}</span>
+                    </AdminDataTableTd>
+                    {LOCALES.map((loc) => {
+                      const status = item.status[loc];
+                      const tone =
+                        status === "translated"
+                          ? "neutral"
+                          : status === "empty"
+                            ? "warning"
+                            : "danger";
+                      const label = status === "translated" ? "✓" : status === "empty" ? "∅" : "✗";
+                      return (
+                        <AdminDataTableTd key={loc}>
+                          <AdminStatusBadge tone={tone}>{label}</AdminStatusBadge>
+                        </AdminDataTableTd>
+                      );
+                    })}
+                    <AdminDataTableTd>
+                      <span className="text-xs text-gray-500">
+                        {new Date(item.updatedAt).toLocaleString()}
+                      </span>
+                    </AdminDataTableTd>
+                  </AdminDataTableRow>
+                ))}
+              </AdminDataTableBody>
+            </AdminDataTable>
+          </div>
         )}
 
         {list && list.total > PAGE_SIZE ? (
@@ -424,7 +445,11 @@ export function I18nAdminClient({
                   <div className="mt-1 text-xs text-gray-600">{selected.description}</div>
                 ) : null}
               </div>
-              <button className="rounded border px-2 py-1 text-sm" onClick={closeDrawer} type="button">
+              <button
+                className="rounded border px-2 py-1 text-sm"
+                onClick={closeDrawer}
+                type="button"
+              >
                 {t("close")}
               </button>
             </div>

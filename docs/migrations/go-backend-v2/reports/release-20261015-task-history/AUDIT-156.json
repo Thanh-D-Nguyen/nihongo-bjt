@@ -1,0 +1,297 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-156",
+  "title": "Close moderation access and preserve accurate growth audit state",
+  "start_head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+  "preexisting_changes": {
+    "apps/admin/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/admin/tsconfig.tsbuildinfo": "37e77b2023a730c39360737d774bd4bf83f21d9f",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_iam_test.go": "aee00270d49976ed76fe616f9893de4a8ac7431c",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_postcard_test.go": "9e34e3abd9e24954f99db1fdfe688cc2f502c607",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_rbac_test.go": "996ba6a016727ad3f7cd9a5c033c569e93b9ff8e",
+    "apps/api-go/internal/httpserver/handler_admin_core.go": "adcf77bd8ea17b54d6f42d7f5896f7ae1cfa992c",
+    "apps/api-go/internal/httpserver/handler_admin_growth_campaigns.go": "d1cf6a0cd0d109b9ff59523da87e8d640db8b7b8",
+    "apps/api-go/internal/httpserver/handler_admin_growth_postcards.go": "34013e9db95374d6ef0771be9f09f251202b17ca",
+    "apps/api-go/internal/httpserver/handler_admin_growth_referrals.go": "c0b0be1c757bc3b9526a353419b666325c30c489",
+    "apps/api-go/internal/httpserver/handler_admin_growth_referrals_contract_test.go": "555404bcc2f1d41e28dfa55269555540dc9f30d6",
+    "apps/api-go/internal/httpserver/handler_admin_growth_social.go": "f301b37da4772433c6699590123f72f94dba5bc2",
+    "apps/api-go/internal/httpserver/handler_admin_growth_social_audit153_test.go": "664123c1e6f8c771ebf4bbf59f275adbd2d45d80",
+    "apps/api-go/internal/httpserver/server.go": "083ee51c8d1f15f4ed7d720f3f429009ebaee23a",
+    "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "087e3187f288aeeee524e06c12facc86bdec95e7",
+    "apps/web/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/web/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/web/tsconfig.tsbuildinfo": "91d48d855b4f16f10809b5e9d91bae8ed06c76dc"
+  },
+  "spec": {
+    "problem": "Moderated public shares remain retrievable by token; concurrent postcard publish/archive may audit stale active state; social-template PATCH audit omits new values.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "A moderated public share returns 404 without authentication; concurrent postcard transitions record the actual locked before/after states; social-template patch audit contains the new slug, kind, config, and version."
+      }
+    ],
+    "expected_behavior": "Expired share links are unavailable; postcard state/audit reflect serialized transitions; social-template audit stores complete resulting values.",
+    "observed_behavior": "The public share SELECT filters only by public_token, postcard lifecycle reads do not lock rows, and social template PATCH writes SQL fragments into audit after.",
+    "rollback_plan": "Revert only the AUDIT-156 handler and regression-test changes; retained public-share data and existing audit rows are not migrated or deleted."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY",
+      "DATABASE"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows",
+      "expect": "moderated public share status=200"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAudit156PostcardPublishReadsStateAfterConcurrentWriter",
+      "expect": "audit before={\"active\": false}"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "VALID_RED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-14T23:16:25.275Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-14T23:16:25.665Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-14T23:16:26.050Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T23:19:01.989Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T23:19:25.956Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T23:22:55.987Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T23:23:26.684Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T23:31:34.597Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-14T23:19:01.648Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows|TestAudit156PostcardPublishReadsStateAfterConcurrentWriter)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows 2026/10/15 08:19:01 INFO request method=GET path=/api/admin/growth/social/events status=200 duration=5.941084ms bytes=534 2026/10/15 08:19:01 INFO request method=GET path=/api/public/shares/audit15384ae063fb67d4c2bb94c999a330…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit156PostcardPublishReadsStateAfterConcurrentWriter",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit156PostcardPublishReadsStateAfterConcurrentWriter 2026/10/15 08:19:01 INFO request method=POST path=/api/admin/growth/postcards/ac6b8a56-9059-43b2-bbea-b43fbde67931/publish status=200 duration=114.515042ms bytes=963 handler_admin_audit151_postcard_test.go:127: audit before={\"active\"…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows": "moderated public share status=200",
+        "go:./internal/httpserver:TestAudit156PostcardPublishReadsStateAfterConcurrentWriter": "audit before={\"active\": false}"
+      },
+      "fingerprint": "8afdfad3565e463581d9611fa951ddda9492cbe03dfe96c5cd2a3d2e73f7aa7b"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-14T23:19:25.568Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows|TestAudit156PostcardPublishReadsStateAfterConcurrentWriter)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit156PostcardPublishReadsStateAfterConcurrentWriter",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "7f54f756fb37b4360035153ada19de5c90bb6d423ce8691c59b5a0997cfa0b12"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-14T23:22:55.669Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 988,
+        "executed": 988,
+        "passed": 988,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "7f54f756fb37b4360035153ada19de5c90bb6d423ce8691c59b5a0997cfa0b12"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-14T23:23:26.181Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows|TestAudit156PostcardPublishReadsStateAfterConcurrentWriter)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit156PostcardPublishReadsStateAfterConcurrentWriter",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "7a9252150e1a316dd3ec03396c7da8d10bc473312ecf5e90bb51d96acda582ac"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-14T23:26:24.736Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 988,
+        "executed": 988,
+        "passed": 988,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "988 passed, 0 allowed skip(s)",
+      "fingerprint": "7a9252150e1a316dd3ec03396c7da8d10bc473312ecf5e90bb51d96acda582ac"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-14T23:27:55.442Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows|TestAudit156PostcardPublishReadsStateAfterConcurrentWriter)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAudit156PostcardPublishReadsStateAfterConcurrentWriter",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "4292076e17ade8dd28a72a2de1ad13154aee5f0d1282398062cdd14176241465"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-14T23:29:46.673Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit156-share-moderation.mjs",
+      "exit_code": 1,
+      "fingerprint": "4292076e17ade8dd28a72a2de1ad13154aee5f0d1282398062cdd14176241465"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-14T23:31:34.128Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit156-share-moderation.mjs",
+      "exit_code": 1,
+      "fingerprint": "e71120c906a71c9f5d9b4a5c408b4eb7fe505b94b6092c59f2b51ad3ba802987"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-14T23:32:28.793Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit156-share-moderation.mjs",
+      "exit_code": 1,
+      "fingerprint": "fbf416f5bb8e89ccc474bd3ee6734ff63f0f2bec6e0634359386940c4ae0a2f9"
+    }
+  ],
+  "closed": null,
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [
+    "apps/api-go/internal/httpserver/handler_admin_audit151_postcard_test.go",
+    "apps/api-go/internal/httpserver/handler_admin_growth_social_audit153_test.go",
+    "apps/api-go/internal/httpserver/handler_admin_growth_postcards.go",
+    "apps/api-go/internal/httpserver/handler_admin_growth_social.go"
+  ]
+}

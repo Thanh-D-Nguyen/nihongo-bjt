@@ -3,6 +3,7 @@ package authn
 import (
 	"errors"
 	"fmt"
+	"net"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -421,5 +422,41 @@ func TestNormalizePeerIP_DependsOnlyOnRemoteAddr(t *testing.T) {
 		if got := NormalizePeerIP("192.168.1.1:8080"); got != ip {
 			t.Fatalf("iteration %d: got %q, want %q", i, got, ip)
 		}
+	}
+}
+
+func TestNormalizeClientIP_TrustsForwardedAddressOnlyFromLoopbackProxy(t *testing.T) {
+	tests := []struct {
+		name         string
+		remoteAddr   string
+		forwardedFor string
+		want         string
+	}{
+		{"loopback proxy uses rightmost hop", "127.0.0.1:4001", "192.0.2.99, 198.51.100.8", "198.51.100.8"},
+		{"public peer cannot spoof forwarded address", "198.51.100.3:4001", "192.0.2.99", "198.51.100.3"},
+		{"malformed forwarded address falls back to proxy", "[::1]:4001", "not-an-ip", "::1"},
+		{"missing peer remains fail closed", "", "192.0.2.99", "unknown"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NormalizeClientIP(tt.remoteAddr, tt.forwardedFor); got != tt.want {
+				t.Fatalf("NormalizeClientIP(%q, %q) = %q, want %q", tt.remoteAddr, tt.forwardedFor, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNormalizeClientIP_TrustsConfiguredDockerProxyCIDROnly(t *testing.T) {
+	_, trustedCaddy, err := net.ParseCIDR("172.29.254.3/32")
+	if err != nil {
+		t.Fatal(err)
+	}
+	trusted := []*net.IPNet{trustedCaddy}
+	if got := NormalizeClientIP("172.29.254.3:4001", "198.51.100.10", trusted); got != "198.51.100.10" {
+		t.Fatalf("configured Caddy peer should use forwarded client IP, got %q", got)
+	}
+	if got := NormalizeClientIP("172.29.254.4:4001", "198.51.100.11", trusted); got != "172.29.254.4" {
+		t.Fatalf("untrusted Docker peer must not supply client IP, got %q", got)
 	}
 }

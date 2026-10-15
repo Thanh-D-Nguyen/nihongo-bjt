@@ -171,8 +171,8 @@ async function uploadLearnerImage(file: File, userId: string): Promise<string> {
     method: "POST"
   });
   if (!pres.ok) throw new Error("presign");
-  const { assetId, uploadUrl } = (await pres.json()) as { assetId: string; uploadUrl: string };
-  const put = await fetch(uploadUrl, { body: file, headers: { "Content-Type": file.type }, method: "PUT" });
+  const { assetId, uploadUrl, uploadToken } = (await pres.json()) as { assetId: string; uploadUrl: string; uploadToken: string };
+  const put = await fetch(uploadUrl, { body: file, headers: { "Content-Type": file.type, "X-Media-Upload-Token": uploadToken }, method: "PUT" });
   if (!put.ok) throw new Error("put");
   const done = await learnerApiFetch("/api/media/complete-upload", {
     body: JSON.stringify({ assetId, byteSize: file.size, userId }),

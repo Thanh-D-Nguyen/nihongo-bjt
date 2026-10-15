@@ -110,3 +110,8 @@ id_ecdsa
 backups/
 database/backups/
 OPERATOR_LOGIN_READ_ONCE.txt
+
+# Engineering lifecycle harness: local-only state (task records in tasks/*.json ARE committed)
+tasks/.active
+tasks/.logs/
+tasks/.review/

@@ -1,0 +1,3190 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "ACC-001",
+  "title": "Full local product acceptance run",
+  "start_head": "c24ba033efe0b999a966a1018381efa03553e394",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Local full-stack deployment (Caddy+API+Learner+Admin+PG+Redis+Meili) healthy"
+      },
+      {
+        "id": "AC2",
+        "text": "Real browser learner login through Caddy succeeds"
+      },
+      {
+        "id": "AC3",
+        "text": "Real browser admin login through Caddy succeeds"
+      },
+      {
+        "id": "AC4",
+        "text": "WebSocket upgrade/auth/origin/disconnect verified via public route"
+      },
+      {
+        "id": "AC5",
+        "text": "Canonical automated gates pass with no unexpected skips"
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "CROSS_CUTTING",
+      "INFRASTRUCTURE",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "characterization",
+    "rationale": ""
+  },
+  "red_targets": [],
+  "sensitivity": {
+    "mutation": {
+      "file": "scripts/quality/harness/lib/selftest.mjs",
+      "find": "result: problems.length ? \"VIOLATION\" : \"PASS\"",
+      "replace": "result: \"PASS\""
+    },
+    "targets": [
+      {
+        "id": "harness-self-test-detects-false-pass",
+        "description": "Guard test validates summarizeHarnessReport returns VIOLATION on failed tests",
+        "runner": "vitest",
+        "file": "scripts/quality/harness/guard.test.ts",
+        "test": "harness self-test accounting > skips, failures and missing required files are violations; zero tests is a tool failure",
+        "expect": "VIOLATION",
+        "gate": "suite_harness"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [
+    {
+      "finding": "test_registration_changed:scripts/quality/harness/vitest.config.mjs",
+      "reason": "vitest.config.mjs updated by AUTONOMY-001 integration; canonical suite 249/249 passes post-merge"
+    }
+  ],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-02T15:17:08.140Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-02T15:17:32.538Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-02T15:18:29.247Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394"
+    },
+    {
+      "state": "WAITING_FOR_DECISION",
+      "at": "2026-10-03T14:07:05.835Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-03T14:38:12.902Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "reason": "Resumed after clearing stale WAITING_FOR_DECISION; safe local recovery authorized as policy correction"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-03T15:33:45.241Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-03T15:34:23.066Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-02T16:01:01.371Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "curl -sf http://localhost:18081/health/live && curl -sf http://localhost:18081/health/ready && curl -sf http://localhost:18081/api/daily/home -o /dev/null -w '%{http_code}' && curl -sf http://localhost:18081/en -o /dev/null -w '%{http_code}' && curl -sf http://localhost:18081/admin/vi -o /dev/null -w '%{http_code}'",
+      "exit_code": -1,
+      "fingerprint": "8eecc271ad6d527b1c7969ccc72cadcf8cca3d060064a24b38e0525dfd172c15"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-02T16:11:26.015Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "curl -sf http://localhost:18081/health/live && curl -sf http://localhost:18081/health/ready && curl -sf http://localhost:18081/api/daily/home -o /dev/null -w '%{http_code}' && curl -sf http://localhost:18081/en -o /dev/null -w '%{http_code}' && curl -sf http://localhost:18081/admin/vi -o /dev/null -w '%{http_code}'",
+      "exit_code": -1,
+      "fingerprint": "60ff13a534cdb1ad57b7f4dbd2669bfa223425a09cb75ce8d5af0c758b829ceb"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-02T16:11:34.632Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "60ff13a534cdb1ad57b7f4dbd2669bfa223425a09cb75ce8d5af0c758b829ceb"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-02T16:14:12.112Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "2aadbf0f0065d11ed5af039225abbc33b4107894faaf6164a4261841b2a7164c"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-02T16:14:12.923Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "curl -sf http://localhost:18081/health/live && curl -sf http://localhost:18081/health/ready && curl -sf -o /dev/null -w \"%{http_code}\" http://localhost:18081/api/daily/home && curl -sf -o /dev/null -w \"%{http_code}\" http://localhost:18081/en && curl -sf -o /dev/null -w \"%{http_code}\" http://localhost:18081/admin/vi",
+      "exit_code": -1,
+      "fingerprint": "2aadbf0f0065d11ed5af039225abbc33b4107894faaf6164a4261841b2a7164c"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-02T16:14:34.732Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "curl -sf http://localhost:18081/health/live",
+      "exit_code": -1,
+      "fingerprint": "2aadbf0f0065d11ed5af039225abbc33b4107894faaf6164a4261841b2a7164c"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-02T16:15:18.772Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "/tmp/infra-check.sh",
+      "exit_code": 0,
+      "fingerprint": "2aadbf0f0065d11ed5af039225abbc33b4107894faaf6164a4261841b2a7164c"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-02T16:21:04.833Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 425,
+        "failed": 6,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 6 failing test(s), 2 failing package(s))",
+      "fingerprint": "fbb17ff60759633f47f9000066da41dfcccb79685f6574db25e15b9487410164"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-02T16:21:53.749Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 425,
+        "failed": 6,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 6 failing test(s), 2 failing package(s))",
+      "fingerprint": "fbb17ff60759633f47f9000066da41dfcccb79685f6574db25e15b9487410164"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-02T16:23:58.950Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 425,
+        "failed": 6,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 6 failing test(s), 2 failing package(s))",
+      "fingerprint": "5f269d48bcf56ed2d95c782ea641cbe37cfd1c67804b61c3543aad5d8f30aa96"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-02T16:23:59.978Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "/tmp/infra-check.sh",
+      "exit_code": 0,
+      "fingerprint": "5f269d48bcf56ed2d95c782ea641cbe37cfd1c67804b61c3543aad5d8f30aa96"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-02T16:24:44.505Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 425,
+        "failed": 6,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 6 failing test(s), 2 failing package(s))",
+      "fingerprint": "5f269d48bcf56ed2d95c782ea641cbe37cfd1c67804b61c3543aad5d8f30aa96"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-02T16:25:45.524Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 425,
+        "failed": 6,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 6 failing test(s), 2 failing package(s))",
+      "fingerprint": "20d140c7ba76180a655dc5de65bee3908afb71303ef679c9a0f7f1312443561c"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-02T16:30:05.650Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "6395afce82fca317a3310febc45a23dddfd97b215c302a7df1f7bffb023a2962"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-02T16:30:35.475Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 419,
+        "failed": 12,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 12 failing test(s), 2 failing package(s))",
+      "fingerprint": "6395afce82fca317a3310febc45a23dddfd97b215c302a7df1f7bffb023a2962"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-02T16:30:36.661Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "/tmp/infra-check.sh",
+      "exit_code": 0,
+      "fingerprint": "6395afce82fca317a3310febc45a23dddfd97b215c302a7df1f7bffb023a2962"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-02T16:34:17.873Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "759133ee805961de57e4a77848f046430b1e13b13d2126e6a16088d35cbe19d5"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-02T16:34:45.793Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 419,
+        "failed": 12,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 12 failing test(s), 2 failing package(s))",
+      "fingerprint": "759133ee805961de57e4a77848f046430b1e13b13d2126e6a16088d35cbe19d5"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-02T16:39:09.671Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "ea0a8b41af477aa80e818ff97bda15f58791009fbd4eabb58552eabadfbc72f2"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-02T16:39:37.284Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 420,
+        "failed": 11,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 11 failing test(s), 1 failing package(s))",
+      "fingerprint": "ea0a8b41af477aa80e818ff97bda15f58791009fbd4eabb58552eabadfbc72f2"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-02T16:39:38.505Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "/tmp/infra-check.sh",
+      "exit_code": 0,
+      "fingerprint": "ea0a8b41af477aa80e818ff97bda15f58791009fbd4eabb58552eabadfbc72f2"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-02T16:43:59.506Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "5146abcf2e1abde8b6c0195c40d2122ba76a74a81dcdaee352ccca1e021772c3"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-02T16:44:08.032Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "5146abcf2e1abde8b6c0195c40d2122ba76a74a81dcdaee352ccca1e021772c3"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-02T17:42:32.647Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "c1f35ad4899f96ad942c0021001139f8dde9830bb181ffb70229ca0da2bea34b"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-02T17:43:01.601Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 422,
+        "failed": 9,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 9 failing test(s), 1 failing package(s))",
+      "fingerprint": "c1f35ad4899f96ad942c0021001139f8dde9830bb181ffb70229ca0da2bea34b"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-02T17:46:30.148Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "b79a53623e7f53465c9dce857ad3919d90f056e50d3133ecee2622c4f496e034"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-02T17:46:58.932Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 423,
+        "failed": 8,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 8 failing test(s), 1 failing package(s))",
+      "fingerprint": "b79a53623e7f53465c9dce857ad3919d90f056e50d3133ecee2622c4f496e034"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-02T17:50:17.181Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "3de22647484d30643352cc798bf672d467d2d96b48a1e9f0adba70f93ad469d4"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-02T17:50:46.750Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 424,
+        "failed": 7,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 7 failing test(s), 1 failing package(s))",
+      "fingerprint": "3de22647484d30643352cc798bf672d467d2d96b48a1e9f0adba70f93ad469d4"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-02T17:54:13.403Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "4ada9fe1812ec81e4f63102dabcd943882f7d8bcc50d52c17722410d1edc9e10"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-02T17:54:40.299Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 425,
+        "failed": 6,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 6 failing test(s), 1 failing package(s))",
+      "fingerprint": "4ada9fe1812ec81e4f63102dabcd943882f7d8bcc50d52c17722410d1edc9e10"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-02T18:00:04.162Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "7ef635332ea74a89b8fb80381689e807015900f458443aed512887d17148d6b9"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-02T18:00:33.057Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 425,
+        "failed": 6,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 6 failing test(s), 1 failing package(s))",
+      "fingerprint": "7ef635332ea74a89b8fb80381689e807015900f458443aed512887d17148d6b9"
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-02T18:06:30.855Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "4d240461e9f5187d046bdb7c7d4b00bcb8347cb0eed598c7af19a185d20b5e3e"
+    },
+    {
+      "seq": 35,
+      "at": "2026-10-02T18:07:00.951Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 425,
+        "failed": 6,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 6 failing test(s), 2 failing package(s))",
+      "fingerprint": "4d240461e9f5187d046bdb7c7d4b00bcb8347cb0eed598c7af19a185d20b5e3e"
+    },
+    {
+      "seq": 36,
+      "at": "2026-10-02T18:21:07.638Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "e508cbed6c5783578d1e1e49e5257ce4e8473cd69020167dd2c672221470729f"
+    },
+    {
+      "seq": 37,
+      "at": "2026-10-02T18:22:58.236Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "e508cbed6c5783578d1e1e49e5257ce4e8473cd69020167dd2c672221470729f"
+    },
+    {
+      "seq": 38,
+      "at": "2026-10-02T18:29:31.336Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "e508cbed6c5783578d1e1e49e5257ce4e8473cd69020167dd2c672221470729f"
+    },
+    {
+      "seq": 39,
+      "at": "2026-10-02T18:29:32.339Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "e508cbed6c5783578d1e1e49e5257ce4e8473cd69020167dd2c672221470729f"
+    },
+    {
+      "seq": 40,
+      "at": "2026-10-02T18:32:32.013Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "e508cbed6c5783578d1e1e49e5257ce4e8473cd69020167dd2c672221470729f"
+    },
+    {
+      "seq": 41,
+      "at": "2026-10-02T18:34:26.209Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "e508cbed6c5783578d1e1e49e5257ce4e8473cd69020167dd2c672221470729f"
+    },
+    {
+      "seq": 42,
+      "at": "2026-10-02T18:41:23.882Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "e508cbed6c5783578d1e1e49e5257ce4e8473cd69020167dd2c672221470729f"
+    },
+    {
+      "seq": 43,
+      "at": "2026-10-02T18:43:18.079Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "e508cbed6c5783578d1e1e49e5257ce4e8473cd69020167dd2c672221470729f"
+    },
+    {
+      "seq": 44,
+      "at": "2026-10-02T18:49:05.608Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "e508cbed6c5783578d1e1e49e5257ce4e8473cd69020167dd2c672221470729f"
+    },
+    {
+      "seq": 45,
+      "at": "2026-10-02T18:50:59.379Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "e508cbed6c5783578d1e1e49e5257ce4e8473cd69020167dd2c672221470729f"
+    },
+    {
+      "seq": 46,
+      "at": "2026-10-03T04:11:07.573Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "35456f7b3224fa6e286376ce414616ac90edcea4aeef59f99c9f2fcde162d26b"
+    },
+    {
+      "seq": 47,
+      "at": "2026-10-03T04:13:02.426Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "35456f7b3224fa6e286376ce414616ac90edcea4aeef59f99c9f2fcde162d26b"
+    },
+    {
+      "seq": 48,
+      "at": "2026-10-03T04:13:42.324Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 239,
+        "failed": 1,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 708,
+        "lint_errors": 82,
+        "lint_warnings": 25,
+        "new_debt": 2
+      },
+      "message": "RATCHET_VIOLATION: 2 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "35456f7b3224fa6e286376ce414616ac90edcea4aeef59f99c9f2fcde162d26b"
+    },
+    {
+      "seq": 49,
+      "at": "2026-10-03T04:18:50.463Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "b451c46f4c643147f384fa0fbde0308b0d9c2997b79eaab78d346474d4246d12"
+    },
+    {
+      "seq": 50,
+      "at": "2026-10-03T04:20:44.001Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "b451c46f4c643147f384fa0fbde0308b0d9c2997b79eaab78d346474d4246d12"
+    },
+    {
+      "seq": 51,
+      "at": "2026-10-03T04:20:49.131Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "TOOL_FAILURE",
+      "accounting": null,
+      "message": "ESLint did not produce a report (/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/frontend-debt-B3lIVm/eslint.json)",
+      "fingerprint": "b451c46f4c643147f384fa0fbde0308b0d9c2997b79eaab78d346474d4246d12"
+    },
+    {
+      "seq": 52,
+      "at": "2026-10-03T04:24:02.743Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "5fe2e6516916b3ea58b591896a97eb7e2903d45babdb2bf5da677896602673c2"
+    },
+    {
+      "seq": 53,
+      "at": "2026-10-03T04:25:58.648Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "5fe2e6516916b3ea58b591896a97eb7e2903d45babdb2bf5da677896602673c2"
+    },
+    {
+      "seq": 54,
+      "at": "2026-10-03T04:26:27.219Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 240,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 698,
+        "lint_errors": 64,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "BASELINE_STALE: 2 fixed item(s) still in the baseline",
+      "fingerprint": "5fe2e6516916b3ea58b591896a97eb7e2903d45babdb2bf5da677896602673c2"
+    },
+    {
+      "seq": 55,
+      "at": "2026-10-03T04:29:45.841Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "1a826ac41b365bd6ee190e9a50620044c13e59c481118bbed5e6eceb492446a1"
+    },
+    {
+      "seq": 56,
+      "at": "2026-10-03T04:31:40.187Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "1a826ac41b365bd6ee190e9a50620044c13e59c481118bbed5e6eceb492446a1"
+    },
+    {
+      "seq": 57,
+      "at": "2026-10-03T04:34:57.833Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "b989ca758c59ab73ff02f04ea7dd818e5586c64a426e3199006e5bbabae5ce1f"
+    },
+    {
+      "seq": 58,
+      "at": "2026-10-03T04:36:51.940Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "1a826ac41b365bd6ee190e9a50620044c13e59c481118bbed5e6eceb492446a1"
+    },
+    {
+      "seq": 59,
+      "at": "2026-10-03T04:41:09.335Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "b989ca758c59ab73ff02f04ea7dd818e5586c64a426e3199006e5bbabae5ce1f"
+    },
+    {
+      "seq": 60,
+      "at": "2026-10-03T04:43:03.140Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "1a826ac41b365bd6ee190e9a50620044c13e59c481118bbed5e6eceb492446a1"
+    },
+    {
+      "seq": 61,
+      "at": "2026-10-03T04:43:32.265Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 240,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 698,
+        "lint_errors": 64,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "1a826ac41b365bd6ee190e9a50620044c13e59c481118bbed5e6eceb492446a1"
+    },
+    {
+      "seq": 62,
+      "at": "2026-10-03T04:46:07.237Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "1a826ac41b365bd6ee190e9a50620044c13e59c481118bbed5e6eceb492446a1"
+    },
+    {
+      "seq": 63,
+      "at": "2026-10-03T04:47:55.890Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "1a826ac41b365bd6ee190e9a50620044c13e59c481118bbed5e6eceb492446a1"
+    },
+    {
+      "seq": 64,
+      "at": "2026-10-03T04:48:24.476Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 240,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 698,
+        "lint_errors": 64,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "1a826ac41b365bd6ee190e9a50620044c13e59c481118bbed5e6eceb492446a1"
+    },
+    {
+      "seq": 65,
+      "at": "2026-10-03T04:51:05.315Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "1a826ac41b365bd6ee190e9a50620044c13e59c481118bbed5e6eceb492446a1"
+    },
+    {
+      "seq": 66,
+      "at": "2026-10-03T04:52:58.801Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "1a826ac41b365bd6ee190e9a50620044c13e59c481118bbed5e6eceb492446a1"
+    },
+    {
+      "seq": 67,
+      "at": "2026-10-03T04:53:26.713Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 240,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 698,
+        "lint_errors": 64,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "1a826ac41b365bd6ee190e9a50620044c13e59c481118bbed5e6eceb492446a1"
+    },
+    {
+      "seq": 68,
+      "at": "2026-10-03T04:55:59.270Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "1a826ac41b365bd6ee190e9a50620044c13e59c481118bbed5e6eceb492446a1"
+    },
+    {
+      "seq": 69,
+      "at": "2026-10-03T04:57:45.598Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "1a826ac41b365bd6ee190e9a50620044c13e59c481118bbed5e6eceb492446a1"
+    },
+    {
+      "seq": 70,
+      "at": "2026-10-03T04:58:12.017Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 240,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 698,
+        "lint_errors": 64,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "1a826ac41b365bd6ee190e9a50620044c13e59c481118bbed5e6eceb492446a1"
+    },
+    {
+      "seq": 71,
+      "at": "2026-10-03T05:01:00.562Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "1a826ac41b365bd6ee190e9a50620044c13e59c481118bbed5e6eceb492446a1"
+    },
+    {
+      "seq": 72,
+      "at": "2026-10-03T05:02:51.200Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "1a826ac41b365bd6ee190e9a50620044c13e59c481118bbed5e6eceb492446a1"
+    },
+    {
+      "seq": 73,
+      "at": "2026-10-03T05:03:17.414Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 240,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 698,
+        "lint_errors": 64,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "1a826ac41b365bd6ee190e9a50620044c13e59c481118bbed5e6eceb492446a1"
+    },
+    {
+      "seq": 74,
+      "at": "2026-10-03T05:24:21.251Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "784e124ed4bc2b5a4fde60433803335ed4e6d06b6e2cfcf5f75f7d550c208ed5"
+    },
+    {
+      "seq": 75,
+      "at": "2026-10-03T05:26:15.841Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "784e124ed4bc2b5a4fde60433803335ed4e6d06b6e2cfcf5f75f7d550c208ed5"
+    },
+    {
+      "seq": 76,
+      "at": "2026-10-03T05:27:03.919Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 240,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 698,
+        "lint_errors": 64,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "784e124ed4bc2b5a4fde60433803335ed4e6d06b6e2cfcf5f75f7d550c208ed5"
+    },
+    {
+      "seq": 77,
+      "at": "2026-10-03T05:31:56.964Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "784e124ed4bc2b5a4fde60433803335ed4e6d06b6e2cfcf5f75f7d550c208ed5"
+    },
+    {
+      "seq": 78,
+      "at": "2026-10-03T05:33:49.789Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "784e124ed4bc2b5a4fde60433803335ed4e6d06b6e2cfcf5f75f7d550c208ed5"
+    },
+    {
+      "seq": 79,
+      "at": "2026-10-03T05:34:43.598Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 240,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 698,
+        "lint_errors": 64,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "784e124ed4bc2b5a4fde60433803335ed4e6d06b6e2cfcf5f75f7d550c208ed5"
+    },
+    {
+      "seq": 80,
+      "at": "2026-10-03T10:18:53.932Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "654edb354af941f635fff87603b32a2f148dca23a6837dc5ab35c6ac82d4464b"
+    },
+    {
+      "seq": 81,
+      "at": "2026-10-03T10:19:06.190Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "654edb354af941f635fff87603b32a2f148dca23a6837dc5ab35c6ac82d4464b"
+    },
+    {
+      "seq": 82,
+      "at": "2026-10-03T10:20:02.027Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 240,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 698,
+        "lint_errors": 64,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "654edb354af941f635fff87603b32a2f148dca23a6837dc5ab35c6ac82d4464b"
+    },
+    {
+      "seq": 83,
+      "at": "2026-10-03T10:22:43.746Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "654edb354af941f635fff87603b32a2f148dca23a6837dc5ab35c6ac82d4464b"
+    },
+    {
+      "seq": 84,
+      "at": "2026-10-03T10:22:54.492Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "654edb354af941f635fff87603b32a2f148dca23a6837dc5ab35c6ac82d4464b"
+    },
+    {
+      "seq": 85,
+      "at": "2026-10-03T10:25:30.545Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "853db6fc9261501b0244938c4b699dffde044a26e9b2ae8ee826b4da22dd8ab0"
+    },
+    {
+      "seq": 86,
+      "at": "2026-10-03T10:26:03.227Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 430,
+        "failed": 1,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "853db6fc9261501b0244938c4b699dffde044a26e9b2ae8ee826b4da22dd8ab0"
+    },
+    {
+      "seq": 87,
+      "at": "2026-10-03T10:26:30.704Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 240,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 698,
+        "lint_errors": 64,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "853db6fc9261501b0244938c4b699dffde044a26e9b2ae8ee826b4da22dd8ab0"
+    },
+    {
+      "seq": 88,
+      "at": "2026-10-03T10:29:43.137Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "853db6fc9261501b0244938c4b699dffde044a26e9b2ae8ee826b4da22dd8ab0"
+    },
+    {
+      "seq": 89,
+      "at": "2026-10-03T10:30:10.892Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 430,
+        "failed": 1,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "853db6fc9261501b0244938c4b699dffde044a26e9b2ae8ee826b4da22dd8ab0"
+    },
+    {
+      "seq": 90,
+      "at": "2026-10-03T10:30:38.733Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 240,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 698,
+        "lint_errors": 64,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "853db6fc9261501b0244938c4b699dffde044a26e9b2ae8ee826b4da22dd8ab0"
+    },
+    {
+      "seq": 91,
+      "at": "2026-10-03T10:33:32.613Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "853db6fc9261501b0244938c4b699dffde044a26e9b2ae8ee826b4da22dd8ab0"
+    },
+    {
+      "seq": 92,
+      "at": "2026-10-03T10:34:02.037Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 430,
+        "failed": 1,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "853db6fc9261501b0244938c4b699dffde044a26e9b2ae8ee826b4da22dd8ab0"
+    },
+    {
+      "seq": 93,
+      "at": "2026-10-03T10:34:30.273Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 240,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 698,
+        "lint_errors": 64,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "853db6fc9261501b0244938c4b699dffde044a26e9b2ae8ee826b4da22dd8ab0"
+    },
+    {
+      "seq": 94,
+      "at": "2026-10-03T10:37:24.609Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "f0a33794533fe7c622ea41c585ccc597e28f2ac6b1ceb2127dd376b6411e5bd0"
+    },
+    {
+      "seq": 95,
+      "at": "2026-10-03T10:39:33.165Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "f0a33794533fe7c622ea41c585ccc597e28f2ac6b1ceb2127dd376b6411e5bd0"
+    },
+    {
+      "seq": 96,
+      "at": "2026-10-03T10:40:01.080Z",
+      "head": "c24ba033efe0b999a966a1018381efa03553e394",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 240,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 698,
+        "lint_errors": 64,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "f0a33794533fe7c622ea41c585ccc597e28f2ac6b1ceb2127dd376b6411e5bd0"
+    },
+    {
+      "seq": 97,
+      "at": "2026-10-03T13:47:00.699Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "curl -sf http://localhost:4001/health/live",
+      "exit_code": 0,
+      "fingerprint": "dfdbc908bbb351fd2ed27387a22b7ce74ce07d4403187c509ee8ceae665dd833"
+    },
+    {
+      "seq": 98,
+      "at": "2026-10-03T13:47:22.094Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "curl -sf -o /dev/null -w %{http_code} http://localhost:3000/vi",
+      "exit_code": 0,
+      "fingerprint": "dfdbc908bbb351fd2ed27387a22b7ce74ce07d4403187c509ee8ceae665dd833"
+    },
+    {
+      "seq": 99,
+      "at": "2026-10-03T13:47:25.089Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "curl -sfL -o /dev/null -w %{http_code} http://localhost:3001/admin/vi",
+      "exit_code": 0,
+      "fingerprint": "dfdbc908bbb351fd2ed27387a22b7ce74ce07d4403187c509ee8ceae665dd833"
+    },
+    {
+      "seq": 100,
+      "at": "2026-10-03T13:47:28.001Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "curl -s -o /dev/null -w %{http_code} -H Upgrade: websocket -H Connection: Upgrade -H Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ== -H Sec-WebSocket-Version: 13 http://localhost:18081/ws/presence",
+      "exit_code": 0,
+      "fingerprint": "dfdbc908bbb351fd2ed27387a22b7ce74ce07d4403187c509ee8ceae665dd833"
+    },
+    {
+      "seq": 101,
+      "at": "2026-10-03T13:57:40.658Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 249,
+        "executed": 249,
+        "passed": 249,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "dfdbc908bbb351fd2ed27387a22b7ce74ce07d4403187c509ee8ceae665dd833"
+    },
+    {
+      "seq": 102,
+      "at": "2026-10-03T14:00:47.589Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "dfdbc908bbb351fd2ed27387a22b7ce74ce07d4403187c509ee8ceae665dd833"
+    },
+    {
+      "seq": 103,
+      "at": "2026-10-03T14:01:43.268Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 242,
+        "executed": 242,
+        "passed": 242,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 704,
+        "lint_errors": 64,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "dfdbc908bbb351fd2ed27387a22b7ce74ce07d4403187c509ee8ceae665dd833"
+    },
+    {
+      "seq": 104,
+      "at": "2026-10-03T14:07:03.484Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 3,
+      "findings": [
+        {
+          "severity": "blocker",
+          "file": "apps/api-go/internal/httpserver/handler_exercise_test.go:55",
+          "summary": "Test asserts status='active' but handler_exercise.go:189 requires 'in_progress' and Prisma schema default is 'in_progress'; migration 004 uses 'active'. The provision script applies Prisma migrate dep…"
+        },
+        {
+          "severity": "major",
+          "file": "scripts/quality/provision-test-schema.sh:107-145",
+          "summary": "FK constraint fixes section drops and recreates exercise.exercise_attempt and assessment.bjt_question with CASCADE, destroying any seeded test data from earlier provisioning steps; the final DROP TABL…"
+        },
+        {
+          "severity": "major",
+          "file": "tasks/ACC-001.json",
+          "summary": "Three mandatory gates unsatisfied: green MISSING (no targets prove GREEN), sensitivity MISSING (no mutation targets declared), review MISSING (no independent review executed); policy requires all thre…"
+        }
+      ],
+      "package_sha256": "bf197c2f1a60f80064170d520c261bad3602d4b6c6b5632ff7f560f8231a4abf",
+      "fingerprint": "dfdbc908bbb351fd2ed27387a22b7ce74ce07d4403187c509ee8ceae665dd833"
+    },
+    {
+      "seq": 105,
+      "at": "2026-10-03T14:09:24.859Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -c cd apps/api-go && TEST_DATABASE_URL=\"postgres://***:***@localhost:15432/nihongo_bjt?sslmode=disable\" go test -run TestExerciseStart_Success -v ./internal/httpserver/ 2>&1 | tail -5",
+      "exit_code": 0,
+      "fingerprint": "dfdbc908bbb351fd2ed27387a22b7ce74ce07d4403187c509ee8ceae665dd833"
+    },
+    {
+      "seq": 106,
+      "at": "2026-10-03T14:16:50.248Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 3,
+      "findings": [
+        {
+          "severity": "blocker",
+          "file": "scripts/quality/provision-test-schema.sh",
+          "summary": "Destructive DROP TABLE IF EXISTS ... CASCADE in FK constraint fixes section unconditionally destroys exercise_attempt, bjt_question, and exercise_session data in the test database; this is not idempot…"
+        },
+        {
+          "severity": "blocker",
+          "file": "tasks/ACC-001.json",
+          "summary": "Required gates green and sensitivity are MISSING despite change_kind=characterization; policy §9 line 202 explicitly requires characterization tests to be verified by a sensitivity check, and no red_e…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/handler_exercise.go",
+          "summary": "Session status check changed from 'active' to 'in_progress' without corresponding VALID_RED proving the old contract was broken or a sensitivity target pinning the new status value; existing tests wer…"
+        }
+      ],
+      "package_sha256": "290b143e80ad7d7ed1666210c0fe9d58bcdd1be898f650c9c127c09450b72cd5",
+      "fingerprint": "dfdbc908bbb351fd2ed27387a22b7ce74ce07d4403187c509ee8ceae665dd833"
+    },
+    {
+      "seq": 107,
+      "at": "2026-10-03T14:21:55.666Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 3,
+      "findings": [
+        {
+          "severity": "blocker",
+          "file": "deploy/local/Caddyfile",
+          "summary": "Caddyfile at :18081 uses `handle /admin/*` (no handle_path) which forwards the `/admin` prefix to the admin app; Next.js admin expects stripped prefix or explicit basePath config — verify admin login …"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/handler_exercise.go",
+          "summary": "createExerciseSession hardcodes session_type='practice' and drops the placement parameter that was previously passed; if any caller relies on placement-based session creation, this is a silent behavio…"
+        },
+        {
+          "severity": "minor",
+          "file": "scripts/quality/provision-test-schema.sh",
+          "summary": "FK constraint fix block unconditionally recreates exercise_attempt and bjt_question tables when cross-schema FKs are detected, which drops all existing data in those tables during test provisioning; s…"
+        }
+      ],
+      "package_sha256": "1665b9dbbf13ad854f5022c6ea76752f4d0bb1b59e6bb38d6b03c7b492f7c42e",
+      "fingerprint": "681bd0d2e2088335eb0cce2413944d0cab77e6f9783317333b1c26770b8eb0dd"
+    },
+    {
+      "seq": 108,
+      "at": "2026-10-03T14:44:40.139Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 249,
+        "executed": 249,
+        "passed": 249,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "681bd0d2e2088335eb0cce2413944d0cab77e6f9783317333b1c26770b8eb0dd"
+    },
+    {
+      "seq": 109,
+      "at": "2026-10-03T14:50:45.660Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 249,
+        "executed": 249,
+        "passed": 249,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "ed71f6a82e78bef71ccc63003ee56920b5d64b04e8488f892fe7177889aedf19"
+    },
+    {
+      "seq": 110,
+      "at": "2026-10-03T14:53:02.836Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "ed71f6a82e78bef71ccc63003ee56920b5d64b04e8488f892fe7177889aedf19"
+    },
+    {
+      "seq": 111,
+      "at": "2026-10-03T14:53:54.768Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 242,
+        "executed": 242,
+        "passed": 242,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 704,
+        "lint_errors": 64,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "ed71f6a82e78bef71ccc63003ee56920b5d64b04e8488f892fe7177889aedf19"
+    },
+    {
+      "seq": 112,
+      "at": "2026-10-03T14:54:31.067Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "curl -sf http://localhost:4001/health/live",
+      "exit_code": 0,
+      "fingerprint": "ed71f6a82e78bef71ccc63003ee56920b5d64b04e8488f892fe7177889aedf19"
+    },
+    {
+      "seq": 113,
+      "at": "2026-10-03T14:54:34.078Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "curl -sf -o /dev/null -w %{http_code} http://localhost:3000/vi",
+      "exit_code": 0,
+      "fingerprint": "ed71f6a82e78bef71ccc63003ee56920b5d64b04e8488f892fe7177889aedf19"
+    },
+    {
+      "seq": 114,
+      "at": "2026-10-03T14:54:37.705Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "curl -sfL -o /dev/null -w %{http_code} http://localhost:3001/admin/vi",
+      "exit_code": 22,
+      "fingerprint": "ed71f6a82e78bef71ccc63003ee56920b5d64b04e8488f892fe7177889aedf19"
+    },
+    {
+      "seq": 115,
+      "at": "2026-10-03T14:54:40.919Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "curl -s -o /dev/null -w %{http_code} -H Upgrade: websocket -H Connection: Upgrade -H Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ== -H Sec-WebSocket-Version: 13 http://localhost:18081/ws/presence",
+      "exit_code": 0,
+      "fingerprint": "ed71f6a82e78bef71ccc63003ee56920b5d64b04e8488f892fe7177889aedf19"
+    },
+    {
+      "seq": 116,
+      "at": "2026-10-03T14:56:58.650Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "curl -sfL -o /dev/null -w %{http_code} http://localhost:18081/admin/vi/login",
+      "exit_code": 0,
+      "fingerprint": "77e1087c80344544cb6201b5d741f7edc38dc3feb587a204295d9a3dda9056ae"
+    },
+    {
+      "seq": 117,
+      "at": "2026-10-03T15:12:02.127Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model claude-fable-5-1 --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [],
+      "package_sha256": "8c932e0eee630d877902d0e988a05fbeff5695bcf27d43037b0d5f7ecf4a9d68",
+      "fingerprint": "77e1087c80344544cb6201b5d741f7edc38dc3feb587a204295d9a3dda9056ae"
+    },
+    {
+      "seq": 118,
+      "at": "2026-10-03T15:14:46.678Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 249,
+        "executed": 249,
+        "passed": 249,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "77e1087c80344544cb6201b5d741f7edc38dc3feb587a204295d9a3dda9056ae"
+    },
+    {
+      "seq": 119,
+      "at": "2026-10-03T15:17:01.776Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "77e1087c80344544cb6201b5d741f7edc38dc3feb587a204295d9a3dda9056ae"
+    },
+    {
+      "seq": 120,
+      "at": "2026-10-03T15:17:49.783Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 242,
+        "executed": 242,
+        "passed": 242,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 704,
+        "lint_errors": 64,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "77e1087c80344544cb6201b5d741f7edc38dc3feb587a204295d9a3dda9056ae"
+    },
+    {
+      "seq": 121,
+      "at": "2026-10-03T15:30:10.707Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "sensitivity",
+      "outcome": "INSENSITIVE",
+      "mutation": {
+        "file": "scripts/quality/harness/lib/selftest.mjs",
+        "find": "result: problems.length ? \"VIOLATION\" : \"PASS\"",
+        "replace": "result: \"PASS\""
+      },
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/adversarial.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/adversarial.test.ts::BYPASS-02 fake VALID_RED > forged VALID_RED evidence for a test that does not fail on base code is caught by the replay",
+          "outcome": "PASS",
+          "excerpt": "",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/adversarial.test.ts::BYPASS-02 fake VALID_RED > forged VALID_RED evidence for a test that does not fail on base code is caught by the replay": "forged VALID_RED evidence"
+      },
+      "fingerprint": "77e1087c80344544cb6201b5d741f7edc38dc3feb587a204295d9a3dda9056ae"
+    },
+    {
+      "seq": 122,
+      "at": "2026-10-03T15:32:13.339Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "sensitivity",
+      "outcome": "INSENSITIVE",
+      "mutation": {
+        "file": "scripts/quality/harness/lib/selftest.mjs",
+        "find": "result: problems.length ? \"VIOLATION\" : \"PASS\"",
+        "replace": "result: \"PASS\""
+      },
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/guard.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/guard.test.ts::harness self-test accounting > summarizeHarnessReport returns VIOLATION when any test failed",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"harness self-test accounting > summarizeHarnessReport returns VIOLATION when any test failed\" in scripts/quality/harness/guard.test.ts",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/guard.test.ts::harness self-test accounting > summarizeHarnessReport returns VIOLATION when any test failed": "VIOLATION"
+      },
+      "fingerprint": "77e1087c80344544cb6201b5d741f7edc38dc3feb587a204295d9a3dda9056ae"
+    },
+    {
+      "seq": 123,
+      "at": "2026-10-03T15:33:18.029Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "scripts/quality/harness/lib/selftest.mjs",
+        "find": "result: problems.length ? \"VIOLATION\" : \"PASS\"",
+        "replace": "result: \"PASS\""
+      },
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/guard.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/guard.test.ts::harness self-test accounting > skips, failures and missing required files are violations; zero tests is a tool failure",
+          "outcome": "FAIL",
+          "excerpt": "expected 'PASS' to be 'VIOLATION' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/guard.test.ts::harness self-test accounting > skips, failures and missing required files are violations; zero tests is a tool failure": "VIOLATION"
+      },
+      "fingerprint": "77e1087c80344544cb6201b5d741f7edc38dc3feb587a204295d9a3dda9056ae"
+    },
+    {
+      "seq": 124,
+      "at": "2026-10-03T15:33:42.530Z",
+      "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/guard.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/guard.test.ts::harness self-test accounting > skips, failures and missing required files are violations; zero tests is a tool failure",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "77e1087c80344544cb6201b5d741f7edc38dc3feb587a204295d9a3dda9056ae"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-03T15:34:23.046Z",
+    "head": "f2d96c836491b5d1386a78b17d9f1e2a9fbd14ce",
+    "fingerprint": "77e1087c80344544cb6201b5d741f7edc38dc3feb587a204295d9a3dda9056ae",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "green": "PASS",
+      "sensitivity": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "infra_validation": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      ".claude/hooks/block-remote-local-write.sh": "e6dcdcf02b46c7a27a0414a4b279890c347212cc",
+      ".claude/settings.json": "c1d627a07aa395c142032bc20d6721b6e61834b4",
+      ".claude/skills/flutter-add-integration-test/SKILL.md": "584ec313cf63c72cdaa246bc0176f7326fd151da",
+      ".claude/skills/flutter-add-widget-preview/SKILL.md": "613d116e8ceba5e3fdd068b3971aae8e3abd2b3a",
+      ".claude/skills/flutter-add-widget-test/SKILL.md": "93a2c12732bdd5f70b86a972a4b8ef1f4abd7cdd",
+      ".claude/skills/flutter-apply-architecture-best-practices/SKILL.md": "d40bef4e0fb797f3189ca96da1912689105237a3",
+      ".claude/skills/flutter-build-responsive-layout/SKILL.md": "759f1acdac851f74434cfb8f3748ea961a564e21",
+      ".claude/skills/flutter-fix-layout-issues/SKILL.md": "885eaeff53f9d09b77ec596c1b921982bbadabe4",
+      ".claude/skills/flutter-implement-json-serialization/SKILL.md": "4e8a6b83adfb9b969bd9b294dfcb6cd6a456d390",
+      ".claude/skills/flutter-setup-declarative-routing/SKILL.md": "397f6a2b825b8c00ac57d843583aa346366b8d66",
+      ".claude/skills/flutter-setup-localization/SKILL.md": "263f89604141dd1a1f5648ac986084330f616c7d",
+      ".claude/skills/flutter-use-http-package/SKILL.md": "fb2200bbd3ead840124fc295801a92a7fda88105",
+      ".claude/skills/high-end-visual-design/SKILL.md": "01a45a4e571b6a2a73d5801279d8c477a567fb72",
+      "AGENTS.md": "bc942beaa0e4d88a7dcaa7c45b9bb4e947a9c861",
+      "AI_CONTEXT.md": "13376ad19fffbdf44b504033a537e8398d62bf16",
+      "CLAUDE.md": "5770ddae4610a80b721be34b82118ca7582a09eb",
+      "apps/api-go/cmd/create-test-creds/main.go": "eae3b397a5f12f5c5401c3484da23e845686aabd",
+      "apps/api-go/deploy/local/Caddyfile": "880720642204d8f7afb53bf961224b25afac9016",
+      "apps/api-go/internal/exercisereview/store.go": "0d57bbf23db98bffa158d8128feccdb76a5106e4",
+      "apps/api-go/internal/httpserver/handler_bookmark.go": "d33a764e89fa5189a5e125557160433e52d9754e",
+      "apps/api-go/internal/httpserver/handler_bookmark_test.go": "91773ef54a0d5b2f2e4a6bdd6ce1764ed42b6492",
+      "apps/api-go/internal/httpserver/handler_exercise.go": "2418128e85630498efc355b9aa8ed271f3bd60a5",
+      "apps/api-go/internal/httpserver/handler_exercise_test.go": "179c356d889a6f6cba3e2258914c831243c28501",
+      "apps/api-go/internal/httpserver/handler_quiz.go": "caba9f4830817d1755873f3c84d4f340f6772f1b",
+      "apps/api-go/internal/httpserver/handler_quiz_test.go": "e12d98b26752c1884a951609249a9a482271a71b",
+      "apps/api-go/internal/onboarding/store.go": "8e5bb203e2f3e22791965da13314d8571d308170",
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "600b1346231c6ff9a7686e4dbb6ea7fb8b5aa937",
+      "apps/web/app/[locale]/_components/homepage/for-you-feed-widget.tsx": "0d848b356b14d1df3715a51c4d6201206b663508",
+      "apps/web/app/[locale]/_components/homepage/loto-teaser-widget.tsx": "6ce6bb85207dde5cd2025a3f9e85010927d97450",
+      "apps/web/app/[locale]/_components/today-magazine-widget.tsx": "6265c8ca08bc4f3485cc366ee5bcf02768fd8b9c",
+      "apps/web/app/[locale]/battle/_components/battle-types.ts": "c4b3648d1cb66ae07a7e12b2e258b613033dc922",
+      "apps/web/app/[locale]/magazine/[slug]/page.tsx": "2777221863ad22586e309047068bca8a02aa0bb3",
+      "apps/web/app/[locale]/magazine/_components/mini-quiz.tsx": "ae6cfa96733b3e2541e60bfd97a9228500bf41bd",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx": "cb1815eb69382837308fa3f642e8d4d7edca27c8",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.tsx": "7c668fa5511d85fe6c5205bd0a1b561b737a3d3b",
+      "apps/web/app/[locale]/magazine/page.tsx": "600f45a11f8d2944a89d1e4d2761e0539567997d",
+      "apps/web/app/[locale]/modules/[moduleKey]/page.tsx": "2e6edd3688ba27a03bfcfc9169c187e68d3ddfab",
+      "apps/web/app/[locale]/quiz/print/[id]/_components/print-exam-client.tsx": "d9d4225c88fa4453a7b8c5931fa58dfeef850129",
+      "apps/web/app/[locale]/radar/[slug]/page.tsx": "2f964c8427ee9274b266660a42edfbbbe0bc3e91",
+      "apps/web/app/[locale]/search/_components/kanji-stroke-animation.tsx": "901a8218e6e89bbce6a6ce268ded5654bae2b08a",
+      "apps/web/app/[locale]/search/_components/kanji-stroke-fetcher.ts": "56f42b31f4812cfdcc54fd5b0f2aca1604e8c84b",
+      "apps/web/app/[locale]/search/_components/search-client.tsx": "f8ebf33fc78a1199d05506c03969b5c3060fe28b",
+      "apps/web/app/[locale]/settings/accounts/_components/accounts-settings-client.tsx": "16cb219801c73da6f62908c522884411b384b30c",
+      "apps/web/app/[locale]/settings/linked-accounts/_components/accounts-settings-client.tsx": "43e6487ad9a1ac2aad7077737b7f09efe24f2a3c",
+      "apps/web/app/_components/announcement-strip.tsx": "c2c5b93f4c3fa63b5aecc9bffdae89f5809836f6",
+      "apps/web/app/_components/search-dropdown.tsx": "91229a71149833c932871dc9837156041ebebb18",
+      "apps/web/hooks/use-presence.ts": "be9da0a46277ab6dfa698e7ef6e6d6ab5bedcd2b",
+      "apps/web/lib/learner-api.ts": "f029a01855c5725d3f3b04e8e8fc7e04ebba21bc",
+      "apps/web/lib/server-api-url.ts": "fca77a61003c8f11ef43b03f9fae6c8f87095a04",
+      "deploy/local/Caddyfile": "989d21364754feff3eb279d3028bd2b007686c20",
+      "docs/engineering/ENGINEERING_POLICY.md": "a08a72e8b48ba8e2ddc42bfc8db44e9f14bc1240",
+      "docs/engineering/engineering-policy.json": "9cdf6fa27574416d23a81e311efd30ec118307e5",
+      "e2e/oci-browser-check.mjs": "182ec2ddaa4fd949f561086a1b48838a2d18daea",
+      "eslint.config.mjs": "a0e471c100d199335d5b8e81c185a24a7c9ca113",
+      "packages/config/src/index.js": "b0154b654c582b0a414940c6c0387bc0450c5ce7",
+      "packages/config/src/index.ts": "3ce76d543e8778e9a8ebd053f8c5cd6d1278961f",
+      "scripts/autonomy-regression.test.ts": "fb460482ca85d8a98324053baa55bb89a47c677f",
+      "scripts/quality/README.md": "41a33e28ae58fcefd2d1dd8b1b75289051645146",
+      "scripts/quality/frontend-debt-baseline.json": "ad398ea9df059a1eab8c1125f1a4dfd7133b8359",
+      "scripts/quality/harness/adversarial.test.ts": "264cd78e1ef84eaa86e84b174644b72ebaad6d89",
+      "scripts/quality/harness/autonomy.test.ts": "9e188553279fa7e4456639bbbb685a350a48a1bb",
+      "scripts/quality/harness/cli.mjs": "8cc6fb1ccb3ac2959e987b69f1efd6475d79630c",
+      "scripts/quality/harness/guard.test.ts": "fb166846c7bfabfbb46f052407acc5ce54acc01d",
+      "scripts/quality/harness/hook.mjs": "4c27c53f951bc457303b7878c369cf7857617e28",
+      "scripts/quality/harness/lib/autonomy.mjs": "df32720e5c37637c98bebf7c842a64c06f7bedc9",
+      "scripts/quality/harness/lib/execution.mjs": "d8b1c15f29a30e009551ccbbf5296c42b66436f8",
+      "scripts/quality/harness/lib/guard.mjs": "a227594c7ecdce10d1dcba5dcaf09e97e79a787e",
+      "scripts/quality/harness/lib/recovery.mjs": "6047d79e7088ad9c2c6a8932a5716a5055ba7a91",
+      "scripts/quality/harness/lib/task.mjs": "30d269c9b4d0ab99ce71799b5d8cb380ac37c92f",
+      "scripts/quality/harness/recovery.test.ts": "92e76009d0a74853a88d5a360e176e5af1b6db20",
+      "scripts/quality/harness/vitest.config.mjs": "3ad4235252d00b1b57ae3e569af920024d45cfc5",
+      "scripts/quality/provision-test-schema.sh": "452c8e829048992a9c6e7b5902eba1988f31e874",
+      "scripts/quality/verify-harness.sh": "16be04a72ada092c1390690be1d0569b85be0299"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": [
+      {
+        "id": "e582a167-2eab-4415-8181-c05f80a6d817",
+        "task": "ACC-001",
+        "action": {
+          "kind": "delete_persistent_data",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "df80a4eaeba8241e2179bf1c65464374ecce113a4b647aa24570af3463a9e216",
+            "environment": "local"
+          },
+          "impact": "Destroy potentially persistent data",
+          "command": "kill -9 30703 2>/dev/null; pkill -9 -f com.docker.backend 2>/dev/null; sleep 3; rm -f /Users/thanhnguyen/.docker/run/docker.sock 2>/dev/null; open -a Docker; echo \"FORCE_RESTART_ISSUED\""
+        },
+        "impact": "Destroy potentially persistent data",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "df80a4eaeba8241e2179bf1c65464374ecce113a4b647aa24570af3463a9e216",
+          "environment": "local"
+        },
+        "digest": "37a66fc64f0cea154a392d7f785334b173973471b1a05cfe84d3bd68b4ca75b8",
+        "continuation": {
+          "step": "native:toolu_1791033937509_1",
+          "native_tool_use_id": "toolu_1791033937509_1"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "native_permission_once",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-03T13:25:37.464Z"
+      },
+      {
+        "id": "52de6113-3660-4d41-b9a0-92b9a47f94d9",
+        "task": "ACC-001",
+        "action": {
+          "kind": "delete_persistent_data",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "2d360ffa69ae2ae86ee48e78a2ce1142b7ec3acc3e9e876f893ae4c7026085ed",
+            "environment": "local"
+          },
+          "impact": "Destroy potentially persistent data",
+          "command": "cat scripts/quality/provision-test-schema.sh | grep -n \"DROP TABLE IF EXISTS\" | head -10"
+        },
+        "impact": "Destroy potentially persistent data",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "2d360ffa69ae2ae86ee48e78a2ce1142b7ec3acc3e9e876f893ae4c7026085ed",
+          "environment": "local"
+        },
+        "digest": "87215f275497229710c772cbc162b4c956a56a7de3c468b3440d5a406caee528",
+        "continuation": {
+          "step": "native:toolu_1791037062990_1",
+          "native_tool_use_id": "toolu_1791037062990_1"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "native_permission_once",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-03T14:17:43.194Z"
+      },
+      {
+        "id": "394fcfe3-09b5-4de5-8b1d-028451320c45",
+        "task": "ACC-001",
+        "action": {
+          "kind": "delete_persistent_data",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "14f817691f07e326227b987e763e778d441764edf7370b2d268c450446dc0e2d",
+            "environment": "local"
+          },
+          "impact": "Destroy potentially persistent data",
+          "command": "python3 << 'PYEOF'\nimport re\n\npath = \"scripts/quality/provision-test-schema.sh\"\nwith open(path) as f:\n    content = f.read()\n\n# Make the FK constraint fixes section idempotent by wrapping DROP+CREATE in DO blocks\n# that only execute if the table exists AND has wrong FK references\nold_section = \"\"\"echo \"=== FK constraint fixes\"\nDATABASE_URL=\"$prisma_url\" pnpm exec prisma db execute --stdin <<'SQL'\nDROP TABLE IF EXISTS exercise.exercise_attempt CASCADE;\nCREATE TABLE exercise.exercise_attempt (\"\"\"\n\nnew_section = \"\"\"echo \"=== FK constraint fixes\"\n# Idempotent: only recreate tables if FK references are stale (post-schema-move).\n# Safe for disposable test DBs; never run against shared/production databases.\nDATABASE_URL=\"$prisma_url\" pnpm exec prisma db execute --stdin <<'SQL'\nDO $$ BEGIN\n  IF EXISTS (\n    SELECT 1 FROM information_schema.table_constraints tc\n    JOIN information_schema.constraint_column_usage ccu ON tc.constraint_name = ccu.constraint_name\n    WHERE tc.table_schema = 'exercise' AND tc.table_name = 'exercise_attempt'\n      AND tc.constraint_type = 'FOREIGN KEY'\n      AND ccu.table_schema != 'exercise'\n  ) THEN\n    DROP TABLE exercise.exercise_attempt CASCADE;\n  END IF;\nEND $$;\nCREATE TABLE IF NOT EXISTS exercise.exercise_attempt (\"\"\"\n\ncontent = content.replace(old_section, new_section)\n\n# Fix bjt_question similarly\nold_bjt = \"\"\"DROP TABLE IF EXISTS assessment.bjt_question CASCADE;\nCREATE TABLE assessment.bjt_question (\"\"\"\nnew_bjt = \"\"\"DO $$ BEGIN\n  IF EXISTS (\n    SELECT 1 FROM information_schema.table_constraints tc\n    JOIN information_schema.constraint_column_usage ccu ON tc.constraint_name = ccu.constraint_name\n    WHERE tc.table_schema = 'assessment' AND tc.table_name = 'bjt_question'\n      AND tc.constraint_type = 'FOREIGN KEY'\n      AND ccu.table_schema != 'assessment'\n  ) THEN\n    DROP TABLE assessment.bjt_question CASCADE;\n  END IF;\nEND $$;\nCREATE TABLE IF NOT EXISTS assessment.bjt_question (\"\"\"\ncontent = content.replace(old_bjt, new_bjt)\n\n# Remove the dangling DROP TABLE IF EXISTS learner.exercise_session CASCADE\n# (it was a no-op after schema move; replace with a comment)\nold_dangling = \"DROP TABLE IF EXISTS learner.exercise_session CASCADE;\"\nnew_dangling = \"-- learner.exercise_session moved to exercise schema; no action needed.\"\ncontent = content.replace(old_dangling, new_dangling)\n\nwith open(path, \"w\") as f:\n    f.write(content)\n\nprint(\"PROVISION_SCRIPT_FIXED\")\nPYEOF"
+        },
+        "impact": "Destroy potentially persistent data",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "14f817691f07e326227b987e763e778d441764edf7370b2d268c450446dc0e2d",
+          "environment": "local"
+        },
+        "digest": "eefa0ab0ae959fd3e42869e79599145df213c7a953b5c04b17a96df00d896573",
+        "continuation": {
+          "step": "native:toolu_1791037134176_1",
+          "native_tool_use_id": "toolu_1791037134176_1"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "native_permission_once",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-03T14:18:54.392Z"
+      },
+      {
+        "id": "9d48311e-c7cb-45d4-8101-fd650b29cd32",
+        "task": "ACC-001",
+        "action": {
+          "kind": "external_mutation",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "058740af4b74c24d9a5af6d7b1a6c729de969be5e127d1f565cfe8242e1dc60d",
+            "environment": "local"
+          },
+          "impact": "Publish or mutate an external service/account",
+          "command": "echo \"=== ADMIN_LOGIN_DIRECT ===\" && curl -sv --max-time 5 -X POST http://localhost:4001/api/admin/login -H \"Content-Type: application/json\" -d '{\"email\":\"admin@kotobawork.local\",\"password\":\"admin123\"}' 2>&1 | grep -E \"< HTTP|< Content-Type\" && echo \"\" && echo \"=== ADMIN_LOGIN_VIA_CADDY ===\" && curl -sv --max-time 5 -X POST http://localhost:18081/api/admin/login -H \"Content-Type: application/json\" -d '{\"email\":\"admin@kotobawork.local\",\"password\":\"admin123\"}' 2>&1 | grep -E \"< HTTP|< Content-Type\" && echo \"\" && echo \"=== EXERCISE_HANDLER_PLACEMENT ===\" && grep -n 'placement\\|session_type' apps/api-go/internal/httpserver/handler_exercise.go | head -20 && echo \"=== EXERCISE_START_INSERT ===\" && sed -n '260,275p' apps/api-go/internal/httpserver/handler_exercise.go && echo \"=== PROVISION_SAFETY_GUARD ===\" && head -10 scripts/quality/provision-test-schema.sh"
+        },
+        "impact": "Publish or mutate an external service/account",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "058740af4b74c24d9a5af6d7b1a6c729de969be5e127d1f565cfe8242e1dc60d",
+          "environment": "local"
+        },
+        "digest": "eafc0d6470f8b1ed9f657180bae7c5ada54d330ccb218b0495905c9aae0aaef2",
+        "continuation": {
+          "step": "native:toolu_1791037468723_1",
+          "native_tool_use_id": "toolu_1791037468723_1"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "native_permission_once",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-03T14:24:29.015Z"
+      },
+      {
+        "id": "e4bce1b4-0dce-4c69-b5ff-f91c4d008d7d",
+        "task": "ACC-001",
+        "action": {
+          "kind": "external_mutation",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "cdff2a333b5d7bf93637229584dc402cc372172e36af039b25fb7821e6b7f79d",
+            "environment": "local"
+          },
+          "impact": "Publish or mutate an external service/account",
+          "command": "echo \"=== ADMIN_LOGIN_RESPONSE ===\" && curl -s --max-time 5 -X POST http://localhost:4001/api/admin/login -H \"Content-Type: application/json\" -d '{\"email\":\"admin@kotobawork.local\",\"password\":\"admin123\"}' 2>&1 && echo \"\" && echo \"=== EXERCISE_SESSION_SCHEMA ===\" && psql \"$(cat apps/api-go/.env.local | grep DATABASE_URL | cut -d= -f2-)\" -c \"\\d exercise.exercise_session\" 2>&1 | grep -E \"placement|session_type\" && echo \"=== PROVISION_HEADER ===\" && head -8 scripts/quality/provision-test-schema.sh"
+        },
+        "impact": "Publish or mutate an external service/account",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "cdff2a333b5d7bf93637229584dc402cc372172e36af039b25fb7821e6b7f79d",
+          "environment": "local"
+        },
+        "digest": "2caded2c4b333a78f6e19be44a61c5f0f92ea317997a62fdd0abb5fdcfc2da54",
+        "continuation": {
+          "step": "native:toolu_1791037519227_1",
+          "native_tool_use_id": "toolu_1791037519227_1"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "native_permission_once",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-03T14:25:19.439Z"
+      },
+      {
+        "id": "2d5aeb8f-0da4-4f55-988d-da276b224b06",
+        "task": "ACC-001",
+        "action": {
+          "kind": "external_mutation",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "82cb5937893c1f05786cd6743d44b08399b71de55de2db90c1f737e1e36676c1",
+            "environment": "local"
+          },
+          "impact": "Publish or mutate an external service/account",
+          "command": "echo \"=== ADMIN_LOGIN_WITH_ORIGIN ===\" && curl -s --max-time 5 -X POST http://localhost:4001/api/admin/login -H \"Content-Type: application/json\" -H \"Origin: http://localhost:18081\" -d '{\"email\":\"admin@kotobawork.local\",\"password\":\"admin123\"}' -w \"\\nHTTP:%{http_code}\" 2>&1 && echo \"\" && echo \"=== EXERCISE_SESSION_COLUMNS ===\" && psql \"$(grep DATABASE_URL apps/api-go/.env.local | cut -d= -f2-)\" -c \"SELECT column_name FROM information_schema.columns WHERE table_schema='exercise' AND table_name='exercise_session' ORDER BY ordinal_position;\" 2>&1 && echo \"=== PROVISION_SAFETY_CHECK ===\" && head -6 scripts/quality/provision-test-schema.sh"
+        },
+        "impact": "Publish or mutate an external service/account",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "82cb5937893c1f05786cd6743d44b08399b71de55de2db90c1f737e1e36676c1",
+          "environment": "local"
+        },
+        "digest": "c790f5a70541ad159a1f0a608e5b28ac3669a7bbddead0f52123350bb2cb5bc8",
+        "continuation": {
+          "step": "native:toolu_1791037560775_1",
+          "native_tool_use_id": "toolu_1791037560775_1"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "native_permission_once",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-03T14:26:00.991Z"
+      },
+      {
+        "id": "e9ad512a-7e6b-4175-8593-3698295dec8b",
+        "task": "ACC-001",
+        "action": {
+          "kind": "external_mutation",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "066d420fe0e676d92ba7880124619c02ce89af43e7d5c303cca6aaa1d675af44",
+            "environment": "local"
+          },
+          "impact": "Publish or mutate an external service/account",
+          "command": "pkill -f \"go run ./cmd/api\" 2>/dev/null; sleep 2; (cd apps/api-go && set -a && source .env.local && set +a && go run ./cmd/api/main.go > /tmp/nihongo-api.log 2>&1 &) && sleep 8 && echo \"=== API_LOG ===\" && tail -5 /tmp/nihongo-api.log && echo \"=== ADMIN_LOGIN_WITH_ORIGIN ===\" && curl -s --max-time 5 -X POST http://localhost:4001/api/admin/login -H \"Content-Type: application/json\" -H \"Origin: http://localhost:18081\" -d '{\"email\":\"admin@kotobawork.local\",\"password\":\"admin123\"}' -w \"\\nHTTP:%{http_code}\" 2>&1 && echo \"\" && echo \"=== ADMIN_LOGIN_VIA_CADDY ===\" && curl -s --max-time 5 -X POST http://localhost:18081/api/admin/login -H \"Content-Type: application/json\" -H \"Origin: http://localhost:18081\" -d '{\"email\":\"admin@kotobawork.local\",\"password\":\"admin123\"}' -w \"\\nHTTP:%{http_code}\" 2>&1"
+        },
+        "impact": "Publish or mutate an external service/account",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "066d420fe0e676d92ba7880124619c02ce89af43e7d5c303cca6aaa1d675af44",
+          "environment": "local"
+        },
+        "digest": "63b0c91cd2762d33ae4cc7fb822fa126a21b99977ffc49ef7b3f47b3404b8197",
+        "continuation": {
+          "step": "native:toolu_1791037648933_1",
+          "native_tool_use_id": "toolu_1791037648933_1"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "native_permission_once",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-03T14:27:29.156Z"
+      },
+      {
+        "id": "94ca49c3-f841-455c-9272-dd4526196090",
+        "task": "ACC-001",
+        "action": {
+          "kind": "external_mutation",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "1052a162b4429fe6a70c508e64b573d38bd926ebc5ee8bc2db22303b1d65272c",
+            "environment": "local"
+          },
+          "impact": "Publish or mutate an external service/account",
+          "command": "kill -9 36799 2>/dev/null; sleep 2; lsof -iTCP:4001 -sTCP:LISTEN 2>/dev/null || echo \"PORT_4001_FREE\"; (cd apps/api-go && set -a && source .env.local && set +a && echo \"LOADED_CORS=$CORS_ORIGINS\" && go run ./cmd/api/main.go > /tmp/nihongo-api.log 2>&1 &) && sleep 8 && echo \"=== API_LOG_CORS ===\" && grep -i 'cors\\|origin\\|csrf\\|config\\|started' /tmp/nihongo-api.log | tail -10 && echo \"=== ADMIN_LOGIN_DIRECT ===\" && curl -s --max-time 5 -X POST http://localhost:4001/api/admin/login -H \"Content-Type: application/json\" -H \"Origin: http://localhost:18081\" -d '{\"email\":\"admin@kotobawork.local\",\"password\":\"admin123\"}' -w \"\\nHTTP:%{http_code}\" 2>&1"
+        },
+        "impact": "Publish or mutate an external service/account",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "1052a162b4429fe6a70c508e64b573d38bd926ebc5ee8bc2db22303b1d65272c",
+          "environment": "local"
+        },
+        "digest": "a8b469f5b1ca4dab3499577ff68c7a6abd745fdaea7c9765445334b8ccacc84b",
+        "continuation": {
+          "step": "native:toolu_1791037849637_1",
+          "native_tool_use_id": "toolu_1791037849637_1"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "native_permission_once",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-03T14:30:49.833Z"
+      },
+      {
+        "id": "79781a57-26e5-4116-ae1d-1f1ea8a7ad2f",
+        "task": "ACC-001",
+        "action": {
+          "kind": "delete_persistent_data",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "0058ed8ff2ae21a2184f20132e7c039d6537a1c0c4b0c8a8676e2e6c949f1330",
+            "environment": "local"
+          },
+          "impact": "Destroy potentially persistent data",
+          "command": "rm -f forged && echo \"FORGED_REMOVED\" && ls forged 2>/dev/null || echo \"CONFIRMED_GONE\""
+        },
+        "impact": "Destroy potentially persistent data",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "0058ed8ff2ae21a2184f20132e7c039d6537a1c0c4b0c8a8676e2e6c949f1330",
+          "environment": "local"
+        },
+        "digest": "5b60b29228b42e2190618247c73a0a6b5e642daf6b176429bad0d1f0839e376c",
+        "continuation": {
+          "step": "native:toolu_1791041222752_1",
+          "native_tool_use_id": "toolu_1791041222752_1"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "native_permission_once",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-03T15:27:02.958Z"
+      }
+    ]
+  }
+}

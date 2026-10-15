@@ -31,7 +31,7 @@ interface KanjiDetail {
   level: number | null;
   frequency: number | null;
   strokeSvgPath: string | null;
-  components: KanjiComponent[];
+  components?: KanjiComponent[];
   examples: KanjiExample[];
 }
 
@@ -92,7 +92,10 @@ export function KanjiDetailClient({
     return (
       <div className="mx-auto max-w-2xl px-4 py-8 text-center">
         <p className="text-sm text-[#6B7280]">{error ? labels.error : labels.notFound}</p>
-        <Link className="mt-2 inline-block text-sm font-medium text-[#3B82F6]" href={`/${locale}/kanji`}>
+        <Link
+          className="mt-2 inline-block text-sm font-medium text-[#3B82F6]"
+          href={`/${locale}/kanji`}
+        >
           ← {labels.back}
         </Link>
       </div>
@@ -101,7 +104,10 @@ export function KanjiDetailClient({
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
-      <Link className="text-sm font-medium text-[#3B82F6] hover:underline" href={`/${locale}/kanji`}>
+      <Link
+        className="text-sm font-medium text-[#3B82F6] hover:underline"
+        href={`/${locale}/kanji`}
+      >
         ← {labels.back}
       </Link>
 
@@ -145,7 +151,9 @@ export function KanjiDetailClient({
         ) : null}
         {item.strokeCount != null ? (
           <div className="rounded-xl border border-[#E5E7EB] bg-white p-3">
-            <p className="text-[10px] font-semibold uppercase text-[#9CA3AF]">{labels.strokeCount}</p>
+            <p className="text-[10px] font-semibold uppercase text-[#9CA3AF]">
+              {labels.strokeCount}
+            </p>
             <p className="mt-1 text-sm font-medium text-[#111827]">{item.strokeCount}</p>
           </div>
         ) : null}
@@ -158,9 +166,11 @@ export function KanjiDetailClient({
       </div>
 
       {/* Components / radicals */}
-      {item.components.length > 0 ? (
+      {item.components?.length ? (
         <section className="mt-6">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-[#6B7280]">{labels.components}</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-[#6B7280]">
+            {labels.components}
+          </h2>
           <div className="mt-2 flex flex-wrap gap-2">
             {item.components.map((c) => (
               <span
@@ -178,16 +188,22 @@ export function KanjiDetailClient({
       {/* Example words — link to dictionary */}
       {item.examples.length > 0 ? (
         <section className="mt-6">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-[#6B7280]">{labels.examples}</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-[#6B7280]">
+            {labels.examples}
+          </h2>
           <ul className="mt-2 space-y-2">
             {item.examples.map((ex) => (
               <li className="rounded-xl border border-[#E5E7EB] bg-white px-4 py-2.5" key={ex.id}>
                 <div className="flex items-baseline gap-2">
                   <span className="text-sm font-semibold text-[#111827]">{ex.word}</span>
                   {ex.reading ? <span className="text-xs text-[#9CA3AF]">{ex.reading}</span> : null}
-                  {ex.hanViet ? <span className="text-xs text-[#6B7280]">({ex.hanViet})</span> : null}
+                  {ex.hanViet ? (
+                    <span className="text-xs text-[#6B7280]">({ex.hanViet})</span>
+                  ) : null}
                 </div>
-                {ex.meaningVi ? <p className="mt-0.5 text-xs text-[#4B5563]">{ex.meaningVi}</p> : null}
+                {ex.meaningVi ? (
+                  <p className="mt-0.5 text-xs text-[#4B5563]">{ex.meaningVi}</p>
+                ) : null}
               </li>
             ))}
           </ul>
@@ -196,10 +212,16 @@ export function KanjiDetailClient({
 
       {/* Cross-links */}
       <nav className="mt-8 flex flex-wrap gap-2 border-t border-[#E5E7EB] pt-4">
-        <Link className="rounded-lg bg-[#F3F4F6] px-3 py-1.5 text-xs font-medium text-[#4B5563] hover:bg-[#E5E7EB]" href={`/${locale}/dictionary`}>
+        <Link
+          className="rounded-lg bg-[#F3F4F6] px-3 py-1.5 text-xs font-medium text-[#4B5563] hover:bg-[#E5E7EB]"
+          href={`/${locale}/dictionary`}
+        >
           📖 Từ điển →
         </Link>
-        <Link className="rounded-lg bg-[#F3F4F6] px-3 py-1.5 text-xs font-medium text-[#4B5563] hover:bg-[#E5E7EB]" href={`/${locale}/grammar`}>
+        <Link
+          className="rounded-lg bg-[#F3F4F6] px-3 py-1.5 text-xs font-medium text-[#4B5563] hover:bg-[#E5E7EB]"
+          href={`/${locale}/grammar`}
+        >
           📝 Ngữ pháp →
         </Link>
       </nav>

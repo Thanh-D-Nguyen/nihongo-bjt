@@ -16,10 +16,7 @@ import {
   cn,
   useAdminToast
 } from "@nihongo-bjt/ui";
-import {
-  GROWTH_SOCIAL_TEMPLATE_KINDS,
-  GROWTH_TEMPLATE_PRIVACY_CLASSES
-} from "@nihongo-bjt/shared";
+import { GROWTH_SOCIAL_TEMPLATE_KINDS, GROWTH_TEMPLATE_PRIVACY_CLASSES } from "@nihongo-bjt/shared";
 import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
@@ -44,7 +41,12 @@ type TemplateSummary = {
   createdAt: string;
   updatedAt: string;
 };
-type TemplateListResponse = { items: TemplateSummary[]; total: number; page: number; pageSize: number };
+type TemplateListResponse = {
+  items: TemplateSummary[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
 
 type AuditEntry = {
   id: string;
@@ -104,13 +106,16 @@ const PAGE_SIZE = 25;
 function formatWhen(iso: string | null, locale: string) {
   if (!iso) return "—";
   try {
-    return new Intl.DateTimeFormat(locale === "ja" ? "ja-JP" : locale === "en" ? "en-US" : "vi-VN", {
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      month: "short",
-      year: "numeric"
-    }).format(new Date(iso));
+    return new Intl.DateTimeFormat(
+      locale === "ja" ? "ja-JP" : locale === "en" ? "en-US" : "vi-VN",
+      {
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        month: "short",
+        year: "numeric"
+      }
+    ).format(new Date(iso));
   } catch {
     return iso;
   }
@@ -275,12 +280,35 @@ export function GrowthSocialClient({
     if (!canManage) return;
     fe.clearAll();
     const errs = validateFields([
-      { field: "slug", value: form.slug, message: t("slugRequired"), validate: validators.required },
-      { field: "name", value: form.name, message: t("nameRequired"), validate: validators.required },
-      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.required },
-      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.minLength(3) },
+      {
+        field: "slug",
+        value: form.slug,
+        message: t("slugRequired"),
+        validate: validators.required
+      },
+      {
+        field: "name",
+        value: form.name,
+        message: t("nameRequired"),
+        validate: validators.required
+      },
+      {
+        field: "reason",
+        value: reason,
+        message: t("reasonRequired"),
+        validate: validators.required
+      },
+      {
+        field: "reason",
+        value: reason,
+        message: t("reasonRequired"),
+        validate: validators.minLength(3)
+      }
     ]);
-    if (Object.keys(errs).length > 0) { fe.setFieldErrors(errs); return; }
+    if (Object.keys(errs).length > 0) {
+      fe.setFieldErrors(errs);
+      return;
+    }
     setMutating(true);
     try {
       const r = await adminApiFetch("/api/admin/growth/social/templates", {
@@ -315,12 +343,35 @@ export function GrowthSocialClient({
     if (!canManage || !tplDetail) return;
     fe.clearAll();
     const errs = validateFields([
-      { field: "slug", value: form.slug, message: t("slugRequired"), validate: validators.required },
-      { field: "name", value: form.name, message: t("nameRequired"), validate: validators.required },
-      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.required },
-      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.minLength(3) },
+      {
+        field: "slug",
+        value: form.slug,
+        message: t("slugRequired"),
+        validate: validators.required
+      },
+      {
+        field: "name",
+        value: form.name,
+        message: t("nameRequired"),
+        validate: validators.required
+      },
+      {
+        field: "reason",
+        value: reason,
+        message: t("reasonRequired"),
+        validate: validators.required
+      },
+      {
+        field: "reason",
+        value: reason,
+        message: t("reasonRequired"),
+        validate: validators.minLength(3)
+      }
     ]);
-    if (Object.keys(errs).length > 0) { fe.setFieldErrors(errs); return; }
+    if (Object.keys(errs).length > 0) {
+      fe.setFieldErrors(errs);
+      return;
+    }
     setMutating(true);
     try {
       const r = await adminApiFetch(`/api/admin/growth/social/templates/${tplDetail.id}`, {
@@ -351,7 +402,10 @@ export function GrowthSocialClient({
 
   async function submitTplTransition(kind: "publish" | "archive") {
     if (!canManage || !tplDetail) return;
-    if (reason.trim().length < 3) { fe.setFieldError("reason", t("reasonRequired")); return; }
+    if (reason.trim().length < 3) {
+      fe.setFieldError("reason", t("reasonRequired"));
+      return;
+    }
     setMutating(true);
     try {
       const r = await adminApiFetch(`/api/admin/growth/social/templates/${tplDetail.id}/${kind}`, {
@@ -379,14 +433,23 @@ export function GrowthSocialClient({
 
   async function submitModerate() {
     if (!canManage || !moderate) return;
-    if (reason.trim().length < 3) { fe.setFieldError("reason", t("reasonRequired")); return; }
+    if (reason.trim().length < 3) {
+      fe.setFieldError("reason", t("reasonRequired"));
+      return;
+    }
     setMutating(true);
     try {
-      const r = await adminApiFetch(`/api/admin/growth/social/events/${moderate.eventId}/moderate`, {
-        body: JSON.stringify({ action: moderate.action, reason: reason.trim() }),
-        method: "POST"
-      });
-      if (!r.ok) { toast.error(t("moderateFailed")); return; }
+      const r = await adminApiFetch(
+        `/api/admin/growth/social/events/${moderate.eventId}/moderate`,
+        {
+          body: JSON.stringify({ action: moderate.action, reason: reason.trim() }),
+          method: "POST"
+        }
+      );
+      if (!r.ok) {
+        toast.error(t("moderateFailed"));
+        return;
+      }
       toast.success(t("moderateOk"));
       setModerate(null);
       setReason("");
@@ -412,7 +475,10 @@ export function GrowthSocialClient({
         <div className="flex gap-2 border-b text-sm">
           <button
             aria-current={tab === "templates" ? "page" : undefined}
-            className={cn("px-3 py-2", tab === "templates" ? "border-b-2 border-indigo-600 font-semibold" : "")}
+            className={cn(
+              "px-3 py-2",
+              tab === "templates" ? "border-b-2 border-indigo-600 font-semibold" : ""
+            )}
             onClick={() => setTab("templates")}
             type="button"
           >
@@ -420,7 +486,10 @@ export function GrowthSocialClient({
           </button>
           <button
             aria-current={tab === "events" ? "page" : undefined}
-            className={cn("px-3 py-2", tab === "events" ? "border-b-2 border-indigo-600 font-semibold" : "")}
+            className={cn(
+              "px-3 py-2",
+              tab === "events" ? "border-b-2 border-indigo-600 font-semibold" : ""
+            )}
             onClick={() => setTab("events")}
             type="button"
           >
@@ -456,14 +525,20 @@ export function GrowthSocialClient({
               <select
                 aria-label={t("filterStatus")}
                 className="rounded border px-2 py-1 text-sm"
-                onChange={(e) => setStatusFilter(e.target.value as "all" | "published" | "archived")}
+                onChange={(e) =>
+                  setStatusFilter(e.target.value as "all" | "published" | "archived")
+                }
                 value={statusFilter}
               >
                 <option value="all">{t("filterStatusAll")}</option>
                 <option value="published">{t("status_published")}</option>
                 <option value="archived">{t("status_archived")}</option>
               </select>
-              <button className="rounded border px-3 py-1 text-sm" onClick={() => void loadTemplates()} type="button">
+              <button
+                className="rounded border px-3 py-1 text-sm"
+                onClick={() => void loadTemplates()}
+                type="button"
+              >
                 {t("actionRefresh")}
               </button>
               {canManage ? (
@@ -486,7 +561,10 @@ export function GrowthSocialClient({
           </AdminSection>
 
           {tplError ? (
-            <div role="alert" className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-900">
+            <div
+              role="alert"
+              className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-900"
+            >
               {tplError}
             </div>
           ) : null}
@@ -508,7 +586,10 @@ export function GrowthSocialClient({
                   templates.items.map((it) => (
                     <AdminDataTableRow
                       key={it.id}
-                      className={cn("cursor-pointer", selectedTplId === it.id ? "bg-indigo-50" : "")}
+                      className={cn(
+                        "cursor-pointer",
+                        selectedTplId === it.id ? "bg-indigo-50" : ""
+                      )}
                       onClick={() => {
                         setSelectedTplId(it.id);
                         setEditing(false);
@@ -521,7 +602,9 @@ export function GrowthSocialClient({
                       <AdminDataTableTd>{t(`kind_${it.kind}`)}</AdminDataTableTd>
                       <AdminDataTableTd>{it.name}</AdminDataTableTd>
                       <AdminDataTableTd>
-                        <AdminStatusBadge tone={it.privacyClass === "public" ? "warning" : "neutral"}>
+                        <AdminStatusBadge
+                          tone={it.privacyClass === "public" ? "warning" : "neutral"}
+                        >
                           {t(`privacy_${it.privacyClass}`)}
                         </AdminStatusBadge>
                         {it.privacyClass === "public" && !it.noPiiVerified ? (
@@ -577,7 +660,9 @@ export function GrowthSocialClient({
 
           {creating || editing ? (
             <AdminSection>
-              <h3 className="text-lg font-semibold">{creating ? t("createHeading") : t("editHeading")}</h3>
+              <h3 className="text-lg font-semibold">
+                {creating ? t("createHeading") : t("editHeading")}
+              </h3>
               <div className="mb-3 flex items-center justify-between">
                 <FormError message={fe.errors.form} className="flex-1" />
                 <AdminAutoFill
@@ -591,8 +676,12 @@ export function GrowthSocialClient({
                       ...(f.name !== undefined && { name: String(f.name) }),
                       ...(f.description !== undefined && { description: String(f.description) }),
                       ...(f.bodyTemplate !== undefined && { bodyTemplate: String(f.bodyTemplate) }),
-                      ...(f.privacyClass !== undefined && { privacyClass: f.privacyClass as FormState["privacyClass"] }),
-                      ...(f.noPiiVerified !== undefined && { noPiiVerified: Boolean(f.noPiiVerified) }),
+                      ...(f.privacyClass !== undefined && {
+                        privacyClass: f.privacyClass as FormState["privacyClass"]
+                      }),
+                      ...(f.noPiiVerified !== undefined && {
+                        noPiiVerified: Boolean(f.noPiiVerified)
+                      })
                     }));
                   }}
                   labels={{ button: t("autoFill") || "Auto Fill" }}
@@ -603,11 +692,19 @@ export function GrowthSocialClient({
                 <label className="text-sm">
                   {t("formSlug")} <span className="text-red-500">*</span>
                   <input
-                    className={cn("mt-1 w-full rounded border px-2 py-1", fe.fieldError("slug") ? "border-red-400 bg-red-50/50" : "")}
-                    onChange={(e) => { setForm((f) => ({ ...f, slug: e.target.value })); fe.clearFieldError("slug"); }}
+                    className={cn(
+                      "mt-1 w-full rounded border px-2 py-1",
+                      fe.fieldError("slug") ? "border-red-400 bg-red-50/50" : ""
+                    )}
+                    onChange={(e) => {
+                      setForm((f) => ({ ...f, slug: e.target.value }));
+                      fe.clearFieldError("slug");
+                    }}
                     value={form.slug}
                   />
-                  {fe.fieldError("slug") && <p className="text-xs text-red-600">{fe.fieldError("slug")}</p>}
+                  {fe.fieldError("slug") && (
+                    <p className="text-xs text-red-600">{fe.fieldError("slug")}</p>
+                  )}
                 </label>
                 <label className="text-sm">
                   {t("formKind")}
@@ -626,11 +723,19 @@ export function GrowthSocialClient({
                 <label className="text-sm md:col-span-2">
                   {t("formName")} <span className="text-red-500">*</span>
                   <input
-                    className={cn("mt-1 w-full rounded border px-2 py-1", fe.fieldError("name") ? "border-red-400 bg-red-50/50" : "")}
-                    onChange={(e) => { setForm((f) => ({ ...f, name: e.target.value })); fe.clearFieldError("name"); }}
+                    className={cn(
+                      "mt-1 w-full rounded border px-2 py-1",
+                      fe.fieldError("name") ? "border-red-400 bg-red-50/50" : ""
+                    )}
+                    onChange={(e) => {
+                      setForm((f) => ({ ...f, name: e.target.value }));
+                      fe.clearFieldError("name");
+                    }}
                     value={form.name}
                   />
-                  {fe.fieldError("name") && <p className="text-xs text-red-600">{fe.fieldError("name")}</p>}
+                  {fe.fieldError("name") && (
+                    <p className="text-xs text-red-600">{fe.fieldError("name")}</p>
+                  )}
                 </label>
                 <label className="text-sm md:col-span-2">
                   {t("formDescription")}
@@ -654,7 +759,9 @@ export function GrowthSocialClient({
                   {t("formPrivacyClass")}
                   <select
                     className="mt-1 w-full rounded border px-2 py-1"
-                    onChange={(e) => setForm((f) => ({ ...f, privacyClass: e.target.value as PrivacyClass }))}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, privacyClass: e.target.value as PrivacyClass }))
+                    }
                     value={form.privacyClass}
                   >
                     {GROWTH_TEMPLATE_PRIVACY_CLASSES.map((p) => (
@@ -663,7 +770,9 @@ export function GrowthSocialClient({
                       </option>
                     ))}
                   </select>
-                  <span className="text-xs text-muted-foreground">{t(`privacyDesc_${form.privacyClass}`)}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {t(`privacyDesc_${form.privacyClass}`)}
+                  </span>
                 </label>
                 {form.privacyClass === "public" ? (
                   <label className="flex items-center gap-2 text-sm md:col-span-2">
@@ -678,11 +787,19 @@ export function GrowthSocialClient({
                 <label className="text-sm md:col-span-2">
                   {t("formReason")} <span className="text-red-500">*</span>
                   <input
-                    className={cn("mt-1 w-full rounded border px-2 py-1", fe.fieldError("reason") ? "border-red-400 bg-red-50/50" : "")}
-                    onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
+                    className={cn(
+                      "mt-1 w-full rounded border px-2 py-1",
+                      fe.fieldError("reason") ? "border-red-400 bg-red-50/50" : ""
+                    )}
+                    onChange={(e) => {
+                      setReason(e.target.value);
+                      fe.clearFieldError("reason");
+                    }}
                     value={reason}
                   />
-                  {fe.fieldError("reason") && <p className="text-xs text-red-600">{fe.fieldError("reason")}</p>}
+                  {fe.fieldError("reason") && (
+                    <p className="text-xs text-red-600">{fe.fieldError("reason")}</p>
+                  )}
                 </label>
               </div>
               <div className="mt-3 flex gap-2">
@@ -716,8 +833,11 @@ export function GrowthSocialClient({
                 <div>
                   <h3 className="text-lg font-semibold">{tplDetail.name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    <code>{tplDetail.slug}</code> · {t(`kind_${tplDetail.kind}`)} · v{tplDetail.version} ·{" "}
-                    <AdminStatusBadge tone={tplDetail.privacyClass === "public" ? "warning" : "neutral"}>
+                    <code>{tplDetail.slug}</code> · {t(`kind_${tplDetail.kind}`)} · v
+                    {tplDetail.version} ·{" "}
+                    <AdminStatusBadge
+                      tone={tplDetail.privacyClass === "public" ? "warning" : "neutral"}
+                    >
                       {t(`privacy_${tplDetail.privacyClass}`)}
                     </AdminStatusBadge>
                   </p>
@@ -738,7 +858,10 @@ export function GrowthSocialClient({
                     {!tplDetail.active ? (
                       <button
                         className="rounded border px-2 py-1 text-xs"
-                        onClick={() => { fe.clearFieldError("reason"); setConfirmTpl({ kind: "publish" }); }}
+                        onClick={() => {
+                          fe.clearFieldError("reason");
+                          setConfirmTpl({ kind: "publish" });
+                        }}
                         type="button"
                       >
                         {t("actionPublish")}
@@ -746,7 +869,10 @@ export function GrowthSocialClient({
                     ) : (
                       <button
                         className="rounded border px-2 py-1 text-xs"
-                        onClick={() => { fe.clearFieldError("reason"); setConfirmTpl({ kind: "archive" }); }}
+                        onClick={() => {
+                          fe.clearFieldError("reason");
+                          setConfirmTpl({ kind: "archive" });
+                        }}
                         type="button"
                       >
                         {t("actionArchive")}
@@ -791,12 +917,22 @@ export function GrowthSocialClient({
                 <h4 className="text-lg font-semibold">{t(`confirmHeading_${confirmTpl.kind}`)}</h4>
                 <p className="mt-1 text-sm">{t(`confirmBody_${confirmTpl.kind}`)}</p>
                 <input
-                  className={cn("mt-3 w-full rounded border px-2 py-1 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")}
-                  onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
+                  className={cn(
+                    "mt-3 w-full rounded border px-2 py-1 text-sm",
+                    fe.fieldError("reason")
+                      ? "border-red-400 bg-red-50/50 text-red-900"
+                      : "border-slate-300"
+                  )}
+                  onChange={(e) => {
+                    setReason(e.target.value);
+                    fe.clearFieldError("reason");
+                  }}
                   placeholder={t("formReason")}
                   value={reason}
                 />
-                {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
+                {fe.fieldError("reason") && (
+                  <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>
+                )}
                 <div className="mt-3 flex justify-end gap-2">
                   <button
                     className="rounded border px-3 py-1 text-sm"
@@ -838,100 +974,108 @@ export function GrowthSocialClient({
                 <option value="active">{t("filterHiddenActive")}</option>
                 <option value="hidden">{t("filterHiddenHidden")}</option>
               </select>
-              <button className="rounded border px-3 py-1 text-sm" onClick={() => void loadEvents()} type="button">
+              <button
+                className="rounded border px-3 py-1 text-sm"
+                onClick={() => void loadEvents()}
+                type="button"
+              >
                 {t("actionRefresh")}
               </button>
             </div>
           </AdminSection>
           <AdminSection>
-            <AdminDataTable>
-              <AdminDataTableHead>
-                <AdminDataTableRow>
-                  <AdminDataTableTh>{t("colToken")}</AdminDataTableTh>
-                  <AdminDataTableTh>{t("colKind")}</AdminDataTableTh>
-                  <AdminDataTableTh>{t("colTemplate")}</AdminDataTableTh>
-                  <AdminDataTableTh>{t("colPreview")}</AdminDataTableTh>
-                  <AdminDataTableTh>{t("colCreated")}</AdminDataTableTh>
-                  <AdminDataTableTh>{t("colHidden")}</AdminDataTableTh>
-                  <AdminDataTableTh>{t("colActions")}</AdminDataTableTh>
-                </AdminDataTableRow>
-              </AdminDataTableHead>
-              <AdminDataTableBody>
-                {events && events.items.length > 0 ? (
-                  events.items.map((ev) => (
-                    <AdminDataTableRow key={ev.id}>
-                      <AdminDataTableTd>
-                        <code className="text-xs">{ev.publicToken.slice(0, 12)}…</code>
-                      </AdminDataTableTd>
-                      <AdminDataTableTd>{ev.kind}</AdminDataTableTd>
-                      <AdminDataTableTd>{ev.template?.slug ?? "—"}</AdminDataTableTd>
-                      <AdminDataTableTd>
-                        {ev.summaryPreview.headline ? (
-                          <span className="text-xs">{ev.summaryPreview.headline}</span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">{t("previewRedacted")}</span>
-                        )}
-                      </AdminDataTableTd>
-                      <AdminDataTableTd>{formatWhen(ev.createdAt, locale)}</AdminDataTableTd>
-                      <AdminDataTableTd>
-                        {ev.hidden ? (
-                          <AdminStatusBadge tone="neutral">{t("status_hidden")}</AdminStatusBadge>
-                        ) : (
-                          <AdminStatusBadge tone="good">{t("status_active")}</AdminStatusBadge>
-                        )}
-                      </AdminDataTableTd>
-                      <AdminDataTableTd>
-                        {canManage ? (
-                          <div className="flex flex-wrap gap-1">
-                            <button
-                              className="rounded border px-2 py-1 text-xs"
-                              onClick={() => {
-                                setModerate({ action: "dismiss", eventId: ev.id });
-                                setReason("");
-                                fe.clearFieldError("reason");
-                              }}
-                              type="button"
-                            >
-                              {t("actionDismiss")}
-                            </button>
-                            <button
-                              className="rounded border px-2 py-1 text-xs"
-                              onClick={() => {
-                                setModerate({ action: "hide_from_public", eventId: ev.id });
-                                setReason("");
-                                fe.clearFieldError("reason");
-                              }}
-                              type="button"
-                            >
-                              {t("actionHide")}
-                            </button>
-                            <button
-                              className="rounded border px-2 py-1 text-xs"
-                              onClick={() => {
-                                setModerate({ action: "report_to_legal", eventId: ev.id });
-                                setReason("");
-                                fe.clearFieldError("reason");
-                              }}
-                              type="button"
-                            >
-                              {t("actionReport")}
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
+            <div role="region" aria-label={t("tabEvents")} tabIndex={0} className="overflow-x-auto">
+              <AdminDataTable className="min-w-[760px]">
+                <AdminDataTableHead>
+                  <AdminDataTableRow>
+                    <AdminDataTableTh>{t("colToken")}</AdminDataTableTh>
+                    <AdminDataTableTh>{t("colKind")}</AdminDataTableTh>
+                    <AdminDataTableTh>{t("colTemplate")}</AdminDataTableTh>
+                    <AdminDataTableTh>{t("colPreview")}</AdminDataTableTh>
+                    <AdminDataTableTh>{t("colCreated")}</AdminDataTableTh>
+                    <AdminDataTableTh>{t("colHidden")}</AdminDataTableTh>
+                    <AdminDataTableTh>{t("colActions")}</AdminDataTableTh>
+                  </AdminDataTableRow>
+                </AdminDataTableHead>
+                <AdminDataTableBody>
+                  {events && events.items.length > 0 ? (
+                    events.items.map((ev) => (
+                      <AdminDataTableRow key={ev.id}>
+                        <AdminDataTableTd>
+                          <code className="text-xs">{ev.publicToken.slice(0, 12)}…</code>
+                        </AdminDataTableTd>
+                        <AdminDataTableTd>{ev.kind}</AdminDataTableTd>
+                        <AdminDataTableTd>{ev.template?.slug ?? "—"}</AdminDataTableTd>
+                        <AdminDataTableTd>
+                          {ev.summaryPreview.headline ? (
+                            <span className="text-xs">{ev.summaryPreview.headline}</span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">
+                              {t("previewRedacted")}
+                            </span>
+                          )}
+                        </AdminDataTableTd>
+                        <AdminDataTableTd>{formatWhen(ev.createdAt, locale)}</AdminDataTableTd>
+                        <AdminDataTableTd>
+                          {ev.hidden ? (
+                            <AdminStatusBadge tone="neutral">{t("status_hidden")}</AdminStatusBadge>
+                          ) : (
+                            <AdminStatusBadge tone="good">{t("status_active")}</AdminStatusBadge>
+                          )}
+                        </AdminDataTableTd>
+                        <AdminDataTableTd>
+                          {canManage ? (
+                            <div className="flex flex-wrap gap-1">
+                              <button
+                                className="rounded border px-2 py-1 text-xs"
+                                onClick={() => {
+                                  setModerate({ action: "dismiss", eventId: ev.id });
+                                  setReason("");
+                                  fe.clearFieldError("reason");
+                                }}
+                                type="button"
+                              >
+                                {t("actionDismiss")}
+                              </button>
+                              <button
+                                className="rounded border px-2 py-1 text-xs"
+                                onClick={() => {
+                                  setModerate({ action: "hide_from_public", eventId: ev.id });
+                                  setReason("");
+                                  fe.clearFieldError("reason");
+                                }}
+                                type="button"
+                              >
+                                {t("actionHide")}
+                              </button>
+                              <button
+                                className="rounded border px-2 py-1 text-xs"
+                                onClick={() => {
+                                  setModerate({ action: "report_to_legal", eventId: ev.id });
+                                  setReason("");
+                                  fe.clearFieldError("reason");
+                                }}
+                                type="button"
+                              >
+                                {t("actionReport")}
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </AdminDataTableTd>
+                      </AdminDataTableRow>
+                    ))
+                  ) : (
+                    <AdminDataTableRow>
+                      <AdminDataTableTd colSpan={7}>
+                        <AdminEmptyState title={common.empty} />
                       </AdminDataTableTd>
                     </AdminDataTableRow>
-                  ))
-                ) : (
-                  <AdminDataTableRow>
-                    <AdminDataTableTd colSpan={7}>
-                      <AdminEmptyState title={common.empty} />
-                    </AdminDataTableTd>
-                  </AdminDataTableRow>
-                )}
-              </AdminDataTableBody>
-            </AdminDataTable>
+                  )}
+                </AdminDataTableBody>
+              </AdminDataTable>
+            </div>
             {events ? (
               <div className="mt-2 flex items-center justify-between text-sm">
                 <span>
@@ -972,12 +1116,22 @@ export function GrowthSocialClient({
                 <h4 className="text-lg font-semibold">{t(`moderateHeading_${moderate.action}`)}</h4>
                 <p className="mt-1 text-sm">{t(`moderateBody_${moderate.action}`)}</p>
                 <input
-                  className={cn("mt-3 w-full rounded border px-2 py-1 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")}
-                  onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
+                  className={cn(
+                    "mt-3 w-full rounded border px-2 py-1 text-sm",
+                    fe.fieldError("reason")
+                      ? "border-red-400 bg-red-50/50 text-red-900"
+                      : "border-slate-300"
+                  )}
+                  onChange={(e) => {
+                    setReason(e.target.value);
+                    fe.clearFieldError("reason");
+                  }}
                   placeholder={t("formReason")}
                   value={reason}
                 />
-                {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
+                {fe.fieldError("reason") && (
+                  <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>
+                )}
                 <div className="mt-3 flex justify-end gap-2">
                   <button
                     className="rounded border px-3 py-1 text-sm"

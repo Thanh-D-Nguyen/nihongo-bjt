@@ -1,0 +1,698 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-088",
+  "title": "Audit learner pricing screen",
+  "start_head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Pricing crashes on missing plan details and its session, checkout, and backend contracts disagree.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Anonymous vi/en/ja pricing renders active plan names, prices, quotas, entitlements and links without requiring a learner session."
+      },
+      {
+        "id": "AC2",
+        "text": "Authenticated pricing loads the current subscription from the real session-owned subscription endpoint; caller-supplied userId cannot reveal another learner's subscription."
+      },
+      {
+        "id": "AC3",
+        "text": "Selecting an upgrade sends the selected plan ID through the CSRF-protected checkout API and renders the returned pending state without falsely claiming a completed purchase."
+      },
+      {
+        "id": "AC4",
+        "text": "API failures produce a localized retryable error, and the 390x844 layout has no horizontal overflow."
+      }
+    ],
+    "expected_behavior": "Public plans include canonical quota/entitlement data; subscription access is session-bound; checkout records only an honest pending intent; localized loading errors remain retryable.",
+    "observed_behavior": "Visible 390x844 pricing crashes after HTTP 200; subscription summary route is absent; checkout request and persisted SQL do not match contracts.",
+    "rollback_plan": "Revert only the Pricing frontend, monetization read/checkout handler, tests, and i18n additions; test subscriptions are cleaned and no canonical plans are changed."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DATABASE",
+      "AUTH_SECURITY",
+      "DOMAIN_LOGIC",
+      "UI_ONLY",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx",
+      "test": "PricingClient contracts > loads subscription only from the authenticated session endpoint",
+      "expect": "expected 2nd"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-09T17:00:11.714Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-09T17:02:47.519Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-09T17:03:01.970Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T17:08:35.461Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T17:10:21.545Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T17:10:54.135Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T17:12:26.444Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T17:24:45.882Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T17:34:10.927Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T18:33:41.239Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-09T18:34:22.678Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-09T18:34:29.707Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-09T17:08:34.963Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPricingPlanReadIncludesCanonicalFeaturesAndCheckoutIsSessionOwned)$ ./apps/api-go/internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestPricingPlanReadIncludesCanonicalFeaturesAndCheckoutIsSessionOwned",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-6jwA14/tree/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestPricingPlanReadIncludesCanonicalFeaturesAndCheckoutIsSessionOwned": "plan features missing from public contract"
+      },
+      "fingerprint": "1399f430101415e2f4148dc0889aae122abc0069788dc637488be8a76f2f1056"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-09T17:08:53.221Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPricingPlanReadIncludesCanonicalFeaturesAndCheckoutIsSessionOwned)$ ./apps/api-go/internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPricingPlanReadIncludesCanonicalFeaturesAndCheckoutIsSessionOwned)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestPricingPlanReadIncludesCanonicalFeaturesAndCheckoutIsSessionOwned",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-OAOnWO/tree/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestPricingPlanReadIncludesCanonicalFeaturesAndCheckoutIsSessionOwned",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestPricingPlanReadIncludesCanonicalFeaturesAndCheckoutIsSessionOwned handler_monetization_reading_onboarding_test.go:30: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestPricingPlanReadIncludesCanonicalFeaturesAndCheckoutIsSessionOwned (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestPricingPlanReadIncludesCanonicalFeaturesAndCheckoutIsSessionOwned": "plan features missing from public contract",
+        "go:./internal/httpserver:TestPricingPlanReadIncludesCanonicalFeaturesAndCheckoutIsSessionOwned": "plan features missing from public contract"
+      },
+      "fingerprint": "1399f430101415e2f4148dc0889aae122abc0069788dc637488be8a76f2f1056"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-09T17:09:14.107Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders complete public vi plan data",
+          "outcome": "PASS",
+          "excerpt": "",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders complete public vi plan data": "Cannot read properties"
+      },
+      "fingerprint": "93e4c2c0b054ea867c827af06dbb0c852cfb5489e461e633daf3f7269c557c01"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-09T17:09:23.816Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders complete public vi plan data",
+          "outcome": "PASS",
+          "excerpt": "",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders complete public en plan data",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Pricing PlansChoose the plan that bes…' to contain 'Plus'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders complete public vi plan data": "Cannot read properties",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders complete public en plan data": "Plus"
+      },
+      "fingerprint": "93e4c2c0b054ea867c827af06dbb0c852cfb5489e461e633daf3f7269c557c01"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-09T17:10:12.485Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > loads subscription only from the authenticated session endpoint",
+          "outcome": "FAIL",
+          "excerpt": "expected 2nd \"vi.fn()\" call to have been called with [ Array(1) ]",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"summary?userId=learner-id\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > loads subscription only from the authenticated session endpoint": "summary?userId=learner-id"
+      },
+      "fingerprint": "93e4c2c0b054ea867c827af06dbb0c852cfb5489e461e633daf3f7269c557c01"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-09T17:10:21.064Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > loads subscription only from the authenticated session endpoint",
+          "outcome": "FAIL",
+          "excerpt": "expected 2nd \"vi.fn()\" call to have been called with [ Array(1) ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > loads subscription only from the authenticated session endpoint": "expected 2nd"
+      },
+      "fingerprint": "93e4c2c0b054ea867c827af06dbb0c852cfb5489e461e633daf3f7269c557c01"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-09T17:10:53.650Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > loads subscription only from the authenticated session endpoint",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "5a74133e1ec0afdd73d38a570b5fba7bce81d5aa978332a988751deba0ff4f36"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-09T17:12:26.029Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 734,
+        "executed": 734,
+        "passed": 733,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "c33d4b76276e285df2b510cada7b2e439914fcddc0980d939b92e4b5856314cc"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-09T17:15:27.102Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 406,
+        "executed": 406,
+        "passed": 406,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 774,
+        "lint_errors": 66,
+        "lint_warnings": 25,
+        "new_debt": 1
+      },
+      "message": "RATCHET_VIOLATION: 1 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "c33d4b76276e285df2b510cada7b2e439914fcddc0980d939b92e4b5856314cc"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-09T17:18:28.144Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "9a637b59138f4842ef41292607ed51f3c956d3385d97a4b991c08896a6c16528"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-09T17:21:07.504Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 734,
+        "executed": 734,
+        "passed": 734,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "734 passed, 0 allowed skip(s)",
+      "fingerprint": "9a637b59138f4842ef41292607ed51f3c956d3385d97a4b991c08896a6c16528"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-09T17:24:26.608Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 406,
+        "executed": 406,
+        "passed": 406,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 774,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "9a637b59138f4842ef41292607ed51f3c956d3385d97a4b991c08896a6c16528"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-09T17:24:45.366Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > loads subscription only from the authenticated session endpoint",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9a637b59138f4842ef41292607ed51f3c956d3385d97a4b991c08896a6c16528"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-09T17:31:29.287Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > loads subscription only from the authenticated session endpoint",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ca8b1ac75a023b472749c956f4cc1aa1322e1f8551cfbf1e1a84d1de43051cf9"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-09T17:34:10.406Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "ca8b1ac75a023b472749c956f4cc1aa1322e1f8551cfbf1e1a84d1de43051cf9"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-09T17:36:33.173Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 734,
+        "executed": 734,
+        "passed": 734,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "734 passed, 0 allowed skip(s)",
+      "fingerprint": "c699d6f07f6b897eeda4d7cc11606fa77b13d550c0c29695cf9932640137d962"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-09T17:39:53.602Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 406,
+        "executed": 406,
+        "passed": 406,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 774,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "c699d6f07f6b897eeda4d7cc11606fa77b13d550c0c29695cf9932640137d962"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-09T17:43:28.320Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "/tmp/audit-088-visible.sh",
+      "exit_code": 1,
+      "fingerprint": "0fcb572e181b97e43301fffc551762436beb9b477109ea30aacbc250f4232444"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-09T17:43:54.533Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "/tmp/audit-088-visible.sh",
+      "exit_code": 0,
+      "fingerprint": "0fcb572e181b97e43301fffc551762436beb9b477109ea30aacbc250f4232444"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-09T17:46:46.665Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "0fcb572e181b97e43301fffc551762436beb9b477109ea30aacbc250f4232444"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-09T17:49:27.834Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 734,
+        "executed": 734,
+        "passed": 734,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "734 passed, 0 allowed skip(s)",
+      "fingerprint": "0fcb572e181b97e43301fffc551762436beb9b477109ea30aacbc250f4232444"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-09T18:13:43.660Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "TOOL_FAILURE",
+      "accounting": null,
+      "message": "lint could not run: spawnSync pnpm ETIMEDOUT",
+      "fingerprint": "0fcb572e181b97e43301fffc551762436beb9b477109ea30aacbc250f4232444"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-09T18:32:51.922Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 413,
+        "executed": 413,
+        "passed": 413,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 775,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "0fcb572e181b97e43301fffc551762436beb9b477109ea30aacbc250f4232444"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-09T18:33:40.785Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > loads subscription only from the authenticated session endpoint",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0fcb572e181b97e43301fffc551762436beb9b477109ea30aacbc250f4232444"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-09T18:34:22.217Z",
+      "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Plato/01a121b8-dcd9-71f1-9223-0b23740858f6",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "0fcb572e181b97e43301fffc551762436beb9b477109ea30aacbc250f4232444"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-09T18:34:29.692Z",
+    "head": "ebbeec1fb0c228e84c991707f079a644a24d012b",
+    "fingerprint": "0fcb572e181b97e43301fffc551762436beb9b477109ea30aacbc250f4232444",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_monetization_reading_onboarding.go": "92a79b6038802df990c3717c67e7560164dff4dc",
+      "apps/api-go/internal/httpserver/handler_monetization_reading_onboarding_test.go": "f899464d7159b66c0e69c7c3ebc6940fed189895",
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "93822808a114294b5871bd485ce3701e916af624",
+      "apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx": "90409ea5d12cccf312940ed40e60c7d4426a5189",
+      "apps/web/app/[locale]/pricing/_components/pricing-client.tsx": "780436839e827dd71c59ded184ebd450e45b71f8",
+      "apps/web/messages/en.json": "f0296f62b722de6293fb10343fad7345a23cf677",
+      "apps/web/messages/ja.json": "376b78e0fe0e8abbfd7d2bb6cc815d058a3f4fae",
+      "apps/web/messages/vi.json": "8e8ca458d594f44d43fcde7b2319cb0e75bf2dc9"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

@@ -1,0 +1,2843 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-080",
+  "title": "Audit learner BJT level detail screen",
+  "start_head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The active BJT level detail screen calls five Go APIs that are unregistered, so /vi/levels/J1 renders not found and vocabulary/kanji/grammar tabs cannot load; lesson completion summary still reads localStorage instead of persisted learner progress.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "GET /api/levels/{code} returns the established BJT metadata and canonical active content counts; unknown code is 404."
+      },
+      {
+        "id": "AC2",
+        "text": "GET /api/levels/{code}/lessons returns only active/published ordered lesson summaries, accurate activity/reference counts, and optional authenticated isCompleted from PostgreSQL; no-content is an empty array."
+      },
+      {
+        "id": "AC3",
+        "text": "GET vocabulary, kanji and grammar tabs return active canonical rows for the mapped BJT/JLPT level, honor parameterized search and validated pagination, preserve nested read DTO fields, and never mutate master rows."
+      },
+      {
+        "id": "AC4",
+        "text": "Visible anonymous and authenticated /vi/levels/J1 flows, tab interactions and mobile 390x844 render without page errors/overflow; lesson progress from detail is reflected on this screen after navigation and refresh."
+      },
+      {
+        "id": "AC5",
+        "text": "Public level lesson reads remain registered when learner sessions are unavailable."
+      },
+      {
+        "id": "AC6",
+        "text": "Public level reads are bounded by an IP-based route limit and fail closed without the dedicated limiter."
+      }
+    ],
+    "expected_behavior": "Known BJT levels render canonical level metadata and content counts; level lesson lists show published curriculum, activity/reference counts and the current learner's saved completion; read-only reference tabs query active canonical lexeme, kanji and grammar rows with safe search/pagination.",
+    "observed_behavior": "Visible authenticated /vi/levels/J1 shows Không tìm thấy trình độ này; GET /api/levels/J1 and GET /api/levels/J1/lessons both return 404. Source shows all four content-tab API callers are also unregistered, and completion list reads bjt_lesson_completed localStorage.",
+    "rollback_plan": "Revert the screen/API commit; retain canonical content and existing progress data. The routes are read-only and require no data migration or master-content writes."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DATABASE",
+      "AUTH_SECURITY",
+      "DOMAIN_LOGIC",
+      "UI_ONLY",
+      "CROSS_CUTTING",
+      "INFRASTRUCTURE"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLevelDetailReturnsEstablishedBJTDefinition",
+      "expect": "expected known level metadata 200"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+      "expect": "public lesson list without session store: expected 200"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLevelPublicReadsApplyIPRateLimit",
+      "expect": "first public read: expected 200"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLevelPublicReadsFailClosedWithoutLimiter",
+      "expect": "public read without limiter: expected 503"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLevelPublicReadsUseClientIPFromLocalProxy",
+      "expect": "first proxied client read: expected 200"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination",
+      "expect": "GET vocabulary: expected 200"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-09T02:58:14.499Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-09T03:01:39.921Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T03:01:40.294Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T03:25:51.213Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T03:35:23.345Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T04:02:29.465Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T04:50:10.585Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T04:56:31.564Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T04:57:42.468Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T05:04:32.801Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T05:11:35.176Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T05:12:01.815Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T05:12:38.816Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T05:15:10.152Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T05:16:10.982Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T05:17:27.909Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T05:31:16.402Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T05:31:40.993Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T05:37:32.865Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T05:39:54.904Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T05:41:03.237Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T05:48:41.087Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T05:52:47.480Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T05:54:41.482Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T05:57:35.858Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T06:02:56.746Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T06:03:16.765Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T06:14:10.357Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T06:18:42.751Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T06:21:20.624Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T06:33:38.643Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T06:35:49.711Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-09T06:43:02.671Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T06:58:50.236Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T07:00:25.725Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T07:50:17.806Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T07:52:20.853Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T08:00:14.685Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T08:08:08.508Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T08:15:47.388Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T08:19:10.345Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T08:22:47.359Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T08:25:49.773Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-09T08:29:27.658Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-09T08:29:43.683Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-09T03:25:51.001Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelDetailReturnsEstablishedBJTDefinition handler_levels_test.go:24: expected known level metadata 200, got 404: 404 page not found --- FAIL: TestLevelDetailReturnsEstablishedBJTDefinition (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition": "expected known level metadata 200"
+      },
+      "fingerprint": "960dcf6b32356a8a83af796c466a181f0be9c25640c25ab3fbdad3ff7059742d"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-09T03:27:26.748Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestLevelDetailReturnsEstablishedBJTDefinition handler_levels_test.go:18: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLevelDetailReturnsEstablishedBJTDefinition (0.00s)"
+        }
+      ],
+      "fingerprint": "496add6e64a8d9c2f1e8007e96c51d3ea343393ece41e31644e57d637b89017e"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-09T03:27:37.600Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestLevelDetailReturnsEstablishedBJTDefinition handler_levels_test.go:39: expected established J1 metadata and canonical counts, got {Code:J1 ScoreMin:530 ScoreMax:599 JLPTEquiv:N1 VocabCount:0 KanjiCount:0 GrammarCount:0} --- FAIL: TestLevelDetailReturnsEstablishedBJTDefinition (0.02s)"
+        }
+      ],
+      "fingerprint": "496add6e64a8d9c2f1e8007e96c51d3ea343393ece41e31644e57d637b89017e"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-09T03:35:02.916Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestLevelDetailReturnsEstablishedBJTDefinition handler_levels_test.go:29: seed canonical level count fixture: ERROR: inconsistent types deduced for parameter $1 (SQLSTATE 42P08) --- FAIL: TestLevelDetailReturnsEstablishedBJTDefinition (0.02s)"
+        }
+      ],
+      "fingerprint": "1fc634037183f1c16ea5e0717c72e6d8fc550f653a4143540f13c3cd9696b487"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-09T03:35:22.975Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9d45fce3b5083bd403be38861e0fca34f5d07e1c5d5320e4160ecc8143cb4873"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-09T03:35:36.405Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9d45fce3b5083bd403be38861e0fca34f5d07e1c5d5320e4160ecc8143cb4873"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-09T03:35:45.569Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9d45fce3b5083bd403be38861e0fca34f5d07e1c5d5320e4160ecc8143cb4873"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-09T04:02:29.008Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 709,
+        "executed": 709,
+        "passed": 709,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "a later step of bash scripts/quality/verify-go.sh failed (exit 1)",
+      "fingerprint": "b49ebb284d30f855ce9989711466195981e33dd240ce74810a1d746dcf547297"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-09T04:06:22.136Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 381,
+        "executed": 381,
+        "passed": 381,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 765,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "b49ebb284d30f855ce9989711466195981e33dd240ce74810a1d746dcf547297"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-09T04:50:10.033Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0d9092615a6e683c5a233f16806bbecf6217ff7ec850f4d05ea19dd6b9155f4c"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-09T04:53:01.276Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 709,
+        "executed": 709,
+        "passed": 709,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "a later step of bash scripts/quality/verify-go.sh failed (exit 1)",
+      "fingerprint": "0d9092615a6e683c5a233f16806bbecf6217ff7ec850f4d05ea19dd6b9155f4c"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-09T04:56:30.804Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 382,
+        "executed": 382,
+        "passed": 382,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 766,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "0d9092615a6e683c5a233f16806bbecf6217ff7ec850f4d05ea19dd6b9155f4c"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-09T04:57:41.992Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8273b0b1d5f757c9f783197a0973d2951c8ce567bc6418e4d9c0afaa38a41eed"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-09T05:00:44.480Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 709,
+        "executed": 709,
+        "passed": 709,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "709 passed, 0 allowed skip(s)",
+      "fingerprint": "8273b0b1d5f757c9f783197a0973d2951c8ce567bc6418e4d9c0afaa38a41eed"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-09T05:03:55.005Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 382,
+        "executed": 382,
+        "passed": 382,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 766,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "8273b0b1d5f757c9f783197a0973d2951c8ce567bc6418e4d9c0afaa38a41eed"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-09T05:04:32.335Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium",
+      "exit_code": 0,
+      "fingerprint": "8273b0b1d5f757c9f783197a0973d2951c8ce567bc6418e4d9c0afaa38a41eed"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-09T05:07:41.767Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec -s read-only -C /Users/thanhnguyen/Documents/Projects/nihongo-bjt -",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 2,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/server.go",
+          "summary": "The public GET /api/levels/{code}/lessons route is registered only when SessionStore is non-nil. With a database-backed router without sessions, the endpoint returns 404 despite its public, optionally…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/handler_levels.go",
+          "summary": "The new public endpoints have no rate limiting. The reference handlers allow repeated wildcard ILIKE searches and perform nested database queries, contrary to the production policy requiring rate limi…"
+        }
+      ],
+      "package_sha256": "e849ad5e2d6c1335679a2c8269bb30a249ab0a90c0eafa525bc4526e70b6d1d5",
+      "fingerprint": "8273b0b1d5f757c9f783197a0973d2951c8ce567bc6418e4d9c0afaa38a41eed"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-09T05:11:34.689Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelDetailReturnsEstablishedBJTDefinition handler_levels_test.go:46: expected known level metadata 200, got 404: 404 page not found --- FAIL: TestLevelDetailReturnsEstablishedBJTDefinition (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelLessonsRouteRegisteredWithoutLearnerSessions handler_levels_test.go:76: public lesson list without session store: expected 200, got 404: 404 page not found --- FAIL: TestLevelLessonsRouteRegisteredWithoutLearnerSessions (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition": "expected known level metadata 200",
+        "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions": "public lesson list without session store: expected 200"
+      },
+      "fingerprint": "bd8f0debc3c29a64cf98e21abf0782382285c890915e04a52883aacce3bf2151"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-09T05:12:01.313Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelDetailReturnsEstablishedBJTDefinition handler_levels_test.go:46: expected known level metadata 200, got 404: 404 page not found --- FAIL: TestLevelDetailReturnsEstablishedBJTDefinition (0.07s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelLessonsRouteRegisteredWithoutLearnerSessions handler_levels_test.go:76: public lesson list without session store: expected 200, got 404: 404 page not found --- FAIL: TestLevelLessonsRouteRegisteredWithoutLearnerSessions (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelPublicReadsApplyIPRateLimit handler_levels_test.go:95: first public read: expected 200, got 404: 404 page not found --- FAIL: TestLevelPublicReadsApplyIPRateLimit (0.00s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"rate-limited public read: expected 429\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition": "expected known level metadata 200",
+        "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions": "public lesson list without session store: expected 200",
+        "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit": "rate-limited public read: expected 429"
+      },
+      "fingerprint": "bd8f0debc3c29a64cf98e21abf0782382285c890915e04a52883aacce3bf2151"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-09T05:12:38.322Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelDetailReturnsEstablishedBJTDefinition handler_levels_test.go:46: expected known level metadata 200, got 404: 404 page not found --- FAIL: TestLevelDetailReturnsEstablishedBJTDefinition (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelLessonsRouteRegisteredWithoutLearnerSessions handler_levels_test.go:76: public lesson list without session store: expected 200, got 404: 404 page not found --- FAIL: TestLevelLessonsRouteRegisteredWithoutLearnerSessions (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelPublicReadsApplyIPRateLimit handler_levels_test.go:95: first public read: expected 200, got 404: 404 page not found --- FAIL: TestLevelPublicReadsApplyIPRateLimit (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition": "expected known level metadata 200",
+        "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions": "public lesson list without session store: expected 200",
+        "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit": "first public read: expected 200"
+      },
+      "fingerprint": "bd8f0debc3c29a64cf98e21abf0782382285c890915e04a52883aacce3bf2151"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-09T05:15:09.590Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_levels_test.go:48:95: unknown field PublicReadRateLimiter in struct literal of type Dependencies internal/httpserver/handler_levels_test.go:7…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_levels_test.go:48:95: unknown field PublicReadRateLimiter in struct literal of type Dependencies internal/httpserver/handler_levels_test.go:7…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_levels_test.go:48:95: unknown field PublicReadRateLimiter in struct literal of type Dependencies internal/httpserver/handler_levels_test.go:7…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_levels_test.go:48:95: unknown field PublicReadRateLimiter in struct literal of type Dependencies internal/httpserver/handler_levels_test.go:7…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition": "expected known level metadata 200",
+        "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions": "public lesson list without session store: expected 200",
+        "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit": "first public read: expected 200",
+        "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter": "public read without limiter: expected 503"
+      },
+      "fingerprint": "75816f0232f18f0a85e3daed340fef6c96983b0a9d23bd0c5a6d86ce456c3109"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-09T05:16:10.432Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelDetailReturnsEstablishedBJTDefinition handler_levels_test.go:53: expected known level metadata 200, got 404: 404 page not found --- FAIL: TestLevelDetailReturnsEstablishedBJTDefinition (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelLessonsRouteRegisteredWithoutLearnerSessions handler_levels_test.go:83: public lesson list without session store: expected 200, got 404: 404 page not found --- FAIL: TestLevelLessonsRouteRegisteredWithoutLearnerSessions (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelPublicReadsApplyIPRateLimit handler_levels_test.go:102: first public read: expected 200, got 404: 404 page not found --- FAIL: TestLevelPublicReadsApplyIPRateLimit (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelPublicReadsFailClosedWithoutLimiter handler_levels_test.go:117: public read without limiter: expected 503, got 404: 404 page not found --- FAIL: TestLevelPublicReadsFailClosedWithoutLimiter (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition": "expected known level metadata 200",
+        "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions": "public lesson list without session store: expected 200",
+        "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit": "first public read: expected 200",
+        "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter": "public read without limiter: expected 503"
+      },
+      "fingerprint": "75d4939aded90b4be58fc31517ad32356076ec4ef15fb9a4a70fb1588a7d7504"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-09T05:17:27.363Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "74090ebf1d9690aa4c0f79008e37da99d8741cb5d5f54056a30159d2a0cb411b"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-09T05:18:24.482Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "33e0793d16198cb273cd11509734b0fa8eb8d5fce6ed36d4496ce3fa0f21bd62"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-09T05:19:19.441Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 712,
+        "executed": 712,
+        "passed": 709,
+        "failed": 3,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 3 failing test(s), 1 failing package(s))",
+      "fingerprint": "33e0793d16198cb273cd11509734b0fa8eb8d5fce6ed36d4496ce3fa0f21bd62"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-09T05:20:40.758Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "6f257e3a526f9a13cfa1697a677d11810611b792a64adea211e6781263f32db8"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-09T05:23:42.061Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 712,
+        "executed": 712,
+        "passed": 712,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "712 passed, 0 allowed skip(s)",
+      "fingerprint": "6f257e3a526f9a13cfa1697a677d11810611b792a64adea211e6781263f32db8"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-09T05:27:11.414Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 382,
+        "executed": 382,
+        "passed": 382,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 766,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "6f257e3a526f9a13cfa1697a677d11810611b792a64adea211e6781263f32db8"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-09T05:31:15.787Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestLevelDetailReturnsEstablishedBJTDefinition handler_levels_test.go:27: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLevelDetailReturnsEstablishedBJTDefinition (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestLevelLessonsRouteRegisteredWithoutLearnerSessions handler_levels_test.go:78: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLevelLessonsRouteRegisteredWithoutLearnerSessions (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestLevelPublicReadsApplyIPRateLimit handler_levels_test.go:88: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLevelPublicReadsApplyIPRateLimit (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestLevelPublicReadsFailClosedWithoutLimiter handler_levels_test.go:114: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLevelPublicReadsFailClosedWithoutLimiter (0.00s)"
+        }
+      ],
+      "fingerprint": "c68d5088a276a15fa53613f158a1ea5566fb505e8b06efb675fccc49fb35c892"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-09T05:31:40.385Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c68d5088a276a15fa53613f158a1ea5566fb505e8b06efb675fccc49fb35c892"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-09T05:34:12.383Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 712,
+        "executed": 712,
+        "passed": 712,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "712 passed, 0 allowed skip(s)",
+      "fingerprint": "c68d5088a276a15fa53613f158a1ea5566fb505e8b06efb675fccc49fb35c892"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-09T05:37:18.081Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 382,
+        "executed": 382,
+        "passed": 382,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 766,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "c68d5088a276a15fa53613f158a1ea5566fb505e8b06efb675fccc49fb35c892"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-09T05:37:32.262Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium",
+      "exit_code": 0,
+      "fingerprint": "c68d5088a276a15fa53613f158a1ea5566fb505e8b06efb675fccc49fb35c892"
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-09T05:39:13.155Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec -s read-only -C /Users/thanhnguyen/Documents/Projects/nihongo-bjt -",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/server.go",
+          "summary": "Public level routes fall back to `RateLimiter` when `PublicReadRateLimiter` is nil. That means reads still proceed when the dedicated limiter is missing, contrary to AC6. The fail-closed test omits bo…"
+        }
+      ],
+      "package_sha256": "9692d0e2abefcd3235f2270a2346726c7c278dcda195f682978af99d1a49ee23",
+      "fingerprint": "c68d5088a276a15fa53613f158a1ea5566fb505e8b06efb675fccc49fb35c892"
+    },
+    {
+      "seq": 35,
+      "at": "2026-10-09T05:39:54.186Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestLevelDetailReturnsEstablishedBJTDefinition handler_levels_test.go:27: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLevelDetailReturnsEstablishedBJTDefinition (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestLevelLessonsRouteRegisteredWithoutLearnerSessions handler_levels_test.go:78: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLevelLessonsRouteRegisteredWithoutLearnerSessions (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestLevelPublicReadsApplyIPRateLimit handler_levels_test.go:88: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLevelPublicReadsApplyIPRateLimit (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestLevelPublicReadsFailClosedWithoutLimiter handler_levels_test.go:114: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLevelPublicReadsFailClosedWithoutLimiter (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition": "expected known level metadata 200",
+        "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions": "public lesson list without session store: expected 200",
+        "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit": "first public read: expected 200",
+        "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter": "public read without limiter: expected 503"
+      },
+      "fingerprint": "dd60e36fc02f173820b449a9013ff8d9f327c9f60f69b88561f50bba649260b1"
+    },
+    {
+      "seq": 36,
+      "at": "2026-10-09T05:40:17.586Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelDetailReturnsEstablishedBJTDefinition handler_levels_test.go:53: expected known level metadata 200, got 404: 404 page not found --- FAIL: TestLevelDetailReturnsEstablishedBJTDefinition (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelLessonsRouteRegisteredWithoutLearnerSessions handler_levels_test.go:83: public lesson list without session store: expected 200, got 404: 404 page not found --- FAIL: TestLevelLessonsRouteRegisteredWithoutLearnerSessions (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelPublicReadsApplyIPRateLimit handler_levels_test.go:102: first public read: expected 200, got 404: 404 page not found --- FAIL: TestLevelPublicReadsApplyIPRateLimit (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelPublicReadsFailClosedWithoutLimiter handler_levels_test.go:124: public read without limiter: expected 503, got 404: 404 page not found --- FAIL: TestLevelPublicReadsFailClosedWithoutLimiter (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition": "expected known level metadata 200",
+        "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions": "public lesson list without session store: expected 200",
+        "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit": "first public read: expected 200",
+        "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter": "public read without limiter: expected 503"
+      },
+      "fingerprint": "dd60e36fc02f173820b449a9013ff8d9f327c9f60f69b88561f50bba649260b1"
+    },
+    {
+      "seq": 37,
+      "at": "2026-10-09T05:41:02.558Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "5722ecda1c8830b62efa8589192ed52f67b245ebcf8da12940754c680e8a25b3"
+    },
+    {
+      "seq": 38,
+      "at": "2026-10-09T05:41:19.353Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "5722ecda1c8830b62efa8589192ed52f67b245ebcf8da12940754c680e8a25b3"
+    },
+    {
+      "seq": 39,
+      "at": "2026-10-09T05:44:46.359Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 382,
+        "executed": 382,
+        "passed": 382,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 766,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "5722ecda1c8830b62efa8589192ed52f67b245ebcf8da12940754c680e8a25b3"
+    },
+    {
+      "seq": 40,
+      "at": "2026-10-09T05:48:40.382Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 712,
+        "executed": 712,
+        "passed": 712,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "712 passed, 0 allowed skip(s)",
+      "fingerprint": "0a0598e69648e4b8015485b09e8d9c9ad0608cd4d91396bc64e4e203f220d842"
+    },
+    {
+      "seq": 41,
+      "at": "2026-10-09T05:51:43.189Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 382,
+        "executed": 382,
+        "passed": 382,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 766,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "0a0598e69648e4b8015485b09e8d9c9ad0608cd4d91396bc64e4e203f220d842"
+    },
+    {
+      "seq": 42,
+      "at": "2026-10-09T05:52:46.871Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0a0598e69648e4b8015485b09e8d9c9ad0608cd4d91396bc64e4e203f220d842"
+    },
+    {
+      "seq": 43,
+      "at": "2026-10-09T05:53:22.055Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium",
+      "exit_code": 1,
+      "fingerprint": "0a0598e69648e4b8015485b09e8d9c9ad0608cd4d91396bc64e4e203f220d842"
+    },
+    {
+      "seq": 44,
+      "at": "2026-10-09T05:54:40.879Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium",
+      "exit_code": 0,
+      "fingerprint": "0a0598e69648e4b8015485b09e8d9c9ad0608cd4d91396bc64e4e203f220d842"
+    },
+    {
+      "seq": 45,
+      "at": "2026-10-09T05:56:19.687Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec -s read-only -C /Users/thanhnguyen/Documents/Projects/nihongo-bjt -",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/handler_levels.go",
+          "summary": "The limiter keys requests from `RemoteAddr`, but deployed API traffic passes through Caddy, so distinct learners share Caddy’s upstream IP bucket. A few users can exhaust the 120/minute allowance for …"
+        }
+      ],
+      "package_sha256": "bc2141d792b093226d8bc5c28935df17406e09bd125c7da6ca3e5ba0da7eda14",
+      "fingerprint": "0a0598e69648e4b8015485b09e8d9c9ad0608cd4d91396bc64e4e203f220d842"
+    },
+    {
+      "seq": 46,
+      "at": "2026-10-09T05:57:35.147Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter|TestLevelPublicReadsUseClientIPFromLocalProxy)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_lesson_detail_test.go:35:95: unknown field PublicReadRateLimiter in struct literal of type Dependencies internal/httpserver/handler_lesson_de…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_lesson_detail_test.go:35:95: unknown field PublicReadRateLimiter in struct literal of type Dependencies internal/httpserver/handler_lesson_de…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_lesson_detail_test.go:35:95: unknown field PublicReadRateLimiter in struct literal of type Dependencies internal/httpserver/handler_lesson_de…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_lesson_detail_test.go:35:95: unknown field PublicReadRateLimiter in struct literal of type Dependencies internal/httpserver/handler_lesson_de…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_lesson_detail_test.go:35:95: unknown field PublicReadRateLimiter in struct literal of type Dependencies internal/httpserver/handler_lesson_de…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition": "expected known level metadata 200",
+        "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions": "public lesson list without session store: expected 200",
+        "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit": "first public read: expected 200",
+        "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter": "public read without limiter: expected 503",
+        "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy": "second proxied client must have an independent bucket: expected 200"
+      },
+      "fingerprint": "867ce9bc38dcabbe5f97adb78ad10aff7fa151bf49bc0f7d6eee06711afbf3d7"
+    },
+    {
+      "seq": 47,
+      "at": "2026-10-09T05:58:46.667Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter|TestLevelPublicReadsUseClientIPFromLocalProxy)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "bf2b256ee15a2fe11d09dd14312132086fa8512559912d25cb49d78cccb9e044"
+    },
+    {
+      "seq": 48,
+      "at": "2026-10-09T05:59:41.695Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium",
+      "exit_code": 0,
+      "fingerprint": "bf2b256ee15a2fe11d09dd14312132086fa8512559912d25cb49d78cccb9e044"
+    },
+    {
+      "seq": 49,
+      "at": "2026-10-09T06:02:56.067Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter|TestLevelPublicReadsUseClientIPFromLocalProxy)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelDetailReturnsEstablishedBJTDefinition handler_levels_test.go:67: expected known level metadata 200, got 404: 404 page not found --- FAIL: TestLevelDetailReturnsEstablishedBJTDefinition (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelLessonsRouteRegisteredWithoutLearnerSessions handler_levels_test.go:97: public lesson list without session store: expected 200, got 404: 404 page not found --- FAIL: TestLevelLessonsRouteRegisteredWithoutLearnerSessions (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelPublicReadsApplyIPRateLimit handler_levels_test.go:116: first public read: expected 200, got 404: 404 page not found --- FAIL: TestLevelPublicReadsApplyIPRateLimit (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelPublicReadsFailClosedWithoutLimiter handler_levels_test.go:167: public read without limiter: expected 503, got 404: 404 page not found --- FAIL: TestLevelPublicReadsFailClosedWithoutLimiter (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelPublicReadsUseClientIPFromLocalProxy handler_levels_test.go:146: first proxied client read: expected 200, got 404: 404 page not found --- FAIL: TestLevelPublicReadsUseClientIPFromLocalProxy (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition": "expected known level metadata 200",
+        "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions": "public lesson list without session store: expected 200",
+        "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit": "first public read: expected 200",
+        "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter": "public read without limiter: expected 503",
+        "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy": "first proxied client read: expected 200"
+      },
+      "fingerprint": "4801b9a297e82a4332708fd461dadde285d3db71c1d0259cecad0ef5979b01d5"
+    },
+    {
+      "seq": 50,
+      "at": "2026-10-09T06:03:16.079Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter|TestLevelPublicReadsUseClientIPFromLocalProxy)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "4801b9a297e82a4332708fd461dadde285d3db71c1d0259cecad0ef5979b01d5"
+    },
+    {
+      "seq": 51,
+      "at": "2026-10-09T06:03:52.492Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium",
+      "exit_code": 0,
+      "fingerprint": "4801b9a297e82a4332708fd461dadde285d3db71c1d0259cecad0ef5979b01d5"
+    },
+    {
+      "seq": 52,
+      "at": "2026-10-09T06:05:31.792Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter|TestLevelPublicReadsUseClientIPFromLocalProxy)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "4470b193d9eaf254d5e1fa474052b0cf27e17ce955e61d47edaf251004aa32ff"
+    },
+    {
+      "seq": 53,
+      "at": "2026-10-09T06:08:24.522Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 713,
+        "executed": 713,
+        "passed": 713,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "713 passed, 0 allowed skip(s)",
+      "fingerprint": "4470b193d9eaf254d5e1fa474052b0cf27e17ce955e61d47edaf251004aa32ff"
+    },
+    {
+      "seq": 54,
+      "at": "2026-10-09T06:11:57.767Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 382,
+        "executed": 382,
+        "passed": 382,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 766,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "4470b193d9eaf254d5e1fa474052b0cf27e17ce955e61d47edaf251004aa32ff"
+    },
+    {
+      "seq": 55,
+      "at": "2026-10-09T06:14:09.770Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium",
+      "exit_code": 0,
+      "fingerprint": "4470b193d9eaf254d5e1fa474052b0cf27e17ce955e61d47edaf251004aa32ff"
+    },
+    {
+      "seq": 56,
+      "at": "2026-10-09T06:15:43.434Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec -s read-only -C /Users/thanhnguyen/Documents/Projects/nihongo-bjt -",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/handler_levels.go",
+          "summary": "The nested tab DTOs do not preserve the existing read DTO fields: kanji components use `hanViet`/`character` instead of `component`/`meaningVi`, and grammar details use `explanation` instead of `expla…"
+        }
+      ],
+      "package_sha256": "ea8049bdb0a439a6712dccbc3966edb95281060a50f880cf150baebb86a593b0",
+      "fingerprint": "4470b193d9eaf254d5e1fa474052b0cf27e17ce955e61d47edaf251004aa32ff"
+    },
+    {
+      "seq": 57,
+      "at": "2026-10-09T06:18:41.999Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter|TestLevelPublicReadsUseClientIPFromLocalProxy|TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelDetailReturnsEstablishedBJTDefinition handler_levels_test.go:67: expected known level metadata 200, got 404: 404 page not found --- FAIL: TestLevelDetailReturnsEstablishedBJTDefinition (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelLessonsRouteRegisteredWithoutLearnerSessions handler_levels_test.go:97: public lesson list without session store: expected 200, got 404: 404 page not found --- FAIL: TestLevelLessonsRouteRegisteredWithoutLearnerSessions (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelPublicReadsApplyIPRateLimit handler_levels_test.go:116: first public read: expected 200, got 404: 404 page not found --- FAIL: TestLevelPublicReadsApplyIPRateLimit (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelPublicReadsFailClosedWithoutLimiter handler_levels_test.go:167: public read without limiter: expected 503, got 404: 404 page not found --- FAIL: TestLevelPublicReadsFailClosedWithoutLimiter (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelPublicReadsUseClientIPFromLocalProxy handler_levels_test.go:146: first proxied client read: expected 200, got 404: 404 page not found --- FAIL: TestLevelPublicReadsUseClientIPFromLocalProxy (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination handler_levels_test.go:331: GET vocabulary: expected 200, got 404: 404 page not found --- FAIL: TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition": "expected known level metadata 200",
+        "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions": "public lesson list without session store: expected 200",
+        "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit": "first public read: expected 200",
+        "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter": "public read without limiter: expected 503",
+        "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy": "first proxied client read: expected 200",
+        "go:./internal/httpserver:TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination": "GET vocabulary: expected 200"
+      },
+      "fingerprint": "674a8703b7ba9d7e2d3664c2944e1083a72b95afe2c3a9035ef5d07cc3b607ee"
+    },
+    {
+      "seq": 58,
+      "at": "2026-10-09T06:19:16.156Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter|TestLevelPublicReadsUseClientIPFromLocalProxy|TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination handler_levels_test.go:338: GET vocabulary did not preserve nested DTO \"senses\":[{\"meaningVi\":\"nghĩa kiểm thử\",\"pos\":\"noun\"}]: [{\"id\":\"cdd55afa-7b0e-48dd-a6d4-ee1b3bfc90ac\",\"senses\":[{\"pos\":\"noun\",\"meaningVi\":\"nghĩa kiểm thử\"}]…"
+        }
+      ],
+      "fingerprint": "aae0d298f55125f991d8c198c88d15977a7995d468c20b600d3263ab300f5dd1"
+    },
+    {
+      "seq": 59,
+      "at": "2026-10-09T06:19:50.477Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter|TestLevelPublicReadsUseClientIPFromLocalProxy|TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination handler_levels_test.go:338: GET kanji did not preserve nested DTO \"examples\":[{\"meaningVi\":\"Nhật Bản\",\"reading\":\"にほん\",\"word\":\"日本\"}]: [{\"id\":\"112576c4-8267-439a-9b28-135a845cd741\",\"level\":1,\"onyomi\":\"カン\",\"kunyomi\":null,\"examples…"
+        }
+      ],
+      "fingerprint": "3a41529a2882430d14022f16cb7f50c7f27a6b62b19922ddfe177bab46cfd54f"
+    },
+    {
+      "seq": 60,
+      "at": "2026-10-09T06:21:19.927Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter|TestLevelPublicReadsUseClientIPFromLocalProxy|TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e883228006887b371a480312bbeb7d8677bd92aa9614c30e83a3167e1a7c660b"
+    },
+    {
+      "seq": 61,
+      "at": "2026-10-09T06:22:26.523Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter|TestLevelPublicReadsUseClientIPFromLocalProxy|TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "23b7786ce31bce1139db536a7dfa4e4aa4a5acf0c3ae67e3a78e6c0ff3bdca76"
+    },
+    {
+      "seq": 62,
+      "at": "2026-10-09T06:25:22.382Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 713,
+        "executed": 713,
+        "passed": 713,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "713 passed, 0 allowed skip(s)",
+      "fingerprint": "23b7786ce31bce1139db536a7dfa4e4aa4a5acf0c3ae67e3a78e6c0ff3bdca76"
+    },
+    {
+      "seq": 63,
+      "at": "2026-10-09T06:28:27.405Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 382,
+        "executed": 382,
+        "passed": 382,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 766,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "23b7786ce31bce1139db536a7dfa4e4aa4a5acf0c3ae67e3a78e6c0ff3bdca76"
+    },
+    {
+      "seq": 64,
+      "at": "2026-10-09T06:33:37.932Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium",
+      "exit_code": 0,
+      "fingerprint": "23b7786ce31bce1139db536a7dfa4e4aa4a5acf0c3ae67e3a78e6c0ff3bdca76"
+    },
+    {
+      "seq": 65,
+      "at": "2026-10-09T06:35:49.085Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec -s read-only -C /Users/thanhnguyen/Documents/Projects/nihongo-bjt -",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 3,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/handler_levels.go",
+          "summary": "J1+ is labeled >N1, but levelFilters trims the > and filters vocabulary and grammar as N1; kanji also maps to level 1. This duplicates J1 content and counts despite the project plan defining J1+ as co…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/authn/ratelimit.go",
+          "summary": "Forwarded client IPs are trusted only when the peer is loopback, but deploy/linux routes Caddy to api:4001 over the Docker network. There the API sees Caddy’s bridge IP, so all public users share one …"
+        },
+        {
+          "severity": "blocker",
+          "file": "tasks/AUDIT-080.json",
+          "summary": "Required GREEN, Go/frontend suites, and browser E2E are marked stale after later code changes. The lifecycle policy requires fresh evidence bound to the final fingerprint before approval."
+        }
+      ],
+      "package_sha256": "7ad85965f4b7b0c49729f7945d3910488a19c8c264ef43d92975303347a2ccd1",
+      "fingerprint": "f26c7fb0bb8c553f2705daab887615129fb6943098b94161564151121780aac0"
+    },
+    {
+      "seq": 66,
+      "at": "2026-10-09T06:43:01.701Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter|TestLevelPublicReadsUseClientIPFromLocalProxy|TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_levels_test.go:93:26: undefined: levelFilters internal/httpserver/handler_levels_test.go:202:46: unknown field TrustedProxyCIDRs in struct li…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_levels_test.go:93:26: undefined: levelFilters internal/httpserver/handler_levels_test.go:202:46: unknown field TrustedProxyCIDRs in struct li…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_levels_test.go:93:26: undefined: levelFilters internal/httpserver/handler_levels_test.go:202:46: unknown field TrustedProxyCIDRs in struct li…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_levels_test.go:93:26: undefined: levelFilters internal/httpserver/handler_levels_test.go:202:46: unknown field TrustedProxyCIDRs in struct li…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_levels_test.go:93:26: undefined: levelFilters internal/httpserver/handler_levels_test.go:202:46: unknown field TrustedProxyCIDRs in struct li…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_levels_test.go:93:26: undefined: levelFilters internal/httpserver/handler_levels_test.go:202:46: unknown field TrustedProxyCIDRs in struct li…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition": "expected known level metadata 200",
+        "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions": "public lesson list without session store: expected 200",
+        "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit": "first public read: expected 200",
+        "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter": "public read without limiter: expected 503",
+        "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy": "first proxied client read: expected 200",
+        "go:./internal/httpserver:TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination": "GET vocabulary: expected 200"
+      },
+      "fingerprint": "ca6289e0464a5820f504375ef56a7bfb77ceb07018bfa0aba363246b95df93a4"
+    },
+    {
+      "seq": 67,
+      "at": "2026-10-09T07:00:06.993Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "docker compose -f deploy/linux/docker-compose.yml config -q",
+      "exit_code": 0,
+      "fingerprint": "660f280e08afc232156e938d41b123aec706cb0bda55557d111ac3187cdb6e03"
+    },
+    {
+      "seq": 68,
+      "at": "2026-10-09T07:00:24.987Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter|TestLevelPublicReadsUseClientIPFromLocalProxy|TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "660f280e08afc232156e938d41b123aec706cb0bda55557d111ac3187cdb6e03"
+    },
+    {
+      "seq": 69,
+      "at": "2026-10-09T07:32:02.708Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 718,
+        "executed": 718,
+        "passed": 718,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "a later step of bash scripts/quality/verify-go.sh failed (exit 1)",
+      "fingerprint": "660f280e08afc232156e938d41b123aec706cb0bda55557d111ac3187cdb6e03"
+    },
+    {
+      "seq": 70,
+      "at": "2026-10-09T07:38:48.104Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 382,
+        "executed": 382,
+        "passed": 382,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 766,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "660f280e08afc232156e938d41b123aec706cb0bda55557d111ac3187cdb6e03"
+    },
+    {
+      "seq": 71,
+      "at": "2026-10-09T07:39:45.014Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter|TestLevelPublicReadsUseClientIPFromLocalProxy|TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "47b28a81b412f770834c72d1c88183f429f4548389b7799c11e64ed231f9d85d"
+    },
+    {
+      "seq": 72,
+      "at": "2026-10-09T07:39:47.208Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "docker compose -f deploy/linux/docker-compose.yml config -q",
+      "exit_code": 0,
+      "fingerprint": "47b28a81b412f770834c72d1c88183f429f4548389b7799c11e64ed231f9d85d"
+    },
+    {
+      "seq": 73,
+      "at": "2026-10-09T07:42:18.551Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 718,
+        "executed": 718,
+        "passed": 718,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "718 passed, 0 allowed skip(s)",
+      "fingerprint": "47b28a81b412f770834c72d1c88183f429f4548389b7799c11e64ed231f9d85d"
+    },
+    {
+      "seq": 74,
+      "at": "2026-10-09T07:45:28.542Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 382,
+        "executed": 382,
+        "passed": 382,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 766,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "47b28a81b412f770834c72d1c88183f429f4548389b7799c11e64ed231f9d85d"
+    },
+    {
+      "seq": 75,
+      "at": "2026-10-09T07:50:16.892Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium",
+      "exit_code": 0,
+      "fingerprint": "47b28a81b412f770834c72d1c88183f429f4548389b7799c11e64ed231f9d85d"
+    },
+    {
+      "seq": 76,
+      "at": "2026-10-09T07:52:19.963Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter|TestLevelPublicReadsUseClientIPFromLocalProxy|TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "863e471d3b19eb40d489690302cb41e05989bbd5157cdfad03abd6628d3e6153"
+    },
+    {
+      "seq": 77,
+      "at": "2026-10-09T07:52:22.091Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "docker compose -f deploy/linux/docker-compose.yml config -q",
+      "exit_code": 0,
+      "fingerprint": "863e471d3b19eb40d489690302cb41e05989bbd5157cdfad03abd6628d3e6153"
+    },
+    {
+      "seq": 78,
+      "at": "2026-10-09T07:54:58.147Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 718,
+        "executed": 718,
+        "passed": 718,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "718 passed, 0 allowed skip(s)",
+      "fingerprint": "863e471d3b19eb40d489690302cb41e05989bbd5157cdfad03abd6628d3e6153"
+    },
+    {
+      "seq": 79,
+      "at": "2026-10-09T07:58:13.021Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 382,
+        "executed": 382,
+        "passed": 382,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 766,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "863e471d3b19eb40d489690302cb41e05989bbd5157cdfad03abd6628d3e6153"
+    },
+    {
+      "seq": 80,
+      "at": "2026-10-09T08:00:13.769Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium",
+      "exit_code": 0,
+      "fingerprint": "863e471d3b19eb40d489690302cb41e05989bbd5157cdfad03abd6628d3e6153"
+    },
+    {
+      "seq": 81,
+      "at": "2026-10-09T08:02:12.657Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec -s read-only -C /Users/thanhnguyen/Documents/Projects/nihongo-bjt -",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/handler_levels.go",
+          "summary": "Lesson reference counts include every bjt_lesson_item link, even when its content ID is missing or inactive. The lesson detail query omits those references, so the level screen can advertise content t…"
+        }
+      ],
+      "package_sha256": "6c38465f1a9d9c0f2f43f2abee9f92ba03a23f9543cebfda9240c7d3c6d2e0ab",
+      "fingerprint": "863e471d3b19eb40d489690302cb41e05989bbd5157cdfad03abd6628d3e6153"
+    },
+    {
+      "seq": 82,
+      "at": "2026-10-09T08:08:07.626Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter|TestLevelPublicReadsUseClientIPFromLocalProxy|TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "cafda996129e2b6d570887b3794ef0fc17d0ca20048e13252723e508d522371f"
+    },
+    {
+      "seq": 83,
+      "at": "2026-10-09T08:08:24.896Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "docker compose -f deploy/linux/docker-compose.yml config -q",
+      "exit_code": 0,
+      "fingerprint": "cafda996129e2b6d570887b3794ef0fc17d0ca20048e13252723e508d522371f"
+    },
+    {
+      "seq": 84,
+      "at": "2026-10-09T08:11:12.068Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 718,
+        "executed": 718,
+        "passed": 718,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "718 passed, 0 allowed skip(s)",
+      "fingerprint": "cafda996129e2b6d570887b3794ef0fc17d0ca20048e13252723e508d522371f"
+    },
+    {
+      "seq": 85,
+      "at": "2026-10-09T08:14:19.896Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 382,
+        "executed": 382,
+        "passed": 382,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 766,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "cafda996129e2b6d570887b3794ef0fc17d0ca20048e13252723e508d522371f"
+    },
+    {
+      "seq": 86,
+      "at": "2026-10-09T08:15:46.501Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium",
+      "exit_code": 0,
+      "fingerprint": "cafda996129e2b6d570887b3794ef0fc17d0ca20048e13252723e508d522371f"
+    },
+    {
+      "seq": 87,
+      "at": "2026-10-09T08:19:09.455Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 718,
+        "executed": 718,
+        "passed": 718,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "718 passed, 0 allowed skip(s)",
+      "fingerprint": "be38eecda063611e126ffb73b35a46d89c7f6b3a36a39778e5e0bc7b3799f8aa"
+    },
+    {
+      "seq": 88,
+      "at": "2026-10-09T08:22:20.655Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 382,
+        "executed": 382,
+        "passed": 382,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 766,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "be38eecda063611e126ffb73b35a46d89c7f6b3a36a39778e5e0bc7b3799f8aa"
+    },
+    {
+      "seq": 89,
+      "at": "2026-10-09T08:22:46.459Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelDetailReturnsEstablishedBJTDefinition|TestLevelLessonsRouteRegisteredWithoutLearnerSessions|TestLevelPublicReadsApplyIPRateLimit|TestLevelPublicReadsFailClosedWithoutLimiter|TestLevelPublicReadsUseClientIPFromLocalProxy|TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelDetailReturnsEstablishedBJTDefinition",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsRouteRegisteredWithoutLearnerSessions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsApplyIPRateLimit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsFailClosedWithoutLimiter",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelPublicReadsUseClientIPFromLocalProxy",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelReferenceTabsReturnCanonicalRowsWithSearchAndPagination",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "be38eecda063611e126ffb73b35a46d89c7f6b3a36a39778e5e0bc7b3799f8aa"
+    },
+    {
+      "seq": 90,
+      "at": "2026-10-09T08:22:52.832Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "docker compose -f deploy/linux/docker-compose.yml config -q",
+      "exit_code": 0,
+      "fingerprint": "be38eecda063611e126ffb73b35a46d89c7f6b3a36a39778e5e0bc7b3799f8aa"
+    },
+    {
+      "seq": 91,
+      "at": "2026-10-09T08:25:48.800Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium",
+      "exit_code": 0,
+      "fingerprint": "be38eecda063611e126ffb73b35a46d89c7f6b3a36a39778e5e0bc7b3799f8aa"
+    },
+    {
+      "seq": 92,
+      "at": "2026-10-09T08:29:26.772Z",
+      "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec -s read-only -C /Users/thanhnguyen/Documents/Projects/nihongo-bjt -",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [],
+      "package_sha256": "b6a6b2bcb60de670acd0b8781c85171bb538ce90b3f7d9b3ec4149c8c863fbe7",
+      "fingerprint": "be38eecda063611e126ffb73b35a46d89c7f6b3a36a39778e5e0bc7b3799f8aa"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-09T08:29:43.664Z",
+    "head": "2ab4f28f480be31b21f40ce8393bfa159b9aa7ed",
+    "fingerprint": "be38eecda063611e126ffb73b35a46d89c7f6b3a36a39778e5e0bc7b3799f8aa",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "infra_validation": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      ".env.example": "e55d91fd1fc871b6828a4036cabc88b59ba1d441",
+      "apps/api-go/internal/app/app.go": "7d68062608bbbab331121b26dda8ced64c7a14a4",
+      "apps/api-go/internal/authn/ratelimit.go": "d80b640766d626a85744cfec9362bf835876677d",
+      "apps/api-go/internal/authn/ratelimit_test.go": "069e0a064cc893b0a9b853bef787bd21df0c2ec1",
+      "apps/api-go/internal/config/config.go": "1534bdcadee70b4aefa15898c18ac6388b075d79",
+      "apps/api-go/internal/config/config_test.go": "6cf7119aa5d21416148db48e66e80c1333a5c696",
+      "apps/api-go/internal/exercisereview/store_integration_test.go": "09fdb7b85b4fdf887121fdc81f9427c7ea67fd8b",
+      "apps/api-go/internal/httpserver/handler_lesson_detail_test.go": "ba4867cb5dd5152e0d7c30446f9b8eaa3f374e72",
+      "apps/api-go/internal/httpserver/handler_levels.go": "029e8a7b646c283b600e23c0921a1e9ae1d61184",
+      "apps/api-go/internal/httpserver/handler_levels_test.go": "77a210d2ac8adc79e6cfd1b87376ff406f0eba49",
+      "apps/api-go/internal/httpserver/server.go": "8e906b0450e41de432ff16c67395c6959eff9504",
+      "apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx": "7ca952614e6660ac0233a748b8cd29af64540fef",
+      "apps/web/app/[locale]/levels/[level]/_components/level-detail-client.tsx": "9d00f6fe2126dc8514e729c8f1b5c7116c70e588",
+      "deploy/linux/Caddyfile": "19afdf616fdb217cd1608b0ce924bf43e1f94537",
+      "deploy/linux/docker-compose.yml": "b638629a2ac1aa99a530fce2257979adb9e29b32",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "e02f1e219f47e1c27800b52c61e852aaf99419b6",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "e8c793449bcb3fb4ada7a86fbc07d42055669405",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "e0a9be796c02adc34691ec3a820a3099997565c5",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "b3133bd6e491775c16f95b0b103a83e4a02b24fe",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "ffc833b70587215750ce58fb5cf2f2185afa8574",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "7877c3bb0dd88be389c12a4d9ed184669d8acf8e",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "534a5b91a843f142dda2e29ab2796e554134e543"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

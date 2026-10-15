@@ -6,7 +6,8 @@ import {
   ExamCard,
   OfficialAvailabilityPanel,
   QuizModeSelector,
-  type QuizLabels
+  type QuizLabels,
+  type Template
 } from "./quiz-client";
 
 const labels = {
@@ -40,8 +41,8 @@ const status = {
   availableTemplates: 2,
   enabled: true,
   entitled: true,
-  entitlementKey: "quiz.official",
-  featureFlag: "quiz_official_simulation",
+  entitlementKey: "quiz.official_simulation",
+  featureFlag: "quiz.official_simulation.enabled",
   planSlug: "standard"
 };
 
@@ -145,7 +146,9 @@ describe("official simulation provenance", () => {
         onStart={() => undefined}
         submitting={false}
         template={{
-          _count: { sections: 9, sessions: 0 },
+          createdAt: "2026-10-10T00:00:00Z",
+          sectionCount: 9,
+          sessionCount: 0,
           blueprintMeta: {
             reference: {
               purpose: "exam-structure-reference-only",
@@ -156,10 +159,10 @@ describe("official simulation provenance", () => {
           description: "Original KotobaWorks practice content.",
           id: "official-a",
           level: null,
-          slug: "bjt-full-simulation-a-v1",
           timeLimitSeconds: 6300,
-          titleJa: "BJT総合模擬試験 A",
+          title: "Official simulation A",
           titleVi: "Đề thi thử BJT toàn diện A",
+          titleJa: "BJT総合模擬試験 A",
           type: "official"
         }}
         userId="user-1"
@@ -179,7 +182,9 @@ describe("official simulation provenance", () => {
         onStart={() => undefined}
         submitting={false}
         template={{
-          _count: { sections: 9, sessions: 0 },
+          createdAt: "2026-10-10T00:00:00Z",
+          sectionCount: 9,
+          sessionCount: 0,
           blueprintMeta: {
             reference: {
               sourceUrl: "javascript:alert(document.domain)"
@@ -188,8 +193,8 @@ describe("official simulation provenance", () => {
           description: null,
           id: "official-a",
           level: null,
-          slug: "bjt-full-simulation-a-v1",
           timeLimitSeconds: 6300,
+          title: "Official simulation A",
           titleJa: null,
           titleVi: "Official simulation A",
           type: "official"
@@ -200,5 +205,32 @@ describe("official simulation provenance", () => {
 
     expect(html).not.toContain("BJT format reference");
     expect(html).not.toContain("javascript:");
+  });
+});
+
+describe("published template API contract", () => {
+  it("renders the localized title and section count returned by Go", () => {
+    const template = {
+      id: "practice-1",
+      title: "Đề luyện BJT J2",
+      type: "practice",
+      status: "published",
+      sectionCount: 9,
+      sessionCount: 0,
+      createdAt: "2026-10-10T00:00:00Z"
+    } as unknown as Template;
+    const html = renderToStaticMarkup(
+      <ExamCard
+        labels={{ ...labels, hubMetaSections: "{n} phần", start: "Bắt đầu" }}
+        locale="vi"
+        onStart={() => undefined}
+        submitting={false}
+        template={template}
+        userId="learner-1"
+      />
+    );
+
+    expect(html).toContain("Đề luyện BJT J2");
+    expect(html).toContain("9 phần");
   });
 });

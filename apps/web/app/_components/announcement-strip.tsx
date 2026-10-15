@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { usePathname } from "next/navigation";
 
 import { IconClose, IconNotice } from "./app-icons";
 
@@ -9,8 +10,15 @@ import { IconClose, IconNotice } from "./app-icons";
 type AnnouncementType = "info" | "event" | "promo";
 type AnnouncementFormat = "banner" | "modal";
 type EffectPreset = "none" | "confetti" | "particles" | "shimmer" | "aurora" | "sakura";
-type BgPreset = "default" | "gradient-blue" | "gradient-violet" | "gradient-warm" | "gradient-dark" | "image-only";
+type BgPreset =
+  | "default"
+  | "gradient-blue"
+  | "gradient-violet"
+  | "gradient-warm"
+  | "gradient-dark"
+  | "image-only";
 type ShowFrequency = "every_visit" | "once_per_day" | "once_ever";
+type Locale = "vi" | "en" | "ja";
 
 interface Announcement {
   id: string;
@@ -38,7 +46,13 @@ interface Announcement {
 const NOTICE_TONE: Record<AnnouncementType, string> = {
   event: "bg-amber-100 text-amber-700",
   info: "bg-accent/10 text-accent",
-  promo: "bg-violet-100 text-violet-700",
+  promo: "bg-violet-100 text-violet-700"
+};
+
+const COPY: Record<Locale, { promo: string; event: string; info: string; close: string; later: string; more: string }> = {
+  vi: { promo: "🎁 Khuyến mãi", event: "📅 Sự kiện", info: "ℹ️ Thông báo", close: "Đóng", later: "Để sau", more: "Xem thêm →" },
+  en: { promo: "🎁 Promotion", event: "📅 Event", info: "ℹ️ Notice", close: "Close", later: "Later", more: "Learn more →" },
+  ja: { promo: "🎁 キャンペーン", event: "📅 イベント", info: "ℹ️ お知らせ", close: "閉じる", later: "後で", more: "詳しく見る →" }
 };
 
 /* ── API + LocalStorage dismiss ── */
@@ -72,7 +86,9 @@ function getFreqData(): Record<string, { ts: number }> {
   if (typeof window === "undefined") return {};
   try {
     return JSON.parse(localStorage.getItem(FREQ_STORAGE_KEY) || "{}");
-  } catch { return {}; }
+  } catch {
+    return {};
+  }
 }
 
 function setFreqSeen(id: string) {
@@ -80,7 +96,9 @@ function setFreqSeen(id: string) {
     const d = getFreqData();
     d[id] = { ts: Date.now() };
     localStorage.setItem(FREQ_STORAGE_KEY, JSON.stringify(d));
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 function shouldShowByFrequency(ann: Announcement): boolean {
@@ -98,35 +116,27 @@ function shouldShowByFrequency(ann: Announcement): boolean {
 }
 
 /* ── Resolve i18n text ── */
-function resolveText(
-  ann: Announcement,
-  field: "title" | "body",
-): string | null {
-  const locale =
-    typeof document !== "undefined"
-      ? document.documentElement.lang || "vi"
-      : "vi";
+function resolveText(ann: Announcement, field: "title" | "body", locale: Locale): string | null {
   if (field === "title") {
-    if (locale === "ja" && ann.titleJa) return ann.titleJa;
-    if (locale === "en" && ann.titleEn) return ann.titleEn;
-    return ann.titleVi ?? null;
+    const title = locale === "ja" ? ann.titleJa : locale === "en" ? ann.titleEn : ann.titleVi;
+    return title?.trim() || null;
   }
-  if (locale === "ja" && ann.bodyJa) return ann.bodyJa;
-  if (locale === "en" && ann.bodyEn) return ann.bodyEn;
-  return ann.bodyVi ?? null;
+  const body = locale === "ja" ? ann.bodyJa : locale === "en" ? ann.bodyEn : ann.bodyVi;
+  return body?.trim() || null;
 }
 
 /* ── Background preset classes ── */
 const BG_CLASSES: Record<BgPreset, string> = {
-  "default": "bg-white",
+  default: "bg-white",
   "gradient-blue": "bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-500",
   "gradient-violet": "bg-gradient-to-br from-violet-600 via-purple-600 to-pink-500",
   "gradient-warm": "bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500",
   "gradient-dark": "bg-gradient-to-br from-gray-900 via-slate-900 to-zinc-800",
-  "image-only": "bg-black",
+  "image-only": "bg-black"
 };
 
-const isDarkBg = (bg: BgPreset) => ["gradient-blue", "gradient-violet", "gradient-warm", "gradient-dark", "image-only"].includes(bg);
+const isDarkBg = (bg: BgPreset) =>
+  ["gradient-blue", "gradient-violet", "gradient-warm", "gradient-dark", "image-only"].includes(bg);
 
 /* ── Effect renderers ── */
 function EffectLayer({ effect, bg }: { effect: EffectPreset; bg: BgPreset }) {
@@ -145,7 +155,7 @@ function EffectLayer({ effect, bg }: { effect: EffectPreset; bg: BgPreset }) {
               animationDelay: `${Math.random() * 3}s`,
               animationDuration: `${2.5 + Math.random() * 2}s`,
               color: ["#F59E0B", "#3B82F6", "#EC4899", "#10B981", "#8B5CF6", "#F97316"][i % 6],
-              fontSize: `${10 + Math.random() * 8}px`,
+              fontSize: `${10 + Math.random() * 8}px`
             }}
           >
             {["●", "■", "▲", "★", "♦", "✦"][i % 6]}
@@ -168,7 +178,7 @@ function EffectLayer({ effect, bg }: { effect: EffectPreset; bg: BgPreset }) {
               width: `${4 + Math.random() * 8}px`,
               height: `${4 + Math.random() * 8}px`,
               animationDelay: `${Math.random() * 4}s`,
-              animationDuration: `${4 + Math.random() * 4}s`,
+              animationDuration: `${4 + Math.random() * 4}s`
             }}
           />
         ))}
@@ -200,7 +210,7 @@ function EffectLayer({ effect, bg }: { effect: EffectPreset; bg: BgPreset }) {
               animationDelay: `${Math.random() * 5}s`,
               animationDuration: `${4 + Math.random() * 3}s`,
               fontSize: `${14 + Math.random() * 10}px`,
-              opacity: 0.6 + Math.random() * 0.4,
+              opacity: 0.6 + Math.random() * 0.4
             }}
           >
             🌸
@@ -214,18 +224,13 @@ function EffectLayer({ effect, bg }: { effect: EffectPreset; bg: BgPreset }) {
 }
 
 /* ── Modal Component — Full-viewport world-class design ── */
-function AnnouncementModal({
-  ann,
-  onDismiss,
-}: {
-  ann: Announcement;
-  onDismiss: () => void;
-}) {
+function AnnouncementModal({ ann, locale, onDismiss }: { ann: Announcement; locale: Locale; onDismiss: () => void }) {
   const [visible, setVisible] = useState(false);
   const [canClose, setCanClose] = useState((ann.dismissDelay ?? 0) === 0);
   const [countdown, setCountdown] = useState(ann.dismissDelay ?? 0);
-  const title = resolveText(ann, "title");
-  const body = resolveText(ann, "body");
+  const title = resolveText(ann, "title", locale);
+  const body = resolveText(ann, "body", locale);
+  const copy = COPY[locale];
   const bgPreset = (ann.bgPreset ?? "default") as BgPreset;
   const effect = (ann.effect ?? "none") as EffectPreset;
   const dark = isDarkBg(bgPreset);
@@ -241,11 +246,18 @@ function AnnouncementModal({
   // Countdown timer for dismissDelay
   useEffect(() => {
     const delay = ann.dismissDelay ?? 0;
-    if (delay <= 0) { setCanClose(true); return; }
+    if (delay <= 0) {
+      setCanClose(true);
+      return;
+    }
     setCountdown(delay);
     const interval = setInterval(() => {
       setCountdown((prev) => {
-        if (prev <= 1) { clearInterval(interval); setCanClose(true); return 0; }
+        if (prev <= 1) {
+          clearInterval(interval);
+          setCanClose(true);
+          return 0;
+        }
         return prev - 1;
       });
     }, 1000);
@@ -258,9 +270,12 @@ function AnnouncementModal({
     setTimeout(onDismiss, 300);
   }, [onDismiss, canClose]);
 
-  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget && clickOutside && canClose) handleDismiss();
-  }, [clickOutside, canClose, handleDismiss]);
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.target === e.currentTarget && clickOutside && canClose) handleDismiss();
+    },
+    [clickOutside, canClose, handleDismiss]
+  );
 
   // CTA theme
   const ctaClass = dark
@@ -285,14 +300,14 @@ function AnnouncementModal({
     >
       <div
         className={`relative flex w-full flex-col overflow-hidden rounded-3xl shadow-2xl transition-all duration-600 ease-out ${BG_CLASSES[bgPreset]} ${
-          visible
-            ? "translate-y-0 scale-100 opacity-100"
-            : "translate-y-12 scale-90 opacity-0"
+          visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-12 scale-90 opacity-0"
         }`}
         style={{
           maxWidth: "min(560px, 95vw)",
           maxHeight: "90vh",
-          boxShadow: visible ? "0 40px 80px -16px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.1)" : undefined,
+          boxShadow: visible
+            ? "0 40px 80px -16px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.1)"
+            : undefined
         }}
       >
         {/* Effects layer */}
@@ -308,7 +323,9 @@ function AnnouncementModal({
               style={{ maxHeight: "45vh" }}
             />
             {bgPreset !== "image-only" && (
-              <div className={`absolute inset-0 bg-gradient-to-t ${dark ? "from-black/80 via-transparent" : "from-white via-transparent"}`} />
+              <div
+                className={`absolute inset-0 bg-gradient-to-t ${dark ? "from-black/80 via-transparent" : "from-white via-transparent"}`}
+              />
             )}
           </div>
         )}
@@ -337,24 +354,33 @@ function AnnouncementModal({
         <div className="relative flex flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-8 sm:px-10 sm:py-10 text-center">
           {/* Type badge */}
           <div className="mb-4">
-            <span className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider ${
-              dark ? "bg-white/15 text-white/90" :
-              ann.type === "promo" ? "bg-violet-100 text-violet-700" :
-              ann.type === "event" ? "bg-amber-100 text-amber-700" :
-              "bg-blue-100 text-blue-700"
-            }`}>
-              {ann.type === "promo" ? "🎁 Khuyến mãi" : ann.type === "event" ? "📅 Sự kiện" : "ℹ️ Thông báo"}
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider ${
+                dark
+                  ? "bg-white/15 text-white/90"
+                  : ann.type === "promo"
+                    ? "bg-violet-100 text-violet-700"
+                    : ann.type === "event"
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-blue-100 text-blue-700"
+              }`}
+            >
+              {ann.type === "promo" ? copy.promo : ann.type === "event" ? copy.event : copy.info}
             </span>
           </div>
 
           {/* Title */}
-          <h2 className={`mb-3 text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl ${dark ? "text-white" : "text-ink"}`}>
-            {title || ann.message}
+          <h2
+            className={`mb-3 text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl ${dark ? "text-white" : "text-ink"}`}
+          >
+            {title ?? (locale === "vi" ? ann.message : "")}
           </h2>
 
           {/* Body */}
           {body && (
-            <p className={`mb-6 max-w-md text-base leading-relaxed sm:text-lg ${dark ? "text-white/75" : "text-ink/65"}`}>
+            <p
+              className={`mb-6 max-w-md text-base leading-relaxed sm:text-lg ${dark ? "text-white/75" : "text-ink/65"}`}
+            >
               {body}
             </p>
           )}
@@ -368,7 +394,7 @@ function AnnouncementModal({
                 rel="noopener noreferrer"
                 target={ann.ctaUrl.startsWith("http") ? "_blank" : undefined}
               >
-                {ann.ctaLabel ?? "Xem thêm →"}
+                {ann.ctaLabel ?? copy.more}
               </a>
             )}
             {canClose && (
@@ -377,7 +403,7 @@ function AnnouncementModal({
                 onClick={handleDismiss}
                 type="button"
               >
-                Để sau
+                {copy.later}
               </button>
             )}
           </div>
@@ -392,12 +418,17 @@ function AnnouncementModal({
 
 /* ── Banner Strip Component ── */
 export function AnnouncementStrip() {
+  const pathname = usePathname() ?? "";
+  const locale = (pathname.split("/")[1] as Locale) || "vi";
+  const copy = COPY[locale] ?? COPY.vi;
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [activeIdx, setActiveIdx] = useState(0);
   const [paused, setPaused] = useState(false);
   const [modalAnn, setModalAnn] = useState<Announcement | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const modalShownPathRef = useRef<string | null>(null);
+  const homePath = /^\/(vi|en|ja)\/?$/u.test(pathname);
 
   // Fetch announcements from API on mount
   useEffect(() => {
@@ -413,33 +444,36 @@ export function AnnouncementStrip() {
             return;
           }
         }
-      } catch { /* network error */ }
+      } catch {
+        /* network error */
+      }
       if (!cancelled) setAnnouncements([]);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const visible = useMemo(
-    () => announcements.filter((a) => !dismissed.has(a.id)),
-    [dismissed, announcements],
+    () => announcements.filter((a) => !dismissed.has(a.id) && (locale === "vi" || Boolean(resolveText(a, "title", locale)))),
+    [dismissed, announcements, locale]
   );
 
-  const banners = useMemo(
-    () => visible.filter((a) => a.format !== "modal"),
-    [visible],
-  );
+  const banners = useMemo(() => visible.filter((a) => a.format !== "modal"), [visible]);
 
-  const modals = useMemo(
-    () => visible.filter((a) => a.format === "modal" && shouldShowByFrequency(a)),
-    [visible],
-  );
-
-  // Show first undismissed modal on mount
+  // Promotional modals belong on the home route and never queue one after another.
   useEffect(() => {
-    if (modals.length > 0 && !modalAnn) {
-      setModalAnn(modals[0]);
+    if (!homePath) {
+      setModalAnn(null);
+      return;
     }
-  }, [modals, modalAnn]);
+    if (modalShownPathRef.current === pathname) return;
+    const first = visible.find((a) => a.format === "modal" && shouldShowByFrequency(a));
+    if (first) {
+      modalShownPathRef.current = pathname;
+      setModalAnn(first);
+    }
+  }, [homePath, pathname, visible]);
 
   // Auto-rotate banners
   useEffect(() => {
@@ -466,24 +500,23 @@ export function AnnouncementStrip() {
       // Also notify server (fire-and-forget)
       fetch(`${API_BASE}/api/announcements/${id}/dismiss`, { method: "POST" }).catch(() => {});
     },
-    [dismissed],
+    [dismissed]
   );
 
   const dismissModal = useCallback(() => {
     if (modalAnn) {
       setFreqSeen(modalAnn.id);
       dismiss(modalAnn.id);
-      const remaining = modals.filter((m) => m.id !== modalAnn.id && !dismissed.has(m.id));
-      setModalAnn(remaining.length > 0 ? remaining[0] : null);
+      setModalAnn(null);
     }
-  }, [modalAnn, modals, dismissed, dismiss]);
+  }, [modalAnn, dismiss]);
 
   const current = banners[activeIdx % Math.max(banners.length, 1)];
 
   return (
     <>
       {/* Modal overlay */}
-      {modalAnn && <AnnouncementModal ann={modalAnn} onDismiss={dismissModal} />}
+      {homePath && modalAnn && <AnnouncementModal ann={modalAnn} locale={locale} onDismiss={dismissModal} />}
 
       {/* Banner strip */}
       {current && (
@@ -496,7 +529,9 @@ export function AnnouncementStrip() {
           role="status"
           aria-live="polite"
         >
-          <span className={`inline-flex size-5 shrink-0 items-center justify-center rounded-full ${NOTICE_TONE[current.type]}`}>
+          <span
+            className={`inline-flex size-5 shrink-0 items-center justify-center rounded-full ${NOTICE_TONE[current.type]}`}
+          >
             <IconNotice aria-hidden size={16} />
           </span>
 
@@ -509,14 +544,14 @@ export function AnnouncementStrip() {
                 className={link ? "underline-offset-2 hover:underline" : undefined}
                 {...contentProps}
               >
-                {current.message}
+                {resolveText(current, "title", locale) ?? current.message}
               </Content>
             );
           })()}
 
           {/* Dismiss button */}
           <button
-            aria-label="Đóng"
+            aria-label={copy.close}
             className="ml-1 shrink-0 rounded p-0.5 text-muted/60 transition-colors hover:text-ink"
             onClick={() => dismiss(current.id)}
             type="button"

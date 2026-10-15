@@ -1,0 +1,315 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-157",
+  "title": "Keep Social event moderation reachable on mobile",
+  "start_head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+  "preexisting_changes": {
+    "apps/admin/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/admin/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/admin/tsconfig.tsbuildinfo": "37e77b2023a730c39360737d774bd4bf83f21d9f",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_iam_test.go": "aee00270d49976ed76fe616f9893de4a8ac7431c",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_postcard_test.go": "b7b6da529effa42f1634a4574eecd87727b6a002",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_rbac_test.go": "996ba6a016727ad3f7cd9a5c033c569e93b9ff8e",
+    "apps/api-go/internal/httpserver/handler_admin_core.go": "adcf77bd8ea17b54d6f42d7f5896f7ae1cfa992c",
+    "apps/api-go/internal/httpserver/handler_admin_growth_campaigns.go": "d1cf6a0cd0d109b9ff59523da87e8d640db8b7b8",
+    "apps/api-go/internal/httpserver/handler_admin_growth_postcards.go": "e11ab671f08d22059bbec5af508661e68ddc49ed",
+    "apps/api-go/internal/httpserver/handler_admin_growth_referrals.go": "c0b0be1c757bc3b9526a353419b666325c30c489",
+    "apps/api-go/internal/httpserver/handler_admin_growth_referrals_contract_test.go": "555404bcc2f1d41e28dfa55269555540dc9f30d6",
+    "apps/api-go/internal/httpserver/handler_admin_growth_social.go": "b19a01e21cdc971d318ce6756d782db9c0059a08",
+    "apps/api-go/internal/httpserver/handler_admin_growth_social_audit153_test.go": "d706bec6b5c70a6a8ffd1405c6dad3647458407d",
+    "apps/api-go/internal/httpserver/handler_final_batch.go": "65d591f83985bef41c5e752421963fd68575acb3",
+    "apps/api-go/internal/httpserver/server.go": "083ee51c8d1f15f4ed7d720f3f429009ebaee23a",
+    "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "087e3187f288aeeee524e06c12facc86bdec95e7",
+    "apps/web/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/web/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/web/tsconfig.tsbuildinfo": "91d48d855b4f16f10809b5e9d91bae8ed06c76dc",
+    "e2e/audit/audit156-share-moderation.mjs": "23600c0cc06214c63885a4a08422ed7968617f1f"
+  },
+  "spec": {
+    "problem": "At 390px the Social event table overflows its content area and its hide button is blocked by adjacent table content or the sticky Admin header during real browser interaction.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "At 390x844 document scrollWidth does not exceed clientWidth; the Social events table is a keyboard-reachable horizontal scroll region; an Admin can hide a disposable event through the visible UI."
+      }
+    ],
+    "expected_behavior": "Contain the wide event table in a keyboard-focusable horizontal scroll region so moderation controls can be reached and clicked at mobile width.",
+    "observed_behavior": "Headed Chromium at 390x844 could load the event and showed the hide button, but a normal click was intercepted while scrolling into the wide uncontained table.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/admin/app/[locale]/growth/social/admin-mobile-events.test.ts",
+      "test": "Admin Social mobile event moderation > keeps the event hide action reachable at 390px",
+      "expect": "intercepts pointer events"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-14T23:33:32.906Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-14T23:33:33.310Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-14T23:33:33.706Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T23:34:19.391Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T23:35:55.786Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T23:36:06.791Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T23:47:41.168Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T23:52:51.230Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-14T23:53:18.411Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-14T23:34:19.087Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/[locale]/growth/social/admin-mobile-events.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/[locale]/growth/social/admin-mobile-events.test.ts::Admin Social mobile event moderation > keeps the event hide action reachable at 390px",
+          "outcome": "FAIL",
+          "excerpt": "node:internal/modules/run_main:107 triggerUncaughtException( ^ locator.click: Timeout 30000ms exceeded. Call log: \u001b[2m - waiting for getByRole('row').filter({ hasText: 'audit1561126…' }).getByRole('button', { name: 'Ẩn khỏi public' })\u001b[22m \u001b[2m - locator resolved to <button type=\"button\" class=\"roun…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/admin/app/[locale]/growth/social/admin-mobile-events.test.ts::Admin Social mobile event moderation > keeps the event hide action reachable at 390px": "intercepts pointer events"
+      },
+      "fingerprint": "50726b2622f09c81645240c793ad83a0f55fe54c6191a7dd92a0657d3d1648dd"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-14T23:34:51.909Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/[locale]/growth/social/admin-mobile-events.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/[locale]/growth/social/admin-mobile-events.test.ts::Admin Social mobile event moderation > keeps the event hide action reachable at 390px",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "node:internal/modules/run_main:107 triggerUncaughtException( ^ AssertionError [ERR_ASSERTION]: no browser page or console errors + actual - expected + [ + 'Failed to load resource: the server responded with a status of 404 (Not Found)' + ] - [] at file:///Users/thanhnguyen/Documents/Projects/nihongo…"
+        }
+      ],
+      "fingerprint": "75cfe04fd09f71f3a1f876f3e9ea5797ee6b12c03902403960f270211b31d38b"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-14T23:35:18.866Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/[locale]/growth/social/admin-mobile-events.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/[locale]/growth/social/admin-mobile-events.test.ts::Admin Social mobile event moderation > keeps the event hide action reachable at 390px",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "node:internal/modules/run_main:107 triggerUncaughtException( ^ AssertionError [ERR_ASSERTION]: no browser page or console errors + actual - expected + [ + 'Failed to load resource: the server responded with a status of 404 (Not Found)' + ] - [] at file:///Users/thanhnguyen/Documents/Projects/nihongo…"
+        }
+      ],
+      "fingerprint": "75cfe04fd09f71f3a1f876f3e9ea5797ee6b12c03902403960f270211b31d38b"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-14T23:35:55.439Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/[locale]/growth/social/admin-mobile-events.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/[locale]/growth/social/admin-mobile-events.test.ts::Admin Social mobile event moderation > keeps the event hide action reachable at 390px",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "75cfe04fd09f71f3a1f876f3e9ea5797ee6b12c03902403960f270211b31d38b"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-14T23:41:07.452Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 470,
+        "executed": 470,
+        "passed": 469,
+        "failed": 1,
+        "failed_new": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 807,
+        "lint_errors": 72,
+        "lint_warnings": 22,
+        "new_debt": 2
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "104ed9b4293cf5bdc723a0c0c23bb8bd9c154e6259cc0fbbc1043330737d7716"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-14T23:46:40.661Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 470,
+        "executed": 470,
+        "passed": 469,
+        "failed": 1,
+        "failed_new": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 807,
+        "lint_errors": 72,
+        "lint_warnings": 22,
+        "new_debt": 2
+      },
+      "message": "RATCHET_VIOLATION: 2 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "dc8d699ee3763ac3509436a39595f523995e14968fc6018e694ee0e6a207a25f"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-14T23:47:40.622Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/[locale]/growth/social/admin-mobile-events.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/[locale]/growth/social/admin-mobile-events.test.ts::Admin Social mobile event moderation > keeps the event hide action reachable at 390px",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ea2a28938f62f49ddb51fe2cd420bdcc57bcfca247b050d94718de364fbf47a4"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-14T23:52:50.723Z",
+      "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 470,
+        "executed": 470,
+        "passed": 470,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 807,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "ea2a28938f62f49ddb51fe2cd420bdcc57bcfca247b050d94718de364fbf47a4"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-14T23:53:18.392Z",
+    "head": "8196cbf4518af4e6ec2ada491a95d06fb148c17f",
+    "fingerprint": "ea2a28938f62f49ddb51fe2cd420bdcc57bcfca247b050d94718de364fbf47a4",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/admin/app/[locale]/growth/social/admin-mobile-events.test.ts": "d624fdc5e4bcb66672a4c9d27fe8aacc4fb83bb9",
+      "apps/admin/app/[locale]/growth/social/growth-social-client.tsx": "f87a00d4e9497e7c1cb971d6b978c6a43dd96441",
+      "apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts": "4b361483cf53a2df8ab2b20f77db064d22194939",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "64204c676bd6f6c264a19fec39012b9ee2e4de10",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "b7f0e1e5656df6450dffc49402dbcfa281adbbec",
+      "e2e/audit/audit155-admin-mobile-tables.mjs": "531258892354c4a96065d4b0110598f72d909910",
+      "e2e/audit/audit156-share-moderation.mjs": "f8da1d95be1066e0e3af2ade35e23a8886eec028"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [
+    "e2e/audit/audit156-share-moderation.mjs"
+  ]
+}

@@ -138,7 +138,7 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
         if (!r.ok) throw new Error(`Next draw request failed: ${r.status}`);
         return r.json();
       })
-      .then((data) => setNextDraw(data))
+      .then((data: { nextDraw: NextDrawData | null }) => setNextDraw(data.nextDraw))
       .catch((error: unknown) => {
         if (!isAbortError(error)) setNextDrawError(true);
       });

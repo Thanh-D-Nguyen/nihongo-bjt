@@ -3,7 +3,6 @@ package httpserver
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -13,6 +12,7 @@ import (
 	"log/slog"
 	"mime"
 	"net/http"
+	"net/mail"
 	"strings"
 	"time"
 
@@ -43,11 +43,13 @@ type registerRequest struct {
 	Email       string `json:"email"`
 	Password    string `json:"password"`
 	DisplayName string `json:"displayName"`
+	Username    string `json:"username"`
 }
 
 // forgotPasswordRequest is the expected JSON shape for POST /api/auth/forgot-password.
 type forgotPasswordRequest struct {
-	Email string `json:"email"`
+	Email  string `json:"email"`
+	Locale string `json:"locale"`
 }
 
 // resetPasswordRequest is the expected JSON shape for POST /api/auth/reset-password.
@@ -119,10 +121,18 @@ func registerHandler(
 		email := strings.ToLower(strings.TrimSpace(req.Email))
 		password := req.Password
 		displayName := strings.TrimSpace(req.DisplayName)
+		if displayName == "" {
+			displayName = strings.TrimSpace(req.Username)
+		}
 
 		// Validate inputs before rate limiting or expensive work.
 		if email == "" || password == "" || displayName == "" {
 			writeJSONError(w, "email, password, and displayName are required", http.StatusBadRequest)
+			return
+		}
+		parsedEmail, err := mail.ParseAddress(email)
+		if err != nil || parsedEmail.Address != email {
+			writeJSONError(w, "invalid email", http.StatusBadRequest)
 			return
 		}
 		if len(password) < minPasswordLen {
@@ -139,14 +149,13 @@ func registerHandler(
 		}
 
 		// Rate limit by IP.
-		peerIP := authn.NormalizePeerIP(r.RemoteAddr)
+		peerIP := requestClientIP(r)
 		ipKey := "ip:reg:" + peerIP
 		ok, err := rateLimiter.Allow(ipKey)
 		if err != nil || !ok {
 			writeJSONError(w, "too many requests", http.StatusTooManyRequests)
 			return
 		}
-
 		ctx := r.Context()
 
 		// Check for existing user with this email.
@@ -188,6 +197,18 @@ func registerHandler(
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+		rawToken, digest, err := session.GenerateToken()
+		if err != nil {
+			logger.Error("register: generate session token failed", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		expiresAt := time.Now().Add(sessionTTL)
+		if _, err := tx.Exec(ctx, `INSERT INTO auth.session (user_id, token_digest, expires_at) VALUES ($1, $2, $3)`, userID, digest, expiresAt); err != nil {
+			logger.Error("register: create session failed", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		if err := tx.Commit(ctx); err != nil {
 			logger.Error("register: commit failed", "error", err)
@@ -195,19 +216,17 @@ func registerHandler(
 			return
 		}
 
+		secureCookie := r.TLS != nil || strings.HasPrefix(strings.ToLower(r.Header.Get("Origin")), "https://")
+		setSessionCookie(w, learnerCookieName, rawToken, expiresAt, secureCookie)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		_ = json.NewEncoder(w).Encode(map[string]string{"userId": userID})
 	}
 }
 
-// forgotPasswordHandler implements POST /api/auth/forgot-password.
-// Generates a single-use reset token, stores SHA-256 hash, always returns 200 (anti-enumeration).
-func forgotPasswordHandler(
-	db *pgxpool.Pool,
-	rateLimiter *authn.RateLimiter,
-	logger *slog.Logger,
-) http.HandlerFunc {
+// forgotPasswordHandler implements POST /api/auth/forgot-password. Account lookup
+// and delivery run asynchronously so the response cannot reveal account existence.
+func forgotPasswordHandler(rateLimiter *authn.RateLimiter, logger *slog.Logger, queue PasswordResetRequestQueue) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			writeJSONError(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -216,6 +235,11 @@ func forgotPasswordHandler(
 
 		if rateLimiter == nil {
 			logger.Error("forgot-password: rate limiter nil; rejecting")
+			writeJSONError(w, "service unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		if queue == nil {
+			logger.Error("forgot-password: email delivery is not configured")
 			writeJSONError(w, "service unavailable", http.StatusServiceUnavailable)
 			return
 		}
@@ -262,64 +286,38 @@ func forgotPasswordHandler(
 		}
 
 		// Rate limit by IP.
-		peerIP := authn.NormalizePeerIP(r.RemoteAddr)
+		peerIP := requestClientIP(r)
 		ipKey := "ip:forgot:" + peerIP
 		ok, err := rateLimiter.Allow(ipKey)
 		if err != nil || !ok {
 			writeJSONError(w, "too many requests", http.StatusTooManyRequests)
 			return
 		}
-
-		ctx := r.Context()
-
-		// Lookup user.
-		userID, err := lookupUserIDByEmail(ctx, db, email)
-		if err != nil {
-			logger.Error("forgot-password: lookup failed", "error", err)
-			// Anti-enumeration: still return 200.
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			_ = json.NewEncoder(w).Encode(map[string]bool{"ok": true})
-			return
-		}
-		if userID == "" {
-			// Anti-enumeration: burn time and return 200.
-			burnTime()
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			_ = json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+		ok, err = rateLimiter.Allow("email:forgot:" + hashAccountKey(email))
+		if err != nil || !ok {
+			writeJSONError(w, "too many requests", http.StatusTooManyRequests)
 			return
 		}
 
-		// Generate raw token.
-		rawToken := make([]byte, rawResetTokenLen)
-		if _, err := rand.Read(rawToken); err != nil {
-			logger.Error("forgot-password: token generation failed", "error", err)
-			writeJSONError(w, "internal error", http.StatusInternalServerError)
+		locale := strings.ToLower(strings.TrimSpace(req.Locale))
+		switch locale {
+		case "vi", "ja", "en":
+		default:
+			locale = "en"
+		}
+		if !queue.Enqueue(email, locale) {
+			logger.Warn("forgot-password: request queue is full")
+			writeJSONError(w, "service unavailable", http.StatusServiceUnavailable)
 			return
 		}
-		tokenHex := hex.EncodeToString(rawToken)
-
-		// Hash token for storage.
-		h := sha256.Sum256(rawToken)
-		tokenHash := hex.EncodeToString(h[:])
-
-		// Store token in DB.
-		expiresAt := time.Now().Add(resetTokenTTL)
-		if err := storeResetToken(ctx, db, userID, tokenHash, expiresAt); err != nil {
-			logger.Error("forgot-password: store token failed", "error", err)
-			writeJSONError(w, "internal error", http.StatusInternalServerError)
-			return
-		}
-
-		// In production, send email with token. For now, log it (TODO: integrate email service).
-		logger.Info("forgot-password: token generated", "user_id", userID, "token", tokenHex)
-
-		// Always return 200.
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+		writeForgotPasswordSuccess(w)
 	}
+}
+
+func writeForgotPasswordSuccess(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 }
 
 // resetPasswordHandler implements POST /api/auth/reset-password.
@@ -388,8 +386,8 @@ func resetPasswordHandler(
 			return
 		}
 
-		// Rate limit by IP.
-		peerIP := authn.NormalizePeerIP(r.RemoteAddr)
+		// Rate limit by the browser IP forwarded by the local proxy.
+		peerIP := requestClientIP(r)
 		ipKey := "ip:reset:" + peerIP
 		ok, err := rateLimiter.Allow(ipKey)
 		if err != nil || !ok {
@@ -401,37 +399,51 @@ func resetPasswordHandler(
 		h := sha256.Sum256([]byte(token))
 		tokenHash := hex.EncodeToString(h[:])
 
-		ctx := r.Context()
-
-		// Lookup and validate token.
-		userID, tokenID, err := lookupResetToken(ctx, db, tokenHash)
+		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+		defer cancel()
+		tx, err := db.Begin(ctx)
 		if err != nil {
-			logger.Error("reset-password: token lookup failed", "error", err)
+			logger.Error("reset-password: begin transaction failed", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-		if userID == "" {
+		defer func() { _ = tx.Rollback(ctx) }()
+
+		var userID string
+		err = tx.QueryRow(ctx, `WITH eligible AS (
+			SELECT token.token_hash
+			FROM auth.password_reset_token token
+			JOIN profile.user_profile learner ON learner.id = token.user_id
+			WHERE token.token_hash = $1 AND token.expires_at > now()
+			  AND token.used_at IS NULL AND learner.status = 'active'
+			FOR UPDATE OF token, learner
+		)
+		UPDATE auth.password_reset_token token
+		SET used_at = now()
+		FROM eligible
+		WHERE token.token_hash = eligible.token_hash
+		RETURNING token.user_id`, tokenHash).Scan(&userID)
+		if errors.Is(err, pgx.ErrNoRows) {
 			writeJSONError(w, "invalid or expired token", http.StatusBadRequest)
 			return
 		}
-
-		// Mark token as used.
-		if err := markResetTokenUsed(ctx, db, tokenID); err != nil {
-			logger.Error("reset-password: mark token used failed", "error", err)
+		if err != nil {
+			logger.Error("reset-password: claim token failed", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-
-		// Update password.
-		if err := credStore.SetLearnerCredential(ctx, userID, []byte(password)); err != nil {
+		if err := credStore.SetLearnerCredentialTx(ctx, tx, userID, []byte(password)); err != nil {
 			logger.Error("reset-password: set credential failed", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-
-		// Revoke all sessions for this user.
-		if err := sessionStore.RevokeAllLearnerSessions(ctx, userID); err != nil {
+		if err := sessionStore.RevokeAllLearnerSessionsTx(ctx, tx, userID); err != nil {
 			logger.Error("reset-password: revoke sessions failed", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("reset-password: commit failed", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
@@ -700,7 +712,7 @@ func lookupUserIDByEmail(ctx context.Context, db *pgxpool.Pool, email string) (s
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	const q = `SELECT id FROM profile.user_profile WHERE email = $1`
+	const q = `SELECT id FROM profile.user_profile WHERE email = $1 AND status = 'active'`
 	var id string
 	err := db.QueryRow(ctx, q, email).Scan(&id)
 	if err != nil {
@@ -730,33 +742,6 @@ func storeResetToken(ctx context.Context, db *pgxpool.Pool, userID, tokenHash st
 	_, err := db.Exec(ctx, q, userID, tokenHash, expiresAt)
 	if err != nil {
 		return fmt.Errorf("store reset token: %w", err)
-	}
-	return nil
-}
-
-func lookupResetToken(ctx context.Context, db *pgxpool.Pool, tokenHash string) (userID string, tokenID string, err error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	const q = `SELECT id, user_id FROM auth.password_reset_token WHERE token_hash = $1 AND expires_at > now() AND used_at IS NULL`
-	err = db.QueryRow(ctx, q, tokenHash).Scan(&tokenID, &userID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return "", "", nil
-		}
-		return "", "", fmt.Errorf("lookup reset token: %w", err)
-	}
-	return userID, tokenID, nil
-}
-
-func markResetTokenUsed(ctx context.Context, db *pgxpool.Pool, tokenID string) error {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	const q = `UPDATE auth.password_reset_token SET used_at = now() WHERE id = $1`
-	_, err := db.Exec(ctx, q, tokenID)
-	if err != nil {
-		return fmt.Errorf("mark reset token used: %w", err)
 	}
 	return nil
 }

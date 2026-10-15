@@ -1453,7 +1453,7 @@ export function OperationsResourceClient({
       </div>
 
       <AdminSection title={page.title}>
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="max-w-full overflow-x-auto [contain:layout] rounded-lg border border-slate-200 bg-white shadow-sm">
             {loading ? <div className="p-6 text-sm text-slate-600">{common.loading}</div> : null}
             {error ? <div className="p-6 text-sm text-red-700">{common.error}</div> : null}
             {!loading && !error && !endpoint ? (

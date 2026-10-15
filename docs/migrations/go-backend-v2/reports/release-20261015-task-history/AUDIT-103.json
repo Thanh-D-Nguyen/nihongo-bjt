@@ -1,0 +1,1308 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-103",
+  "title": "Audit learner appearance settings screen",
+  "start_head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Anonymous appearance choices apply locally and never call learner profile persistence."
+      },
+      {
+        "id": "AC2",
+        "text": "Authenticated appearance loads from the learner profile and saves theme, font size and density through the visible UI to PostgreSQL."
+      },
+      {
+        "id": "AC3",
+        "text": "Server save failures are not presented as saved; success is shown only after an OK response."
+      },
+      {
+        "id": "AC4",
+        "text": "Concurrent appearance updates are serialized so an older response can never overwrite newer choices or report the newest save complete."
+      },
+      {
+        "id": "AC5",
+        "text": "Neither a late profile GET nor auth-provider loading may replace a newer learner choice; a choice made while auth is loading is saved after authentication resolves."
+      }
+    ],
+    "expected_behavior": "BFF forwards GET/PUT with learner session and Origin, Go session+CSRF checks remain effective, and the client reports saved only after HTTP success.",
+    "observed_behavior": "AppearanceSettingsClient issues GET and debounced PUT to /api/auth/me, but the Next BFF exports GET only and the client marks any HTTP response as saved.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY",
+      "API_CONTRACT",
+      "AUTH_SECURITY",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/api/auth/me/route.test.ts",
+      "test": "forwards authenticated appearance updates and the CSRF Origin to Go",
+      "expect": "function"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx",
+      "test": "AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update",
+      "expect": "not to contain"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx",
+      "test": "AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice",
+      "expect": "but got 3 times"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx",
+      "test": "AppearanceSettingsClient > does not replace a learner choice when the initial profile request resolves late",
+      "expect": "to contain"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx",
+      "test": "AppearanceSettingsClient > persists a learner choice made while auth is loading instead of replacing it with the profile",
+      "expect": "to be 'PUT'"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-11T07:55:00.741Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-11T07:55:01.089Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T07:55:01.435Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T07:57:18.581Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T07:58:23.079Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-11T08:08:39.077Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T08:09:09.945Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T08:09:43.755Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T08:09:59.588Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T08:10:31.420Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-11T08:17:13.606Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T08:20:52.104Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T08:21:18.128Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T08:21:29.358Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T08:22:14.539Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-11T08:26:15.514Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T11:40:13.692Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T11:40:31.017Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T11:42:03.720Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T11:57:17.949Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T11:57:31.464Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-11T12:06:32.841Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-11T12:08:52.696Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-11T12:08:53.559Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-11T07:55:50.542Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/me/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to be type of 'function'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::does not show saved after the profile endpoint rejects the update",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"does not show saved after the profile endpoint rejects the update\" in apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go": "function",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::does not show saved after the profile endpoint rejects the update": "Appearance could not be saved"
+      },
+      "fingerprint": "a73fbaa6449ae647865edd04179969e188023bb9046cf36b425050f555fd1640"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-11T07:56:34.681Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/me/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to be type of 'function'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::does not show saved after the profile endpoint rejects the update",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"does not show saved after the profile endpoint rejects the update\" in apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go": "function",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::does not show saved after the profile endpoint rejects the update": "✓ Đã lưu."
+      },
+      "fingerprint": "c3612a6abd233d246e3b3fef930984f27f01612d763776b13cf3be2d097a9cee"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-11T07:57:18.356Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/me/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to be type of 'function'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update",
+          "outcome": "FAIL",
+          "excerpt": "expected '✓ Đã lưu.' not to contain 'Đã lưu.'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go": "function",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update": "✓ Đã lưu."
+      },
+      "fingerprint": "c3612a6abd233d246e3b3fef930984f27f01612d763776b13cf3be2d097a9cee"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-11T07:58:22.639Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/me/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0df7c95abab9bc788b416ed776890096b99a9e2a6fe6285599be55255ad1ad68"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-11T08:03:23.114Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/me/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "b581e2088afcc3b93b64a3b3f78393e3fd7956d8717b52bb01686c111f158eae"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-11T08:03:56.907Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/audit103-browser-evidence.sh",
+      "exit_code": 1,
+      "fingerprint": "b581e2088afcc3b93b64a3b3f78393e3fd7956d8717b52bb01686c111f158eae"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-11T08:04:11.923Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/audit103-browser-evidence.sh",
+      "exit_code": 1,
+      "fingerprint": "b581e2088afcc3b93b64a3b3f78393e3fd7956d8717b52bb01686c111f158eae"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-11T08:04:28.936Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/audit103-browser-evidence.sh",
+      "exit_code": 0,
+      "fingerprint": "b581e2088afcc3b93b64a3b3f78393e3fd7956d8717b52bb01686c111f158eae"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-11T08:04:59.889Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/audit103-browser-evidence.sh",
+      "exit_code": 0,
+      "fingerprint": "b581e2088afcc3b93b64a3b3f78393e3fd7956d8717b52bb01686c111f158eae"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-11T08:08:38.627Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 438,
+        "executed": 438,
+        "passed": 438,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 785,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "b581e2088afcc3b93b64a3b3f78393e3fd7956d8717b52bb01686c111f158eae"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-11T08:09:43.359Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/me/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to be type of 'function'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Giao diệnChỉnh chế độ sáng/tối, cỡ ch…' not to contain 'Đã lưu.'",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"✓ Đã lưu.\""
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called 2 times, but got 3 times",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"expected 2\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go": "function",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update": "✓ Đã lưu.",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice": "expected 2"
+      },
+      "fingerprint": "5be691a13097941a4ec5a0a0895da041c3f9bae002cd1b88514fa5893f97c9ec"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-11T08:09:59.211Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/me/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to be type of 'function'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Giao diệnChỉnh chế độ sáng/tối, cỡ ch…' not to contain 'Đã lưu.'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called 2 times, but got 3 times",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go": "function",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update": "not to contain",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice": "but got 3 times"
+      },
+      "fingerprint": "5be691a13097941a4ec5a0a0895da041c3f9bae002cd1b88514fa5893f97c9ec"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-11T08:10:30.969Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/me/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "cd302dc0d017ae88f92318e13775991d3071b91250d89c5490da16500f139d21"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-11T08:14:22.029Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 438,
+        "executed": 438,
+        "passed": 438,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 785,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "cd302dc0d017ae88f92318e13775991d3071b91250d89c5490da16500f139d21"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-11T08:14:48.228Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/audit103-browser-evidence.sh",
+      "exit_code": 1,
+      "fingerprint": "cd302dc0d017ae88f92318e13775991d3071b91250d89c5490da16500f139d21"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-11T08:15:33.396Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/audit103-browser-evidence.sh",
+      "exit_code": 1,
+      "fingerprint": "cd302dc0d017ae88f92318e13775991d3071b91250d89c5490da16500f139d21"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-11T08:17:13.173Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/audit103-browser-evidence.sh",
+      "exit_code": 0,
+      "fingerprint": "cd302dc0d017ae88f92318e13775991d3071b91250d89c5490da16500f139d21"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-11T08:20:51.679Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/me/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to be type of 'function'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Giao diệnChỉnh chế độ sáng/tối, cỡ ch…' not to contain 'Đã lưu.'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called 2 times, but got 3 times",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go": "function",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update": "not to contain",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice": "but got 3 times"
+      },
+      "fingerprint": "cd302dc0d017ae88f92318e13775991d3071b91250d89c5490da16500f139d21"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-11T08:21:17.665Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/me/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to be type of 'function'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Giao diệnChỉnh chế độ sáng/tối, cỡ ch…' not to contain 'Đã lưu.'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called 2 times, but got 3 times",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not replace a learner choice when the initial profile request resolves late",
+          "outcome": "FAIL",
+          "excerpt": "expected '{\"density\":\"comfortable\",\"fontSize\":\"…' to contain '\"theme\":\"dark\"'",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"not to contain\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go": "function",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update": "not to contain",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice": "but got 3 times",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not replace a learner choice when the initial profile request resolves late": "not to contain"
+      },
+      "fingerprint": "fb99e9cf7075f88842661615d9265f113a64f99810cdefc68f50d9770344e1b4"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-11T08:21:28.905Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/me/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to be type of 'function'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Giao diệnChỉnh chế độ sáng/tối, cỡ ch…' not to contain 'Đã lưu.'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called 2 times, but got 3 times",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not replace a learner choice when the initial profile request resolves late",
+          "outcome": "FAIL",
+          "excerpt": "expected '{\"density\":\"comfortable\",\"fontSize\":\"…' to contain '\"theme\":\"dark\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go": "function",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update": "not to contain",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice": "but got 3 times",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not replace a learner choice when the initial profile request resolves late": "to contain"
+      },
+      "fingerprint": "fb99e9cf7075f88842661615d9265f113a64f99810cdefc68f50d9770344e1b4"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-11T08:21:41.455Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/me/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "expected \"vi.fn()\" to be called 2 times, but got 3 times"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not replace a learner choice when the initial profile request resolves late",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a5293b5f1a681bd4c1ee9fb31ddf16d5661a4ff9c93a301efbb6610b30c02189"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-11T08:22:14.114Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/me/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not replace a learner choice when the initial profile request resolves late",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c785ef83de7df6d26ddf4e010b6999bf7a7fd5e6f5e6f0e989eea50acf0758f4"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-11T08:25:45.176Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 438,
+        "executed": 438,
+        "passed": 438,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 785,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "c785ef83de7df6d26ddf4e010b6999bf7a7fd5e6f5e6f0e989eea50acf0758f4"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-11T08:26:15.094Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/audit103-browser-evidence.sh",
+      "exit_code": 0,
+      "fingerprint": "c785ef83de7df6d26ddf4e010b6999bf7a7fd5e6f5e6f0e989eea50acf0758f4"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-11T11:40:13.231Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/me/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to be type of 'function'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Giao diệnChỉnh chế độ sáng/tối, cỡ ch…' not to contain 'Đã lưu.'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called 2 times, but got 3 times",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not replace a learner choice when the initial profile request resolves late",
+          "outcome": "FAIL",
+          "excerpt": "expected '{\"density\":\"comfortable\",\"fontSize\":\"…' to contain '\"theme\":\"dark\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > persists a learner choice made while auth is loading instead of replacing it with the profile",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to be 'PUT' // Object.is equality",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"not to have been called\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go": "function",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update": "not to contain",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice": "but got 3 times",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not replace a learner choice when the initial profile request resolves late": "to contain",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > persists a learner choice made while auth is loading instead of replacing it with the profile": "not to have been called"
+      },
+      "fingerprint": "b64b7becf55d6e191741b52efe4f5c844b189c862912e886211bcea1ffd258cf"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-11T11:40:30.565Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/me/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to be type of 'function'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Giao diệnChỉnh chế độ sáng/tối, cỡ ch…' not to contain 'Đã lưu.'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called 2 times, but got 3 times",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not replace a learner choice when the initial profile request resolves late",
+          "outcome": "FAIL",
+          "excerpt": "expected '{\"density\":\"comfortable\",\"fontSize\":\"…' to contain '\"theme\":\"dark\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > persists a learner choice made while auth is loading instead of replacing it with the profile",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to be 'PUT' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go": "function",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update": "not to contain",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice": "but got 3 times",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not replace a learner choice when the initial profile request resolves late": "to contain",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > persists a learner choice made while auth is loading instead of replacing it with the profile": "to be 'PUT'"
+      },
+      "fingerprint": "b64b7becf55d6e191741b52efe4f5c844b189c862912e886211bcea1ffd258cf"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-11T11:42:03.271Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/me/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not replace a learner choice when the initial profile request resolves late",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > persists a learner choice made while auth is loading instead of replacing it with the profile",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1674740b3c38143b7bdf77a57c09447a4866b8305bfaf04da8503f267705fa46"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-11T11:45:30.192Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 438,
+        "executed": 438,
+        "passed": 438,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 785,
+        "lint_errors": 65,
+        "lint_warnings": 24,
+        "new_debt": 0
+      },
+      "message": "BASELINE_STALE: 1 fixed item(s) still in the baseline",
+      "fingerprint": "1674740b3c38143b7bdf77a57c09447a4866b8305bfaf04da8503f267705fa46"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-11T11:46:11.451Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/me/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not replace a learner choice when the initial profile request resolves late",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > persists a learner choice made while auth is loading instead of replacing it with the profile",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "add0d3242e22649271d6b00ff6fee7c2768076146df9e7756490ea17b8b9724a"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-11T11:49:21.770Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 438,
+        "executed": 438,
+        "passed": 438,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 785,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 1
+      },
+      "message": "RATCHET_VIOLATION: 1 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "add0d3242e22649271d6b00ff6fee7c2768076146df9e7756490ea17b8b9724a"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-11T11:50:17.394Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/me/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not replace a learner choice when the initial profile request resolves late",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > persists a learner choice made while auth is loading instead of replacing it with the profile",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e26bbe154b13c750ab37958c1ee98470e99d976dacb224fb4b90713c42656f4e"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-11T11:53:38.819Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 438,
+        "executed": 438,
+        "passed": 438,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 785,
+        "lint_errors": 65,
+        "lint_warnings": 24,
+        "new_debt": 0
+      },
+      "message": "BASELINE_STALE: 1 fixed item(s) still in the baseline",
+      "fingerprint": "e26bbe154b13c750ab37958c1ee98470e99d976dacb224fb4b90713c42656f4e"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-11T11:57:30.983Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/me/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/me/route.test.ts::forwards authenticated appearance updates and the CSRF Origin to Go",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not show saved after the profile endpoint rejects the update",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > serializes saves so an older response cannot overwrite the newest choice",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > does not replace a learner choice when the initial profile request resolves late",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > persists a learner choice made while auth is loading instead of replacing it with the profile",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "96674748429ad5921a2e2c08c981b99cddc7058c6525a09e0fd54534a493ce73"
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-11T11:59:35.533Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "96674748429ad5921a2e2c08c981b99cddc7058c6525a09e0fd54534a493ce73"
+    },
+    {
+      "seq": 35,
+      "at": "2026-10-11T12:03:02.626Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 438,
+        "executed": 438,
+        "passed": 438,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 785,
+        "lint_errors": 65,
+        "lint_warnings": 24,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "96674748429ad5921a2e2c08c981b99cddc7058c6525a09e0fd54534a493ce73"
+    },
+    {
+      "seq": 36,
+      "at": "2026-10-11T12:03:15.570Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/audit103-browser-evidence.sh",
+      "exit_code": 1,
+      "fingerprint": "96674748429ad5921a2e2c08c981b99cddc7058c6525a09e0fd54534a493ce73"
+    },
+    {
+      "seq": 37,
+      "at": "2026-10-11T12:06:32.377Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/audit103-browser-evidence.sh",
+      "exit_code": 0,
+      "fingerprint": "96674748429ad5921a2e2c08c981b99cddc7058c6525a09e0fd54534a493ce73"
+    },
+    {
+      "seq": 38,
+      "at": "2026-10-11T12:08:52.220Z",
+      "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Euclid",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "96674748429ad5921a2e2c08c981b99cddc7058c6525a09e0fd54534a493ce73"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-11T12:08:53.539Z",
+    "head": "8139f3674003900ecae6fd06e0bb0efa57d50f76",
+    "fingerprint": "96674748429ad5921a2e2c08c981b99cddc7058c6525a09e0fd54534a493ce73",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_harness": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx": "97875b3deb8a499d0a796cfbfbecdb4ee79e81d4",
+      "apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.tsx": "7d312b3b57ef1d4a063e556be50e2ecb95571732",
+      "apps/web/app/api/auth/me/route.test.ts": "fe525c427caa098cbac6a817e55f256c9436231b",
+      "apps/web/app/api/auth/me/route.ts": "810f7cd85c6f6f3efda67489ff73568f861e7c71",
+      "apps/web/messages/en.json": "1190c48a2df5f922206be310ad26973d642b6717",
+      "apps/web/messages/ja.json": "1794e7f71f29511597a3f491285f71537fa5e058",
+      "apps/web/messages/vi.json": "147635256818c8c6e8e8d292dc3f48e527acc2ac",
+      "scripts/quality/frontend-debt-baseline.json": "a779a3bc03192e7af1567585fe7733afaa7ec36d"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

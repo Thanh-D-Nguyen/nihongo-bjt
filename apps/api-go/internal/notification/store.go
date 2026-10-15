@@ -3,6 +3,7 @@ package notification
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -60,12 +61,15 @@ func (s *Store) GetPreferences(ctx context.Context, userID string) (*Preferences
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			// Return defaults matching NestJS/Prisma schema defaults
+			now := time.Now().UTC()
 			return &Preferences{
 				UserID:                userID,
 				StudyRemindersEnabled: true,
 				ProductNewsEnabled:    false,
 				EmailEnabled:          true,
 				InAppEnabled:          true,
+				CreatedAt:             now,
+				UpdatedAt:             now,
 			}, nil
 		}
 		return nil, fmt.Errorf("notification: get preferences: %w", err)
@@ -109,8 +113,8 @@ func (s *Store) UpdatePreferences(ctx context.Context, userID string, input Upda
 	}
 
 	const q = `INSERT INTO profile.notification_preference
-		(user_id, study_reminders_enabled, product_news_enabled, email_enabled, in_app_enabled)
-		VALUES ($1, $2, $3, $4, $5)
+		(user_id, study_reminders_enabled, product_news_enabled, email_enabled, in_app_enabled, updated_at)
+		VALUES ($1, $2, $3, $4, $5, NOW())
 		ON CONFLICT (user_id) DO UPDATE SET
 			study_reminders_enabled = EXCLUDED.study_reminders_enabled,
 			product_news_enabled = EXCLUDED.product_news_enabled,
@@ -128,4 +132,72 @@ func (s *Store) UpdatePreferences(ctx context.Context, userID string, input Upda
 		return nil, fmt.Errorf("notification: update preferences: %w", err)
 	}
 	return &p, nil
+}
+
+// InAppNotification is one row of the learner's in-app inbox feed. Kind maps to
+// a client-side i18n key; Payload is opaque JSON owned by the producer.
+type InAppNotification struct {
+	ID        string          `json:"id"`
+	Kind      string          `json:"kind"`
+	Payload   json.RawMessage `json:"payload"`
+	ReadAt    *time.Time      `json:"readAt"`
+	CreatedAt time.Time       `json:"createdAt"`
+}
+
+// ErrInAppNotificationNotFound is returned when the notification does not exist
+// or belongs to a different user; both cases are indistinguishable to the caller.
+var ErrInAppNotificationNotFound = errors.New("notification: in-app notification not found")
+
+// ListInAppNotifications returns up to limit of the user's newest notifications.
+func (s *Store) ListInAppNotifications(ctx context.Context, userID string, limit int) ([]InAppNotification, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	const q = `SELECT id::text, kind, payload, read_at, created_at
+		FROM profile.in_app_notification
+		WHERE user_id = $1
+		ORDER BY created_at DESC, id DESC
+		LIMIT $2`
+
+	rows, err := s.db.Query(ctx, q, userID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("notification: list in-app: %w", err)
+	}
+	defer rows.Close()
+
+	items := make([]InAppNotification, 0, limit)
+	for rows.Next() {
+		var n InAppNotification
+		if err := rows.Scan(&n.ID, &n.Kind, &n.Payload, &n.ReadAt, &n.CreatedAt); err != nil {
+			return nil, fmt.Errorf("notification: scan in-app: %w", err)
+		}
+		items = append(items, n)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("notification: iterate in-app: %w", err)
+	}
+	return items, nil
+}
+
+// MarkInAppNotificationRead sets read_at on the user's notification. The first
+// read time is kept, so repeated calls are idempotent.
+func (s *Store) MarkInAppNotificationRead(ctx context.Context, userID, notificationID string) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	const q = `WITH updated AS (
+			UPDATE profile.in_app_notification
+			SET read_at = COALESCE(read_at, NOW())
+			WHERE id = $1 AND user_id = $2
+			RETURNING id
+		) SELECT EXISTS (SELECT 1 FROM updated)`
+
+	var found bool
+	if err := s.db.QueryRow(ctx, q, notificationID, userID).Scan(&found); err != nil {
+		return fmt.Errorf("notification: mark in-app read: %w", err)
+	}
+	if !found {
+		return ErrInAppNotificationNotFound
+	}
+	return nil
 }

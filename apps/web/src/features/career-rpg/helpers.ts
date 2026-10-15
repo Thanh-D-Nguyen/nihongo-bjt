@@ -17,14 +17,14 @@ export function timeOfDayBucket(date: Date = new Date()): "morning" | "afternoon
   return "evening";
 }
 
-export function findRankByCode(code: RankCode): CareerRank | undefined {
-  return mockCareerRanks.find((r) => r.rankCode === code);
+export function findRankByCode(code: RankCode, ranks: CareerRank[] = mockCareerRanks): CareerRank | undefined {
+  return ranks.find((r) => r.rankCode === code);
 }
 
-export function nextRank(code: RankCode): CareerRank | undefined {
-  const cur = findRankByCode(code);
+export function nextRank(code: RankCode, ranks: CareerRank[] = mockCareerRanks): CareerRank | undefined {
+  const cur = findRankByCode(code, ranks);
   if (!cur) return undefined;
-  return mockCareerRanks.find((r) => r.displayOrder === cur.displayOrder + 1);
+  return ranks.find((r) => r.displayOrder === cur.displayOrder + 1);
 }
 
 export function rankProgressPct(state: UserCareerState): number {

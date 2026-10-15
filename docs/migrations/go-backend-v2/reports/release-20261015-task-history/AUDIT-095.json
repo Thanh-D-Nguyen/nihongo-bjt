@@ -1,0 +1,520 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-095",
+  "title": "Correct Daily Radar coupon card source title",
+  "start_head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+  "preexisting_changes": {
+    "apps/api-go/internal/httpserver/handler_daily_radar_card_public_test.go": "5d2df7e7a4b6594c253cf9a9b117d4e163e7f5f6",
+    "apps/api-go/internal/httpserver/handler_dailyradar_announcement.go": "19048deaa799e6e6acd1dd7e42d64423d1020df8"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Correct the canonical Daily Radar coupon card seed so Vietnamese title is Vietnamese and Japanese title is populated; apply canonical local seed and verify persisted values through PostgreSQL and the visible localized screen."
+      }
+    ],
+    "expected_behavior": "Coupon card title fields match their locale in canonical source and local database.",
+    "observed_behavior": "The canonical seed stores Japanese text in titleVi and leaves titleJa null; the Vietnamese screen renders Japanese title.",
+    "rollback_plan": "Revert only coupon-terms title fields in the seed data and restore prior local seed row if needed."
+  },
+  "classification": {
+    "classes": [
+      "DATABASE",
+      "DOMAIN_LOGIC"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "scripts/daily-radar-seed.test.ts",
+      "test": "Daily Radar seed localization > stores the coupon card title in the matching Vietnamese and Japanese fields",
+      "expect": "Đọc điều kiện coupon / khuyến mãi"
+    },
+    {
+      "runner": "vitest",
+      "file": "scripts/daily-radar-seed.test.ts",
+      "test": "Daily Radar seed localization > provides structured expressions consumed by the card detail screen",
+      "expect": "対象商品"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-10T11:37:46.708Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-10T11:37:47.089Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-10T11:38:03.945Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-10T11:40:23.220Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-10T11:40:35.989Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-10T11:40:44.029Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-10T11:43:38.531Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-10T11:44:13.243Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-10T11:45:37.348Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T04:46:41.655Z",
+      "head": "9f2be1b758bb5bea1e3f2ecd47304893c94e51a0"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-11T04:48:17.473Z",
+      "head": "9f2be1b758bb5bea1e3f2ecd47304893c94e51a0"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-11T04:51:37.645Z",
+      "head": "9f2be1b758bb5bea1e3f2ecd47304893c94e51a0"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-11T04:51:38.712Z",
+      "head": "9f2be1b758bb5bea1e3f2ecd47304893c94e51a0"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-10T11:38:54.602Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/daily-radar-seed.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::stores the coupon card title in the matching Vietnamese and Japanese fields",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"stores the coupon card title in the matching Vietnamese and Japanese fields\" in scripts/daily-radar-seed.test.ts",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/daily-radar-seed.test.ts::stores the coupon card title in the matching Vietnamese and Japanese fields": "expected Vietnamese title and Japanese title fields in the canonical coupon seed"
+      },
+      "fingerprint": "d92d38ba5c3c962a7965fcf3c5b68d6503e1de3e4e2de3e98a22ccbce2b9928c"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-10T11:39:04.099Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/daily-radar-seed.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::stores the coupon card title in the matching Vietnamese and Japanese fields",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"stores the coupon card title in the matching Vietnamese and Japanese fields\" in scripts/daily-radar-seed.test.ts",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > stores the coupon card title in the matching Vietnamese and Japanese fields",
+          "outcome": "FAIL",
+          "excerpt": "expected 'クーポンの条件を読む' to be 'Đọc điều kiện coupon / khuyến mãi' // Object.is equality",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"expected localized title fields\""
+        }
+      ],
+      "expects": {
+        "vitest:scripts/daily-radar-seed.test.ts::stores the coupon card title in the matching Vietnamese and Japanese fields": "expected Vietnamese title and Japanese title fields in the canonical coupon seed",
+        "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > stores the coupon card title in the matching Vietnamese and Japanese fields": "expected localized title fields"
+      },
+      "fingerprint": "d92d38ba5c3c962a7965fcf3c5b68d6503e1de3e4e2de3e98a22ccbce2b9928c"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-10T11:39:12.427Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/daily-radar-seed.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::stores the coupon card title in the matching Vietnamese and Japanese fields",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"stores the coupon card title in the matching Vietnamese and Japanese fields\" in scripts/daily-radar-seed.test.ts",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > stores the coupon card title in the matching Vietnamese and Japanese fields",
+          "outcome": "FAIL",
+          "excerpt": "expected 'クーポンの条件を読む' to be 'Đọc điều kiện coupon / khuyến mãi' // Object.is equality",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"expected localized title fields\""
+        }
+      ],
+      "expects": {
+        "vitest:scripts/daily-radar-seed.test.ts::stores the coupon card title in the matching Vietnamese and Japanese fields": "expected Vietnamese title and Japanese title fields in the canonical coupon seed",
+        "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > stores the coupon card title in the matching Vietnamese and Japanese fields": "expected localized title fields"
+      },
+      "fingerprint": "d92d38ba5c3c962a7965fcf3c5b68d6503e1de3e4e2de3e98a22ccbce2b9928c"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-10T11:39:21.129Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/daily-radar-seed.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::stores the coupon card title in the matching Vietnamese and Japanese fields",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"stores the coupon card title in the matching Vietnamese and Japanese fields\" in scripts/daily-radar-seed.test.ts",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > stores the coupon card title in the matching Vietnamese and Japanese fields",
+          "outcome": "FAIL",
+          "excerpt": "expected 'クーポンの条件を読む' to be 'Đọc điều kiện coupon / khuyến mãi' // Object.is equality",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"expected localized title fields\""
+        }
+      ],
+      "expects": {
+        "vitest:scripts/daily-radar-seed.test.ts::stores the coupon card title in the matching Vietnamese and Japanese fields": "expected Vietnamese title and Japanese title fields in the canonical coupon seed",
+        "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > stores the coupon card title in the matching Vietnamese and Japanese fields": "expected localized title fields"
+      },
+      "fingerprint": "d92d38ba5c3c962a7965fcf3c5b68d6503e1de3e4e2de3e98a22ccbce2b9928c"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-10T11:39:29.877Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/daily-radar-seed.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::stores the coupon card title in the matching Vietnamese and Japanese fields",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"stores the coupon card title in the matching Vietnamese and Japanese fields\" in scripts/daily-radar-seed.test.ts",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > stores the coupon card title in the matching Vietnamese and Japanese fields",
+          "outcome": "FAIL",
+          "excerpt": "expected 'クーポンの条件を読む' to be 'Đọc điều kiện coupon / khuyến mãi' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/daily-radar-seed.test.ts::stores the coupon card title in the matching Vietnamese and Japanese fields": "expected Vietnamese title and Japanese title fields in the canonical coupon seed",
+        "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > stores the coupon card title in the matching Vietnamese and Japanese fields": "クーポンの条件を読む"
+      },
+      "fingerprint": "d92d38ba5c3c962a7965fcf3c5b68d6503e1de3e4e2de3e98a22ccbce2b9928c"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-10T11:40:23.038Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/daily-radar-seed.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > stores the coupon card title in the matching Vietnamese and Japanese fields",
+          "outcome": "FAIL",
+          "excerpt": "expected 'クーポンの条件を読む' to be 'Đọc điều kiện coupon / khuyến mãi' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > stores the coupon card title in the matching Vietnamese and Japanese fields": "クーポンの条件を読む"
+      },
+      "fingerprint": "d92d38ba5c3c962a7965fcf3c5b68d6503e1de3e4e2de3e98a22ccbce2b9928c"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-10T11:40:35.789Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/daily-radar-seed.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > stores the coupon card title in the matching Vietnamese and Japanese fields",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d85bdd1de9c3d8cc1f1d3af950c4035e53790e905a2deebf69eaa6d5ade45081"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-10T11:43:38.232Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/daily-radar-seed.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > stores the coupon card title in the matching Vietnamese and Japanese fields",
+          "outcome": "PASS",
+          "excerpt": "",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        },
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > provides structured expressions consumed by the card detail screen",
+          "outcome": "FAIL",
+          "excerpt": "expected [] to deeply equal [ '対象商品', '併用不可', '期間限定', '税込', …(1) ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > stores the coupon card title in the matching Vietnamese and Japanese fields": "クーポンの条件を読む",
+        "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > provides structured expressions consumed by the card detail screen": "対象商品"
+      },
+      "fingerprint": "36a73e1169af6b1b3e6fdca126c0c96a5ece15220e7a68a9fa19c1333f2ac994"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-10T11:44:13.043Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/daily-radar-seed.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > provides structured expressions consumed by the card detail screen",
+          "outcome": "FAIL",
+          "excerpt": "expected [] to deeply equal [ '対象商品', '併用不可', '期間限定', '税込', …(1) ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > provides structured expressions consumed by the card detail screen": "対象商品"
+      },
+      "fingerprint": "36a73e1169af6b1b3e6fdca126c0c96a5ece15220e7a68a9fa19c1333f2ac994"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-10T11:45:37.147Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/daily-radar-seed.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > provides structured expressions consumed by the card detail screen",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "bc556e56f1ba9a1de9481419c157ea27c32fc9aef99350a0676921b78a01eba4"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-11T04:46:41.464Z",
+      "head": "9f2be1b758bb5bea1e3f2ecd47304893c94e51a0",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/daily-radar-seed.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > provides structured expressions consumed by the card detail screen",
+          "outcome": "PASS",
+          "excerpt": "",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > provides structured expressions consumed by the card detail screen": "対象商品"
+      },
+      "fingerprint": "0664707e63bfb922af02cdb2647e8413aedb42647cf2b7f7a57a286162b8373b"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-11T04:47:39.422Z",
+      "head": "9f2be1b758bb5bea1e3f2ecd47304893c94e51a0",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/daily-radar-seed.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > stores the coupon card title in the matching Vietnamese and Japanese fields",
+          "outcome": "FAIL",
+          "excerpt": "expected 'クーポンの条件を読む' to be 'Đọc điều kiện coupon / khuyến mãi' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > provides structured expressions consumed by the card detail screen",
+          "outcome": "FAIL",
+          "excerpt": "expected [] to deeply equal [ { word: '対象商品', …(5) }, …(4) ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > stores the coupon card title in the matching Vietnamese and Japanese fields": "Đọc điều kiện coupon / khuyến mãi",
+        "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > provides structured expressions consumed by the card detail screen": "対象商品"
+      },
+      "fingerprint": "f1b14712e046bf5d9fb5d83c9e7343487b095924c9a80f45e17b861950ab21eb"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-11T04:48:17.291Z",
+      "head": "9f2be1b758bb5bea1e3f2ecd47304893c94e51a0",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/daily-radar-seed.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > stores the coupon card title in the matching Vietnamese and Japanese fields",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:scripts/daily-radar-seed.test.ts::Daily Radar seed localization > provides structured expressions consumed by the card detail screen",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0664707e63bfb922af02cdb2647e8413aedb42647cf2b7f7a57a286162b8373b"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-11T04:51:37.460Z",
+      "head": "9f2be1b758bb5bea1e3f2ecd47304893c94e51a0",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Pasteur",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "3b062b30ca6b853f90ac887ae8e11d4fe8897655b25bcddb1cf28d85d09a40dc",
+      "attested": true,
+      "fingerprint": "0664707e63bfb922af02cdb2647e8413aedb42647cf2b7f7a57a286162b8373b"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-11T04:51:38.696Z",
+    "head": "9f2be1b758bb5bea1e3f2ecd47304893c94e51a0",
+    "fingerprint": "0664707e63bfb922af02cdb2647e8413aedb42647cf2b7f7a57a286162b8373b",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "database/scripts/seeds/radar/seed-daily-radar.ts": "033f673e1fa33ff2b9c3bd0bc8bf6ddf21c1b1bb",
+      "scripts/daily-radar-seed.test.ts": "3feeaaf22d42d769f8239a5c7864653ad2a80d97"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

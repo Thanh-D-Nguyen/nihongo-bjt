@@ -8,8 +8,8 @@ import {
   TabButton,
   TabsList
 } from "@nihongo-bjt/ui";
-import { useCallback, useEffect, useId, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
@@ -161,6 +161,8 @@ export function DeckBrowser({
   searchQuery: string;
 }) {
   const { userId } = useGoAuth();
+  const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const cloneToken = searchParams.get("cloneToken");
   const [decks, setDecks] = useState<DeckApiRow[]>([]);
@@ -174,6 +176,7 @@ export function DeckBrowser({
     null
   );
   const [cloneError, setCloneError] = useState<string | null>(null);
+  const cloneRequestKey = useRef<string | null>(null);
 
   const loadDecks = useCallback(async () => {
     if (!userId) return;
@@ -198,7 +201,10 @@ export function DeckBrowser({
   }, [userId, loadDecks]);
 
   useEffect(() => {
-    if (!cloneToken || !userId || cloning || cloneResult) return;
+    if (!cloneToken || !userId) return;
+    const requestKey = `${userId}:${cloneToken}`;
+    if (cloneRequestKey.current === requestKey) return;
+    cloneRequestKey.current = requestKey;
     setCloning(true);
     setCloneError(null);
     learnerApiFetch(`/api/flashcards/decks/clone/${encodeURIComponent(cloneToken)}`, {
@@ -209,8 +215,12 @@ export function DeckBrowser({
           const body = (await r.json().catch(() => ({}))) as Record<string, unknown>;
           throw new Error(body?.code === "QUOTA_EXCEEDED" ? "quota" : "clone_failed");
         }
-        const data = (await r.json()) as { newDeckId: string; cardCount: number };
-        setCloneResult(data);
+        const data = (await r.json()) as { id: string; cardCount: number };
+        const remainingParams = new URLSearchParams(searchParams.toString());
+        remainingParams.delete("cloneToken");
+        const remainingQuery = remainingParams.toString();
+        router.replace(remainingQuery ? `${pathname}?${remainingQuery}` : pathname, { scroll: false });
+        setCloneResult({ newDeckId: data.id, cardCount: data.cardCount });
         void loadDecks();
       })
       .catch((e: Error) => {
@@ -221,7 +231,7 @@ export function DeckBrowser({
         );
       })
       .finally(() => setCloning(false));
-  }, [cloneToken, userId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cloneToken, loadDecks, pathname, router, searchParams, userId]);
 
   const filteredByScope = useMemo(() => {
     if (!userId) return [];

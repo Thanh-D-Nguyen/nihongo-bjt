@@ -286,6 +286,95 @@ func TestBattleHandler_JoinBroadcastsPlayerJoined(t *testing.T) {
 	}
 }
 
+func TestBattleHandlerLobbyJoinAuthenticatedUser(t *testing.T) {
+	hub := NewHub()
+	handler := NewBattleHandler(hub, slog.Default())
+	c := &Conn{ID: "bc-lobby", UserID: "server-user", DisplayName: "Learner", Send: make(chan []byte, 16), done: make(chan struct{})}
+	hub.Register(c)
+	handler.HandleMessage(c, &Message{Event: "battle:lobby_join", Data: json.RawMessage(`{"userId":"spoofed","displayName":"Spoofed"}`)})
+
+	select {
+	case raw := <-c.Send:
+		msg, err := Decode(raw)
+		if err != nil {
+			t.Fatalf("decode lobby join: %v", err)
+		}
+		if msg.Event != "battle:lobby_joined" {
+			t.Fatalf("expected battle:lobby_joined, got %q", msg.Event)
+		}
+		var data map[string]string
+		if err := json.Unmarshal(msg.Data, &data); err != nil {
+			t.Fatalf("decode lobby identity: %v", err)
+		}
+		if data["userId"] != "server-user" || data["displayName"] != "Learner" {
+			t.Fatalf("lobby identity must come from authenticated connection, got %#v", data)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("expected battle:lobby_joined")
+	}
+}
+
+func TestBattleHandlerLobbyPresenceIncludesOnlyAuthenticatedLobbyUsers(t *testing.T) {
+	hub := NewHub()
+	handler := NewBattleHandler(hub, slog.Default())
+	first := &Conn{ID: "bc-first", UserID: "server-first", DisplayName: "First", Send: make(chan []byte, 16), done: make(chan struct{})}
+	second := &Conn{ID: "bc-second", UserID: "server-second", DisplayName: "Second", Send: make(chan []byte, 16), done: make(chan struct{})}
+	hub.Register(first)
+	hub.Register(second)
+
+	handler.HandleMessage(first, &Message{Event: "battle:lobby_join"})
+	select {
+	case <-first.Send: // join acknowledgement
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for lobby acknowledgement")
+	}
+	select {
+	case <-first.Send: // initial one-user lobby snapshot
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for initial lobby snapshot")
+	}
+	handler.HandleMessage(second, &Message{Event: "battle:lobby_join", Data: json.RawMessage(`{"userId":"spoofed"}`)})
+	select {
+	case <-second.Send: // join acknowledgement
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for second lobby acknowledgement")
+	}
+
+	for _, conn := range []*Conn{first, second} {
+		select {
+		case raw := <-conn.Send:
+			msg, err := Decode(raw)
+			if err != nil || msg.Event != "battle:lobby_presence" {
+				t.Fatalf("expected lobby presence for %s, got %s (%v)", conn.ID, raw, err)
+			}
+			var payload LobbyPresencePayload
+			if err := json.Unmarshal(msg.Data, &payload); err != nil {
+				t.Fatalf("decode lobby presence: %v", err)
+			}
+			if len(payload.Users) != 2 || payload.Users[0].UserID == "spoofed" || payload.Users[1].UserID == "spoofed" {
+				t.Fatalf("presence must contain the two authenticated users: %+v", payload.Users)
+			}
+		case <-time.After(time.Second):
+			t.Fatalf("timed out waiting for lobby presence for %s", conn.ID)
+		}
+	}
+
+	handler.OnDisconnect(first)
+	select {
+	case raw := <-second.Send:
+		msg, err := Decode(raw)
+		if err != nil || msg.Event != "battle:lobby_presence" {
+			t.Fatalf("expected updated lobby presence after disconnect, got %s (%v)", raw, err)
+		}
+		var payload LobbyPresencePayload
+		if err := json.Unmarshal(msg.Data, &payload); err != nil || len(payload.Users) != 1 || payload.Users[0].UserID != "server-second" {
+			t.Fatalf("unexpected lobby presence after disconnect: %+v (%v)", payload, err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for lobby presence after disconnect")
+	}
+}
+
 // TestBattleHandler_ActionAcknowledges verifies that battle:action produces
 // a battle:action_ack sent back to the originating connection.
 func TestBattleHandler_ActionAcknowledges(t *testing.T) {

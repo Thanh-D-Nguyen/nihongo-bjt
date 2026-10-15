@@ -1393,7 +1393,15 @@ const cards: CardSeed[] = [
     isSpotlight: false,
     levelLabel: "N3",
     metadata: withCommonMetadata(
-      {},
+      {
+        japaneseExpressions: [
+          { word: "対象商品", reading: "たいしょうしょうひん", meaning: "Sản phẩm áp dụng", example: "対象商品のみご利用いただけます。", jlptLevel: "N3", usageNote: "Không phải mọi sản phẩm đều dùng được coupon." },
+          { word: "併用不可", reading: "へいようふか", meaning: "Không dùng chung được", example: "他のクーポンとの併用不可です。", jlptLevel: "N2", usageNote: "Không thể áp dụng cùng coupon khác." },
+          { word: "期間限定", reading: "きかんげんてい", meaning: "Chỉ trong thời gian nhất định", example: "期間限定：6月1日〜6月30日まで。", jlptLevel: "N3", usageNote: "Thời hạn áp dụng có giới hạn." },
+          { word: "税込", reading: "ぜいこみ", meaning: "Đã bao gồm thuế", example: "表示価格は税込です。", jlptLevel: "N3", usageNote: "Ngược với 税抜, giá chưa gồm thuế." },
+          { word: "一人一回限り", reading: "ひとりいっかいかぎり", meaning: "Mỗi người chỉ được một lần", example: "お一人様一回限りのご利用となります。", jlptLevel: "N3", usageNote: "Giới hạn số lần sử dụng coupon." }
+        ]
+      },
       "Giảm nhầm lẫn khi đọc điều khoản coupon ngắn.",
       ["対象商品", "併用不可", "期間限定"],
       ["coupon_reading"]
@@ -1402,7 +1410,8 @@ const cards: CardSeed[] = [
     priority: 118,
     recommendationReasonVi: "Điều kiện coupon thường ngắn nhưng nhiều từ khó.",
     slug: "coupon-terms",
-    titleVi: "クーポンの条件を読む"
+    titleJa: "クーポンの条件を読む",
+    titleVi: "Đọc điều kiện coupon / khuyến mãi"
   }
 ];
 

@@ -1,12 +1,17 @@
 
 ## Engineering Policy — MANDATORY
-All behavior-changing work MUST follow `docs/engineering/ENGINEERING_POLICY.md` (single source of truth; this is a summary).
-- Lifecycle: SPEC → EVIDENCE → VALID RED → GREEN → REFACTOR → VERIFY → REVIEW (§1; where VALID_RED applies vs. exceptions)
-- Change classification required before implementation (§2); gates per classification (§3)
-- Bug fixes require regression TDD (§4); ADD / MODIFY / DELETE have equal rigor (§5)
-- Canonical verification: `scripts/quality/with-test-db.sh scripts/quality/verify-all.sh` (§11) — CI runs the same scripts
-- Status words COVERED / VERIFIED / BLOCKED / UNTESTED have strict meanings; skipped tests are never VERIFIED (§12)
-- Known debt is ratcheted; never edit a baseline to make CI green without a reviewed reason (§13)
+All work follows `docs/engineering/ENGINEERING_POLICY.md` (single source of truth; this is a pointer, not a copy).
+Every change other than pure docs runs through the lifecycle harness (§16); CI rejects changes without a CLOSED task:
+```
+pnpm quality begin <ID-123> "<title>"   →  pnpm quality spec --acceptance "..."  →  pnpm quality classify <CLASS> --kind <kind>
+pnpm quality red --go ./pkg:TestX --expect "..."   (VALID_RED before production edits; the write guard enforces it)
+pnpm quality green  →  pnpm quality verify  →  pnpm quality review run (high risk)  →  pnpm quality close
+pnpm quality status        # where am I, which gate is missing, what next (resume from here in a fresh session)
+```
+- Status words: report only what `pnpm quality status` / CI evidence supports; PARTIAL is never VERIFIED (§12)
+- Never weaken tests or baselines to get green; such diffs are detected and need acknowledgement + review (§13, §16)
+- Autonomy-first execution (§17): recover/install/start ordinary local tooling/services yourself and reconstruct durable task state. The human makes consequential decisions, not machine repairs.
+- Use native AskUserQuestion for consequential decisions, preserve WAITING_FOR_DECISION and continuation, then resume immediately. Continue independent safe work; first failure is never BLOCKED.
 - Legacy NestJS is removed and the Go API is authoritative, but parity gaps remain open (`docs/migrations/MIGRATION_CLOSURE.md`)
 
 ## Remote host filesystem
@@ -34,5 +39,5 @@ Never use Write/Edit for:
 For `/dev/null`, use Bash redirection instead:
 `command >/dev/null 2>&1`
 
-If a PreToolUse hook denies an operation, change the execution mechanism.
-Never retry the same denied Write/Edit call.
+If a PreToolUse hook denies an operation, diagnose scope and satisfy the guard.
+Never switch execution mechanisms to bypass a quality/security denial.

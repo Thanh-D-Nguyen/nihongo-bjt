@@ -60,7 +60,7 @@ describe("AnnotatedJapaneseText a11y and network behavior", () => {
 
   it("supports Enter open, Escape close, and focus restore in bottom sheet", async () => {
     learnerApiFetchMock.mockImplementation((path: string) => {
-      if (path.startsWith("/api/decks")) {
+      if (path.startsWith("/api/flashcards/decks")) {
         return Promise.resolve(jsonResponse([{ id: "deck-1" }]));
       }
       if (path === "/api/reading-assist/analyze") {
@@ -104,6 +104,11 @@ describe("AnnotatedJapaneseText a11y and network behavior", () => {
       );
     });
 
+    expect(learnerApiFetchMock).toHaveBeenCalledWith(
+      "/api/flashcards/decks?userId=11111111-1111-4111-8111-111111111111&limit=1",
+      { method: "GET" }
+    );
+
     await act(async () => {
       await Promise.resolve();
     });
@@ -141,7 +146,7 @@ describe("AnnotatedJapaneseText a11y and network behavior", () => {
 
   it("deduplicates in-flight analyze requests with the same text+context key", async () => {
     learnerApiFetchMock.mockImplementation((path: string) => {
-      if (path.startsWith("/api/decks")) {
+      if (path.startsWith("/api/flashcards/decks")) {
         return Promise.resolve(jsonResponse([{ id: "deck-1" }]));
       }
       if (path === "/api/reading-assist/analyze") {
@@ -200,7 +205,7 @@ describe("AnnotatedJapaneseText a11y and network behavior", () => {
     vi.useFakeTimers();
 
     learnerApiFetchMock.mockImplementation((path: string, init?: RequestInit) => {
-      if (path.startsWith("/api/decks")) {
+      if (path.startsWith("/api/flashcards/decks")) {
         return Promise.resolve(jsonResponse([{ id: "deck-1" }]));
       }
       if (path === "/api/reading-assist/analyze") {
@@ -244,7 +249,7 @@ describe("AnnotatedJapaneseText a11y and network behavior", () => {
 
   it("shows support unavailable hint when deck loading fails", async () => {
     learnerApiFetchMock.mockImplementation((path: string) => {
-      if (path.startsWith("/api/decks")) {
+      if (path.startsWith("/api/flashcards/decks")) {
         return Promise.resolve(jsonResponse({ code: "deck_failed" }, false));
       }
       if (path === "/api/reading-assist/analyze") {

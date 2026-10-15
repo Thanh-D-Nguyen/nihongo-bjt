@@ -1,0 +1,230 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-154",
+  "title": "Fix i18n SQL conformance and retire resolved drift",
+  "start_head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+  "preexisting_changes": {
+    "apps/admin/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/admin/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/admin/tsconfig.tsbuildinfo": "6b0c7bc84ee49d33491f829cb00b397b9e0b3723",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_iam_test.go": "aee00270d49976ed76fe616f9893de4a8ac7431c",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_postcard_test.go": "9e34e3abd9e24954f99db1fdfe688cc2f502c607",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_rbac_test.go": "996ba6a016727ad3f7cd9a5c033c569e93b9ff8e",
+    "apps/api-go/internal/httpserver/handler_admin_core.go": "14a2612cde42307d64abf200dafe4f760c57b3f1",
+    "apps/api-go/internal/httpserver/handler_admin_growth_campaigns.go": "d1cf6a0cd0d109b9ff59523da87e8d640db8b7b8",
+    "apps/api-go/internal/httpserver/handler_admin_growth_postcards.go": "34013e9db95374d6ef0771be9f09f251202b17ca",
+    "apps/api-go/internal/httpserver/handler_admin_growth_referrals.go": "c0b0be1c757bc3b9526a353419b666325c30c489",
+    "apps/api-go/internal/httpserver/handler_admin_growth_referrals_contract_test.go": "555404bcc2f1d41e28dfa55269555540dc9f30d6",
+    "apps/api-go/internal/httpserver/handler_admin_growth_social.go": "f301b37da4772433c6699590123f72f94dba5bc2",
+    "apps/api-go/internal/httpserver/handler_admin_growth_social_audit153_test.go": "664123c1e6f8c771ebf4bbf59f275adbd2d45d80",
+    "apps/api-go/internal/httpserver/server.go": "083ee51c8d1f15f4ed7d720f3f429009ebaee23a",
+    "apps/web/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/web/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/web/tsconfig.tsbuildinfo": "91d48d855b4f16f10809b5e9d91bae8ed06c76dc"
+  },
+  "spec": {
+    "problem": "The i18n key detail query is valid at runtime but SQL conformance cannot see the CTE because it is concatenated from a constant; previously recorded legacy drift is now resolved.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "The canonical schema conformance test reports no new i18n SQL drift and baseline contains no resolved legacy entries."
+      }
+    ],
+    "expected_behavior": "Inline the CTE into the detail SQL literal, then refresh only the canonical conformance baseline after validation.",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DATABASE",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/postgres",
+      "test": "TestSQLConformsToCanonicalSchema",
+      "expect": "relation \"key_rows\" does not exist"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "VERIFYING",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-14T22:59:10.820Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-14T22:59:11.216Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-14T22:59:11.616Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T22:59:28.892Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-14T23:00:45.847Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T23:00:56.641Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-14T22:59:17.456Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSQLConformsToCanonicalSchema)$ ./internal/postgres"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/postgres:TestSQLConformsToCanonicalSchema",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestSQLConformsToCanonicalSchema sql_conformance_test.go:140: TEST_DATABASE_URL not set; skipping SQL conformance check (requires the canonical schema) --- SKIP: TestSQLConformsToCanonicalSchema (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/postgres:TestSQLConformsToCanonicalSchema": "relation \"key_rows\" does not exist"
+      },
+      "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-14T22:59:28.685Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSQLConformsToCanonicalSchema)$ ./internal/postgres"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/postgres:TestSQLConformsToCanonicalSchema",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestSQLConformsToCanonicalSchema sql_conformance_test.go:197: SQL literals found=1238 checked=1191 drift entries=43 sql_conformance_test.go:252: NEW SQL/schema drift (statement references something the canonical schema does not have): internal/httpserver/handler_admin_core.go :: 42P01 relati…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/postgres:TestSQLConformsToCanonicalSchema": "relation \"key_rows\" does not exist"
+      },
+      "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-14T23:00:45.587Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSQLConformsToCanonicalSchema)$ ./internal/postgres"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/postgres:TestSQLConformsToCanonicalSchema",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d60196b69307132916da7cce52e7d248fcc76f4592c277c5bfa4ac0b8853b4af"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-14T23:01:45.642Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 987,
+        "executed": 985,
+        "passed": 984,
+        "failed": 1,
+        "skipped": 2,
+        "expected_skips": 0,
+        "unexpected_skips": 2,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "d60196b69307132916da7cce52e7d248fcc76f4592c277c5bfa4ac0b8853b4af"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-14T23:03:34.160Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSQLConformsToCanonicalSchema)$ ./internal/postgres"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/postgres:TestSQLConformsToCanonicalSchema",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d60196b69307132916da7cce52e7d248fcc76f4592c277c5bfa4ac0b8853b4af"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-14T23:04:32.285Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 987,
+        "executed": 985,
+        "passed": 985,
+        "failed": 0,
+        "skipped": 2,
+        "expected_skips": 0,
+        "unexpected_skips": 2,
+        "min_passed_tests": 431
+      },
+      "message": "2 test(s) skipped that are not in go-test-skips-baseline.json — skipped tests are not verification",
+      "fingerprint": "d60196b69307132916da7cce52e7d248fcc76f4592c277c5bfa4ac0b8853b4af"
+    }
+  ],
+  "closed": null,
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

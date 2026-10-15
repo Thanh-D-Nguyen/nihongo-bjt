@@ -1,0 +1,1376 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-124",
+  "title": "Audit Admin exercise APIs",
+  "start_head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Nine pending Admin exercise APIs require one-by-one contract and security verification. Current mutation routes lack admin.content.write/CSRF middleware, create defaults a UUID-backed source_id to non-UUID text, JSON fields and text-array tags do not follow the Prisma contract, writes ignore audit/delete errors, and read handlers suppress row/query errors.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Exercise list, detail, performance analytics and config list return persisted, correctly typed contracts; read/query/scan errors are not silently converted to success."
+      },
+      {
+        "id": "AC2",
+        "text": "Exercise create/update/delete and config upsert/delete are individually exercised through METHOD+PATH; unsafe writes require admin.content.write and trusted-origin CSRF; writes persist with exactly one audit event atomically."
+      },
+      {
+        "id": "AC3",
+        "text": "Create accepts schema-valid JSON prompt/choices/correctAnswer and string-array tags; detail/list/update preserve JSON and tag types; missing IDs return 404 without audit or mutation."
+      },
+      {
+        "id": "AC4",
+        "text": "A headed browser with a real Admin session observes every exercised request and its response; safe fixtures are removed after persistence verification."
+      },
+      {
+        "id": "AC5",
+        "text": "Deleting an exercise with answer history returns 409 without deleting the exercise, answers or writing a delete audit; an unanswered disposable exercise can still be deleted and audited."
+      },
+      {
+        "id": "AC6",
+        "text": "Admin exercise/config validation and defaults match packages/shared schemas, including valid enums/ranges, enabled=true and pointsPerCorrect=10 defaults."
+      },
+      {
+        "id": "AC7",
+        "text": "Exercise prompt and correctAnswer inputs must be JSON objects and choices must be a JSON array on create/update; null or incompatible shapes return 400 before persistence."
+      },
+      {
+        "id": "AC8",
+        "text": "API integration fixtures snapshot and restore any preexisting exercise_config row; cleanup never removes unrelated seeded configuration."
+      },
+      {
+        "id": "AC9",
+        "text": "Admin exercise configuration table headers render inside a header row without hydration warnings, and the table stays within the 390px page width with its overflow available through a horizontally scrollable table region."
+      }
+    ],
+    "expected_behavior": "Admin exercise APIs expose database-backed JSON and config contracts. Mutations must be role-protected, CSRF-checked, and atomic with audit records. Use isolated UUID-backed exercise/config fixtures, invoke each method/path separately, verify status/body/DB effects, and clean up.",
+    "observed_behavior": "Current write routes are registered without permission/CSRF wrappers; some handlers ignore query/scan/Exec/audit failures; exercise JSON and tags types diverge from Prisma; sourceId defaults to non-UUID \"admin\"; update/delete can report success and write audit for missing rows.",
+    "rollback_plan": "Revert only AUDIT-124 handler/router/test changes and audit checkpoint. Test/browser fixtures are prefixed, isolated and explicitly cleaned; no canonical authored exercises are modified."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY",
+      "AUTH_SECURITY",
+      "API_CONTRACT",
+      "DATABASE",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Correct Admin exercise API authorization, schema-aligned contracts, SQL error handling and atomic audit semantics."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminExerciseAuditContracts",
+      "expect": "exercise create status="
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin",
+      "expect": "roleless exercise create status="
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminExerciseAuditFailureRollsBack",
+      "expect": "exercise config upsert after audit failure="
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminExerciseMissingIDsReturnNotFound",
+      "expect": "missing exercise update status="
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminExerciseDeletePreservesAnswerHistory",
+      "expect": "exercise delete with answer history status="
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminExerciseConfigValidatesSharedContract",
+      "expect": "invalid config status="
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminExerciseConfigDefaultsToSharedContract",
+      "expect": "config defaults enabled="
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminExerciseRejectsInvalidJSONShapes",
+      "expect": "exercise create prompt shape status="
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [
+    {
+      "finding": "baseline_expanded:apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json:min_statements_checked_lowered",
+      "reason": "The canonical Prisma conformance run proved the two exercise SQL drifts were fixed: `learning.exercise` did not exist and `exercise.exercise.updated_at` does not exist. The refactor also consolidates four duplicate audit INSERT literals into the single transaction helper. The generated checkable-SQL floor therefore moves from 1155 to 1151 and removes only those two resolved drift signatures; the generated baseline test passes against all migrations."
+    }
+  ],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-12T13:52:58.733Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-12T13:56:28.426Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T13:57:16.074Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T14:01:22.110Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T14:02:48.583Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T14:04:54.860Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T14:12:03.777Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T14:25:08.028Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-12T14:32:20.851Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T14:36:20.574Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T14:36:38.882Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T14:39:33.636Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T14:39:52.135Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T14:51:10.901Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T15:02:13.301Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-12T15:02:33.613Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-12T15:02:50.106Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-12T15:03:59.472Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-12T13:56:28.245Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminExerciseAuditContracts|TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin|TestAdminExerciseAuditFailureRollsBack|TestAdminExerciseMissingIDsReturnNotFound)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseAuditContracts handler_admin_exercises_audit_test.go:35: exercise create status=400 body={\"error\":\"invalid request body\"} ; want 201 --- FAIL: TestAdminExerciseAuditContracts (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin === RUN TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin/roleless handler_admin_exercises_audit_test.go:139: roleless exercise create status=400 body={\"error\":\"invalid request body\"} ; want 403 --- FAIL: TestAdminExerciseWriteR…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack",
+          "outcome": "PASS",
+          "excerpt": "=== RUN TestAdminExerciseAuditFailureRollsBack {\"time\":\"2026-10-12T22:56:28.196854+09:00\",\"level\":\"ERROR\",\"msg\":\"update exercise\",\"error\":\"ERROR: column \\\"updated_at\\\" of relation \\\"exercise\\\" does not exist (SQLSTATE 42703)\"} --- PASS: TestAdminExerciseAuditFailureRollsBack (0.03s)",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseMissingIDsReturnNotFound {\"time\":\"2026-10-12T22:56:28.176037+09:00\",\"level\":\"ERROR\",\"msg\":\"update exercise\",\"error\":\"ERROR: column \\\"updated_at\\\" of relation \\\"exercise\\\" does not exist (SQLSTATE 42703)\"} handler_admin_exercises_audit_test.go:172: missing PUT /api/admin/exer…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"missing exercise update status=\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminExerciseAuditContracts": "exercise create status=",
+        "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin": "roleless exercise create status=",
+        "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack": "exercise update after audit failure=",
+        "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound": "missing exercise update status="
+      },
+      "fingerprint": "886c29fcdabf3f369e1c32558425bf3c8a166a50ee922c59c7c1d85ee25b197f"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-12T13:57:15.904Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminExerciseAuditContracts|TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin|TestAdminExerciseAuditFailureRollsBack|TestAdminExerciseMissingIDsReturnNotFound)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseAuditContracts handler_admin_exercises_audit_test.go:35: exercise create status=400 body={\"error\":\"invalid request body\"} ; want 201 --- FAIL: TestAdminExerciseAuditContracts (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin === RUN TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin/roleless handler_admin_exercises_audit_test.go:139: roleless exercise create status=400 body={\"error\":\"invalid request body\"} ; want 403 --- FAIL: TestAdminExerciseWriteR…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseAuditFailureRollsBack handler_admin_exercises_audit_test.go:208: exercise config upsert after audit failure=200 body={\"exerciseType\":\"audit_rollback\",\"id\":\"77833621-8b32-4ce3-bff1-b6637ef54a5b\",\"placement\":\"auditrollback_9f23fef2\"} ; want 500 --- FAIL: TestAdminExerciseAudit…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseMissingIDsReturnNotFound {\"time\":\"2026-10-12T22:57:15.835916+09:00\",\"level\":\"ERROR\",\"msg\":\"update exercise\",\"error\":\"ERROR: column \\\"updated_at\\\" of relation \\\"exercise\\\" does not exist (SQLSTATE 42703)\"} handler_admin_exercises_audit_test.go:173: missing exercise update sta…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminExerciseAuditContracts": "exercise create status=",
+        "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin": "roleless exercise create status=",
+        "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack": "exercise config upsert after audit failure=",
+        "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound": "missing exercise update status="
+      },
+      "fingerprint": "2ceb0b13050499a52fce3398c9d80a2e8d03ef1191f16ae461aed4ea3002eece"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-12T14:00:59.482Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminExerciseAuditContracts|TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin|TestAdminExerciseAuditFailureRollsBack|TestAdminExerciseMissingIDsReturnNotFound)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditContracts",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminExerciseAuditContracts handler_admin_exercises_audit_test.go:50: exercise detail status=200 body={\"id\":\"44af2286-04f0-4250-89b4-92c6f4fd1a01\",\"exerciseType\":\"audit_contract\",\"sourceType\":\"lexeme\",\"sourceId\":\"5d0d49a7-781b-4775-82ea-51c753ebd7f1\",\"level\":\"N3\",\"prompt\":\"{\\\"text\\\": \\\"f…"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "16ebe9d316926ae0713e570a8f87ed82369e0509e47ecafb2bf810cd53e083b9"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-12T14:01:21.861Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminExerciseAuditContracts|TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin|TestAdminExerciseAuditFailureRollsBack|TestAdminExerciseMissingIDsReturnNotFound)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditContracts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "079ae8cad1db8c534bd68600d469aa6951a362f4057500c3d2aadd4b732b26f3"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-12T14:02:48.269Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminExerciseAuditContracts|TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin|TestAdminExerciseAuditFailureRollsBack|TestAdminExerciseMissingIDsReturnNotFound)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseAuditContracts handler_admin_exercises_audit_test.go:35: exercise create status=400 body={\"error\":\"invalid request body\"} ; want 201 --- FAIL: TestAdminExerciseAuditContracts (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin === RUN TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin/roleless handler_admin_exercises_audit_test.go:142: roleless exercise create status=400 body={\"error\":\"invalid request body\"} ; want 403 --- FAIL: TestAdminExerciseWriteR…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseAuditFailureRollsBack handler_admin_exercises_audit_test.go:211: exercise config upsert after audit failure=200 body={\"exerciseType\":\"audit_rollback\",\"id\":\"ec47f27a-5070-4719-b7d4-748f6459ec67\",\"placement\":\"auditrollback_2a516d54\"} ; want 500 --- FAIL: TestAdminExerciseAudit…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseMissingIDsReturnNotFound {\"time\":\"2026-10-12T23:02:47.410175+09:00\",\"level\":\"ERROR\",\"msg\":\"update exercise\",\"error\":\"ERROR: column \\\"updated_at\\\" of relation \\\"exercise\\\" does not exist (SQLSTATE 42703)\"} handler_admin_exercises_audit_test.go:176: missing exercise update sta…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminExerciseAuditContracts": "exercise create status=",
+        "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin": "roleless exercise create status=",
+        "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack": "exercise config upsert after audit failure=",
+        "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound": "missing exercise update status="
+      },
+      "fingerprint": "02182de085f1629739945f9ddf98e608cfedb620134cae8a3260d2054384f674"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-12T14:04:54.446Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminExerciseAuditContracts|TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin|TestAdminExerciseAuditFailureRollsBack|TestAdminExerciseMissingIDsReturnNotFound)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditContracts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "7c7fd4a89d8144e8ecb9e87e42b602b7606112e16a6e166cab6e3f407b1ba40a"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-12T14:05:56.153Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 807,
+        "executed": 807,
+        "passed": 806,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "7c7fd4a89d8144e8ecb9e87e42b602b7606112e16a6e166cab6e3f407b1ba40a"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-12T14:11:17.297Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 460,
+        "executed": 460,
+        "passed": 460,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 791,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "7c7fd4a89d8144e8ecb9e87e42b602b7606112e16a6e166cab6e3f407b1ba40a"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-12T14:14:16.952Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "327f72559854b095b37e53cd9db8824bc5838385ffda3a482ee08a47e6a05d87"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-12T14:17:06.309Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 807,
+        "executed": 807,
+        "passed": 807,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "807 passed, 0 allowed skip(s)",
+      "fingerprint": "327f72559854b095b37e53cd9db8824bc5838385ffda3a482ee08a47e6a05d87"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-12T14:22:29.506Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 460,
+        "executed": 460,
+        "passed": 460,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 791,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "327f72559854b095b37e53cd9db8824bc5838385ffda3a482ee08a47e6a05d87"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-12T14:24:50.292Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminExerciseAuditContracts|TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin|TestAdminExerciseAuditFailureRollsBack|TestAdminExerciseMissingIDsReturnNotFound|TestAdminExerciseDeletePreservesAnswerHistory|TestAdminExerciseConfigValidatesSharedContract|TestAdminExerciseConfigDefaultsToSharedContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseAuditContracts handler_admin_exercises_audit_test.go:34: exercise create status=400 body={\"error\":\"invalid request body\"} ; want 201 --- FAIL: TestAdminExerciseAuditContracts (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin === RUN TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin/roleless handler_admin_exercises_audit_test.go:265: roleless exercise create status=400 body={\"error\":\"invalid request body\"} ; want 403 --- FAIL: TestAdminExerciseWriteR…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseAuditFailureRollsBack handler_admin_exercises_audit_test.go:334: exercise config upsert after audit failure=200 body={\"exerciseType\":\"meaning_match\",\"id\":\"5ba9db69-b249-4c75-81ba-63722b15a363\",\"placement\":\"post_review\"} ; want 500 --- FAIL: TestAdminExerciseAuditFailureRolls…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseMissingIDsReturnNotFound {\"time\":\"2026-10-12T23:24:49.369585+09:00\",\"level\":\"ERROR\",\"msg\":\"update exercise\",\"error\":\"ERROR: column \\\"updated_at\\\" of relation \\\"exercise\\\" does not exist (SQLSTATE 42703)\"} handler_admin_exercises_audit_test.go:299: missing exercise update sta…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseDeletePreservesAnswerHistory",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseDeletePreservesAnswerHistory handler_admin_exercises_audit_test.go:230: exercise delete with answer history status=200 body={\"deleted\":true} ; want 409 --- FAIL: TestAdminExerciseDeletePreservesAnswerHistory (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseConfigValidatesSharedContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseConfigValidatesSharedContract handler_admin_exercises_audit_test.go:166: invalid config status=200 body={\"exerciseType\":\"unknown\",\"id\":\"c75430c4-e02c-4ce7-9871-6ee0b1a05653\",\"placement\":\"invalid\"} ; want 400 --- FAIL: TestAdminExerciseConfigValidatesSharedContract (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseConfigDefaultsToSharedContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseConfigDefaultsToSharedContract handler_admin_exercises_audit_test.go:201: config defaults enabled=false displayOrder=0 points=0; want true, 0, 10 --- FAIL: TestAdminExerciseConfigDefaultsToSharedContract (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminExerciseAuditContracts": "exercise create status=",
+        "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin": "roleless exercise create status=",
+        "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack": "exercise config upsert after audit failure=",
+        "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound": "missing exercise update status=",
+        "go:./internal/httpserver:TestAdminExerciseDeletePreservesAnswerHistory": "exercise delete with answer history status=",
+        "go:./internal/httpserver:TestAdminExerciseConfigValidatesSharedContract": "invalid config status=",
+        "go:./internal/httpserver:TestAdminExerciseConfigDefaultsToSharedContract": "config defaults enabled="
+      },
+      "fingerprint": "0eceb265c962f24412ba19d4f787c6319ccea03ef97d8495129acb976d702a28"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-12T14:25:07.537Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminExerciseAuditContracts|TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin|TestAdminExerciseAuditFailureRollsBack|TestAdminExerciseMissingIDsReturnNotFound|TestAdminExerciseDeletePreservesAnswerHistory|TestAdminExerciseConfigValidatesSharedContract|TestAdminExerciseConfigDefaultsToSharedContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditContracts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseDeletePreservesAnswerHistory",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseConfigValidatesSharedContract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseConfigDefaultsToSharedContract",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0eceb265c962f24412ba19d4f787c6319ccea03ef97d8495129acb976d702a28"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-12T14:28:57.218Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "0eceb265c962f24412ba19d4f787c6319ccea03ef97d8495129acb976d702a28"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-12T14:32:20.285Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminExerciseAuditContracts|TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin|TestAdminExerciseAuditFailureRollsBack|TestAdminExerciseMissingIDsReturnNotFound|TestAdminExerciseDeletePreservesAnswerHistory|TestAdminExerciseConfigValidatesSharedContract|TestAdminExerciseConfigDefaultsToSharedContract|TestAdminExerciseRejectsInvalidJSONShapes)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseAuditContracts handler_admin_exercises_audit_test.go:60: exercise create status=400 body={\"error\":\"invalid request body\"} ; want 201 --- FAIL: TestAdminExerciseAuditContracts (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin === RUN TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin/roleless handler_admin_exercises_audit_test.go:341: roleless exercise create status=400 body={\"error\":\"invalid request body\"} ; want 403 --- FAIL: TestAdminExerciseWriteR…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseAuditFailureRollsBack handler_admin_exercises_audit_test.go:410: exercise config upsert after audit failure=200 body={\"exerciseType\":\"meaning_match\",\"id\":\"3fbf9d39-5b59-4155-a20e-38a7d6ad492e\",\"placement\":\"post_review\"} ; want 500 --- FAIL: TestAdminExerciseAuditFailureRolls…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseMissingIDsReturnNotFound {\"time\":\"2026-10-12T23:32:19.220529+09:00\",\"level\":\"ERROR\",\"msg\":\"update exercise\",\"error\":\"ERROR: column \\\"updated_at\\\" of relation \\\"exercise\\\" does not exist (SQLSTATE 42703)\"} handler_admin_exercises_audit_test.go:375: missing exercise update sta…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseDeletePreservesAnswerHistory",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseDeletePreservesAnswerHistory handler_admin_exercises_audit_test.go:306: exercise delete with answer history status=200 body={\"deleted\":true} ; want 409 --- FAIL: TestAdminExerciseDeletePreservesAnswerHistory (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseConfigValidatesSharedContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseConfigValidatesSharedContract handler_admin_exercises_audit_test.go:196: invalid config status=200 body={\"exerciseType\":\"unknown\",\"id\":\"c09228a1-d9ef-4460-901d-403058439cb7\",\"placement\":\"invalid\"} ; want 400 --- FAIL: TestAdminExerciseConfigValidatesSharedContract (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseConfigDefaultsToSharedContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseConfigDefaultsToSharedContract handler_admin_exercises_audit_test.go:277: config defaults enabled=false displayOrder=0 points=0; want true, 0, 10 --- FAIL: TestAdminExerciseConfigDefaultsToSharedContract (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseRejectsInvalidJSONShapes",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseRejectsInvalidJSONShapes handler_admin_exercises_audit_test.go:230: valid shape fixture create status=400 body={\"error\":\"invalid request body\"} --- FAIL: TestAdminExerciseRejectsInvalidJSONShapes (0.02s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"exercise create prompt shape status=\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminExerciseAuditContracts": "exercise create status=",
+        "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin": "roleless exercise create status=",
+        "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack": "exercise config upsert after audit failure=",
+        "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound": "missing exercise update status=",
+        "go:./internal/httpserver:TestAdminExerciseDeletePreservesAnswerHistory": "exercise delete with answer history status=",
+        "go:./internal/httpserver:TestAdminExerciseConfigValidatesSharedContract": "invalid config status=",
+        "go:./internal/httpserver:TestAdminExerciseConfigDefaultsToSharedContract": "config defaults enabled=",
+        "go:./internal/httpserver:TestAdminExerciseRejectsInvalidJSONShapes": "exercise create prompt shape status="
+      },
+      "fingerprint": "37959eea917191737bcb13679059bff947d835c6af9b792a842e6ba42ff8a0de"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-12T14:33:29.743Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminExerciseAuditContracts|TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin|TestAdminExerciseAuditFailureRollsBack|TestAdminExerciseMissingIDsReturnNotFound|TestAdminExerciseDeletePreservesAnswerHistory|TestAdminExerciseConfigValidatesSharedContract|TestAdminExerciseConfigDefaultsToSharedContract|TestAdminExerciseRejectsInvalidJSONShapes)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseAuditContracts handler_admin_exercises_audit_test.go:60: exercise create status=400 body={\"error\":\"invalid request body\"} ; want 201 --- FAIL: TestAdminExerciseAuditContracts (0.05s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin === RUN TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin/roleless handler_admin_exercises_audit_test.go:341: roleless exercise create status=400 body={\"error\":\"invalid request body\"} ; want 403 --- FAIL: TestAdminExerciseWriteR…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseAuditFailureRollsBack handler_admin_exercises_audit_test.go:410: exercise config upsert after audit failure=200 body={\"exerciseType\":\"meaning_match\",\"id\":\"35d94016-b7c1-4930-a3ea-ebb9b6baa661\",\"placement\":\"post_review\"} ; want 500 --- FAIL: TestAdminExerciseAuditFailureRolls…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseMissingIDsReturnNotFound {\"time\":\"2026-10-12T23:33:28.812031+09:00\",\"level\":\"ERROR\",\"msg\":\"update exercise\",\"error\":\"ERROR: column \\\"updated_at\\\" of relation \\\"exercise\\\" does not exist (SQLSTATE 42703)\"} handler_admin_exercises_audit_test.go:375: missing exercise update sta…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseDeletePreservesAnswerHistory",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseDeletePreservesAnswerHistory handler_admin_exercises_audit_test.go:306: exercise delete with answer history status=200 body={\"deleted\":true} ; want 409 --- FAIL: TestAdminExerciseDeletePreservesAnswerHistory (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseConfigValidatesSharedContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseConfigValidatesSharedContract handler_admin_exercises_audit_test.go:196: invalid config status=200 body={\"exerciseType\":\"unknown\",\"id\":\"d819ca0c-03a5-47bb-8493-1daef9ed10d8\",\"placement\":\"invalid\"} ; want 400 --- FAIL: TestAdminExerciseConfigValidatesSharedContract (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseConfigDefaultsToSharedContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseConfigDefaultsToSharedContract handler_admin_exercises_audit_test.go:277: config defaults enabled=false displayOrder=0 points=0; want true, 0, 10 --- FAIL: TestAdminExerciseConfigDefaultsToSharedContract (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseRejectsInvalidJSONShapes",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseRejectsInvalidJSONShapes handler_admin_exercises_audit_test.go:230: valid shape fixture create status=400 body={\"error\":\"invalid request body\"} --- FAIL: TestAdminExerciseRejectsInvalidJSONShapes (0.02s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"exercise create prompt shape status=\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminExerciseAuditContracts": "exercise create status=",
+        "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin": "roleless exercise create status=",
+        "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack": "exercise config upsert after audit failure=",
+        "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound": "missing exercise update status=",
+        "go:./internal/httpserver:TestAdminExerciseDeletePreservesAnswerHistory": "exercise delete with answer history status=",
+        "go:./internal/httpserver:TestAdminExerciseConfigValidatesSharedContract": "invalid config status=",
+        "go:./internal/httpserver:TestAdminExerciseConfigDefaultsToSharedContract": "config defaults enabled=",
+        "go:./internal/httpserver:TestAdminExerciseRejectsInvalidJSONShapes": "exercise create prompt shape status="
+      },
+      "fingerprint": "800fe6c6f827138d2c7e3ec8f130a15129a758e35634f66300a7f6d1991e2b36"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-12T14:35:14.711Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminExerciseAuditContracts|TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin|TestAdminExerciseAuditFailureRollsBack|TestAdminExerciseMissingIDsReturnNotFound|TestAdminExerciseDeletePreservesAnswerHistory|TestAdminExerciseConfigValidatesSharedContract|TestAdminExerciseConfigDefaultsToSharedContract|TestAdminExerciseRejectsInvalidJSONShapes)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseAuditContracts handler_admin_exercises_audit_test.go:60: exercise create status=400 body={\"error\":\"invalid request body\"} ; want 201 --- FAIL: TestAdminExerciseAuditContracts (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin === RUN TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin/roleless handler_admin_exercises_audit_test.go:341: roleless exercise create status=400 body={\"error\":\"invalid request body\"} ; want 403 --- FAIL: TestAdminExerciseWriteR…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseAuditFailureRollsBack handler_admin_exercises_audit_test.go:410: exercise config upsert after audit failure=200 body={\"exerciseType\":\"meaning_match\",\"id\":\"c2f62a8e-9491-492e-a06c-659b732544f9\",\"placement\":\"post_review\"} ; want 500 --- FAIL: TestAdminExerciseAuditFailureRolls…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseMissingIDsReturnNotFound {\"time\":\"2026-10-12T23:35:13.875945+09:00\",\"level\":\"ERROR\",\"msg\":\"update exercise\",\"error\":\"ERROR: column \\\"updated_at\\\" of relation \\\"exercise\\\" does not exist (SQLSTATE 42703)\"} handler_admin_exercises_audit_test.go:375: missing exercise update sta…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseDeletePreservesAnswerHistory",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseDeletePreservesAnswerHistory handler_admin_exercises_audit_test.go:306: exercise delete with answer history status=200 body={\"deleted\":true} ; want 409 --- FAIL: TestAdminExerciseDeletePreservesAnswerHistory (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseConfigValidatesSharedContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseConfigValidatesSharedContract handler_admin_exercises_audit_test.go:196: invalid config status=200 body={\"exerciseType\":\"unknown\",\"id\":\"7f8f4adf-b1a8-4b44-8e12-8ff5500283aa\",\"placement\":\"invalid\"} ; want 400 --- FAIL: TestAdminExerciseConfigValidatesSharedContract (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseConfigDefaultsToSharedContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseConfigDefaultsToSharedContract handler_admin_exercises_audit_test.go:277: config defaults enabled=false displayOrder=0 points=0; want true, 0, 10 --- FAIL: TestAdminExerciseConfigDefaultsToSharedContract (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseRejectsInvalidJSONShapes",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseRejectsInvalidJSONShapes handler_admin_exercises_audit_test.go:230: valid shape fixture create status=400 body={\"error\":\"invalid request body\"} request={\"exerciseType\":\"translation\",\"sourceType\":\"lexeme\",\"sourceId\":\"d6599444-7618-424a-8703-eac0a456b75a\",\"prompt\":{\"text\":\"sha…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"exercise create prompt shape status=\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminExerciseAuditContracts": "exercise create status=",
+        "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin": "roleless exercise create status=",
+        "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack": "exercise config upsert after audit failure=",
+        "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound": "missing exercise update status=",
+        "go:./internal/httpserver:TestAdminExerciseDeletePreservesAnswerHistory": "exercise delete with answer history status=",
+        "go:./internal/httpserver:TestAdminExerciseConfigValidatesSharedContract": "invalid config status=",
+        "go:./internal/httpserver:TestAdminExerciseConfigDefaultsToSharedContract": "config defaults enabled=",
+        "go:./internal/httpserver:TestAdminExerciseRejectsInvalidJSONShapes": "exercise create prompt shape status="
+      },
+      "fingerprint": "cb08c6fd9aa1cca089b25438ed8a7246e7f44cf487ca6b9f14fcdaed0aa08a0d"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-12T14:36:20.040Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminExerciseAuditContracts|TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin|TestAdminExerciseAuditFailureRollsBack|TestAdminExerciseMissingIDsReturnNotFound|TestAdminExerciseDeletePreservesAnswerHistory|TestAdminExerciseConfigValidatesSharedContract|TestAdminExerciseConfigDefaultsToSharedContract|TestAdminExerciseRejectsInvalidJSONShapes)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseAuditContracts handler_admin_exercises_audit_test.go:60: exercise create status=400 body={\"error\":\"invalid request body\"} ; want 201 --- FAIL: TestAdminExerciseAuditContracts (0.05s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin === RUN TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin/roleless handler_admin_exercises_audit_test.go:342: roleless exercise create status=400 body={\"error\":\"invalid request body\"} ; want 403 --- FAIL: TestAdminExerciseWriteR…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseAuditFailureRollsBack handler_admin_exercises_audit_test.go:411: exercise config upsert after audit failure=200 body={\"exerciseType\":\"meaning_match\",\"id\":\"33011f06-e20b-4f8e-aca8-845a2e61352c\",\"placement\":\"post_review\"} ; want 500 --- FAIL: TestAdminExerciseAuditFailureRolls…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseMissingIDsReturnNotFound {\"time\":\"2026-10-12T23:36:18.212618+09:00\",\"level\":\"ERROR\",\"msg\":\"update exercise\",\"error\":\"ERROR: column \\\"updated_at\\\" of relation \\\"exercise\\\" does not exist (SQLSTATE 42703)\"} handler_admin_exercises_audit_test.go:376: missing exercise update sta…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseDeletePreservesAnswerHistory",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseDeletePreservesAnswerHistory handler_admin_exercises_audit_test.go:307: exercise delete with answer history status=200 body={\"deleted\":true} ; want 409 --- FAIL: TestAdminExerciseDeletePreservesAnswerHistory (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseConfigValidatesSharedContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseConfigValidatesSharedContract handler_admin_exercises_audit_test.go:196: invalid config status=200 body={\"exerciseType\":\"unknown\",\"id\":\"39dfb2f2-70b6-456f-8344-511b0a98d2bd\",\"placement\":\"invalid\"} ; want 400 --- FAIL: TestAdminExerciseConfigValidatesSharedContract (0.09s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseConfigDefaultsToSharedContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseConfigDefaultsToSharedContract handler_admin_exercises_audit_test.go:278: config defaults enabled=false displayOrder=0 points=0; want true, 0, 10 --- FAIL: TestAdminExerciseConfigDefaultsToSharedContract (0.09s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseRejectsInvalidJSONShapes",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseRejectsInvalidJSONShapes {\"time\":\"2026-10-12T23:36:18.028563+09:00\",\"level\":\"ERROR\",\"msg\":\"create exercise\",\"error\":\"ERROR: relation \\\"learning.exercise\\\" does not exist (SQLSTATE 42P01)\"} handler_admin_exercises_audit_test.go:225: exercise create prompt shape status=500 bod…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminExerciseAuditContracts": "exercise create status=",
+        "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin": "roleless exercise create status=",
+        "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack": "exercise config upsert after audit failure=",
+        "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound": "missing exercise update status=",
+        "go:./internal/httpserver:TestAdminExerciseDeletePreservesAnswerHistory": "exercise delete with answer history status=",
+        "go:./internal/httpserver:TestAdminExerciseConfigValidatesSharedContract": "invalid config status=",
+        "go:./internal/httpserver:TestAdminExerciseConfigDefaultsToSharedContract": "config defaults enabled=",
+        "go:./internal/httpserver:TestAdminExerciseRejectsInvalidJSONShapes": "exercise create prompt shape status="
+      },
+      "fingerprint": "6eb712797b90e413e7ffd05bc395396bbd2dadca5c677a69ddfb3b819b76c44b"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-12T14:36:38.397Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminExerciseAuditContracts|TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin|TestAdminExerciseAuditFailureRollsBack|TestAdminExerciseMissingIDsReturnNotFound|TestAdminExerciseDeletePreservesAnswerHistory|TestAdminExerciseConfigValidatesSharedContract|TestAdminExerciseConfigDefaultsToSharedContract|TestAdminExerciseRejectsInvalidJSONShapes)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditContracts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseDeletePreservesAnswerHistory",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseConfigValidatesSharedContract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseConfigDefaultsToSharedContract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseRejectsInvalidJSONShapes",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "6eb712797b90e413e7ffd05bc395396bbd2dadca5c677a69ddfb3b819b76c44b"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-12T14:39:33.165Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminExerciseAuditContracts|TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin|TestAdminExerciseAuditFailureRollsBack|TestAdminExerciseMissingIDsReturnNotFound|TestAdminExerciseDeletePreservesAnswerHistory|TestAdminExerciseConfigValidatesSharedContract|TestAdminExerciseConfigDefaultsToSharedContract|TestAdminExerciseRejectsInvalidJSONShapes)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseAuditContracts handler_admin_exercises_audit_test.go:63: exercise create status=400 body={\"error\":\"invalid request body\"} ; want 201 --- FAIL: TestAdminExerciseAuditContracts (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin === RUN TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin/roleless handler_admin_exercises_audit_test.go:345: roleless exercise create status=400 body={\"error\":\"invalid request body\"} ; want 403 --- FAIL: TestAdminExerciseWriteR…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseAuditFailureRollsBack handler_admin_exercises_audit_test.go:414: exercise config upsert after audit failure=200 body={\"exerciseType\":\"meaning_match\",\"id\":\"43ce0e16-c796-421b-a4ef-d7179dd0f8ef\",\"placement\":\"post_review\"} ; want 500 --- FAIL: TestAdminExerciseAuditFailureRolls…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseMissingIDsReturnNotFound {\"time\":\"2026-10-12T23:39:32.284305+09:00\",\"level\":\"ERROR\",\"msg\":\"update exercise\",\"error\":\"ERROR: column \\\"updated_at\\\" of relation \\\"exercise\\\" does not exist (SQLSTATE 42703)\"} handler_admin_exercises_audit_test.go:379: missing exercise update sta…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseDeletePreservesAnswerHistory",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseDeletePreservesAnswerHistory handler_admin_exercises_audit_test.go:310: exercise delete with answer history status=200 body={\"deleted\":true} ; want 409 --- FAIL: TestAdminExerciseDeletePreservesAnswerHistory (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseConfigValidatesSharedContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseConfigValidatesSharedContract handler_admin_exercises_audit_test.go:199: invalid config status=200 body={\"exerciseType\":\"unknown\",\"id\":\"10f92acf-4a10-4688-9ccc-c3c441cc6746\",\"placement\":\"invalid\"} ; want 400 --- FAIL: TestAdminExerciseConfigValidatesSharedContract (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseConfigDefaultsToSharedContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseConfigDefaultsToSharedContract handler_admin_exercises_audit_test.go:281: config defaults enabled=false displayOrder=0 points=0; want true, 0, 10 --- FAIL: TestAdminExerciseConfigDefaultsToSharedContract (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseRejectsInvalidJSONShapes",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminExerciseRejectsInvalidJSONShapes {\"time\":\"2026-10-12T23:39:32.20046+09:00\",\"level\":\"ERROR\",\"msg\":\"create exercise\",\"error\":\"ERROR: relation \\\"learning.exercise\\\" does not exist (SQLSTATE 42P01)\"} handler_admin_exercises_audit_test.go:228: exercise create prompt shape status=500 body…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminExerciseAuditContracts": "exercise create status=",
+        "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin": "roleless exercise create status=",
+        "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack": "exercise config upsert after audit failure=",
+        "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound": "missing exercise update status=",
+        "go:./internal/httpserver:TestAdminExerciseDeletePreservesAnswerHistory": "exercise delete with answer history status=",
+        "go:./internal/httpserver:TestAdminExerciseConfigValidatesSharedContract": "invalid config status=",
+        "go:./internal/httpserver:TestAdminExerciseConfigDefaultsToSharedContract": "config defaults enabled=",
+        "go:./internal/httpserver:TestAdminExerciseRejectsInvalidJSONShapes": "exercise create prompt shape status="
+      },
+      "fingerprint": "3c367ee84a274b219966fbfdf64d76dbe37470d426e43e5b0e452c39b27c262c"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-12T14:39:51.670Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminExerciseAuditContracts|TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin|TestAdminExerciseAuditFailureRollsBack|TestAdminExerciseMissingIDsReturnNotFound|TestAdminExerciseDeletePreservesAnswerHistory|TestAdminExerciseConfigValidatesSharedContract|TestAdminExerciseConfigDefaultsToSharedContract|TestAdminExerciseRejectsInvalidJSONShapes)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditContracts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseWriteRequiresPermissionAndTrustedOrigin",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseAuditFailureRollsBack",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseMissingIDsReturnNotFound",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseDeletePreservesAnswerHistory",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseConfigValidatesSharedContract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseConfigDefaultsToSharedContract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminExerciseRejectsInvalidJSONShapes",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3c367ee84a274b219966fbfdf64d76dbe37470d426e43e5b0e452c39b27c262c"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-12T14:42:50.045Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "3c367ee84a274b219966fbfdf64d76dbe37470d426e43e5b0e452c39b27c262c"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-12T14:45:42.864Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 811,
+        "executed": 811,
+        "passed": 811,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "811 passed, 0 allowed skip(s)",
+      "fingerprint": "3c367ee84a274b219966fbfdf64d76dbe37470d426e43e5b0e452c39b27c262c"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-12T14:51:10.374Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 460,
+        "executed": 460,
+        "passed": 460,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 791,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "3c367ee84a274b219966fbfdf64d76dbe37470d426e43e5b0e452c39b27c262c"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-12T15:02:12.785Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash tmp/local-audit/audit124-browser-check.sh",
+      "exit_code": 1,
+      "fingerprint": "3c367ee84a274b219966fbfdf64d76dbe37470d426e43e5b0e452c39b27c262c"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-12T15:02:33.139Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash tmp/local-audit/audit124-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "3c367ee84a274b219966fbfdf64d76dbe37470d426e43e5b0e452c39b27c262c"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-12T15:02:49.639Z",
+      "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Parfit",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "9e674849e312366429438407a254b32219a998a34fcc1356434e6ba69daecf2e",
+      "attested": true,
+      "fingerprint": "3c367ee84a274b219966fbfdf64d76dbe37470d426e43e5b0e452c39b27c262c"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-12T15:03:59.454Z",
+    "head": "36acbccea05d28846f0353d4c8b30a01590966e2",
+    "fingerprint": "3c367ee84a274b219966fbfdf64d76dbe37470d426e43e5b0e452c39b27c262c",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/admin/app/[locale]/exercises/exercises-admin-client.tsx": "f57904a567b910598e776c3f66d5b9246c64553f",
+      "apps/admin/messages/en.json": "9709e326ed18eb7bf71fe3778f7d5c8e6edcded8",
+      "apps/admin/messages/ja.json": "18c8fd2c551a9987a2530bbd3f1f136c4ad51c17",
+      "apps/admin/messages/vi.json": "f3f12db4279fdb639ffe4bf7ca392fe3e8c63fd7",
+      "apps/api-go/internal/httpserver/handler_admin_dailyradar_exercises.go": "525297e1a5837ba3a7b6a0e0ff85f18827091f07",
+      "apps/api-go/internal/httpserver/handler_admin_exercises_audit_test.go": "7b05bf66ddf1b139d5232eefda6ff1060d67f2b0",
+      "apps/api-go/internal/httpserver/server.go": "0cf1767cf5eaaa11a19656445bc6f79236ff01d8",
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "f2a48da3d4b712bf8848d95688e6e388807eedf3"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

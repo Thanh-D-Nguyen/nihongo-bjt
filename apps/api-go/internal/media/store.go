@@ -88,7 +88,7 @@ func (s *Store) GetAsset(ctx context.Context, id string) (*Asset, error) {
 	err := s.db.QueryRow(ctx,
 		`SELECT id, mime_type, byte_size, object_key, owner_user_id, created_at
 		 FROM media.asset
-		 WHERE id = $1`,
+		 WHERE id = $1 AND status = 'active'`,
 		id,
 	).Scan(&a.ID, &a.ContentType, &a.SizeBytes, &a.StorageKey, &a.UploadedBy, &a.CreatedAt)
 	if err != nil {

@@ -34,6 +34,7 @@ type AppearanceLabels = {
   densityCompact: string;
   densityComfortable: string;
   saved: string;
+  saveError: string;
   preview: string;
   previewText: string;
 };
@@ -51,30 +52,12 @@ export function AppearanceSettingsClient({
   const [state, setState] = useState<AppearanceState>(DEFAULT_APPEARANCE);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const [mounted, setMounted] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Load from localStorage immediately (fast), then sync from server
-  useEffect(() => {
-    setMounted(true);
-    const cached = loadCachedAppearance();
-    setState(cached);
-    saveAppearance(cached);
-
-    // Fetch from server and reconcile
-    if (auth.isAuthenticated) {
-      fetch("/api/auth/me", { cache: "no-store", credentials: "same-origin" })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => {
-          if (!data) return;
-          const serverState = appearanceFromProfile(data);
-          setState(serverState);
-          saveAppearance(serverState);
-        })
-        .catch(() => { /* use cached */ });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.isAuthenticated]);
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const saveRevisionRef = useRef(0);
+  const choiceRevisionRef = useRef(0);
 
   // Listen for system theme changes
   useEffect(() => {
@@ -89,32 +72,80 @@ export function AppearanceSettingsClient({
   const persistToServer = useCallback(
     (next: AppearanceState) => {
       if (!auth.isAuthenticated) return;
+      const revision = ++saveRevisionRef.current;
       if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(async () => {
-        setSaving(true);
-        try {
-          await fetch("/api/auth/me", {
-            method: "PUT",
-            credentials: "same-origin",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              themeMode: next.theme,
-              fontSizePreference: next.fontSize,
-              densityPreference: next.density,
-            }),
-          });
-          setSaved(true);
-          setTimeout(() => setSaved(false), 2000);
-        } catch { /* silent */ }
-        finally { setSaving(false); }
+      debounceRef.current = setTimeout(() => {
+        const save = async () => {
+          if (revision === saveRevisionRef.current) setSaving(true);
+          try {
+            const response = await fetch("/api/auth/me", {
+              method: "PUT",
+              credentials: "same-origin",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                themeMode: next.theme,
+                fontSizePreference: next.fontSize,
+                densityPreference: next.density,
+              }),
+            });
+            if (revision !== saveRevisionRef.current) return;
+            if (!response.ok) {
+              setSaveError(true);
+              return;
+            }
+            setSaveError(false);
+            setSaved(true);
+            setTimeout(() => {
+              if (revision === saveRevisionRef.current) setSaved(false);
+            }, 2000);
+          } catch {
+            if (revision === saveRevisionRef.current) setSaveError(true);
+          } finally {
+            if (revision === saveRevisionRef.current) setSaving(false);
+          }
+        };
+        saveQueueRef.current = saveQueueRef.current.then(save, save);
       }, 600);
     },
     [auth.isAuthenticated]
   );
 
+  // Load from localStorage immediately (fast), then sync from server
+  useEffect(() => {
+    setMounted(true);
+    const cached = loadCachedAppearance();
+    setState(cached);
+    saveAppearance(cached);
+
+    if (auth.isLoading) return;
+
+    // A choice made before session restoration belongs to the learner too.
+    if (auth.isAuthenticated && choiceRevisionRef.current > 0) {
+      persistToServer(loadCachedAppearance());
+      return;
+    }
+
+    // Fetch from server and reconcile
+    if (auth.isAuthenticated) {
+      const revision = choiceRevisionRef.current;
+      fetch("/api/auth/me", { cache: "no-store", credentials: "same-origin" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (!data || revision !== choiceRevisionRef.current) return;
+          const serverState = appearanceFromProfile(data);
+          setState(serverState);
+          saveAppearance(serverState);
+        })
+        .catch(() => { /* use cached */ });
+    }
+  }, [auth.isAuthenticated, auth.isLoading, persistToServer]);
+
   const apply = useCallback(
     (next: AppearanceState) => {
+      choiceRevisionRef.current++;
       setState(next);
+      setSaved(false);
+      setSaveError(false);
       saveAppearance(next);
       persistToServer(next);
     },
@@ -256,6 +287,11 @@ export function AppearanceSettingsClient({
         {saved && !saving && (
           <span className="text-xs font-medium text-leaf" role="status">
             ✓ {labels.saved}
+          </span>
+        )}
+        {saveError && !saving && (
+          <span className="text-xs font-medium text-sakura" role="alert">
+            {labels.saveError}
           </span>
         )}
       </div>

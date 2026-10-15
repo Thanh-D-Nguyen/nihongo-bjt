@@ -131,17 +131,29 @@ function getFocusableElements(root: HTMLElement): HTMLElement[] {
   });
 }
 
-function detailPathForKind(kind: SearchResult["kind"], id: string): string | null {
+export function detailPathForKind(kind: SearchResult["kind"], id: string): string | null {
   switch (kind) {
     case "lexeme":
-      return `/api/dictionary/words/${encodeURIComponent(id)}`;
+      return `/api/content/lexemes/${encodeURIComponent(id)}`;
     case "kanji":
       return `/api/kanji/${encodeURIComponent(id)}`;
     case "grammar":
-      return `/api/grammar/${encodeURIComponent(id)}`;
+      return `/api/content/grammar/${encodeURIComponent(id)}`;
     default:
       return null;
   }
+}
+
+export function filterSearchResults(
+  results: SearchResult[],
+  filter: KindFilter,
+  level: string
+): SearchResult[] {
+  return results.filter(
+    (result) =>
+      (filter === "all" || result.kind === filter) &&
+      (!level || result.jlptLevel?.split(",").some((value) => value.trim() === level))
+  );
 }
 
 export function SearchClient({
@@ -189,6 +201,7 @@ export function SearchClient({
       ].join("\u0001"),
     [searchParams]
   );
+  const entryParam = searchParams.get("entry");
   const isMobile = useIsMobileMd();
 
   const [error, setError] = useState(false);
@@ -259,6 +272,17 @@ export function SearchClient({
   );
 
   const selectedEntry = selected ? `${selected.kind}:${selected.id}` : null;
+
+  useEffect(() => {
+    const requested = entryKeyFromUrl(entryParam);
+    if (!requested) {
+      pendingEntryRef.current = null;
+      return;
+    }
+    if (selectedEntry === `${requested.kind}:${requested.id}`) return;
+    pendingEntryRef.current = requested;
+    setSelected(null);
+  }, [entryParam, selectedEntry]);
 
   useEffect(() => {
     if (!hasSearched) return;
@@ -355,6 +379,7 @@ export function SearchClient({
   }
 
   function selectResult(r: SearchResult) {
+    pendingEntryRef.current = null;
     if (isMobile) {
       sheetReturnFocusRef.current =
         document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -408,8 +433,8 @@ export function SearchClient({
   }, [urlSearchBootstrapKey, runSearch]);
 
   const visibleResults = useMemo(
-    () => (filter === "all" ? results : results.filter((r) => r.kind === filter)),
-    [filter, results]
+    () => filterSearchResults(results, filter, levelFilter),
+    [filter, levelFilter, results]
   );
 
   const kindCounts = useMemo(() => {
@@ -426,11 +451,12 @@ export function SearchClient({
     const fromUrl = pendingEntryRef.current;
     if (fromUrl) {
       const hit = visibleResults.find((r) => r.kind === fromUrl.kind && r.id === fromUrl.id);
-      pendingEntryRef.current = null;
       if (hit) {
+        pendingEntryRef.current = null;
         setSelected(hit);
         return;
       }
+      return;
     }
     setSelected((prev) => {
       if (prev && visibleResults.some((r) => r.id === prev.id && r.kind === prev.kind)) {
@@ -438,7 +464,7 @@ export function SearchClient({
       }
       return visibleResults[0];
     });
-  }, [visibleResults]);
+  }, [entryParam, visibleResults]);
 
   useEffect(() => {
     if (!isMobile) setDetailSheetOpen(false);

@@ -1,0 +1,806 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-140",
+  "title": "Fix five Admin Loto API contracts",
+  "start_head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Five active Admin Loto method/path entries need individual contract, authorization, validation, and persistence verification.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "POST /api/admin/magazine/loto/generate is tested individually for authorization, valid generation, duplicates, invalid game/date/count inputs, response contract, persistence, and audit behavior."
+      },
+      {
+        "id": "AC2",
+        "text": "POST /api/admin/magazine/loto/import-csv is tested individually for authorization, valid CSV import, malformed/invalid rows, duplicate behavior, response contract, persistence, and safe handling of partial input."
+      },
+      {
+        "id": "AC3",
+        "text": "GET /api/admin/magazine/loto/predictions is tested individually for anonymous/roleless denial, authorized contract, query handling, and read consistency."
+      },
+      {
+        "id": "AC4",
+        "text": "GET /api/admin/magazine/loto/predictions/analytics is tested individually for anonymous/roleless denial, valid game contract, invalid game handling, and aggregate field correctness."
+      },
+      {
+        "id": "AC5",
+        "text": "POST /api/admin/magazine/loto/predictions/results is tested individually for authorization/CSRF, valid upsert/persistence, malformed body/date/game/numbers, and stable duplicate behavior."
+      },
+      {
+        "id": "AC6",
+        "text": "A visible headed 390x844 Admin session exercises each practical UI trigger, validates the corresponding API response and resulting view, and shows no unexpected page/console errors."
+      },
+      {
+        "id": "AC7",
+        "text": "Update each API verdict, task checkpoint, and report immediately; commit the five-entry wave only after all five pass individually."
+      },
+      {
+        "id": "AC8",
+        "text": "Preserve existing canonical authored content and leave no disposable test data after verification."
+      }
+    ],
+    "expected_behavior": "Each of the five APIs returns its documented contract, enforces Admin permission/CSRF, rejects malformed or invalid inputs safely, and persists expected side effects without 5xx or data corruption.",
+    "observed_behavior": "Audit-138 secured the route group, but these five entries have not yet had individual request/response, invalid-input, persistence, and caller checks.",
+    "rollback_plan": "Remove the task's newly generated disposable fixtures through the supported cleanup helper."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY",
+      "DATABASE",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Verify and repair five existing Admin Loto routes, including RBAC, CSRF, validation, and PostgreSQL-backed contracts."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminLotoFiveApiContracts",
+      "expect": "slice bounds out of range"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-13T11:17:30.803Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-13T11:17:31.161Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-13T11:17:31.519Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T11:22:41.701Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T11:27:55.326Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T11:35:38.311Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T11:39:25.195Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T11:44:16.962Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T11:59:21.857Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-13T11:59:34.379Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-13T12:03:07.104Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T12:12:55.720Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-13T12:13:21.355Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-13T12:16:06.028Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-13T12:16:21.812Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-13T11:21:15.637Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./apps/api-go/internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestAdminLotoFiveApiContracts": "short date status=400"
+      },
+      "fingerprint": "7a5b3e1eb1f9d4c94d4532c98e3bb62dd68b6ebab86b3ac933950a1ea59b3cbb"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-13T11:21:27.064Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./apps/api-go/internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminLotoFiveApiContracts handler_admin_loto_api_contract_test.go:15: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminLotoFiveApiContracts (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestAdminLotoFiveApiContracts": "short date status=400",
+        "go:./internal/httpserver:TestAdminLotoFiveApiContracts": "short date status=400"
+      },
+      "fingerprint": "7a5b3e1eb1f9d4c94d4532c98e3bb62dd68b6ebab86b3ac933950a1ea59b3cbb"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-13T11:21:41.630Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./apps/api-go/internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLotoFiveApiContracts === RUN TestAdminLotoFiveApiContracts/POST_/api/admin/magazine/loto/generate panic: runtime error: slice bounds out of range [:10] with length 1 -> github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.NewRouter.func96.adminLotoGenerateHandler.115 -> /Use…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"short date status=400\""
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestAdminLotoFiveApiContracts": "short date status=400",
+        "go:./internal/httpserver:TestAdminLotoFiveApiContracts": "short date status=400"
+      },
+      "fingerprint": "7a5b3e1eb1f9d4c94d4532c98e3bb62dd68b6ebab86b3ac933950a1ea59b3cbb"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-13T11:21:53.681Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./apps/api-go/internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLotoFiveApiContracts === RUN TestAdminLotoFiveApiContracts/POST_/api/admin/magazine/loto/generate panic: runtime error: slice bounds out of range [:10] with length 1 -> github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.NewRouter.func96.adminLotoGenerateHandler.115 -> /Use…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestAdminLotoFiveApiContracts": "short date status=400",
+        "go:./internal/httpserver:TestAdminLotoFiveApiContracts": "slice bounds out of range"
+      },
+      "fingerprint": "7a5b3e1eb1f9d4c94d4532c98e3bb62dd68b6ebab86b3ac933950a1ea59b3cbb"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-13T11:22:00.641Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./apps/api-go/internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "BUILD_FAIL",
+          "valid": false,
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminLotoFiveApiContracts handler_admin_loto_api_contract_test.go:15: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminLotoFiveApiContracts (0.00s)"
+        }
+      ],
+      "fingerprint": "7a5b3e1eb1f9d4c94d4532c98e3bb62dd68b6ebab86b3ac933950a1ea59b3cbb"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-13T11:22:41.512Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLotoFiveApiContracts === RUN TestAdminLotoFiveApiContracts/POST_/api/admin/magazine/loto/generate panic: runtime error: slice bounds out of range [:10] with length 1 -> github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.NewRouter.func96.adminLotoGenerateHandler.115 -> /Use…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminLotoFiveApiContracts": "slice bounds out of range"
+      },
+      "fingerprint": "7a5b3e1eb1f9d4c94d4532c98e3bb62dd68b6ebab86b3ac933950a1ea59b3cbb"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-13T11:25:27.763Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminLotoFiveApiContracts === RUN TestAdminLotoFiveApiContracts/POST_/api/admin/magazine/loto/generate 2026/10/13 20:25:27 INFO request method=POST path=/api/admin/magazine/loto/generate status=400 duration=3.509583ms bytes=42 2026/10/13 20:25:27 INFO request method=POST path=/api/admin/…"
+        }
+      ],
+      "fingerprint": "9fc1ccab97c15428cc7db748ec2ecf0ebdcac1ff8171d332cf891bcea1d89968"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-13T11:27:55.104Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "4eb88b916fffe2ec7dc6ddde13d59e711abaf0696e5e4b31aca66c70a421b51b"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-13T11:35:37.971Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "sh -c node e2e/audit/audit138-fixture.mjs create; node e2e/audit/audit140-admin-loto.mjs; result=$?; node e2e/audit/audit138-fixture.mjs cleanup; exit $result",
+      "exit_code": 0,
+      "fingerprint": "23e4d9dc8350b31b4c5c55127c4a54afb11b69f3727e5b2a8bfe5e4c2b312642"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-13T11:39:08.291Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLotoFiveApiContracts === RUN TestAdminLotoFiveApiContracts/POST_/api/admin/magazine/loto/generate panic: runtime error: slice bounds out of range [:10] with length 1 -> github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.NewRouter.func96.adminLotoGenerateHandler.115 -> /pri…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminLotoFiveApiContracts": "slice bounds out of range"
+      },
+      "fingerprint": "48c52a17c2164aa2a1c607decdd923a64a4044378d3feaa3224b8c3a8a7eb952"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-13T11:39:24.841Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "48c52a17c2164aa2a1c607decdd923a64a4044378d3feaa3224b8c3a8a7eb952"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-13T11:40:21.240Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 889,
+        "executed": 887,
+        "passed": 886,
+        "failed": 1,
+        "skipped": 2,
+        "expected_skips": 0,
+        "unexpected_skips": 2,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "48c52a17c2164aa2a1c607decdd923a64a4044378d3feaa3224b8c3a8a7eb952"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-13T11:44:16.569Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 889,
+        "executed": 889,
+        "passed": 889,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "889 passed, 0 allowed skip(s)",
+      "fingerprint": "a4086d43bc388bf3a56b00f2027fe725c816daf8bd5c4899e4bf564b5952d16f"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-13T11:46:30.591Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "a4086d43bc388bf3a56b00f2027fe725c816daf8bd5c4899e4bf564b5952d16f"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-13T11:50:45.879Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 889,
+        "executed": 889,
+        "passed": 889,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "35e70cb9eea203e4f0b81821a19dbf1b435365c7ff004cd264e7e19c48f694ab"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-13T11:54:00.850Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 889,
+        "executed": 889,
+        "passed": 889,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "f3fdce45ce26758330f53f76119630393b361fb823477abf236690bf7c265e54"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-13T11:57:03.042Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 889,
+        "executed": 889,
+        "passed": 889,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "889 passed, 0 allowed skip(s)",
+      "fingerprint": "2423e2921c7598c36e7b220684855914726389875d41755088ce3c8fbdadfd86"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-13T11:59:08.550Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "2423e2921c7598c36e7b220684855914726389875d41755088ce3c8fbdadfd86"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-13T11:59:21.450Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "2423e2921c7598c36e7b220684855914726389875d41755088ce3c8fbdadfd86"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-13T11:59:33.951Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "sh -c node e2e/audit/audit138-fixture.mjs create && node e2e/audit/audit140-admin-loto.mjs; result=$?; node e2e/audit/audit138-fixture.mjs cleanup; cleanup=$?; test \"$result\" -eq 0 && test \"$cleanup\" -eq 0",
+      "exit_code": 0,
+      "fingerprint": "2423e2921c7598c36e7b220684855914726389875d41755088ce3c8fbdadfd86"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-13T12:03:06.677Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLotoFiveApiContracts === RUN TestAdminLotoFiveApiContracts/POST_/api/admin/magazine/loto/generate panic: runtime error: slice bounds out of range [:10] with length 1 -> github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.NewRouter.func96.adminLotoGenerateHandler.115 -> /pri…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"generated Loto6 number out of range or repeated\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminLotoFiveApiContracts": "generated Loto6 number out of range or repeated"
+      },
+      "fingerprint": "1cec46892cb802517ff613a79516c2215ed6bcf9b77977f347d78f30ca8f2bca"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-13T12:05:08.850Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c9fc36ff8a9716f08e9fca264042d26f3930cb09559b0c94f1fd2e14ffa4c1a2"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-13T12:06:44.769Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "sh -c node e2e/audit/audit138-fixture.mjs create && node e2e/audit/audit140-admin-loto.mjs; result=$?; node e2e/audit/audit138-fixture.mjs cleanup; cleanup=$?; test \"$result\" -eq 0 && test \"$cleanup\" -eq 0",
+      "exit_code": 0,
+      "fingerprint": "f01e6892f5720feba84748c1c54a5c76b5da60f397df952f1940ed51a4379ee9"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-13T12:09:48.685Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 889,
+        "executed": 889,
+        "passed": 889,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "889 passed, 0 allowed skip(s)",
+      "fingerprint": "f01e6892f5720feba84748c1c54a5c76b5da60f397df952f1940ed51a4379ee9"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-13T12:11:58.869Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "f01e6892f5720feba84748c1c54a5c76b5da60f397df952f1940ed51a4379ee9"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-13T12:12:16.283Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f01e6892f5720feba84748c1c54a5c76b5da60f397df952f1940ed51a4379ee9"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-13T12:12:55.281Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLotoFiveApiContracts === RUN TestAdminLotoFiveApiContracts/POST_/api/admin/magazine/loto/generate panic: runtime error: slice bounds out of range [:10] with length 1 -> github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.NewRouter.func96.adminLotoGenerateHandler.115 -> /pri…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminLotoFiveApiContracts": "slice bounds out of range"
+      },
+      "fingerprint": "f01e6892f5720feba84748c1c54a5c76b5da60f397df952f1940ed51a4379ee9"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-13T12:13:20.934Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLotoFiveApiContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLotoFiveApiContracts",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f01e6892f5720feba84748c1c54a5c76b5da60f397df952f1940ed51a4379ee9"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-13T12:16:05.620Z",
+      "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a1352e-b8c5-7220-a1ac-82199bebb017",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "Fresh reviewer APPROVE after verifying unique Loto number generation, matching-game ranges, audit targets, scoped E2E cleanup, and current passing gates.",
+      "output_sha256": "de3d0d8b3c165ee263ff35695823b65a5a43fff6119496dbfbd3bc728744a1c8",
+      "attested": true,
+      "fingerprint": "f01e6892f5720feba84748c1c54a5c76b5da60f397df952f1940ed51a4379ee9"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-13T12:16:21.792Z",
+    "head": "48e134c48ce93eee8c7817f15e3d36b43299193e",
+    "fingerprint": "f01e6892f5720feba84748c1c54a5c76b5da60f397df952f1940ed51a4379ee9",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_admin_loto_api_contract_test.go": "71c5210732a1f378c7be4ef8c4bbc953e010a002",
+      "apps/api-go/internal/httpserver/handler_admin_magazine.go": "2971b8856ec729c796a035cca66c8bfb4abb2fd9",
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "373cd68e3905c436f62c31cacf1fa200f05822c2",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "3e76c3539bb8be2b0bb1dfed9240e99ff3fe48eb",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "2d3942102d0a5c5328b774a2c3f9b000ba80730b",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "aa4ba3b5c8eed2a4b3ffaaa453b6e996b1e27482",
+      "docs/migrations/go-backend-v2/reports/HANDOFF_NEXT_AUDIT.md": "67fadeb67ccf25e0eed9f100d1e798e949038c4d",
+      "e2e/audit/audit140-admin-loto.mjs": "908afed1aafe84467b3f2816bc55f75153913d9d"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

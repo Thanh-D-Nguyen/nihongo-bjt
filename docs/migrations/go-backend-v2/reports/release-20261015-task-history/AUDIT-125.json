@@ -1,0 +1,77 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-125",
+  "title": "Checkpoint Admin exercise screen and API audit",
+  "start_head": "8343860d99ca7d3a096d3c90894ebd048679b583",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Update all seven durable audit reports consistently; preserve count invariants; cite the 8343860d code commit; set GET /api/admin/flashcards/styles as NEXT_ITEM; no runtime/source behavior changes."
+      }
+    ],
+    "expected_behavior": "Screen/API counters, evidence, defect ledger, exact verified code commit, and next API checkpoint match the verified AUDIT-124 output.",
+    "observed_behavior": "AUDIT-124 Admin exercise screen and API wave was verified and committed as 8343860d; durable audit inventories and handoff still reflected the prior checkpoint.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "DOC_ONLY"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-12T15:08:15.899Z",
+      "head": "8343860d99ca7d3a096d3c90894ebd048679b583"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-12T15:08:36.985Z",
+      "head": "8343860d99ca7d3a096d3c90894ebd048679b583"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-12T15:08:37.342Z",
+      "head": "8343860d99ca7d3a096d3c90894ebd048679b583"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-12T15:09:19.769Z",
+      "head": "8343860d99ca7d3a096d3c90894ebd048679b583"
+    }
+  ],
+  "evidence": [],
+  "closed": {
+    "at": "2026-10-12T15:09:19.750Z",
+    "head": "8343860d99ca7d3a096d3c90894ebd048679b583",
+    "fingerprint": "285510a10df4e0526b0c05d0cadbb722fa5e1787a7878d71c2274fa0a1c6bb82",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS"
+    },
+    "files": {
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "ea38cc289677ae91945efe36f2ea11cb651801ab",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "1e23e97972ef102e19a6a1e2a20ea813c6aee99e",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "cc3088d320a74280777711e168ab107e07b34285",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "5533bcc1b5b0b72a9d1c9e4d259a06a04e19ca4a",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "909acc7ab947abc269b6674a37fa88fa9e3379ad",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "4227f983c90bb4c003d424fb3d991bf55afd8040",
+      "docs/migrations/go-backend-v2/reports/HANDOFF_NEXT_AUDIT.md": "bde0c04bb6de7d02e99e727908953b543553427a"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

@@ -1,41 +1,34 @@
 "use client";
 
 interface ActivityHeatmapProps {
-  /** Daily data from API, must be sorted by date ascending */
-  dailyActivity: Array<{
+  /** Dense daily data for the selected period, sorted by date ascending */
+  dailyStats: Array<{
     date: string;
-    reviews: number;
-    quizAnswers: number;
-    quizSessionsCompleted: number;
+    minutes: number;
+    xpEarned: number;
+    lessonsCount: number;
   }>;
   label: string;
+  minuteLabel: string;
 }
 
 /**
  * GitHub-style heatmap showing daily learning intensity.
  * Colors range from no activity (gray) to high intensity (deep emerald).
  */
-export function ActivityHeatmap({ dailyActivity, label }: ActivityHeatmapProps) {
+export function ActivityHeatmap({ dailyStats, label, minuteLabel }: ActivityHeatmapProps) {
   // Build activity map
   const activityMap = new Map<string, number>();
   let maxActivity = 1;
-  for (const d of dailyActivity) {
-    const total = d.reviews + d.quizAnswers + d.quizSessionsCompleted;
-    activityMap.set(d.date, total);
-    if (total > maxActivity) maxActivity = total;
+  for (const d of dailyStats) {
+    activityMap.set(d.date, d.minutes);
+    if (d.minutes > maxActivity) maxActivity = d.minutes;
   }
 
-  // Generate last 84 days (12 weeks)
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const days: { dateStr: string; intensity: number }[] = [];
-  for (let i = 83; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().slice(0, 10);
-    const total = activityMap.get(dateStr) ?? 0;
-    days.push({ dateStr, intensity: total / maxActivity });
-  }
+  const days = dailyStats.map((day) => ({
+    dateStr: day.date,
+    intensity: (activityMap.get(day.date) ?? 0) / maxActivity
+  }));
 
   // Group into weeks (columns)
   const weeks: typeof days[] = [];
@@ -54,8 +47,9 @@ export function ActivityHeatmap({ dailyActivity, label }: ActivityHeatmapProps) 
                 <div
                   key={day.dateStr}
                   className={`h-3 w-3 rounded-[3px] transition-colors ${intensityClass(day.intensity)}`}
-                  title={`${day.dateStr}: ${Math.round(day.intensity * maxActivity)} activities`}
-                  aria-label={`${day.dateStr}: intensity ${Math.round(day.intensity * 100)}%`}
+                  role="img"
+                  aria-label={`${day.dateStr}: ${Math.round(day.intensity * maxActivity)} ${minuteLabel}`}
+                  title={`${day.dateStr}: ${Math.round(day.intensity * maxActivity)} ${minuteLabel}`}
                 />
               ))}
             </div>

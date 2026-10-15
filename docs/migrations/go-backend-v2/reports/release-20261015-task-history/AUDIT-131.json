@@ -1,0 +1,75 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-131",
+  "title": "Record visible learner active flashcard style API check",
+  "start_head": "a92061e55c32c5754c7527a99802f164ee74d4b3",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Record the distinct authenticated browser GET /api/flashcards/styles/active response and matching activeSlug, update all API counts and next item, preserve screen/API/defect count invariants."
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "DOC_ONLY"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": "Persisting already-observed browser API evidence in audit reports only."
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-13T01:58:04.546Z",
+      "head": "a92061e55c32c5754c7527a99802f164ee74d4b3"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-13T01:58:04.891Z",
+      "head": "a92061e55c32c5754c7527a99802f164ee74d4b3"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-13T01:58:05.226Z",
+      "head": "a92061e55c32c5754c7527a99802f164ee74d4b3"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-13T01:59:17.248Z",
+      "head": "a92061e55c32c5754c7527a99802f164ee74d4b3"
+    }
+  ],
+  "evidence": [],
+  "closed": {
+    "at": "2026-10-13T01:59:17.229Z",
+    "head": "a92061e55c32c5754c7527a99802f164ee74d4b3",
+    "fingerprint": "d26a9365582d588e855b9abea6f86a55c810043a8f8a59bd034008074e431f66",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS"
+    },
+    "files": {
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "4e81277edce59bb06a5cafdfa635114003ce42b5",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "95cf97553ac2aea7c6d2eca71aea3dac3fc1442e",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "b81add0c3c6a4e67c6b965812c37efbe0c69a90c",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "3e2c4dbbb76762cad31b521347f95122bfd46b18",
+      "docs/migrations/go-backend-v2/reports/HANDOFF_NEXT_AUDIT.md": "da62effa76646d8e8c7f93be5976601f33d4758c"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

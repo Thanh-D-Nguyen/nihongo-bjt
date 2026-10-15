@@ -47,21 +47,41 @@ func createDeckHandler(store *flashcarddeck.Store, logger *slog.Logger) http.Han
 			return
 		}
 		var req struct {
-			Name        string  `json:"name"`
-			Description *string `json:"description,omitempty"`
+			Name          string                        `json:"name"`
+			TitleVi       string                        `json:"titleVi"`
+			TitleJa       *string                       `json:"titleJa"`
+			Description   *string                       `json:"description"`
+			DescriptionVi *string                       `json:"descriptionVi"`
+			Visibility    string                        `json:"visibility"`
+			Cards         []flashcarddeck.DeckCardInput `json:"cards"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
+		if req.TitleVi != "" {
+			req.Name = req.TitleVi
+		}
+		if req.DescriptionVi != nil {
+			req.Description = req.DescriptionVi
+		}
 		if req.Name == "" {
 			writeJSONError(w, "name is required", http.StatusBadRequest)
 			return
 		}
+		for _, card := range req.Cards {
+			if card.CardID == "" && (strings.TrimSpace(card.FrontText) == "" || strings.TrimSpace(card.BackText) == "") {
+				writeJSONError(w, "card frontText and backText are required", http.StatusBadRequest)
+				return
+			}
+		}
 		deck, err := store.CreateDeck(r.Context(), flashcarddeck.CreateDeckInput{
 			UserID:      identity.UserID,
 			Name:        req.Name,
+			TitleJa:     req.TitleJa,
 			Description: req.Description,
+			Visibility:  req.Visibility,
+			Cards:       req.Cards,
 		})
 		if err != nil {
 			logger.Error("create deck", "error", err, "user_id", identity.UserID)
@@ -88,16 +108,38 @@ func updateDeckHandler(store *flashcarddeck.Store, logger *slog.Logger) http.Han
 			return
 		}
 		var req struct {
-			Name        *string `json:"name,omitempty"`
-			Description *string `json:"description,omitempty"`
+			Name          *string                        `json:"name,omitempty"`
+			TitleVi       *string                        `json:"titleVi,omitempty"`
+			TitleJa       *string                        `json:"titleJa,omitempty"`
+			Description   *string                        `json:"description,omitempty"`
+			DescriptionVi *string                        `json:"descriptionVi,omitempty"`
+			Visibility    *string                        `json:"visibility,omitempty"`
+			Cards         *[]flashcarddeck.DeckCardInput `json:"cards,omitempty"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
+		if req.TitleVi != nil {
+			req.Name = req.TitleVi
+		}
+		if req.DescriptionVi != nil {
+			req.Description = req.DescriptionVi
+		}
+		if req.Cards != nil {
+			for _, card := range *req.Cards {
+				if card.CardID == "" && (strings.TrimSpace(card.FrontText) == "" || strings.TrimSpace(card.BackText) == "") {
+					writeJSONError(w, "card frontText and backText are required", http.StatusBadRequest)
+					return
+				}
+			}
+		}
 		deck, err := store.UpdateDeck(r.Context(), identity.UserID, deckID, flashcarddeck.UpdateDeckInput{
 			Name:        req.Name,
+			TitleJa:     req.TitleJa,
 			Description: req.Description,
+			Visibility:  req.Visibility,
+			Cards:       req.Cards,
 		})
 		if err != nil {
 			if errors.Is(err, flashcarddeck.ErrNotOwner) {
@@ -110,6 +152,29 @@ func updateDeckHandler(store *flashcarddeck.Store, logger *slog.Logger) http.Han
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(deck)
+	}
+}
+
+func getDeckHandler(store *flashcarddeck.Store, logger *slog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		identity, ok := authn.GetLearnerIdentity(r.Context())
+		if !ok {
+			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		deckID := extractPathParam(r.URL.Path, "decks", 1)
+		deck, err := store.GetDeck(r.Context(), identity.UserID, deckID)
+		if err != nil {
+			if errors.Is(err, flashcarddeck.ErrNotFound) {
+				writeJSONError(w, "not found", http.StatusNotFound)
+				return
+			}
+			logger.Error("get deck", "error", err, "deck_id", deckID)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(deck)
 	}
 }
@@ -249,6 +314,7 @@ func generateDeckHandler(store *flashcarddeck.Store, logger *slog.Logger) http.H
 			SourceTypes []string `json:"sourceTypes"`
 			Levels      []string `json:"levels"`
 			Limit       int      `json:"limit"`
+			Direction   string   `json:"direction"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
@@ -264,6 +330,7 @@ func generateDeckHandler(store *flashcarddeck.Store, logger *slog.Logger) http.H
 			SourceTypes: req.SourceTypes,
 			Levels:      req.Levels,
 			Limit:       req.Limit,
+			Direction:   req.Direction,
 		})
 		if err != nil {
 			logger.Error("generate deck", "error", err, "user_id", identity.UserID)
@@ -376,6 +443,14 @@ func createCardFromContentHandler(store *flashcarddeck.Store, logger *slog.Logge
 			Reading:    req.Reading,
 		})
 		if err != nil {
+			if errors.Is(err, flashcarddeck.ErrNotOwner) {
+				writeJSONError(w, "not owner", http.StatusForbidden)
+				return
+			}
+			if errors.Is(err, flashcarddeck.ErrNotFound) {
+				writeJSONError(w, "content not found", http.StatusNotFound)
+				return
+			}
 			logger.Error("create card from content", "error", err, "user_id", identity.UserID)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return

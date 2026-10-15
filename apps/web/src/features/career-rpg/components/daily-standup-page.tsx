@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 
 import { careerMe, clockIn, storyArcs, storyChapter } from "../api";
 import { timeOfDayBucket } from "../helpers";
-import { useCareerRpg } from "../store";
 import type { CareerRpgLabels } from "../i18n";
 import type { MissionArc, MissionChapter, UserCareerState } from "../types";
 
@@ -20,12 +19,12 @@ interface Props {
 }
 
 export function DailyStandupPage({ labels, locale }: Props) {
-  const { career: fallbackCareer, reset } = useCareerRpg();
   const router = useRouter();
-  const [career, setCareer] = useState<UserCareerState>(fallbackCareer);
+  const [career, setCareer] = useState<UserCareerState | null>(null);
   const [arcs, setArcs] = useState<MissionArc[]>([]);
   const [nextChapter, setNextChapter] = useState<MissionChapter | null>(null);
-  const [, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [isClockingIn, setIsClockingIn] = useState(false);
   const [bucket, setBucket] = useState<"morning" | "afternoon" | "evening">("morning");
   const [showNamePicker, setShowNamePicker] = useState(false);
@@ -36,6 +35,11 @@ export function DailyStandupPage({ labels, locale }: Props) {
 
   useEffect(() => {
     let alive = true;
+    setCareer(null);
+    setArcs([]);
+    setNextChapter(null);
+    setLoading(true);
+    setLoadError(false);
     void Promise.all([careerMe(), storyArcs()])
       .then(async ([careerResponse, arcsResponse]) => {
         if (!alive) return;
@@ -55,13 +59,22 @@ export function DailyStandupPage({ labels, locale }: Props) {
         }
         if (alive) setLoading(false);
       })
-      .catch(() => {
-        if (alive) setLoading(false);
+      .catch((error: unknown) => {
+        if (!alive) return;
+        if (error instanceof Error && error.message.includes("401")) {
+          setCareer(null);
+          setArcs([]);
+          setNextChapter(null);
+          router.replace(`/${locale}/login?returnTo=${encodeURIComponent(`/${locale}/daily-standup`)}`);
+          return;
+        }
+        setLoadError(true);
+        setLoading(false);
       });
     return () => {
       alive = false;
     };
-  }, []);
+  }, [locale, router]);
 
   const greeting =
     bucket === "morning"
@@ -87,12 +100,33 @@ export function DailyStandupPage({ labels, locale }: Props) {
     try {
       const response = await clockIn();
       setCareer(response.state);
-    } catch {
-      // Keep dev fallback usable if the API is unavailable.
+      router.push(`/${locale}/story/chapters/${todayChapterId}`);
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes("401")) {
+        setCareer(null);
+        setArcs([]);
+        setNextChapter(null);
+        router.replace(`/${locale}/login?returnTo=${encodeURIComponent(`/${locale}/daily-standup`)}`);
+      }
     } finally {
       setIsClockingIn(false);
-      router.push(`/${locale}/story/chapters/${todayChapterId}`);
     }
+  }
+
+  if (!career) {
+    return (
+      <main aria-busy={loading} className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+        {loading ? <p role="status" className="text-sm text-[#4B5563]">{labels.career.loading}</p> : null}
+        {!loading && loadError ? (
+          <section aria-live="polite" className="rounded-xl border border-[#FECACA] bg-white p-5" role="alert">
+            <p className="text-sm text-[#991B1B]">{labels.career.loadError}</p>
+            <Link className="mt-3 inline-flex min-h-10 items-center text-sm font-semibold text-[#1B2A4A] underline" href={`/${locale}/login?returnTo=${encodeURIComponent(`/${locale}/daily-standup`)}`}>
+              {labels.career.loginLink}
+            </Link>
+          </section>
+        ) : null}
+      </main>
+    );
   }
 
   return (
@@ -200,30 +234,7 @@ export function DailyStandupPage({ labels, locale }: Props) {
           </Link>
         </div>
       </section>
-
-      <PrototypeFooter onReset={reset} />
     </div>
-  );
-}
-
-function PrototypeFooter({ onReset }: { onReset: () => void }) {
-  return (
-    <footer className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-dashed border-[#E2E8F0] pt-4 text-[11px] text-[#9CA3AF]">
-      <span className="uppercase tracking-[0.18em]">Career RPG · visual prototype</span>
-      <button
-        className="rounded-md border border-[#E2E8F0] bg-white px-2.5 py-1 text-[11px] font-medium text-[#4B5563] transition-colors hover:border-[#CBD5E1] hover:bg-[#F8FAFC]"
-        onClick={() => {
-          if (typeof window === "undefined") return;
-          const ok = window.confirm(
-            "Reset prototype state? This clears local rank XP, NPC trust and inbox."
-          );
-          if (ok) onReset();
-        }}
-        type="button"
-      >
-        Reset prototype state
-      </button>
-    </footer>
   );
 }
 

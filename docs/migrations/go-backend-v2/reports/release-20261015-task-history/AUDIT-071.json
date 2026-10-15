@@ -1,0 +1,433 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-071",
+  "title": "Prevent duplicate learner deck clones",
+  "start_head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "A single visible shared-deck clone query submits exactly one POST even when React development StrictMode replays the mount effect."
+      },
+      {
+        "id": "AC2",
+        "text": "Successful clone still reports success and refreshes the learner deck list; canonical vocabulary, kanji and grammar records remain unchanged."
+      },
+      {
+        "id": "AC3",
+        "text": "A failed clone keeps the token available for retry after refresh; a successful clone consumes it and refreshes the library list."
+      }
+    ],
+    "expected_behavior": "One active user action yields one created learner deck.",
+    "observed_behavior": "A real visible learner clone action generated two HTTP 201 POST responses and duplicate cloned decks.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY",
+      "DOMAIN_LOGIC"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx",
+      "test": "DeckBrowser shared-deck clone > submits only once when StrictMode replays the clone effect",
+      "expect": "to have a length of 1 but got 2"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-08T06:22:07.115Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-08T06:22:39.053Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T06:22:39.411Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T06:23:46.040Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T06:24:17.769Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T06:27:45.662Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-08T06:32:49.848Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T06:41:46.138Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T06:41:48.021Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-08T06:46:15.883Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-08T06:48:31.878Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-08T06:23:04.688Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx::submits only once when StrictMode replays the clone effect",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"submits only once when StrictMode replays the clone effect\" in apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx::submits only once when StrictMode replays the clone effect": "expected one clone POST"
+      },
+      "fingerprint": "54ca484f6e56d57db3376eb7675c1504c226e439a00adff3478dc31fc38187ed"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-08T06:23:25.379Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx::submits only once when StrictMode replays the clone effect",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"submits only once when StrictMode replays the clone effect\" in apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx::DeckBrowser shared-deck clone > submits only once when StrictMode replays the clone effect",
+          "outcome": "FAIL",
+          "excerpt": "expected [ [ …(2) ], [ …(2) ] ] to have a length of 1 but got 2",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx::submits only once when StrictMode replays the clone effect": "expected one clone POST",
+        "vitest:apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx::DeckBrowser shared-deck clone > submits only once when StrictMode replays the clone effect": "to have a length of 1 but got 2"
+      },
+      "fingerprint": "54ca484f6e56d57db3376eb7675c1504c226e439a00adff3478dc31fc38187ed"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-08T06:23:45.856Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx::DeckBrowser shared-deck clone > submits only once when StrictMode replays the clone effect",
+          "outcome": "FAIL",
+          "excerpt": "expected [ [ …(2) ], [ …(2) ] ] to have a length of 1 but got 2",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx::DeckBrowser shared-deck clone > submits only once when StrictMode replays the clone effect": "to have a length of 1 but got 2"
+      },
+      "fingerprint": "54ca484f6e56d57db3376eb7675c1504c226e439a00adff3478dc31fc38187ed"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-08T06:24:17.548Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx::DeckBrowser shared-deck clone > submits only once when StrictMode replays the clone effect",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "987704c8a4632acd67e14afda005d54077d473503aa6c3b96ba0976fcdc785c9"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-08T06:24:31.930Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "987704c8a4632acd67e14afda005d54077d473503aa6c3b96ba0976fcdc785c9"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-08T06:27:45.448Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 353,
+        "executed": 353,
+        "passed": 353,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 749,
+        "lint_errors": 65,
+        "lint_warnings": 26,
+        "new_debt": 1
+      },
+      "message": "RATCHET_VIOLATION: 1 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "1c0723801a28add3e350bc04c92be7ccbc0c8419c1841ac04cecbf4dd1cd0240"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-08T06:31:47.697Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 353,
+        "executed": 353,
+        "passed": 353,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 749,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "d14e428aa960e2a3e8f313a418e64699b0140fcb26c5e16883aff62bc845cab0"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-08T06:32:49.630Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx::DeckBrowser shared-deck clone > submits only once when StrictMode replays the clone effect",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d14e428aa960e2a3e8f313a418e64699b0140fcb26c5e16883aff62bc845cab0"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-08T06:37:35.560Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash tmp/local-audit/audit-071-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "d14e428aa960e2a3e8f313a418e64699b0140fcb26c5e16883aff62bc845cab0"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-08T06:41:47.803Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx::DeckBrowser shared-deck clone > submits only once when StrictMode replays the clone effect",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "49c3223af2490af03934c2942f7639ed8972c8722d4295368a389cffd6ee0856"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-08T06:42:24.081Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash tmp/local-audit/audit-071-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "49c3223af2490af03934c2942f7639ed8972c8722d4295368a389cffd6ee0856"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-08T06:42:32.059Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "49c3223af2490af03934c2942f7639ed8972c8722d4295368a389cffd6ee0856"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-08T06:42:46.449Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx::DeckBrowser shared-deck clone > submits only once when StrictMode replays the clone effect",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "4b26a959b41c4b4b723ebff69c4433862eee1c36088c19207edd430f121c5b49"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-08T06:46:15.656Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 353,
+        "executed": 353,
+        "passed": 353,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 749,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "4b26a959b41c4b4b723ebff69c4433862eee1c36088c19207edd430f121c5b49"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-08T06:46:43.868Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash tmp/local-audit/audit-071-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "4b26a959b41c4b4b723ebff69c4433862eee1c36088c19207edd430f121c5b49"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-08T06:48:31.040Z",
+      "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Rawls",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "4b26a959b41c4b4b723ebff69c4433862eee1c36088c19207edd430f121c5b49"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-08T06:48:31.858Z",
+    "head": "3cb0d5b486ad8318120ed1c664379a8d2389e72b",
+    "fingerprint": "4b26a959b41c4b4b723ebff69c4433862eee1c36088c19207edd430f121c5b49",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx": "3646ffb6be7b9912408a1c427a932eec644ec3dd",
+      "apps/web/app/[locale]/flashcards/_components/deck-browser.tsx": "d91c160113ce5994904ed4f873af88fcc12483c1"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

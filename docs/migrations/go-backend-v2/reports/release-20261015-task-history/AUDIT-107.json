@@ -1,0 +1,522 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-107",
+  "title": "Audit and repair learner scenario list",
+  "start_head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Learner Scenario list accesses synchronous Next route params, has no auth guard, keeps loading when auth is absent, masks non-2xx/network failures as an empty catalog, and uses Vietnamese interface copy on every locale. List row iteration also omits terminal database error handling.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Scenario list route awaits Next params and redirects anonymous users to localized login."
+      },
+      {
+        "id": "AC2",
+        "text": "Authenticated learners see localized loading, populated, truthful empty, and retryable API error states; failures are never presented as an empty catalog."
+      },
+      {
+        "id": "AC3",
+        "text": "Scenario cards show localized labels and navigate to the matching detail route in vi/en/ja."
+      },
+      {
+        "id": "AC4",
+        "text": "The visible list remains usable at a 390px viewport with no horizontal overflow."
+      }
+    ],
+    "expected_behavior": "Await route params and use the learner auth guard. Authenticated learners see localized list content; actual empty data is distinct from request failure, which provides a localized retry. English/Japanese screens use localized controls and Japanese scenario title data when present. GET /api/scenarios returns complete rows or a surfaced error.",
+    "observed_behavior": "Chrome emitted the Next sync params warning. A fresh anonymous session stayed on /vi/scenarios without content while the API returned 401. Source swallowed HTTP/network errors and showed empty state; list labels were hardcoded Vietnamese. The store did not inspect rows.Err().",
+    "rollback_plan": "Revert only AUDIT-107 changes and its task record; preserve committed AUDIT-106 scenario detail and prior checkpoints."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY",
+      "AUTH_SECURITY",
+      "API_CONTRACT",
+      "DATABASE"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/scenarios/page.test.tsx",
+      "test": "awaits dynamic locale params and renders the list behind the learner guard",
+      "expect": "expected undefined to be"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx",
+      "test": "scenario list > shows localized scenario data and navigates to the selected detail",
+      "expect": "お詫びメール"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx",
+      "test": "scenario list > shows a retryable error instead of treating an API failure as an empty list",
+      "expect": "undefined and string"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-11T14:16:15.268Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-11T14:17:18.533Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T14:17:45.416Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T14:19:38.590Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T14:21:59.135Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T14:24:34.351Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T14:26:50.790Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T14:43:32.063Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T14:43:38.598Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-11T14:47:07.986Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-11T14:47:19.638Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-11T14:19:28.712Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/page.test.tsx::awaits dynamic locale params and renders the list behind the learner guard",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to be 'ja' // Object.is equality",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"expected undefined to be \\\"ja\\\"\""
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > shows localized scenario data and navigates to the selected detail",
+          "outcome": "FAIL",
+          "excerpt": "expected '💼 Tình huống kinh doanhLuyện tập ứng…' to contain 'お詫びメール'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > shows a retryable error instead of treating an API failure as an empty list",
+          "outcome": "FAIL",
+          "excerpt": "the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"role=\\\"alert\\\"\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/scenarios/page.test.tsx::awaits dynamic locale params and renders the list behind the learner guard": "expected undefined to be \"ja\"",
+        "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > shows localized scenario data and navigates to the selected detail": "お詫びメール",
+        "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > shows a retryable error instead of treating an API failure as an empty list": "role=\"alert\""
+      },
+      "fingerprint": "e08adeafb2873ead514581eea7af8c4da172110a03a6e8471d96ba386749ca3d"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-11T14:19:38.261Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/page.test.tsx::awaits dynamic locale params and renders the list behind the learner guard",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to be 'ja' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > shows localized scenario data and navigates to the selected detail",
+          "outcome": "FAIL",
+          "excerpt": "expected '💼 Tình huống kinh doanhLuyện tập ứng…' to contain 'お詫びメール'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > shows a retryable error instead of treating an API failure as an empty list",
+          "outcome": "FAIL",
+          "excerpt": "the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/scenarios/page.test.tsx::awaits dynamic locale params and renders the list behind the learner guard": "expected undefined to be",
+        "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > shows localized scenario data and navigates to the selected detail": "お詫びメール",
+        "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > shows a retryable error instead of treating an API failure as an empty list": "undefined and string"
+      },
+      "fingerprint": "e08adeafb2873ead514581eea7af8c4da172110a03a6e8471d96ba386749ca3d"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-11T14:21:58.611Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/page.test.tsx::awaits dynamic locale params and renders the list behind the learner guard",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > shows localized scenario data and navigates to the selected detail",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > shows a retryable error instead of treating an API failure as an empty list",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9f6a678a9dcda6e6e5d2361f1f8455b7b41622574abf120cdbab67873d85cfc1"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-11T14:26:50.236Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/page.test.tsx::awaits dynamic locale params and renders the list behind the learner guard",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > shows localized scenario data and navigates to the selected detail",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > shows a retryable error instead of treating an API failure as an empty list",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c1313a21d52b7448047f52ed97053a60095fd9920dda1d29925c32b75a3dcdab"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-11T14:27:36.380Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash tmp/local-audit/audit107-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "c1313a21d52b7448047f52ed97053a60095fd9920dda1d29925c32b75a3dcdab"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-11T14:30:49.625Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 760,
+        "executed": 760,
+        "passed": 760,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "a later step of bash scripts/quality/verify-go.sh failed (exit 1)",
+      "fingerprint": "c1313a21d52b7448047f52ed97053a60095fd9920dda1d29925c32b75a3dcdab"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-11T14:30:52.541Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "c1313a21d52b7448047f52ed97053a60095fd9920dda1d29925c32b75a3dcdab"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-11T14:33:16.137Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/page.test.tsx::awaits dynamic locale params and renders the list behind the learner guard",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > shows localized scenario data and navigates to the selected detail",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > shows a retryable error instead of treating an API failure as an empty list",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1cd50ce097348ec233f4a9adf6f58c48fe90e59ec6910500a9de3255cd06a394"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-11T14:36:18.779Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 760,
+        "executed": 760,
+        "passed": 760,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "760 passed, 0 allowed skip(s)",
+      "fingerprint": "1cd50ce097348ec233f4a9adf6f58c48fe90e59ec6910500a9de3255cd06a394"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-11T14:39:39.182Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 455,
+        "executed": 455,
+        "passed": 455,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 788,
+        "lint_errors": 65,
+        "lint_warnings": 23,
+        "new_debt": 1
+      },
+      "message": "RATCHET_VIOLATION: 1 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "1cd50ce097348ec233f4a9adf6f58c48fe90e59ec6910500a9de3255cd06a394"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-11T14:43:31.538Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 455,
+        "executed": 455,
+        "passed": 455,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 788,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "a7e1cdfcd6fc0c45ffb146eab36d591fb916016442dd5a815f8419a17cf9a4f7"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-11T14:43:38.005Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/page.test.tsx::awaits dynamic locale params and renders the list behind the learner guard",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > shows localized scenario data and navigates to the selected detail",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > shows a retryable error instead of treating an API failure as an empty list",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a7e1cdfcd6fc0c45ffb146eab36d591fb916016442dd5a815f8419a17cf9a4f7"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-11T14:44:15.458Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash tmp/local-audit/audit107-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "a7e1cdfcd6fc0c45ffb146eab36d591fb916016442dd5a815f8419a17cf9a4f7"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-11T14:44:26.529Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Planck",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fd7b4547ac7bea33e8dca5f631547321791d40f7d163242cf7f7aba79776dadb",
+      "attested": true,
+      "fingerprint": "a7e1cdfcd6fc0c45ffb146eab36d591fb916016442dd5a815f8419a17cf9a4f7"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-11T14:47:07.473Z",
+      "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 760,
+        "executed": 760,
+        "passed": 760,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "760 passed, 0 allowed skip(s)",
+      "fingerprint": "a7e1cdfcd6fc0c45ffb146eab36d591fb916016442dd5a815f8419a17cf9a4f7"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-11T14:47:19.618Z",
+    "head": "e70d90a61e43c1369c7bf1af7d8573d7c12473d4",
+    "fingerprint": "a7e1cdfcd6fc0c45ffb146eab36d591fb916016442dd5a815f8419a17cf9a4f7",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/scenario/store.go": "8847bee983418e483d711f15298cac854a8764b6",
+      "apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx": "2255c66ce4f8a94ead7c39dcd006aa82ab4545f2",
+      "apps/web/app/[locale]/scenarios/_components/scenario-list-client.tsx": "42706726b42f179de7c4efda6c31b927d8984ff2",
+      "apps/web/app/[locale]/scenarios/page.test.tsx": "6a38d3556059d3aa860cb0e44eb54894444808d1",
+      "apps/web/app/[locale]/scenarios/page.tsx": "9d0229b51d9a2a910c41a0070c9de2c4fae8e5f7",
+      "apps/web/messages/en.json": "f53f76b777821ee6c162b4ace1582904169c71b9",
+      "apps/web/messages/ja.json": "65bdde5c60f54a6878d9cfad0b2e85618315f769",
+      "apps/web/messages/vi.json": "afe1a34f6a42741791692cd928e88979147ee316"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

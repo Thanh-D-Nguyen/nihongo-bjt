@@ -26,13 +26,9 @@ export type AdminLoginFormCopy = {
 
 const ERROR_REGION_ID = "admin-login-error";
 
-// Use relative paths so the form works regardless of whether the browser
-// is on a .test domain, raw IP, or production hostname. The Caddy reverse
-// proxy routes /api/* to the Go API on all hostnames.
-const apiBaseUrl = "";
-
 function mapErrorCode(code: string | undefined, copy: AdminLoginFormCopy): string {
   switch (code) {
+    case "invalid credentials":
     case "invalid_credentials":
       return copy.wrongCredentials;
     case "auth_method_not_allowed":
@@ -94,13 +90,17 @@ export function AdminLoginFormClient({
     if (submitInFlight.current) {
       return;
     }
+    if (!username.trim() || !password) {
+      setClientError(copy.validationError);
+      return;
+    }
     submitInFlight.current = true;
     setClientError(null);
     setLoading(true);
     try {
       // Go-native admin login: POST /api/admin/login with credentials.
       // The Go API sets bjt_admin_session cookie on success.
-      const res = await fetch(`${apiBaseUrl}/api/admin/login`, {
+      const res = await fetch(`/api/admin/login`, {
         body: JSON.stringify({ email: username, password }),
         credentials: "include",
         headers: { "content-type": "application/json" },

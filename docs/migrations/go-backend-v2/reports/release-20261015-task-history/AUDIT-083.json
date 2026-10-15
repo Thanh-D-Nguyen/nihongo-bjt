@@ -1,0 +1,2370 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-083",
+  "title": "Audit learner magazine article detail screen",
+  "start_head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Open a real seeded magazine article through the visible learner UI; verify content and metadata render in vi/en/ja, including the seeded Japanese/Vietnamese introduction; persist article vocabulary to a learner-owned flashcard deck without modifying master vocabulary; verify mini-quiz answer/result states and saved read score, mobile layout at 390x844, and missing-article behavior separately from operational failures. Persist anonymous/authenticated/mobile evidence and fixes in the inventory."
+      },
+      {
+        "id": "AC2",
+        "text": "The dynamic public article route returns published article content, ordered vocabulary with stable row IDs, quiz options/correct answer feedback data, and a valid published timestamp; the visible localized page renders the article and quiz on desktop/mobile; quiz completion persists read state and score/total through the authenticated API; learner flashcard creation persists only learner-owned rows; missing slugs remain 404 while upstream/network failures surface as operational errors. The flashcard endpoint must also reject vocabulary whose parent magazine article is unpublished."
+      }
+    ],
+    "expected_behavior": "GET /api/magazine/{slug} returns the published article, its ordered vocabItems and quizzes in the fields consumed by the UI, and a valid publishedAt. The public UI renders content and localized dates; authenticated quiz completion persists quiz score and total in daily.magazine_user_read, and invalid slugs return 404. A magazine vocabulary source is eligible for flashcard creation only while its parent article is published.",
+    "observed_behavior": "The Go detail handler returned only metadata and contentJson, omitting the child vocabulary and quiz rows; the learner screen rendered Invalid Date and no article body/vocabulary/quiz. POST /api/magazine/{slug}/read wrote to a retired daily.magazine_read table, discarded the quiz body, ignored SQL errors, and returned read:true. The canonical Prisma-owned table is daily.magazine_user_read.",
+    "rollback_plan": "Revert the focused Go detail/read contract, learner article date/localized label changes, and their tests together. Local canonical seed data is idempotent and may remain for future screen audits."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DATABASE",
+      "DOMAIN_LOGIC",
+      "UI_ONLY",
+      "CROSS_CUTTING",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "The active learner article page receives a reduced detail DTO, formats a missing date as Invalid Date, and quiz completion writes to a retired table while discarding score fields. Fix the source contract and persistence path with PostgreSQL integration and visible browser retests. Removing the retired SQL also requires shrinking the canonical SQL drift baseline."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+      "expect": "detail omitted vocabulary contract"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestMarkMagazineReadPersistsQuizScore",
+      "expect": "quiz result was not persisted"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx",
+      "test": "magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+      "expect": "to be called with arguments"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+      "expect": "flashcarddeck: not found"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx",
+      "test": "magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+      "expect": "to contain"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx",
+      "test": "vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+      "expect": "to have been called with"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/magazine/[slug]/page.test.ts",
+      "test": "magazine article loading > surfaces upstream and network failures",
+      "expect": "NEXT_NOT_FOUND"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-09T12:03:39.312Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-09T12:05:20.832Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-09T12:05:21.175Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T12:09:38.800Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T12:11:40.693Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T12:18:25.346Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T12:26:37.620Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T12:32:07.143Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T12:33:15.905Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-09T12:37:52.200Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T12:40:56.517Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T12:46:32.774Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T12:58:16.323Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T12:59:22.935Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T12:59:42.029Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T13:10:09.807Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T13:10:25.934Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T13:16:46.803Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T13:17:11.728Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T13:20:07.006Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T13:20:19.975Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T13:28:24.868Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T13:30:02.788Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T13:30:42.662Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T13:30:59.335Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T13:31:49.038Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T13:32:05.332Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T13:41:21.897Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T13:52:33.732Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T13:53:29.620Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T13:53:45.353Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T14:02:27.472Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-09T14:03:16.424Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-09T14:03:23.436Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-09T12:11:40.455Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGetMagazineBySlugIncludesVocabularyAndQuiz handler_magazine_test.go:59: detail omitted vocabulary contract: [] body={\"id\":\"1b8bcee5-5cbe-4ee9-8df1-193e7787386e\",\"slug\":\"audit-magazine-1b8bcee5-5cbe-4ee9-8df1-193e7787386e\",\"widgetKind\":\"magazine_bjt_phrase\",\"titleJp\":\"記事の見出し\",\"titleVi\":\"T…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMarkMagazineReadPersistsQuizScore {\"time\":\"2026-10-09T21:11:40.401981+09:00\",\"level\":\"ERROR\",\"msg\":\"mark magazine read\",\"error\":\"ERROR: relation \\\"daily.magazine_read\\\" does not exist (SQLSTATE 42P01)\"} handler_magazine_test.go:77: quiz result was not persisted: no rows in result set ---…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz": "detail omitted vocabulary contract",
+        "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore": "quiz result was not persisted"
+      },
+      "fingerprint": "90dfb2a5763badbd494946a245d2f49f34619dc8fbc27bcf01e4f4aabed822bc"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-09T12:16:12.010Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestGetMagazineBySlugIncludesVocabularyAndQuiz handler_magazine_test.go:15: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestGetMagazineBySlugIncludesVocabularyAndQuiz (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestMarkMagazineReadPersistsQuizScore handler_magazine_test.go:67: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestMarkMagazineReadPersistsQuizScore (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz": "detail omitted vocabulary contract",
+        "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore": "quiz result was not persisted"
+      },
+      "fingerprint": "90dfb2a5763badbd494946a245d2f49f34619dc8fbc27bcf01e4f4aabed822bc"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-09T12:16:52.108Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGetMagazineBySlugIncludesVocabularyAndQuiz handler_magazine_test.go:59: detail omitted vocabulary contract: [] body={\"id\":\"6bd1bf47-427f-4fb9-9129-06ca2c8c5ef4\",\"slug\":\"audit-magazine-6bd1bf47-427f-4fb9-9129-06ca2c8c5ef4\",\"widgetKind\":\"magazine_bjt_phrase\",\"titleJp\":\"記事の見出し\",\"titleVi\":\"T…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMarkMagazineReadPersistsQuizScore {\"time\":\"2026-10-09T21:16:50.729619+09:00\",\"level\":\"ERROR\",\"msg\":\"mark magazine read\",\"error\":\"ERROR: relation \\\"daily.magazine_read\\\" does not exist (SQLSTATE 42P01)\"} handler_magazine_test.go:77: quiz result was not persisted: no rows in result set ---…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ …(2) ] Received: 1st vi.fn() call: [ - \"/api/magazine/phrase%2Farticle/read\", - ObjectContaining { + \"http://localhost:4000/api/magazine/phrase/article/read\", + { \"body\": \"{\\\"quizScore\\\":1,\\\"quizTotal\\\":1}\", + \"credentials\": \"include\", + \"headers\": {…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz": "detail omitted vocabulary contract",
+        "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore": "quiz result was not persisted",
+        "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save": "to be called with arguments"
+      },
+      "fingerprint": "f2a49c5a74400da0bf81d24f8cb959a738dc0a158427fdd75292430995a50d6e"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-09T12:18:02.187Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "BUILD_FAIL",
+          "valid": false,
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_career_content_gamification_misc.go:843:18: undefined: VocabItem internal/httpserver/handler_career_content_gamification_misc.go:844:18: unde…"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "BUILD_FAIL",
+          "valid": false,
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_career_content_gamification_misc.go:843:18: undefined: VocabItem internal/httpserver/handler_career_content_gamification_misc.go:844:18: unde…"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0c8ca85d7d6b0befb74a28a931c15e0bb183fbd20a7834bfd9ad830da512d849"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-09T12:18:24.768Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d89bd9296338e5b089bf357c2f93ef554c8c6603cc4d6ef14dee8d6a307410fe"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-09T12:26:37.126Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 721,
+        "executed": 721,
+        "passed": 720,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "74a1352955ab255e96b72f5a8d1ee59c08abe4fa778851eef586fdcb0e1593d0"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-09T12:29:49.354Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 392,
+        "executed": 392,
+        "passed": 392,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 768,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "74a1352955ab255e96b72f5a8d1ee59c08abe4fa778851eef586fdcb0e1593d0"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-09T12:32:06.479Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "889879aa03b169c08e5459d4081748f8988eeeaecb786f940f3c0fe91f92ea17"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-09T12:33:15.309Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 721,
+        "executed": 721,
+        "passed": 720,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "553f772a426808985277a0733f8bb4ee5fd26ae59c958121a3fe70f47707e30f"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-09T12:36:33.674Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 392,
+        "executed": 392,
+        "passed": 392,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 768,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "553f772a426808985277a0733f8bb4ee5fd26ae59c958121a3fe70f47707e30f"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-09T12:37:51.431Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGetMagazineBySlugIncludesVocabularyAndQuiz handler_magazine_test.go:60: detail omitted vocabulary contract: [] body={\"id\":\"7d0dce77-afa9-4800-a863-37ed74d9813f\",\"slug\":\"audit-magazine-7d0dce77-afa9-4800-a863-37ed74d9813f\",\"widgetKind\":\"magazine_bjt_phrase\",\"titleJp\":\"記事の見出し\",\"titleVi\":\"T…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMarkMagazineReadPersistsQuizScore {\"time\":\"2026-10-09T21:37:49.645557+09:00\",\"level\":\"ERROR\",\"msg\":\"mark magazine read\",\"error\":\"ERROR: relation \\\"daily.magazine_read\\\" does not exist (SQLSTATE 42P01)\"} handler_magazine_test.go:78: quiz result was not persisted: no rows in result set ---…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ …(2) ] Received: 1st vi.fn() call: [ - \"/api/magazine/phrase%2Farticle/read\", - ObjectContaining { + \"http://localhost:4000/api/magazine/phrase/article/read\", + { \"body\": \"{\\\"quizScore\\\":1,\\\"quizTotal\\\":1}\", + \"credentials\": \"include\", + \"headers\": {…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz": "detail omitted vocabulary contract",
+        "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore": "quiz result was not persisted",
+        "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save": "to be called with arguments"
+      },
+      "fingerprint": "9f8684dbf1201f2adbea40156e251e83a43bd38a37cdd81052b559d78862a0cc"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-09T12:38:08.520Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9f8684dbf1201f2adbea40156e251e83a43bd38a37cdd81052b559d78862a0cc"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-09T12:40:55.872Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "9f8684dbf1201f2adbea40156e251e83a43bd38a37cdd81052b559d78862a0cc"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-09T12:43:26.607Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 721,
+        "executed": 721,
+        "passed": 721,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "721 passed, 0 allowed skip(s)",
+      "fingerprint": "9f8684dbf1201f2adbea40156e251e83a43bd38a37cdd81052b559d78862a0cc"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-09T12:46:32.031Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 392,
+        "executed": 392,
+        "passed": 392,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 768,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "9f8684dbf1201f2adbea40156e251e83a43bd38a37cdd81052b559d78862a0cc"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-09T12:52:09.679Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec --ephemeral --sandbox read-only --model gpt-6.1-sol -",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 3,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/web/app/[locale]/magazine/_components/magazine-article-view.tsx:82",
+          "summary": "The audited seeded vocabulary article stores its body in contentJson.introduction/introductionVi, which ContentBody ignores and renders as null. Both texts were absent when rendering the actual seed f…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/web/app/[locale]/_components/vocab-expression-list.tsx:63",
+          "summary": "The vocabulary Add to flashcard action only toggles local success text and a timer. Clicking it displayed Saved with zero API requests, so nothing persists. The newly exposed vocabulary interaction do…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/web/app/[locale]/magazine/[slug]/page.tsx:17",
+          "summary": "fetchArticle returns null for every non-2xx response and caught exception, causing API 503 and network failures to invoke notFound() just like a missing slug. This swallows operational failures despit…"
+        }
+      ],
+      "package_sha256": "5dd7e2aaf075c06dd8b8696a7860ea80e64eedc3a4cb0148b665fd91da5f3ed4",
+      "fingerprint": "9f8684dbf1201f2adbea40156e251e83a43bd38a37cdd81052b559d78862a0cc"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-09T12:58:15.230Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 11,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore|TestMagazineVocabularyCanBeAddedToLearnerFlashcards)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestGetMagazineBySlugIncludesVocabularyAndQuiz handler_magazine_test.go:17: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestGetMagazineBySlugIncludesVocabularyAndQuiz (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestMarkMagazineReadPersistsQuizScore handler_magazine_test.go:106: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestMarkMagazineReadPersistsQuizScore (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ …(2) ] Received: 1st vi.fn() call: [ - \"/api/magazine/phrase%2Farticle/read\", - ObjectContaining { + \"http://localhost:4000/api/magazine/phrase/article/read\", + { \"body\": \"{\\\"quizScore\\\":1,\\\"quizTotal\\\":1}\", + \"credentials\": \"include\", + \"headers\": {…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestMagazineVocabularyCanBeAddedToLearnerFlashcards handler_magazine_test.go:70: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestMagazineVocabularyCanBeAddedToLearnerFlashcards (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+          "outcome": "FAIL",
+          "excerpt": "expected 'MagazineThứ Năm, 08/10/2026見出しTiêu đề' to contain '会議で使う表現を学びましょう。'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+          "outcome": "FAIL",
+          "excerpt": "expected last \"vi.fn()\" call to have been called with [ …(2) ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures",
+          "outcome": "FAIL",
+          "excerpt": "fetchArticle is not a function",
+          "valid": false,
+          "reason": "runtime crash or non-assertion exception is not a valid RED/sensitivity failure"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz": "detail omitted vocabulary contract",
+        "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore": "quiz result was not persisted",
+        "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save": "to be called with arguments",
+        "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards": "magazine_vocab source validation",
+        "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese": "to contain",
+        "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck": "to have been called with",
+        "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures": "rejects"
+      },
+      "fingerprint": "94db11d165558a302499e7cf0495cd7393cf3040acca4424030ebf13338b2621"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-09T12:58:54.348Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 11,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore|TestMagazineVocabularyCanBeAddedToLearnerFlashcards)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGetMagazineBySlugIncludesVocabularyAndQuiz handler_magazine_test.go:62: detail omitted vocabulary contract: [] body={\"id\":\"74b593f3-b8f8-4927-b46f-a890d7653cf3\",\"slug\":\"audit-magazine-74b593f3-b8f8-4927-b46f-a890d7653cf3\",\"widgetKind\":\"magazine_bjt_phrase\",\"titleJp\":\"記事の見出し\",\"titleVi\":\"T…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMarkMagazineReadPersistsQuizScore {\"time\":\"2026-10-09T21:58:49.693094+09:00\",\"level\":\"ERROR\",\"msg\":\"mark magazine read\",\"error\":\"ERROR: relation \\\"daily.magazine_read\\\" does not exist (SQLSTATE 42P01)\"} handler_magazine_test.go:116: quiz result was not persisted: no rows in result set --…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ …(2) ] Received: 1st vi.fn() call: [ - \"/api/magazine/phrase%2Farticle/read\", - ObjectContaining { + \"http://localhost:4000/api/magazine/phrase/article/read\", + { \"body\": \"{\\\"quizScore\\\":1,\\\"quizTotal\\\":1}\", + \"credentials\": \"include\", + \"headers\": {…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMagazineVocabularyCanBeAddedToLearnerFlashcards handler_magazine_test.go:88: add magazine vocabulary to learner deck: flashcarddeck: not found --- FAIL: TestMagazineVocabularyCanBeAddedToLearnerFlashcards (0.03s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"magazine_vocab source validation\""
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+          "outcome": "FAIL",
+          "excerpt": "expected 'MagazineThứ Năm, 08/10/2026見出しTiêu đề' to contain '会議で使う表現を学びましょう。'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+          "outcome": "FAIL",
+          "excerpt": "expected last \"vi.fn()\" call to have been called with [ …(2) ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures",
+          "outcome": "FAIL",
+          "excerpt": "expected [Function] to throw error including '503' but got 'NEXT_NOT_FOUND'",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"rejects\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz": "detail omitted vocabulary contract",
+        "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore": "quiz result was not persisted",
+        "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save": "to be called with arguments",
+        "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards": "magazine_vocab source validation",
+        "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese": "to contain",
+        "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck": "to have been called with",
+        "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures": "rejects"
+      },
+      "fingerprint": "e4fab59ec7c19b8df61ef12d3c13e11b6bcb26f12ee544987239995a87df5e7e"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-09T12:59:21.842Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 11,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore|TestMagazineVocabularyCanBeAddedToLearnerFlashcards)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGetMagazineBySlugIncludesVocabularyAndQuiz handler_magazine_test.go:62: detail omitted vocabulary contract: [] body={\"id\":\"3e6c3b29-3e7a-42de-92c9-72ee72e628b7\",\"slug\":\"audit-magazine-3e6c3b29-3e7a-42de-92c9-72ee72e628b7\",\"widgetKind\":\"magazine_bjt_phrase\",\"titleJp\":\"記事の見出し\",\"titleVi\":\"T…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMarkMagazineReadPersistsQuizScore {\"time\":\"2026-10-09T21:59:17.394887+09:00\",\"level\":\"ERROR\",\"msg\":\"mark magazine read\",\"error\":\"ERROR: relation \\\"daily.magazine_read\\\" does not exist (SQLSTATE 42P01)\"} handler_magazine_test.go:116: quiz result was not persisted: no rows in result set --…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ …(2) ] Received: 1st vi.fn() call: [ - \"/api/magazine/phrase%2Farticle/read\", - ObjectContaining { + \"http://localhost:4000/api/magazine/phrase/article/read\", + { \"body\": \"{\\\"quizScore\\\":1,\\\"quizTotal\\\":1}\", + \"credentials\": \"include\", + \"headers\": {…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMagazineVocabularyCanBeAddedToLearnerFlashcards handler_magazine_test.go:88: add magazine vocabulary to learner deck: flashcarddeck: not found --- FAIL: TestMagazineVocabularyCanBeAddedToLearnerFlashcards (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+          "outcome": "FAIL",
+          "excerpt": "expected 'MagazineThứ Năm, 08/10/2026見出しTiêu đề' to contain '会議で使う表現を学びましょう。'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+          "outcome": "FAIL",
+          "excerpt": "expected last \"vi.fn()\" call to have been called with [ …(2) ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures",
+          "outcome": "FAIL",
+          "excerpt": "expected [Function] to throw error including '503' but got 'NEXT_NOT_FOUND'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz": "detail omitted vocabulary contract",
+        "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore": "quiz result was not persisted",
+        "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save": "to be called with arguments",
+        "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards": "flashcarddeck: not found",
+        "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese": "to contain",
+        "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck": "to have been called with",
+        "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures": "NEXT_NOT_FOUND"
+      },
+      "fingerprint": "e4fab59ec7c19b8df61ef12d3c13e11b6bcb26f12ee544987239995a87df5e7e"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-09T12:59:41.000Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore|TestMagazineVocabularyCanBeAddedToLearnerFlashcards)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e4fab59ec7c19b8df61ef12d3c13e11b6bcb26f12ee544987239995a87df5e7e"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-09T13:10:08.745Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 11,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore|TestMagazineVocabularyCanBeAddedToLearnerFlashcards)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGetMagazineBySlugIncludesVocabularyAndQuiz handler_magazine_test.go:62: detail omitted vocabulary contract: [] body={\"id\":\"86e4ade2-a5d9-4e64-9ecd-bce12e934a6f\",\"slug\":\"audit-magazine-86e4ade2-a5d9-4e64-9ecd-bce12e934a6f\",\"widgetKind\":\"magazine_bjt_phrase\",\"titleJp\":\"記事の見出し\",\"titleVi\":\"T…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMarkMagazineReadPersistsQuizScore {\"time\":\"2026-10-09T22:10:04.0521+09:00\",\"level\":\"ERROR\",\"msg\":\"mark magazine read\",\"error\":\"ERROR: relation \\\"daily.magazine_read\\\" does not exist (SQLSTATE 42P01)\"} handler_magazine_test.go:116: quiz result was not persisted: no rows in result set --- …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ …(2) ] Received: 1st vi.fn() call: [ - \"/api/magazine/phrase%2Farticle/read\", - ObjectContaining { + \"http://localhost:4000/api/magazine/phrase/article/read\", + { \"body\": \"{\\\"quizScore\\\":1,\\\"quizTotal\\\":1}\", + \"credentials\": \"include\", + \"headers\": {…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMagazineVocabularyCanBeAddedToLearnerFlashcards handler_magazine_test.go:88: add magazine vocabulary to learner deck: flashcarddeck: not found --- FAIL: TestMagazineVocabularyCanBeAddedToLearnerFlashcards (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+          "outcome": "FAIL",
+          "excerpt": "expected 'MagazineThứ Năm, 08/10/2026見出しTiêu đề' to contain '会議で使う表現を学びましょう。'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+          "outcome": "FAIL",
+          "excerpt": "expected last \"vi.fn()\" call to have been called with [ …(2) ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures",
+          "outcome": "FAIL",
+          "excerpt": "expected [Function] to throw error including '503' but got 'NEXT_NOT_FOUND'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz": "detail omitted vocabulary contract",
+        "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore": "quiz result was not persisted",
+        "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save": "to be called with arguments",
+        "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards": "flashcarddeck: not found",
+        "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese": "to contain",
+        "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck": "to have been called with",
+        "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures": "NEXT_NOT_FOUND"
+      },
+      "fingerprint": "a0087f6dd894b518fc24aa127029d9ba04536364a4a9fa8288ac21718a470f92"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-09T13:10:24.834Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore|TestMagazineVocabularyCanBeAddedToLearnerFlashcards)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a0087f6dd894b518fc24aa127029d9ba04536364a4a9fa8288ac21718a470f92"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-09T13:12:36.724Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "a0087f6dd894b518fc24aa127029d9ba04536364a4a9fa8288ac21718a470f92"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-09T13:12:37.991Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "a0087f6dd894b518fc24aa127029d9ba04536364a4a9fa8288ac21718a470f92"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-09T13:15:54.839Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 392,
+        "executed": 392,
+        "passed": 392,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 768,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "a0087f6dd894b518fc24aa127029d9ba04536364a4a9fa8288ac21718a470f92"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-09T13:16:45.715Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 11,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore|TestMagazineVocabularyCanBeAddedToLearnerFlashcards)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGetMagazineBySlugIncludesVocabularyAndQuiz handler_magazine_test.go:62: detail omitted vocabulary contract: [] body={\"id\":\"32daeecc-8071-4855-af2f-d0ad7492287d\",\"slug\":\"audit-magazine-32daeecc-8071-4855-af2f-d0ad7492287d\",\"widgetKind\":\"magazine_bjt_phrase\",\"titleJp\":\"記事の見出し\",\"titleVi\":\"T…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMarkMagazineReadPersistsQuizScore {\"time\":\"2026-10-09T22:16:41.214989+09:00\",\"level\":\"ERROR\",\"msg\":\"mark magazine read\",\"error\":\"ERROR: relation \\\"daily.magazine_read\\\" does not exist (SQLSTATE 42P01)\"} handler_magazine_test.go:116: quiz result was not persisted: no rows in result set --…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ …(2) ] Received: 1st vi.fn() call: [ - \"/api/magazine/phrase%2Farticle/read\", - ObjectContaining { + \"http://localhost:4000/api/magazine/phrase/article/read\", + { \"body\": \"{\\\"quizScore\\\":1,\\\"quizTotal\\\":1}\", + \"credentials\": \"include\", + \"headers\": {…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMagazineVocabularyCanBeAddedToLearnerFlashcards handler_magazine_test.go:88: add magazine vocabulary to learner deck: flashcarddeck: not found --- FAIL: TestMagazineVocabularyCanBeAddedToLearnerFlashcards (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+          "outcome": "FAIL",
+          "excerpt": "expected 'MagazineThứ Năm, 08/10/2026見出しTiêu đề' to contain '会議で使う表現を学びましょう。'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+          "outcome": "FAIL",
+          "excerpt": "expected last \"vi.fn()\" call to have been called with [ …(2) ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures",
+          "outcome": "FAIL",
+          "excerpt": "expected [Function] to throw error including '503' but got 'NEXT_NOT_FOUND'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz": "detail omitted vocabulary contract",
+        "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore": "quiz result was not persisted",
+        "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save": "to be called with arguments",
+        "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards": "flashcarddeck: not found",
+        "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese": "to contain",
+        "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck": "to have been called with",
+        "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures": "NEXT_NOT_FOUND"
+      },
+      "fingerprint": "36486a170fad28865854590689fffddf931fa41b8161a272aae8584ac3d14e7f"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-09T13:17:10.715Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore|TestMagazineVocabularyCanBeAddedToLearnerFlashcards)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "36486a170fad28865854590689fffddf931fa41b8161a272aae8584ac3d14e7f"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-09T13:20:05.914Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 11,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore|TestMagazineVocabularyCanBeAddedToLearnerFlashcards)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGetMagazineBySlugIncludesVocabularyAndQuiz handler_magazine_test.go:62: detail omitted vocabulary contract: [] body={\"id\":\"04ddddda-ba79-4968-85b5-d459b52e3ec6\",\"slug\":\"audit-magazine-04ddddda-ba79-4968-85b5-d459b52e3ec6\",\"widgetKind\":\"magazine_bjt_phrase\",\"titleJp\":\"記事の見出し\",\"titleVi\":\"T…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMarkMagazineReadPersistsQuizScore {\"time\":\"2026-10-09T22:20:01.267492+09:00\",\"level\":\"ERROR\",\"msg\":\"mark magazine read\",\"error\":\"ERROR: relation \\\"daily.magazine_read\\\" does not exist (SQLSTATE 42P01)\"} handler_magazine_test.go:116: quiz result was not persisted: no rows in result set --…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ …(2) ] Received: 1st vi.fn() call: [ - \"/api/magazine/phrase%2Farticle/read\", - ObjectContaining { + \"http://localhost:4000/api/magazine/phrase/article/read\", + { \"body\": \"{\\\"quizScore\\\":1,\\\"quizTotal\\\":1}\", + \"credentials\": \"include\", + \"headers\": {…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMagazineVocabularyCanBeAddedToLearnerFlashcards handler_magazine_test.go:88: add magazine vocabulary to learner deck: flashcarddeck: not found --- FAIL: TestMagazineVocabularyCanBeAddedToLearnerFlashcards (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+          "outcome": "FAIL",
+          "excerpt": "expected 'MagazineThứ Năm, 08/10/2026見出しTiêu đề' to contain '会議で使う表現を学びましょう。'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+          "outcome": "FAIL",
+          "excerpt": "expected last \"vi.fn()\" call to have been called with [ …(2) ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures",
+          "outcome": "FAIL",
+          "excerpt": "expected [Function] to throw error including '503' but got 'NEXT_NOT_FOUND'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz": "detail omitted vocabulary contract",
+        "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore": "quiz result was not persisted",
+        "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save": "to be called with arguments",
+        "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards": "flashcarddeck: not found",
+        "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese": "to contain",
+        "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck": "to have been called with",
+        "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures": "NEXT_NOT_FOUND"
+      },
+      "fingerprint": "46c1013dcea96898b7d19293b5a951d1405ac1e8a3a0185ab92775373b3b3298"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-09T13:20:18.899Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore|TestMagazineVocabularyCanBeAddedToLearnerFlashcards)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "46c1013dcea96898b7d19293b5a951d1405ac1e8a3a0185ab92775373b3b3298"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-09T13:22:32.813Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "46c1013dcea96898b7d19293b5a951d1405ac1e8a3a0185ab92775373b3b3298"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-09T13:25:05.358Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 722,
+        "executed": 722,
+        "passed": 722,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "722 passed, 0 allowed skip(s)",
+      "fingerprint": "46c1013dcea96898b7d19293b5a951d1405ac1e8a3a0185ab92775373b3b3298"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-09T13:28:23.864Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 392,
+        "executed": 392,
+        "passed": 392,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 768,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "46c1013dcea96898b7d19293b5a951d1405ac1e8a3a0185ab92775373b3b3298"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-09T13:30:01.727Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 11,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore|TestMagazineVocabularyCanBeAddedToLearnerFlashcards)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGetMagazineBySlugIncludesVocabularyAndQuiz handler_magazine_test.go:63: detail omitted vocabulary contract: [] body={\"id\":\"29fb7002-f5a2-4a79-aab9-d11c3bd28369\",\"slug\":\"audit-magazine-29fb7002-f5a2-4a79-aab9-d11c3bd28369\",\"widgetKind\":\"magazine_bjt_phrase\",\"titleJp\":\"記事の見出し\",\"titleVi\":\"T…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMarkMagazineReadPersistsQuizScore {\"time\":\"2026-10-09T22:29:57.193457+09:00\",\"level\":\"ERROR\",\"msg\":\"mark magazine read\",\"error\":\"ERROR: relation \\\"daily.magazine_read\\\" does not exist (SQLSTATE 42P01)\"} handler_magazine_test.go:127: quiz result was not persisted: no rows in result set --…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ …(2) ] Received: 1st vi.fn() call: [ - \"/api/magazine/phrase%2Farticle/read\", - ObjectContaining { + \"http://localhost:4000/api/magazine/phrase/article/read\", + { \"body\": \"{\\\"quizScore\\\":1,\\\"quizTotal\\\":1}\", + \"credentials\": \"include\", + \"headers\": {…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMagazineVocabularyCanBeAddedToLearnerFlashcards handler_magazine_test.go:89: add magazine vocabulary to learner deck: flashcarddeck: not found --- FAIL: TestMagazineVocabularyCanBeAddedToLearnerFlashcards (0.03s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"unpublished vocabulary source must be rejected\""
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+          "outcome": "FAIL",
+          "excerpt": "expected 'MagazineThứ Năm, 08/10/2026見出しTiêu đề' to contain '会議で使う表現を学びましょう。'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+          "outcome": "FAIL",
+          "excerpt": "expected last \"vi.fn()\" call to have been called with [ …(2) ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures",
+          "outcome": "FAIL",
+          "excerpt": "expected [Function] to throw error including '503' but got 'NEXT_NOT_FOUND'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz": "detail omitted vocabulary contract",
+        "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore": "quiz result was not persisted",
+        "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save": "to be called with arguments",
+        "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards": "unpublished vocabulary source must be rejected",
+        "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese": "to contain",
+        "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck": "to have been called with",
+        "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures": "NEXT_NOT_FOUND"
+      },
+      "fingerprint": "c3d8958e7941c33d551ad8e54f5f7287ca6345f5308e0bd8aa0f54e9dec6fea4"
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-09T13:30:41.600Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 11,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore|TestMagazineVocabularyCanBeAddedToLearnerFlashcards)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGetMagazineBySlugIncludesVocabularyAndQuiz handler_magazine_test.go:63: detail omitted vocabulary contract: [] body={\"id\":\"498b8ff4-7f63-4f41-b0fc-ad125189e041\",\"slug\":\"audit-magazine-498b8ff4-7f63-4f41-b0fc-ad125189e041\",\"widgetKind\":\"magazine_bjt_phrase\",\"titleJp\":\"記事の見出し\",\"titleVi\":\"T…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMarkMagazineReadPersistsQuizScore {\"time\":\"2026-10-09T22:30:37.182439+09:00\",\"level\":\"ERROR\",\"msg\":\"mark magazine read\",\"error\":\"ERROR: relation \\\"daily.magazine_read\\\" does not exist (SQLSTATE 42P01)\"} handler_magazine_test.go:127: quiz result was not persisted: no rows in result set --…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ …(2) ] Received: 1st vi.fn() call: [ - \"/api/magazine/phrase%2Farticle/read\", - ObjectContaining { + \"http://localhost:4000/api/magazine/phrase/article/read\", + { \"body\": \"{\\\"quizScore\\\":1,\\\"quizTotal\\\":1}\", + \"credentials\": \"include\", + \"headers\": {…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMagazineVocabularyCanBeAddedToLearnerFlashcards handler_magazine_test.go:89: add magazine vocabulary to learner deck: flashcarddeck: not found --- FAIL: TestMagazineVocabularyCanBeAddedToLearnerFlashcards (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+          "outcome": "FAIL",
+          "excerpt": "expected 'MagazineThứ Năm, 08/10/2026見出しTiêu đề' to contain '会議で使う表現を学びましょう。'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+          "outcome": "FAIL",
+          "excerpt": "expected last \"vi.fn()\" call to have been called with [ …(2) ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures",
+          "outcome": "FAIL",
+          "excerpt": "expected [Function] to throw error including '503' but got 'NEXT_NOT_FOUND'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz": "detail omitted vocabulary contract",
+        "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore": "quiz result was not persisted",
+        "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save": "to be called with arguments",
+        "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards": "flashcarddeck: not found",
+        "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese": "to contain",
+        "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck": "to have been called with",
+        "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures": "NEXT_NOT_FOUND"
+      },
+      "fingerprint": "c3d8958e7941c33d551ad8e54f5f7287ca6345f5308e0bd8aa0f54e9dec6fea4"
+    },
+    {
+      "seq": 35,
+      "at": "2026-10-09T13:30:58.249Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore|TestMagazineVocabularyCanBeAddedToLearnerFlashcards)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c3d8958e7941c33d551ad8e54f5f7287ca6345f5308e0bd8aa0f54e9dec6fea4"
+    },
+    {
+      "seq": 36,
+      "at": "2026-10-09T13:31:47.982Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 11,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore|TestMagazineVocabularyCanBeAddedToLearnerFlashcards)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGetMagazineBySlugIncludesVocabularyAndQuiz handler_magazine_test.go:63: detail omitted vocabulary contract: [] body={\"id\":\"945d7e74-06eb-477a-b31c-1cae44441a10\",\"slug\":\"audit-magazine-945d7e74-06eb-477a-b31c-1cae44441a10\",\"widgetKind\":\"magazine_bjt_phrase\",\"titleJp\":\"記事の見出し\",\"titleVi\":\"T…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMarkMagazineReadPersistsQuizScore {\"time\":\"2026-10-09T22:31:43.583234+09:00\",\"level\":\"ERROR\",\"msg\":\"mark magazine read\",\"error\":\"ERROR: relation \\\"daily.magazine_read\\\" does not exist (SQLSTATE 42P01)\"} handler_magazine_test.go:127: quiz result was not persisted: no rows in result set --…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ …(2) ] Received: 1st vi.fn() call: [ - \"/api/magazine/phrase%2Farticle/read\", - ObjectContaining { + \"http://localhost:4000/api/magazine/phrase/article/read\", + { \"body\": \"{\\\"quizScore\\\":1,\\\"quizTotal\\\":1}\", + \"credentials\": \"include\", + \"headers\": {…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMagazineVocabularyCanBeAddedToLearnerFlashcards handler_magazine_test.go:89: add magazine vocabulary to learner deck: flashcarddeck: not found --- FAIL: TestMagazineVocabularyCanBeAddedToLearnerFlashcards (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+          "outcome": "FAIL",
+          "excerpt": "expected 'MagazineThứ Năm, 08/10/2026見出しTiêu đề' to contain '会議で使う表現を学びましょう。'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+          "outcome": "FAIL",
+          "excerpt": "expected last \"vi.fn()\" call to have been called with [ …(2) ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures",
+          "outcome": "FAIL",
+          "excerpt": "expected [Function] to throw error including '503' but got 'NEXT_NOT_FOUND'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz": "detail omitted vocabulary contract",
+        "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore": "quiz result was not persisted",
+        "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save": "to be called with arguments",
+        "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards": "flashcarddeck: not found",
+        "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese": "to contain",
+        "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck": "to have been called with",
+        "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures": "NEXT_NOT_FOUND"
+      },
+      "fingerprint": "c0dc842bc61061b8991eba1c78305093a86c0fd2eef4784ffca56ec915e0d994"
+    },
+    {
+      "seq": 37,
+      "at": "2026-10-09T13:32:04.308Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore|TestMagazineVocabularyCanBeAddedToLearnerFlashcards)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c0dc842bc61061b8991eba1c78305093a86c0fd2eef4784ffca56ec915e0d994"
+    },
+    {
+      "seq": 38,
+      "at": "2026-10-09T13:35:43.562Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "c0dc842bc61061b8991eba1c78305093a86c0fd2eef4784ffca56ec915e0d994"
+    },
+    {
+      "seq": 39,
+      "at": "2026-10-09T13:38:16.327Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 722,
+        "executed": 722,
+        "passed": 722,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "722 passed, 0 allowed skip(s)",
+      "fingerprint": "c0dc842bc61061b8991eba1c78305093a86c0fd2eef4784ffca56ec915e0d994"
+    },
+    {
+      "seq": 40,
+      "at": "2026-10-09T13:41:20.909Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 392,
+        "executed": 392,
+        "passed": 392,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 768,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "c0dc842bc61061b8991eba1c78305093a86c0fd2eef4784ffca56ec915e0d994"
+    },
+    {
+      "seq": 41,
+      "at": "2026-10-09T13:52:32.722Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 11,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore|TestMagazineVocabularyCanBeAddedToLearnerFlashcards)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestGetMagazineBySlugIncludesVocabularyAndQuiz handler_magazine_test.go:20: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestGetMagazineBySlugIncludesVocabularyAndQuiz (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestMarkMagazineReadPersistsQuizScore handler_magazine_test.go:119: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestMarkMagazineReadPersistsQuizScore (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ …(2) ] Received: 1st vi.fn() call: [ - \"/api/magazine/phrase%2Farticle/read\", - ObjectContaining { + \"http://localhost:4000/api/magazine/phrase/article/read\", + { \"body\": \"{\\\"quizScore\\\":1,\\\"quizTotal\\\":1}\", + \"credentials\": \"include\", + \"headers\": {…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestMagazineVocabularyCanBeAddedToLearnerFlashcards handler_magazine_test.go:73: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestMagazineVocabularyCanBeAddedToLearnerFlashcards (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+          "outcome": "FAIL",
+          "excerpt": "expected 'MagazineThứ Năm, 08/10/2026見出しTiêu đề' to contain '会議で使う表現を学びましょう。'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+          "outcome": "FAIL",
+          "excerpt": "expected last \"vi.fn()\" call to have been called with [ …(2) ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures",
+          "outcome": "FAIL",
+          "excerpt": "expected [Function] to throw error including '503' but got 'NEXT_NOT_FOUND'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz": "detail omitted vocabulary contract",
+        "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore": "save quiz result status",
+        "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save": "to be called with arguments",
+        "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards": "flashcarddeck: not found",
+        "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese": "to contain",
+        "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck": "to have been called with",
+        "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures": "NEXT_NOT_FOUND"
+      },
+      "fingerprint": "3c3b0e5455c99fda0169e56008115afbae03e4563856cd24aaec520cc44a87ca"
+    },
+    {
+      "seq": 42,
+      "at": "2026-10-09T13:52:59.007Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 11,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore|TestMagazineVocabularyCanBeAddedToLearnerFlashcards)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGetMagazineBySlugIncludesVocabularyAndQuiz handler_magazine_test.go:65: detail omitted vocabulary contract: [] body={\"id\":\"872e38af-8a9e-4c97-bad1-20cac18cea6a\",\"slug\":\"audit-magazine-872e38af-8a9e-4c97-bad1-20cac18cea6a\",\"widgetKind\":\"magazine_bjt_phrase\",\"titleJp\":\"記事の見出し\",\"titleVi\":\"T…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMarkMagazineReadPersistsQuizScore {\"time\":\"2026-10-09T22:52:54.288022+09:00\",\"level\":\"ERROR\",\"msg\":\"mark magazine read\",\"error\":\"ERROR: relation \\\"daily.magazine_read\\\" does not exist (SQLSTATE 42P01)\"} handler_magazine_test.go:155: quiz result was not persisted: no rows in result set --…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"save quiz result status\""
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ …(2) ] Received: 1st vi.fn() call: [ - \"/api/magazine/phrase%2Farticle/read\", - ObjectContaining { + \"http://localhost:4000/api/magazine/phrase/article/read\", + { \"body\": \"{\\\"quizScore\\\":1,\\\"quizTotal\\\":1}\", + \"credentials\": \"include\", + \"headers\": {…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMagazineVocabularyCanBeAddedToLearnerFlashcards handler_magazine_test.go:91: add magazine vocabulary to learner deck: flashcarddeck: not found --- FAIL: TestMagazineVocabularyCanBeAddedToLearnerFlashcards (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+          "outcome": "FAIL",
+          "excerpt": "expected 'MagazineThứ Năm, 08/10/2026見出しTiêu đề' to contain '会議で使う表現を学びましょう。'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+          "outcome": "FAIL",
+          "excerpt": "expected last \"vi.fn()\" call to have been called with [ …(2) ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures",
+          "outcome": "FAIL",
+          "excerpt": "expected [Function] to throw error including '503' but got 'NEXT_NOT_FOUND'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz": "detail omitted vocabulary contract",
+        "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore": "save quiz result status",
+        "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save": "to be called with arguments",
+        "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards": "flashcarddeck: not found",
+        "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese": "to contain",
+        "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck": "to have been called with",
+        "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures": "NEXT_NOT_FOUND"
+      },
+      "fingerprint": "3c3b0e5455c99fda0169e56008115afbae03e4563856cd24aaec520cc44a87ca"
+    },
+    {
+      "seq": 43,
+      "at": "2026-10-09T13:53:28.581Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 11,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore|TestMagazineVocabularyCanBeAddedToLearnerFlashcards)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGetMagazineBySlugIncludesVocabularyAndQuiz handler_magazine_test.go:65: detail omitted vocabulary contract: [] body={\"id\":\"8b53ab2f-58fc-432f-bf83-7ad10fc95ea7\",\"slug\":\"audit-magazine-8b53ab2f-58fc-432f-bf83-7ad10fc95ea7\",\"widgetKind\":\"magazine_bjt_phrase\",\"titleJp\":\"記事の見出し\",\"titleVi\":\"T…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMarkMagazineReadPersistsQuizScore {\"time\":\"2026-10-09T22:53:23.769243+09:00\",\"level\":\"ERROR\",\"msg\":\"mark magazine read\",\"error\":\"ERROR: relation \\\"daily.magazine_read\\\" does not exist (SQLSTATE 42P01)\"} handler_magazine_test.go:155: quiz result was not persisted: no rows in result set --…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ …(2) ] Received: 1st vi.fn() call: [ - \"/api/magazine/phrase%2Farticle/read\", - ObjectContaining { + \"http://localhost:4000/api/magazine/phrase/article/read\", + { \"body\": \"{\\\"quizScore\\\":1,\\\"quizTotal\\\":1}\", + \"credentials\": \"include\", + \"headers\": {…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestMagazineVocabularyCanBeAddedToLearnerFlashcards handler_magazine_test.go:91: add magazine vocabulary to learner deck: flashcarddeck: not found --- FAIL: TestMagazineVocabularyCanBeAddedToLearnerFlashcards (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+          "outcome": "FAIL",
+          "excerpt": "expected 'MagazineThứ Năm, 08/10/2026見出しTiêu đề' to contain '会議で使う表現を学びましょう。'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+          "outcome": "FAIL",
+          "excerpt": "expected last \"vi.fn()\" call to have been called with [ …(2) ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures",
+          "outcome": "FAIL",
+          "excerpt": "expected [Function] to throw error including '503' but got 'NEXT_NOT_FOUND'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz": "detail omitted vocabulary contract",
+        "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore": "quiz result was not persisted",
+        "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save": "to be called with arguments",
+        "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards": "flashcarddeck: not found",
+        "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese": "to contain",
+        "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck": "to have been called with",
+        "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures": "NEXT_NOT_FOUND"
+      },
+      "fingerprint": "3c3b0e5455c99fda0169e56008115afbae03e4563856cd24aaec520cc44a87ca"
+    },
+    {
+      "seq": 44,
+      "at": "2026-10-09T13:53:44.325Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetMagazineBySlugIncludesVocabularyAndQuiz|TestMarkMagazineReadPersistsQuizScore|TestMagazineVocabularyCanBeAddedToLearnerFlashcards)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestMarkMagazineReadPersistsQuizScore",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx::magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestMagazineVocabularyCanBeAddedToLearnerFlashcards",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx::magazine article body > renders the seeded vocabulary introduction in Japanese and Vietnamese",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > persists the selected magazine vocabulary to the learner's deck",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::magazine article loading > surfaces upstream and network failures",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3c3b0e5455c99fda0169e56008115afbae03e4563856cd24aaec520cc44a87ca"
+    },
+    {
+      "seq": 45,
+      "at": "2026-10-09T13:56:44.342Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "3c3b0e5455c99fda0169e56008115afbae03e4563856cd24aaec520cc44a87ca"
+    },
+    {
+      "seq": 46,
+      "at": "2026-10-09T13:59:15.131Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 722,
+        "executed": 722,
+        "passed": 722,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "722 passed, 0 allowed skip(s)",
+      "fingerprint": "3c3b0e5455c99fda0169e56008115afbae03e4563856cd24aaec520cc44a87ca"
+    },
+    {
+      "seq": 47,
+      "at": "2026-10-09T14:02:26.396Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 392,
+        "executed": 392,
+        "passed": 392,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 768,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "3c3b0e5455c99fda0169e56008115afbae03e4563856cd24aaec520cc44a87ca"
+    },
+    {
+      "seq": 48,
+      "at": "2026-10-09T14:03:15.386Z",
+      "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "agent 01a120f1-295f-7f93-8fde-adb1297a07b1",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "3c3b0e5455c99fda0169e56008115afbae03e4563856cd24aaec520cc44a87ca"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-09T14:03:23.416Z",
+    "head": "042b0fd04ca747e1ada57c756b51893c3088f5d5",
+    "fingerprint": "3c3b0e5455c99fda0169e56008115afbae03e4563856cd24aaec520cc44a87ca",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/flashcarddeck/store.go": "420c3154571ed26040f16b10a354401b93cae206",
+      "apps/api-go/internal/httpserver/handler_career_content_gamification_misc.go": "7a1fe21d7c8d02b85e6c96caed22ece1cd7e3713",
+      "apps/api-go/internal/httpserver/handler_magazine_test.go": "fe546b4b41e41810245bffb36fb7afbb117c0307",
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "a9393e43f2ba52ae7ff2a08433b7d2c2e71e83e5",
+      "apps/web/app/[locale]/_components/content-actions.tsx": "89653510bc9d0a99e6c3c28e455a60085d9f159e",
+      "apps/web/app/[locale]/_components/vocab-expression-list.tsx": "6b239ed97e12b3a0f81d6093552856b22371cb18",
+      "apps/web/app/[locale]/magazine/[slug]/page.test.ts": "bf6a6cf4f45bc16fe124c420b3d9c934432ac495",
+      "apps/web/app/[locale]/magazine/[slug]/page.tsx": "034e80d757a6d49248b6ff00f7974b3c06cd9c09",
+      "apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx": "b477e70a2fe06480ca175c239db6d38954812cae",
+      "apps/web/app/[locale]/magazine/_components/magazine-article-view.tsx": "2a3cb090b55671f4ebfaa8791ba4c099af5ef2be",
+      "apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx": "d2fd3632ccda22f9a63d3139d3f1622317dd6c8b",
+      "apps/web/app/[locale]/magazine/_components/mini-quiz.tsx": "1b36c20a5e50bf8cd5859e1e7eef3016f3d3c188",
+      "apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx": "5259f9dcea81833e70673a860612b496f9b3f330",
+      "apps/web/messages/en.json": "dd39401bfa735a159af71e40e76271f93fb6a9e5",
+      "apps/web/messages/ja.json": "dcad035fe36913c446ce829e73bd94c7b46bfd37",
+      "apps/web/messages/vi.json": "33b383c5dd12627b15809647852e23f5f5805ad7",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "27b4bf5dad9ed48ccd23b4fb680a5d9d6e93dd04",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "e5450141d5966474e68ea85b40a9d04c7afc3950",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "b0f93559e3eada9e3540dd6828b558aa9e5ff738",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "764f94d51349d20fd27a64087d39896961fa4ad8",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "af1f93f21f022a354366e7cefac68c12c9ecd495",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "984cffc3e15b3338dd10ab2d5e9c82fd77145499",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "3817684a42a6d746445f685cf4ddab2bd019a8bf"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "green_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestGetMagazineBySlugIncludesVocabularyAndQuiz",
+      "expect": "detail omitted vocabulary contract"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestMarkMagazineReadPersistsQuizScore",
+      "expect": "quiz result was not persisted"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/magazine/_components/mini-quiz.test.tsx",
+      "test": "magazine mini quiz > saves the result through the same-origin API and reports a failed save",
+      "expect": "to be called with arguments"
+    }
+  ]
+}

@@ -1,0 +1,175 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-101",
+  "title": "Audit learner search history screen",
+  "start_head": "c52c547264905839e8cd063f1ba19efd8ad7f7ba",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Verify current learner Search History route and its visible history/clear interactions at desktop/mobile with the authenticated browser session.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Open /vi/search/history in the visible browser and verify authenticated rendering, history items, navigation back to Search, individual removal and clear-all behavior without changing non-test learner data."
+      },
+      {
+        "id": "AC2",
+        "text": "Verify anonymous access behavior and mobile 390x844 layout without horizontal overflow."
+      },
+      {
+        "id": "AC3",
+        "text": "At 390x844 every history row's remove button is visible and has a usable touch target; clicking removes only that item and persists across route change/refresh."
+      }
+    ],
+    "expected_behavior": "Each history row exposes a clearly visible, touch-sized remove button on mobile while desktop can retain hover refinement; individual deletion and clear-all still work.",
+    "observed_behavior": "At the visible 390x844 viewport the Search History screen lists history items but each individual remove button uses opacity-0 and is effectively invisible until hover; no hover exists on touch.",
+    "rollback_plan": "Revert the Search History row remove-button visibility and touch-target changes plus its test."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Visible mobile audit found that individual history deletion is inaccessible on touch because the button is opacity-0 by default."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/search/history/_components/search-history-client.test.tsx",
+      "test": "SearchHistoryClient > keeps each individual remove control visible and touch-sized on mobile",
+      "expect": "opacity-100"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "VERIFYING",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-11T07:16:22.372Z",
+      "head": "c52c547264905839e8cd063f1ba19efd8ad7f7ba"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-11T07:16:22.713Z",
+      "head": "c52c547264905839e8cd063f1ba19efd8ad7f7ba"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-11T07:16:23.086Z",
+      "head": "c52c547264905839e8cd063f1ba19efd8ad7f7ba"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T07:19:34.986Z",
+      "head": "c52c547264905839e8cd063f1ba19efd8ad7f7ba"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T07:20:06.172Z",
+      "head": "c52c547264905839e8cd063f1ba19efd8ad7f7ba"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T07:20:40.498Z",
+      "head": "c52c547264905839e8cd063f1ba19efd8ad7f7ba"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-11T07:19:56.821Z",
+      "head": "c52c547264905839e8cd063f1ba19efd8ad7f7ba",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/history/_components/search-history-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/history/_components/search-history-client.test.tsx::SearchHistoryClient > keeps each individual remove control visible and touch-sized on mobile",
+          "outcome": "FAIL",
+          "excerpt": "expected [ 'opacity-0', …(5) ] to include 'opacity-100'",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"h-11\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/search/history/_components/search-history-client.test.tsx::SearchHistoryClient > keeps each individual remove control visible and touch-sized on mobile": "h-11"
+      },
+      "fingerprint": "0a2a7b13b399286a97c6d978c34f7ad6b4f4c6089412bc7f3446ca6ca0bd01c3"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-11T07:20:05.994Z",
+      "head": "c52c547264905839e8cd063f1ba19efd8ad7f7ba",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/history/_components/search-history-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/history/_components/search-history-client.test.tsx::SearchHistoryClient > keeps each individual remove control visible and touch-sized on mobile",
+          "outcome": "FAIL",
+          "excerpt": "expected [ 'opacity-0', …(5) ] to include 'opacity-100'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/search/history/_components/search-history-client.test.tsx::SearchHistoryClient > keeps each individual remove control visible and touch-sized on mobile": "opacity-100"
+      },
+      "fingerprint": "0a2a7b13b399286a97c6d978c34f7ad6b4f4c6089412bc7f3446ca6ca0bd01c3"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-11T07:20:25.609Z",
+      "head": "c52c547264905839e8cd063f1ba19efd8ad7f7ba",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/history/_components/search-history-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/history/_components/search-history-client.test.tsx::SearchHistoryClient > keeps each individual remove control visible and touch-sized on mobile",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "expected [ 'flex', 'h-11', 'w-11', …(11) ] to include 'opacity-100'"
+        }
+      ],
+      "fingerprint": "f4e53960d1f87573e2a525e64b00670652eb5236a2286d978628a9524b38e936"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-11T07:20:40.282Z",
+      "head": "c52c547264905839e8cd063f1ba19efd8ad7f7ba",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/history/_components/search-history-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/history/_components/search-history-client.test.tsx::SearchHistoryClient > keeps each individual remove control visible and touch-sized on mobile",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "cf35fe6c4441cf1e65d47bfae7ad5e0f642c78baa7430f9f4a24f184b2cb05c0"
+    }
+  ],
+  "closed": null,
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

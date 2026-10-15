@@ -65,8 +65,8 @@ func seedCode(t *testing.T, db *pgxpool.Pool, userID string, expiresIn time.Dura
 	raw := "code-" + newUUID(t)
 	sum := sha256.Sum256([]byte(raw))
 	if _, err := db.Exec(context.Background(),
-		`INSERT INTO auth.auth_link_code (code_hash, user_id, expires_at) VALUES ($1, $2, $3)`,
-		hex.EncodeToString(sum[:]), userID, time.Now().Add(expiresIn)); err != nil {
+		`INSERT INTO auth.auth_link_code (code_hash, user_id, expires_at) VALUES ($1, $2, NOW() + $3::interval)`,
+		hex.EncodeToString(sum[:]), userID, fmt.Sprintf("%f seconds", expiresIn.Seconds())); err != nil {
 		t.Fatalf("seed link code: %v", err)
 	}
 	return raw

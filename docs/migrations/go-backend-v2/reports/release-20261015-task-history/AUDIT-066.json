@@ -1,0 +1,1183 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-066",
+  "title": "Repair learner Career screen API contract and remove demo fallback",
+  "start_head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The active Career screen renders prototype state anonymously and crashes for authenticated users because the UI expects a nested response while Go returns a flat CareerMe record. The view also resolves rank labels from mock data.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Career page consumes Go CareerMe JSON and renders persisted learner fields without fabricated NPC, skill, or rank values."
+      },
+      {
+        "id": "AC2",
+        "text": "Anonymous/API failure state shows localized retry/login-safe UI and never falls back to prototype career data."
+      },
+      {
+        "id": "AC3",
+        "text": "Career ranks and skills render only when supplied by backend endpoints; empty datasets have explicit empty states."
+      },
+      {
+        "id": "AC4",
+        "text": "At 390x844 the page has no horizontal overflow; screen state and Career API methods/paths are checkpointed."
+      },
+      {
+        "id": "AC5",
+        "text": "Partial skill datasets display only measured values; missing axes remain unavailable and incomplete data is not plotted as zero. A real-browser UI regression exercises the 390x844 layout and asserts both Career GET method/path pairs, including empty-rank messaging."
+      },
+      {
+        "id": "AC6",
+        "text": "A newly created Career profile with an empty work name is eligible for the existing localized name-onboarding UI; every saved non-empty name is accepted and does not prompt again."
+      },
+      {
+        "id": "AC7",
+        "text": "Saving a Career work name through the existing UI normalizes the Go flat PATCH response, updates the parent learner state, and keeps the saved name visible."
+      }
+    ],
+    "expected_behavior": "Authenticated learners see persisted career profile data only; absent fields show honest empty states. Anonymous or failed requests never show demo identity or progress.",
+    "observed_behavior": "Anonymous /vi/career displays mock rank, skill, and NPC values while /api/career/me and /api/career/ranks return 401. After visible registration, both API reads return 200 but CareerPageClient dereferences response.state although Go returns flat CareerMe, triggering the Next error boundary.",
+    "rollback_plan": "Revert the Career page/API adapter and tests as one commit; retain protected Go API routes and existing PostgreSQL rows."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DOMAIN_LOGIC",
+      "UI_ONLY",
+      "DATABASE",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/src/features/career-rpg/api.contract.test.ts",
+      "test": "careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model",
+      "expect": "to match object { state:"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestCareerGetMeDoesNotInventJapaneseWorkName",
+      "expect": "invented jpWorkName"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/src/features/career-rpg/components/career-name-onboarding.test.ts",
+      "test": "needsNameOnboarding > prompts learners whose work name has not been set",
+      "expect": "expected false to be true"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/src/features/career-rpg/api.contract.test.ts",
+      "test": "careerMe API adapter > normalizes the flat PATCH response so name onboarding can update parent state",
+      "expect": "expected undefined to match object"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-08T02:06:13.750Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-08T02:06:23.914Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T02:06:37.524Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T02:11:32.457Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T02:15:06.849Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T02:15:43.265Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-08T02:17:47.633Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T02:18:06.014Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T02:24:52.636Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T02:25:10.204Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T02:33:56.760Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T02:40:38.887Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T02:40:47.819Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T02:47:33.800Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T02:54:37.592Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T02:54:43.124Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T03:01:24.027Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T03:07:30.860Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T03:07:36.225Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T03:13:59.221Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-08T03:17:29.065Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-08T03:17:36.973Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-08T02:08:13.589Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/career/_components/career-page-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/career/_components/career-page-client.contract.test.tsx::CareerPageClient API contract > renders the persisted CareerMe response without prototype NPC or rank data",
+          "outcome": "FAIL",
+          "excerpt": "useCareerRpg must be used inside <CareerRpgProvider>.",
+          "valid": false,
+          "reason": "runtime crash or non-assertion exception is not a valid RED/sensitivity failure"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/career/_components/career-page-client.contract.test.tsx::CareerPageClient API contract > renders the persisted CareerMe response without prototype NPC or rank data": "CareerPageClient contract test fails on the existing prototype-store dependency before API response handling"
+      },
+      "fingerprint": "5f8250dd3036194e0ce7a2ac4d29cd4791f630f7eaaf1bc586c300616e099254"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-08T02:08:58.113Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "red",
+      "outcome": "TOOL_FAILURE",
+      "mode": "in_place",
+      "production_at_base": true,
+      "message": "vitest reported unhandled error(s): [vitest-worker]: Closing rpc while \"onUserConsoleLog\" was pending",
+      "expects": {
+        "vitest:apps/web/app/[locale]/career/_components/career-page-client.contract.test.tsx::CareerPageClient API contract > renders the persisted CareerMe response without prototype NPC or rank data": "Expected Career Audit but existing CareerPageClient receives the backend flat response as a nested state and renders no persisted name"
+      },
+      "fingerprint": "13d2e5c608284db673f5b96f87fa66da2b2505c222d0b7ad59bf42c5fcf24d72"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-08T02:09:22.131Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "red",
+      "outcome": "TOOL_FAILURE",
+      "mode": "in_place",
+      "production_at_base": true,
+      "message": "vitest reported unhandled error(s): [vitest-worker]: Closing rpc while \"onUserConsoleLog\" was pending",
+      "expects": {
+        "vitest:apps/web/app/[locale]/career/_components/career-page-client.contract.test.tsx::CareerPageClient API contract > renders the persisted CareerMe response without prototype NPC or rank data": "Expected Career Audit but existing CareerPageClient receives the backend flat response as a nested state and renders no persisted name"
+      },
+      "fingerprint": "1d5bbcc1b9af64e0c0c5339754552bfc8e6e8da68e72120a743b0c7b91bb34b0"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-08T02:10:21.579Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "red",
+      "outcome": "TOOL_FAILURE",
+      "mode": "in_place",
+      "production_at_base": true,
+      "message": "vitest reported unhandled error(s): [vitest-worker]: Closing rpc while \"onUserConsoleLog\" was pending",
+      "expects": {
+        "vitest:apps/web/app/[locale]/career/_components/career-page-client.contract.test.tsx::CareerPageClient API contract > renders the persisted CareerMe response without prototype NPC or rank data": "Expected Career Audit but existing CareerPageClient receives the backend flat response as a nested state and renders no persisted name",
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model": "Go CareerMe response lacks dashboard wrapper required by CareerPageClient; careerMe returns flat response"
+      },
+      "fingerprint": "f7aac53812ae46a5d7bf49b11ec48ea047c3446307c26662cb964231fb33aa51"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-08T02:11:12.120Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "red",
+      "outcome": "TOOL_FAILURE",
+      "mode": "in_place",
+      "production_at_base": true,
+      "message": "vitest reported unhandled error(s): [vitest-worker]: Closing rpc while \"onUserConsoleLog\" was pending",
+      "expects": {
+        "vitest:apps/web/app/[locale]/career/_components/career-page-client.contract.test.tsx::CareerPageClient API contract > renders the persisted CareerMe response without prototype NPC or rank data": "Expected Career Audit but existing CareerPageClient receives the backend flat response as a nested state and renders no persisted name",
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model": "Go CareerMe response lacks dashboard wrapper required by CareerPageClient; careerMe returns flat response"
+      },
+      "fingerprint": "f7aac53812ae46a5d7bf49b11ec48ea047c3446307c26662cb964231fb33aa51"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-08T02:11:21.773Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model",
+          "outcome": "FAIL",
+          "excerpt": "expected { userId: 'learner-1', …(7) } to match object { state: { …(5) }, …(2) } (8 matching properties omitted from actual)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"Go CareerMe response lacks dashboard wrapper required by CareerPageClient; careerMe returns flat response\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model": "Go CareerMe response lacks dashboard wrapper required by CareerPageClient; careerMe returns flat response"
+      },
+      "fingerprint": "f7aac53812ae46a5d7bf49b11ec48ea047c3446307c26662cb964231fb33aa51"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-08T02:11:32.090Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model",
+          "outcome": "FAIL",
+          "excerpt": "expected { userId: 'learner-1', …(7) } to match object { state: { …(5) }, …(2) } (8 matching properties omitted from actual)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model": "to match object { state:"
+      },
+      "fingerprint": "f7aac53812ae46a5d7bf49b11ec48ea047c3446307c26662cb964231fb33aa51"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-08T02:15:06.017Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 9,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCareerGetMeDoesNotInventJapaneseWorkName)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model",
+          "outcome": "FAIL",
+          "excerpt": "expected { userId: 'learner-1', …(7) } to match object { state: { …(5) }, …(2) } (8 matching properties omitted from actual)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestCareerGetMeDoesNotInventJapaneseWorkName",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestCareerGetMeDoesNotInventJapaneseWorkName handler_career_test.go:12: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestCareerGetMeDoesNotInventJapaneseWorkName (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model": "to match object { state:",
+        "go:./internal/httpserver:TestCareerGetMeDoesNotInventJapaneseWorkName": "invented jpWorkName"
+      },
+      "fingerprint": "b875cf4f71a639a861102a4a99c906f27fa9bc4be60802c8a40c8d674c1a9e40"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-08T02:15:42.452Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 9,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCareerGetMeDoesNotInventJapaneseWorkName)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model",
+          "outcome": "FAIL",
+          "excerpt": "expected { userId: 'learner-1', …(7) } to match object { state: { …(5) }, …(2) } (8 matching properties omitted from actual)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestCareerGetMeDoesNotInventJapaneseWorkName",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestCareerGetMeDoesNotInventJapaneseWorkName handler_career_test.go:24: new learner career profile has invented jpWorkName \"田中 太郎\" --- FAIL: TestCareerGetMeDoesNotInventJapaneseWorkName (0.06s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model": "to match object { state:",
+        "go:./internal/httpserver:TestCareerGetMeDoesNotInventJapaneseWorkName": "invented jpWorkName"
+      },
+      "fingerprint": "b875cf4f71a639a861102a4a99c906f27fa9bc4be60802c8a40c8d674c1a9e40"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-08T02:17:46.734Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCareerGetMeDoesNotInventJapaneseWorkName)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestCareerGetMeDoesNotInventJapaneseWorkName",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d1ffc36203855b8b3a0580eb959fc82e8ac1b502eebb4a76d9221cc248da1ad1"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-08T02:22:39.162Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 344,
+        "executed": 344,
+        "passed": 344,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 743,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "d1ffc36203855b8b3a0580eb959fc82e8ac1b502eebb4a76d9221cc248da1ad1"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-08T02:24:02.268Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 658,
+        "executed": 658,
+        "passed": 657,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "d1ffc36203855b8b3a0580eb959fc82e8ac1b502eebb4a76d9221cc248da1ad1"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-08T02:25:01.399Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCareerGetMeDoesNotInventJapaneseWorkName)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestCareerGetMeDoesNotInventJapaneseWorkName",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestCareerGetMeDoesNotInventJapaneseWorkName handler_career_test.go:12: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestCareerGetMeDoesNotInventJapaneseWorkName (0.00s)"
+        }
+      ],
+      "fingerprint": "e41a0b9506402e495dd6b8346ec61822270fa568ff220e59b6a89b0375f936b6"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-08T02:25:09.258Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCareerGetMeDoesNotInventJapaneseWorkName)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestCareerGetMeDoesNotInventJapaneseWorkName",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e41a0b9506402e495dd6b8346ec61822270fa568ff220e59b6a89b0375f936b6"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-08T02:27:36.858Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 658,
+        "executed": 658,
+        "passed": 658,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "658 passed, 0 allowed skip(s)",
+      "fingerprint": "e41a0b9506402e495dd6b8346ec61822270fa568ff220e59b6a89b0375f936b6"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-08T02:29:53.301Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "e41a0b9506402e495dd6b8346ec61822270fa568ff220e59b6a89b0375f936b6"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-08T02:32:00.207Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 658,
+        "executed": 658,
+        "passed": 658,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "658 passed, 0 allowed skip(s)",
+      "fingerprint": "e41a0b9506402e495dd6b8346ec61822270fa568ff220e59b6a89b0375f936b6"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-08T02:33:55.805Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 344,
+        "executed": 344,
+        "passed": 344,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 743,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "e41a0b9506402e495dd6b8346ec61822270fa568ff220e59b6a89b0375f936b6"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-08T02:37:45.608Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec --ephemeral --sandbox read-only -",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 2,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/web/app/[locale]/career/_components/career-page-client.tsx:102",
+          "summary": "A partial backend response such as skills:[{axisCode:'keigo',value:73}] renders five additional zero scores through CareerSkillRadar's defaults. Reproduced in memory. This violates AC1/AC3 by presenti…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/app/[locale]/career/_components/career-page-client.tsx:131",
+          "summary": "When /api/career/ranks returns [], the rank list disappears without an explicit localized empty state, contrary to AC3. Add an empty-state message and assertion."
+        },
+        {
+          "severity": "major",
+          "file": "apps/web/app/[locale]/career/_components/career-page-client.contract.test.tsx",
+          "summary": "AC4 lacks verification: jsdom cannot measure horizontal overflow, the page tests mock both display components, and the API test never asserts request methods or paths or exercises careerRanks. These t…"
+        }
+      ],
+      "package_sha256": "44a062841b84154a1b0cc65ff0081cb5e731c4f0622ab631c5b70a8bf0d80e53",
+      "fingerprint": "e41a0b9506402e495dd6b8346ec61822270fa568ff220e59b6a89b0375f936b6"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-08T02:40:37.772Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 12,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCareerGetMeDoesNotInventJapaneseWorkName)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model",
+          "outcome": "FAIL",
+          "excerpt": "expected { userId: 'learner-1', …(7) } to match object { state: { …(5) }, …(2) } (8 matching properties omitted from actual)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestCareerGetMeDoesNotInventJapaneseWorkName",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestCareerGetMeDoesNotInventJapaneseWorkName handler_career_test.go:24: new learner career profile has invented jpWorkName/companyTheme: jpWorkName=\"田中 太郎\" companyTheme=\"mirai-shoji\" --- FAIL: TestCareerGetMeDoesNotInventJapaneseWorkName (0.05s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model": "to match object { state:",
+        "go:./internal/httpserver:TestCareerGetMeDoesNotInventJapaneseWorkName": "invented jpWorkName"
+      },
+      "fingerprint": "ba6ed0c08cd6ccb6d87bc8e3bae77a6508e6b2ca1951a5125529665a73d1beff"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-08T02:40:46.608Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCareerGetMeDoesNotInventJapaneseWorkName)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestCareerGetMeDoesNotInventJapaneseWorkName",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ba6ed0c08cd6ccb6d87bc8e3bae77a6508e6b2ca1951a5125529665a73d1beff"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-08T02:42:51.763Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 344,
+        "executed": 344,
+        "passed": 344,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 743,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "ba6ed0c08cd6ccb6d87bc8e3bae77a6508e6b2ca1951a5125529665a73d1beff"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-08T02:45:10.747Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 658,
+        "executed": 658,
+        "passed": 658,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "658 passed, 0 allowed skip(s)",
+      "fingerprint": "ba6ed0c08cd6ccb6d87bc8e3bae77a6508e6b2ca1951a5125529665a73d1beff"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-08T02:47:32.698Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "ba6ed0c08cd6ccb6d87bc8e3bae77a6508e6b2ca1951a5125529665a73d1beff"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-08T02:51:25.297Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec --ephemeral --sandbox read-only -",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/career/store.go:132",
+          "summary": "The new blank jpWorkName default bypasses name onboarding: needsNameOnboarding only recognizes the old '田中 太郎' default. Newly created learners cannot open the sole UI for setting their work name. Upda…"
+        },
+        {
+          "severity": "minor",
+          "file": "e2e/career-mobile.spec.ts:34",
+          "summary": "Document scrollWidth can remain 390 while Career content overflows because the enclosing .site-root hides horizontal overflow. Check Career container overflow directly or remove shell clipping during …"
+        }
+      ],
+      "package_sha256": "7d6a4d52aba9855aafdbf494f4d964eb287efdef941a24eeda064b7f19fb8e9c",
+      "fingerprint": "ba6ed0c08cd6ccb6d87bc8e3bae77a6508e6b2ca1951a5125529665a73d1beff"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-08T02:54:36.273Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 13,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCareerGetMeDoesNotInventJapaneseWorkName)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/career-name-onboarding.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model",
+          "outcome": "FAIL",
+          "excerpt": "expected { userId: 'learner-1', …(7) } to match object { state: { …(5) }, …(2) } (8 matching properties omitted from actual)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestCareerGetMeDoesNotInventJapaneseWorkName",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestCareerGetMeDoesNotInventJapaneseWorkName handler_career_test.go:24: new learner career profile has invented jpWorkName/companyTheme: jpWorkName=\"田中 太郎\" companyTheme=\"mirai-shoji\" --- FAIL: TestCareerGetMeDoesNotInventJapaneseWorkName (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/career-name-onboarding.test.ts::needsNameOnboarding > prompts learners whose work name has not been set",
+          "outcome": "FAIL",
+          "excerpt": "expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model": "to match object { state:",
+        "go:./internal/httpserver:TestCareerGetMeDoesNotInventJapaneseWorkName": "invented jpWorkName",
+        "vitest:apps/web/src/features/career-rpg/components/career-name-onboarding.test.ts::needsNameOnboarding > prompts learners whose work name has not been set": "expected false to be true"
+      },
+      "fingerprint": "4c9df867113a1abbb7a3a78dd2ba85e25fa2ab0e73847cd861cde80418ff21e7"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-08T02:54:41.926Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCareerGetMeDoesNotInventJapaneseWorkName)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/career-name-onboarding.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestCareerGetMeDoesNotInventJapaneseWorkName",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/career-name-onboarding.test.ts::needsNameOnboarding > prompts learners whose work name has not been set",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "4c9df867113a1abbb7a3a78dd2ba85e25fa2ab0e73847cd861cde80418ff21e7"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-08T02:56:51.771Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 344,
+        "executed": 344,
+        "passed": 344,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 743,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "4c9df867113a1abbb7a3a78dd2ba85e25fa2ab0e73847cd861cde80418ff21e7"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-08T02:59:09.583Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 658,
+        "executed": 658,
+        "passed": 658,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "658 passed, 0 allowed skip(s)",
+      "fingerprint": "4c9df867113a1abbb7a3a78dd2ba85e25fa2ab0e73847cd861cde80418ff21e7"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-08T03:01:22.894Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "4c9df867113a1abbb7a3a78dd2ba85e25fa2ab0e73847cd861cde80418ff21e7"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-08T03:04:28.062Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec --ephemeral --sandbox read-only -",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/web/src/features/career-rpg/api.ts:72",
+          "summary": "The newly reachable name-onboarding flow still expects a nested PATCH response: updateCareerProfile returns Go's flat CareerMe, while CareerNameOnboarding reads response.state. Reproduced with React/D…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/src/features/career-rpg/components/career-name-onboarding.tsx:38",
+          "summary": "AC6 says saved non-empty names must not prompt again, but a saved '田中 太郎' still returns true. The new test explicitly preserves this exception instead of pinning the stated criterion. Distinguish lega…"
+        }
+      ],
+      "package_sha256": "3a1bb153abfff483a3c041e8028d929735903f4042bef0798e8edf5602bb05bf",
+      "fingerprint": "4c9df867113a1abbb7a3a78dd2ba85e25fa2ab0e73847cd861cde80418ff21e7"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-08T03:07:29.563Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 13,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCareerGetMeDoesNotInventJapaneseWorkName)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/career-name-onboarding.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model",
+          "outcome": "FAIL",
+          "excerpt": "expected { userId: 'learner-1', …(7) } to match object { state: { …(5) }, …(2) } (8 matching properties omitted from actual)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestCareerGetMeDoesNotInventJapaneseWorkName",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestCareerGetMeDoesNotInventJapaneseWorkName handler_career_test.go:24: new learner career profile has invented jpWorkName/companyTheme: jpWorkName=\"田中 太郎\" companyTheme=\"mirai-shoji\" --- FAIL: TestCareerGetMeDoesNotInventJapaneseWorkName (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/career-name-onboarding.test.ts::needsNameOnboarding > prompts learners whose work name has not been set",
+          "outcome": "FAIL",
+          "excerpt": "expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > normalizes the flat PATCH response so name onboarding can update parent state",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to match object { jpWorkName: '佐藤 ゆうき', …(1) }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model": "to match object { state:",
+        "go:./internal/httpserver:TestCareerGetMeDoesNotInventJapaneseWorkName": "invented jpWorkName",
+        "vitest:apps/web/src/features/career-rpg/components/career-name-onboarding.test.ts::needsNameOnboarding > prompts learners whose work name has not been set": "expected false to be true",
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > normalizes the flat PATCH response so name onboarding can update parent state": "expected undefined to match object"
+      },
+      "fingerprint": "e64783e23578abd083b9d8a43a9899d8cd87944e46616bae457445b0d1949cc3"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-08T03:07:35.083Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCareerGetMeDoesNotInventJapaneseWorkName)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/career-name-onboarding.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > maps the authenticated Go CareerMe contract to a data-only dashboard model",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestCareerGetMeDoesNotInventJapaneseWorkName",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/career-name-onboarding.test.ts::needsNameOnboarding > prompts learners whose work name has not been set",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::careerMe API adapter > normalizes the flat PATCH response so name onboarding can update parent state",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e64783e23578abd083b9d8a43a9899d8cd87944e46616bae457445b0d1949cc3"
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-08T03:09:55.637Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "e64783e23578abd083b9d8a43a9899d8cd87944e46616bae457445b0d1949cc3"
+    },
+    {
+      "seq": 35,
+      "at": "2026-10-08T03:12:04.518Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 658,
+        "executed": 658,
+        "passed": 658,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "658 passed, 0 allowed skip(s)",
+      "fingerprint": "e64783e23578abd083b9d8a43a9899d8cd87944e46616bae457445b0d1949cc3"
+    },
+    {
+      "seq": 36,
+      "at": "2026-10-08T03:13:58.023Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 344,
+        "executed": 344,
+        "passed": 344,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 743,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "e64783e23578abd083b9d8a43a9899d8cd87944e46616bae457445b0d1949cc3"
+    },
+    {
+      "seq": 37,
+      "at": "2026-10-08T03:17:27.919Z",
+      "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec --ephemeral --sandbox read-only -",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [
+        {
+          "severity": "minor",
+          "file": "apps/web/src/features/career-rpg/api.contract.test.ts",
+          "summary": "AC7's test verifies PATCH normalization but never exercises onboarding submission or the parent's displayed name. The flow passed an independent in-memory check; add a committed UI regression so remov…"
+        }
+      ],
+      "package_sha256": "a1995380ae0e422b73317f5f2220ff7a4292110edf2f812432951a239d0a0aa3",
+      "fingerprint": "e64783e23578abd083b9d8a43a9899d8cd87944e46616bae457445b0d1949cc3"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-08T03:17:36.954Z",
+    "head": "11e8594996bb1f38a2d8988780b5153f11222d3f",
+    "fingerprint": "e64783e23578abd083b9d8a43a9899d8cd87944e46616bae457445b0d1949cc3",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/career/store.go": "57ac57fc8cc480b808122babdef7c2a8717b70b0",
+      "apps/api-go/internal/httpserver/handler_career_test.go": "c9bd28268e41820e931b26843ca908b63183f820",
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "c047ce301a358d2040def3276ff196d55753b794",
+      "apps/web/app/[locale]/career/_components/career-page-client.contract.test.tsx": "c216f25e4b33ac56d0d1fdf62879e5f9b3145c15",
+      "apps/web/app/[locale]/career/_components/career-page-client.tsx": "c9b984498c6f71e9733c6af180456adc8bf5eff5",
+      "apps/web/app/[locale]/career/page.tsx": "da2561669b11f59ded406ed2f1c9281c56b21226",
+      "apps/web/messages/en.json": "98f86aa038380675625a8ad78eec1c61773a54e1",
+      "apps/web/messages/ja.json": "58577d89850127f2395207076b49752a2e38c348",
+      "apps/web/messages/vi.json": "43e939d11ccba90a19ff405f1acb4827b5a8cd7b",
+      "apps/web/src/features/career-rpg/api.contract.test.ts": "20e8c232fb40dac0f890f5801c494882a8c4646a",
+      "apps/web/src/features/career-rpg/api.ts": "305391d3c5ba5332ffedb54dbb0056bbe13f4944",
+      "apps/web/src/features/career-rpg/components/career-name-onboarding.test.ts": "bbdef699725b62027584390398384dc33b26341b",
+      "apps/web/src/features/career-rpg/components/career-name-onboarding.tsx": "fa227f41c4478ff80062b981cda16b396e620df2",
+      "apps/web/src/features/career-rpg/components/career-rank-card.tsx": "1ab9232a753a1c9b0dfb37aeab05546826013406",
+      "apps/web/src/features/career-rpg/components/career-skill-radar.test.tsx": "f445786023bd4d57b0b944b2443081ad100eb050",
+      "apps/web/src/features/career-rpg/components/career-skill-radar.tsx": "d1ff48cb034dc6508f3cb264ff21c6675ab88f93",
+      "apps/web/src/features/career-rpg/helpers.ts": "08cd77c2c94549b9a8c5cf6265eec93fba02a0ba",
+      "apps/web/src/features/career-rpg/i18n.ts": "dfc30aeac50c95498d12e7d6eab3c137a32e28af",
+      "e2e/career-mobile.spec.ts": "bc7bc219ddcacbb3f49eee8000857f994d3c0e22",
+      "packages/database/prisma/migrations/20261008110000_remove_demo_career_defaults/migration.sql": "46fad7012c3e47c919b28044ae4a567c55960030",
+      "packages/database/prisma/schema.prisma": "1619adea447ad3e944b399097d9756eb08efc8be"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

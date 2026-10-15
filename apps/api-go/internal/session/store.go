@@ -22,12 +22,13 @@ var ErrInvalidExpiry = errors.New("session: expiry must be in the future")
 
 // LearnerSession represents an active learner session row.
 type LearnerSession struct {
-	ID        string
-	UserID    string
-	ExpiresAt time.Time
-	CreatedAt time.Time
-	UserAgent string
-	IPAddress string
+	ID          string
+	UserID      string
+	DisplayName string
+	ExpiresAt   time.Time
+	CreatedAt   time.Time
+	UserAgent   string
+	IPAddress   string
 }
 
 // AdminSession represents an active admin session row.
@@ -113,13 +114,13 @@ func (s *Store) lookupLearnerByDigest(ctx context.Context, digest string) (*Lear
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	const q = `SELECT s.id, s.user_id, s.expires_at, s.created_at, COALESCE(s.user_agent,''), COALESCE(s.ip_address,'')
+	const q = `SELECT s.id, s.user_id, s.expires_at, s.created_at, COALESCE(s.user_agent,''), COALESCE(s.ip_address,''), u.display_name
 FROM auth.session s
 JOIN profile.user_profile u ON u.id = s.user_id
 WHERE s.token_digest = $1 AND s.revoked_at IS NULL AND s.expires_at > now() AND u.status = 'active'`
 	row := s.db.QueryRow(ctx, q, digest)
 	var sess LearnerSession
-	if err := row.Scan(&sess.ID, &sess.UserID, &sess.ExpiresAt, &sess.CreatedAt, &sess.UserAgent, &sess.IPAddress); err != nil {
+	if err := row.Scan(&sess.ID, &sess.UserID, &sess.ExpiresAt, &sess.CreatedAt, &sess.UserAgent, &sess.IPAddress, &sess.DisplayName); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrSessionNotFound
 		}
@@ -195,6 +196,15 @@ func (s *Store) RevokeAllLearnerSessions(ctx context.Context, userID string) err
 	const q = `UPDATE auth.session SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`
 	_, err := s.db.Exec(ctx, q, userID)
 	if err != nil {
+		return fmt.Errorf("session: revoke all learner: %w", err)
+	}
+	return nil
+}
+
+// RevokeAllLearnerSessionsTx revokes active learner sessions within a caller-owned transaction.
+func (s *Store) RevokeAllLearnerSessionsTx(ctx context.Context, tx pgx.Tx, userID string) error {
+	const q = `UPDATE auth.session SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`
+	if _, err := tx.Exec(ctx, q, userID); err != nil {
 		return fmt.Errorf("session: revoke all learner: %w", err)
 	}
 	return nil

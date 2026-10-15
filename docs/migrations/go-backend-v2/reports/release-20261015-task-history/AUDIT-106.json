@@ -1,0 +1,1277 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-106",
+  "title": "Audit learner scenario detail screen",
+  "start_head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The protected learner scenario detail route passes undefined route params to the API, the scenario store queries a nonexistent status column although the canonical table uses active, and the frontend answer/completion payloads disagree with Go API contracts. The read response also exposes answer keys, anonymous route rendering stalls, and request failures are silently ignored.",
+    "acceptance": [
+      {
+        "id": "AC-1",
+        "text": "The authenticated detail route receives resolved locale/scenarioId params, loads an active scenario from the canonical schema, and sends no answer-key flags before a choice is submitted."
+      },
+      {
+        "id": "AC-2",
+        "text": "Anonymous access to a scenario detail route redirects to localized Login with the original route as returnTo."
+      },
+      {
+        "id": "AC-3",
+        "text": "Answer submission accepts the Flutter-compatible choiceKey contract (and legacy choiceId additively) and returns choiceKey, isOptimal, pointsAwarded and feedbackVi."
+      },
+      {
+        "id": "AC-4",
+        "text": "Completion accepts the Flutter-compatible stepOrder/choiceKey/points records (and legacy stepId/choiceId additively), derives awarded points from the selected database choice and maxPoints from the best optimal choice per step, persists the attempt, returns id/totalPoints/maxPoints, and the UI shows results only after success."
+      },
+      {
+        "id": "AC-5",
+        "text": "The Japanese UI uses available Japanese scenario/choice text; all interface copy is localized for VI/EN/JA and mobile layout remains within 390px with reachable controls."
+      },
+      {
+        "id": "AC-6",
+        "text": "Active scenarios can be exercised from canonical local seed data; inactive/missing scenarios return a truthful not-found state, and each step's choice keys are unique in PostgreSQL."
+      }
+    ],
+    "expected_behavior": "Real authenticated learners can open an active scenario, answer each step using canonical IDs, see server feedback, complete a persisted attempt, and retry if the server fails; anonymous learners are sent to Login.",
+    "observed_behavior": "Visible authenticated route requests /api/scenarios/undefined and shows not found. GET /api/scenarios returns HTTP 500 which the list UI masks as an empty catalog. Source/store use nonexistent status columns, payload/response fields differ, detail includes isOptimal and pointsAwarded in the initial JSON, and anonymous detail is not guarded.",
+    "rollback_plan": "Revert only AUDIT-106 changes; retain prior independent account-settings commits and canonical schema/migrations."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY",
+      "API_CONTRACT",
+      "DATABASE",
+      "AUTH_SECURITY",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Repair learner scenario detail routing, schema contract, answer submission, result persistence, answer secrecy and anonymous guard."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/scenario",
+      "test": "TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey",
+      "expect": "column bs.title does not exist"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx",
+      "test": "scenario play API contract > uses server feedback and the persisted attempt result",
+      "expect": "to deeply equal"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx",
+      "test": "scenario play API contract > allows another choice after the answer request fails",
+      "expect": "to be called 3 times"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/scenario",
+      "test": "TestScenarioChoiceKeyMustBeUnique",
+      "expect": "database accepted duplicate scenario choice key"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/scenario",
+      "test": "TestScenarioCompletionMaxPointsUsesOptimalChoices",
+      "expect": "got total=10 max=25, want total=10 max=15"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [
+    {
+      "finding": "test_skip_added:apps/api-go/internal/scenario/store_integration_test.go",
+      "reason": "Integration coverage requires the disposable PostgreSQL environment; the canonical quality verify/red/green gates run it with TEST_DATABASE_URL, while package-only unit runs explicitly skip this DB test."
+    }
+  ],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-11T13:04:26.048Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-11T13:07:57.603Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T13:07:57.959Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T13:12:53.497Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T13:16:26.968Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T13:20:31.619Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T13:23:35.853Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T13:26:17.021Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T13:30:38.379Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T13:36:57.135Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T13:40:50.609Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T13:45:19.084Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T13:45:35.850Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T13:48:13.447Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T13:48:45.709Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T13:50:56.171Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T13:53:53.796Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T13:54:57.641Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T13:55:14.555Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T13:57:49.398Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T14:05:15.465Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-11T14:11:22.971Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-11T14:11:25.240Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-11T14:11:32.142Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-11T13:12:53.264Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey)$ ./internal/scenario",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey store_integration_test.go:61: list active scenarios: scenario: list: ERROR: column bs.title does not exist (SQLSTATE 42703) --- FAIL: TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result",
+          "outcome": "FAIL",
+          "excerpt": "expected { choices: [ { stepOrder: 1, …(4) } ] } to deeply equal { choices: [ { stepOrder: 1, …(2) } ] }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called 3 times, but got 2 times",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey": "column bs.title does not exist",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result": "to deeply equal",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails": "to be called 3 times"
+      },
+      "fingerprint": "e351ba70ffdd76eb4fa41bae58acf7049e47238630bf7621d99f7f16918d0fac"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-11T13:16:26.428Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey)$ ./internal/scenario",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "064a24170ab3358da3305c8fa6ff1fc3fdd0a08f0d8778fe81ed10f863fd541d"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-11T13:17:15.275Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 758,
+        "executed": 758,
+        "passed": 757,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "064a24170ab3358da3305c8fa6ff1fc3fdd0a08f0d8778fe81ed10f863fd541d"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-11T13:20:31.094Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 451,
+        "executed": 451,
+        "passed": 451,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 787,
+        "lint_errors": 65,
+        "lint_warnings": 23,
+        "new_debt": 1
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "064a24170ab3358da3305c8fa6ff1fc3fdd0a08f0d8778fe81ed10f863fd541d"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-11T13:23:00.097Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey)$ ./internal/scenario",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "Cannot read properties of undefined (reading '0')"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "Cannot read properties of undefined (reading '0')"
+        }
+      ],
+      "fingerprint": "aeaf6b9cad60389101e3e622edc0794dc44fe1debf653e343f9903d5bc084841"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-11T13:23:35.307Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey)$ ./internal/scenario",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "df6c0004d9e50c7788cfc9fb5b2b09283f8ec8bd62722418fcc226d624a67b2e"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-11T13:26:16.441Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "df6c0004d9e50c7788cfc9fb5b2b09283f8ec8bd62722418fcc226d624a67b2e"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-11T13:26:23.903Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "cf91f035342834dc244a00d0c67e272d09e70ab2033eeabdce12f23c1549bac5"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-11T13:30:02.792Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 455,
+        "executed": 455,
+        "passed": 455,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 788,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "cf91f035342834dc244a00d0c67e272d09e70ab2033eeabdce12f23c1549bac5"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-11T13:30:37.815Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey)$ ./internal/scenario",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "73b88eff31c4a1ce601f060ecf90f95f6fe13e9884a2365ceb9185968641ad91"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-11T13:31:52.364Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash tmp/local-audit/audit106-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "73b88eff31c4a1ce601f060ecf90f95f6fe13e9884a2365ceb9185968641ad91"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-11T13:34:06.346Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "73b88eff31c4a1ce601f060ecf90f95f6fe13e9884a2365ceb9185968641ad91"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-11T13:36:56.582Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 758,
+        "executed": 758,
+        "passed": 758,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "73b88eff31c4a1ce601f060ecf90f95f6fe13e9884a2365ceb9185968641ad91"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-11T13:40:41.942Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 455,
+        "executed": 455,
+        "passed": 455,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 788,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "44c24287eea8ae653ff100610b5cc022d190498a51b45f3efcaf9ba827ebbd1f"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-11T13:40:50.057Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 8,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey)$ ./internal/scenario",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/scenario [github.com/kotobawork/nihongo-bjt/api-go/internal/scenario.test] internal/scenario/store_integration_test.go:150:50: unknown field StepOrder in struct literal of type ChoiceRecord internal/scenario/store_integration_test.go:150:64: unknow…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result",
+          "outcome": "FAIL",
+          "excerpt": "expected { choices: [ { stepOrder: 1, …(4) } ] } to deeply equal { choices: [ { stepOrder: 1, …(2) } ] }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called 3 times, but got 2 times",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey": "database accepted duplicate scenario choice key",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result": "to deeply equal",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails": "to be called 3 times"
+      },
+      "fingerprint": "2c2abbf4757ebfe8492311e8480245793c2af79b7c2371c4eeefe02d3217256b"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-11T13:43:09.095Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 8,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey|TestScenarioChoiceKeyMustBeUnique)$ ./internal/scenario",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/scenario [github.com/kotobawork/nihongo-bjt/api-go/internal/scenario.test] internal/scenario/store_integration_test.go:152:16: assignment mismatch: 2 variables but store.CompleteScenario returns 1 value internal/scenario/store_integration_test.go:1…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result",
+          "outcome": "FAIL",
+          "excerpt": "expected { choices: [ { stepOrder: 1, …(4) } ] } to deeply equal { choices: [ { stepOrder: 1, …(2) } ] }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called 3 times, but got 2 times",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/scenario:TestScenarioChoiceKeyMustBeUnique",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/scenario [github.com/kotobawork/nihongo-bjt/api-go/internal/scenario.test] internal/scenario/store_integration_test.go:152:16: assignment mismatch: 2 variables but store.CompleteScenario returns 1 value internal/scenario/store_integration_test.go:1…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey": "column bs.title does not exist",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result": "to deeply equal",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails": "to be called 3 times",
+        "go:./internal/scenario:TestScenarioChoiceKeyMustBeUnique": "database accepted duplicate scenario choice key"
+      },
+      "fingerprint": "b66a9856be85db14b4d67b4ece4bf3dcdf300d5362e90b01de54077357601644"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-11T13:44:16.575Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 8,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey|TestScenarioChoiceKeyMustBeUnique)$ ./internal/scenario",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey store_integration_test.go:34: TEST_DATABASE_URL not set; run with scripts/quality/with-test-db.sh --- SKIP: TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result",
+          "outcome": "FAIL",
+          "excerpt": "expected { choices: [ { stepOrder: 1, …(4) } ] } to deeply equal { choices: [ { stepOrder: 1, …(2) } ] }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called 3 times, but got 2 times",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/scenario:TestScenarioChoiceKeyMustBeUnique",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestScenarioChoiceKeyMustBeUnique store_integration_test.go:192: TEST_DATABASE_URL not set; run with scripts/quality/with-test-db.sh --- SKIP: TestScenarioChoiceKeyMustBeUnique (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey": "column bs.title does not exist",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result": "to deeply equal",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails": "to be called 3 times",
+        "go:./internal/scenario:TestScenarioChoiceKeyMustBeUnique": "database accepted duplicate scenario choice key"
+      },
+      "fingerprint": "ce4654a74113849d6b25c53adcbf7c47308618e03f3ada7a9b4a137e351d7006"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-11T13:44:50.904Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 8,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey|TestScenarioChoiceKeyMustBeUnique)$ ./internal/scenario",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey store_integration_test.go:82: inactive scenario exposed answer feedback: scenario: submit answer: ERROR: invalid input syntax for type uuid: \"A\" (SQLSTATE 22P02) --- FAIL: TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey …",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"column bs.title does not exist\""
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result",
+          "outcome": "FAIL",
+          "excerpt": "expected { choices: [ { stepOrder: 1, …(4) } ] } to deeply equal { choices: [ { stepOrder: 1, …(2) } ] }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called 3 times, but got 2 times",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/scenario:TestScenarioChoiceKeyMustBeUnique",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestScenarioChoiceKeyMustBeUnique store_integration_test.go:207: database accepted duplicate scenario choice key --- FAIL: TestScenarioChoiceKeyMustBeUnique (0.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey": "column bs.title does not exist",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result": "to deeply equal",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails": "to be called 3 times",
+        "go:./internal/scenario:TestScenarioChoiceKeyMustBeUnique": "database accepted duplicate scenario choice key"
+      },
+      "fingerprint": "23fec6e892c6dc5bb15feaf143470b7c48526bb1ff1dc401e20c53a359651745"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-11T13:45:18.515Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 8,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey|TestScenarioChoiceKeyMustBeUnique)$ ./internal/scenario",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey store_integration_test.go:83: list active scenarios: scenario: list: ERROR: column bs.title does not exist (SQLSTATE 42703) --- FAIL: TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result",
+          "outcome": "FAIL",
+          "excerpt": "expected { choices: [ { stepOrder: 1, …(4) } ] } to deeply equal { choices: [ { stepOrder: 1, …(2) } ] }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called 3 times, but got 2 times",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/scenario:TestScenarioChoiceKeyMustBeUnique",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestScenarioChoiceKeyMustBeUnique store_integration_test.go:207: database accepted duplicate scenario choice key --- FAIL: TestScenarioChoiceKeyMustBeUnique (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey": "column bs.title does not exist",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result": "to deeply equal",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails": "to be called 3 times",
+        "go:./internal/scenario:TestScenarioChoiceKeyMustBeUnique": "database accepted duplicate scenario choice key"
+      },
+      "fingerprint": "fd78894483bb77052ac0d722e672d318f124a6e7058642e0014cd16b0bf7ae3d"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-11T13:45:35.208Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey|TestScenarioChoiceKeyMustBeUnique)$ ./internal/scenario",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/scenario:TestScenarioChoiceKeyMustBeUnique",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8773a5674790275c3d1308f4a53a51bb92ad9d24a30b2a54b52e986bc4dbff15"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-11T13:48:12.775Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash tmp/local-audit/audit106-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "966c1721c2cbbf05a8f5a05aa65c074544cf352c7b32e08545f32eccfb766d9e"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-11T13:48:44.987Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey|TestScenarioChoiceKeyMustBeUnique)$ ./internal/scenario",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/scenario:TestScenarioChoiceKeyMustBeUnique",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "966c1721c2cbbf05a8f5a05aa65c074544cf352c7b32e08545f32eccfb766d9e"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-11T13:50:55.461Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "966c1721c2cbbf05a8f5a05aa65c074544cf352c7b32e08545f32eccfb766d9e"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-11T13:51:36.252Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 760,
+        "executed": 760,
+        "passed": 759,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "7a896c53d582eccf046dae6e7fe1054b83ba694129f36e36f8f5c7476f023a16"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-11T13:54:08.117Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 8,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey|TestScenarioChoiceKeyMustBeUnique|TestScenarioCompletionMaxPointsUsesOptimalChoices)$ ./internal/scenario",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey store_integration_test.go:83: list active scenarios: scenario: list: ERROR: column bs.title does not exist (SQLSTATE 42703) --- FAIL: TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result",
+          "outcome": "FAIL",
+          "excerpt": "expected { choices: [ { stepOrder: 1, …(4) } ] } to deeply equal { choices: [ { stepOrder: 1, …(2) } ] }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called 3 times, but got 2 times",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/scenario:TestScenarioChoiceKeyMustBeUnique",
+          "outcome": "PASS",
+          "excerpt": "=== RUN TestScenarioChoiceKeyMustBeUnique --- PASS: TestScenarioChoiceKeyMustBeUnique (0.01s)",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        },
+        {
+          "id": "go:./internal/scenario:TestScenarioCompletionMaxPointsUsesOptimalChoices",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestScenarioCompletionMaxPointsUsesOptimalChoices store_integration_test.go:223: max points must use the best optimal choice per step: got total=10 max=25, want total=10 max=15 --- FAIL: TestScenarioCompletionMaxPointsUsesOptimalChoices (0.02s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"got total=10 max=20, want total=10 max=15\""
+        }
+      ],
+      "expects": {
+        "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey": "column bs.title does not exist",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result": "to deeply equal",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails": "to be called 3 times",
+        "go:./internal/scenario:TestScenarioChoiceKeyMustBeUnique": "database accepted duplicate scenario choice key",
+        "go:./internal/scenario:TestScenarioCompletionMaxPointsUsesOptimalChoices": "got total=10 max=20, want total=10 max=15"
+      },
+      "fingerprint": "942fec9e87ea8e569dcc23699759177dab52b2e406d60402b71ec77426ceb0a9"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-11T13:54:57.112Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 8,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey|TestScenarioChoiceKeyMustBeUnique|TestScenarioCompletionMaxPointsUsesOptimalChoices)$ ./internal/scenario",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey store_integration_test.go:83: list active scenarios: scenario: list: ERROR: column bs.title does not exist (SQLSTATE 42703) --- FAIL: TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result",
+          "outcome": "FAIL",
+          "excerpt": "expected { choices: [ { stepOrder: 1, …(4) } ] } to deeply equal { choices: [ { stepOrder: 1, …(2) } ] }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called 3 times, but got 2 times",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/scenario:TestScenarioChoiceKeyMustBeUnique",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestScenarioChoiceKeyMustBeUnique store_integration_test.go:243: database accepted duplicate scenario choice key --- FAIL: TestScenarioChoiceKeyMustBeUnique (0.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/scenario:TestScenarioCompletionMaxPointsUsesOptimalChoices",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestScenarioCompletionMaxPointsUsesOptimalChoices store_integration_test.go:223: max points must use the best optimal choice per step: got total=10 max=25, want total=10 max=15 --- FAIL: TestScenarioCompletionMaxPointsUsesOptimalChoices (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey": "column bs.title does not exist",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result": "to deeply equal",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails": "to be called 3 times",
+        "go:./internal/scenario:TestScenarioChoiceKeyMustBeUnique": "database accepted duplicate scenario choice key",
+        "go:./internal/scenario:TestScenarioCompletionMaxPointsUsesOptimalChoices": "got total=10 max=25, want total=10 max=15"
+      },
+      "fingerprint": "15730ee8d340fae904a7675fc804976a10a0f0b769ab772b5322e6cd75e7e51e"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-11T13:55:13.933Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey|TestScenarioChoiceKeyMustBeUnique|TestScenarioCompletionMaxPointsUsesOptimalChoices)$ ./internal/scenario",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/scenario:TestScenarioChoiceKeyMustBeUnique",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/scenario:TestScenarioCompletionMaxPointsUsesOptimalChoices",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "942fec9e87ea8e569dcc23699759177dab52b2e406d60402b71ec77426ceb0a9"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-11T13:57:48.811Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "942fec9e87ea8e569dcc23699759177dab52b2e406d60402b71ec77426ceb0a9"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-11T14:00:38.888Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 760,
+        "executed": 760,
+        "passed": 760,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "760 passed, 0 allowed skip(s)",
+      "fingerprint": "06d9eaf730ca112a26df006a04efac13e22089997a3c9e6ba7a3937ff4c6ae97"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-11T14:03:45.841Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 455,
+        "executed": 455,
+        "passed": 455,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 788,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "06d9eaf730ca112a26df006a04efac13e22089997a3c9e6ba7a3937ff4c6ae97"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-11T14:05:14.751Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey|TestScenarioChoiceKeyMustBeUnique|TestScenarioCompletionMaxPointsUsesOptimalChoices)$ ./internal/scenario",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/scenario:TestScenarioStoreUsesCanonicalActiveSchemaAndHidesAnswerKey",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses server feedback and the persisted attempt result",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > allows another choice after the answer request fails",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/scenario:TestScenarioChoiceKeyMustBeUnique",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/scenario:TestScenarioCompletionMaxPointsUsesOptimalChoices",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "06d9eaf730ca112a26df006a04efac13e22089997a3c9e6ba7a3937ff4c6ae97"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-11T14:07:30.597Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "06d9eaf730ca112a26df006a04efac13e22089997a3c9e6ba7a3937ff4c6ae97"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-11T14:11:22.329Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash tmp/local-audit/audit106-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "06d9eaf730ca112a26df006a04efac13e22089997a3c9e6ba7a3937ff4c6ae97"
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-11T14:11:23.971Z",
+      "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "McClintock",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "ab65a4359ef9cb6442a5a1bf60059ea89f72e1135af8354dcf5614c092021f67",
+      "attested": true,
+      "fingerprint": "06d9eaf730ca112a26df006a04efac13e22089997a3c9e6ba7a3937ff4c6ae97"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-11T14:11:32.121Z",
+    "head": "04775aed0e270f073ce170e6e314d7e2e82aec2b",
+    "fingerprint": "06d9eaf730ca112a26df006a04efac13e22089997a3c9e6ba7a3937ff4c6ae97",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_scenario.go": "15bbd78acf550ebd5ad4d4737ed0591bf66a30d8",
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "b778dc7273760bc1d04f9bc882ac155819734040",
+      "apps/api-go/internal/scenario/store.go": "dea8b65e40f7f93d56f6f5dbae598f2d609ddc97",
+      "apps/api-go/internal/scenario/store_integration_test.go": "cd32b0d4dde1ba999d2b92ac31a97f5c89573707",
+      "apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx": "78d7bf9d809d0c4b2bb94af9b8c60ec50bb1ea0f",
+      "apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.tsx": "f6f67ed6d9ff467fbfc3fa6926331972958f6eb5",
+      "apps/web/app/[locale]/scenarios/[scenarioId]/page.tsx": "4fb268f9b7ce1cc59aa467eb57a30b58ab8f3ee3",
+      "apps/web/messages/en.json": "d8c4106a5c45697918b355daf9ee9a18f85753bf",
+      "apps/web/messages/ja.json": "b9283eccef2883e1818a21f245c50dbd3ed4bf4c",
+      "apps/web/messages/vi.json": "58d1c3c12126a3cf697f15496dd202bd2a0eef4d",
+      "packages/database/prisma/migrations/20261011130000_scenario_choice_key_unique/migration.sql": "7b5894d679818d825796faa9001c63fd906b3271",
+      "packages/database/prisma/schema.prisma": "6444ae7fce86eb291ab18beccad31dd603ca73cf"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

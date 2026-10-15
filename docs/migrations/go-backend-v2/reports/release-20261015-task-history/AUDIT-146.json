@@ -1,0 +1,2496 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-146",
+  "title": "Audit and repair the next ten Admin growth APIs",
+  "start_head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The next ten active Admin growth METHOD+PATH APIs have incomplete method-level authorization, validation, status, persistence/audit, or error handling; callers and OpenAPI must retain aligned contracts.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "GET /api/admin/growth/campaigns/audience-estimate enforces the campaign-read permission, validates supported filters (including UI plan/country where data supports them), and returns correct counts or 500 on DB failure."
+      },
+      {
+        "id": "AC2",
+        "text": "GET /api/admin/growth/campaigns/{id} validates UUID, returns 404 only for missing campaign, and reports audit query/scan/iteration failures rather than partial success."
+      },
+      {
+        "id": "AC3",
+        "text": "PATCH /api/admin/growth/campaigns/{id} requires growth.manage and trusted-origin CSRF; validates body/reason/UUID; returns accurate 400/404/500; updates selected fields and before/after actor audit atomically."
+      },
+      {
+        "id": "AC4",
+        "text": "POST /api/admin/growth/campaigns/{id}/activate requires growth.manage and CSRF, validates reason/UUID and state transition, and atomically persists status plus actor audit."
+      },
+      {
+        "id": "AC5",
+        "text": "POST /api/admin/growth/campaigns/{id}/archive requires growth.manage and CSRF, validates reason/UUID and state transition, and atomically persists status plus actor audit."
+      },
+      {
+        "id": "AC6",
+        "text": "POST /api/admin/growth/campaigns/{id}/duplicate requires growth.manage and CSRF, validates reason/UUID, creates a draft copy and actor audit atomically, and returns the copy contract."
+      },
+      {
+        "id": "AC7",
+        "text": "POST /api/admin/growth/campaigns/{id}/end requires growth.manage and CSRF, validates reason/UUID and state transition, and atomically persists status plus actor audit."
+      },
+      {
+        "id": "AC8",
+        "text": "POST /api/admin/growth/campaigns/{id}/schedule requires growth.manage and CSRF, validates reason/UUID and state transition/schedule constraints, and atomically persists status plus actor audit."
+      },
+      {
+        "id": "AC9",
+        "text": "GET /api/admin/growth/postcards enforces the correct Growth read permissions, filters/paginates only postcard kinds, and reports query/scan/iteration errors."
+      },
+      {
+        "id": "AC10",
+        "text": "POST /api/admin/growth/postcards requires the appropriate write permission and CSRF, validates privacy/content fields, returns accurate status and atomically persists postcard plus audit."
+      },
+      {
+        "id": "AC11",
+        "text": "The direct Next.js runtime dependency is upgraded to a release patched for the three critical advisories reported for 16.2.4, and learner/Admin production builds still pass."
+      }
+    ],
+    "expected_behavior": "Every API enforces the right permission and CSRF on writes, validates untrusted input, returns accurate contract/status and missing-row errors, persists mutations with actor audit atomically, preserves frontend behavior, and uses a Next.js version patched for the known critical advisories.",
+    "observed_behavior": "Current Go handlers rely mainly on AdminGuard; campaign reads ignore audit query failures, PATCH/transition/duplicate ignore DB and audit errors and do not transact; audience estimate ignores supported filters and the default free plan; postcard list skips row errors; postcard create behavior requires verification against schema, OpenAPI and callers. The installed Next.js 16.2.4 also has three critical production advisories.",
+    "rollback_plan": "Revert only the AUDIT-146 implementation commit; no schema changes are planned and tests/browser use uniquely named disposable campaigns/postcards with cleanup."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY",
+      "DATABASE",
+      "UI_ONLY",
+      "DEPENDENCY_METADATA"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Repair ten Admin Growth API contracts and estimate behavior, keep the campaign estimate display truthful for unsupported filters, and update the direct Next.js dependency to a patched release for three verified critical advisories."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+      "expect": "roleless postcard list status="
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+      "expect": "mutations without an audit reason must be rejected"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+      "expect": "want 500 for database failure"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+      "expect": "default free-plan learner was omitted"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146",
+      "expect": "schedule dates were not cleared"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146",
+      "expect": "anonymized is a supported template privacy class"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146",
+      "expect": "postcard API does not accept UI kind"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminGrowthCampaignTransitionRulesAUDIT146",
+      "expect": "archived campaign activate status="
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestValidateGrowthPostcardConfigAUDIT146",
+      "expect": "invalid postcard config accepted"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-14T06:44:32.437Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-14T06:46:05.194Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-14T06:46:05.568Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T06:48:46.362Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T07:00:27.146Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T07:13:24.698Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T07:14:05.554Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-14T07:21:38.502Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T07:26:28.744Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T07:27:04.891Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-14T07:35:12.914Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T07:36:15.496Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T07:37:06.618Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T07:49:04.445Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T07:55:18.150Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T07:58:48.614Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T07:59:16.392Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T08:03:29.855Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-14T08:11:01.746Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T08:12:25.103Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T08:13:55.254Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T08:16:44.819Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T08:54:31.357Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T09:24:36.865Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T09:24:54.068Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-14T09:32:36.978Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-14T09:40:22.345Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-14T09:40:31.543Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-14T06:48:46.075Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 2026/10/14 15:48:45 INFO request method=GET path=/api/admin/growth/postcards status=200 duration=5.125416ms bytes=46 handler_admin_growth_audit146_test.go:25: roleless postcard list status=200 body={\"items\":[],\"page\":1,\"pageSize\":20…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146": "roleless postcard list status="
+      },
+      "fingerprint": "67171ac8808a3b2603282f854ed2ce3bd4fb66d3950f9035a54e2caf16f27bfe"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-14T06:53:25.759Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthCampaignAndPostcardAPIsAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 2026/10/14 15:53:24 INFO request method=GET path=/api/admin/growth/postcards status=200 duration=4.49975ms bytes=46 handler_admin_growth_audit146_test.go:25: roleless postcard list status=200 body={\"items\":[],\"page\":1,\"pageSize\":20,…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146 2026/10/14 15:53:24 INFO request method=PATCH path=/api/admin/growth/campaigns/8b6445ca-412b-4dd4-8f3e-2089a5bc7dfb status=200 duration=6.15075ms bytes=706 2026/10/14 15:53:24 INFO request method=POST path=/api/admin/growth/campaigns…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 handler_admin_growth_audit146_test.go:149: detail status=404 body={\"error\":\"campaign not found\"} ; want 500 for database failure --- FAIL: TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 (…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignAndPostcardAPIsAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignAndPostcardAPIsAUDIT146 2026/10/14 15:53:24 INFO request method=GET path=/api/admin/growth/campaigns/audience-estimate status=200 duration=3.900583ms bytes=55 2026/10/14 15:53:24 INFO request method=GET path=/api/admin/growth/campaigns/802f6949-d5ec-4390-8fa5-7bcbd50ce…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146": "roleless postcard list status=",
+        "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146": "mutations without an audit reason must be rejected",
+        "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146": "want 500 for database failure",
+        "go:./internal/httpserver:TestAdminGrowthCampaignAndPostcardAPIsAUDIT146": "postcard create status="
+      },
+      "fingerprint": "c6b85acef26823a002c5b0e24c3e190b07dbf5b9421134431d3c39c07fecf1e3"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-14T06:59:55.555Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthCampaignAndPostcardAPIsAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "valid": false,
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_postcards.go:105:110: undefined: total FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [build failed]"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "valid": false,
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_postcards.go:105:110: undefined: total FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [build failed]"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "valid": false,
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_postcards.go:105:110: undefined: total FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [build failed]"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignAndPostcardAPIsAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "valid": false,
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_postcards.go:105:110: undefined: total FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [build failed]"
+        }
+      ],
+      "fingerprint": "406a3eb9a1f9e777cea5c20398836e0f8501863629e1871ca7e29d1e2fa10460"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-14T07:00:26.628Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthCampaignAndPostcardAPIsAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignAndPostcardAPIsAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1899ce82c9c49a2ccbabb01756cffda1856dfee2e984c9da7204691ba66c3050"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-14T07:04:19.620Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 944,
+        "executed": 942,
+        "passed": 942,
+        "failed": 0,
+        "skipped": 2,
+        "expected_skips": 0,
+        "unexpected_skips": 2,
+        "min_passed_tests": 431
+      },
+      "message": "2 test(s) skipped that are not in go-test-skips-baseline.json — skipped tests are not verification",
+      "fingerprint": "1899ce82c9c49a2ccbabb01756cffda1856dfee2e984c9da7204691ba66c3050"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-14T07:07:47.870Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 944,
+        "executed": 944,
+        "passed": 944,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "944 passed, 0 allowed skip(s)",
+      "fingerprint": "1899ce82c9c49a2ccbabb01756cffda1856dfee2e984c9da7204691ba66c3050"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-14T07:13:24.175Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 801,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "1899ce82c9c49a2ccbabb01756cffda1856dfee2e984c9da7204691ba66c3050"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-14T07:13:49.659Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthCampaignAndPostcardAPIsAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 handler_admin_growth_audit146_test.go:14: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146 handler_admin_growth_audit146_test.go:198: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146 (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 handler_admin_growth_audit146_test.go:244: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignAndPostcardAPIsAUDIT146",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminGrowthCampaignAndPostcardAPIsAUDIT146 handler_admin_growth_audit146_test.go:62: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthCampaignAndPostcardAPIsAUDIT146 (0.00s)"
+        }
+      ],
+      "fingerprint": "f0dfedea6069b452fea2465a371b7c087465f45605524fd11c9bbc7dcb139aa1"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-14T07:14:04.917Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthCampaignAndPostcardAPIsAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignAndPostcardAPIsAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f0dfedea6069b452fea2465a371b7c087465f45605524fd11c9bbc7dcb139aa1"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-14T07:19:27.401Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 801,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "f0dfedea6069b452fea2465a371b7c087465f45605524fd11c9bbc7dcb139aa1"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-14T07:21:37.891Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthCampaignAndPostcardAPIsAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 handler_admin_growth_audit146_test.go:14: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146 handler_admin_growth_audit146_test.go:209: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146 (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 handler_admin_growth_audit146_test.go:255: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignAndPostcardAPIsAUDIT146",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminGrowthCampaignAndPostcardAPIsAUDIT146 handler_admin_growth_audit146_test.go:62: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthCampaignAndPostcardAPIsAUDIT146 (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146": "roleless postcard list status=",
+        "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146": "mutations without an audit reason must be rejected",
+        "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146": "want 500 for database failure",
+        "go:./internal/httpserver:TestAdminGrowthCampaignAndPostcardAPIsAUDIT146": "audience estimate total="
+      },
+      "fingerprint": "8aac74f251c8ee2abb0f69fef799bcb07ae089bccb32383be5a9c923eadc6c23"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-14T07:22:01.475Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthCampaignAndPostcardAPIsAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 2026/10/14 16:22:00 INFO request method=GET path=/api/admin/growth/postcards status=200 duration=3.603042ms bytes=46 handler_admin_growth_audit146_test.go:25: roleless postcard list status=200 body={\"items\":[],\"page\":1,\"pageSize\":20…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146 2026/10/14 16:22:00 INFO request method=PATCH path=/api/admin/growth/campaigns/68202559-c3f3-4b24-88c9-ee5149f5b13b status=200 duration=8.908209ms bytes=706 2026/10/14 16:22:00 INFO request method=POST path=/api/admin/growth/campaign…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 handler_admin_growth_audit146_test.go:261: detail status=404 body={\"error\":\"campaign not found\"} ; want 500 for database failure --- FAIL: TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 (…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignAndPostcardAPIsAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignAndPostcardAPIsAUDIT146 2026/10/14 16:22:00 INFO request method=GET path=/api/admin/growth/campaigns/audience-estimate status=200 duration=3.71ms bytes=55 handler_admin_growth_audit146_test.go:126: audience estimate={\"filters\":{\"level\":\"BJT-J2\",\"locale\":\"vi\"},\"total\":1…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"audience estimate total=\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146": "roleless postcard list status=",
+        "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146": "mutations without an audit reason must be rejected",
+        "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146": "want 500 for database failure",
+        "go:./internal/httpserver:TestAdminGrowthCampaignAndPostcardAPIsAUDIT146": "audience estimate total="
+      },
+      "fingerprint": "8aac74f251c8ee2abb0f69fef799bcb07ae089bccb32383be5a9c923eadc6c23"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-14T07:22:39.815Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthCampaignAndPostcardAPIsAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 2026/10/14 16:22:38 INFO request method=GET path=/api/admin/growth/postcards status=200 duration=3.945625ms bytes=46 handler_admin_growth_audit146_test.go:25: roleless postcard list status=200 body={\"items\":[],\"page\":1,\"pageSize\":20…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146 2026/10/14 16:22:38 INFO request method=PATCH path=/api/admin/growth/campaigns/97bd54da-330d-41fc-8175-7fc0ae42b5c8 status=200 duration=7.552167ms bytes=706 2026/10/14 16:22:38 INFO request method=POST path=/api/admin/growth/campaign…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 handler_admin_growth_audit146_test.go:262: detail status=404 body={\"error\":\"campaign not found\"} ; want 500 for database failure --- FAIL: TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 (…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignAndPostcardAPIsAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignAndPostcardAPIsAUDIT146 2026/10/14 16:22:38 INFO request method=GET path=/api/admin/growth/campaigns/audience-estimate status=200 duration=3.14775ms bytes=65 handler_admin_growth_audit146_test.go:127: audience estimate={\"filters\":{\"level\":\"BJT-J2\",\"locale\":\"a1464ee477f…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"audience estimate total=\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146": "roleless postcard list status=",
+        "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146": "mutations without an audit reason must be rejected",
+        "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146": "want 500 for database failure",
+        "go:./internal/httpserver:TestAdminGrowthCampaignAndPostcardAPIsAUDIT146": "audience estimate total="
+      },
+      "fingerprint": "3b34f13434bc4116aa3a04a3d1eec9d5be371e57b69875d2d90dea2df99981e7"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-14T07:24:30.143Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthCampaignAndPostcardAPIsAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 2026/10/14 16:24:28 INFO request method=GET path=/api/admin/growth/postcards status=200 duration=4.483958ms bytes=46 handler_admin_growth_audit146_test.go:25: roleless postcard list status=200 body={\"items\":[],\"page\":1,\"pageSize\":20…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146 2026/10/14 16:24:28 INFO request method=PATCH path=/api/admin/growth/campaigns/c0cef085-587c-4a99-81ee-d15685796bf2 status=200 duration=7.678292ms bytes=706 2026/10/14 16:24:28 INFO request method=POST path=/api/admin/growth/campaign…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 handler_admin_growth_audit146_test.go:279: detail status=404 body={\"error\":\"campaign not found\"} ; want 500 for database failure --- FAIL: TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 (…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignAndPostcardAPIsAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignAndPostcardAPIsAUDIT146 2026/10/14 16:24:28 INFO request method=GET path=/api/admin/growth/campaigns/audience-estimate status=200 duration=4.83725ms bytes=65 handler_admin_growth_audit146_test.go:144: audience estimate={\"filters\":{\"level\":\"BJT-J2\",\"locale\":\"a146834ff41…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"default free-plan learner was omitted\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146": "roleless postcard list status=",
+        "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146": "mutations without an audit reason must be rejected",
+        "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146": "want 500 for database failure",
+        "go:./internal/httpserver:TestAdminGrowthCampaignAndPostcardAPIsAUDIT146": "default free-plan learner was omitted"
+      },
+      "fingerprint": "60519f2da9b32f254bc989f07eac2d8a4360a699663475d400271e0c239f407e"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-14T07:25:42.875Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthCampaignAndPostcardAPIsAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 2026/10/14 16:25:41 INFO request method=GET path=/api/admin/growth/postcards status=200 duration=4.019583ms bytes=46 handler_admin_growth_audit146_test.go:26: roleless postcard list status=200 body={\"items\":[],\"page\":1,\"pageSize\":20…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146 2026/10/14 16:25:41 INFO request method=PATCH path=/api/admin/growth/campaigns/bffad0f5-51bf-4dfb-9265-73c5c925340d status=200 duration=6.59475ms bytes=706 2026/10/14 16:25:41 INFO request method=POST path=/api/admin/growth/campaigns…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 handler_admin_growth_audit146_test.go:296: detail status=404 body={\"error\":\"campaign not found\"} ; want 500 for database failure --- FAIL: TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 (…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignAndPostcardAPIsAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignAndPostcardAPIsAUDIT146 2026/10/14 16:25:41 INFO request method=GET path=/api/admin/growth/campaigns/audience-estimate status=200 duration=4.132458ms bytes=55 2026/10/14 16:25:41 INFO request method=GET path=/api/admin/growth/campaigns/86f06b33-02f5-4f83-8178-89e1e58d0…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"postcard create status=\""
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146 handler_admin_growth_audit146_test.go:239: default free-plan learner was omitted: got total=2, want 1 --- FAIL: TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146 (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146": "roleless postcard list status=",
+        "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146": "mutations without an audit reason must be rejected",
+        "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146": "want 500 for database failure",
+        "go:./internal/httpserver:TestAdminGrowthCampaignAndPostcardAPIsAUDIT146": "postcard create status=",
+        "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146": "default free-plan learner was omitted"
+      },
+      "fingerprint": "c34a705023ec6cdf6c9aa5da2f677ac822b17f8279a71ee1c2f2ec52af992db0"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-14T07:26:28.135Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 2026/10/14 16:26:26 INFO request method=GET path=/api/admin/growth/postcards status=200 duration=4.4915ms bytes=46 handler_admin_growth_audit146_test.go:26: roleless postcard list status=200 body={\"items\":[],\"page\":1,\"pageSize\":20,\"…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146 2026/10/14 16:26:26 INFO request method=PATCH path=/api/admin/growth/campaigns/577e76c8-34ba-40ce-b9a0-4289938e3525 status=200 duration=10.876208ms bytes=706 2026/10/14 16:26:26 INFO request method=POST path=/api/admin/growth/campaig…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 handler_admin_growth_audit146_test.go:296: detail status=404 body={\"error\":\"campaign not found\"} ; want 500 for database failure --- FAIL: TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 (…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146 handler_admin_growth_audit146_test.go:239: default free-plan learner was omitted: got total=2, want 1 --- FAIL: TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146 (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146": "roleless postcard list status=",
+        "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146": "mutations without an audit reason must be rejected",
+        "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146": "want 500 for database failure",
+        "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146": "default free-plan learner was omitted"
+      },
+      "fingerprint": "c34a705023ec6cdf6c9aa5da2f677ac822b17f8279a71ee1c2f2ec52af992db0"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-14T07:27:04.296Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "17f6e2479a4d9c8eed9ca0920a6293a1b0f9081e0a4ce52dd53079bfaae150db"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-14T07:29:10.277Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9398373b7e57dd7e8ec25b3b921f31540b167c7ef9117b0cb387d30f2319fff0"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-14T07:32:44.931Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 945,
+        "executed": 945,
+        "passed": 945,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "945 passed, 0 allowed skip(s)",
+      "fingerprint": "9398373b7e57dd7e8ec25b3b921f31540b167c7ef9117b0cb387d30f2319fff0"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-14T07:34:45.698Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 handler_admin_growth_audit146_test.go:15: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146 handler_admin_growth_audit146_test.go:244: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146 (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 handler_admin_growth_audit146_test.go:290: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146 handler_admin_growth_audit146_test.go:198: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146 (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146": "roleless postcard list status=",
+        "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146": "mutations without an audit reason must be rejected",
+        "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146": "want 500 for database failure",
+        "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146": "default free-plan learner was omitted"
+      },
+      "fingerprint": "9398373b7e57dd7e8ec25b3b921f31540b167c7ef9117b0cb387d30f2319fff0"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-14T07:35:12.160Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146|TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 handler_admin_growth_audit146_test.go:15: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146 handler_admin_growth_audit146_test.go:288: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146 (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 handler_admin_growth_audit146_test.go:334: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146 handler_admin_growth_audit146_test.go:242: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146 (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146 handler_admin_growth_audit146_test.go:198: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146 (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146": "roleless postcard list status=",
+        "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146": "mutations without an audit reason must be rejected",
+        "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146": "want 500 for database failure",
+        "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146": "default free-plan learner was omitted",
+        "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146": "schedule dates were not cleared"
+      },
+      "fingerprint": "8ba1f527c897039cf754db9151cfa79e0db772522b41452bc5c7c1d9fdf765d3"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-14T07:35:41.643Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146|TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 2026/10/14 16:35:40 INFO request method=GET path=/api/admin/growth/postcards status=200 duration=3.731209ms bytes=46 handler_admin_growth_audit146_test.go:26: roleless postcard list status=200 body={\"items\":[],\"page\":1,\"pageSize\":20…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146 2026/10/14 16:35:40 INFO request method=PATCH path=/api/admin/growth/campaigns/988fc34d-c818-481e-bc19-ff3bfa82423c status=200 duration=8.37475ms bytes=706 2026/10/14 16:35:40 INFO request method=POST path=/api/admin/growth/campaigns…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 handler_admin_growth_audit146_test.go:340: detail status=404 body={\"error\":\"campaign not found\"} ; want 500 for database failure --- FAIL: TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 (…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146 handler_admin_growth_audit146_test.go:283: default free-plan learner was omitted: got total=2, want 1 --- FAIL: TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146 (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146 2026/10/14 16:35:40 INFO request method=PATCH path=/api/admin/growth/campaigns/3c286b8a-c979-4a0a-aa8c-13909880e9b7 status=400 duration=5.828375ms bytes=53 handler_admin_growth_audit146_test.go:223: clear schedule status=400 body={\"erro…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"schedule dates were not cleared\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146": "roleless postcard list status=",
+        "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146": "mutations without an audit reason must be rejected",
+        "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146": "want 500 for database failure",
+        "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146": "default free-plan learner was omitted",
+        "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146": "schedule dates were not cleared"
+      },
+      "fingerprint": "8ba1f527c897039cf754db9151cfa79e0db772522b41452bc5c7c1d9fdf765d3"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-14T07:36:14.751Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146|TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 2026/10/14 16:36:13 INFO request method=GET path=/api/admin/growth/postcards status=200 duration=5.034083ms bytes=46 handler_admin_growth_audit146_test.go:26: roleless postcard list status=200 body={\"items\":[],\"page\":1,\"pageSize\":20…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146 2026/10/14 16:36:13 INFO request method=PATCH path=/api/admin/growth/campaigns/72c5cbfb-32a0-4ce1-bb49-333de2f4fc55 status=200 duration=7.031792ms bytes=706 2026/10/14 16:36:13 INFO request method=POST path=/api/admin/growth/campaign…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 handler_admin_growth_audit146_test.go:340: detail status=404 body={\"error\":\"campaign not found\"} ; want 500 for database failure --- FAIL: TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 (…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146 handler_admin_growth_audit146_test.go:283: default free-plan learner was omitted: got total=2, want 1 --- FAIL: TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146 (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146 2026/10/14 16:36:13 INFO request method=PATCH path=/api/admin/growth/campaigns/69a03dd0-a0d6-4198-8b01-1dfdf1821fa3 status=400 duration=3.628708ms bytes=53 handler_admin_growth_audit146_test.go:223: schedule dates were not cleared: stat…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146": "roleless postcard list status=",
+        "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146": "mutations without an audit reason must be rejected",
+        "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146": "want 500 for database failure",
+        "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146": "default free-plan learner was omitted",
+        "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146": "schedule dates were not cleared"
+      },
+      "fingerprint": "89dd2f0355c2e4e10fcf1b597509ef3da237ce9649c4aaad4e6d524186e7245e"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-14T07:37:05.779Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146|TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "6f0165c18cb646626038806ad094906284c033928275b0255bbb48af8791b4ed"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-14T07:43:07.960Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 801,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "6f0165c18cb646626038806ad094906284c033928275b0255bbb48af8791b4ed"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-14T07:46:36.698Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 946,
+        "executed": 946,
+        "passed": 946,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "946 passed, 0 allowed skip(s)",
+      "fingerprint": "6f0165c18cb646626038806ad094906284c033928275b0255bbb48af8791b4ed"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-14T07:49:03.604Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 1,
+      "fingerprint": "b9352d124a4e8eb745c6ac81094e91ce74a7b8b2e2729b99335eaad080944d87"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-14T07:50:31.726Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 1,
+      "fingerprint": "0268ed0f724e3e7ff7518549e4b5fd3fb3ab76c1623214cb88eba769ad1fec95"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-14T07:51:21.966Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 1,
+      "fingerprint": "71dec2e0178c4540f038214fed9d92f931510beca314a2a9dea9522ab5984f36"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-14T07:52:07.499Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 1,
+      "fingerprint": "6f5c90465721bf2cf2ac33e84fb3485596a9fcf1932abcfe22dd64f5b5e32896"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-14T07:53:23.893Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 1,
+      "fingerprint": "4bf5717a9a1b020821b5a6349bbaf898cd418f206e342c231d1127ea1037ea76"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-14T07:54:50.094Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146|TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146|TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 2026/10/14 16:54:48 INFO request method=GET path=/api/admin/growth/postcards status=200 duration=4.246167ms bytes=46 handler_admin_growth_audit146_test.go:32: roleless postcard list status=200 body={\"items\":[],\"page\":1,\"pageSize\":20…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146 2026/10/14 16:54:48 INFO request method=PATCH path=/api/admin/growth/campaigns/f8792037-1baf-48dd-affa-d7f90f49d8e1 status=200 duration=7.800125ms bytes=706 2026/10/14 16:54:48 INFO request method=POST path=/api/admin/growth/campaign…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 handler_admin_growth_audit146_test.go:346: detail status=404 body={\"error\":\"campaign not found\"} ; want 500 for database failure --- FAIL: TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 (…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146 handler_admin_growth_audit146_test.go:289: default free-plan learner was omitted: got total=2, want 1 --- FAIL: TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146 (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146 2026/10/14 16:54:48 INFO request method=PATCH path=/api/admin/growth/campaigns/b550b025-6c80-486c-95f1-ce0b032bf246 status=400 duration=4.89ms bytes=53 handler_admin_growth_audit146_test.go:229: schedule dates were not cleared: status=4…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146 handler_admin_growth_audit146_test.go:16: anonymized is a supported template privacy class: invalid privacy class: anonymized --- FAIL: TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146 (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146": "roleless postcard list status=",
+        "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146": "mutations without an audit reason must be rejected",
+        "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146": "want 500 for database failure",
+        "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146": "default free-plan learner was omitted",
+        "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146": "schedule dates were not cleared",
+        "go:./internal/httpserver:TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146": "anonymized is a supported template privacy class"
+      },
+      "fingerprint": "c69295d8293a0752d9672cffd85ecfe01ab0dea0f5e2aa3a8992023f24504997"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-14T07:55:17.267Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146|TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146|TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f660accba2a6f3cf6d68c621ade38ac8f53324b5b0939ab737d0168461e07277"
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-14T07:57:46.604Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 1,
+      "fingerprint": "f660accba2a6f3cf6d68c621ade38ac8f53324b5b0939ab737d0168461e07277"
+    },
+    {
+      "seq": 35,
+      "at": "2026-10-14T07:58:47.762Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146|TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146|TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146|TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 2026/10/14 16:58:46 INFO request method=GET path=/api/admin/growth/postcards status=200 duration=3.975959ms bytes=46 handler_admin_growth_audit146_test.go:44: roleless postcard list status=200 body={\"items\":[],\"page\":1,\"pageSize\":20…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146 2026/10/14 16:58:46 INFO request method=PATCH path=/api/admin/growth/campaigns/9c141185-aca8-46f5-8459-afceac088e60 status=200 duration=7.36425ms bytes=706 2026/10/14 16:58:46 INFO request method=POST path=/api/admin/growth/campaigns…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 handler_admin_growth_audit146_test.go:358: detail status=404 body={\"error\":\"campaign not found\"} ; want 500 for database failure --- FAIL: TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 (…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146 handler_admin_growth_audit146_test.go:301: default free-plan learner was omitted: got total=2, want 1 --- FAIL: TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146 (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146 2026/10/14 16:58:46 INFO request method=PATCH path=/api/admin/growth/campaigns/a248ccb0-d4a7-4fa1-a520-6a77a78ee54e status=400 duration=4.073208ms bytes=53 handler_admin_growth_audit146_test.go:241: schedule dates were not cleared: stat…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146 handler_admin_growth_audit146_test.go:16: anonymized is a supported template privacy class: invalid privacy class: anonymized --- FAIL: TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146 (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146 handler_admin_growth_audit146_test.go:27: postcard API does not accept UI kind: streak --- FAIL: TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146 (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146": "roleless postcard list status=",
+        "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146": "mutations without an audit reason must be rejected",
+        "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146": "want 500 for database failure",
+        "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146": "default free-plan learner was omitted",
+        "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146": "schedule dates were not cleared",
+        "go:./internal/httpserver:TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146": "anonymized is a supported template privacy class",
+        "go:./internal/httpserver:TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146": "postcard API does not accept UI kind"
+      },
+      "fingerprint": "78bc9756eeabc87fbb0a31ee131291eec7e40ec7c4cebc445acf0835f0fe4cf3"
+    },
+    {
+      "seq": 36,
+      "at": "2026-10-14T07:59:15.514Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146|TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146|TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146|TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c533e82d0a0c981a029af5a6a31baedaf9f54e13e7983026161aff9565c0da09"
+    },
+    {
+      "seq": 37,
+      "at": "2026-10-14T08:01:13.823Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 1,
+      "fingerprint": "c533e82d0a0c981a029af5a6a31baedaf9f54e13e7983026161aff9565c0da09"
+    },
+    {
+      "seq": 38,
+      "at": "2026-10-14T08:03:29.048Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 1,
+      "fingerprint": "42fc31e3f54b87ba5cd8e3d3ccce884a83dca66421f0682c3a94819348f64861"
+    },
+    {
+      "seq": 39,
+      "at": "2026-10-14T08:04:36.621Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 0,
+      "fingerprint": "8a7651ae06bf1d8e5dbb8c9e579d42aab2fb1f74e206780942b1230aaeaf426f"
+    },
+    {
+      "seq": 40,
+      "at": "2026-10-14T08:08:21.437Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 948,
+        "executed": 948,
+        "passed": 948,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "948 passed, 0 allowed skip(s)",
+      "fingerprint": "8a7651ae06bf1d8e5dbb8c9e579d42aab2fb1f74e206780942b1230aaeaf426f"
+    },
+    {
+      "seq": 41,
+      "at": "2026-10-14T08:11:00.866Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146|TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146|TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146|TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146|TestAdminGrowthCampaignTransitionRulesAUDIT146|TestValidateGrowthPostcardConfigAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_audit146_test.go:37:11: undefined: validateGrowthCampaignTransition internal/httpserver/handler_admin_growth_audit146_test.go:51…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_audit146_test.go:37:11: undefined: validateGrowthCampaignTransition internal/httpserver/handler_admin_growth_audit146_test.go:51…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_audit146_test.go:37:11: undefined: validateGrowthCampaignTransition internal/httpserver/handler_admin_growth_audit146_test.go:51…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_audit146_test.go:37:11: undefined: validateGrowthCampaignTransition internal/httpserver/handler_admin_growth_audit146_test.go:51…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_audit146_test.go:37:11: undefined: validateGrowthCampaignTransition internal/httpserver/handler_admin_growth_audit146_test.go:51…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_audit146_test.go:37:11: undefined: validateGrowthCampaignTransition internal/httpserver/handler_admin_growth_audit146_test.go:51…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_audit146_test.go:37:11: undefined: validateGrowthCampaignTransition internal/httpserver/handler_admin_growth_audit146_test.go:51…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignTransitionRulesAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_audit146_test.go:37:11: undefined: validateGrowthCampaignTransition internal/httpserver/handler_admin_growth_audit146_test.go:51…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestValidateGrowthPostcardConfigAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_audit146_test.go:37:11: undefined: validateGrowthCampaignTransition internal/httpserver/handler_admin_growth_audit146_test.go:51…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146": "roleless postcard list status=",
+        "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146": "mutations without an audit reason must be rejected",
+        "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146": "want 500 for database failure",
+        "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146": "default free-plan learner was omitted",
+        "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146": "schedule dates were not cleared",
+        "go:./internal/httpserver:TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146": "anonymized is a supported template privacy class",
+        "go:./internal/httpserver:TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146": "postcard API does not accept UI kind",
+        "go:./internal/httpserver:TestAdminGrowthCampaignTransitionRulesAUDIT146": "undefined: validateGrowthCampaignTransition",
+        "go:./internal/httpserver:TestValidateGrowthPostcardConfigAUDIT146": "undefined: validateGrowthPostcardConfig"
+      },
+      "fingerprint": "5b7e4a9cf23fe6a4dd092c6e4a7a882a11f451b0cc5d8e52e4ab97b98579ac78"
+    },
+    {
+      "seq": 42,
+      "at": "2026-10-14T08:11:23.213Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146|TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146|TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146|TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146|TestAdminGrowthCampaignTransitionRulesAUDIT146|TestValidateGrowthPostcardConfigAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_audit146_test.go:37:11: undefined: validateGrowthCampaignTransition internal/httpserver/handler_admin_growth_audit146_test.go:51…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_audit146_test.go:37:11: undefined: validateGrowthCampaignTransition internal/httpserver/handler_admin_growth_audit146_test.go:51…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_audit146_test.go:37:11: undefined: validateGrowthCampaignTransition internal/httpserver/handler_admin_growth_audit146_test.go:51…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_audit146_test.go:37:11: undefined: validateGrowthCampaignTransition internal/httpserver/handler_admin_growth_audit146_test.go:51…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_audit146_test.go:37:11: undefined: validateGrowthCampaignTransition internal/httpserver/handler_admin_growth_audit146_test.go:51…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_audit146_test.go:37:11: undefined: validateGrowthCampaignTransition internal/httpserver/handler_admin_growth_audit146_test.go:51…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_audit146_test.go:37:11: undefined: validateGrowthCampaignTransition internal/httpserver/handler_admin_growth_audit146_test.go:51…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignTransitionRulesAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_audit146_test.go:37:11: undefined: validateGrowthCampaignTransition internal/httpserver/handler_admin_growth_audit146_test.go:51…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestValidateGrowthPostcardConfigAUDIT146",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_growth_audit146_test.go:37:11: undefined: validateGrowthCampaignTransition internal/httpserver/handler_admin_growth_audit146_test.go:51…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146": "roleless postcard list status=",
+        "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146": "mutations without an audit reason must be rejected",
+        "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146": "want 500 for database failure",
+        "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146": "default free-plan learner was omitted",
+        "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146": "schedule dates were not cleared",
+        "go:./internal/httpserver:TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146": "anonymized is a supported template privacy class",
+        "go:./internal/httpserver:TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146": "postcard API does not accept UI kind",
+        "go:./internal/httpserver:TestAdminGrowthCampaignTransitionRulesAUDIT146": "transition archived -> active",
+        "go:./internal/httpserver:TestValidateGrowthPostcardConfigAUDIT146": "invalid config accepted"
+      },
+      "fingerprint": "2937440121df2d194f8f6e0e2460f1052fa37cf992e7104900ee18968ca712e0"
+    },
+    {
+      "seq": 43,
+      "at": "2026-10-14T08:12:24.178Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146|TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146|TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146|TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146|TestAdminGrowthCampaignTransitionRulesAUDIT146|TestValidateGrowthPostcardConfigAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146 2026/10/14 17:12:22 INFO request method=GET path=/api/admin/growth/postcards status=200 duration=3.71975ms bytes=46 handler_admin_growth_audit146_test.go:103: roleless postcard list status=200 body={\"items\":[],\"page\":1,\"pageSize\":20…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146 2026/10/14 17:12:22 INFO request method=PATCH path=/api/admin/growth/campaigns/e078b72e-f4ff-4e7f-8b89-63e5ff1fa8cf status=200 duration=6.426125ms bytes=706 2026/10/14 17:12:22 INFO request method=POST path=/api/admin/growth/campaign…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 handler_admin_growth_audit146_test.go:417: detail status=404 body={\"error\":\"campaign not found\"} ; want 500 for database failure --- FAIL: TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146 (…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146 handler_admin_growth_audit146_test.go:360: default free-plan learner was omitted: got total=2, want 1 --- FAIL: TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146 (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146 2026/10/14 17:12:22 INFO request method=PATCH path=/api/admin/growth/campaigns/0181da33-4d1a-43f1-b111-f36695243e33 status=400 duration=3.246334ms bytes=53 handler_admin_growth_audit146_test.go:300: schedule dates were not cleared: stat…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146 handler_admin_growth_audit146_test.go:75: anonymized is a supported template privacy class: invalid privacy class: anonymized --- FAIL: TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146 (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146 handler_admin_growth_audit146_test.go:86: postcard API does not accept UI kind: streak --- FAIL: TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146 (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignTransitionRulesAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminGrowthCampaignTransitionRulesAUDIT146 2026/10/14 17:12:22 INFO request method=POST path=/api/admin/growth/campaigns/e6b61c9c-fcff-4cef-a321-bd1ee611a772/activate status=200 duration=10.962042ms bytes=676 handler_admin_growth_audit146_test.go:36: archived campaign activate status=200…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestValidateGrowthPostcardConfigAUDIT146",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestValidateGrowthPostcardConfigAUDIT146 2026/10/14 17:12:22 INFO request method=POST path=/api/admin/growth/postcards status=400 duration=1.730708ms bytes=46 2026/10/14 17:12:22 INFO request method=POST path=/api/admin/growth/postcards status=400 duration=759.334µs bytes=46 2026/10/14 17:12…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146": "roleless postcard list status=",
+        "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146": "mutations without an audit reason must be rejected",
+        "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146": "want 500 for database failure",
+        "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146": "default free-plan learner was omitted",
+        "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146": "schedule dates were not cleared",
+        "go:./internal/httpserver:TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146": "anonymized is a supported template privacy class",
+        "go:./internal/httpserver:TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146": "postcard API does not accept UI kind",
+        "go:./internal/httpserver:TestAdminGrowthCampaignTransitionRulesAUDIT146": "archived campaign activate status=",
+        "go:./internal/httpserver:TestValidateGrowthPostcardConfigAUDIT146": "invalid postcard config accepted"
+      },
+      "fingerprint": "3c8645b2ad97c3c43a1c9e4da60d651d8b7e1c61959ebd6ff019b2741ec272fb"
+    },
+    {
+      "seq": 44,
+      "at": "2026-10-14T08:13:54.337Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146|TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146|TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146|TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146|TestAdminGrowthCampaignTransitionRulesAUDIT146|TestValidateGrowthPostcardConfigAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignTransitionRulesAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestValidateGrowthPostcardConfigAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "6482b138f6bde63832f3943fbc28d297f4f4aba934ed1b4e3ac58dd898ebdf3c"
+    },
+    {
+      "seq": 45,
+      "at": "2026-10-14T08:16:25.989Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 1,
+      "fingerprint": "6482b138f6bde63832f3943fbc28d297f4f4aba934ed1b4e3ac58dd898ebdf3c"
+    },
+    {
+      "seq": 46,
+      "at": "2026-10-14T08:16:43.953Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 1,
+      "fingerprint": "af9aa0260c1f2f14d3482b5f133c92a6abfec811283bc5996312d077a16d028a"
+    },
+    {
+      "seq": 47,
+      "at": "2026-10-14T08:17:09.191Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 1,
+      "fingerprint": "322056a60ea9baeada0554052d41303ff2fde000bb2906114a690535e123c958"
+    },
+    {
+      "seq": 48,
+      "at": "2026-10-14T08:17:28.809Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 1,
+      "fingerprint": "915b20ff7d968cd087850624e17b36943d63c4cfc693a662f1819a95871241ab"
+    },
+    {
+      "seq": 49,
+      "at": "2026-10-14T08:18:03.213Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 1,
+      "fingerprint": "915b20ff7d968cd087850624e17b36943d63c4cfc693a662f1819a95871241ab"
+    },
+    {
+      "seq": 50,
+      "at": "2026-10-14T08:18:21.312Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 1,
+      "fingerprint": "3912d489453e584398ea1b33da18b472316797238444477a9634f58b642e97d9"
+    },
+    {
+      "seq": 51,
+      "at": "2026-10-14T08:19:25.460Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 1,
+      "fingerprint": "b5991d1ac75e8f20d7a769680a7c321b881e497357d640401bf47ab15cf8c31a"
+    },
+    {
+      "seq": 52,
+      "at": "2026-10-14T08:20:15.695Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 1,
+      "fingerprint": "a5d1fae3f77475e6294b2b2cf2a4929969174bb696d30478bf4eba0d2757ce41"
+    },
+    {
+      "seq": 53,
+      "at": "2026-10-14T08:20:30.386Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 1,
+      "fingerprint": "b8f13645f4024d421eb17d603ac862acdcc2eb49bc2faf0f0614ade77188d64b"
+    },
+    {
+      "seq": 54,
+      "at": "2026-10-14T08:54:30.302Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146|TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146|TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146|TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146|TestAdminGrowthCampaignTransitionRulesAUDIT146|TestValidateGrowthPostcardConfigAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignTransitionRulesAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestValidateGrowthPostcardConfigAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "b8f13645f4024d421eb17d603ac862acdcc2eb49bc2faf0f0614ade77188d64b"
+    },
+    {
+      "seq": 55,
+      "at": "2026-10-14T08:55:25.056Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 950,
+        "executed": 948,
+        "passed": 946,
+        "failed": 2,
+        "skipped": 2,
+        "expected_skips": 0,
+        "unexpected_skips": 2,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 2 failing test(s), 1 failing package(s))",
+      "fingerprint": "b8f13645f4024d421eb17d603ac862acdcc2eb49bc2faf0f0614ade77188d64b"
+    },
+    {
+      "seq": 56,
+      "at": "2026-10-14T08:59:04.274Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146|TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146|TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146|TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146|TestAdminGrowthCampaignTransitionRulesAUDIT146|TestValidateGrowthPostcardConfigAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignTransitionRulesAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestValidateGrowthPostcardConfigAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "5f8f82a82a6b121464f5c0cffd6d864be9ed08a767114f566f3a1c280e50fb6a"
+    },
+    {
+      "seq": 57,
+      "at": "2026-10-14T08:59:56.049Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 950,
+        "executed": 948,
+        "passed": 948,
+        "failed": 0,
+        "skipped": 2,
+        "expected_skips": 0,
+        "unexpected_skips": 2,
+        "min_passed_tests": 431
+      },
+      "message": "2 test(s) skipped that are not in go-test-skips-baseline.json — skipped tests are not verification",
+      "fingerprint": "5f8f82a82a6b121464f5c0cffd6d864be9ed08a767114f566f3a1c280e50fb6a"
+    },
+    {
+      "seq": 58,
+      "at": "2026-10-14T09:05:39.417Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 801,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "5f8f82a82a6b121464f5c0cffd6d864be9ed08a767114f566f3a1c280e50fb6a"
+    },
+    {
+      "seq": 59,
+      "at": "2026-10-14T09:09:25.225Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 950,
+        "executed": 950,
+        "passed": 950,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "950 passed, 0 allowed skip(s)",
+      "fingerprint": "5f8f82a82a6b121464f5c0cffd6d864be9ed08a767114f566f3a1c280e50fb6a"
+    },
+    {
+      "seq": 60,
+      "at": "2026-10-14T09:18:12.197Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 950,
+        "executed": 950,
+        "passed": 950,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "950 passed, 0 allowed skip(s)",
+      "fingerprint": "5f8f82a82a6b121464f5c0cffd6d864be9ed08a767114f566f3a1c280e50fb6a"
+    },
+    {
+      "seq": 61,
+      "at": "2026-10-14T09:23:06.665Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 801,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "5f8f82a82a6b121464f5c0cffd6d864be9ed08a767114f566f3a1c280e50fb6a"
+    },
+    {
+      "seq": 62,
+      "at": "2026-10-14T09:24:05.912Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 1,
+      "fingerprint": "5f8f82a82a6b121464f5c0cffd6d864be9ed08a767114f566f3a1c280e50fb6a"
+    },
+    {
+      "seq": 63,
+      "at": "2026-10-14T09:24:36.069Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 0,
+      "fingerprint": "f9671cee41f7b951fee76d6795e1cc3e48f6d996cf074132a0a0f05ac33eb09e"
+    },
+    {
+      "seq": 64,
+      "at": "2026-10-14T09:24:53.194Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146|TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146|TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146|TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146|TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146|TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146|TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146|TestAdminGrowthCampaignTransitionRulesAUDIT146|TestValidateGrowthPostcardConfigAUDIT146)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthPostcardsRequireGrowthReadPermissionAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignMutationsRequireAuditReasonAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignDetailReturnsServerErrorWhenDatabaseIsClosedAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthAudienceEstimateDefaultsNoSubscriptionToFreeAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignPatchClearsScheduleDatesAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardPrivacyClassAcceptsAnonymizedAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestGrowthPostcardKindsIncludeAdminFormOptionsAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminGrowthCampaignTransitionRulesAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestValidateGrowthPostcardConfigAUDIT146",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f9671cee41f7b951fee76d6795e1cc3e48f6d996cf074132a0a0f05ac33eb09e"
+    },
+    {
+      "seq": 65,
+      "at": "2026-10-14T09:27:49.359Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 950,
+        "executed": 950,
+        "passed": 950,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "950 passed, 0 allowed skip(s)",
+      "fingerprint": "f9671cee41f7b951fee76d6795e1cc3e48f6d996cf074132a0a0f05ac33eb09e"
+    },
+    {
+      "seq": 66,
+      "at": "2026-10-14T09:32:36.199Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 801,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "f9671cee41f7b951fee76d6795e1cc3e48f6d996cf074132a0a0f05ac33eb09e"
+    },
+    {
+      "seq": 67,
+      "at": "2026-10-14T09:33:05.489Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit146-admin-growth-campaigns-postcards.mjs",
+      "exit_code": 0,
+      "fingerprint": "f9671cee41f7b951fee76d6795e1cc3e48f6d996cf074132a0a0f05ac33eb09e"
+    },
+    {
+      "seq": 68,
+      "at": "2026-10-14T09:40:21.482Z",
+      "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude-fresh-reviewer-146",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "a9abb0b18961d1fec8ea975c3c670897d38507b102514b3be5ffb6ee5c0ee77b",
+      "attested": true,
+      "fingerprint": "f9671cee41f7b951fee76d6795e1cc3e48f6d996cf074132a0a0f05ac33eb09e"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-14T09:40:31.520Z",
+    "head": "ba2bf9e5222c106c8e441ad96ca37287f6fcf864",
+    "fingerprint": "f9671cee41f7b951fee76d6795e1cc3e48f6d996cf074132a0a0f05ac33eb09e",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/admin/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+      "apps/admin/app/[locale]/growth/campaigns/growth-campaigns-client.tsx": "7b5b5d8635529bac3e6875c0e4c292f8fba481f3",
+      "apps/admin/app/[locale]/growth/postcards/growth-postcards-client.tsx": "47cfe45c3105e6743d4bcdecc4e34a3ebfd49fa6",
+      "apps/admin/package.json": "fc6d51b82579dbb995c92e96b0691f7d7aaca769",
+      "apps/api-go/internal/httpserver/handler_admin_growth_audit146_test.go": "48c114a2ed3c749ac8f2c9ba5a529a4c3c385652",
+      "apps/api-go/internal/httpserver/handler_admin_growth_campaigns.go": "01989e435dc4719c2a3ab1d7a30c0e3ecc1cedcf",
+      "apps/api-go/internal/httpserver/handler_admin_growth_postcards.go": "1fed836b9229df844bc9def7db6d089ea93b0cc5",
+      "apps/api-go/internal/httpserver/server.go": "0f4cc73daefaec07991bb86e33785d50634f9c3a",
+      "apps/web/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+      "apps/web/package.json": "eb14ac07265f8369bc303b19ab1c2d8342c8e221",
+      "docs/openapi.json": "e55b79db9e38aa4888034cfa556fd3b2e851c40c",
+      "e2e/audit/audit146-admin-growth-campaigns-postcards.mjs": "2d28715e836b3c4b127900b7b3b616006db9058b",
+      "package.json": "1f7a4100cac69dd47293b6fecdec2b5ee04e43a7",
+      "pnpm-lock.yaml": "f68b44e91d543c6425b7a322830104e1568c90d9"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

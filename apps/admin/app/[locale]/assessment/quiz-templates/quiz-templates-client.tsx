@@ -27,6 +27,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { isQuizTemplateDeletable } from "@/lib/quiz-template-admin-utils";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 import { AdminAutoFill } from "@/app/_components/admin-auto-fill";
 import { useFormErrors, parseApiError, validateFields, validators } from "@/lib/form-errors";
@@ -379,7 +380,7 @@ export function QuizTemplatesAdminClient({ common, labels, locale }: { common: C
                   {detail.status !== "published" ? <button className="rounded bg-emerald-600 px-3 py-1 text-sm text-white" onClick={() => { setReason(""); fe.clearFieldError("reason"); setConfirm("publish"); }} type="button">{t("publish")}</button> : null}
                   {detail.status !== "archived" ? <button className="rounded border border-slate-300 px-3 py-1 text-sm" onClick={() => { setReason(""); fe.clearFieldError("reason"); setConfirm("archive"); }} type="button">{t("archive")}</button> : null}
                   <button className="rounded border border-slate-300 px-3 py-1 text-sm" onClick={() => { setReason(""); fe.clearFieldError("reason"); setConfirm("duplicate"); }} type="button">{t("duplicate")}</button>
-                  <button className="rounded border border-red-300 px-3 py-1 text-sm text-red-700" onClick={() => { setReason(""); fe.clearFieldError("reason"); setConfirm("delete"); }} type="button">{t("delete")}</button>
+                  {isQuizTemplateDeletable(detail.status) ? <button className="rounded border border-red-300 px-3 py-1 text-sm text-red-700" onClick={() => { setReason(""); fe.clearFieldError("reason"); setConfirm("delete"); }} type="button">{t("delete")}</button> : null}
                 </div>
               ) : null}
               {(() => {

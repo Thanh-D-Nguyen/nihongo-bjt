@@ -1,0 +1,18 @@
+{$OCI_PUBLIC_HOST} {
+	encode zstd gzip
+	@recovery path /api/auth/forgot-password /api/auth/reset-password
+	handle @recovery {
+		reverse_proxy web:3000
+	}
+	@backend path /api /api/* /ws/* /health /health/*
+	handle @backend {
+		reverse_proxy api:4001
+	}
+	@admin path /admin /admin/*
+	handle @admin {
+		reverse_proxy admin:3001
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+}

@@ -12,6 +12,23 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/placement"
 )
 
+func placementOnboardingStatusHandler(store *placement.Store, logger *slog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		identity, ok := authn.GetLearnerIdentity(r.Context())
+		if !ok {
+			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		state, err := store.GetOnboardingState(r.Context(), identity.UserID)
+		if err != nil {
+			logger.Error("get learner onboarding state", "error", err, "user_id", identity.UserID)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		writeJSON(w, http.StatusOK, state)
+	}
+}
+
 // startPlacementHandler implements POST /api/learner/placement/start.
 // Creates or resumes an in-progress placement session for the authenticated learner.
 func startPlacementHandler(store *placement.Store, logger *slog.Logger) http.HandlerFunc {
@@ -30,12 +47,19 @@ func startPlacementHandler(store *placement.Store, logger *slog.Logger) http.Han
 			return
 		}
 		if existing != nil {
+			questions, err := store.LoadQuestions(r.Context(), existing.QuestionIDs)
+			if err != nil {
+				logger.Error("load active placement questions", "error", err, "user_id", identity.UserID)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			_ = json.NewEncoder(w).Encode(placement.StartResponse{
 				SessionID:   existing.ID,
 				QuestionIDs: existing.QuestionIDs,
 				Status:      existing.Status,
+				Questions:   questions,
 			})
 			return
 		}
@@ -49,6 +73,12 @@ func startPlacementHandler(store *placement.Store, logger *slog.Logger) http.Han
 		}
 		if len(pool) == 0 {
 			writeJSONError(w, "No published BJT questions available for placement", http.StatusBadRequest)
+			return
+		}
+		questions, err := store.LoadQuestions(r.Context(), pool)
+		if err != nil {
+			logger.Error("load placement questions", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 
@@ -67,6 +97,7 @@ func startPlacementHandler(store *placement.Store, logger *slog.Logger) http.Han
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+		resp.Questions = questions
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -123,21 +154,17 @@ func submitPlacementHandler(store *placement.Store, logger *slog.Logger) http.Ha
 			return
 		}
 
-		// Validate all questions have answers
-		for _, qid := range session.QuestionIDs {
-			if _, ok := req.Answers[qid]; !ok {
-				writeJSONError(w, "Missing answer for question "+qid, http.StatusBadRequest)
-				return
-			}
+		correctCount, err := store.ScoreAnswers(r.Context(), req.SessionID, identity.UserID, req.Answers)
+		if errors.Is(err, placement.ErrInvalidAnswer) {
+			writeJSONError(w, "answers must include a valid option for every question", http.StatusBadRequest)
+			return
 		}
-
-		// Score: count correct answers (simplified — real scoring would compare against correct option IDs from DB)
-		// For now, estimate band based on correct ratio. Full scoring requires loading question options.
-		correctCount := 0
+		if err != nil {
+			logger.Error("score placement answers", "error", err, "session_id", req.SessionID)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		total := len(session.QuestionIDs)
-		// TODO: Load correct answers from assessment.bjt_question.options and compare
-		// Placeholder scoring: assume 50% correct for band estimation until full scoring is implemented
-		correctCount = total / 2
 		band := estimateBjtBand(correctCount, total)
 
 		resp, err := store.CompleteSession(r.Context(), req.SessionID, identity.UserID, correctCount, band)

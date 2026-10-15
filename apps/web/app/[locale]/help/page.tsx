@@ -49,7 +49,7 @@ export default async function HelpPage({
               className="group rounded-xl border border-ink/10 bg-white p-4"
               key={i}
             >
-              <summary className="cursor-pointer font-medium text-ink">
+              <summary className="min-h-12 cursor-pointer py-3 font-medium text-ink">
                 {faq.q}
               </summary>
               <p className="mt-2 text-sm text-muted">{faq.a}</p>
@@ -62,7 +62,7 @@ export default async function HelpPage({
         <h2 className="text-lg font-semibold text-ink">{t.contactTitle}</h2>
         <p className="mt-1 text-sm text-muted">{t.contactDesc}</p>
         <Link
-          className="mt-3 inline-block rounded-lg bg-leaf px-4 py-2 text-sm font-medium text-white hover:bg-leaf/90"
+          className="mt-3 inline-flex min-h-12 items-center rounded-lg bg-leaf px-4 py-2 text-sm font-medium text-white hover:bg-leaf/90"
           href={`${base}/feedback`}
         >
           {t.contactLink}

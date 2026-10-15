@@ -9,11 +9,13 @@ interface LevelItem {
   code: string;
   nameJa: string;
   nameVi: string;
+  nameEn: string;
   scoreMin: number;
   scoreMax: number;
   jlptEquiv: string;
   descriptionVi: string;
   descriptionJa: string;
+  descriptionEn: string;
   color: string;
   vocabCount: number;
   kanjiCount: number;
@@ -38,13 +40,14 @@ interface Labels {
   grammar: string;
   loading: string;
   error: string;
-  readinessTitle?: string;
-  readinessSubtitle?: string;
-  readinessCta?: string;
-  completed?: string;
-  current?: string;
-  locked?: string;
-  skills?: string;
+  assessmentIntro: string;
+  assessmentCta: string;
+  readinessTitle: string;
+  readinessSubtitle: string;
+  readinessCta: string;
+  accuracyAcross: string;
+  noSessions: string;
+  analyticsError: string;
 }
 
 export function LevelsClient({ labels, locale }: { labels: Labels; locale: string }) {
@@ -53,6 +56,7 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
   const [error, setError] = useState(false);
   const [analytics, setAnalytics] = useState<LearnerAnalytics | null>(null);
   const [analyticsReady, setAnalyticsReady] = useState(false);
+  const [analyticsFailed, setAnalyticsFailed] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -71,8 +75,9 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
     void learnerApiFetchOptional("/api/analytics/learner?days=30")
       .then(async (r) => {
         if (r?.ok) setAnalytics(await r.json());
+        else if (r?.status !== 401) setAnalyticsFailed(true);
       })
-      .catch(() => {})
+      .catch(() => setAnalyticsFailed(true))
       .finally(() => setAnalyticsReady(true));
   }, []);
 
@@ -116,16 +121,16 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
       </div>
 
       {/* No-level-established notice — truthful neutral state */}
-      {!hasSessions && (
+      {!hasSessions && !analyticsFailed && (
         <div className="mb-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
           <p className="text-body text-muted">
-            Complete a BJT assessment to establish your current level and track your progress through the roadmap.
+            {labels.assessmentIntro}
           </p>
           <Link
             className="btn btn-primary btn-sm mt-4 inline-flex"
             href={`/${locale}/quiz`}
           >
-            Take Assessment
+            {labels.assessmentCta}
           </Link>
         </div>
       )}
@@ -141,6 +146,8 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
         <div className="space-y-0">
           {levels.map((lv, index) => {
             const isLast = index === levels.length - 1;
+            const name = locale === "ja" ? lv.nameJa : locale === "en" ? lv.nameEn : lv.nameVi;
+            const description = locale === "ja" ? lv.descriptionJa : locale === "en" ? lv.descriptionEn : lv.descriptionVi;
 
             return (
               <div
@@ -164,14 +171,14 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h2 className="text-h3 text-ink">{lv.code}</h2>
-                      <p className="text-body-sm mt-1 text-muted">{lv.nameVi}</p>
+                      <p className="text-body-sm mt-1 text-muted">{name}</p>
                     </div>
                     <span className="shrink-0 rounded-full bg-[var(--color-paper)] px-2.5 py-1 text-[10px] font-semibold tabular-nums text-muted ring-1 ring-[var(--color-border)]">
                       {lv.scoreMin}–{lv.scoreMax}
                     </span>
                   </div>
 
-                  <p className="text-body-sm mt-3 leading-relaxed text-muted">{lv.descriptionVi}</p>
+                  <p className="text-body-sm mt-3 leading-relaxed text-muted">{description}</p>
 
                   {/* Skill Chips */}
                   <div className="mt-3 flex flex-wrap gap-1.5">
@@ -194,9 +201,9 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
 
       {/* Mock Exam Readiness Panel — only shows real data or truthful neutral */}
       <div className="mt-10 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs sm:p-6">
-        <h3 className="text-h3 text-ink">{labels.readinessTitle ?? "Mock Exam Readiness"}</h3>
+        <h3 className="text-h3 text-ink">{labels.readinessTitle}</h3>
         <p className="text-body-sm mt-1 text-muted">
-          {labels.readinessSubtitle ?? "Based on recent performance"}
+          {labels.readinessSubtitle}
         </p>
 
         <div className="mt-4 flex items-baseline gap-3">
@@ -208,9 +215,11 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
             <div className="h-10 w-20 animate-pulse rounded bg-[var(--color-border)]" />
           )}
           <span className="text-body-sm text-muted">
-            {hasSessions
-              ? `accuracy across ${(analytics?.totals.completedBjtSessions ?? 0)} sessions`
-              : "No completed sessions yet"}
+            {analyticsFailed
+              ? labels.analyticsError
+              : hasSessions
+                ? labels.accuracyAcross.replace("{count}", String(analytics?.totals.completedBjtSessions ?? 0))
+                : labels.noSessions}
           </span>
         </div>
 
@@ -229,7 +238,7 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
           className="btn btn-primary btn-sm mt-5 inline-flex"
           href={`/${locale}/quiz`}
         >
-          {labels.readinessCta ?? "Take Mock Exam"}
+          {labels.readinessCta}
         </Link>
       </div>
     </div>

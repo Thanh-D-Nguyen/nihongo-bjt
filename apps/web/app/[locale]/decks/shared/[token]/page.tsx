@@ -3,7 +3,6 @@ import Link from "next/link";
 import { getServerApiBaseUrl } from "@/lib/server-api-url";
 
 interface DeckPreview {
-  id: string;
   titleVi: string;
   titleJa: string | null;
   descriptionVi: string | null;
@@ -22,7 +21,7 @@ async function fetchPreview(token: string): Promise<DeckPreview | null> {
   try {
     const res = await fetch(
       `${base}/api/public/decks/${encodeURIComponent(token)}`,
-      { next: { revalidate: 60 } }
+      { cache: "no-store" }
     );
     if (!res.ok) return null;
     return (await res.json()) as DeckPreview;

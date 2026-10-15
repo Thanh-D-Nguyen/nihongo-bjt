@@ -73,7 +73,7 @@ func uploadMediaHandler(
 		}
 
 		// Rate limit by IP.
-		peerIP := authn.NormalizePeerIP(r.RemoteAddr)
+		peerIP := requestClientIP(r)
 		ipKey := "ip:media-upload:" + peerIP
 		allowed, err := rateLimiter.Allow(ipKey)
 		if err != nil || !allowed {

@@ -1,0 +1,1368 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "HARNESS-001",
+  "title": "Hard engineering lifecycle harness (task state, VALID_RED replay, execution accounting, CI lifecycle gate)",
+  "start_head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+  "preexisting_changes": {
+    ".claude/settings.local.json": "b367e2649db3a56f8ea1f6a05e9d0dd998db4094",
+    ".claude/hooks/block-remote-local-write.sh": "3390f999b0672988fd76d74cd9dea26e6573ccef",
+    "e2e/oci-browser-check.mjs": "5d0124e5f0b3d5e3bc1e4ae5ae0322da3a99a643",
+    "apps/web/next-env.d.ts": "9edff1c7cacb3bfac9a1eadcf6f51eaa99565e38"
+  },
+  "spec": {
+    "problem": "Policy prose was not enforced: an agent could skip RED, claim VERIFIED with skipped/unexecuted tests, misclassify, weaken tests/baselines, or close work whose evidence did not match the merged code.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Machine-readable policy (docs/engineering/engineering-policy.json) derives required gates from classification + changed paths; paths force classes"
+      },
+      {
+        "id": "AC2",
+        "text": "Task lifecycle CLI (pnpm quality) records START_HEAD, spec, classification and harness-produced evidence in tasks/<ID>.json; close refuses unless every derived gate has evidence bound to the final content fingerprint"
+      },
+      {
+        "id": "AC3",
+        "text": "VALID_RED is machine evidence: target executed and failed with declared expect text against base production code; skips, compile/import failures, infra signatures and passing tests are rejected; CI replays RED/GREEN/sensitivity"
+      },
+      {
+        "id": "AC4",
+        "text": "Suites record execution accounting (executed/passed/failed/skipped/unexpected skips); missing accounting, zero executed, unexpected skips or tool failure never count as PASS"
+      },
+      {
+        "id": "AC5",
+        "text": "CI lifecycle job rejects unowned changes, misclassification, stale evidence, unclosed tasks, forbidden test/CI weakening and unacknowledged high-risk changes; quality-system invariants (deploy SHA, no continue-on-error, DB-backed Go gate) are checked"
+      },
+      {
+        "id": "AC6",
+        "text": "BLOCKED requires the blocker protocol incl. known in-process alternatives; a BLOCKED gate yields PARTIAL, never VERIFIED"
+      },
+      {
+        "id": "AC7",
+        "text": "Claude Code PreToolUse hook denies production writes before SPECIFIED/CLASSIFIED/VALID_RED and evidence tampering; limits documented honestly"
+      },
+      {
+        "id": "AC8",
+        "text": "Adversarial self-test suite proves each bypass class is caught"
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "CI_QUALITY_SYSTEM",
+      "INFRASTRUCTURE"
+    ],
+    "change_kind": "add",
+    "rationale": "Quality-system + deployment verification (deploy-gcp.yml release gate)"
+  },
+  "red_exception": {
+    "category": "new_component",
+    "reason": "The lifecycle harness is a new component: its tests import modules that do not exist at the base commit, so a RED would be a meaningless import failure. Sensitivity (mutation replay) + adversarial suite + independent review replace it.",
+    "declared_before_red": true
+  },
+  "red_targets": [],
+  "sensitivity": {
+    "mutation": {
+      "file": "scripts/quality/harness/lib/runners.mjs",
+      "find": "const sig = infraSignature(policy, r.output);",
+      "replace": "const sig = null;"
+    },
+    "targets": [
+      {
+        "runner": "vitest",
+        "file": "scripts/quality/harness/runners.test.ts",
+        "test": "RED judgement > accepts only an executed failure containing the expected text",
+        "expect": "expected true to be false"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [
+    {
+      "finding": "quality_swallowed_failure:scripts/quality/harness/lib/invariants.mjs",
+      "reason": "False positive by design: the line is the detector's own regex for '|| true' in workflows, not a swallowed failure."
+    },
+    {
+      "finding": "test_registration_changed:scripts/quality/harness/vitest.config.mjs",
+      "reason": "New dedicated config for the harness suite (allowOnly: false, passWithNoTests: false); run by verify-harness.sh in the CI lifecycle job."
+    },
+    {
+      "finding": "test_registration_changed:vitest.config.ts",
+      "reason": "Root config excludes scripts/quality/harness/** because those tests drive real git/go processes and run via verify-harness.sh (required-file list enforced); no existing test is removed from the root run."
+    }
+  ],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-02T07:28:40.735Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-02T07:28:42.314Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-02T07:28:43.813Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-02T08:20:10.282Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-02T08:22:55.756Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-02T08:29:42.233Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-02T08:37:33.689Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-02T08:43:03.001Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-02T08:48:18.397Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-02T09:19:15.924Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-02T09:24:30.108Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-02T09:40:57.799Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-02T09:48:37.615Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    },
+    {
+      "state": "EXCEPTION_APPROVED",
+      "at": "2026-10-02T12:30:41.130Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-02T13:37:53.990Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-02T13:59:20.251Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-02T14:12:19.846Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-02T14:12:38.609Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    },
+    {
+      "state": "EXCEPTION_APPROVED",
+      "at": "2026-10-02T14:14:44.844Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-02T14:14:48.811Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-02T07:52:31.957Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "scripts/quality/harness/lib/runners.mjs",
+        "find": "const sig = infraSignature(policy, r.output);",
+        "replace": "const sig = null;"
+      },
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/runners.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/runners.test.ts::RED judgement > accepts only an executed failure containing the expected text",
+          "outcome": "FAIL"
+        }
+      ],
+      "fingerprint": "18734519fa7729d94a84d24215e35851cbe5873a42bf794b1ef5a18f424f23e4"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-02T08:14:23.650Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 161,
+        "executed": 161,
+        "passed": 161,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "d8aad21d7f8c5583784bb2a4ba38cd4e4f94d4ba597ff7f917049cc0f8e9acca"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-02T08:16:37.121Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "d8aad21d7f8c5583784bb2a4ba38cd4e4f94d4ba597ff7f917049cc0f8e9acca"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-02T08:20:07.582Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 239,
+        "failed": 1,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 682,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "d8aad21d7f8c5583784bb2a4ba38cd4e4f94d4ba597ff7f917049cc0f8e9acca"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-02T08:24:00.630Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 163,
+        "executed": 163,
+        "passed": 163,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "d922a141dde610cb075259facaf3307080b7549a1c4e361769327fcaee7050b8"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-02T08:25:58.291Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "d922a141dde610cb075259facaf3307080b7549a1c4e361769327fcaee7050b8"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-02T08:29:03.566Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 239,
+        "failed": 1,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 682,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "d922a141dde610cb075259facaf3307080b7549a1c4e361769327fcaee7050b8"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-02T08:29:35.254Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "scripts/quality/harness/lib/runners.mjs",
+        "find": "const sig = infraSignature(policy, r.output);",
+        "replace": "const sig = null;"
+      },
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/runners.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/runners.test.ts::RED judgement > accepts only an executed failure containing the expected text",
+          "outcome": "FAIL"
+        }
+      ],
+      "fingerprint": "797e8e3619650fa4848cfa79760de1b0d740aa890bff3d212c7ad567518f26cd"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-02T08:29:39.620Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/runners.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/runners.test.ts::RED judgement > accepts only an executed failure containing the expected text",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "797e8e3619650fa4848cfa79760de1b0d740aa890bff3d212c7ad567518f26cd"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-02T08:29:42.915Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -c python3 -c \"import sys,yaml; [yaml.safe_load(open(f)) for f in sys.argv[1:]]; print(\\\"workflow YAML parses\\\")\" .github/workflows/ci.yml .github/workflows/deploy-gcp.yml && bash -n scripts/quality/verify-ci-passed.sh scripts/quality/verify-harness.sh .githooks/pre-push && node scripts/quality/harness/cli.mjs invariants",
+      "exit_code": 0,
+      "fingerprint": "797e8e3619650fa4848cfa79760de1b0d740aa890bff3d212c7ad567518f26cd"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-02T08:32:11.994Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 165,
+        "executed": 165,
+        "passed": 165,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "0c6b2029ca42290ea8bcd332e426874abe805a19922fd9c631bcb388417f0cff"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-02T08:34:08.984Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "0c6b2029ca42290ea8bcd332e426874abe805a19922fd9c631bcb388417f0cff"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-02T08:37:05.598Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 239,
+        "failed": 1,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 682,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "0c6b2029ca42290ea8bcd332e426874abe805a19922fd9c631bcb388417f0cff"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-02T08:37:22.739Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "scripts/quality/harness/lib/runners.mjs",
+        "find": "const sig = infraSignature(policy, r.output);",
+        "replace": "const sig = null;"
+      },
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/runners.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/runners.test.ts::RED judgement > accepts only an executed failure containing the expected text",
+          "outcome": "FAIL"
+        }
+      ],
+      "fingerprint": "0c6b2029ca42290ea8bcd332e426874abe805a19922fd9c631bcb388417f0cff"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-02T08:37:27.463Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/runners.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/runners.test.ts::RED judgement > accepts only an executed failure containing the expected text",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0c6b2029ca42290ea8bcd332e426874abe805a19922fd9c631bcb388417f0cff"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-02T08:37:30.853Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -c python3 -c \"import sys,yaml; [yaml.safe_load(open(f)) for f in sys.argv[1:]]; print(\\\"workflow YAML parses\\\")\" .github/workflows/ci.yml .github/workflows/deploy-gcp.yml && bash -n scripts/quality/verify-ci-passed.sh scripts/quality/verify-harness.sh .githooks/pre-push && node scripts/quality/harness/cli.mjs invariants",
+      "exit_code": 0,
+      "fingerprint": "0c6b2029ca42290ea8bcd332e426874abe805a19922fd9c631bcb388417f0cff"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-02T08:43:00.713Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 165,
+        "executed": 165,
+        "passed": 165,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "8a087a3c7311a2b6964a8293fde7348622d9f36e5593f8044d25f6b8b2a6e018"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-02T08:44:58.837Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "8a087a3c7311a2b6964a8293fde7348622d9f36e5593f8044d25f6b8b2a6e018"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-02T08:47:51.471Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 239,
+        "failed": 1,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 682,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "8a087a3c7311a2b6964a8293fde7348622d9f36e5593f8044d25f6b8b2a6e018"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-02T08:48:08.484Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "scripts/quality/harness/lib/runners.mjs",
+        "find": "const sig = infraSignature(policy, r.output);",
+        "replace": "const sig = null;"
+      },
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/runners.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/runners.test.ts::RED judgement > accepts only an executed failure containing the expected text",
+          "outcome": "FAIL"
+        }
+      ],
+      "fingerprint": "8a087a3c7311a2b6964a8293fde7348622d9f36e5593f8044d25f6b8b2a6e018"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-02T08:48:12.901Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/runners.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/runners.test.ts::RED judgement > accepts only an executed failure containing the expected text",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8a087a3c7311a2b6964a8293fde7348622d9f36e5593f8044d25f6b8b2a6e018"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-02T08:48:15.947Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -c python3 -c \"import sys,yaml; [yaml.safe_load(open(f)) for f in sys.argv[1:]]; print(\\\"workflow YAML parses\\\")\" .github/workflows/ci.yml .github/workflows/deploy-gcp.yml && bash -n scripts/quality/verify-ci-passed.sh scripts/quality/verify-harness.sh .githooks/pre-push && node scripts/quality/harness/cli.mjs invariants",
+      "exit_code": 0,
+      "fingerprint": "8a087a3c7311a2b6964a8293fde7348622d9f36e5593f8044d25f6b8b2a6e018"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-02T08:56:07.758Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude-code subagent a56d4478 (fresh context, read-only)",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 2,
+      "notes": "B1 self-approved review is the only gate for refactor/not_reproducible; B2 sensitivity mutation may target the test file; M3 CI unknown base fails open; M4 multi-task replay vs range base; M5 deletion/command/blocked evidence trusted; m6-m9",
+      "fingerprint": "8a087a3c7311a2b6964a8293fde7348622d9f36e5593f8044d25f6b8b2a6e018"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-02T09:19:13.565Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 175,
+        "executed": 175,
+        "passed": 175,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "edb95e0d6c9e784a502af1bd3d6fddbdc3af29a012d3bb332468c059bc144a0a"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-02T09:21:10.672Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "edb95e0d6c9e784a502af1bd3d6fddbdc3af29a012d3bb332468c059bc144a0a"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-02T09:24:02.245Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 239,
+        "failed": 1,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 682,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "edb95e0d6c9e784a502af1bd3d6fddbdc3af29a012d3bb332468c059bc144a0a"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-02T09:24:19.825Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "scripts/quality/harness/lib/runners.mjs",
+        "find": "const sig = infraSignature(policy, r.output);",
+        "replace": "const sig = null;"
+      },
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/runners.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/runners.test.ts::RED judgement > accepts only an executed failure containing the expected text",
+          "outcome": "FAIL"
+        }
+      ],
+      "fingerprint": "edb95e0d6c9e784a502af1bd3d6fddbdc3af29a012d3bb332468c059bc144a0a"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-02T09:24:24.256Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/runners.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/runners.test.ts::RED judgement > accepts only an executed failure containing the expected text",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "edb95e0d6c9e784a502af1bd3d6fddbdc3af29a012d3bb332468c059bc144a0a"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-02T09:24:27.576Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -c python3 -c \"import sys,yaml; [yaml.safe_load(open(f)) for f in sys.argv[1:]]; print(\\\"workflow YAML parses\\\")\" .github/workflows/ci.yml .github/workflows/deploy-gcp.yml && bash -n scripts/quality/verify-ci-passed.sh scripts/quality/verify-harness.sh .githooks/pre-push && node scripts/quality/harness/cli.mjs invariants",
+      "exit_code": 0,
+      "fingerprint": "edb95e0d6c9e784a502af1bd3d6fddbdc3af29a012d3bb332468c059bc144a0a"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-02T09:30:18.370Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude-code subagent a56d4478 (fresh context, read-only) re-review",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 0,
+      "notes": "0 blockers; majors: schema_only too wide, replay base for PRs behind main, crash-injection sensitivity, attested review (documented)",
+      "output_sha256": "f5a23b79c87dc6137b75fdb62ec83cb0a01b288c9ec219963c939f510ad9b70d",
+      "attested": true,
+      "fingerprint": "edb95e0d6c9e784a502af1bd3d6fddbdc3af29a012d3bb332468c059bc144a0a"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-02T09:40:55.352Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "scripts/quality/harness/lib/runners.mjs",
+        "find": "const sig = infraSignature(policy, r.output);",
+        "replace": "const sig = null;"
+      },
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/runners.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/runners.test.ts::RED judgement > accepts only an executed failure containing the expected text",
+          "outcome": "FAIL",
+          "excerpt": "expected true to be false // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/runners.test.ts::RED judgement > accepts only an executed failure containing the expected text": "expected true to be false"
+      },
+      "fingerprint": "bd48060102c5a3dae4d5032014565eb6423a5d6e7438a3da394104612c49ca6b"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-02T09:43:04.558Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 178,
+        "executed": 178,
+        "passed": 178,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "bd48060102c5a3dae4d5032014565eb6423a5d6e7438a3da394104612c49ca6b"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-02T09:45:16.789Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "bd48060102c5a3dae4d5032014565eb6423a5d6e7438a3da394104612c49ca6b"
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-02T09:48:12.178Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 239,
+        "failed": 1,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 682,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "bd48060102c5a3dae4d5032014565eb6423a5d6e7438a3da394104612c49ca6b"
+    },
+    {
+      "seq": 35,
+      "at": "2026-10-02T09:48:27.848Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "scripts/quality/harness/lib/runners.mjs",
+        "find": "const sig = infraSignature(policy, r.output);",
+        "replace": "const sig = null;"
+      },
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/runners.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/runners.test.ts::RED judgement > accepts only an executed failure containing the expected text",
+          "outcome": "FAIL",
+          "excerpt": "expected true to be false // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/runners.test.ts::RED judgement > accepts only an executed failure containing the expected text": "expected true to be false"
+      },
+      "fingerprint": "bd48060102c5a3dae4d5032014565eb6423a5d6e7438a3da394104612c49ca6b"
+    },
+    {
+      "seq": 36,
+      "at": "2026-10-02T09:48:32.100Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/runners.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/runners.test.ts::RED judgement > accepts only an executed failure containing the expected text",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "bd48060102c5a3dae4d5032014565eb6423a5d6e7438a3da394104612c49ca6b"
+    },
+    {
+      "seq": 37,
+      "at": "2026-10-02T09:48:35.282Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -c python3 -c \"import sys,yaml; [yaml.safe_load(open(f)) for f in sys.argv[1:]]; print(\\\"workflow YAML parses\\\")\" .github/workflows/ci.yml .github/workflows/deploy-gcp.yml && bash -n scripts/quality/verify-ci-passed.sh scripts/quality/verify-harness.sh .githooks/pre-push && node scripts/quality/harness/cli.mjs invariants",
+      "exit_code": 0,
+      "fingerprint": "bd48060102c5a3dae4d5032014565eb6423a5d6e7438a3da394104612c49ca6b"
+    },
+    {
+      "seq": 38,
+      "at": "2026-10-02T12:30:38.670Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude-code subagent a56d4478 (fresh context, read-only) round 3",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "0 blockers; attested gates documented as REVIEW/PLATFORM; minors: start_head choice, expect substring vs Go framing, abort regex",
+      "output_sha256": "ab82754808629cce061e4864cc069feb016da6ce6f4aaf2acdd70af6d35d59d5",
+      "attested": true,
+      "fingerprint": "bd48060102c5a3dae4d5032014565eb6423a5d6e7438a3da394104612c49ca6b"
+    },
+    {
+      "seq": 39,
+      "at": "2026-10-02T13:26:52.384Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 178,
+        "executed": 178,
+        "passed": 178,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "bd48060102c5a3dae4d5032014565eb6423a5d6e7438a3da394104612c49ca6b"
+    },
+    {
+      "seq": 40,
+      "at": "2026-10-02T13:28:49.389Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "bd48060102c5a3dae4d5032014565eb6423a5d6e7438a3da394104612c49ca6b"
+    },
+    {
+      "seq": 41,
+      "at": "2026-10-02T13:29:20.818Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 239,
+        "failed": 1,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 682,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "bd48060102c5a3dae4d5032014565eb6423a5d6e7438a3da394104612c49ca6b"
+    },
+    {
+      "seq": 42,
+      "at": "2026-10-02T13:31:09.085Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 239,
+        "failed": 1,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 707,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "bd48060102c5a3dae4d5032014565eb6423a5d6e7438a3da394104612c49ca6b"
+    },
+    {
+      "seq": 43,
+      "at": "2026-10-02T13:31:23.756Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -c python3 -c \"import yaml; from pathlib import Path; [yaml.safe_load(Path(f).read_text()) for f in [\\\".github/workflows/ci.yml\\\", \\\".github/workflows/deploy-gcp.yml\\\"]]; print(\\\"workflow YAML parses\\\")\" && bash -n scripts/quality/verify-ci-passed.sh scripts/quality/verify-harness.sh .githooks/pre-push && node scripts/quality/harness/cli.mjs invariants",
+      "exit_code": 0,
+      "fingerprint": "bd48060102c5a3dae4d5032014565eb6423a5d6e7438a3da394104612c49ca6b"
+    },
+    {
+      "seq": 44,
+      "at": "2026-10-02T13:37:51.567Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Codex independent agent Euler 01a0fcca-8074-7f72-81b6-4521041f2a17",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 4,
+      "notes": "Four independently reproduced P1 defects; original reviewed fingerprint bd48060102c5. Task remains open for surgical correction.",
+      "output_sha256": "75bec797d0ebe51b535424a118a2e7adaa49364333f86f7a76e8c67b961f5e40",
+      "attested": true,
+      "fingerprint": "bd48060102c5a3dae4d5032014565eb6423a5d6e7438a3da394104612c49ca6b"
+    },
+    {
+      "seq": 45,
+      "at": "2026-10-02T13:59:17.585Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 188,
+        "executed": 188,
+        "passed": 187,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "failed: scripts/quality/harness/lifecycle.e2e.test.ts > Case C — infrastructure failure pretending to be RED > rejects wrong failure reason and keeps the task in RED_REQUIRED",
+      "fingerprint": "00b8ac1f01a07ec7d6b084ce0f00023cd4e9062f4e020214da0d99babe5647f3"
+    },
+    {
+      "seq": 46,
+      "at": "2026-10-02T14:01:16.105Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "00b8ac1f01a07ec7d6b084ce0f00023cd4e9062f4e020214da0d99babe5647f3"
+    },
+    {
+      "seq": 47,
+      "at": "2026-10-02T14:05:07.225Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 189,
+        "executed": 189,
+        "passed": 189,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "8feb0c198e103360a1398d4836a9e21c5943a63d8f4a4f7d4fac5c51115398f0"
+    },
+    {
+      "seq": 48,
+      "at": "2026-10-02T14:07:04.274Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 437,
+        "executed": 431,
+        "passed": 431,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "431 passed, 6 allowed skip(s)",
+      "fingerprint": "8feb0c198e103360a1398d4836a9e21c5943a63d8f4a4f7d4fac5c51115398f0"
+    },
+    {
+      "seq": 49,
+      "at": "2026-10-02T14:07:36.139Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 239,
+        "failed": 1,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 682,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "8feb0c198e103360a1398d4836a9e21c5943a63d8f4a4f7d4fac5c51115398f0"
+    },
+    {
+      "seq": 50,
+      "at": "2026-10-02T14:11:45.440Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 240,
+        "executed": 240,
+        "passed": 239,
+        "failed": 1,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 707,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "8feb0c198e103360a1398d4836a9e21c5943a63d8f4a4f7d4fac5c51115398f0"
+    },
+    {
+      "seq": 51,
+      "at": "2026-10-02T14:12:05.768Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "scripts/quality/harness/lib/runners.mjs",
+        "find": "const sig = infraSignature(policy, r.output);",
+        "replace": "const sig = null;"
+      },
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/runners.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/runners.test.ts::RED judgement > accepts only an executed failure containing the expected text",
+          "outcome": "FAIL",
+          "excerpt": "expected true to be false // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/runners.test.ts::RED judgement > accepts only an executed failure containing the expected text": "expected true to be false"
+      },
+      "fingerprint": "8feb0c198e103360a1398d4836a9e21c5943a63d8f4a4f7d4fac5c51115398f0"
+    },
+    {
+      "seq": 52,
+      "at": "2026-10-02T14:12:17.243Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/runners.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/runners.test.ts::RED judgement > accepts only an executed failure containing the expected text",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8feb0c198e103360a1398d4836a9e21c5943a63d8f4a4f7d4fac5c51115398f0"
+    },
+    {
+      "seq": 53,
+      "at": "2026-10-02T14:12:36.125Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -c python3 -c \"import yaml; from pathlib import Path; [yaml.safe_load(Path(f).read_text()) for f in [\\\".github/workflows/ci.yml\\\", \\\".github/workflows/deploy-gcp.yml\\\"]]; print(\\\"workflow YAML parses\\\")\" && bash -n scripts/quality/verify-ci-passed.sh scripts/quality/verify-harness.sh .githooks/pre-push && node scripts/quality/harness/cli.mjs invariants",
+      "exit_code": 0,
+      "fingerprint": "8feb0c198e103360a1398d4836a9e21c5943a63d8f4a4f7d4fac5c51115398f0"
+    },
+    {
+      "seq": 54,
+      "at": "2026-10-02T14:14:42.273Z",
+      "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Codex independent agent Mill 01a0fce6-3458-7601-a0f7-300c38fca1e5",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "Fresh read-only independent review of fingerprint 8feb0c198e10: P0/P1/P2 all zero within HARNESS-001. Disposable adversarial checks reproduced. Reviewer identity and command execution remain attested; product dependency advisories are outside this harness verdict.",
+      "output_sha256": "e796a67905b469efeb3c1862b9dc38fb5224c776e394900c0a57b8b348580bcc",
+      "attested": true,
+      "fingerprint": "8feb0c198e103360a1398d4836a9e21c5943a63d8f4a4f7d4fac5c51115398f0"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-02T14:14:48.787Z",
+    "head": "f2ca0315fa9fd0bd8c7f747619fa5fe73644d70b",
+    "fingerprint": "8feb0c198e103360a1398d4836a9e21c5943a63d8f4a4f7d4fac5c51115398f0",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "green": "PASS",
+      "sensitivity": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "infra_validation": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      ".claude/settings.json": "1a89e8dfcccc4dcf28240c33ba4a9ebac7cc8557",
+      ".githooks/pre-push": "df80eaa55c47bb7a60d653cb1cf9c5025eb89a2c",
+      ".github/CODEOWNERS": "8bfe9f0f063c5780d17dbe9a394aa93ceec9378c",
+      ".github/copilot-instructions.md": "0423d36f9bbe280dca701afdb216e515f2636122",
+      ".github/workflows/ci.yml": "1b4bb90c3eff83b35649cb0bc853c9bdb1c010eb",
+      ".github/workflows/deploy-gcp.yml": "f6c5a15b946bcf1c329dff21df5c86a6c9d33b38",
+      ".gitignore": "86df36296dadf419ceb1006ce28eed53dbddf088",
+      "AGENTS.md": "2b7e5d46a13069c70b3e3ba0812359f955050e3c",
+      "AI_CONTEXT.md": "2fc82c553e16a39f39ebb23343ae1adce588461a",
+      "CLAUDE.md": "4017fa4f643cc72a7b9ae60dd93f6cd06861c8a1",
+      "docs/engineering/ENGINEERING_POLICY.md": "ac967641daa123bfd664855aa18474b9a694fadd",
+      "docs/engineering/engineering-policy.json": "d1a608b1e9e71b625cb18e429684fb8eb01ed572",
+      "package.json": "5c50c85c92a7741ec6332177db6b24eb1601fdd0",
+      "scripts/quality/README.md": "c241ee36829e356c45236902450766da46c7a7b9",
+      "scripts/quality/check-frontend-debt.mjs": "76aced3e7a0986c1127fd5d37f4589d789b69eef",
+      "scripts/quality/check-go-test-report.mjs": "e07e7509ef423a97d56031ea1280e13ae2952391",
+      "scripts/quality/harness/adversarial.test.ts": "bc8e401a102012a38c15f9cc972569e76e947dc0",
+      "scripts/quality/harness/cli.mjs": "d23580512fdb4d5a50a0f6083636ed8f20df050b",
+      "scripts/quality/harness/diffscan.test.ts": "011d41b200e873a84682844a94e84ff43bafc906",
+      "scripts/quality/harness/fixture.ts": "311d4bc03b380876431432266b26c01518de2a75",
+      "scripts/quality/harness/guard.test.ts": "f0c61cada4e83a6e3170f63b718d6096d9ac5a1a",
+      "scripts/quality/harness/hook.mjs": "dfa973b657a5e557b4cf2679bb84f860e1240d37",
+      "scripts/quality/harness/invariants.test.ts": "1371543616a26da89bf08a4bc97e0c55b4a7326b",
+      "scripts/quality/harness/lib/check.mjs": "701da8bfa24a7842b84ed3a76bd779e5604ea229",
+      "scripts/quality/harness/lib/deletion.mjs": "b979208259e301290c42de39a30539f9fb21f310",
+      "scripts/quality/harness/lib/diffscan.mjs": "0db771f7cdd4b1873e17790d9daab52a09d2a265",
+      "scripts/quality/harness/lib/git.mjs": "5bac1bd1a09423ab4b58502006ce4857f9c3b6c5",
+      "scripts/quality/harness/lib/guard.mjs": "112a992372abf7e7011033c5df090cc63b9ad4df",
+      "scripts/quality/harness/lib/invariants.mjs": "80046f9094a298bd17d4ed798cfa20f44f2ec22e",
+      "scripts/quality/harness/lib/policy.mjs": "e1ae9984c036ec8c8d42583d0c702d2576c0f145",
+      "scripts/quality/harness/lib/replay.mjs": "bf879baced7c69475a56941b1002b81a7ae20c8d",
+      "scripts/quality/harness/lib/review.mjs": "885f399b24a51427bb951ac6e6aaa36eaeaab5b3",
+      "scripts/quality/harness/lib/runners.mjs": "26cf0525abba87ec71efc9518c328e9fe8bc5f1b",
+      "scripts/quality/harness/lib/selftest.mjs": "fa96fcd052958a815dcdbe7c9de5cc314dd367c6",
+      "scripts/quality/harness/lib/summary.mjs": "fbdeb59b11037c4859f3557401b09d631bafd1b3",
+      "scripts/quality/harness/lib/task.mjs": "a1ece9cb66f47cfb260efd8f535f827cd91a3e3e",
+      "scripts/quality/harness/lib/util.mjs": "7830fae56c5456a82bf38a6c16e5bc0cc95b8adc",
+      "scripts/quality/harness/lifecycle.e2e.test.ts": "6ec33f671d1392e5ed80625cc3ae9eefa56f57bf",
+      "scripts/quality/harness/policy.test.ts": "83b31a2980789132629a680b39be6cd9131533e8",
+      "scripts/quality/harness/runners.test.ts": "97fbbae1ac600fea489b6327d2cdd14dc841dbc4",
+      "scripts/quality/harness/vitest.config.mjs": "dde94eb3226a9d1843836a67b95819d7a71b912c",
+      "scripts/quality/verify-ci-passed.sh": "47fb7254d9a0179e94817d39b039f8013c04afac",
+      "scripts/quality/verify-harness.sh": "fcd7f734090bc571032f3a23863dd92a80b279b8",
+      "scripts/quality/vitest-debt-reporter.mjs": "164fc1756f79dbf793cc54757a70552b9c86d99b",
+      "vitest.config.ts": "519953b8570de9a58d4d4f2edd32c2fc71ccb82b"
+    }
+  },
+  "disowned": [
+    {
+      "path": ".claude/settings.local.json",
+      "reason": "Pre-existing user change (Claude Code permission allow-list), modified by the app during this session; not part of the harness work.",
+      "at": "2026-10-02T07:51:44.290Z"
+    },
+    {
+      "path": "apps/web/next-env.d.ts",
+      "reason": "Generated by 'next build' during suite_frontend (dev->build route types path flip); not authored by this task.",
+      "at": "2026-10-02T08:02:25.190Z"
+    },
+    {
+      "path": ".claude/settings.local.json",
+      "reason": "User-local permission allow-list rewritten by the Claude desktop app during the session; not part of the harness work.",
+      "at": "2026-10-02T08:22:53.439Z"
+    }
+  ]
+}

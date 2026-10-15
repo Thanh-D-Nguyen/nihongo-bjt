@@ -1,0 +1,69 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-123",
+  "title": "Finalize AUDIT-122 audit checkpoint",
+  "start_head": "1bd80504342d1d89a41b164e942d016041e3f62f",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The AUDIT-122 API wave is closed and committed, but canonical audit reports still identify the prior checkpoint as FINAL_GIT_HEAD and omit the final code commit hash.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Update canonical state and morning/handoff reports to identify commit 1bd80504342d1d89a41b164e942d016041e3f62f as the completed AUDIT-122 code commit and retain the verified API/screen/defect totals."
+      },
+      {
+        "id": "AC2",
+        "text": "Link the publish and archive API fixes to commit 1bd80504 in both JSON and Markdown inventory views; do not alter verdicts or runtime behavior."
+      }
+    ],
+    "expected_behavior": "Durable JSON and Markdown report the same 306 PASS, 0 FAIL, 321 remaining APIs; 62 PASS, 2 FAIL, 99 remaining screens; 274 defects found, 270 fixed, 4 remaining; and record AUDIT-122 commit 1bd80504.",
+    "observed_behavior": "AUDIT-122 was committed after review, while FINAL_GIT_HEAD/fix_commit fields still point to the earlier checkpoint or are unset.",
+    "rollback_plan": "Revert only this documentation checkpoint commit; no application code or runtime data changes."
+  },
+  "classification": {
+    "classes": [
+      "DOC_ONLY"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": "Synchronize audit inventory and handoff documents with the just-committed AUDIT-122 code change."
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-12T13:50:57.453Z",
+      "head": "1bd80504342d1d89a41b164e942d016041e3f62f"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-12T13:51:32.989Z",
+      "head": "1bd80504342d1d89a41b164e942d016041e3f62f"
+    }
+  ],
+  "evidence": [],
+  "closed": {
+    "at": "2026-10-12T13:51:32.970Z",
+    "head": "1bd80504342d1d89a41b164e942d016041e3f62f",
+    "fingerprint": "aedc71943f48da730084f68669876f4d0a3b99ae89a6b3f9ca21a0c1346687f5",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS"
+    },
+    "files": {
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "7c1cbe9a90a08819b09f047a5a0554d943d7750e",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "2f01da19e4467524ec01a24b05543e4077c47af9",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "61e1fcd77d160b035dfeda17fb5782c99960e299",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "df646a52e6d895d5331f01bf7790b866dd6443db",
+      "docs/migrations/go-backend-v2/reports/HANDOFF_NEXT_AUDIT.md": "dbf8085c2c0d151dd95c9fe860fdec62e796d9f3"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

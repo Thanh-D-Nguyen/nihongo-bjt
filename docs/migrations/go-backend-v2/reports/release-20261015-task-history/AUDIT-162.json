@@ -1,0 +1,199 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-162",
+  "title": "Harden four Admin dead-letter actions",
+  "start_head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+  "preexisting_changes": {
+    ".codegraph/.gitignore": "6cef7cd23c43635be9f0b43b9f5287242413c467",
+    "apps/admin/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/admin/app/[locale]/growth/social/admin-mobile-events.test.ts": "d624fdc5e4bcb66672a4c9d27fe8aacc4fb83bb9",
+    "apps/admin/app/[locale]/growth/social/growth-social-client.tsx": "f87a00d4e9497e7c1cb971d6b978c6a43dd96441",
+    "apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts": "4b361483cf53a2df8ab2b20f77db064d22194939",
+    "apps/admin/app/[locale]/media/media-admin-client.tsx": "02cde6ae4bc6666404815ed74459065620bb7a5e",
+    "apps/admin/app/[locale]/ops/notifications/ops-notifications-client.test.tsx": "67f81a58382974d681bc3a1eb578a953c1c60e4e",
+    "apps/admin/app/[locale]/ops/notifications/ops-notifications-client.tsx": "83e79b25bb46954c81f3f30dcc6f0b1c3184e776",
+    "apps/admin/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/admin/tsconfig.tsbuildinfo": "b7b2f1339e0d7cca509b94db76bc43909118d62c",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_iam_test.go": "aee00270d49976ed76fe616f9893de4a8ac7431c",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_postcard_test.go": "b7b6da529effa42f1634a4574eecd87727b6a002",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_rbac_test.go": "996ba6a016727ad3f7cd9a5c033c569e93b9ff8e",
+    "apps/api-go/internal/httpserver/handler_admin_audit159_ads_test.go": "794ce0986e37f8795466c9a2092830cdfe6803e4",
+    "apps/api-go/internal/httpserver/handler_admin_audit159_auth_test.go": "acccc05e5d1cd3e7e5684a276d2f1401c7ec9797",
+    "apps/api-go/internal/httpserver/handler_admin_audit159_loto_test.go": "ed436c6004232bc8f1bd1af3fd2822917aacff26",
+    "apps/api-go/internal/httpserver/handler_admin_audit159_media_test.go": "7a0edaa033382390dc069acf25050f5930edd262",
+    "apps/api-go/internal/httpserver/handler_admin_audit160_ads_test.go": "0d222e4f6ceb78a70d2eba0a77b14ebe0bdd8c79",
+    "apps/api-go/internal/httpserver/handler_admin_audit160_catalog_test.go": "671dec55b6ec44ab449f7c32b830730035684b44",
+    "apps/api-go/internal/httpserver/handler_admin_audit160_core_test.go": "ff4569af6d970726c08ded9b11c0eab2cbd19c6b",
+    "apps/api-go/internal/httpserver/handler_admin_growth_campaigns.go": "d1cf6a0cd0d109b9ff59523da87e8d640db8b7b8",
+    "apps/api-go/internal/httpserver/handler_admin_growth_postcards.go": "e11ab671f08d22059bbec5af508661e68ddc49ed",
+    "apps/api-go/internal/httpserver/handler_admin_growth_referrals.go": "c0b0be1c757bc3b9526a353419b666325c30c489",
+    "apps/api-go/internal/httpserver/handler_admin_growth_referrals_contract_test.go": "555404bcc2f1d41e28dfa55269555540dc9f30d6",
+    "apps/api-go/internal/httpserver/handler_admin_growth_social.go": "b19a01e21cdc971d318ce6756d782db9c0059a08",
+    "apps/api-go/internal/httpserver/handler_admin_growth_social_audit153_test.go": "d706bec6b5c70a6a8ffd1405c6dad3647458407d",
+    "apps/api-go/internal/httpserver/handler_admin_magazine.go": "3d5c119e275ac95bee4659b95933ab39a9705e96",
+    "apps/api-go/internal/httpserver/handler_admin_media_companion_privacy.go": "80e51a6824d1ba2d62a88e751266cf3f81db63c9",
+    "apps/api-go/internal/httpserver/handler_admin_monetization_ads.go": "078221f4513a44b9bae18d2c1af81054e91d0f16",
+    "apps/api-go/internal/httpserver/handler_admin_monetization_core.go": "932fc0ce6b96d980f9f90e2bc1adb2ab34fe9fe1",
+    "apps/api-go/internal/httpserver/handler_admin_monetization_entitlements_quotas.go": "d086f787fa94aff3ba1d2be164f39289348f8c80",
+    "apps/api-go/internal/httpserver/handler_admin_monetization_subscriptions_coupons.go": "cb88901fcb04c08f1381bc6c1501cef817281187",
+    "apps/api-go/internal/httpserver/handler_admin_monetization_wave3_test.go": "7424150fe29c141383530d29319a26005e0224bc",
+    "apps/api-go/internal/httpserver/handler_admin_nhknews.go": "b7f1a9528f8e414ba92a57dcacc2190b74eee68e",
+    "apps/api-go/internal/httpserver/handler_admin_nhknews_audit161_test.go": "071a629fe92725e0a32eff73c816ca8b77673c31",
+    "apps/api-go/internal/httpserver/handler_admin_operations_audit161_test.go": "4475706868a3cf6ea41c91aa89b716308b1c10e0",
+    "apps/api-go/internal/httpserver/handler_admin_operations_bjt.go": "1852ff5b6e6546bd0ef7f8305fd648484f06d41a",
+    "apps/api-go/internal/httpserver/handler_admin_operations_broadcasts.go": "a7791d54dda6f1507188321b0133b44e48a8f1c3",
+    "apps/api-go/internal/httpserver/handler_admin_operations_dead_letter.go": "d381bbfdb49ffcae653110274fe45b9b7e6cad6a",
+    "apps/api-go/internal/httpserver/handler_final_batch.go": "65d591f83985bef41c5e752421963fd68575acb3",
+    "apps/api-go/internal/httpserver/server.go": "1490070af04e5c74db146d6ba7c7eb16920b081a",
+    "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "69c68e611b59cec10c00b545f211e0d75badaa2b",
+    "apps/web/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/web/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/web/tsconfig.tsbuildinfo": "91d48d855b4f16f10809b5e9d91bae8ed06c76dc",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "b8066331cd1691e65721e041313b2d638f1fca7c",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "ea4ca1ca409c6cb2eab1b6f7191c281b908ba9a8",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "37ac7cfc99f18871ba3457f5201e35434158fd4b",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "7210999bc05130c3fd5188d0469c189e48c6a084",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "f53925cf2d8e65b24494c08c694c6b373902bce0",
+    "e2e/audit/audit155-admin-mobile-tables.mjs": "531258892354c4a96065d4b0110598f72d909910",
+    "e2e/audit/audit156-share-moderation.mjs": "f8da1d95be1066e0e3af2ade35e23a8886eec028",
+    "packages/database/prisma/migrations/20261015100000_nhk_news_admin_config/migration.sql": "29dff004ae36f7ab44cb5ef3f8cb5f6fed7bfd49",
+    "packages/database/prisma/schema.prisma": "9421a9edbfc761b1322740a108500bb675aee892"
+  },
+  "spec": {
+    "problem": "Four Admin DLQ detail and mutation routes must enforce their permission and input contracts, report DB failures accurately, atomically audit mutations, and retry only through a real idempotent processing path.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Test each of the four METHOD+PATH through real router middleware with PostgreSQL fixtures, covering auth/permission/CSRF, validation, persistence/audit, and retry delivery/idempotency."
+      },
+      {
+        "id": "AC2",
+        "text": "Fix locally reproducible defects with a scoped production diff and leave unrelated working-tree changes untouched."
+      }
+    ],
+    "expected_behavior": "Only authorized admins can access these routes; request validation and status transitions are explicit; detail matches the Admin caller DTO; database and audit failures never become false success/404; each retry changes durable state and audit at most once while already-open retry requests are idempotent; bulk mutations are all-or-nothing.",
+    "observed_behavior": "These AdminGuard-only routes lacked handler-level permission checks; detail audit JSON disagreed with the live Admin DTO; malformed IDs and database/audit failures were misreported or swallowed; repeated retries incremented retry_count and audit rows repeatedly; resolve/retry/bulk mutations were not atomic with their audit records.",
+    "rollback_plan": "Revert only the Wave 4 edits in the dead-letter handlers and remove the focused Wave 4 test file; preserve every pre-existing and concurrent change in the shared worktree."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY",
+      "DATABASE"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminOperationsDeadLetterWave4Contracts",
+      "expect": "admin without permission status="
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "VERIFYING",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-15T05:07:37.992Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-15T05:07:45.109Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-15T05:07:45.559Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-15T05:14:50.803Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-15T05:15:07.990Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-15T05:14:50.244Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsDeadLetterWave4Contracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOperationsDeadLetterWave4Contracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminOperationsDeadLetterWave4Contracts === RUN TestAdminOperationsDeadLetterWave4Contracts/PATCH_/api/admin/operations/dead-letter-queue/bulk_auth_and_CSRF 2026/10/15 14:14:49 INFO request method=PATCH path=/api/admin/operations/dead-letter-queue/bulk status=401 duration=239.041µs bytes…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminOperationsDeadLetterWave4Contracts": "admin without permission status="
+      },
+      "fingerprint": "c72ee2181deb7d4a512e5c3fdbe18d1c201f3a4c0019e6e6ac4c8d3664b7e3cf"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-15T05:15:07.410Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsDeadLetterWave4Contracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOperationsDeadLetterWave4Contracts",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c72ee2181deb7d4a512e5c3fdbe18d1c201f3a4c0019e6e6ac4c8d3664b7e3cf"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-15T05:16:06.877Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsDeadLetterWave4Contracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOperationsDeadLetterWave4Contracts",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c3e23922ea9cb193632d56e17705b88da92b17409ea7d637fb990394338df275"
+    }
+  ],
+  "closed": null,
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [
+    "apps/api-go/internal/httpserver/handler_admin_operations_dead_letter.go"
+  ]
+}

@@ -1,0 +1,326 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-113",
+  "title": "Learner subscription cancel: cancel at period end instead of cutting access",
+  "start_head": "1efbd6f4d7e61e62566210cf22169a5177f9e66d",
+  "preexisting_changes": {
+    "apps/admin/next-env.d.ts": "9edff1c7cacb3bfac9a1eadcf6f51eaa99565e38",
+    "apps/admin/tsconfig.tsbuildinfo": "1ebcbc1e512aaf84682dc85cbd10250c8d5ad6e3",
+    "apps/web/next-env.d.ts": "9edff1c7cacb3bfac9a1eadcf6f51eaa99565e38",
+    "apps/web/tsconfig.tsbuildinfo": "5692a7eab6ec61027fb89f3740d1eef14bca165f"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "An active subscription stays status 'active' with cancel_at_period_end true after POST cancel, and the response is {ok:true,cancelAtPeriodEnd:true}."
+      },
+      {
+        "id": "AC2",
+        "text": "POST cancel with no active or trialing subscription returns 404; anonymous returns 401; an untrusted origin returns 403."
+      },
+      {
+        "id": "AC3",
+        "text": "The subscription summary then reports cancelAtPeriodEnd true for that learner."
+      }
+    ],
+    "expected_behavior": "The endpoint sets cancel_at_period_end = true, keeps the subscription active until period end, returns {ok:true, cancelAtPeriodEnd:true}; with no active subscription it returns 404.",
+    "observed_behavior": "POST /api/learner/monetization/subscription/cancel sets the subscription status to 'cancelled' immediately and returns {cancelled:true}; the settings page expects cancel-at-period-end (it keeps the plan and sets cancelAtPeriodEnd), so the learner loses paid access before the period ends.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "DOMAIN_LOGIC",
+      "API_CONTRACT",
+      "AUTH_SECURITY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestSubscriptionCancelKeepsAccessUntilPeriodEnd",
+      "expect": "cancel response = "
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestSubscriptionCancelContractForMissingAndUnauthorizedRequests",
+      "expect": "cancel without active subscription status = 200, want 404"
+    }
+  ],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/api-go/internal/httpserver/handler_monetization_reading_onboarding.go",
+      "find": "SET cancel_at_period_end = true, updated_at = NOW()",
+      "replace": "SET status = 'cancelled', updated_at = NOW()"
+    },
+    "targets": [
+      {
+        "runner": "go",
+        "package": "./internal/httpserver",
+        "test": "TestSubscriptionCancelKeepsAccessUntilPeriodEnd",
+        "expect": "after cancel status="
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-12T00:50:11.673Z",
+      "head": "1efbd6f4d7e61e62566210cf22169a5177f9e66d"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-12T00:50:12.033Z",
+      "head": "1efbd6f4d7e61e62566210cf22169a5177f9e66d"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-12T00:50:12.402Z",
+      "head": "1efbd6f4d7e61e62566210cf22169a5177f9e66d"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T00:50:39.585Z",
+      "head": "1efbd6f4d7e61e62566210cf22169a5177f9e66d"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T00:51:10.987Z",
+      "head": "1efbd6f4d7e61e62566210cf22169a5177f9e66d"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T00:57:10.816Z",
+      "head": "1efbd6f4d7e61e62566210cf22169a5177f9e66d"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-12T00:57:50.603Z",
+      "head": "1efbd6f4d7e61e62566210cf22169a5177f9e66d"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-12T00:59:49.005Z",
+      "head": "1efbd6f4d7e61e62566210cf22169a5177f9e66d"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-12T00:59:49.968Z",
+      "head": "1efbd6f4d7e61e62566210cf22169a5177f9e66d"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-12T00:50:39.286Z",
+      "head": "1efbd6f4d7e61e62566210cf22169a5177f9e66d",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSubscriptionCancelKeepsAccessUntilPeriodEnd)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestSubscriptionCancelKeepsAccessUntilPeriodEnd",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestSubscriptionCancelKeepsAccessUntilPeriodEnd handler_subscription_cancel_test.go:55: cancel response = {\"cancelled\":true} , want {ok:true,cancelAtPeriodEnd:true} --- FAIL: TestSubscriptionCancelKeepsAccessUntilPeriodEnd (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestSubscriptionCancelKeepsAccessUntilPeriodEnd": "cancel response = "
+      },
+      "fingerprint": "4bb912ad9cfd69703932f902c0822d6d47c3f3008c7b3f9ef2d1c28ba3d5c108"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-12T00:50:48.053Z",
+      "head": "1efbd6f4d7e61e62566210cf22169a5177f9e66d",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSubscriptionCancelKeepsAccessUntilPeriodEnd|TestSubscriptionCancelContractForMissingAndUnauthorizedRequests)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestSubscriptionCancelKeepsAccessUntilPeriodEnd",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestSubscriptionCancelKeepsAccessUntilPeriodEnd handler_subscription_cancel_test.go:55: cancel response = {\"cancelled\":true} , want {ok:true,cancelAtPeriodEnd:true} --- FAIL: TestSubscriptionCancelKeepsAccessUntilPeriodEnd (0.05s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestSubscriptionCancelContractForMissingAndUnauthorizedRequests",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestSubscriptionCancelContractForMissingAndUnauthorizedRequests handler_subscription_cancel_test.go:75: cancel without active subscription status = 200, want 404: {\"cancelled\":true} --- FAIL: TestSubscriptionCancelContractForMissingAndUnauthorizedRequests (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestSubscriptionCancelKeepsAccessUntilPeriodEnd": "cancel response = ",
+        "go:./internal/httpserver:TestSubscriptionCancelContractForMissingAndUnauthorizedRequests": "cancel without active subscription status = 200, want 404"
+      },
+      "fingerprint": "4bb912ad9cfd69703932f902c0822d6d47c3f3008c7b3f9ef2d1c28ba3d5c108"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-12T00:51:10.676Z",
+      "head": "1efbd6f4d7e61e62566210cf22169a5177f9e66d",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSubscriptionCancelKeepsAccessUntilPeriodEnd|TestSubscriptionCancelContractForMissingAndUnauthorizedRequests)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestSubscriptionCancelKeepsAccessUntilPeriodEnd",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestSubscriptionCancelContractForMissingAndUnauthorizedRequests",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "40ef8c60ba03ba4d98ad3441d0fb02adab49dcc3146a21097aa50b7370d2ec67"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-12T00:51:34.637Z",
+      "head": "1efbd6f4d7e61e62566210cf22169a5177f9e66d",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_monetization_reading_onboarding.go",
+        "find": "SET cancel_at_period_end = true, updated_at = NOW()",
+        "replace": "SET status = 'cancelled', updated_at = NOW()"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSubscriptionCancelKeepsAccessUntilPeriodEnd)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestSubscriptionCancelKeepsAccessUntilPeriodEnd",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestSubscriptionCancelKeepsAccessUntilPeriodEnd handler_subscription_cancel_test.go:64: after cancel status=\"cancelled\" cancel_at_period_end=false, want active and true --- FAIL: TestSubscriptionCancelKeepsAccessUntilPeriodEnd (0.07s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestSubscriptionCancelKeepsAccessUntilPeriodEnd": "after cancel status="
+      },
+      "fingerprint": "40ef8c60ba03ba4d98ad3441d0fb02adab49dcc3146a21097aa50b7370d2ec67"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-12T00:57:10.482Z",
+      "head": "1efbd6f4d7e61e62566210cf22169a5177f9e66d",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 776,
+        "executed": 776,
+        "passed": 776,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "776 passed, 0 allowed skip(s)",
+      "fingerprint": "8e1f4d377283f556bfd227f6d62e1c82eaf1e12b296ad3454879abeb0aef9671"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-12T00:57:34.329Z",
+      "head": "1efbd6f4d7e61e62566210cf22169a5177f9e66d",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit113-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "8e1f4d377283f556bfd227f6d62e1c82eaf1e12b296ad3454879abeb0aef9671"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-12T00:57:50.214Z",
+      "head": "1efbd6f4d7e61e62566210cf22169a5177f9e66d",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSubscriptionCancelKeepsAccessUntilPeriodEnd|TestSubscriptionCancelContractForMissingAndUnauthorizedRequests)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestSubscriptionCancelKeepsAccessUntilPeriodEnd",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestSubscriptionCancelContractForMissingAndUnauthorizedRequests",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8e1f4d377283f556bfd227f6d62e1c82eaf1e12b296ad3454879abeb0aef9671"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-12T00:59:48.696Z",
+      "head": "1efbd6f4d7e61e62566210cf22169a5177f9e66d",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "fresh-review-a226",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "2ab4eb77ef0fe395db0d76d0199c31a3b06cfa9e7ca9bab5b840893b00d45515",
+      "attested": true,
+      "fingerprint": "8e1f4d377283f556bfd227f6d62e1c82eaf1e12b296ad3454879abeb0aef9671"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-12T00:59:49.947Z",
+    "head": "1efbd6f4d7e61e62566210cf22169a5177f9e66d",
+    "fingerprint": "8e1f4d377283f556bfd227f6d62e1c82eaf1e12b296ad3454879abeb0aef9671",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_monetization_reading_onboarding.go": "33f574a71bc6c13f909880d2276417a18f69ba4b",
+      "apps/api-go/internal/httpserver/handler_subscription_cancel_test.go": "76b6b88ee1c98675809ae5ddbd7285b818735000",
+      "e2e/audit/audit113-browser-check.sh": "01bf4fa5a4be27ea2b8882f8835ddd18ec06405b"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

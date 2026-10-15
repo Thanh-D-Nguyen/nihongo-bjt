@@ -3,8 +3,6 @@ import type { Metadata } from "next";
 import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
-import { CareerRpgProvider } from "../../../src/features/career-rpg/store";
-
 import { CareerPageClient } from "./_components/career-page-client";
 
 const messages = { ja, vi, en } as const;
@@ -26,9 +24,5 @@ export default async function CareerRoute({
 }) {
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
-  return (
-    <CareerRpgProvider>
-      <CareerPageClient labels={t.careerRpg} locale={locale} />
-    </CareerRpgProvider>
-  );
+  return <CareerPageClient labels={t.careerRpg} locale={locale} />;
 }

@@ -188,13 +188,17 @@ export function LearningPathsAdminClient({
     setDetail(null);
     try {
       const r = await adminApiFetch(`/api/admin/learning/paths/${id}`);
-      if (r.ok) {
-        setDetail((await r.json()) as LearningPathDetail);
+      if (!r.ok) {
+        toast.error(t("errorLoad"));
+        return;
       }
+      setDetail((await r.json()) as LearningPathDetail);
+    } catch {
+      toast.error(t("errorLoad"));
     } finally {
       setDrawerLoading(false);
     }
-  }, []);
+  }, [t, toast]);
 
   const openCreate = () => {
     setDetail(null);
@@ -267,11 +271,11 @@ export function LearningPathsAdminClient({
         else toast.error(t("errorSave"));
         return;
       }
-      const saved = (await r.json()) as LearningPathDetail;
-      setDetail(saved);
+      const saved = (await r.json()) as { id: string };
       setEditing(null);
       toast.success(t("saved"));
       await load();
+      await openDetail(saved.id);
     } catch {
       toast.error(t("errorSave"));
     } finally {
@@ -293,16 +297,21 @@ export function LearningPathsAdminClient({
         headers: { "content-type": "application/json" },
         method
       });
-      if (r.ok) {
-        await load();
-        if (action === "delete") {
-          closeDrawer();
-        } else if (detail?.id === targetId) {
-          await openDetail(targetId);
-        }
-        setReasonModal(null);
-        setReason("");
+      if (!r.ok) {
+        const parsed = await parseApiError(r, t("errorSave"));
+        toast.error(parsed.form || t("errorSave"));
+        return;
       }
+      await load();
+      if (action === "delete") {
+        closeDrawer();
+      } else if (detail?.id === targetId) {
+        await openDetail(targetId);
+      }
+      setReasonModal(null);
+      setReason("");
+    } catch {
+      toast.error(t("errorSave"));
     } finally {
       setSubmitting(false);
     }
@@ -412,8 +421,9 @@ export function LearningPathsAdminClient({
           <AdminEmptyState title={t("empty")}>{t("emptyHint")}</AdminEmptyState>
         ) : (
           <>
-            <AdminDataTable>
-              <AdminDataTableHead>
+            <div className="w-full max-w-full overflow-x-auto">
+              <AdminDataTable>
+                <AdminDataTableHead>
                 <AdminDataTableRow>
                   <AdminDataTableTh>{t("colSlug")}</AdminDataTableTh>
                   <AdminDataTableTh>{t("colTitleVi")}</AdminDataTableTh>
@@ -450,8 +460,9 @@ export function LearningPathsAdminClient({
                     </AdminDataTableTd>
                   </AdminDataTableRow>
                 ))}
-              </AdminDataTableBody>
-            </AdminDataTable>
+                </AdminDataTableBody>
+              </AdminDataTable>
+            </div>
             <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
               <span>
                 {t("pageLabel")}: {data?.page ?? page} / {totalPages}

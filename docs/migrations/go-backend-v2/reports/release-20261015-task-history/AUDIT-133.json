@@ -1,0 +1,75 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-133",
+  "title": "Checkpoint Admin Cookie and Tracker screen API audit",
+  "start_head": "a6580e1998d6f32a1f9cd8cf6d6877244a5f424f",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Record AUDIT-132's API-specific 401/403/200 browser and Go evidence; mark the Cookie & Tracker screen and GET /api/admin/legal/cookie-categories PASS, refresh every count and defect record with invariants, update next item to GET /api/admin/legal/retention."
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "DOC_ONLY"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": "Persisting completed screen/API evidence and count reconciliation in canonical audit reports only."
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-13T02:22:05.689Z",
+      "head": "a6580e1998d6f32a1f9cd8cf6d6877244a5f424f"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-13T02:22:06.028Z",
+      "head": "a6580e1998d6f32a1f9cd8cf6d6877244a5f424f"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-13T02:22:06.376Z",
+      "head": "a6580e1998d6f32a1f9cd8cf6d6877244a5f424f"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-13T02:23:30.671Z",
+      "head": "a6580e1998d6f32a1f9cd8cf6d6877244a5f424f"
+    }
+  ],
+  "evidence": [],
+  "closed": {
+    "at": "2026-10-13T02:23:30.654Z",
+    "head": "a6580e1998d6f32a1f9cd8cf6d6877244a5f424f",
+    "fingerprint": "840a609514b0d77974379a8286189494669b08066ee81bd27b473eed5dbf7eb5",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS"
+    },
+    "files": {
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "fec66068a40c6ca787f552b8ad4d259e29ff1aa0",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "4b67220c74c419c5de52b8bb2f7812b63d5227fe",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "884e36a19604836c932ad3ffccd6b07a82b4ecff",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "194977b9d2b0c7c68b929ebe29bbfd696333cd72",
+      "docs/migrations/go-backend-v2/reports/HANDOFF_NEXT_AUDIT.md": "a355dbe2be3afa6027daa695f304526002aa19b7"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

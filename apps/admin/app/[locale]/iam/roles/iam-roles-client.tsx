@@ -335,49 +335,51 @@ export function IamRolesClient({
         ) : filtered.length === 0 ? (
           <AdminEmptyState title={t("empty")}>{t("empty")}</AdminEmptyState>
         ) : (
-          <AdminDataTable>
-            <AdminDataTableHead>
-              <AdminDataTableRow>
-                <AdminDataTableTh>{t("colCode")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colName")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colStatus")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colPermissions")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colAdmins")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colCreated")}</AdminDataTableTh>
-              </AdminDataTableRow>
-            </AdminDataTableHead>
-            <AdminDataTableBody>
-              {filtered.map((row) => {
-                const isSelected = row.code === selectedCode;
-                return (
-                  <AdminDataTableRow
-                    key={row.id}
-                    className={cn(
-                      "cursor-pointer hover:bg-indigo-50/40",
-                      isSelected ? "bg-indigo-50" : undefined
-                    )}
-                  >
-                    <AdminDataTableTd>
-                      <button
-                        className="font-mono text-xs font-semibold text-indigo-700 hover:underline"
-                        onClick={() => setSelectedCode(row.code)}
-                        type="button"
-                      >
-                        {row.code}
-                      </button>
-                    </AdminDataTableTd>
-                    <AdminDataTableTd>{row.name}</AdminDataTableTd>
-                    <AdminDataTableTd>
-                      <AdminStatusBadge tone={statusTone(row.status)}>{row.status}</AdminStatusBadge>
-                    </AdminDataTableTd>
-                    <AdminDataTableTd>{row.permissionCount}</AdminDataTableTd>
-                    <AdminDataTableTd>{row.adminCount}</AdminDataTableTd>
-                    <AdminDataTableTd>{formatDate(row.createdAt, locale)}</AdminDataTableTd>
-                  </AdminDataTableRow>
-                );
-              })}
-            </AdminDataTableBody>
-          </AdminDataTable>
+          <div aria-label={t("title")} className="max-w-full overflow-x-auto" role="region" tabIndex={0}>
+            <AdminDataTable>
+              <AdminDataTableHead>
+                <AdminDataTableRow>
+                  <AdminDataTableTh>{t("colCode")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colName")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colStatus")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colPermissions")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colAdmins")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colCreated")}</AdminDataTableTh>
+                </AdminDataTableRow>
+              </AdminDataTableHead>
+              <AdminDataTableBody>
+                {filtered.map((row) => {
+                  const isSelected = row.code === selectedCode;
+                  return (
+                    <AdminDataTableRow
+                      key={row.id}
+                      className={cn(
+                        "cursor-pointer hover:bg-indigo-50/40",
+                        isSelected ? "bg-indigo-50" : undefined
+                      )}
+                    >
+                      <AdminDataTableTd>
+                        <button
+                          className="font-mono text-xs font-semibold text-indigo-700 hover:underline"
+                          onClick={() => setSelectedCode(row.code)}
+                          type="button"
+                        >
+                          {row.code}
+                        </button>
+                      </AdminDataTableTd>
+                      <AdminDataTableTd>{row.name}</AdminDataTableTd>
+                      <AdminDataTableTd>
+                        <AdminStatusBadge tone={statusTone(row.status)}>{row.status}</AdminStatusBadge>
+                      </AdminDataTableTd>
+                      <AdminDataTableTd>{row.permissionCount}</AdminDataTableTd>
+                      <AdminDataTableTd>{row.adminCount}</AdminDataTableTd>
+                      <AdminDataTableTd>{formatDate(row.createdAt, locale)}</AdminDataTableTd>
+                    </AdminDataTableRow>
+                  );
+                })}
+              </AdminDataTableBody>
+            </AdminDataTable>
+          </div>
         )}
       </AdminSection>
 

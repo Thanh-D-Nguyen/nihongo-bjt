@@ -45,9 +45,9 @@ export function AdminSessionGate({
         if (cancelled) return;
 
         if (res.status === 401) {
-          router.replace(
-            `/${locale}/login?returnTo=${encodeURIComponent(pathname || `/${locale}`)}`
-          );
+          // usePathname() omits the /admin basePath; login hands returnTo to window.location, so restore it.
+          const returnTo = pathname ? `/admin${pathname}` : `/admin/${locale}`;
+          router.replace(`/${locale}/login?returnTo=${encodeURIComponent(returnTo)}`);
           return;
         }
         if (res.status === 403) {

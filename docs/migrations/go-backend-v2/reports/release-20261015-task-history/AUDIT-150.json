@@ -1,0 +1,91 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-150",
+  "title": "Checkpoint AUDIT-149 postcard preview and screen state",
+  "start_head": "d9e9cd254205281ba56b6a04b18f5eceb1579d1a",
+  "preexisting_changes": {
+    "apps/admin/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/admin/tsconfig.tsbuildinfo": "6b0c7bc84ee49d33491f829cb00b397b9e0b3723",
+    "apps/web/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/web/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/web/tsconfig.tsbuildinfo": "91d48d855b4f16f10809b5e9d91bae8ed06c76dc"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "AC1: the preview route has an API inventory row with PASS evidence and fix commit d9e9cd25; the invariant holds with 628 total."
+      },
+      {
+        "id": "AC2",
+        "text": "AC2: the Postcards screen records anonymous PASS (AUDIT-147 return path) and authenticated REMAINING (create, list and preview pass; edit, publish and archive pending), with screen totals recomputed."
+      },
+      {
+        "id": "AC3",
+        "text": "AC3: handoff, browser audit, state JSON, parity matrix row and API registry line match the committed code."
+      }
+    ],
+    "expected_behavior": "Inventories, screen state, handoff and parity docs record the implemented SVG route, the verified anonymous and authenticated states and recomputed totals, with the next item and open defects named.",
+    "observed_behavior": "The AUDIT-149 preview route is committed (d9e9cd25), but the API inventory has no row for it, the Postcards screen still records FAIL for the preview, the handoff and state name the wrong next item, and the parity matrix and API registry still describe the legacy PNG/DB_INSERT contract.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "DOC_ONLY"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-14T12:58:34.936Z",
+      "head": "d9e9cd254205281ba56b6a04b18f5eceb1579d1a"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-14T12:58:35.325Z",
+      "head": "d9e9cd254205281ba56b6a04b18f5eceb1579d1a"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-14T12:58:35.704Z",
+      "head": "d9e9cd254205281ba56b6a04b18f5eceb1579d1a"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-14T12:59:29.384Z",
+      "head": "d9e9cd254205281ba56b6a04b18f5eceb1579d1a"
+    }
+  ],
+  "evidence": [],
+  "closed": {
+    "at": "2026-10-14T12:59:29.365Z",
+    "head": "d9e9cd254205281ba56b6a04b18f5eceb1579d1a",
+    "fingerprint": "ab384080d2a250f3100ba4de79f18e6d36e668daec9e963355c9bf8ed2ed9863",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS"
+    },
+    "files": {
+      "docs/API_REGISTRY.md": "239c6930dca3ee0d0a6d1fff91fbdfad89b9fa92",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "ef44eaf65aa55acb05a6fde6e5704b42283be388",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "906d37afe2f2ece9a06d56ff7311ec84a997656b",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "5ade6c6d5ff5268ac3987262f1ab25d3efe6ab00",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "a26ed260ef57684bc2a3864f4971fdf771240f68",
+      "docs/migrations/go-backend-v2/reports/HANDOFF_NEXT_AUDIT.md": "2a3e1336a0e15e91e036935a7b244293cc457c11",
+      "docs/migrations/go-backend-v2/templates/api-compatibility-matrix.csv": "00dc1deae920ba7985bfede93d157a8c9ebb5db8"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

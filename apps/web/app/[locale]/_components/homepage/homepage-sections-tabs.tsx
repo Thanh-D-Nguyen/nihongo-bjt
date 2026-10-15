@@ -203,7 +203,7 @@ export function HomepageSectionsTabs({
           id="homepage-tab-panel-focus"
           role="tabpanel"
         >
-          <FocusTimerWidget locale={locale} />
+          <FocusTimerWidget isLoggedIn={isLoggedIn} locale={locale} signInLabel={labels.rewardsSignInCta} />
           <AmbientModeWidget />
         </div>
       )}

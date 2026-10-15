@@ -1,0 +1,148 @@
+name: oci
+
+services:
+  # Existing services and bind mounts are declared for visibility, never recreated
+  # by deploy-release.sh. This file is not a first-install/bootstrap procedure.
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    mem_limit: 2g
+    environment:
+      POSTGRES_DB: nihongo_bjt
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+    ports: ["127.0.0.1:15432:5432"]
+    volumes: ["/srv/kotobawork/data/postgres:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nihongo_bjt"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    mem_limit: 1g
+    command: [redis-server, --appendonly, "yes", --requirepass, "${REDIS_PASSWORD:?required}", --maxmemory, 896mb, --maxmemory-policy, allkeys-lru]
+    ports: ["127.0.0.1:16379:6379"]
+    volumes: ["/srv/kotobawork/data/redis:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:?required}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.13
+    restart: unless-stopped
+    mem_limit: 4g
+    environment:
+      MEILI_ENV: production
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?required}
+      MEILI_MAX_INDEXING_MEMORY: "2 GiB"
+    ports: ["127.0.0.1:17700:7700"]
+    volumes: ["/srv/kotobawork/data/meilisearch:/meili_data"]
+
+  api:
+    image: kotobawork-oci-api:${OCI_RELEASE_SHA:?required}
+    build:
+      context: ${OCI_SOURCE_DIR:?required}/apps/api-go
+      dockerfile: Dockerfile
+      args:
+        TARGETOS: linux
+        TARGETARCH: arm64
+        VERSION: ${OCI_RELEASE_SHA:?required}
+    restart: unless-stopped
+    mem_limit: 512m
+    ports: ["127.0.0.1:14001:4001"]
+    env_file: ["${OCI_ENV_FILE:-/srv/kotobawork/deploy/oci/.env.production}"]
+    environment:
+      API_GO_PORT: "4001"
+      DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD:?required}@postgres:5432/nihongo_bjt?sslmode=disable"
+      REDIS_URL: "redis://:${REDIS_PASSWORD:?required}@redis:6379"
+      MEILISEARCH_URL: http://meilisearch:7700
+      MEILISEARCH_API_KEY: ${MEILI_MASTER_KEY:?required}
+      CORS_ORIGINS: https://${OCI_PUBLIC_HOST:?required}
+      WEB_PUBLIC_URL: https://${OCI_PUBLIC_HOST:?required}
+      COOKIE_SECURE: "true"
+      # Caddy and the web BFF reach the API from the Docker bridge network. Only
+      # these private ranges may supply X-Forwarded-For; the API port is bound to
+      # 127.0.0.1 and public traffic always passes through Caddy, which overwrites
+      # the header with the connection address.
+      TRUSTED_PROXY_CIDRS: ${OCI_TRUSTED_PROXY_CIDRS:-172.16.0.0/12,10.0.0.0/8,192.168.0.0/16,fc00::/7}
+      MEDIA_BASE_PATH: /srv/kotobawork/data/media
+      SESSION_SECRET: ${SESSION_SECRET:?required}
+      OAUTH_STATE_SECRET: ${OAUTH_STATE_SECRET:?required}
+      KANJI_STROKE_REPO_ROOT: /srv/kotobawork/repo
+      NIHONGO_BJT_REPO_ROOT: /srv/kotobawork/repo
+    volumes:
+      - /srv/kotobawork/data/media:/srv/kotobawork/data/media
+      - ${OCI_SOURCE_DIR:?required}/data/generated/kanji-strokes:/srv/kotobawork/repo/data/generated/kanji-strokes:ro
+
+  migrations:
+    profiles: [tools]
+    image: kotobawork-oci-migrations:${OCI_RELEASE_SHA:?required}
+    build:
+      context: ${OCI_SOURCE_DIR:?required}
+      dockerfile: deploy/oci/Dockerfile.frontend
+      target: workspace
+    environment:
+      DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD:?required}@postgres:5432/nihongo_bjt?schema=content"
+    # Same order as provision-test-schema.sh, without its empty-database promise.
+    command:
+      - bash
+      - -euc
+      - |
+        pnpm exec prisma migrate deploy --schema packages/database/prisma/schema.prisma
+        for file in apps/api-go/internal/postgres/migrations/*.sql; do
+          pnpm exec prisma db execute --file "$$file"
+        done
+
+  web:
+    image: kotobawork-oci-web:${OCI_RELEASE_SHA:?required}
+    build:
+      context: ${OCI_SOURCE_DIR:?required}
+      dockerfile: deploy/oci/Dockerfile.frontend
+      target: frontend
+      args:
+        APP_NAME: web
+        NEXT_PUBLIC_API_URL: https://${OCI_PUBLIC_HOST:?required}
+    restart: unless-stopped
+    mem_limit: 1g
+    ports: ["127.0.0.1:13000:3000"]
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      API_URL: http://api:4001
+      NEXT_PUBLIC_API_URL: https://${OCI_PUBLIC_HOST:?required}
+
+  admin:
+    image: kotobawork-oci-admin:${OCI_RELEASE_SHA:?required}
+    build:
+      context: ${OCI_SOURCE_DIR:?required}
+      dockerfile: deploy/oci/Dockerfile.frontend
+      target: frontend
+      args:
+        APP_NAME: admin
+        NEXT_PUBLIC_API_URL: https://${OCI_PUBLIC_HOST:?required}
+    restart: unless-stopped
+    mem_limit: 512m
+    ports: ["127.0.0.1:13001:3001"]
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+      API_URL: http://api:4001
+      NEXT_PUBLIC_API_URL: https://${OCI_PUBLIC_HOST:?required}
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    mem_limit: 256m
+    ports: ["80:80", "443:443"]
+    environment:
+      OCI_PUBLIC_HOST: ${OCI_PUBLIC_HOST:?required}
+    volumes:
+      - /srv/kotobawork/deploy/oci/Caddyfile:/etc/caddy/Caddyfile:ro
+      - /srv/kotobawork/data/media:/srv/kotobawork/data/media:ro
+      - /srv/kotobawork/data/caddy-data:/data
+      - /srv/kotobawork/data/caddy-config:/config

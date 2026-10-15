@@ -1198,26 +1198,130 @@
     },
     "/api/admin/growth/share-template/preview": {
       "post": {
-        "description": "RBAC: `admin.growth.read`. **Audited** as `growth.share_template.preview`.",
+        "description": "RBAC: `admin.growth.read` (or `growth.manage` / `viewer.audit`). Renders the postcard as an SVG document and returns it base64-encoded. Read-only: nothing is persisted. No audit row is written; the legacy NestJS preview audit row is intentionally not carried over because a render does not change state. Requires a trusted Origin (CSRF guard).",
         "operationId": "preview",
         "parameters": [],
         "requestBody": {
           "required": true,
-          "description": "`headline` (1–200), `sub` (1–200), `kind` enum streak|bjt_result|daily_phrase, optional `config` object",
+          "description": "`headline` and `sub` (1–200 characters each), `kind` from the listed postcard kinds, optional `config` with hex brand colors, a `badgeKey` (≤64 characters) and a `pattern` from the listed names.",
           "content": {
             "application/json": {
               "schema": {
-                "type": "string"
+                "type": "object",
+                "required": [
+                  "headline",
+                  "sub",
+                  "kind"
+                ],
+                "properties": {
+                  "headline": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "sub": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "postcard_achievement",
+                      "postcard_streak",
+                      "postcard_level_up",
+                      "postcard_exam_result",
+                      "postcard_welcome",
+                      "postcard_seasonal",
+                      "streak",
+                      "level_up",
+                      "bjt_pass",
+                      "battle_win",
+                      "daily_phrase",
+                      "bjt_result"
+                    ]
+                  },
+                  "config": {
+                    "type": "object",
+                    "properties": {
+                      "brandBg": {
+                        "type": "string",
+                        "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+                      },
+                      "brandBgEnd": {
+                        "type": "string",
+                        "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+                      },
+                      "brandFg": {
+                        "type": "string",
+                        "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+                      },
+                      "brandAccent": {
+                        "type": "string",
+                        "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+                      },
+                      "badgeKey": {
+                        "type": "string",
+                        "maxLength": 64
+                      },
+                      "pattern": {
+                        "type": "string",
+                        "enum": [
+                          "none",
+                          "dots",
+                          "waves",
+                          "grid",
+                          "stripes",
+                          "diamonds",
+                          "circles",
+                          "zigzag",
+                          "crosshatch",
+                          "sakura"
+                        ]
+                      }
+                    }
+                  }
+                }
               }
             }
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "200": {
+            "description": "SVG preview (1200×630). Overlay patterns are validated but not drawn in this preview.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "base64Svg": {
+                      "type": "string"
+                    },
+                    "contentType": {
+                      "type": "string",
+                      "enum": [
+                        "image/svg+xml"
+                      ]
+                    },
+                    "width": {
+                      "type": "integer",
+                      "enum": [
+                        1200
+                      ]
+                    },
+                    "height": {
+                      "type": "integer",
+                      "enum": [
+                        630
+                      ]
+                    }
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "description": "Validation (Zod/Nest) or bad input.",
+            "description": "Validation error: headline/sub length, kind, hex color, badge key or pattern.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1227,7 +1331,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid Bearer / session.",
+            "description": "Missing or invalid Admin session.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1237,47 +1341,7 @@
             }
           },
           "403": {
-            "description": "RBAC / scope denied.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Resource not found.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict (e.g. duplicate, unique).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiConflictBodyDto"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable (if a dedicated pipe is used; otherwise 400 is common in this API).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit (when enforced at gateway or Nest).",
+            "description": "Missing growth read permission, or the request has no trusted Origin/Referer (`forbidden: missing origin`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -1287,7 +1351,7 @@
             }
           },
           "500": {
-            "description": "Server error / DB.",
+            "description": "Permission lookup failed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1534,9 +1598,7 @@
         "x-admin-audit": true,
         "x-admin-group": "growth",
         "x-admin-requires": [
-          "admin.growth.read",
-          "growth.manage",
-          "viewer.audit"
+          "growth.manage"
         ]
       }
     },
@@ -1544,7 +1606,35 @@
       "get": {
         "description": "**RBAC:** `growth.manage`, `admin.growth.read`, or `viewer.audit`.",
         "operationId": "audienceEstimate",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 16
+            }
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 32
+            }
+          },
+          {
+            "name": "plan",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 64
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": ""
@@ -1866,9 +1956,7 @@
         "x-admin-audit": true,
         "x-admin-group": "growth",
         "x-admin-requires": [
-          "admin.growth.read",
-          "growth.manage",
-          "viewer.audit"
+          "growth.manage"
         ]
       }
     },
@@ -1877,7 +1965,7 @@
         "operationId": "schedule",
         "parameters": [],
         "responses": {
-          "201": {
+          "200": {
             "description": ""
           },
           "400": {
@@ -1969,7 +2057,7 @@
             "bearer": []
           }
         ],
-        "summary": "Transition any → scheduled. Audited.",
+        "summary": "Transition draft → scheduled when scheduleStart is future and scheduleEnd follows. Audited.",
         "tags": [
           "Admin Growth",
           "Growth Campaigns"
@@ -1977,9 +2065,7 @@
         "x-admin-audit": true,
         "x-admin-group": "growth",
         "x-admin-requires": [
-          "admin.growth.read",
-          "growth.manage",
-          "viewer.audit"
+          "growth.manage"
         ]
       }
     },
@@ -1988,7 +2074,7 @@
         "operationId": "activate",
         "parameters": [],
         "responses": {
-          "201": {
+          "200": {
             "description": ""
           },
           "400": {
@@ -2080,7 +2166,7 @@
             "bearer": []
           }
         ],
-        "summary": "Transition any → active. Audited.",
+        "summary": "Transition draft or scheduled → active. Audited.",
         "tags": [
           "Admin Growth",
           "Growth Campaigns"
@@ -2088,9 +2174,7 @@
         "x-admin-audit": true,
         "x-admin-group": "growth",
         "x-admin-requires": [
-          "admin.growth.read",
-          "growth.manage",
-          "viewer.audit"
+          "growth.manage"
         ]
       }
     },
@@ -2099,7 +2183,7 @@
         "operationId": "end",
         "parameters": [],
         "responses": {
-          "201": {
+          "200": {
             "description": ""
           },
           "400": {
@@ -2191,7 +2275,7 @@
             "bearer": []
           }
         ],
-        "summary": "Transition any → ended. Audited.",
+        "summary": "Transition active → ended. Audited.",
         "tags": [
           "Admin Growth",
           "Growth Campaigns"
@@ -2199,9 +2283,7 @@
         "x-admin-audit": true,
         "x-admin-group": "growth",
         "x-admin-requires": [
-          "admin.growth.read",
-          "growth.manage",
-          "viewer.audit"
+          "growth.manage"
         ]
       }
     },
@@ -2210,7 +2292,7 @@
         "operationId": "archive",
         "parameters": [],
         "responses": {
-          "201": {
+          "200": {
             "description": ""
           },
           "400": {
@@ -2302,7 +2384,7 @@
             "bearer": []
           }
         ],
-        "summary": "Transition any → archived. Audited.",
+        "summary": "Transition draft, scheduled, active, or ended → archived. Audited.",
         "tags": [
           "Admin Growth",
           "Growth Campaigns"
@@ -2310,9 +2392,7 @@
         "x-admin-audit": true,
         "x-admin-group": "growth",
         "x-admin-requires": [
-          "admin.growth.read",
-          "growth.manage",
-          "viewer.audit"
+          "growth.manage"
         ]
       }
     },
@@ -2321,7 +2401,7 @@
         "operationId": "duplicate",
         "parameters": [],
         "responses": {
-          "201": {
+          "200": {
             "description": ""
           },
           "400": {
@@ -2421,16 +2501,79 @@
         "x-admin-audit": true,
         "x-admin-group": "growth",
         "x-admin-requires": [
-          "admin.growth.read",
-          "growth.manage",
-          "viewer.audit"
+          "growth.manage"
         ]
       }
     },
     "/api/admin/growth/postcards": {
       "get": {
         "operationId": "list",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "postcard_achievement",
+                "postcard_streak",
+                "postcard_level_up",
+                "postcard_exam_result",
+                "postcard_welcome",
+                "postcard_seasonal",
+                "streak",
+                "level_up",
+                "bjt_pass",
+                "battle_win",
+                "daily_phrase",
+                "bjt_result"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "published",
+                "archived"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": ""
@@ -2524,7 +2667,7 @@
             "bearer": []
           }
         ],
-        "summary": "List postcard templates (filters: q, kind, status). Pagination 25/page.",
+        "summary": "List postcard templates (filters: q, kind, status). Pagination up to 100/page (default 20).",
         "tags": [
           "Admin Growth",
           "Postcards"
@@ -2641,9 +2784,7 @@
         "x-admin-audit": true,
         "x-admin-group": "growth",
         "x-admin-requires": [
-          "admin.growth.read",
-          "growth.manage",
-          "viewer.audit"
+          "growth.manage"
         ]
       }
     },
@@ -32650,7 +32791,8 @@
         "x-admin-requires": [
           "admin.legal.read",
           "admin.legal.write",
-          "legal.admin"
+          "legal.admin",
+          "iam.manage"
         ]
       }
     },
@@ -32761,7 +32903,8 @@
         "x-admin-requires": [
           "admin.legal.read",
           "admin.legal.write",
-          "legal.admin"
+          "legal.admin",
+          "iam.manage"
         ]
       }
     },
@@ -38609,30 +38752,55 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful search response."
+            "description": "Active public content search results.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "kind",
+                      "title"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "lexeme",
+                          "kanji",
+                          "grammar",
+                          "example",
+                          "lesson"
+                        ]
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "reading": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "jlptLevel": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Validation (Zod/Nest) or bad input.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid Bearer / session.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "RBAC / scope denied.",
             "content": {
               "application/json": {
                 "schema": {
@@ -38692,7 +38860,49 @@
             }
           }
         },
-        "summary": "Meilisearch projection — **read-only** copy of indexed content; canonical data lives in PostgreSQL.",
+        "summary": "Public, read-only Meilisearch projection of active content; canonical data lives in PostgreSQL. Reindexing is Admin-only.",
+        "tags": [
+          "Search"
+        ]
+      }
+    },
+    "/api/search/index": {
+      "post": {
+        "operationId": "reindexSearch",
+        "responses": {
+          "200": {
+            "description": "Reindex accepted."
+          },
+          "401": {
+            "description": "Admin session required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Admin authorization or CSRF validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "admin-actor": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Trigger a full search reindex (Admin only).",
         "tags": [
           "Search"
         ]
@@ -46856,6 +47066,37 @@
           "user.create",
           "viewer.audit"
         ]
+      }
+    },
+    "/api/learner/privacy/requests/{id}/export": {
+      "get": {
+        "operationId": "downloadLearnerPrivacyExport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Private JSON export attachment. Expires 24 hours after fulfillment.",
+            "headers": {
+              "Cache-Control": { "schema": { "type": "string", "example": "private, no-store" } },
+              "Content-Disposition": { "schema": { "type": "string" } }
+            },
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "400": { "description": "Invalid request id." },
+          "401": { "description": "Missing or invalid learner session." },
+          "404": { "description": "Export not found, not owned, or not available." },
+          "410": { "description": "Export has expired." },
+          "500": { "description": "Server error / DB." }
+        },
+        "security": [ { "bearer": [] } ],
+        "summary": "Download the signed-in learner's fulfilled privacy export.",
+        "tags": [ "Users" ]
       }
     },
     "/api/admin/privacy/requests/{id}": {

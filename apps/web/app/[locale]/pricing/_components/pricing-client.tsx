@@ -28,9 +28,12 @@ type Labels = {
   loading: string;
   error: string;
   backHome: string;
-  enforcementOff: string;
   checkoutLoading?: string;
   checkoutError?: string;
+  checkoutPending?: string;
+  checkoutPendingShort?: string;
+  retry?: string;
+  signInToUpgrade?: string;
   entitlementLabels?: Record<string, string>;
   quotaLabels?: Record<string, string>;
   windowLabels?: Record<string, string>;
@@ -40,60 +43,76 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
   const { userId } = useGoAuth();
   const [plans, setPlans] = useState<PlanData[]>([]);
   const [currentSlug, setCurrentSlug] = useState<string | null>(null);
-  const [enforcementEnabled, setEnforcementEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [pendingPlanSlug, setPendingPlanSlug] = useState<string | null>(null);
 
   // Human-readable labels for entitlement/quota keys
   const entitlementLabel = (key: string): string => {
+    const text = (vi: string, ja: string, en: string) => locale === "ja" ? ja : locale === "vi" ? vi : en;
     const map: Record<string, string> = {
-      "learner.basic": locale === "ja" ? "基本学習機能" : "Tính năng học cơ bản",
-      "flashcard.deck.create": locale === "ja" ? "デッキ作成" : "Tạo bộ thẻ",
-      "flashcard.suggest_cards": locale === "ja" ? "AIカード提案" : "Gợi ý thẻ AI",
-      "flashcard.adaptive_gen": locale === "ja" ? "アダプティブ生成" : "Tạo thẻ thích ứng",
-      "quiz.bjt.start": locale === "ja" ? "BJTクイズ" : "Làm bài kiểm tra BJT",
-      "quiz.official_simulation": locale === "ja" ? "公式BJTシミュレーション" : "Mô phỏng BJT chính thức",
-      "ads.remove": locale === "ja" ? "広告完全非表示" : "Xóa hoàn toàn quảng cáo",
-      "ads.reduced": locale === "ja" ? "広告削減" : "Giảm quảng cáo",
+      "learner.basic": text("Tính năng học cơ bản", "基本学習機能", "Core learning features"),
+      "flashcard.deck.create": text("Tạo bộ thẻ", "デッキ作成", "Create flashcard decks"),
+      "flashcard.premium_styles": text("Giao diện thẻ cao cấp", "プレミアムカードデザイン", "Premium flashcard styles"),
+      "flashcard.suggest_cards": text("Gợi ý thẻ AI", "AIカード提案", "AI flashcard suggestions"),
+      "flashcard.adaptive_gen": text("Tạo thẻ thích ứng", "アダプティブ生成", "Adaptive card generation"),
+      "quiz.bjt.start": text("Làm bài kiểm tra BJT", "BJTクイズ", "BJT quizzes"),
+      "quiz.official_simulation": text("Mô phỏng BJT chính thức", "公式BJTシミュレーション", "Official BJT simulation"),
+      "ads.remove": text("Xóa hoàn toàn quảng cáo", "広告完全非表示", "Remove ads"),
+      "ads.reduced": text("Giảm quảng cáo", "広告削減", "Fewer ads"),
       ...(labels.entitlementLabels ?? {})
     };
     return map[key] ?? key;
   };
 
   const quotaLabel = (key: string): string => {
+    const text = (vi: string, ja: string, en: string) => locale === "ja" ? ja : locale === "vi" ? vi : en;
     const map: Record<string, string> = {
-      "flashcard_reviews_per_day": locale === "ja" ? "フラッシュカード復習" : "Ôn thẻ flashcard",
+      "flashcard_reviews_per_day": text("Ôn thẻ flashcard", "フラッシュカード復習", "Flashcard reviews"),
+      "image_search_daily": text("Tìm ảnh mỗi ngày", "1日の画像検索", "Daily image searches"),
       ...(labels.quotaLabels ?? {})
     };
     return map[key] ?? key;
   };
 
   const windowLabel = (w: string): string => {
+    const text = (vi: string, ja: string, en: string) => locale === "ja" ? ja : locale === "vi" ? vi : en;
     const map: Record<string, string> = {
-      day: locale === "ja" ? "日" : "ngày",
-      week: locale === "ja" ? "週" : "tuần",
-      month: locale === "ja" ? "月" : "tháng",
+      day: text("ngày", "日", "day"),
+      week: text("tuần", "週", "week"),
+      month: text("tháng", "月", "month"),
       ...(labels.windowLabels ?? {})
     };
     return map[w] ?? w;
   };
 
   const load = useCallback(async () => {
+    setLoading(true);
+    setError(false);
     try {
-      const [plansRes, summaryRes] = await Promise.all([
+      const [plansRes, subscriptionRes] = await Promise.all([
         learnerApiFetch("/api/learner/monetization/plans"),
-        userId ? learnerApiFetch(`/api/learner/monetization/summary?userId=${encodeURIComponent(userId)}`) : null,
+        userId ? learnerApiFetch("/api/learner/monetization/subscription") : null,
       ]);
-      if (plansRes.ok) {
-        setPlans((await plansRes.json()) as PlanData[]);
-      }
-      if (summaryRes?.ok) {
-        const s = (await summaryRes.json()) as { planSlug?: string; enforcementEnabled?: boolean };
-        setCurrentSlug(s.planSlug ?? null);
-        setEnforcementEnabled(s.enforcementEnabled !== false);
-      }
+      if (!plansRes.ok || (subscriptionRes && !subscriptionRes.ok)) throw new Error("pricing request failed");
+      const loadedPlans = await plansRes.json() as PlanData[];
+	      const subscriptionData = subscriptionRes
+	        ? await subscriptionRes.json() as {
+	          subscription?: { planId: string; status: string } | null;
+	          pendingSubscription?: { planId: string } | null;
+	        }
+        : null;
+      setPlans(loadedPlans);
+      const subscription = subscriptionData?.subscription;
+      setCurrentSlug(subscription && ["active", "trialing"].includes(subscription.status)
+        ? loadedPlans.find((plan) => plan.id === subscription.planId)?.slug ?? null
+        : null);
+	      const pendingSubscription = subscriptionData?.pendingSubscription;
+	      setPendingPlanSlug(pendingSubscription
+	        ? loadedPlans.find((plan) => plan.id === pendingSubscription.planId)?.slug ?? null
+        : null);
     } catch {
       setError(true);
     } finally {
@@ -103,30 +122,23 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
 
   useEffect(() => { void load(); }, [load]);
 
-  async function startCheckout(planSlug: string) {
+  async function startCheckout(plan: PlanData) {
     if (!userId) return;
-    setCheckingOut(planSlug);
+    setCheckingOut(plan.slug);
     setCheckoutError(null);
     try {
       const res = await learnerApiFetch("/api/learner/monetization/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planSlug, userId }),
+        body: JSON.stringify({ planId: plan.id }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { message?: string };
-        setCheckoutError(data.message ?? (labels.checkoutError || "Checkout failed"));
+        setCheckoutError(labels.checkoutError || "Checkout failed");
         return;
       }
-      const data = (await res.json()) as { checkoutUrl?: string };
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl.startsWith("/")
-          ? `/${locale}${data.checkoutUrl}`
-          : data.checkoutUrl;
-      } else {
-        // Local checkout completed — reload to reflect new plan
-        await load();
-      }
+      const data = await res.json() as { status?: string };
+      if (data.status !== "pending") throw new Error("unexpected checkout status");
+      setPendingPlanSlug(plan.slug);
     } catch {
       setCheckoutError(labels.checkoutError || "Checkout failed");
     } finally {
@@ -151,6 +163,9 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
     return (
       <main className="mx-auto w-full max-w-4xl px-4 py-12 text-center">
         <p className="text-sm text-rose-600">{labels.error}</p>
+        <button className="mt-4 rounded-xl border px-4 py-2 text-sm" onClick={() => void load()} type="button">
+          {labels.retry || "Retry"}
+        </button>
       </main>
     );
   }
@@ -160,11 +175,6 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
       <div className="mb-8 text-center">
         <h1 className="text-2xl font-bold text-ink sm:text-3xl">{labels.title}</h1>
         <p className="mt-2 text-sm text-muted">{labels.subtitle}</p>
-        {!enforcementEnabled && (
-          <p className="mt-3 rounded-lg bg-amber-50 px-4 py-2 text-sm text-amber-700">
-            {labels.enforcementOff}
-          </p>
-        )}
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -174,7 +184,9 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
           const cfg = plan.config as { displayName?: string; displayNameVi?: string; displayNameJa?: string; price?: number; billingInterval?: string; recommended?: boolean } | null;
           const price = cfg?.price ?? 0;
           const recommended = cfg?.recommended ?? false;
-          const displayName = locale === "ja" ? (cfg?.displayNameJa ?? cfg?.displayName) : (cfg?.displayNameVi ?? cfg?.displayName);
+          const displayName = locale === "ja"
+            ? (cfg?.displayNameJa ?? cfg?.displayName)
+            : locale === "vi" ? (cfg?.displayNameVi ?? cfg?.displayName) : cfg?.displayName;
 
           return (
             <div
@@ -204,13 +216,13 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
 
               <div className="mt-4 flex-1 space-y-2 text-sm text-muted">
                 <p className="font-medium text-ink">{labels.features}:</p>
-                {plan.quotas.map((q) => (
+                {(plan.quotas ?? []).map((q) => (
                   <p key={q.key} className="flex items-center gap-1.5">
                     <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
                     {quotaLabel(q.key)}: {q.limit >= 999999 ? labels.unlimited : `${q.limit}/${windowLabel(q.window)}`}
                   </p>
                 ))}
-                {plan.entitlements.map((e) => (
+                {(plan.entitlements ?? []).map((e) => (
                   <p key={e} className="flex items-center gap-1.5">
                     <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
                     {entitlementLabel(e)}
@@ -223,17 +235,19 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
                   <span className="block w-full rounded-xl border border-slate-200 py-2.5 text-center text-sm font-medium text-muted">
                     {labels.current}
                   </span>
-                ) : !isFree && enforcementEnabled ? (
-                  <button
+                ) : !isFree ? (
+                  userId ? <button
                     className="block w-full rounded-xl bg-indigo-600 py-2.5 text-center text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
-                    disabled={checkingOut === plan.slug}
-                    onClick={() => void startCheckout(plan.slug)}
+                    disabled={checkingOut === plan.slug || pendingPlanSlug !== null}
+                    onClick={() => void startCheckout(plan)}
                     type="button"
                   >
                     {checkingOut === plan.slug
                       ? (labels.checkoutLoading || "Đang xử lý...")
-                      : labels.upgrade}
-                  </button>
+                      : pendingPlanSlug === plan.slug ? (labels.checkoutPendingShort || "Pending") : labels.upgrade}
+                  </button> : <Link className="block w-full rounded-xl bg-indigo-600 py-2.5 text-center text-sm font-medium text-white" href={`/${locale}/login?returnTo=/${locale}/pricing`}>
+                    {labels.signInToUpgrade || labels.upgrade}
+                  </Link>
                 ) : null}
               </div>
             </div>
@@ -246,6 +260,7 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
           <p className="text-sm text-rose-700">{checkoutError}</p>
         </div>
       )}
+      {pendingPlanSlug && <p className="mt-4 text-center text-sm text-amber-700">{labels.checkoutPending}</p>}
 
       <div className="mt-8 text-center">
         <Link className="text-sm text-indigo-600 hover:underline" href={`/${locale}`}>

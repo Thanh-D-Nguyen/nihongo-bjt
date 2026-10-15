@@ -1,8 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
-
-import { SKILL_AXES, radarAxisPoint, skillValue } from "../helpers";
+import { SKILL_AXES, radarAxisPoint } from "../helpers";
 import type { CareerRpgLabels } from "../i18n";
 import type { UserCareerState } from "../types";
 
@@ -17,14 +15,14 @@ const RING_STEPS = [25, 50, 75, 100];
 
 export function CareerSkillRadar({ state, axisLabels, size = 280 }: Props) {
   const center = size / 2;
+  const values = Object.fromEntries(state.skills.map(({ axisCode, value }) => [axisCode, value]));
+  const hasCompleteSkills = SKILL_AXES.every((axis) => values[axis] !== undefined);
 
-  const polygon = useMemo(() => {
-    return SKILL_AXES.map((axis, idx) => {
-      const v = skillValue(state, axis) / 100;
+  const polygon = hasCompleteSkills ? SKILL_AXES.map((axis, idx) => {
+      const v = values[axis]! / 100;
       const { x, y } = radarAxisPoint(idx, SKILL_AXES.length, RADIUS * v);
       return `${center + x},${center + y}`;
-    }).join(" ");
-  }, [state, center]);
+    }).join(" ") : "";
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -85,7 +83,8 @@ export function CareerSkillRadar({ state, axisLabels, size = 280 }: Props) {
           );
         })}
         {SKILL_AXES.map((axis, idx) => {
-          const v = skillValue(state, axis);
+          const v = values[axis];
+          if (v === undefined) return null;
           const { x, y } = radarAxisPoint(idx, SKILL_AXES.length, RADIUS * (v / 100));
           return (
             <circle
@@ -104,7 +103,7 @@ export function CareerSkillRadar({ state, axisLabels, size = 280 }: Props) {
         {SKILL_AXES.map((axis) => (
           <li className="flex items-center justify-between text-[#4B5563]" key={axis}>
             <span>{axisLabels[axis]}</span>
-            <span className="font-semibold text-[#111827]">{skillValue(state, axis)}</span>
+            <span className="font-semibold text-[#111827]">{values[axis] ?? "—"}</span>
           </li>
         ))}
       </ul>

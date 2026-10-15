@@ -13,7 +13,7 @@ vi.mock("../../../../../components/auth/require-auth", () => ({
 }));
 
 vi.mock("../../../../../lib/go-auth-provider", () => ({
-  useGoAuth: () => ({ accessToken: "test-access-token" })
+  useGoAuth: () => ({ accessToken: "test-access-token", isAuthenticated: true })
 }));
 
 vi.mock("./loto-game-toggle", () => ({
@@ -21,7 +21,8 @@ vi.mock("./loto-game-toggle", () => ({
 }));
 
 vi.mock("./loto-hero-prediction", () => ({
-  LotoHeroPrediction: () => <div data-testid="hero-prediction" />
+  LotoHeroPrediction: ({ data }: { data: { sets?: unknown[] } }) =>
+    data.sets ? <div data-testid="hero-prediction" /> : <div data-testid="hero-invalid-prediction" />
 }));
 
 vi.mock("./loto-history-card", () => ({
@@ -95,11 +96,34 @@ afterEach(async () => {
 });
 
 describe("LotoHubClient pagination", () => {
+  it("unwraps an absent next draw instead of passing the response envelope to the hero", async () => {
+    fetchMock.mockImplementation((input: string | URL | Request) => {
+      const url = String(input);
+      if (url.includes("/next-draw")) {
+        return Promise.resolve(new Response(JSON.stringify({ nextDraw: null }), { status: 200 }));
+      }
+      return Promise.resolve(
+        new Response(JSON.stringify({ data: [], total: 0 }), { status: 200 })
+      );
+    });
+
+    await act(async () => {
+      root.render(
+        <LotoHubClient labels={{ empty: "Chưa có tổ hợp tham khảo." }} locale="vi" />
+      );
+    });
+    await flushEffects();
+
+    expect(host.querySelector("[data-testid=hero-prediction]")).toBeNull();
+    expect(host.querySelector("[data-testid=hero-invalid-prediction]")).toBeNull();
+    expect(host.textContent).toContain("Chưa có tổ hợp tham khảo.");
+  });
+
   it("stops automatic loading after a pagination error and keeps one stable retry state", async () => {
     fetchMock.mockImplementation((input: string | URL | Request) => {
       const url = String(input);
       if (url.includes("/next-draw")) {
-        return Promise.resolve(new Response("null", { status: 200 }));
+        return Promise.resolve(new Response(JSON.stringify({ nextDraw: null }), { status: 200 }));
       }
       if (url.includes("page=1")) {
         return Promise.resolve(

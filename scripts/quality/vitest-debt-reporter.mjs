@@ -22,7 +22,10 @@ export default class FrontendDebtReporter {
       tests: [...mod.children.allTests()].map((test) => ({
         name: test.fullName,
         state: test.result().state,
-        mode: test.options.mode
+        mode: test.options.mode,
+        // Failure messages let the lifecycle harness check that a RED fails for the declared reason.
+        errors: (test.result().errors ?? []).map((e) => String(e.message ?? e).slice(0, 2000)),
+        error_names: (test.result().errors ?? []).map((e) => String(e.name ?? "Error"))
       }))
     }));
     writeFileSync(

@@ -17,6 +17,9 @@ interface LevelDef {
   descriptionVi: string;
   descriptionJa: string;
   color: string;
+  vocabCount: number;
+  kanjiCount: number;
+  grammarCount: number;
 }
 
 interface LessonSummary {
@@ -35,6 +38,7 @@ interface LessonSummary {
   vocabCount: number;
   kanjiCount: number;
   grammarCount: number;
+  isCompleted: boolean;
 }
 
 interface Labels {
@@ -63,16 +67,6 @@ interface Labels {
   checkpointUnitLabel: string;
   minutesLabel: string;
   activitiesLabel: string;
-}
-
-/* ── localStorage helpers ── */
-function getCompletedLessons(): Set<string> {
-  try {
-    const raw = localStorage.getItem("bjt_lesson_completed");
-    return raw ? new Set(JSON.parse(raw)) : new Set();
-  } catch {
-    return new Set();
-  }
 }
 
 export function LevelDetailClient({
@@ -231,18 +225,9 @@ export function LevelDetailClient({
           </div>
           <div className="grid grid-cols-2 gap-2 self-center sm:grid-cols-4 lg:grid-cols-2">
             <LevelMetric label={labels.tabLessons} value={lessons.length} />
-            <LevelMetric
-              label={labels.vocabShort}
-              value={lessons.reduce((sum, lesson) => sum + lesson.vocabCount, 0)}
-            />
-            <LevelMetric
-              label={labels.kanjiShort}
-              value={lessons.reduce((sum, lesson) => sum + lesson.kanjiCount, 0)}
-            />
-            <LevelMetric
-              label={labels.grammarShort}
-              value={lessons.reduce((sum, lesson) => sum + lesson.grammarCount, 0)}
-            />
+            <LevelMetric label={labels.vocabShort} value={level.vocabCount} />
+            <LevelMetric label={labels.kanjiShort} value={level.kanjiCount} />
+            <LevelMetric label={labels.grammarShort} value={level.grammarCount} />
           </div>
         </div>
       </div>
@@ -341,11 +326,6 @@ function LessonsList({
   levelCode: string;
   totalItems: number;
 }) {
-  const [completed, setCompleted] = useState<Set<string>>(new Set());
-  useEffect(() => {
-    setCompleted(getCompletedLessons());
-  }, []);
-
   if (lessons.length === 0) {
     return (
       <div className="py-12 text-center">
@@ -357,7 +337,7 @@ function LessonsList({
     );
   }
 
-  const doneCount = lessons.filter((l) => completed.has(l.slug)).length;
+  const doneCount = lessons.filter((lesson) => lesson.isCompleted).length;
 
   return (
     <>
@@ -402,7 +382,7 @@ function LessonsList({
       <ol className="space-y-3">
         {lessons.map((lesson) => {
           const totalItems = lesson.vocabCount + lesson.kanjiCount + lesson.grammarCount;
-          const isDone = completed.has(lesson.slug);
+          const isDone = lesson.isCompleted;
           const unitTypeLabel =
             lesson.unitType === "review"
               ? labels.reviewUnitLabel

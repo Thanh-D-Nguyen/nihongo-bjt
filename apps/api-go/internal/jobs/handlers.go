@@ -19,6 +19,18 @@ func NewHandlers(db *pgxpool.Pool, logger *slog.Logger, cfg Config) *Handlers {
 	return &Handlers{db: db, logger: logger, cfg: cfg}
 }
 
+// PrivacyExportArtifactCleanup removes expired export contents while preserving request history.
+func (h *Handlers) PrivacyExportArtifactCleanup(ctx context.Context) (int, error) {
+	tag, err := h.db.Exec(ctx, `UPDATE profile.privacy_request
+		SET result_payload=result_payload-'artifact'
+		WHERE kind='export' AND result_payload ? 'artifact'
+		AND (result_payload->>'expiresAt')::timestamptz <= NOW()`)
+	if err != nil {
+		return 0, err
+	}
+	return int(tag.RowsAffected()), nil
+}
+
 // ComebackExperience checks for users eligible for comeback engagement.
 // Migrated from: apps/api/src/gamification/comeback-experience.cron.ts
 // Schedule: 0 10 * * * (Asia/Ho_Chi_Minh)

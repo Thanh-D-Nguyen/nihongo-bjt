@@ -1,0 +1,552 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-093",
+  "title": "Audit learner Quiz print screen",
+  "start_head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Quiz print route cannot render the published practice exam because its browser fetch bypasses the configured proxy and its assumed DTO disagrees with the authoritative Go response.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Add a valid regression test that fails against current route/DTO contract; fix the shared contract/path at the authoritative boundary; verify Go integration and frontend tests/typecheck/build; visibly inspect Vietnamese and Japanese route at desktop and 390x844, observe real API request and print preview, verify official denial and invalid-ID/retry behavior; update screen inventory and commit this screen before proceeding."
+      }
+    ],
+    "expected_behavior": "Opening a published non-official practice template through the visible Quiz UI loads the complete printable exam with localized titles, ordered sections/questions/options, timing/level metadata, and optional answer key. Official templates remain denied; loading/error states are actionable; print controls are keyboard accessible and excluded from printed output.",
+    "observed_behavior": "PrintExamClient fetches NEXT_PUBLIC_API_URL/default localhost:4000 directly and casts the response to an unrelated shape; Go PrintableTemplate returns title, sections, IDs and correctAnswer. UI labels are hardcoded, and the error state has no retry.",
+    "rollback_plan": "Revert only the screen/API/contract/test changes from AUDIT-093."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY",
+      "API_CONTRACT",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "The Quiz print bug fix also resolves one known SQL/schema drift entry; retire only that now-fixed baseline entry so the canonical SQL conformance gate remains green without lowering its coverage floor."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/quiztemplate",
+      "test": "TestGetPrintableTemplateUsesCanonicalAssessmentSchema",
+      "expect": "column \"title\" does not exist"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-10T10:28:32.520Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-10T10:29:22.647Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-10T10:29:23.045Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-10T10:32:37.985Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T10:36:50.193Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-10T10:41:38.450Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-10T10:43:30.991Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T10:43:46.386Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-10T11:00:57.539Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T11:06:01.457Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-10T11:14:01.503Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-10T11:14:42.133Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-10T11:15:01.132Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-10T10:32:02.989Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetPrintableTemplateUsesCanonicalAssessmentSchema)$ ./internal/quiztemplate"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/quiztemplate:TestGetPrintableTemplateUsesCanonicalAssessmentSchema",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGetPrintableTemplateUsesCanonicalAssessmentSchema store_printable_test.go:16: TEST_DATABASE_URL is required; run with scripts/quality/with-test-db.sh --- FAIL: TestGetPrintableTemplateUsesCanonicalAssessmentSchema (0.00s)",
+          "valid": false,
+          "reason": "failure shows an infrastructure/tooling signature (\"TEST_DATABASE_URL\")"
+        }
+      ],
+      "expects": {
+        "go:./internal/quiztemplate:TestGetPrintableTemplateUsesCanonicalAssessmentSchema": "column \"title\" does not exist"
+      },
+      "fingerprint": "7fb2132ff51826fd4c4fdbb7f16c05958583669cfbd0e15fb7b8bae1ee31621d"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-10T10:32:37.795Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetPrintableTemplateUsesCanonicalAssessmentSchema)$ ./internal/quiztemplate"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/quiztemplate:TestGetPrintableTemplateUsesCanonicalAssessmentSchema",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGetPrintableTemplateUsesCanonicalAssessmentSchema store_printable_test.go:58: GetPrintableTemplate() error = quiztemplate: get printable sections: ERROR: column \"title\" does not exist (SQLSTATE 42703) --- FAIL: TestGetPrintableTemplateUsesCanonicalAssessmentSchema (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/quiztemplate:TestGetPrintableTemplateUsesCanonicalAssessmentSchema": "column \"title\" does not exist"
+      },
+      "fingerprint": "7fb2132ff51826fd4c4fdbb7f16c05958583669cfbd0e15fb7b8bae1ee31621d"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-10T10:36:36.932Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetPrintableTemplateUsesCanonicalAssessmentSchema)$ ./internal/quiztemplate"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/quiztemplate:TestGetPrintableTemplateUsesCanonicalAssessmentSchema",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestGetPrintableTemplateUsesCanonicalAssessmentSchema store_printable_test.go:16: TEST_DATABASE_URL is required; run with scripts/quality/with-test-db.sh --- FAIL: TestGetPrintableTemplateUsesCanonicalAssessmentSchema (0.00s)"
+        }
+      ],
+      "fingerprint": "9f4fac2a0d5560acd0961563a4fdb3cf42e406d5657df1ef8cd928a4520480be"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-10T10:36:49.685Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetPrintableTemplateUsesCanonicalAssessmentSchema)$ ./internal/quiztemplate"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/quiztemplate:TestGetPrintableTemplateUsesCanonicalAssessmentSchema",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9f4fac2a0d5560acd0961563a4fdb3cf42e406d5657df1ef8cd928a4520480be"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-10T10:37:48.054Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 743,
+        "executed": 743,
+        "passed": 742,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "9f4fac2a0d5560acd0961563a4fdb3cf42e406d5657df1ef8cd928a4520480be"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-10T10:41:37.901Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 421,
+        "executed": 421,
+        "passed": 421,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 778,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "9f4fac2a0d5560acd0961563a4fdb3cf42e406d5657df1ef8cd928a4520480be"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-10T10:43:45.862Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetPrintableTemplateUsesCanonicalAssessmentSchema)$ ./internal/quiztemplate"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/quiztemplate:TestGetPrintableTemplateUsesCanonicalAssessmentSchema",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ad55498f98a5bb0f426db31048affcf06e7928d2e29592c5942df334e46c0f9c"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-10T10:46:00.671Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "ad55498f98a5bb0f426db31048affcf06e7928d2e29592c5942df334e46c0f9c"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-10T10:48:40.469Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 743,
+        "executed": 743,
+        "passed": 743,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "a later step of bash scripts/quality/verify-go.sh failed (exit 1)",
+      "fingerprint": "ad55498f98a5bb0f426db31048affcf06e7928d2e29592c5942df334e46c0f9c"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-10T10:52:12.992Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 421,
+        "executed": 421,
+        "passed": 421,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 778,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "ad55498f98a5bb0f426db31048affcf06e7928d2e29592c5942df334e46c0f9c"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-10T10:53:24.651Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetPrintableTemplateUsesCanonicalAssessmentSchema)$ ./internal/quiztemplate"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/quiztemplate:TestGetPrintableTemplateUsesCanonicalAssessmentSchema",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "26809df4e9e492c6e686750ff8318813e7002d3a0f8eca3a43682878b4793997"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-10T10:55:25.992Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "26809df4e9e492c6e686750ff8318813e7002d3a0f8eca3a43682878b4793997"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-10T10:57:53.117Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 743,
+        "executed": 743,
+        "passed": 743,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "743 passed, 0 allowed skip(s)",
+      "fingerprint": "26809df4e9e492c6e686750ff8318813e7002d3a0f8eca3a43682878b4793997"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-10T11:00:57.048Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 421,
+        "executed": 421,
+        "passed": 421,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 778,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "26809df4e9e492c6e686750ff8318813e7002d3a0f8eca3a43682878b4793997"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-10T11:06:00.859Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetPrintableTemplateUsesCanonicalAssessmentSchema)$ ./internal/quiztemplate"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/quiztemplate:TestGetPrintableTemplateUsesCanonicalAssessmentSchema",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "65bf4c6707e0f11ef800b3b6f0f42801267fad9b9f1e64b6c28eef731f4487fa"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-10T11:08:02.834Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "65bf4c6707e0f11ef800b3b6f0f42801267fad9b9f1e64b6c28eef731f4487fa"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-10T11:10:29.947Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 743,
+        "executed": 743,
+        "passed": 743,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "743 passed, 0 allowed skip(s)",
+      "fingerprint": "65bf4c6707e0f11ef800b3b6f0f42801267fad9b9f1e64b6c28eef731f4487fa"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-10T11:14:00.945Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 421,
+        "executed": 421,
+        "passed": 421,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 778,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "65bf4c6707e0f11ef800b3b6f0f42801267fad9b9f1e64b6c28eef731f4487fa"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-10T11:14:41.612Z",
+      "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Goodall",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "b6d99491684543434795dd0e9ce86daad042ecc87fe7f3bb403e9b662f186694",
+      "attested": true,
+      "fingerprint": "65bf4c6707e0f11ef800b3b6f0f42801267fad9b9f1e64b6c28eef731f4487fa"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-10T11:15:01.113Z",
+    "head": "10481cb53a4d2bb1cb7ab825e7a8e93587a7b817",
+    "fingerprint": "65bf4c6707e0f11ef800b3b6f0f42801267fad9b9f1e64b6c28eef731f4487fa",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "7497289ffc7315e3654e50e4a3543b615824d142",
+      "apps/api-go/internal/quiztemplate/store.go": "0caa2076043e9885afb334b40622b853d3ac7d94",
+      "apps/api-go/internal/quiztemplate/store_printable_test.go": "13eca86becb8675fbc04b03489f7bdf887e44cb9",
+      "apps/web/app/[locale]/quiz/print/[id]/_components/print-exam-client.test.tsx": "52235e65cca3cc4867c460a25b0b301c6a40fdc3",
+      "apps/web/app/[locale]/quiz/print/[id]/_components/print-exam-client.tsx": "48f4f5920252755b5d3984a972da287ad555d870",
+      "apps/web/app/[locale]/quiz/print/[id]/page.tsx": "4914e9face44d65e432b4af764683daf0fed56b9",
+      "apps/web/messages/en.json": "a2bc0399ae85a80de65474a7167fee243cfc345c",
+      "apps/web/messages/ja.json": "b8af6d494ad645b47617c1ac576646b8e2aea30a",
+      "apps/web/messages/vi.json": "6d9deb55cdb82c5c5fc08f636c8ec43d92296e97"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

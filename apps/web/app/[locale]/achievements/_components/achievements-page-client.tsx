@@ -24,16 +24,14 @@ import { StreakCalendar } from "./streak-calendar";
 /* ── Types ─────────────────────────────────────────────────────────────── */
 
 interface StreakData {
-  id: string;
+  configId: string;
+  name: string;
+  activityType: string;
   currentStreak: number;
   longestStreak: number;
-  lastActivityDate: string | null;
+  lastActiveDate: string | null;
   freezesUsed: number;
-  streakConfig: {
-    name: string;
-    activityType: string;
-    freezesAllowed: number;
-  };
+  freezesAllowed: number;
 }
 
 interface AchievementTierBrowse {
@@ -225,7 +223,10 @@ export function AchievementsPageClient({
           learnerApiFetch("/api/gamification/leaderboards")
         ]);
 
-        if (streaksRes.ok) setStreaks(await streaksRes.json());
+        if (streaksRes.ok) {
+          const data: { streaks: StreakData[] } = await streaksRes.json();
+          setStreaks(data.streaks);
+        }
         if (browseRes.ok) setBrowseData(await browseRes.json());
         if (pendingRes.ok) {
           const pending: PendingAchievement[] = await pendingRes.json();
@@ -528,7 +529,7 @@ export function AchievementsPageClient({
             <EmptyState title={labels.noStreaks} />
           ) : (
             streaks.map((s) => (
-              <Card key={s.id} className="overflow-hidden">
+              <Card key={s.configId} className="overflow-hidden">
                 <CardContent className="p-0">
                   <div className="flex items-center gap-5 p-5">
                     {/* Streak ring */}
@@ -562,7 +563,7 @@ export function AchievementsPageClient({
 
                     <div className="flex-1 min-w-0">
                       <h3 className="text-lg font-bold text-ink truncate">
-                        {s.streakConfig.name}
+                        {s.name}
                       </h3>
                       <div className="mt-1.5 flex items-baseline gap-2">
                         <span className="text-3xl font-black text-accent tabular-nums">
@@ -576,9 +577,9 @@ export function AchievementsPageClient({
                         <span>
                           {labels.longestStreak}: <strong className="text-ink/70">{s.longestStreak}</strong>
                         </span>
-                        {s.streakConfig.freezesAllowed > 0 && (
+                        {s.freezesAllowed > 0 && (
                           <span>
-                            ❄️ {s.streakConfig.freezesAllowed - s.freezesUsed} {labels.freezesLeft}
+                            ❄️ {s.freezesAllowed - s.freezesUsed} {labels.freezesLeft}
                           </span>
                         )}
                       </div>
@@ -588,7 +589,7 @@ export function AchievementsPageClient({
                   {/* Streak calendar heatmap */}
                   <div className="border-t border-border/50 px-5 pb-4">
                     <StreakCalendar
-                      lastActivityDate={s.lastActivityDate}
+                      lastActivityDate={s.lastActiveDate}
                       currentStreak={s.currentStreak}
                       label={labels.streakCalendar ?? "Lịch học tập"}
                     />

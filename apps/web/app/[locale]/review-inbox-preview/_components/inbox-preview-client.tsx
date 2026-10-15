@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { ReviewInboxPreview } from "../../../../src/features/career-rpg/components/review-inbox-preview";
-import { careerInbox } from "../../../../src/features/career-rpg/api";
+import { careerInbox, submitContextMemoFeedback } from "../../../../src/features/career-rpg/api";
 import type { CareerRpgLabels } from "../../../../src/features/career-rpg/i18n";
 import type { ContextMemo } from "../../../../src/features/career-rpg/types";
 
@@ -14,27 +15,58 @@ interface Props {
 }
 
 export function InboxPreviewClient({ labels, locale }: Props) {
+  const router = useRouter();
   const [inbox, setInbox] = useState<ContextMemo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [feedbackError, setFeedbackError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
   const unread = inbox.filter((m) => m.status === "unread").length;
+  const loginPath = `/${locale}/login?returnTo=${encodeURIComponent(`/${locale}/review-inbox-preview`)}`;
 
   useEffect(() => {
     let alive = true;
+    let redirecting = false;
     setLoading(true);
     void careerInbox()
       .then((items) => {
-        if (alive) setInbox(items);
+        if (alive) {
+          setInbox(items);
+          setLoadError(false);
+        }
       })
-      .catch(() => {
-        if (alive) setInbox([]);
+      .catch((error: unknown) => {
+        if (!alive) return;
+        if (error instanceof Error && error.message.includes(": 401")) {
+          redirecting = true;
+          router.replace(loginPath);
+          return;
+        }
+        setLoadError(true);
       })
       .finally(() => {
-        if (alive) setLoading(false);
+        if (alive && !redirecting) setLoading(false);
       });
     return () => {
       alive = false;
     };
-  }, []);
+  }, [locale, loginPath, retryKey, router]);
+
+  async function handleFeedback(id: string, feedback: "useful" | "fuzzy" | "lost") {
+    try {
+      await submitContextMemoFeedback(id, feedback);
+      setInbox((current) =>
+        current.map((memo) => (memo.id === id ? { ...memo, status: "read", feedback } : memo))
+      );
+      setFeedbackError(false);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes(": 401")) {
+        router.replace(loginPath);
+        return;
+      }
+      setFeedbackError(true);
+    }
+  }
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-10">
@@ -72,8 +104,27 @@ export function InboxPreviewClient({ labels, locale }: Props) {
           </div>
           <div className="h-72 animate-pulse rounded-xl bg-[#F8FAFC]" />
         </div>
+      ) : loadError ? (
+        <div className="rounded-xl border border-[#FECACA] bg-white p-8 text-center" role="alert">
+          <p className="text-sm text-[#9F1239]">{labels.inbox.loadError}</p>
+          <button
+            className="mt-4 min-h-11 rounded-lg bg-[#1B2A4A] px-4 text-sm font-semibold text-white"
+            onClick={() => {
+              setLoading(true);
+              setRetryKey((key) => key + 1);
+            }}
+            type="button"
+          >
+            {labels.inbox.retry}
+          </button>
+        </div>
       ) : (
-        <ReviewInboxPreview inbox={inbox} labels={labels.inbox} />
+        <ReviewInboxPreview
+          inbox={inbox}
+          labels={labels.inbox}
+          feedbackError={feedbackError ? labels.inbox.feedbackError : null}
+          onFeedback={handleFeedback}
+        />
       )}
     </div>
   );

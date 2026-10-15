@@ -3,15 +3,41 @@ package httpserver
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/authz"
 )
+
+func requireOperationsPermission(w http.ResponseWriter, r *http.Request, db *pgxpool.Pool, logger *slog.Logger, permissions ...string) bool {
+	identity, ok := authn.GetAdminIdentity(r.Context())
+	if !ok || identity.ActorID == "" {
+		writeJSONError(w, "unauthorized", http.StatusUnauthorized)
+		return false
+	}
+	principal, err := authz.NewStore(db).LoadPrincipal(r.Context(), identity.ActorID)
+	if err != nil {
+		if errors.Is(err, authz.ErrActorNotActive) {
+			writeJSONError(w, "forbidden", http.StatusForbidden)
+		} else {
+			logger.Error("load operations admin permissions", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+		}
+		return false
+	}
+	if principal == nil || !principal.HasAnyPermission(permissions) {
+		writeJSONError(w, "forbidden", http.StatusForbidden)
+		return false
+	}
+	return true
+}
 
 // ── P1-A1.2: Admin Operations — Broadcasts Sub-Domain (7 routes) ────────────
 // All routes require admin session + appropriate permissions.
@@ -23,6 +49,9 @@ import (
 // Returns paginated broadcast list reconstructed from audit log events.
 func adminOpsBroadcastsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireOperationsPermission(w, r, db, logger, "iam.manage", "admin.content.read") {
+			return
+		}
 		ctx := r.Context()
 		statusFilter := r.URL.Query().Get("status")
 		channelFilter := r.URL.Query().Get("channel")
@@ -48,9 +77,17 @@ func adminOpsBroadcastsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		for rows.Next() {
 			var id string
 			var firstEvent time.Time
-			if err := rows.Scan(&id, &firstEvent); err == nil {
-				broadcastIDs = append(broadcastIDs, id)
+			if err := rows.Scan(&id, &firstEvent); err != nil {
+				logger.Error("scan broadcast audit rows", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			broadcastIDs = append(broadcastIDs, id)
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate broadcast audit rows", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 
 		type Broadcast struct {
@@ -66,7 +103,12 @@ func adminOpsBroadcastsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		var allBroadcasts []Broadcast
 		for _, bid := range broadcastIDs {
 			snap, err := loadBroadcastSnapshot(ctx, db, bid)
-			if err != nil || snap == nil {
+			if err != nil {
+				logger.Error("load broadcast snapshot", "error", err, "broadcast_id", bid)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			if snap == nil {
 				continue
 			}
 			if statusFilter != "" && snap.Status != statusFilter {
@@ -91,6 +133,9 @@ func adminOpsBroadcastsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		if end > total {
 			end = total
 		}
+		if offset > total {
+			offset = total
+		}
 		items := allBroadcasts[offset:end]
 		if items == nil {
 			items = []Broadcast{}
@@ -103,6 +148,9 @@ func adminOpsBroadcastsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 // adminOpsBroadcastsGetHandler implements GET /api/admin/operations/broadcasts/{id}.
 func adminOpsBroadcastsGetHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireOperationsPermission(w, r, db, logger, "iam.manage", "admin.content.read") {
+			return
+		}
 		id := extractPathParam(r.URL.Path, "broadcasts", 1)
 		if id == "" {
 			writeJSONError(w, "broadcast id required", http.StatusBadRequest)
@@ -110,7 +158,12 @@ func adminOpsBroadcastsGetHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		}
 
 		snap, err := loadBroadcastSnapshot(r.Context(), db, id)
-		if err != nil || snap == nil {
+		if err != nil {
+			logger.Error("load broadcast snapshot", "error", err, "broadcast_id", id)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if snap == nil {
 			writeJSONError(w, "broadcast not found", http.StatusNotFound)
 			return
 		}
@@ -133,6 +186,9 @@ func adminOpsBroadcastsGetHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 // adminOpsBroadcastsEstimateHandler implements PATCH /api/admin/operations/broadcasts/audience/estimate.
 func adminOpsBroadcastsEstimateHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireOperationsPermission(w, r, db, logger, "iam.manage", "admin.content.read") {
+			return
+		}
 		var req struct {
 			Locale  []string `json:"locale"`
 			Plan    []string `json:"plan"`
@@ -156,7 +212,7 @@ func adminOpsBroadcastsEstimateHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 
 		// Count users matching locale filter
 		var total int
-		query := "SELECT COUNT(*) FROM learner.user_profile"
+		query := "SELECT COUNT(*) FROM profile.user_profile"
 		args := []any{}
 		argIdx := 1
 		if len(req.Locale) > 0 {
@@ -190,6 +246,9 @@ func adminOpsBroadcastsEstimateHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 // adminOpsBroadcastsCreateHandler implements POST /api/admin/operations/broadcasts.
 func adminOpsBroadcastsCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireOperationsPermission(w, r, db, logger, "iam.manage") {
+			return
+		}
 		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
@@ -208,7 +267,8 @@ func adminOpsBroadcastsCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		if req.Title == "" || req.Body == "" || req.Channel == "" || req.Reason == "" {
+		if strings.TrimSpace(req.Title) == "" || strings.TrimSpace(req.Body) == "" || strings.TrimSpace(req.Reason) == "" ||
+			(req.Channel != "push" && req.Channel != "email" && req.Channel != "in_app") {
 			writeJSONError(w, "title, body, channel, and reason are required", http.StatusBadRequest)
 			return
 		}
@@ -250,6 +310,9 @@ func adminOpsBroadcastsCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http
 // adminOpsBroadcastsUpdateHandler implements PATCH /api/admin/operations/broadcasts/{id}.
 func adminOpsBroadcastsUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireOperationsPermission(w, r, db, logger, "iam.manage") {
+			return
+		}
 		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
@@ -263,7 +326,12 @@ func adminOpsBroadcastsUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		}
 
 		snap, err := loadBroadcastSnapshot(r.Context(), db, id)
-		if err != nil || snap == nil {
+		if err != nil {
+			logger.Error("load broadcast snapshot", "error", err, "broadcast_id", id)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if snap == nil {
 			writeJSONError(w, "broadcast not found", http.StatusNotFound)
 			return
 		}
@@ -326,6 +394,9 @@ func adminOpsBroadcastsUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http
 // adminOpsBroadcastsScheduleHandler implements PATCH /api/admin/operations/broadcasts/{id}/schedule.
 func adminOpsBroadcastsScheduleHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireOperationsPermission(w, r, db, logger, "iam.manage") {
+			return
+		}
 		handleBroadcastTransition(db, logger, w, r, "scheduled")
 	}
 }
@@ -333,6 +404,9 @@ func adminOpsBroadcastsScheduleHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 // adminOpsBroadcastsCancelHandler implements PATCH /api/admin/operations/broadcasts/{id}/cancel.
 func adminOpsBroadcastsCancelHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireOperationsPermission(w, r, db, logger, "iam.manage") {
+			return
+		}
 		handleBroadcastTransition(db, logger, w, r, "cancelled")
 	}
 }
@@ -375,9 +449,12 @@ func loadBroadcastSnapshot(ctx context.Context, db *pgxpool.Pool, targetID strin
 			CreatedAt time.Time
 		}
 		if err := rows.Scan(&e.Action, &e.After, &e.CreatedAt); err != nil {
-			continue
+			return nil, err
 		}
 		events = append(events, e)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	if len(events) == 0 {
 		return nil, nil
@@ -448,7 +525,12 @@ func handleBroadcastTransition(db *pgxpool.Pool, logger *slog.Logger, w http.Res
 	}
 
 	snap, err := loadBroadcastSnapshot(r.Context(), db, id)
-	if err != nil || snap == nil {
+	if err != nil {
+		logger.Error("load broadcast snapshot", "error", err, "broadcast_id", id)
+		writeJSONError(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	if snap == nil {
 		writeJSONError(w, "broadcast not found", http.StatusNotFound)
 		return
 	}

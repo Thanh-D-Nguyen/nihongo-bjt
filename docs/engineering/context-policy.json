@@ -1,0 +1,17 @@
+{
+  "schema": "nihongo-context-policy/1",
+  "note": "Canonical adaptive context policy. Verified windows are empirical safety limits; provider windows come from runtime metadata. Editing this file is a CI_QUALITY_SYSTEM change.",
+  "defaults": {
+    "checkpoint_ratio": 0.66,
+    "compact_ratio": 0.75,
+    "danger_ratio": 0.875
+  },
+  "profiles": {
+    "ghostcli:claude-fable-5.1": {
+      "verified_reliable_window": 160000,
+      "verification_status": "verified",
+      "verification_scope": "local-provider-path",
+      "notes": "Empirical needle-in-haystack: 155K 3/3 PASS, 160K 3/3 PASS, 165K unreliable, 170K 0/3. Provider advertises 256K but reliable ceiling is 160K on this path."
+    }
+  }
+}

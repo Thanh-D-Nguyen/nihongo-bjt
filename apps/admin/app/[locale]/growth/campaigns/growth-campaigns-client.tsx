@@ -13,10 +13,7 @@ import {
   AdminStatusBadge,
   cn
 } from "@nihongo-bjt/ui";
-import {
-  GROWTH_CAMPAIGN_CHANNELS,
-  GROWTH_CAMPAIGN_STATUSES
-} from "@nihongo-bjt/shared";
+import { GROWTH_CAMPAIGN_CHANNELS, GROWTH_CAMPAIGN_STATUSES } from "@nihongo-bjt/shared";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
@@ -118,13 +115,16 @@ type ChannelFilter = Channel | "all";
 function formatWhen(iso: string | null, locale: string): string {
   if (!iso) return "—";
   try {
-    return new Intl.DateTimeFormat(locale === "ja" ? "ja-JP" : locale === "en" ? "en-US" : "vi-VN", {
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      month: "short",
-      year: "numeric"
-    }).format(new Date(iso));
+    return new Intl.DateTimeFormat(
+      locale === "ja" ? "ja-JP" : locale === "en" ? "en-US" : "vi-VN",
+      {
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        month: "short",
+        year: "numeric"
+      }
+    ).format(new Date(iso));
   } catch {
     return iso;
   }
@@ -171,7 +171,11 @@ function detailToForm(d: Detail): FormState {
   const a = (d.audience ?? {}) as Record<string, string>;
   const c = (d.cta ?? {}) as Record<string, string>;
   const u = (d.trackingUtm ?? {}) as Record<string, string>;
-  const toIso = (s: string | null) => (s ? new Date(s).toISOString().slice(0, 16) : "");
+  const toLocalDateTime = (s: string | null) => {
+    if (!s) return "";
+    const date = new Date(s);
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+  };
   return {
     audienceCountry: a.country ?? "",
     audienceLevel: a.level ?? "",
@@ -183,8 +187,8 @@ function detailToForm(d: Detail): FormState {
     ctaUrl: c.url ?? "",
     description: d.description ?? "",
     name: d.name,
-    scheduleEnd: toIso(d.scheduleEnd),
-    scheduleStart: toIso(d.scheduleStart),
+    scheduleEnd: toLocalDateTime(d.scheduleEnd),
+    scheduleStart: toLocalDateTime(d.scheduleStart),
     utmCampaign: u.campaign ?? "",
     utmMedium: u.medium ?? "",
     utmSource: u.source ?? ""
@@ -223,10 +227,9 @@ export function GrowthCampaignsClient({
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [reason, setReason] = useState("");
   const [mutating, setMutating] = useState(false);
-  const [confirm, setConfirm] = useState<
-    | { kind: "schedule" | "activate" | "end" | "archive" | "duplicate" }
-    | null
-  >(null);
+  const [confirm, setConfirm] = useState<{
+    kind: "schedule" | "activate" | "end" | "archive" | "duplicate";
+  } | null>(null);
   const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
   const [audienceEstimate, setAudienceEstimate] = useState<number | null>(null);
@@ -315,19 +318,22 @@ export function GrowthCampaignsClient({
       if (form.audienceLocale) params.set("locale", form.audienceLocale);
       if (form.audienceLevel) params.set("level", form.audienceLevel);
       if (form.audiencePlan) params.set("plan", form.audiencePlan);
-      if (form.audienceCountry) params.set("country", form.audienceCountry);
       try {
-        const r = await adminApiFetch(`/api/admin/growth/campaigns/audience-estimate?${params.toString()}`);
+        const r = await adminApiFetch(
+          `/api/admin/growth/campaigns/audience-estimate?${params.toString()}`
+        );
         if (r.ok) {
           const body = (await r.json()) as { total: number };
           setAudienceEstimate(body.total);
+        } else {
+          setAudienceEstimate(null);
         }
       } catch {
         setAudienceEstimate(null);
       }
     }, 400);
     return () => clearTimeout(h);
-  }, [creating, editing, form.audienceLocale, form.audienceLevel, form.audiencePlan, form.audienceCountry]);
+  }, [creating, editing, form.audienceLocale, form.audienceLevel, form.audiencePlan]);
 
   const ethicsWarnings = useMemo(() => {
     const text = `${form.name}\n${form.description}\n${form.contentBody}`;
@@ -515,61 +521,70 @@ export function GrowthCampaignsClient({
       </AdminSection>
 
       {listError ? (
-        <div role="alert" className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-900">
+        <div
+          role="alert"
+          className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-900"
+        >
           {listError}
         </div>
       ) : null}
 
       <AdminSection>
-        <AdminDataTable>
-          <AdminDataTableHead>
-            <AdminDataTableRow>
-              <AdminDataTableTh>{t("colName")}</AdminDataTableTh>
-              <AdminDataTableTh>{t("colStatus")}</AdminDataTableTh>
-              <AdminDataTableTh>{t("colChannel")}</AdminDataTableTh>
-              <AdminDataTableTh>{t("colScheduleStart")}</AdminDataTableTh>
-              <AdminDataTableTh>{t("colScheduleEnd")}</AdminDataTableTh>
-              <AdminDataTableTh>{t("colUpdated")}</AdminDataTableTh>
-            </AdminDataTableRow>
-          </AdminDataTableHead>
-          <AdminDataTableBody>
-            {listLoading && !list ? (
+        <div
+          className="max-w-full overflow-x-auto"
+          role="region"
+          aria-label={t("title")}
+          tabIndex={0}
+        >
+          <AdminDataTable>
+            <AdminDataTableHead>
               <AdminDataTableRow>
-                <AdminDataTableTd colSpan={6}>{common.loading}</AdminDataTableTd>
+                <AdminDataTableTh>{t("colName")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("colStatus")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("colChannel")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("colScheduleStart")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("colScheduleEnd")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("colUpdated")}</AdminDataTableTh>
               </AdminDataTableRow>
-            ) : list && list.items.length > 0 ? (
-              list.items.map((it) => (
-                <AdminDataTableRow
-                  key={it.id}
-                  className={cn(
-                    "cursor-pointer",
-                    selectedId === it.id ? "bg-indigo-50" : ""
-                  )}
-                  onClick={() => {
-                    setSelectedId(it.id);
-                    setEditing(false);
-                    setCreating(false);
-                  }}
-                >
-                  <AdminDataTableTd>{it.name}</AdminDataTableTd>
-                  <AdminDataTableTd>
-                    <AdminStatusBadge tone={STATUS_TONE[it.status]}>{t(`status_${it.status}`)}</AdminStatusBadge>
-                  </AdminDataTableTd>
-                  <AdminDataTableTd>{t(`channel_${it.channel}`)}</AdminDataTableTd>
-                  <AdminDataTableTd>{formatWhen(it.scheduleStart, locale)}</AdminDataTableTd>
-                  <AdminDataTableTd>{formatWhen(it.scheduleEnd, locale)}</AdminDataTableTd>
-                  <AdminDataTableTd>{formatWhen(it.updatedAt, locale)}</AdminDataTableTd>
+            </AdminDataTableHead>
+            <AdminDataTableBody>
+              {listLoading && !list ? (
+                <AdminDataTableRow>
+                  <AdminDataTableTd colSpan={6}>{common.loading}</AdminDataTableTd>
                 </AdminDataTableRow>
-              ))
-            ) : (
-              <AdminDataTableRow>
-                <AdminDataTableTd colSpan={6}>
-                  <AdminEmptyState title={common.empty} />
-                </AdminDataTableTd>
-              </AdminDataTableRow>
-            )}
-          </AdminDataTableBody>
-        </AdminDataTable>
+              ) : list && list.items.length > 0 ? (
+                list.items.map((it) => (
+                  <AdminDataTableRow
+                    key={it.id}
+                    className={cn("cursor-pointer", selectedId === it.id ? "bg-indigo-50" : "")}
+                    onClick={() => {
+                      setSelectedId(it.id);
+                      setEditing(false);
+                      setCreating(false);
+                    }}
+                  >
+                    <AdminDataTableTd>{it.name}</AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <AdminStatusBadge tone={STATUS_TONE[it.status]}>
+                        {t(`status_${it.status}`)}
+                      </AdminStatusBadge>
+                    </AdminDataTableTd>
+                    <AdminDataTableTd>{t(`channel_${it.channel}`)}</AdminDataTableTd>
+                    <AdminDataTableTd>{formatWhen(it.scheduleStart, locale)}</AdminDataTableTd>
+                    <AdminDataTableTd>{formatWhen(it.scheduleEnd, locale)}</AdminDataTableTd>
+                    <AdminDataTableTd>{formatWhen(it.updatedAt, locale)}</AdminDataTableTd>
+                  </AdminDataTableRow>
+                ))
+              ) : (
+                <AdminDataTableRow>
+                  <AdminDataTableTd colSpan={6}>
+                    <AdminEmptyState title={common.empty} />
+                  </AdminDataTableTd>
+                </AdminDataTableRow>
+              )}
+            </AdminDataTableBody>
+          </AdminDataTable>
+        </div>
         {list ? (
           <div className="mt-2 flex items-center justify-between text-sm">
             <span>
@@ -602,7 +617,9 @@ export function GrowthCampaignsClient({
 
       {creating || editing ? (
         <AdminSection>
-          <h3 className="text-lg font-semibold">{creating ? t("createHeading") : t("editHeading")}</h3>
+          <h3 className="text-lg font-semibold">
+            {creating ? t("createHeading") : t("editHeading")}
+          </h3>
           {ethicsWarnings.length > 0 ? (
             <div className="mt-2 rounded border border-amber-300 bg-amber-50 p-2 text-sm text-amber-900">
               <strong>{t("ethicsWarningsHeading")}</strong>
@@ -682,15 +699,6 @@ export function GrowthCampaignsClient({
                     onChange={(e) => setForm((f) => ({ ...f, audienceLevel: e.target.value }))}
                     placeholder="N3"
                     value={form.audienceLevel}
-                  />
-                </label>
-                <label className="text-xs">
-                  {t("formAudienceCountry")}
-                  <input
-                    className="mt-1 w-full rounded border px-2 py-1"
-                    onChange={(e) => setForm((f) => ({ ...f, audienceCountry: e.target.value }))}
-                    placeholder="JP"
-                    value={form.audienceCountry}
                   />
                 </label>
               </div>
@@ -802,7 +810,9 @@ export function GrowthCampaignsClient({
             <div>
               <h3 className="text-lg font-semibold">{detail.name}</h3>
               <p className="text-sm text-muted-foreground">
-                <AdminStatusBadge tone={STATUS_TONE[detail.status]}>{t(`status_${detail.status}`)}</AdminStatusBadge>{" "}
+                <AdminStatusBadge tone={STATUS_TONE[detail.status]}>
+                  {t(`status_${detail.status}`)}
+                </AdminStatusBadge>{" "}
                 · {t(`channel_${detail.channel}`)}
               </p>
             </div>

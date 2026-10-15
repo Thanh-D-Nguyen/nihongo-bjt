@@ -1,0 +1,517 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-121",
+  "title": "Audit Admin daily-radar card duplication API",
+  "start_head": "91fea63d4266a3889d495e5c52376984b7b5b845",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "POST daily-radar card duplication is not protected consistently and cannot copy the Prisma-backed card schema; the route lacks write permission and CSRF middleware, while SQL references nonexistent legacy columns.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "A roleless Admin POST is denied and creates no card."
+      },
+      {
+        "id": "AC2",
+        "text": "A write-authorized Admin request without a trusted Origin is denied; a trusted request duplicates source content as an unpublished draft with a unique slug and a matching audit log."
+      },
+      {
+        "id": "AC3",
+        "text": "Missing source returns 404; duplicate and audit failures do not leave partial records."
+      }
+    ],
+    "expected_behavior": "Only an admin with admin.content.write and trusted-origin CSRF protection can duplicate an existing card; the copy uses actual daily.daily_radar_card fields, preserves content in a new draft, and commits its audit record atomically.",
+    "observed_behavior": "An authenticated admin without admin.content.write can reach the handler; the copy query/insert uses legacy columns, so the endpoint returns source-card-not-found or 500 and never creates an audited draft.",
+    "rollback_plan": "Revert only the AUDIT-121 router, handler, tests, task evidence, and audit checkpoint commits; no schema migration or canonical data changes are required."
+  },
+  "classification": {
+    "classes": [
+      "AUTH_SECURITY",
+      "API_CONTRACT",
+      "DATABASE",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Fix the endpoint and shrink the canonical SQL drift baseline by one resolved failure; the baseline generator may only remove observed drift."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminDailyRadarCardDuplicateRequiresContentWrite",
+      "expect": "roleless duplicate status="
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminDailyRadarCardDuplicateRequiresTrustedOrigin",
+      "expect": "untrusted-origin duplicate status="
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminDailyRadarCardDuplicatePersistsDraftAndAudit",
+      "expect": "authorized duplicate status="
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-12T08:26:29.066Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-12T08:30:30.442Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-12T08:30:30.797Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T08:32:23.565Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T08:35:20.799Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T08:36:42.836Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T08:38:01.219Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T08:40:24.735Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T08:41:39.334Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-12T13:18:52.784Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-12T13:21:46.396Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-12T13:21:51.000Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-12T08:31:26.323Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardDuplicate)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardDuplicate",
+          "outcome": "NOT_FOUND",
+          "excerpt": "testing: warning: no tests to run PASS ok github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver 0.723s [no tests to run]",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminDailyRadarCardDuplicate": "roleless duplicate status="
+      },
+      "fingerprint": "1ec38de8d4011edd59b04248c1e05e5cf5cfef365c878302c389af7c6edd6556"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-12T08:31:40.434Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardDuplicate|TestAdminDailyRadarCardDuplicateRequiresContentWrite)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardDuplicate",
+          "outcome": "NOT_FOUND",
+          "excerpt": "FAIL FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver 0.445s",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardDuplicateRequiresContentWrite",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminDailyRadarCardDuplicateRequiresContentWrite 2026/10/12 17:31:40 INFO request method=POST path=/api/admin/daily-radar/cards/5bd5e832-5b58-4568-a06d-961a0059bb1f/duplicate status=404 duration=2.348041ms bytes=34 handler_admin_dailyradar_card_duplicate_test.go:26: roleless duplicate st…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminDailyRadarCardDuplicate": "roleless duplicate status=",
+        "go:./internal/httpserver:TestAdminDailyRadarCardDuplicateRequiresContentWrite": "roleless duplicate status="
+      },
+      "fingerprint": "1ec38de8d4011edd59b04248c1e05e5cf5cfef365c878302c389af7c6edd6556"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-12T08:32:23.387Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardDuplicateRequiresContentWrite)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardDuplicateRequiresContentWrite",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminDailyRadarCardDuplicateRequiresContentWrite 2026/10/12 17:32:23 INFO request method=POST path=/api/admin/daily-radar/cards/911b2c65-801c-4a86-ae4f-71885c6fd098/duplicate status=404 duration=1.902125ms bytes=34 handler_admin_dailyradar_card_duplicate_test.go:26: roleless duplicate st…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminDailyRadarCardDuplicateRequiresContentWrite": "roleless duplicate status="
+      },
+      "fingerprint": "1ec38de8d4011edd59b04248c1e05e5cf5cfef365c878302c389af7c6edd6556"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-12T08:32:39.964Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardDuplicateRequiresContentWrite|TestAdminDailyRadarCardDuplicateRequiresTrustedOrigin|TestAdminDailyRadarCardDuplicatePersistsDraftAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardDuplicateRequiresContentWrite",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminDailyRadarCardDuplicateRequiresContentWrite 2026/10/12 17:32:39 INFO request method=POST path=/api/admin/daily-radar/cards/d3f7c5ec-cb14-47ef-888d-60fd0c05d97e/duplicate status=404 duration=2.171666ms bytes=34 handler_admin_dailyradar_card_duplicate_test.go:26: roleless duplicate st…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardDuplicateRequiresTrustedOrigin",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminDailyRadarCardDuplicateRequiresTrustedOrigin 2026/10/12 17:32:39 INFO request method=POST path=/api/admin/daily-radar/cards/601b96e9-be45-4fd2-adb4-603d51e1493c/duplicate status=404 duration=1.718458ms bytes=34 handler_admin_dailyradar_card_duplicate_test.go:50: untrusted-origin dup…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardDuplicatePersistsDraftAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminDailyRadarCardDuplicatePersistsDraftAndAudit 2026/10/12 17:32:39 INFO request method=POST path=/api/admin/daily-radar/cards/20aa8b2f-679d-425b-a4a9-696ee4b4c2d0/duplicate status=404 duration=1.39725ms bytes=34 handler_admin_dailyradar_card_duplicate_test.go:82: authorized duplicate …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminDailyRadarCardDuplicateRequiresContentWrite": "roleless duplicate status=",
+        "go:./internal/httpserver:TestAdminDailyRadarCardDuplicateRequiresTrustedOrigin": "untrusted-origin duplicate status=",
+        "go:./internal/httpserver:TestAdminDailyRadarCardDuplicatePersistsDraftAndAudit": "authorized duplicate status="
+      },
+      "fingerprint": "1ec38de8d4011edd59b04248c1e05e5cf5cfef365c878302c389af7c6edd6556"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-12T08:35:20.556Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardDuplicateRequiresContentWrite|TestAdminDailyRadarCardDuplicateRequiresTrustedOrigin|TestAdminDailyRadarCardDuplicatePersistsDraftAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardDuplicateRequiresContentWrite",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardDuplicateRequiresTrustedOrigin",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardDuplicatePersistsDraftAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8a8af621ccc58a18debf7b10a3017ad23fa8e5f17ef3f14e4fefb9c76da42358"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-12T08:36:42.593Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 793,
+        "executed": 791,
+        "passed": 790,
+        "failed": 1,
+        "skipped": 2,
+        "expected_skips": 0,
+        "unexpected_skips": 2,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "a669a8eb0b8fa9c0079083bd8ec7927fc4dee6ad6e4d3ee889a12e7b92494dcb"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-12T08:38:00.949Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardDuplicateRequiresContentWrite|TestAdminDailyRadarCardDuplicateRequiresTrustedOrigin|TestAdminDailyRadarCardDuplicatePersistsDraftAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardDuplicateRequiresContentWrite",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardDuplicateRequiresTrustedOrigin",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardDuplicatePersistsDraftAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "2ff39fa595ebcd85eafac158c9357c9a69e6fd445a7853142a6b9bfc8424e798"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-12T08:40:24.364Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "2ff39fa595ebcd85eafac158c9357c9a69e6fd445a7853142a6b9bfc8424e798"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-12T08:40:54.851Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 793,
+        "executed": 791,
+        "passed": 791,
+        "failed": 0,
+        "skipped": 2,
+        "expected_skips": 0,
+        "unexpected_skips": 2,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "639cd522965f7bc420019377bd7bd9bc2bfd29df5ca0d37d9dce3a6261bda335"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-12T08:41:38.916Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardDuplicateRequiresContentWrite|TestAdminDailyRadarCardDuplicateRequiresTrustedOrigin|TestAdminDailyRadarCardDuplicatePersistsDraftAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardDuplicateRequiresContentWrite",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardDuplicateRequiresTrustedOrigin",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardDuplicatePersistsDraftAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9622f390e6381f4f875ae942739b8c620980a5b72d1b9bc68a2af0231a7c09df"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-12T08:44:00.729Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "9622f390e6381f4f875ae942739b8c620980a5b72d1b9bc68a2af0231a7c09df"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-12T08:46:48.191Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 793,
+        "executed": 793,
+        "passed": 793,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "793 passed, 0 allowed skip(s)",
+      "fingerprint": "9622f390e6381f4f875ae942739b8c620980a5b72d1b9bc68a2af0231a7c09df"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-12T13:15:18.547Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit121-browser-check.sh",
+      "exit_code": 1,
+      "fingerprint": "9622f390e6381f4f875ae942739b8c620980a5b72d1b9bc68a2af0231a7c09df"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-12T13:15:42.411Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit121-browser-check.sh",
+      "exit_code": 1,
+      "fingerprint": "9622f390e6381f4f875ae942739b8c620980a5b72d1b9bc68a2af0231a7c09df"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-12T13:18:52.417Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit121-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "9622f390e6381f4f875ae942739b8c620980a5b72d1b9bc68a2af0231a7c09df"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-12T13:21:46.048Z",
+      "head": "91fea63d4266a3889d495e5c52376984b7b5b845",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a13044-57e9-7633-a61d-6a2beee2e4f0",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fcd91f8689c091e13804516e08de41efe324331a7637466daae6ed63e32ae101",
+      "attested": true,
+      "fingerprint": "9622f390e6381f4f875ae942739b8c620980a5b72d1b9bc68a2af0231a7c09df"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-12T13:21:50.981Z",
+    "head": "91fea63d4266a3889d495e5c52376984b7b5b845",
+    "fingerprint": "9622f390e6381f4f875ae942739b8c620980a5b72d1b9bc68a2af0231a7c09df",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_admin_dailyradar_card_duplicate_test.go": "68f4c6ae281728cc7995379790c91ea2354d7482",
+      "apps/api-go/internal/httpserver/handler_admin_dailyradar_exercises.go": "0aded4932e840883ffbe5203c1f8af54a411d321",
+      "apps/api-go/internal/httpserver/server.go": "d7a513727d98391e269b01d059f9549b5241ad53",
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "1f4a20d13ad57cf39b5b65cdf0138d1240f32880",
+      "e2e/audit/audit121-browser-check.sh": "d64194b89a6d6cbba1851c8fac7a5ee77c0e008c"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

@@ -1,0 +1,1061 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-098",
+  "title": "Audit learner Review Inbox preview screen",
+  "start_head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The Review Inbox route silently treats HTTP 401 and database/query failures as an empty inbox; its Go DTO does not match the client ContextMemo contract and the queried context_memo table has no canonical Prisma schema/migration.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Anonymous access to the private inbox redirects to localized login; authenticated empty inbox has truthful localized copy; load/database failures never masquerade as empty data."
+      },
+      {
+        "id": "AC2",
+        "text": "Canonical PostgreSQL stores inbox memo payloads and the public DTO fields expected by the card UI; ownership remains user-scoped and a visible real learner session renders persisted entries."
+      },
+      {
+        "id": "AC3",
+        "text": "Learners can persist memo feedback on their own inbox entries; another learner cannot read or update that entry."
+      },
+      {
+        "id": "AC4",
+        "text": "If the feedback request returns 401 because the learner session expired, redirect to the localized login page with the Review Inbox return path."
+      },
+      {
+        "id": "AC5",
+        "text": "The feedback PATCH route rejects anonymous or untrusted cross-site requests, validates the feedback value, and cannot expose another learner’s memo."
+      }
+    ],
+    "expected_behavior": "Only a successful authenticated query returning zero rows renders the localized empty state. Anonymous users are sent to login with returnTo. Database errors are surfaced. Persisted memo payloads are returned in the typed UI contract.",
+    "observed_behavior": "Visible Chrome showed anonymous GET /api/career/inbox=401 while the page rendered only an em dash. Authenticated GET returned 200 [] because GetInbox suppresses query errors with a comment that the table may not exist; Prisma has no context_memo model/migration. The current Go DTO nests payload while the UI expects flattened ContextMemo fields.",
+    "rollback_plan": "Revert only AUDIT-098-owned inbox UI/API/schema/migration/test changes; no canonical learner content or unrelated account data is deleted."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DATABASE",
+      "DOMAIN_LOGIC",
+      "UI_ONLY",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Private learner data and its UI contract are broken; add the missing canonical persistence schema and surface real auth/error/empty states while preserving per-user access."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx",
+      "test": "InboxPreviewClient > redirects anonymous learners to login instead of showing an empty inbox",
+      "expect": "Number of calls: 0"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx",
+      "test": "InboxPreviewClient > shows the localized empty state when the authenticated inbox has no memos",
+      "expect": "Hộp thư của bạn hiện chưa có memo."
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx",
+      "test": "InboxPreviewClient > redirects to login when the feedback request finds an expired session",
+      "expect": "Number of calls: 0"
+    }
+  ],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/api-go/internal/httpserver/server.go",
+      "find": "lr.Patch(\"/api/career/inbox/{memoID}\", updateCareerInboxFeedbackHandler(deps.CareerStore, deps.Logger))",
+      "replace": ""
+    },
+    "targets": [
+      {
+        "runner": "go",
+        "package": "./internal/httpserver",
+        "test": "TestCareerInboxFeedbackRouteEnforcesSessionCSRFAndOwnership",
+        "expect": "anonymous feedback status=404"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-11T05:07:36.449Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-11T05:07:36.796Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-11T05:07:37.151Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T05:13:05.243Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T05:13:57.457Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T05:21:53.793Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-11T05:29:06.725Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T05:29:41.525Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-11T05:38:13.288Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T05:38:56.277Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T05:40:34.193Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T05:42:10.203Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T05:42:31.625Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T05:52:41.617Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-11T05:59:05.690Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T06:05:18.543Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-11T06:11:31.020Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T06:17:05.131Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-11T06:23:20.758Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-11T06:26:17.892Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-11T06:26:20.196Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-11T05:13:57.271Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects anonymous learners to login instead of showing an empty inbox",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects anonymous learners to login instead of showing an empty inbox": "Number of calls: 0"
+      },
+      "fingerprint": "80cfe04b36735a5c1454de3f8bee1c06e8beecba49bc2b7a77003223ab5226f3"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-11T05:14:07.690Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects anonymous learners to login instead of showing an empty inbox",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > shows the localized empty state when the authenticated inbox has no memos",
+          "outcome": "FAIL",
+          "excerpt": "expected '振り返り トレイReview InboxMemo phản hồi từ …' to contain 'Hộp thư của bạn hiện chưa có memo.'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects anonymous learners to login instead of showing an empty inbox": "Number of calls: 0",
+        "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > shows the localized empty state when the authenticated inbox has no memos": "Hộp thư của bạn hiện chưa có memo."
+      },
+      "fingerprint": "80cfe04b36735a5c1454de3f8bee1c06e8beecba49bc2b7a77003223ab5226f3"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-11T05:16:23.944Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects anonymous learners to login instead of showing an empty inbox",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > shows the localized empty state when the authenticated inbox has no memos",
+          "outcome": "FAIL",
+          "excerpt": "expected '振り返り トレイReview InboxMemo phản hồi từ …' to contain 'Hộp thư của bạn hiện chưa có memo.'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects anonymous learners to login instead of showing an empty inbox": "Number of calls: 0",
+        "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > shows the localized empty state when the authenticated inbox has no memos": "Hộp thư của bạn hiện chưa có memo."
+      },
+      "fingerprint": "292d2b0abeac7610e86594bdb2812b99935ca786f9a22f0aa198b90d1b29aa6e"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-11T05:19:36.046Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "TOOL_FAILURE",
+      "accounting": null,
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "292d2b0abeac7610e86594bdb2812b99935ca786f9a22f0aa198b90d1b29aa6e"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-11T05:21:53.014Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects anonymous learners to login instead of showing an empty inbox",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > shows the localized empty state when the authenticated inbox has no memos",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "206846d88a4a83e4914168ea995bce80275c55845093e99cdafdef2034da251e"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-11T05:23:09.341Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 755,
+        "executed": 755,
+        "passed": 754,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "206846d88a4a83e4914168ea995bce80275c55845093e99cdafdef2034da251e"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-11T05:26:43.747Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 424,
+        "executed": 424,
+        "passed": 424,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 780,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "206846d88a4a83e4914168ea995bce80275c55845093e99cdafdef2034da251e"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-11T05:29:05.885Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects anonymous learners to login instead of showing an empty inbox",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > shows the localized empty state when the authenticated inbox has no memos",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "17032e2691d33ed8097077865f3f4c8ec139d39b5553993cc8040cbea68d5f39"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-11T05:31:48.002Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "17032e2691d33ed8097077865f3f4c8ec139d39b5553993cc8040cbea68d5f39"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-11T05:34:41.708Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 755,
+        "executed": 755,
+        "passed": 755,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "755 passed, 0 allowed skip(s)",
+      "fingerprint": "17032e2691d33ed8097077865f3f4c8ec139d39b5553993cc8040cbea68d5f39"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-11T05:38:12.459Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 424,
+        "executed": 424,
+        "passed": 424,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 780,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "17032e2691d33ed8097077865f3f4c8ec139d39b5553993cc8040cbea68d5f39"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-11T05:38:55.427Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 13,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects anonymous learners to login instead of showing an empty inbox",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > shows the localized empty state when the authenticated inbox has no memos",
+          "outcome": "FAIL",
+          "excerpt": "expected '振り返り トレイReview InboxMemo phản hồi từ …' to contain 'Hộp thư của bạn hiện chưa có memo.'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects to login when the feedback request finds an expired session",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects anonymous learners to login instead of showing an empty inbox": "Number of calls: 0",
+        "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > shows the localized empty state when the authenticated inbox has no memos": "Hộp thư của bạn hiện chưa có memo.",
+        "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects to login when the feedback request finds an expired session": "Number of calls: 0"
+      },
+      "fingerprint": "7bae7dfae7d22e235a2e5c720478dd92ffff6327d2eefb032ec3243db722b5f1"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-11T05:40:33.390Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects anonymous learners to login instead of showing an empty inbox",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > shows the localized empty state when the authenticated inbox has no memos",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects to login when the feedback request finds an expired session",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "30eb6368587a402ea602ab134fd4a6f238abb7be91952134989797d9a4f7fb6c"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-11T05:42:09.416Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/server.go",
+        "find": "lr.Patch(\"/api/career/inbox/{memoID}\", updateCareerInboxFeedbackHandler(deps.CareerStore, deps.Logger))",
+        "replace": ""
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCareerInboxFeedbackRouteEnforcesSessionCSRFAndOwnership)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestCareerInboxFeedbackRouteEnforcesSessionCSRFAndOwnership",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestCareerInboxFeedbackRouteEnforcesSessionCSRFAndOwnership handler_career_test.go:109: anonymous feedback status=404; want 401 --- FAIL: TestCareerInboxFeedbackRouteEnforcesSessionCSRFAndOwnership (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestCareerInboxFeedbackRouteEnforcesSessionCSRFAndOwnership": "anonymous feedback status=404"
+      },
+      "fingerprint": "30eb6368587a402ea602ab134fd4a6f238abb7be91952134989797d9a4f7fb6c"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-11T05:42:30.786Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCareerInboxFeedbackRouteEnforcesSessionCSRFAndOwnership)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects anonymous learners to login instead of showing an empty inbox",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > shows the localized empty state when the authenticated inbox has no memos",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects to login when the feedback request finds an expired session",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestCareerInboxFeedbackRouteEnforcesSessionCSRFAndOwnership",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "30eb6368587a402ea602ab134fd4a6f238abb7be91952134989797d9a4f7fb6c"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-11T05:44:46.530Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "30eb6368587a402ea602ab134fd4a6f238abb7be91952134989797d9a4f7fb6c"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-11T05:47:17.790Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 756,
+        "executed": 756,
+        "passed": 756,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "756 passed, 0 allowed skip(s)",
+      "fingerprint": "30eb6368587a402ea602ab134fd4a6f238abb7be91952134989797d9a4f7fb6c"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-11T05:50:18.949Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 424,
+        "executed": 424,
+        "passed": 424,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 780,
+        "lint_errors": 65,
+        "lint_warnings": 26,
+        "new_debt": 1
+      },
+      "message": "RATCHET_VIOLATION: 1 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "30eb6368587a402ea602ab134fd4a6f238abb7be91952134989797d9a4f7fb6c"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-11T05:52:40.793Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "740d9bc0b252b904e64993d9b2c5ea9ecf345cc38b92ed8119edf05232dff7cb"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-11T05:55:05.064Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 756,
+        "executed": 756,
+        "passed": 756,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "756 passed, 0 allowed skip(s)",
+      "fingerprint": "740d9bc0b252b904e64993d9b2c5ea9ecf345cc38b92ed8119edf05232dff7cb"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-11T05:58:24.895Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 424,
+        "executed": 424,
+        "passed": 424,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 780,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "740d9bc0b252b904e64993d9b2c5ea9ecf345cc38b92ed8119edf05232dff7cb"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-11T05:58:39.338Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCareerInboxFeedbackRouteEnforcesSessionCSRFAndOwnership)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects anonymous learners to login instead of showing an empty inbox",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > shows the localized empty state when the authenticated inbox has no memos",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects to login when the feedback request finds an expired session",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestCareerInboxFeedbackRouteEnforcesSessionCSRFAndOwnership",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestCareerInboxFeedbackRouteEnforcesSessionCSRFAndOwnership handler_career_test.go:71: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestCareerInboxFeedbackRouteEnforcesSessionCSRFAndOwnership (0.00s)"
+        }
+      ],
+      "fingerprint": "740d9bc0b252b904e64993d9b2c5ea9ecf345cc38b92ed8119edf05232dff7cb"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-11T05:59:04.900Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCareerInboxFeedbackRouteEnforcesSessionCSRFAndOwnership)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects anonymous learners to login instead of showing an empty inbox",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > shows the localized empty state when the authenticated inbox has no memos",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects to login when the feedback request finds an expired session",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestCareerInboxFeedbackRouteEnforcesSessionCSRFAndOwnership",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "740d9bc0b252b904e64993d9b2c5ea9ecf345cc38b92ed8119edf05232dff7cb"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-11T06:05:17.741Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "651ed02c5984cef6277e9c5837baddb5e81534e3ee18be0f18666e04e1b3faeb"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-11T06:07:45.428Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 756,
+        "executed": 756,
+        "passed": 756,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "756 passed, 0 allowed skip(s)",
+      "fingerprint": "651ed02c5984cef6277e9c5837baddb5e81534e3ee18be0f18666e04e1b3faeb"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-11T06:11:14.628Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 424,
+        "executed": 424,
+        "passed": 424,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 780,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "651ed02c5984cef6277e9c5837baddb5e81534e3ee18be0f18666e04e1b3faeb"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-11T06:11:30.181Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCareerInboxFeedbackRouteEnforcesSessionCSRFAndOwnership)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects anonymous learners to login instead of showing an empty inbox",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > shows the localized empty state when the authenticated inbox has no memos",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects to login when the feedback request finds an expired session",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestCareerInboxFeedbackRouteEnforcesSessionCSRFAndOwnership",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "651ed02c5984cef6277e9c5837baddb5e81534e3ee18be0f18666e04e1b3faeb"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-11T06:17:04.319Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "5c5270d88bb8c1f8eab2722ea1f8979c7ab60898faf602471ea10a44eb8a5149"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-11T06:19:36.483Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 756,
+        "executed": 756,
+        "passed": 756,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "756 passed, 0 allowed skip(s)",
+      "fingerprint": "5c5270d88bb8c1f8eab2722ea1f8979c7ab60898faf602471ea10a44eb8a5149"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-11T06:23:03.360Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 424,
+        "executed": 424,
+        "passed": 424,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 780,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "5c5270d88bb8c1f8eab2722ea1f8979c7ab60898faf602471ea10a44eb8a5149"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-11T06:23:19.935Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCareerInboxFeedbackRouteEnforcesSessionCSRFAndOwnership)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects anonymous learners to login instead of showing an empty inbox",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > shows the localized empty state when the authenticated inbox has no memos",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx::InboxPreviewClient > redirects to login when the feedback request finds an expired session",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestCareerInboxFeedbackRouteEnforcesSessionCSRFAndOwnership",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "5c5270d88bb8c1f8eab2722ea1f8979c7ab60898faf602471ea10a44eb8a5149"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-11T06:26:17.080Z",
+      "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+      "kind": "review",
+      "mode": "human",
+      "reviewer": "Ptolemy",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "Fresh independent review of the final AUDIT-098 diff; confirmed fixes for redirect/loading state and two-user inbox read ownership.",
+      "attested": true,
+      "fingerprint": "5c5270d88bb8c1f8eab2722ea1f8979c7ab60898faf602471ea10a44eb8a5149"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-11T06:26:20.179Z",
+    "head": "bda94fbca40e83a4358629b1f862169e5217ee58",
+    "fingerprint": "5c5270d88bb8c1f8eab2722ea1f8979c7ab60898faf602471ea10a44eb8a5149",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/career/store.go": "07c071ab92efcc952e751c72d53ddc1373c3188d",
+      "apps/api-go/internal/httpserver/handler_career.go": "bed96668caadebbb4b1c4abab850458286ff0a3a",
+      "apps/api-go/internal/httpserver/handler_career_test.go": "680f4520d9cda0be4f876d820384347e61c0adfe",
+      "apps/api-go/internal/httpserver/server.go": "bea91efc4052a81917f53f00f072e59fcd597e7a",
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "d1a903e5e16f8c3e43599abcc0daf298e53d5ab5",
+      "apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.test.tsx": "16060d4fc2b829e3b8cbe5cbd70fa666789918d9",
+      "apps/web/app/[locale]/review-inbox-preview/_components/inbox-preview-client.tsx": "dd5380ff32aac64d75a6093aa9c9aadd97b41a42",
+      "apps/web/messages/en.json": "d4b96bf8027cf688c7b4e1b0c10d14a9f2b77709",
+      "apps/web/messages/ja.json": "c7f8dd9ca5220d62dcb04065a56eebdc8feb6808",
+      "apps/web/messages/vi.json": "51893830d2ece69d636d305fbe11bc0e8b420eaa",
+      "apps/web/src/features/career-rpg/api.ts": "1a2b1da0f6a9f4bff38ef564715f8703aca771d0",
+      "apps/web/src/features/career-rpg/components/context-memo-card.tsx": "feb3598fd870c6a5ba964cb858e58eb5604be265",
+      "apps/web/src/features/career-rpg/components/review-inbox-preview.tsx": "56affa3a2661381c55cad1831427a3005d9eb65e",
+      "apps/web/src/features/career-rpg/i18n.ts": "41a3bbc9629e0fc34cbfd59d428210181220cd07",
+      "apps/web/src/features/career-rpg/types.ts": "192bb6407d062a1f1e0bbf5fe5a28e0c63caf401",
+      "packages/database/prisma/migrations/20261011120000_career_context_memo/migration.sql": "37ce79878686271137878605cc9e503bf847ff16",
+      "packages/database/prisma/schema.prisma": "408cc411074ed8db0a5980df213ad7d5ae4ff439"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

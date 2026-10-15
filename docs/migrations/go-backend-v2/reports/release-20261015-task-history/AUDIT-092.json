@@ -1,0 +1,74 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-092",
+  "title": "Finalize Quiz audit report checkpoint",
+  "start_head": "c99f978e867902af2d8d011ba78f6188b87e30de",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The just-committed Quiz screen audit checkpoint still says review and final commit are pending, and its report does not yet reference the final screen commit.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Durable Quiz screen/API audit documents point to the committed, reviewed code and record current verification counts and the next screen."
+      }
+    ],
+    "expected_behavior": "The screen/API inventory and morning summary record c99f978e867902af2d8d011ba78f6188b87e30de, current verified test counts, completed review and unchanged next screen without changing runtime behavior.",
+    "observed_behavior": "AUDIT-091 is CLOSED/VERIFIED and code is committed, but the product audit report remains at the pre-close checkpoint.",
+    "rollback_plan": "Revert only the report/inventory metadata changes; no runtime or product behavior changes."
+  },
+  "classification": {
+    "classes": [
+      "DOC_ONLY"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": "Update audit metadata to refer to the already verified and committed Quiz screen; no runtime effect."
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-10T10:26:12.946Z",
+      "head": "c99f978e867902af2d8d011ba78f6188b87e30de"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-10T10:26:26.324Z",
+      "head": "c99f978e867902af2d8d011ba78f6188b87e30de"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-10T10:26:26.855Z",
+      "head": "c99f978e867902af2d8d011ba78f6188b87e30de"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-10T10:28:11.690Z",
+      "head": "c99f978e867902af2d8d011ba78f6188b87e30de"
+    }
+  ],
+  "evidence": [],
+  "closed": {
+    "at": "2026-10-10T10:28:11.669Z",
+    "head": "c99f978e867902af2d8d011ba78f6188b87e30de",
+    "fingerprint": "f16b42dd9a8f4b15e3349326673ee17648a6ce557738e1d8c0b86b376cf47c53",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS"
+    },
+    "files": {
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "6d49016a473c9bc6835b599f0095a7de9d226cea",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "a8b9f4164aa9e124290daa063735e06a6cb35755",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "0ac07ff23c8809d864ac1e65824325690ec31851",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "3ed0be9fac252228f545f6c04eacca19e9c3f20a"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

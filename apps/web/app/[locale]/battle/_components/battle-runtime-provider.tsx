@@ -12,7 +12,6 @@ import {
   type ReactNode
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { io, type Socket } from "socket.io-client";
 
 import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
@@ -34,6 +33,7 @@ import {
   fallbackBotChoices,
   socketUrl
 } from "./battle-types";
+import { createGoRealtimeClient, type GoRealtimeClient } from "../../../../lib/go-realtime-client";
 
 export type PvpEndReason = NonNullable<FinishedEvent["pvpEndReason"]>;
 
@@ -149,10 +149,10 @@ export function BattleRuntimeProvider({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const socketRef = useRef<Socket | null>(null);
+  const socketRef = useRef<GoRealtimeClient | null>(null);
   const handledUrlIntentsRef = useRef<Set<string>>(new Set());
   const lobbyJoinedRef = useRef(false);
-  const pendingLobbyActionsRef = useRef<Array<(socket: Socket) => void>>([]);
+  const pendingLobbyActionsRef = useRef<Array<(socket: GoRealtimeClient) => void>>([]);
   const { displayName, email, isAuthenticated, userId } = useGoAuth();
   const [answerPending, setAnswerPending] = useState(false);
   const [answerResult, setAnswerResult] = useState<AnswerResultEvent | null>(null);
@@ -224,8 +224,6 @@ export function BattleRuntimeProvider({
     pendingLobbyActionsRef.current = [];
   }, []);
 
-  useEffect(() => clearSocket, [clearSocket]);
-
   /** Leaving match via in-app link leaves outcome in memory; clear on lobby so roster is not "still in match" */
   useEffect(() => {
     const parts = pathname?.split("/").filter(Boolean) ?? [];
@@ -272,7 +270,7 @@ export function BattleRuntimeProvider({
   ]);
 
   const attachSocketListeners = useCallback(
-    (s: Socket, uid: string) => {
+    (s: GoRealtimeClient, uid: string) => {
       s.on("connect", () => {
         setSocketConnected(true);
         lobbyJoinedRef.current = false;
@@ -481,19 +479,24 @@ export function BattleRuntimeProvider({
     const uid = userId;
     if (!uid) return null;
     if (socketRef.current) return socketRef.current;
-    const s = io(`${socketUrl}/battle`, {
-      path: "/socket.io",
-      reconnection: true,
-      reconnectionAttempts: 3,
-      transports: ["websocket", "polling"]
-    });
+    const s = createGoRealtimeClient(socketUrl, "/ws/battle");
     socketRef.current = s;
     attachSocketListeners(s, uid);
     return s;
   }, [attachSocketListeners, userId]);
 
+  useEffect(() => {
+    if (!isAuthenticated || !userId) {
+      clearSocket();
+      setSocketConnected(false);
+      return;
+    }
+    ensureSocket();
+    return clearSocket;
+  }, [clearSocket, ensureSocket, isAuthenticated, userId]);
+
   const runWhenLobbyReady = useCallback(
-    (action: (socket: Socket) => void) => {
+    (action: (socket: GoRealtimeClient) => void) => {
       const s = ensureSocket();
       if (!s) return false;
       if (s.connected && lobbyJoinedRef.current) {
@@ -505,10 +508,6 @@ export function BattleRuntimeProvider({
     },
     [ensureSocket]
   );
-
-  useEffect(() => {
-    ensureSocket();
-  }, [ensureSocket]);
 
   useEffect(() => {
     let cancelled = false;
@@ -747,20 +746,29 @@ export function BattleRuntimeProvider({
     }
   }, [labels, opponentName, outcome, userId]);
 
-  const sendLobbyMessage = useCallback(() => {
-    const s = ensureSocket();
-    const uid = userId;
+  const sendLobbyMessage = useCallback(async () => {
     const message = chatText.trim();
-    if (!s || !uid || !message) return;
-    s.emit("battle:lobby_message", {
-      clientMessageId: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`,
-      displayName: learnerDisplayName,
-      message,
-      roomKey: "global",
-      userId: uid
-    });
-    setChatText("");
-  }, [chatText, ensureSocket, learnerDisplayName, userId]);
+    if (!userId || !message) return;
+    try {
+      const response = await learnerApiFetch("/api/battle/chat", {
+        body: JSON.stringify({ message }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST"
+      });
+      if (!response.ok) {
+        setError(labels.error);
+        return;
+      }
+      const saved = (await response.json()) as LobbyMessage;
+      setLobbyMessages((current) =>
+        [...current.filter((item) => item.id !== saved.id), saved].slice(-80)
+      );
+      setChatText("");
+      setError(null);
+    } catch {
+      setError(labels.error);
+    }
+  }, [chatText, labels.error, userId]);
 
   const challengeUser = useCallback(
     (targetUserId: string) => {

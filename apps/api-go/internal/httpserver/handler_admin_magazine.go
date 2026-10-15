@@ -1,8 +1,10 @@
 package httpserver
 
 import (
+	"context"
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -10,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
@@ -19,8 +22,8 @@ import (
 // Contracts derived from NestJS magazine-admin.controller.ts,
 // loto-hub-admin.controller.ts, loto-lab-admin.controller.ts,
 // magazine.repository.ts, loto-hub-admin.service.ts, loto-lab.service.ts.
-// DB tables: daily.magazine_article, content.magazine_user_read,
-// content.loto_draw, content.loto_generation_run, content.loto_generated_set.
+// DB tables: daily.magazine_article, daily.magazine_user_read, daily.loto_draw,
+// daily.loto_generation_run, daily.loto_generated_set.
 
 // ── Magazine Articles ───────────────────────────────────────────────────────
 
@@ -131,7 +134,7 @@ func adminMagazineListHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handle
 // adminMagazineGenerateHandler implements POST /api/admin/magazine/generate.
 func adminMagazineGenerateHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, ok := authn.GetAdminIdentity(r.Context())
+		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
@@ -145,37 +148,67 @@ func adminMagazineGenerateHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		if req.WidgetKind == "" || req.Date == "" {
-			writeJSONError(w, "widgetKind and date required", http.StatusBadRequest)
+		switch req.WidgetKind {
+		case "magazine_vocab", "magazine_weather", "magazine_horoscope", "magazine_loto6", "magazine_loto7", "magazine_bjt_phrase":
+		default:
+			writeJSONError(w, "unsupported widgetKind", http.StatusBadRequest)
+			return
+		}
+		if req.Date == "" {
+			writeJSONError(w, "date required", http.StatusBadRequest)
+			return
+		}
+		if len(req.Date) < len("2006-01-02") {
+			writeJSONError(w, "invalid date format", http.StatusBadRequest)
 			return
 		}
 		locale := req.Locale
 		if locale == "" {
 			locale = "vi"
 		}
-		contentDate, err := time.Parse("2006-01-02", req.Date[:10])
+		if locale != "vi" && locale != "en" && locale != "ja" {
+			writeJSONError(w, "unsupported locale", http.StatusBadRequest)
+			return
+		}
+		dateKey := req.Date[:10]
+		contentDate, err := time.Parse("2006-01-02", dateKey)
 		if err != nil {
 			writeJSONError(w, "invalid date format", http.StatusBadRequest)
 			return
 		}
-		// Check if article already exists for this widget_kind + content_date + locale
-		var existingID string
-		err = db.QueryRow(r.Context(), `SELECT id FROM daily.magazine_article
-			WHERE widget_kind=$1 AND content_date=$2 AND locale=$3`,
-			req.WidgetKind, contentDate, locale).Scan(&existingID)
-		if err == nil {
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin magazine generation", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer func() { _ = tx.Rollback(context.Background()) }()
+		// Create placeholder article (real AI generation would be async)
+		slug := fmt.Sprintf("%s-%s-%s", dateKey, strings.TrimPrefix(req.WidgetKind, "magazine_"), locale)
+		var id string
+		err = tx.QueryRow(r.Context(), `INSERT INTO daily.magazine_article
+			(slug, widget_kind, content_date, locale, title_jp, title_vi, content_json, status, created_at, updated_at)
+			VALUES ($1,$2,$3,$4,'Generated','Generated','{}','draft',NOW(),NOW())
+			ON CONFLICT (widget_kind, content_date, locale) DO NOTHING RETURNING id`,
+			slug, req.WidgetKind, contentDate, locale).Scan(&id)
+		if errors.Is(err, pgx.ErrNoRows) {
 			writeJSON(w, http.StatusOK, map[string]any{"id": nil, "generated": false})
 			return
 		}
-		// Create placeholder article (real AI generation would be async)
-		slug := fmt.Sprintf("%s-%s", req.WidgetKind, req.Date[:10])
-		var id string
-		err = db.QueryRow(r.Context(), `INSERT INTO daily.magazine_article
-			(slug, widget_kind, content_date, locale, title_jp, title_vi, content_json, status, created_at, updated_at)
-			VALUES ($1,$2,$3,$4,'Generated','Generated','{}','draft',NOW(),NOW()) RETURNING id`,
-			slug, req.WidgetKind, contentDate, locale).Scan(&id)
 		if err != nil {
 			logger.Error("generate magazine article", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		after, _ := json.Marshal(map[string]string{"id": id, "widgetKind": req.WidgetKind, "contentDate": dateKey, "locale": locale, "status": "draft"})
+		if _, err = tx.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+			VALUES ('magazine.article.generated',$1,$2,'daily.magazine_article','generated_draft',$3,NOW())`, identity.ActorID, id, after); err != nil {
+			logger.Error("audit magazine generation", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err = tx.Commit(r.Context()); err != nil {
+			logger.Error("commit magazine generation", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
@@ -186,7 +219,7 @@ func adminMagazineGenerateHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 // adminMagazineRegenerateHandler implements POST /api/admin/magazine/{id}/regenerate.
 func adminMagazineRegenerateHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, ok := authn.GetAdminIdentity(r.Context())
+		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
@@ -196,48 +229,86 @@ func adminMagazineRegenerateHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			writeJSONError(w, "article id required", http.StatusBadRequest)
 			return
 		}
-		// Get existing article metadata
-		var widgetKind, locale string
-		var contentDate time.Time
-		err := db.QueryRow(r.Context(), `SELECT widget_kind, content_date, locale
-			FROM daily.magazine_article WHERE id=$1 OR slug=$1`, id).
-			Scan(&widgetKind, &contentDate, &locale)
+		ctx := r.Context()
+		tx, err := db.Begin(ctx)
 		if err != nil {
-			writeJSONError(w, "article not found", http.StatusNotFound)
-			return
-		}
-		// Delete old article
-		db.Exec(r.Context(), "DELETE FROM daily.magazine_article WHERE id=$1 OR slug=$1", id)
-		// Create new placeholder
-		slug := fmt.Sprintf("%s-%s", widgetKind, contentDate.UTC().Format("2006-01-02"))
-		var newID string
-		err = db.QueryRow(r.Context(), `INSERT INTO daily.magazine_article
-			(slug, widget_kind, content_date, locale, title_jp, title_vi, content_json, status, created_at, updated_at)
-			VALUES ($1,$2,$3,$4,'Regenerated','Regenerated','{}','draft',NOW(),NOW()) RETURNING id`,
-			slug, widgetKind, contentDate, locale).Scan(&newID)
-		if err != nil {
-			logger.Error("regenerate magazine article", "error", err)
+			logger.Error("begin magazine regeneration", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"id": newID, "regenerated": true})
+		defer tx.Rollback(ctx)
+		var articleID string
+		err = tx.QueryRow(ctx, `UPDATE daily.magazine_article SET status='draft', approval_status='pending',
+			approved_by=NULL, approved_at=NULL, published_at=NULL, updated_at=NOW()
+			WHERE id::text=$1 OR slug=$1 RETURNING id::text`, id).Scan(&articleID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			writeJSONError(w, "article not found", http.StatusNotFound)
+			return
+		}
+		if err != nil {
+			logger.Error("reset magazine article for regeneration", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.magazine.article.regenerated", "daily.magazine_article", articleID, "Reset article for regeneration", nil, map[string]any{"status": "draft"}); err != nil {
+			logger.Error("audit magazine regeneration", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit magazine regeneration", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"id": articleID, "regenerated": true})
 	}
 }
 
 // adminMagazineDeleteHandler implements DELETE /api/admin/magazine/{id}.
 func adminMagazineDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, ok := authn.GetAdminIdentity(r.Context())
+		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
 		id := extractPathParam(r.URL.Path, "magazine", 1)
-		if id == "" {
+		if !isValidUUID(id) {
 			writeJSONError(w, "article id required", http.StatusBadRequest)
 			return
 		}
-		db.Exec(r.Context(), "DELETE FROM daily.magazine_article WHERE id=$1", id)
+		ctx := r.Context()
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin magazine article delete", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
+		var before json.RawMessage
+		if err := tx.QueryRow(ctx, `SELECT to_jsonb(a) FROM daily.magazine_article a WHERE id=$1 FOR UPDATE`, id).Scan(&before); errors.Is(err, pgx.ErrNoRows) {
+			writeJSONError(w, "article not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			logger.Error("load magazine article for delete", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if _, err := tx.Exec(ctx, "DELETE FROM daily.magazine_article WHERE id=$1", id); err != nil {
+			logger.Error("delete magazine article", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.magazine.article.deleted", "daily.magazine_article", id, "Admin deleted magazine article", before, map[string]any{"deleted": true}); err != nil {
+			logger.Error("audit magazine article delete", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit magazine article delete", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true})
 	}
 }
@@ -246,6 +317,18 @@ func adminMagazineDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 
 func isValidLotoGame(g string) bool {
 	return g == "loto6" || g == "loto7"
+}
+
+func parseLotoDate(value string) (time.Time, error) {
+	if parsed, err := time.Parse("2006-01-02", value); err == nil {
+		return parsed, nil
+	}
+	if len(value) > 10 {
+		if _, err := time.Parse(time.RFC3339Nano, value); err == nil {
+			return time.Parse("2006-01-02", value[:10])
+		}
+	}
+	return time.Time{}, fmt.Errorf("invalid date")
 }
 
 // adminLotoPredictionsListHandler implements GET /api/admin/magazine/loto/predictions.
@@ -279,7 +362,11 @@ func adminLotoPredictionsListHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		whereClause := "WHERE " + strings.Join(whereParts, " AND ")
 
 		var total int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.magazine_article "+whereClause, args...).Scan(&total)
+		if err := db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.magazine_article "+whereClause, args...).Scan(&total); err != nil {
+			logger.Error("count loto predictions", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		dataQ := fmt.Sprintf(`SELECT id, slug, widget_kind, content_date, status, approval_status,
 			approved_by, approved_at, content_json, created_at
@@ -312,16 +399,24 @@ func adminLotoPredictionsListHandler(db *pgxpool.Pool, logger *slog.Logger) http
 			var p Prediction
 			var cd, ca time.Time
 			var aa *time.Time
-			if rows.Scan(&p.ID, &p.Slug, &p.WidgetKind, &cd, &p.Status, &p.ApprovalStatus,
-				&p.ApprovedBy, &aa, &p.ContentJSON, &ca) == nil {
-				p.ContentDate = cd.UTC().Format("2006-01-02")
-				p.CreatedAt = ca.UTC().Format(time.RFC3339)
-				if aa != nil {
-					s := aa.UTC().Format(time.RFC3339)
-					p.ApprovedAt = &s
-				}
-				items = append(items, p)
+			if err := rows.Scan(&p.ID, &p.Slug, &p.WidgetKind, &cd, &p.Status, &p.ApprovalStatus,
+				&p.ApprovedBy, &aa, &p.ContentJSON, &ca); err != nil {
+				logger.Error("scan loto prediction", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			p.ContentDate = cd.UTC().Format("2006-01-02")
+			p.CreatedAt = ca.UTC().Format(time.RFC3339)
+			if aa != nil {
+				s := aa.UTC().Format(time.RFC3339)
+				p.ApprovedAt = &s
+			}
+			items = append(items, p)
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate loto predictions", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if items == nil {
 			items = []Prediction{}
@@ -345,23 +440,45 @@ func adminLotoPredictionApproveHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			writeJSONError(w, "prediction id required", http.StatusBadRequest)
 			return
 		}
-		// Verify it's a loto article
-		var widgetKind string
-		err := db.QueryRow(r.Context(), "SELECT widget_kind FROM daily.magazine_article WHERE id=$1", id).Scan(&widgetKind)
+		ctx := r.Context()
+		tx, err := db.Begin(ctx)
 		if err != nil {
+			logger.Error("begin loto approval", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
+		var widgetKind string
+		err = tx.QueryRow(ctx, "SELECT widget_kind FROM daily.magazine_article WHERE id=$1 FOR UPDATE", id).Scan(&widgetKind)
+		if errors.Is(err, pgx.ErrNoRows) {
 			writeJSONError(w, "prediction not found", http.StatusNotFound)
 			return
 		}
-		if !strings.HasPrefix(widgetKind, "magazine_loto") {
+		if err != nil {
+			logger.Error("load loto prediction for approval", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if widgetKind != "magazine_loto6" && widgetKind != "magazine_loto7" {
 			writeJSONError(w, "not a loto reference-combination article", http.StatusBadRequest)
 			return
 		}
-		_, err = db.Exec(r.Context(), `UPDATE daily.magazine_article SET
+		before := map[string]string{"widgetKind": widgetKind}
+		if _, err = tx.Exec(ctx, `UPDATE daily.magazine_article SET
 			approval_status='approved', approved_by=$1, approved_at=NOW(),
 			status='published', published_at=COALESCE(published_at,NOW()), updated_at=NOW()
-			WHERE id=$2`, identity.ActorID, id)
-		if err != nil {
+			WHERE id=$2`, identity.ActorID, id); err != nil {
 			logger.Error("approve loto prediction", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.magazine.loto.prediction.approved", "daily.magazine_article", id, "Approve loto prediction", before, map[string]string{"approvalStatus": "approved", "status": "published"}); err != nil {
+			logger.Error("audit loto approval", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit loto approval", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
@@ -372,7 +489,7 @@ func adminLotoPredictionApproveHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 // adminLotoPredictionRejectHandler implements PUT /api/admin/magazine/loto/predictions/{id}/reject.
 func adminLotoPredictionRejectHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, ok := authn.GetAdminIdentity(r.Context())
+		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
@@ -382,20 +499,42 @@ func adminLotoPredictionRejectHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 			writeJSONError(w, "prediction id required", http.StatusBadRequest)
 			return
 		}
-		var widgetKind string
-		err := db.QueryRow(r.Context(), "SELECT widget_kind FROM daily.magazine_article WHERE id=$1", id).Scan(&widgetKind)
+		ctx := r.Context()
+		tx, err := db.Begin(ctx)
 		if err != nil {
+			logger.Error("begin loto rejection", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
+		var widgetKind string
+		err = tx.QueryRow(ctx, "SELECT widget_kind FROM daily.magazine_article WHERE id=$1 FOR UPDATE", id).Scan(&widgetKind)
+		if errors.Is(err, pgx.ErrNoRows) {
 			writeJSONError(w, "prediction not found", http.StatusNotFound)
 			return
 		}
-		if !strings.HasPrefix(widgetKind, "magazine_loto") {
+		if err != nil {
+			logger.Error("load loto prediction for rejection", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if widgetKind != "magazine_loto6" && widgetKind != "magazine_loto7" {
 			writeJSONError(w, "not a loto reference-combination article", http.StatusBadRequest)
 			return
 		}
-		_, err = db.Exec(r.Context(), `UPDATE daily.magazine_article SET
-			approval_status='rejected', status='draft', updated_at=NOW() WHERE id=$1`, id)
-		if err != nil {
+		if _, err = tx.Exec(ctx, `UPDATE daily.magazine_article SET
+			approval_status='rejected', status='draft', approved_by=NULL, approved_at=NULL, published_at=NULL, updated_at=NOW() WHERE id=$1`, id); err != nil {
 			logger.Error("reject loto prediction", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.magazine.loto.prediction.rejected", "daily.magazine_article", id, "Reject loto prediction", map[string]string{"widgetKind": widgetKind}, map[string]string{"approvalStatus": "rejected", "status": "draft"}); err != nil {
+			logger.Error("audit loto rejection", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit loto rejection", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
@@ -406,7 +545,7 @@ func adminLotoPredictionRejectHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 // adminLotoResultsInputHandler implements POST /api/admin/magazine/loto/predictions/results.
 func adminLotoResultsInputHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, ok := authn.GetAdminIdentity(r.Context())
+		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
@@ -428,9 +567,15 @@ func adminLotoResultsInputHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		}
 		mainCount := 6
 		bonusCount := 1
+		maxNumber := 43
 		if req.Game == "loto7" {
 			mainCount = 7
 			bonusCount = 2
+			maxNumber = 37
+		}
+		if req.DrawNumber < 1 {
+			writeJSONError(w, "drawNumber must be positive", http.StatusBadRequest)
+			return
 		}
 		if len(req.MainNumbers) != mainCount {
 			writeJSONError(w, fmt.Sprintf("%s requires exactly %d main numbers", req.Game, mainCount), http.StatusBadRequest)
@@ -440,28 +585,54 @@ func adminLotoResultsInputHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 			writeJSONError(w, fmt.Sprintf("%s requires exactly %d bonus numbers", req.Game, bonusCount), http.StatusBadRequest)
 			return
 		}
-		drawDate, err := time.Parse("2006-01-02", req.DrawDate[:10])
+		seen := make(map[int]bool, mainCount+bonusCount)
+		for _, n := range append(append([]int(nil), req.MainNumbers...), req.BonusNumbers...) {
+			if n < 1 || n > maxNumber || seen[n] {
+				writeJSONError(w, "draw numbers must be unique and within the game's range", http.StatusBadRequest)
+				return
+			}
+			seen[n] = true
+		}
+		drawDate, err := parseLotoDate(strings.TrimSpace(req.DrawDate))
 		if err != nil {
 			writeJSONError(w, "invalid drawDate format", http.StatusBadRequest)
 			return
 		}
-		mnJSON, _ := json.Marshal(req.MainNumbers)
-		bnJSON, _ := json.Marshal(req.BonusNumbers)
+		dateKey := drawDate.Format("2006-01-02")
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin loto result transaction", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer func() { _ = tx.Rollback(context.Background()) }()
 		var id string
-		err = db.QueryRow(r.Context(), `INSERT INTO content.loto_draw
+		err = tx.QueryRow(r.Context(), `INSERT INTO daily.loto_draw
 			(game, draw_number, draw_date, main_numbers, bonus_numbers, source_provider, created_at, updated_at)
 			VALUES ($1,$2,$3,$4,$5,'admin_input',NOW(),NOW())
 			ON CONFLICT (game, draw_number) DO UPDATE SET
 			draw_date=$3, main_numbers=$4, bonus_numbers=$5, source_provider='admin_input', updated_at=NOW()
-			RETURNING id`, req.Game, req.DrawNumber, drawDate, mnJSON, bnJSON).Scan(&id)
+			RETURNING id::text`, req.Game, req.DrawNumber, drawDate, req.MainNumbers, req.BonusNumbers).Scan(&id)
 		if err != nil {
 			logger.Error("input loto result", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+		if _, err := tx.Exec(r.Context(), `INSERT INTO ops.admin_audit_log
+			(action, actor_id, target_id, target_type, after, created_at)
+			VALUES ('loto.result.input',$1,$2,'daily.loto_draw',jsonb_build_object('game',$3::text,'drawNumber',$4::int),NOW())`, identity.ActorID, id, req.Game, req.DrawNumber); err != nil {
+			logger.Error("audit loto result input", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit loto result", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"id": id, "game": req.Game, "drawNumber": req.DrawNumber,
-			"drawDate": req.DrawDate[:10], "mainNumbers": req.MainNumbers, "bonusNumbers": req.BonusNumbers,
+			"drawDate": dateKey, "mainNumbers": req.MainNumbers, "bonusNumbers": req.BonusNumbers,
 		})
 	}
 }
@@ -495,10 +666,18 @@ func adminLotoAnalyticsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 		var articleIDs []string
 		for rows.Next() {
 			var a ArticleData
-			if rows.Scan(&a.ID, &a.ContentDate, &a.ContentJSON) == nil {
-				articles = append(articles, a)
-				articleIDs = append(articleIDs, a.ID)
+			if err := rows.Scan(&a.ID, &a.ContentDate, &a.ContentJSON); err != nil {
+				logger.Error("scan loto analytics article", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			articles = append(articles, a)
+			articleIDs = append(articleIDs, a.ID)
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate loto analytics articles", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 
 		totalPredictions := len(articles)
@@ -512,11 +691,16 @@ func adminLotoAnalyticsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 		if len(articles) > 0 {
 			for _, a := range articles {
 				dateKey := a.ContentDate.UTC().Format("2006-01-02")
-				var mainNumbers json.RawMessage
+				var mainNumbers []int
 				err := db.QueryRow(r.Context(), `SELECT main_numbers FROM daily.loto_draw
 					WHERE game=$1 AND draw_date=$2`, game, dateKey).Scan(&mainNumbers)
-				if err != nil {
+				if errors.Is(err, pgx.ErrNoRows) {
 					continue
+				}
+				if err != nil {
+					logger.Error("load loto analytics draw", "error", err)
+					writeJSONError(w, "internal error", http.StatusInternalServerError)
+					return
 				}
 				matchedCount++
 				// Parse predicted sets from content JSON
@@ -528,7 +712,11 @@ func adminLotoAnalyticsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 						MainNumbers []int `json:"mainNumbers"`
 					} `json:"generatedSets"`
 				}
-				json.Unmarshal(a.ContentJSON, &content)
+				if err := json.Unmarshal(a.ContentJSON, &content); err != nil {
+					logger.Error("decode loto prediction analytics", "error", err)
+					writeJSONError(w, "internal error", http.StatusInternalServerError)
+					return
+				}
 				predictedSets := content.Sets
 				if len(predictedSets) == 0 {
 					predictedSets = content.GeneratedSets
@@ -536,10 +724,8 @@ func adminLotoAnalyticsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 				if len(predictedSets) == 0 {
 					continue
 				}
-				var actualMain []int
-				json.Unmarshal(mainNumbers, &actualMain)
 				actualSet := map[int]bool{}
-				for _, n := range actualMain {
+				for _, n := range mainNumbers {
 					actualSet[n] = true
 				}
 				hits := 0
@@ -553,8 +739,12 @@ func adminLotoAnalyticsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 				if hits > bestHit {
 					bestHit = hits
 					var dn int
-					db.QueryRow(r.Context(), `SELECT draw_number FROM daily.loto_draw
-						WHERE game=$1 AND draw_date=$2`, game, dateKey).Scan(&dn)
+					if err := db.QueryRow(r.Context(), `SELECT draw_number FROM daily.loto_draw
+						WHERE game=$1 AND draw_date=$2`, game, dateKey).Scan(&dn); err != nil {
+						logger.Error("load best loto draw number", "error", err)
+						writeJSONError(w, "internal error", http.StatusInternalServerError)
+						return
+					}
 					bestDrawNumber = &dn
 				}
 			}
@@ -572,8 +762,12 @@ func adminLotoAnalyticsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 				placeholders[i] = fmt.Sprintf("$%d", i+1)
 				viewArgs[i] = id
 			}
-			db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.magazine_user_read WHERE article_id IN ("+
-				strings.Join(placeholders, ",")+")", viewArgs...).Scan(&totalViews)
+			if err := db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.magazine_user_read WHERE article_id IN ("+
+				strings.Join(placeholders, ",")+")", viewArgs...).Scan(&totalViews); err != nil {
+				logger.Error("count loto analytics views", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
 		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"game": game, "totalPredictions": totalPredictions, "matchedCount": matchedCount,
@@ -594,13 +788,29 @@ func adminLotoSummaryHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 			return
 		}
 		var totalDraws int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.loto_draw WHERE game=$1", game).Scan(&totalDraws)
+		if err := db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.loto_draw WHERE game=$1", game).Scan(&totalDraws); err != nil {
+			logger.Error("count loto summary draws", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		var latestDrawDate *time.Time
-		db.QueryRow(r.Context(), "SELECT MAX(draw_date) FROM daily.loto_draw WHERE game=$1", game).Scan(&latestDrawDate)
+		if err := db.QueryRow(r.Context(), "SELECT MAX(draw_date) FROM daily.loto_draw WHERE game=$1", game).Scan(&latestDrawDate); err != nil {
+			logger.Error("load latest loto summary draw", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		var totalRuns int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.loto_generation_run WHERE game=$1", game).Scan(&totalRuns)
+		if err := db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.loto_generation_run WHERE game=$1", game).Scan(&totalRuns); err != nil {
+			logger.Error("count loto summary runs", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		var publishedRuns int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.loto_generation_run WHERE game=$1 AND status='published'", game).Scan(&publishedRuns)
+		if err := db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.loto_generation_run WHERE game=$1 AND status='published'", game).Scan(&publishedRuns); err != nil {
+			logger.Error("count published loto summary runs", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		ld := ""
 		if latestDrawDate != nil {
 			ld = latestDrawDate.UTC().Format("2006-01-02")
@@ -668,7 +878,7 @@ func adminLotoDrawsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 // adminLotoImportCSVHandler implements POST /api/admin/magazine/loto/import-csv.
 func adminLotoImportCSVHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, ok := authn.GetAdminIdentity(r.Context())
+		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
@@ -691,59 +901,113 @@ func adminLotoImportCSVHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 			writeJSONError(w, "invalid CSV format", http.StatusBadRequest)
 			return
 		}
-		created := 0
-		updated := 0
-		for _, row := range records {
-			if len(row) < 3 {
+		if !isValidLotoGame(req.Game) {
+			writeJSONError(w, "game must be loto6 or loto7", http.StatusBadRequest)
+			return
+		}
+		mainCount, maxNumber := 6, 43
+		if req.Game == "loto7" {
+			mainCount, maxNumber = 7, 37
+		}
+		bonusCount := 1
+		if req.Game == "loto7" {
+			bonusCount = 2
+		}
+		validRows := make([]struct {
+			drawNum     int
+			drawDate    time.Time
+			main, bonus []int
+		}, 0, len(records))
+		for idx, row := range records {
+			if idx == 0 && len(row) > 0 && strings.EqualFold(strings.TrimSpace(row[0]), "drawNumber") {
 				continue
+			}
+			if len(row) < 2+mainCount+bonusCount {
+				writeJSONError(w, "CSV row has too few columns", http.StatusBadRequest)
+				return
 			}
 			drawNum, err := strconv.Atoi(strings.TrimSpace(row[0]))
+			if err != nil || drawNum < 1 {
+				writeJSONError(w, "CSV contains an invalid draw number", http.StatusBadRequest)
+				return
+			}
+			dt, err := parseLotoDate(strings.TrimSpace(row[1]))
 			if err != nil {
-				continue
+				writeJSONError(w, "CSV contains an invalid draw date", http.StatusBadRequest)
+				return
 			}
-			game := req.Game
-			if game == "" && len(row) > 0 {
-				game = strings.TrimSpace(row[len(row)-1])
+			numbers := make([]int, mainCount+bonusCount)
+			seen := make(map[int]bool, len(numbers))
+			for i := range numbers {
+				n, err := strconv.Atoi(strings.TrimSpace(row[2+i]))
+				if err != nil || n < 1 || n > maxNumber || seen[n] {
+					writeJSONError(w, "CSV contains invalid or duplicate draw numbers", http.StatusBadRequest)
+					return
+				}
+				numbers[i], seen[n] = n, true
 			}
-			if !isValidLotoGame(game) {
-				continue
+			for _, extra := range row[2+len(numbers):] {
+				if strings.TrimSpace(extra) != "" {
+					writeJSONError(w, "CSV row has unexpected columns", http.StatusBadRequest)
+					return
+				}
 			}
-			drawDate := strings.TrimSpace(row[1])
-			dt, err := time.Parse("2006-01-02", drawDate[:10])
+			validRows = append(validRows, struct {
+				drawNum     int
+				drawDate    time.Time
+				main, bonus []int
+			}{
+				drawNum: drawNum, drawDate: dt, main: numbers[:mainCount], bonus: numbers[mainCount:],
+			})
+		}
+		if len(validRows) == 0 {
+			writeJSONError(w, "CSV must contain at least one draw", http.StatusBadRequest)
+			return
+		}
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin loto CSV import", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer func() { _ = tx.Rollback(context.Background()) }()
+		created, updated := 0, 0
+		firstDrawID := ""
+		for _, row := range validRows {
+			var inserted bool
+			var drawID string
+			err := tx.QueryRow(r.Context(), `INSERT INTO daily.loto_draw
+				(game, draw_number, draw_date, main_numbers, bonus_numbers, source_provider, imported_at, created_at, updated_at)
+				VALUES ($1,$2,$3,$4,$5,'csv_import',NOW(),NOW(),NOW())
+				ON CONFLICT (game, draw_number) DO UPDATE SET draw_date=$3, main_numbers=$4, bonus_numbers=$5,
+					source_provider='csv_import', imported_at=NOW(), updated_at=NOW()
+				RETURNING id::text, (xmax = 0)`, req.Game, row.drawNum, row.drawDate, row.main, row.bonus).Scan(&drawID, &inserted)
 			if err != nil {
-				continue
+				logger.Error("import loto CSV row", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
-			// Parse numbers from remaining columns
-			var mainNums, bonusNums []int
-			for i := 2; i < len(row); i++ {
-				n, err := strconv.Atoi(strings.TrimSpace(row[i]))
-				if err != nil {
-					continue
-				}
-				mainCount := 6
-				if game == "loto7" {
-					mainCount = 7
-				}
-				if len(mainNums) < mainCount {
-					mainNums = append(mainNums, n)
-				} else {
-					bonusNums = append(bonusNums, n)
-				}
+			if firstDrawID == "" {
+				firstDrawID = drawID
 			}
-			mnJSON, _ := json.Marshal(mainNums)
-			bnJSON, _ := json.Marshal(bonusNums)
-			var exists bool
-			db.QueryRow(r.Context(), "SELECT EXISTS(SELECT 1 FROM daily.loto_draw WHERE game=$1 AND draw_number=$2)",
-				game, drawNum).Scan(&exists)
-			db.Exec(r.Context(), `INSERT INTO content.loto_draw (game, draw_number, draw_date, main_numbers, bonus_numbers, source_provider, created_at, updated_at)
-				VALUES ($1,$2,$3,$4,$5,'csv_import',NOW(),NOW())
-				ON CONFLICT (game, draw_number) DO UPDATE SET draw_date=$3, main_numbers=$4, bonus_numbers=$5, imported_at=NOW(), updated_at=NOW()`,
-				game, drawNum, dt, mnJSON, bnJSON)
-			if exists {
-				updated++
-			} else {
+			if inserted {
 				created++
+			} else {
+				updated++
 			}
+		}
+		if _, err := tx.Exec(r.Context(), `INSERT INTO ops.admin_audit_log
+			(action, actor_id, target_id, target_type, after, created_at)
+			VALUES ('loto.csv.import',$1,$2,'daily.loto_draw',jsonb_build_object('game',$3::text,'created',$4::int,'updated',$5::int),NOW())`,
+			identity.ActorID, firstDrawID, req.Game, created, updated); err != nil {
+			logger.Error("audit loto CSV import", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit loto CSV import", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"created": created, "updated": updated, "total": created + updated})
 	}
@@ -752,7 +1016,7 @@ func adminLotoImportCSVHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 // adminLotoSyncHandler implements POST /api/admin/magazine/loto/sync.
 func adminLotoSyncHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, ok := authn.GetAdminIdentity(r.Context())
+		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
@@ -768,7 +1032,24 @@ func adminLotoSyncHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFun
 			writeJSONError(w, "game must be loto6 or loto7", http.StatusBadRequest)
 			return
 		}
-		// External CSV sync requires network access — return stub indicating sync was requested
+		ctx := r.Context()
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin loto sync request", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.magazine.loto.sync.requested", "daily.loto_draw", req.Game, "Request loto source sync", nil, map[string]string{"game": req.Game, "status": "sync_requested"}); err != nil {
+			logger.Error("audit loto sync request", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit loto sync request", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"game": req.Game, "status": "sync_requested",
 			"message": "External CSV sync requires staging environment",
@@ -835,18 +1116,35 @@ func adminLotoGenerateHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handle
 		if req.SetCount < 1 {
 			req.SetCount = 3
 		}
+		if req.SetCount > 5 {
+			writeJSONError(w, "setCount must not exceed 5", http.StatusBadRequest)
+			return
+		}
+		if len(req.Seed) > 128 {
+			writeJSONError(w, "seed must not exceed 128 characters", http.StatusBadRequest)
+			return
+		}
 		targetDate := time.Now().UTC()
 		if req.TargetDrawDate != "" {
-			if t, err := time.Parse("2006-01-02", req.TargetDrawDate[:10]); err == nil {
-				targetDate = t
+			t, err := parseLotoDate(strings.TrimSpace(req.TargetDrawDate))
+			if err != nil {
+				writeJSONError(w, "invalid targetDrawDate format", http.StatusBadRequest)
+				return
 			}
+			targetDate = t
 		}
-		// Create generation run
+		tx, err := db.Begin(r.Context())
+		if err != nil {
+			logger.Error("begin loto generation", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer func() { _ = tx.Rollback(context.Background()) }()
 		var runID string
-		err := db.QueryRow(r.Context(), `INSERT INTO content.loto_generation_run
-			(game, target_draw_date, status, seed, requested_set_count, created_at)
-			VALUES ($1,$2,'generated',$3,$4,NOW()) RETURNING id`,
-			req.Game, targetDate, req.Seed, req.SetCount).Scan(&runID)
+		err = tx.QueryRow(r.Context(), `INSERT INTO daily.loto_generation_run
+			(game, target_draw_date, status, seed, requested_set_count, created_by_admin_id, created_at, updated_at)
+			VALUES ($1,$2,'generated',NULLIF($3,''),$4,$5,NOW(),NOW()) RETURNING id::text`,
+			req.Game, targetDate, req.Seed, req.SetCount, identity.ActorID).Scan(&runID)
 		if err != nil {
 			logger.Error("create loto generation run", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -855,9 +1153,11 @@ func adminLotoGenerateHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handle
 		// Generate placeholder sets
 		mainCount := 6
 		bonusCount := 1
+		maxNumber := 43
 		if req.Game == "loto7" {
 			mainCount = 7
 			bonusCount = 2
+			maxNumber = 37
 		}
 		type SetResult struct {
 			ID           string `json:"id"`
@@ -870,22 +1170,43 @@ func adminLotoGenerateHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handle
 		for i := 0; i < req.SetCount; i++ {
 			mainNums := make([]int, mainCount)
 			for j := 0; j < mainCount; j++ {
-				mainNums[j] = (i*7+j+1)%43 + 1
+				mainNums[j] = (i*7+j+1)%maxNumber + 1
 			}
 			bonusNums := make([]int, bonusCount)
-			for j := 0; j < bonusCount; j++ {
-				bonusNums[j] = (i*3+j+1)%16 + 1
+			used := make(map[int]bool, mainCount+bonusCount)
+			for _, number := range mainNums {
+				used[number] = true
 			}
-			mnJSON, _ := json.Marshal(mainNums)
-			bnJSON, _ := json.Marshal(bonusNums)
+			for candidate := (i*3+mainCount)%maxNumber + 1; len(used) < mainCount+bonusCount; candidate = candidate%maxNumber + 1 {
+				if !used[candidate] {
+					bonusNums[len(used)-mainCount] = candidate
+					used[candidate] = true
+				}
+			}
 			var setID string
-			db.QueryRow(r.Context(), `INSERT INTO content.loto_generated_set
+			if err := tx.QueryRow(r.Context(), `INSERT INTO daily.loto_generated_set
 				(run_id, rank, main_numbers, bonus_numbers, score, selected_for_magazine, created_at)
-				VALUES ($1,$2,$3,$4,$5,false,NOW()) RETURNING id`,
-				runID, i+1, mnJSON, bnJSON, 100-i*10).Scan(&setID)
+				VALUES ($1,$2,$3,$4,$5,false,NOW()) RETURNING id::text`,
+				runID, i+1, mainNums, bonusNums, float64(100-i*10)).Scan(&setID); err != nil {
+				logger.Error("create loto generated set", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
 			sets = append(sets, SetResult{ID: setID, Rank: i + 1, MainNumbers: mainNums, BonusNumbers: bonusNums, Score: 100 - i*10})
 		}
-		_ = identity.ActorID // used for audit in production
+		if _, err := tx.Exec(r.Context(), `INSERT INTO ops.admin_audit_log
+			(action, actor_id, target_id, target_type, after, created_at)
+			VALUES ('loto.generation.created',$1,$2,'daily.loto_generation_run',jsonb_build_object('game',$3::text,'setCount',$4::int),NOW())`,
+			identity.ActorID, runID, req.Game, len(sets)); err != nil {
+			logger.Error("audit loto generation", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			logger.Error("commit loto generation", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"id": runID, "game": req.Game, "targetDrawDate": targetDate.UTC().Format("2006-01-02"),
 			"status": "generated", "sets": sets,
@@ -917,10 +1238,18 @@ func adminLotoPublishHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 			writeJSONError(w, "at least one setId is required", http.StatusBadRequest)
 			return
 		}
+		ctx := r.Context()
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin loto publish", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 		// Get run details
 		var game string
 		var targetDate time.Time
-		err := db.QueryRow(r.Context(), "SELECT game, target_draw_date FROM daily.loto_generation_run WHERE id=$1", req.RunID).
+		err = tx.QueryRow(ctx, "SELECT game, target_draw_date FROM daily.loto_generation_run WHERE id=$1 FOR UPDATE", req.RunID).
 			Scan(&game, &targetDate)
 		if err != nil {
 			writeJSONError(w, "generation run not found", http.StatusNotFound)
@@ -929,15 +1258,39 @@ func adminLotoPublishHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 		dateKey := targetDate.UTC().Format("2006-01-02")
 		widgetKind := "magazine_" + game
 		slug := fmt.Sprintf("%s-prediction-%s", game, dateKey)
-		// Mark sets as selected
+		// Validate and select every requested set atomically with publication.
+		if _, err := tx.Exec(ctx, "UPDATE daily.loto_generated_set SET selected_for_magazine=false WHERE run_id=$1 AND selected_for_magazine=true", req.RunID); err != nil {
+			logger.Error("clear loto magazine selections", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		seen := make(map[string]struct{}, len(req.SetIDs))
 		for _, setID := range req.SetIDs {
-			db.Exec(r.Context(), "UPDATE content.loto_generated_set SET selected_for_magazine=true WHERE id=$1 AND run_id=$2", setID, req.RunID)
+			if _, duplicate := seen[setID]; duplicate {
+				writeJSONError(w, "duplicate setId", http.StatusBadRequest)
+				return
+			}
+			seen[setID] = struct{}{}
+			result, err := tx.Exec(ctx, "UPDATE daily.loto_generated_set SET selected_for_magazine=true WHERE id=$1 AND run_id=$2", setID, req.RunID)
+			if err != nil {
+				logger.Error("select loto generated set", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			if result.RowsAffected() != 1 {
+				writeJSONError(w, "generated set not found for run", http.StatusBadRequest)
+				return
+			}
 		}
 		// Update run status
-		db.Exec(r.Context(), "UPDATE content.loto_generation_run SET status='published', updated_at=NOW() WHERE id=$1", req.RunID)
+		if _, err := tx.Exec(ctx, "UPDATE daily.loto_generation_run SET status='published', updated_at=NOW() WHERE id=$1", req.RunID); err != nil {
+			logger.Error("publish loto generation run", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		// Upsert magazine article
 		var articleID string
-		err = db.QueryRow(r.Context(), `INSERT INTO daily.magazine_article
+		err = tx.QueryRow(ctx, `INSERT INTO daily.magazine_article
 			(slug, widget_kind, content_date, locale, title_jp, title_vi, content_json, status,
 			approval_status, approved_by, approved_at, published_at, created_at, updated_at)
 			VALUES ($1,$2,$3,'vi',$4,$5,'{}','published','approved',$6,NOW(),NOW(),NOW(),NOW())
@@ -951,6 +1304,16 @@ func adminLotoPublishHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 			identity.ActorID).Scan(&articleID)
 		if err != nil {
 			logger.Error("publish loto to magazine", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.magazine.loto.published", "daily.magazine_article", articleID, "Publish loto generated sets", nil, map[string]any{"runId": req.RunID, "selectedSets": len(req.SetIDs), "status": "published"}); err != nil {
+			logger.Error("audit loto publish", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit loto publish", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}

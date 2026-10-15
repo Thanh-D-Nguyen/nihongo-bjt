@@ -70,7 +70,7 @@ const EMPTY_FORM: FormData = {
   config: JSON.stringify(DEFAULT_FLASHCARD_THEME.config, null, 2)
 };
 
-function tierBadge(tier: string) {
+function tierBadge(tier: string, label: string) {
   const colors: Record<string, string> = {
     free: "bg-emerald-100 text-emerald-800",
     premium: "bg-amber-100 text-amber-800",
@@ -83,7 +83,7 @@ function tierBadge(tier: string) {
         colors[tier] ?? "bg-gray-100 text-gray-800"
       )}
     >
-      {tier}
+      {label}
     </span>
   );
 }
@@ -94,10 +94,10 @@ function statusTone(status: string): "neutral" | "warning" | "danger" {
   return "danger";
 }
 
-function StylePreview({ config }: { config: Record<string, unknown> }) {
+function StylePreview({ config, invalidLabel }: { config: Record<string, unknown>; invalidLabel: string }) {
   const parsed = flashcardThemeConfigSchema.safeParse(config);
   if (!parsed.success) {
-    return <span className="text-xs font-bold text-red-600">Invalid</span>;
+    return <span className="text-xs font-bold text-red-600">{invalidLabel}</span>;
   }
   const theme = parsed.data;
   return (
@@ -119,7 +119,7 @@ function StylePreview({ config }: { config: Record<string, unknown> }) {
 
 export function FlashcardStylesAdminClient({
   common,
-  labels: _labels
+  labels
 }: {
   common: CommonLabels;
   labels: Labels;
@@ -141,6 +141,7 @@ export function FlashcardStylesAdminClient({
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   // Confirm dialog
@@ -151,6 +152,7 @@ export function FlashcardStylesAdminClient({
   } | null>(null);
 
   const toast = useAdminToast();
+  const label = (key: string) => labels[key] ?? key;
 
   // ── Load perms ──────────────────────────────────
   useEffect(() => {
@@ -169,12 +171,12 @@ export function FlashcardStylesAdminClient({
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setList(Array.isArray(data) ? data : (data.items ?? []));
-    } catch (err) {
-      setListError(err instanceof Error ? err.message : "Unknown error");
+    } catch {
+      setListError(labels.loadFailed ?? "loadFailed");
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, tierFilter]);
+  }, [statusFilter, tierFilter, labels]);
 
   const fetchAdoption = useCallback(async () => {
     try {
@@ -228,13 +230,13 @@ export function FlashcardStylesAdminClient({
       try {
         parsedConfig = JSON.parse(form.config);
       } catch {
-        setFormError("Invalid JSON in config");
+        setFormError(label("invalidJson"));
         setSaving(false);
         return;
       }
       const validation = validateFlashcardTheme(form.slug.trim() || "new-theme", parsedConfig);
       if (!validation.success) {
-        setFormError(validation.errors.join("\n"));
+        setFormError(label("invalidConfig"));
         setSaving(false);
         return;
       }
@@ -251,7 +253,7 @@ export function FlashcardStylesAdminClient({
       };
 
       if (!payload.slug || !payload.nameKey) {
-        setFormError("slug and nameKey are required");
+        setFormError(label("required"));
         setSaving(false);
         return;
       }
@@ -263,10 +265,9 @@ export function FlashcardStylesAdminClient({
           body: JSON.stringify(payload)
         });
         if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.message ?? `HTTP ${res.status}`);
+          throw new Error(label("saveFailed"));
         }
-        toast.success("Style created");
+        toast.success(label("created"));
       } else if (editing) {
         const res = await adminApiFetch(`/api/admin/flashcards/styles/${editing.id}`, {
           method: "PATCH",
@@ -274,16 +275,15 @@ export function FlashcardStylesAdminClient({
           body: JSON.stringify(payload)
         });
         if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.message ?? `HTTP ${res.status}`);
+          throw new Error(label("saveFailed"));
         }
-        toast.success("Style updated");
+        toast.success(label("updated"));
       }
 
       closeEditor();
       fetchList();
-    } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Save failed");
+    } catch {
+      setFormError(label("saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -294,6 +294,7 @@ export function FlashcardStylesAdminClient({
   }
 
   async function handleTransition(id: string, newStatus: string) {
+    setTransitioning(true);
     try {
       const res = await adminApiFetch(`/api/admin/flashcards/styles/${id}/transition`, {
         method: "POST",
@@ -301,15 +302,15 @@ export function FlashcardStylesAdminClient({
         body: JSON.stringify({ status: newStatus })
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message ?? `HTTP ${res.status}`);
+        throw new Error(label("transitionFailed"));
       }
-      toast.success(`Status → ${newStatus}`);
+      toast.success(label("transitionSuccess"));
       fetchList();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Transition failed");
+    } catch {
+      toast.error(label("transitionFailed"));
     } finally {
       setConfirmAction(null);
+      setTransitioning(false);
     }
   }
 
@@ -324,15 +325,15 @@ export function FlashcardStylesAdminClient({
     <div className="space-y-6">
       <AdminToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
       <AdminPageHeader
-        title="Flashcard Styles"
-        description="Manage visual styles for learner flashcards (free / premium / exclusive)"
+        title={label("title")}
+        description={label("desc")}
         actions={
           canWrite ? (
             <button
               onClick={openCreate}
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+              className="min-h-11 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
             >
-              + New Style
+              + {label("create")}
             </button>
           ) : undefined
         }
@@ -343,44 +344,47 @@ export function FlashcardStylesAdminClient({
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800"
+          aria-label={label("statusFilter")}
+          className="min-h-11 max-w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800"
         >
-          <option value="all">All status</option>
-          <option value="draft">Draft</option>
-          <option value="active">Active</option>
-          <option value="archived">Archived</option>
+          <option value="all">{label("allStatuses")}</option>
+          <option value="draft">{label("draft")}</option>
+          <option value="active">{label("active")}</option>
+          <option value="archived">{label("archived")}</option>
         </select>
         <select
           value={tierFilter}
           onChange={(e) => setTierFilter(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800"
+          aria-label={label("tierFilter")}
+          className="min-h-11 max-w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800"
         >
-          <option value="all">All tiers</option>
-          <option value="free">Free</option>
-          <option value="premium">Premium</option>
-          <option value="exclusive">Exclusive</option>
+          <option value="all">{label("allTiers")}</option>
+          <option value="free">{label("free")}</option>
+          <option value="premium">{label("premium")}</option>
+          <option value="exclusive">{label("exclusive")}</option>
         </select>
         <button
           onClick={() => {
             fetchList();
             fetchAdoption();
           }}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+          className="min-h-11 rounded-md border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
         >
-          ↻ Refresh
+          ↻ {label("refresh")}
         </button>
       </div>
 
       {/* ── List ───────────────────────────── */}
       {listError && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
-          {common.error}: {listError}
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
+          <span>{common.error}: {listError}</span>
+          <button onClick={fetchList} className="min-h-11 rounded-md border border-current px-3 py-1.5 font-medium">{label("retry")}</button>
         </div>
       )}
 
       {loading ? (
         <AdminSection>
-          <div className="space-y-3">
+          <div role="status" aria-label={common.loading} aria-busy="true" className="space-y-3">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="flex items-center gap-4 px-3 py-3 animate-pulse">
                 <div className="h-10 w-16 rounded-lg bg-gray-200 dark:bg-gray-700" />
@@ -395,35 +399,36 @@ export function FlashcardStylesAdminClient({
           </div>
         </AdminSection>
       ) : list.length === 0 ? (
-        <AdminEmptyState title="No flashcard styles found" />
+        <AdminEmptyState title={label("empty")} />
       ) : (
         <AdminSection>
-          <AdminDataTable>
+          <div className="w-full overflow-x-auto" role="region" aria-label={label("title")} tabIndex={0}>
+            <AdminDataTable>
             <AdminDataTableHead>
               <AdminDataTableRow>
-                <AdminDataTableTh>Preview</AdminDataTableTh>
-                <AdminDataTableTh>Slug</AdminDataTableTh>
-                <AdminDataTableTh>Tier</AdminDataTableTh>
-                <AdminDataTableTh>Status</AdminDataTableTh>
-                <AdminDataTableTh>Order</AdminDataTableTh>
-                <AdminDataTableTh>Users</AdminDataTableTh>
-                <AdminDataTableTh>Actions</AdminDataTableTh>
+                <AdminDataTableTh>{label("preview")}</AdminDataTableTh>
+                <AdminDataTableTh>{label("slug")}</AdminDataTableTh>
+                <AdminDataTableTh>{label("tier")}</AdminDataTableTh>
+                <AdminDataTableTh>{label("status")}</AdminDataTableTh>
+                <AdminDataTableTh>{label("sortOrder")}</AdminDataTableTh>
+                <AdminDataTableTh>{label("users")}</AdminDataTableTh>
+                <AdminDataTableTh>{label("actions")}</AdminDataTableTh>
               </AdminDataTableRow>
             </AdminDataTableHead>
             <AdminDataTableBody>
               {list.map((style) => (
                 <AdminDataTableRow key={style.id}>
                   <AdminDataTableTd>
-                    <StylePreview config={style.config} />
+                    <StylePreview config={style.config} invalidLabel={label("invalidConfig")} />
                   </AdminDataTableTd>
                   <AdminDataTableTd>
                     <span className="font-mono text-sm">{style.slug}</span>
                     <div className="text-xs text-gray-500">{style.nameKey}</div>
                   </AdminDataTableTd>
-                  <AdminDataTableTd>{tierBadge(style.tier)}</AdminDataTableTd>
+                  <AdminDataTableTd>{tierBadge(style.tier, label(style.tier))}</AdminDataTableTd>
                   <AdminDataTableTd>
                     <AdminStatusBadge tone={statusTone(style.status)}>
-                      {style.status}
+                      {label(style.status)}
                     </AdminStatusBadge>
                   </AdminDataTableTd>
                   <AdminDataTableTd>{style.sortOrder}</AdminDataTableTd>
@@ -436,32 +441,32 @@ export function FlashcardStylesAdminClient({
                         <>
                           <button
                             onClick={() => openEdit(style)}
-                            className="text-sm text-indigo-600 hover:underline dark:text-indigo-400"
+                            className="min-h-11 rounded px-2 text-sm text-indigo-600 hover:underline dark:text-indigo-400"
                           >
-                            Edit
+                            {label("edit")}
                           </button>
                           {style.status === "draft" && (
                             <button
                               onClick={() => requestTransition(style.id, "active", style.slug)}
-                              className="text-sm text-green-600 hover:underline dark:text-green-400"
+                              className="min-h-11 rounded px-2 text-sm text-green-600 hover:underline dark:text-green-400"
                             >
-                              Activate
+                              {label("activate")}
                             </button>
                           )}
                           {style.status === "active" && (
                             <button
                               onClick={() => requestTransition(style.id, "archived", style.slug)}
-                              className="text-sm text-red-600 hover:underline dark:text-red-400"
+                              className="min-h-11 rounded px-2 text-sm text-red-600 hover:underline dark:text-red-400"
                             >
-                              Archive
+                              {label("archive")}
                             </button>
                           )}
                           {style.status === "archived" && (
                             <button
                               onClick={() => requestTransition(style.id, "draft", style.slug)}
-                              className="text-sm text-amber-600 hover:underline dark:text-amber-400"
+                              className="min-h-11 rounded px-2 text-sm text-amber-600 hover:underline dark:text-amber-400"
                             >
-                              Restore
+                              {label("restore")}
                             </button>
                           )}
                         </>
@@ -471,32 +476,35 @@ export function FlashcardStylesAdminClient({
                 </AdminDataTableRow>
               ))}
             </AdminDataTableBody>
-          </AdminDataTable>
+            </AdminDataTable>
+          </div>
         </AdminSection>
       )}
 
       {/* ── Confirm Dialog ──────────────────── */}
       {confirmAction && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-[fadeIn_150ms_ease-out]">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-900 animate-[scaleIn_200ms_ease-out]">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-sm animate-[fadeIn_150ms_ease-out] sm:items-center">
+          <div role="dialog" aria-modal="true" aria-labelledby="style-transition-title" className="my-auto w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl dark:bg-gray-900 sm:p-6 animate-[scaleIn_200ms_ease-out]">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Confirm status change
+              <span id="style-transition-title">{label("confirmStatus")}</span>
             </h3>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Change <span className="font-mono font-bold">{confirmAction.slug}</span> to{" "}
-              <span className="font-bold">{confirmAction.status}</span>?
+              {label("changeTo")} <span className="font-mono font-bold">{confirmAction.slug}</span>{" "}
+              <span className="font-bold">{label(confirmAction.status)}</span>?
             </p>
-            <div className="mt-5 flex justify-end gap-3">
+            <div className="mt-5 flex flex-wrap justify-end gap-3">
               <button
                 onClick={() => setConfirmAction(null)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+                disabled={transitioning}
+                className="min-h-11 rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
               >
-                Cancel
+                {label("cancel")}
               </button>
               <button
                 onClick={() => handleTransition(confirmAction.id, confirmAction.status)}
+                disabled={transitioning}
                 className={cn(
-                  "rounded-lg px-4 py-2 text-sm font-medium text-white",
+                  "min-h-11 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50",
                   confirmAction.status === "archived"
                     ? "bg-red-600 hover:bg-red-700"
                     : confirmAction.status === "active"
@@ -504,7 +512,7 @@ export function FlashcardStylesAdminClient({
                       : "bg-amber-600 hover:bg-amber-700"
                 )}
               >
-                Confirm
+                {transitioning ? label("saving") : label("confirm")}
               </button>
             </div>
           </div>
@@ -513,69 +521,75 @@ export function FlashcardStylesAdminClient({
 
       {/* ── Editor Modal ───────────────────── */}
       {showEditor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-[fadeIn_150ms_ease-out]">
-          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-900 max-h-[90vh] overflow-y-auto animate-[scaleIn_200ms_ease-out]">
-            <h2 className="text-lg font-semibold mb-4">
-              {creating ? "Create New Style" : `Edit: ${editing?.slug}`}
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-sm animate-[fadeIn_150ms_ease-out] sm:items-center">
+          <div role="dialog" aria-modal="true" aria-labelledby="style-editor-title" className="my-auto w-[calc(100vw-2rem)] max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl bg-white p-4 shadow-xl dark:bg-gray-900 sm:p-6 animate-[scaleIn_200ms_ease-out]">
+            <h2 id="style-editor-title" className="mb-4 text-lg font-semibold">
+              {creating ? label("createTitle") : `${label("editTitle")}: ${editing?.slug}`}
             </h2>
 
             {formError && (
-              <div className="mb-4 whitespace-pre-wrap rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
+              <div role="alert" className="mb-4 whitespace-pre-wrap rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
                 {formError}
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium mb-1">Slug</label>
+                <label htmlFor="style-slug" className="mb-1 block text-sm font-medium">{label("slug")}</label>
                 <input
+                  id="style-slug"
                   className="w-full rounded-md border px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600"
                   value={form.slug}
                   onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
-                  placeholder="e.g. sakura-bloom"
+                  placeholder={label("slugPlaceholder")}
                   disabled={!creating}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Name Key (i18n)</label>
+                <label htmlFor="style-name-key" className="mb-1 block text-sm font-medium">{label("nameKey")}</label>
                 <input
+                  id="style-name-key"
                   className="w-full rounded-md border px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600"
                   value={form.nameKey}
                   onChange={(e) => setForm((f) => ({ ...f, nameKey: e.target.value }))}
-                  placeholder="flashcard_style.my_style"
+                  placeholder={label("nameKeyPlaceholder")}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Description Key</label>
+                <label htmlFor="style-description-key" className="mb-1 block text-sm font-medium">{label("descriptionKey")}</label>
                 <input
+                  id="style-description-key"
                   className="w-full rounded-md border px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600"
                   value={form.descriptionKey}
                   onChange={(e) => setForm((f) => ({ ...f, descriptionKey: e.target.value }))}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Thumbnail URL</label>
+                <label htmlFor="style-thumbnail-url" className="mb-1 block text-sm font-medium">{label("thumbnailUrl")}</label>
                 <input
+                  id="style-thumbnail-url"
                   className="w-full rounded-md border px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600"
                   value={form.thumbnailUrl}
                   onChange={(e) => setForm((f) => ({ ...f, thumbnailUrl: e.target.value }))}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Tier</label>
+                <label htmlFor="style-tier" className="mb-1 block text-sm font-medium">{label("tier")}</label>
                 <select
+                  id="style-tier"
                   className="w-full rounded-md border px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600"
                   value={form.tier}
                   onChange={(e) => setForm((f) => ({ ...f, tier: e.target.value }))}
                 >
-                  <option value="free">Free</option>
-                  <option value="premium">Premium</option>
-                  <option value="exclusive">Exclusive</option>
+                  <option value="free">{label("free")}</option>
+                  <option value="premium">{label("premium")}</option>
+                  <option value="exclusive">{label("exclusive")}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Sort Order</label>
+                <label htmlFor="style-sort-order" className="mb-1 block text-sm font-medium">{label("sortOrder")}</label>
                 <input
+                  id="style-sort-order"
                   type="number"
                   className="w-full rounded-md border px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600"
                   value={form.sortOrder}
@@ -585,26 +599,25 @@ export function FlashcardStylesAdminClient({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Status</label>
+                <label htmlFor="style-status" className="mb-1 block text-sm font-medium">{label("status")}</label>
                 <select
+                  id="style-status"
                   className="w-full rounded-md border px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600"
                   value={form.status}
                   onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
                 >
-                  <option value="draft">Draft</option>
-                  <option value="active">Active</option>
-                  <option value="archived">Archived</option>
+                  <option value="draft">{label("draft")}</option>
+                  <option value="active">{label("active")}</option>
+                  <option value="archived">{label("archived")}</option>
                 </select>
               </div>
             </div>
 
             {/* Config JSON editor with live preview */}
             <div className="mt-4">
-              <label className="block text-sm font-medium mb-1">
-                Config (JSON) — background, contentSurface, foreground, mutedForeground, border,
-                accent, accentForeground, controlBackground, controlForeground, focusRing
-              </label>
+              <label htmlFor="style-config" className="mb-1 block text-sm font-medium">{label("config")}</label>
               <textarea
+                id="style-config"
                 className="h-64 w-full rounded-md border px-3 py-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-800"
                 value={form.config}
                 onChange={(e) => setForm((f) => ({ ...f, config: e.target.value }))}
@@ -613,26 +626,33 @@ export function FlashcardStylesAdminClient({
 
             {/* Live Preview */}
             <div className="mt-4">
-              <label className="block text-sm font-medium mb-2">Preview</label>
+              <label className="mb-2 block text-sm font-medium">{label("preview")}</label>
               <div className="flex justify-center p-6 bg-gray-100 rounded-lg dark:bg-gray-800">
-                <StylePreviewLarge config={form.config} />
+                <StylePreviewLarge
+                  config={form.config}
+                  invalidLabel={label("invalidJson")}
+                  invalidConfigLabel={label("invalidConfig")}
+                  sampleTerm={label("sampleTerm")}
+                  sampleReading={label("sampleReading")}
+                  sampleMeaning={label("sampleMeaning")}
+                />
               </div>
             </div>
 
             {/* Actions */}
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
               <button
                 onClick={closeEditor}
-                className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+                className="min-h-11 rounded-md border px-4 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
               >
-                Cancel
+                {label("cancel")}
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                className="min-h-11 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
               >
-                {saving ? "Saving..." : creating ? "Create" : "Save Changes"}
+                {saving ? label("saving") : creating ? label("create") : label("save")}
               </button>
             </div>
           </div>
@@ -643,19 +663,17 @@ export function FlashcardStylesAdminClient({
 }
 
 /** Large style preview card with front/back simulation */
-function StylePreviewLarge({ config: configJson }: { config: string }) {
+function StylePreviewLarge({ config: configJson, invalidLabel, invalidConfigLabel, sampleTerm, sampleReading, sampleMeaning }: { config: string; invalidLabel: string; invalidConfigLabel: string; sampleTerm: string; sampleReading: string; sampleMeaning: string }) {
   let raw: unknown;
   try {
     raw = JSON.parse(configJson);
   } catch {
-    return <div className="text-red-500 text-sm">Invalid JSON</div>;
+    return <div className="text-sm text-red-500">{invalidLabel}</div>;
   }
   const parsed = flashcardThemeConfigSchema.safeParse(raw);
   if (!parsed.success) {
     return (
-      <div className="max-w-md whitespace-pre-wrap text-sm text-red-600">
-        {parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("\n")}
-      </div>
+      <div className="max-w-md whitespace-pre-wrap text-sm text-red-600">{invalidConfigLabel}</div>
     );
   }
   const theme: FlashcardThemeConfig = parsed.data;
@@ -677,13 +695,13 @@ function StylePreviewLarge({ config: configJson }: { config: string }) {
         style={{ background: theme.contentSurface, borderColor: theme.border }}
       >
         <span className="text-3xl font-bold" style={{ color: theme.foreground }}>
-          勉強
+          {sampleTerm}
         </span>
         <span className="text-sm" style={{ color: theme.mutedForeground }}>
-          べんきょう
+          {sampleReading}
         </span>
         <span className="text-xs" style={{ color: theme.mutedForeground }}>
-          study / học tập
+          {sampleMeaning}
         </span>
         <div className="mt-1 h-1 w-8 rounded-full" style={{ background: theme.accent }} />
       </div>

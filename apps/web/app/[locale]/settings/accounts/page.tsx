@@ -16,16 +16,19 @@ export default async function AccountsSettingsPage({
 }) {
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
-  const loc = locale;
-
   return (
     <RequireAuth locale={locale}>
       <main className="w-full space-y-6 pb-12">
-        <PageHeader description={t.accounts.subtitle} title={t.accounts.title} />
+        <PageHeader
+          description={t.accounts.linkedAccountsSubtitle}
+          title={t.accounts.linkedAccountsTitle}
+        />
         <Card className="border-ink/10 shadow-sm">
           <CardContent className="p-5 sm:p-6">
             <Suspense fallback={<p className="text-sm text-muted">{t.accounts.subtitle}</p>}>
-              <AccountsSettingsClient labels={t.accounts} locale={loc} />
+              <AccountsSettingsClient
+                labels={{ ...t.accounts, identitiesEmpty: t.accounts.linkedAccountsEmpty }}
+              />
             </Suspense>
           </CardContent>
         </Card>

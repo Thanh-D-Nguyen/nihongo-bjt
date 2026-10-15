@@ -4,38 +4,36 @@ import { Card } from "@nihongo-bjt/ui";
 
 import { findRankByCode, nextRank, rankProgressPct } from "../helpers";
 import type { CareerRpgLabels } from "../i18n";
-import type { UserCareerState } from "../types";
+import type { CareerRank, UserCareerState } from "../types";
 
 interface Props {
   state: UserCareerState;
   labels: CareerRpgLabels["career"];
+  ranks?: CareerRank[];
   compact?: boolean;
 }
 
-export function CareerRankCard({ state, labels, compact = false }: Props) {
-  const rank = findRankByCode(state.currentRankCode);
-  const next = nextRank(state.currentRankCode);
-  const pct = rankProgressPct(state);
-
-  if (!rank) return null;
+export function CareerRankCard({ state, labels, ranks = [], compact = false }: Props) {
+  const rank = findRankByCode(state.currentRankCode, ranks);
+  const next = nextRank(state.currentRankCode, ranks);
+  const hasRankProgress = state.rankXpToNext > 0;
+  const pct = hasRankProgress ? rankProgressPct(state) : 0;
 
   return (
     <Card className="overflow-hidden">
       <div className="grid grid-cols-[auto_1fr] gap-5 p-5">
-        <RankStamp titleJa={rank.titleJa} stampLabel={labels.rankBadgeStamp} />
+        <RankStamp titleJa={rank?.titleJa ?? state.currentRankCode} stampLabel={labels.rankBadgeStamp} />
         <div className="flex flex-col gap-1">
           <span className="text-[11px] uppercase tracking-[0.18em] text-[#6B7280]">
             {state.companyTheme === "mirai-shoji" ? "株式会社ミライ商事" : "Career"}
           </span>
           <h3 className="text-xl font-semibold leading-tight text-[#111827]">
-            {state.jpWorkName}
+            {state.jpWorkName || "—"}
           </h3>
           <p className="text-sm text-[#4B5563]">
-            {rank.titleJa}
-            <span className="mx-2 text-[#CBD5E1]">·</span>
-            {rank.titleVi}
+            {rank ? `${rank.titleJa} · ${rank.titleVi}` : state.currentRankCode}
           </p>
-          <p className="mt-1 text-xs text-[#6B7280]">BJT band: {rank.bjtBandTarget}</p>
+          {rank ? <p className="mt-1 text-xs text-[#6B7280]">BJT band: {rank.bjtBandTarget}</p> : null}
         </div>
       </div>
       {!compact && (
@@ -45,7 +43,7 @@ export function CareerRankCard({ state, labels, compact = false }: Props) {
               {labels.rankProgressLabel}
             </span>
             <span className="text-xs text-[#4B5563]">
-              {state.rankXp} / {state.rankXpToNext} XP
+              {hasRankProgress ? `${state.rankXp} / ${state.rankXpToNext} XP` : `${state.rankXp} XP`}
             </span>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#F1F5F9]">

@@ -1,0 +1,684 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-084",
+  "title": "Audit learner magazine index screen",
+  "start_head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The learner magazine index reports no articles despite published local content because it expects an envelope and fields the API does not return; filters and pagination also do not reach the Go list query, and fetch failures are rendered as an empty state.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Through the visible learner browser at 390x844, verify the published list renders cards and metadata in vi/en/ja, category filters and pagination preserve the selected state, the empty result is distinct from an upstream failure, and article links navigate to detail."
+      },
+      {
+        "id": "AC2",
+        "text": "GET /api/magazine supports paged/filter queries and returns {data,total,page,limit} with publishDate, summaryVi, and ordered vocabWords; only published rows appear, mobile's MagazineDto accepts the envelope, and operational database errors are not returned as an empty catalog."
+      },
+      {
+        "id": "AC3",
+        "text": "For published catalogs, page values beyond the last result page clamp to the final non-empty page; web renders the returned page rather than a false empty state."
+      }
+    ],
+    "expected_behavior": "GET /api/magazine returns a stable paged envelope of published articles with the fields used by web and mobile, applies equivalent kind/widgetKind filters plus page/limit, and reports database/row errors as 5xx. The localized learner index distinguishes operational failures from a genuinely empty result and renders real cards, date, vocabulary preview, filters, and pagination without breaking the mobile DTO.",
+    "observed_behavior": "At /vi/magazine on a 390x844 visible browser, the shell and filters render but the empty state appears. The Go GET /api/magazine returns a bare array of reduced records, while the page expects {data,total,page,limit}, publishDate, summaryVi, and vocabWords. Web sends kind/page/limit; Go only reads widgetKind and hardcodes 20. Network/5xx failures are caught and treated as an empty catalog. Mobile's DTO accepts either a bare list or the paged envelope.",
+    "rollback_plan": "Revert the list response/query change, localized magazine error state, and their tests together; the mobile DTO supports both the prior bare array and the paged envelope, so rolling back the API and web consumer together restores the old contract. No master vocabulary or database schema changes are required."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DOMAIN_LOGIC",
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "The web magazine index contract never matched the published list route, and list filters/pagination have been ignored since the API was built. Restore an explicit compatible paged list contract, distinguish failure from no published results, and pin cross-client behavior with route and page tests."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestListMagazineReturnsPublishedPagedVocabulary",
+      "expect": "decode magazine list envelope"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/magazine/page.test.tsx",
+      "test": "renders a retryable operational error instead of the empty-catalog state",
+      "expect": "role=\"alert\""
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-09T14:03:53.768Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-09T14:06:07.164Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T14:06:12.236Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T14:08:52.890Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T14:10:46.909Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T14:17:35.989Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T14:17:48.839Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T14:24:36.628Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T14:25:13.658Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T14:26:30.940Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T14:27:08.335Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-09T14:33:36.770Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T14:36:53.985Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T14:39:26.211Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T14:44:29.273Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-09T14:50:24.692Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-09T14:52:22.137Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-09T14:08:29.277Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListMagazineReturnsPublishedPagedVocabulary)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestListMagazineReturnsPublishedPagedVocabulary",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestListMagazineReturnsPublishedPagedVocabulary handler_magazine_test.go:212: insert magazine list fixture \"audit-mag-vocab-new-6488cde8-2725-4859-b090-3be84718dd92\": ERROR: operator is not unique: date + unknown (SQLSTATE 42725) --- FAIL: TestListMagazineReturnsPublishedPagedVocabulary (0.0…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"decode magazine list envelope\""
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::renders a retryable operational error instead of the empty-catalog state",
+          "outcome": "FAIL",
+          "excerpt": "expected '<main class=\"min-h-screen bg-gradient…' to contain 'role=\"alert\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestListMagazineReturnsPublishedPagedVocabulary": "decode magazine list envelope",
+        "vitest:apps/web/app/[locale]/magazine/page.test.tsx::renders a retryable operational error instead of the empty-catalog state": "role=\"alert\""
+      },
+      "fingerprint": "159ea1606b3beab9387773f4a6925b92b34ffb60dc6f9841ac8cac1fcc13b138"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-09T14:08:52.598Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListMagazineReturnsPublishedPagedVocabulary)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestListMagazineReturnsPublishedPagedVocabulary",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestListMagazineReturnsPublishedPagedVocabulary handler_magazine_test.go:250: decode magazine list envelope: json: cannot unmarshal array into Go value of type struct { Data []struct { Slug string \"json:\\\"slug\\\"\"; TitleVi string \"json:\\\"titleVi\\\"\"; SummaryVi string \"json:\\\"summaryVi\\\"\"; Publ…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::renders a retryable operational error instead of the empty-catalog state",
+          "outcome": "FAIL",
+          "excerpt": "expected '<main class=\"min-h-screen bg-gradient…' to contain 'role=\"alert\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestListMagazineReturnsPublishedPagedVocabulary": "decode magazine list envelope",
+        "vitest:apps/web/app/[locale]/magazine/page.test.tsx::renders a retryable operational error instead of the empty-catalog state": "role=\"alert\""
+      },
+      "fingerprint": "ff414eae0e397ebf7245adce0ba53569e0dce8368a4196be2ecde089e861622b"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-09T14:10:46.469Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListMagazineReturnsPublishedPagedVocabulary)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestListMagazineReturnsPublishedPagedVocabulary",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::renders a retryable operational error instead of the empty-catalog state",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "bd691548cda16f381df924ddba2b840c0ca7c99310ac17f631ac29551482b768"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-09T14:17:35.430Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListMagazineReturnsPublishedPagedVocabulary)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestListMagazineReturnsPublishedPagedVocabulary",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestListMagazineReturnsPublishedPagedVocabulary handler_magazine_test.go:192: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestListMagazineReturnsPublishedPagedVocabulary (0.00s)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::renders a retryable operational error instead of the empty-catalog state",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "12712f9b845acf03c55377c07d0c4373b7708c5b28c6f6e1a171417ba2dc127e"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-09T14:17:48.291Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListMagazineReturnsPublishedPagedVocabulary)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestListMagazineReturnsPublishedPagedVocabulary",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::renders a retryable operational error instead of the empty-catalog state",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "12712f9b845acf03c55377c07d0c4373b7708c5b28c6f6e1a171417ba2dc127e"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-09T14:19:43.996Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListMagazineReturnsPublishedPagedVocabulary)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestListMagazineReturnsPublishedPagedVocabulary",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::renders a retryable operational error instead of the empty-catalog state",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "5f9805a26e0ba4c1a9f3b20f10d3ecbb1bb4b24ce1030c30a67c01efbd43d22d"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-09T14:20:03.634Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "5f9805a26e0ba4c1a9f3b20f10d3ecbb1bb4b24ce1030c30a67c01efbd43d22d"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-09T14:23:42.549Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 397,
+        "executed": 397,
+        "passed": 397,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 772,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "5f9805a26e0ba4c1a9f3b20f10d3ecbb1bb4b24ce1030c30a67c01efbd43d22d"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-09T14:25:12.934Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListMagazineReturnsPublishedPagedVocabulary)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestListMagazineReturnsPublishedPagedVocabulary",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestListMagazineReturnsPublishedPagedVocabulary handler_magazine_test.go:250: decode magazine list envelope: json: cannot unmarshal array into Go value of type struct { Data []struct { Slug string \"json:\\\"slug\\\"\"; TitleVi string \"json:\\\"titleVi\\\"\"; SummaryVi string \"json:\\\"summaryVi\\\"\"; Publ…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"out-of-range page should clamp\""
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::renders a retryable operational error instead of the empty-catalog state",
+          "outcome": "FAIL",
+          "excerpt": "expected '<main class=\"min-h-screen bg-gradient…' to contain 'role=\"alert\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestListMagazineReturnsPublishedPagedVocabulary": "out-of-range page should clamp",
+        "vitest:apps/web/app/[locale]/magazine/page.test.tsx::renders a retryable operational error instead of the empty-catalog state": "role=\"alert\""
+      },
+      "fingerprint": "59402dc994b1987143bbbf798f23c8a60213179d816d57366094d1fe99a0b769"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-09T14:26:30.320Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListMagazineReturnsPublishedPagedVocabulary)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestListMagazineReturnsPublishedPagedVocabulary",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestListMagazineReturnsPublishedPagedVocabulary handler_magazine_test.go:250: decode magazine list envelope: json: cannot unmarshal array into Go value of type struct { Data []struct { Slug string \"json:\\\"slug\\\"\"; TitleVi string \"json:\\\"titleVi\\\"\"; SummaryVi string \"json:\\\"summaryVi\\\"\"; Publ…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::renders a retryable operational error instead of the empty-catalog state",
+          "outcome": "FAIL",
+          "excerpt": "expected '<main class=\"min-h-screen bg-gradient…' to contain 'role=\"alert\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestListMagazineReturnsPublishedPagedVocabulary": "decode magazine list envelope",
+        "vitest:apps/web/app/[locale]/magazine/page.test.tsx::renders a retryable operational error instead of the empty-catalog state": "role=\"alert\""
+      },
+      "fingerprint": "7d9a22060f5eb68405fe3d02961795a578a0b5ad702b6d4f6a8a497a88948470"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-09T14:27:07.634Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListMagazineReturnsPublishedPagedVocabulary)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestListMagazineReturnsPublishedPagedVocabulary",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::renders a retryable operational error instead of the empty-catalog state",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9470d02ab0a2dcc86726dc079e38910ef2660ce6fd1b08afeef9b5f2de26a4a5"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-09T14:29:58.742Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 724,
+        "executed": 724,
+        "passed": 724,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "724 passed, 0 allowed skip(s)",
+      "fingerprint": "9470d02ab0a2dcc86726dc079e38910ef2660ce6fd1b08afeef9b5f2de26a4a5"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-09T14:33:36.119Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 397,
+        "executed": 397,
+        "passed": 397,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 772,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "9470d02ab0a2dcc86726dc079e38910ef2660ce6fd1b08afeef9b5f2de26a4a5"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-09T14:36:53.267Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListMagazineReturnsPublishedPagedVocabulary)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestListMagazineReturnsPublishedPagedVocabulary",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::renders a retryable operational error instead of the empty-catalog state",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8a2bf829f432411a9e801c25682134e693821b5bd1833162bbe0e674ba03fe93"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-09T14:39:25.536Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 724,
+        "executed": 724,
+        "passed": 724,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "8a2bf829f432411a9e801c25682134e693821b5bd1833162bbe0e674ba03fe93"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-09T14:43:01.797Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 397,
+        "executed": 397,
+        "passed": 397,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 772,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "ad25b68121f46d3da681847485f255867e9f7df2f0ccdbc26441769d35939ff8"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-09T14:44:28.530Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListMagazineReturnsPublishedPagedVocabulary)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestListMagazineReturnsPublishedPagedVocabulary",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::renders a retryable operational error instead of the empty-catalog state",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d05881eed1abc08f2b7e561042fdc142aec77dcc7e359e5a9bc6ed65875b17e9"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-09T14:47:03.046Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 724,
+        "executed": 724,
+        "passed": 724,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "724 passed, 0 allowed skip(s)",
+      "fingerprint": "d05881eed1abc08f2b7e561042fdc142aec77dcc7e359e5a9bc6ed65875b17e9"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-09T14:50:24.046Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 397,
+        "executed": 397,
+        "passed": 397,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 772,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "d05881eed1abc08f2b7e561042fdc142aec77dcc7e359e5a9bc6ed65875b17e9"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-09T14:52:13.533Z",
+      "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "agent 01a1211c-188e-7d50-8280-8ab7d78e27af",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "d05881eed1abc08f2b7e561042fdc142aec77dcc7e359e5a9bc6ed65875b17e9"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-09T14:52:22.118Z",
+    "head": "a127559cc5c4a4dddb0c444ec635525446f56bcd",
+    "fingerprint": "d05881eed1abc08f2b7e561042fdc142aec77dcc7e359e5a9bc6ed65875b17e9",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_career_content_gamification_misc.go": "ed01311aa6b2347174785c772f6d518cbd862bfb",
+      "apps/api-go/internal/httpserver/handler_magazine_test.go": "7ccfb0edacaffbbc6a3f7c3af4137f071270f30b",
+      "apps/web/app/[locale]/magazine/_components/magazine-page-client.tsx": "22d31f39011bb694f48ea11d3a7d390fe756b598",
+      "apps/web/app/[locale]/magazine/page.test.tsx": "82eeaaedde771abc39139e07e54f19a5538b28db",
+      "apps/web/app/[locale]/magazine/page.tsx": "ea14390c85aa59875361396805bc71f240c3bb1f",
+      "apps/web/messages/en.json": "b46547c47e2d61aacfa072dcf1e5dbfcbc77c3e7",
+      "apps/web/messages/ja.json": "86a05f23db698ed746c139ee7d0e63da57f4ac39",
+      "apps/web/messages/vi.json": "33896c0c5212403fb1c5f94c49b29f9bdec8beab",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "f659edeb3fcf3d77ba09d0a1aff5cc325550ddca",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "2c9a830002d6d064ca3550010cf37cfcb77fb416",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "798e1d8ea69dac7e8f13bdf46b883711ce2522aa",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "7d060cf9ee2c43d7a6436ddce12bad46e248dd86",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "aca15f397808f9b23369deea7328aa372bb1c76a",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "4a1bef6f2d6c43e53e1ca63c340097a410997edf",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "f37f84b3b514939c469f8c177a9b2a5c94d92200"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

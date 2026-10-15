@@ -1,0 +1,3534 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-072",
+  "title": "Complete learner password recovery flow",
+  "start_head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Forgot-password exposes its bearer reset token in application logs, has no delivery path, and the delivered reset URL has no learner screen.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Forgot-password route renders localized accessible UI in anonymous state; invalid form input is handled; submitting valid email calls same-origin recovery API; response stays anti-enumerating; no reset token is exposed in logs or response; backend stores only token hash and safely delivers an expiring reset link through configured local mail capture; record browser/API evidence, defects and retests."
+      },
+      {
+        "id": "AC2",
+        "text": "A delivered reset link opens a localized accessible password reset screen; the learner can submit a valid new password through the real reset API; token reuse or invalid input is rejected; successful reset revokes prior learner sessions and returns the learner to login."
+      },
+      {
+        "id": "AC3",
+        "text": "Reset password consumes a token exactly once under concurrent requests; token consumption, password replacement, and session revocation commit atomically, and failures roll back all three changes."
+      },
+      {
+        "id": "AC4",
+        "text": "AC4: Recovery API submissions work through the deployed learner-origin Next.js BFF as well as the local audit proxy; the BFF forwards request body and upstream status without logging bearer tokens."
+      },
+      {
+        "id": "AC5",
+        "text": "AC5: Forgot-password preserves the supported locale in the reset email and link; email copy and reset-page language controls are localized for supported learner languages."
+      },
+      {
+        "id": "AC6",
+        "text": "Password reset retains its active fragment token across unrelated hash changes such as the skip-to-content anchor, and a replacement reset token is consumed normally."
+      },
+      {
+        "id": "AC7",
+        "text": "Recovery BFFs stream-limit request bodies to the Go lifecycle limit before buffering or forwarding and return a generic 413 without reading or forwarding oversized bodies."
+      },
+      {
+        "id": "AC8",
+        "text": "Forgot and reset IP throttles use the rightmost validated forwarded client IP only when the Go API peer is loopback; public peers cannot spoof rate-limit keys."
+      },
+      {
+        "id": "AC9",
+        "text": "Only active learner accounts are eligible for reset-token issuance and consumption; a disabled learner keeps the existing credential and token unused."
+      },
+      {
+        "id": "AC10",
+        "text": "Recovery requests are committed to a bounded PostgreSQL outbox before success; saturation returns the same generic retryable service failure for any email, and claimed work survives API restart with bounded retry."
+      },
+      {
+        "id": "AC11",
+        "text": "A reset submission started with token A cannot complete or clear loading/error state after the browser has switched to token B; token B remains usable."
+      },
+      {
+        "id": "AC12",
+        "text": "Password-reset URLs use HTTPS for non-loopback hosts; HTTP is accepted only for local loopback development origins."
+      },
+      {
+        "id": "AC13",
+        "text": "SMTP delivery returns its actual acceptance/rejection to the durable worker; locale and reset link are verified from the generated SMTP message for English, Vietnamese, and Japanese."
+      },
+      {
+        "id": "AC14",
+        "text": "In React Strict Mode the emailed fragment token survives effect replay, and an expired claim already at the retry ceiling is removed without generating another token or email."
+      },
+      {
+        "id": "AC15",
+        "text": "When SMTP delivery is configured, WEB_PUBLIC_URL must be explicitly supplied and validated so recovery messages cannot silently target localhost in production."
+      }
+    ],
+    "expected_behavior": "Reset tokens never appear in logs or HTTP responses and valid known-email requests hand a reset link to configured delivery while preserving the generic response.",
+    "observed_behavior": "Forgot-password stores only a hash but logs the raw token field; the UI can report success without mailing a link.",
+    "rollback_plan": "The outbox migration is additive. Roll back the Go API and learner BFF to the prior revision while retaining auth.password_reset_request; do not drop the table while requests may be pending. Drain or explicitly delete short-lived queued email addresses only through a reviewed maintenance procedure."
+  },
+  "classification": {
+    "classes": [
+      "AUTH_SECURITY",
+      "API_CONTRACT",
+      "UI_ONLY",
+      "DOMAIN_LOGIC",
+      "INFRASTRUCTURE",
+      "DATABASE"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": {
+    "category": "new_component",
+    "reason": "The learner-origin recovery BFF routes and locale-aware delivery boundary are new components with no compiling baseline; sensitivity mutations and reviewer-approved current-behavior tests cover them.",
+    "declared_before_red": true
+  },
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver/passwordresetcontract",
+      "test": "TestForgotPassword_DoesNotLogResetToken",
+      "expect": "recovery logs must not contain a bearer token"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver/passwordresetcontract",
+      "test": "TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+      "expect": "exactly one request should succeed"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver/passwordresetcontract",
+      "test": "TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+      "expect": "failed reset must retain the previous password"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/api/auth/forgot-password/route.test.ts",
+      "test": "forgot-password BFF forwards the localized request to the Go recovery endpoint",
+      "expect": "forgot-password BFF must forward to the configured Go endpoint"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/api/auth/reset-password/route.test.ts",
+      "test": "reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+      "expect": "reset-password BFF must forward the body and upstream response"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/email",
+      "test": "TestPasswordResetDeliveryGeneratesLocalizedLink",
+      "expect": "SMTP transport must deliver generated English, Vietnamese, and Japanese copy and reset paths"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/email",
+      "test": "TestSMTPRejectsInsecureExternalResetURL",
+      "expect": "an external password recovery page must not be linked over HTTP"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestPasswordResetQueuePersistsJobsAndRejectsAtCapacity",
+      "expect": "a new queue worker must recover committed requests and admission must remain bounded"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/reset-password/reset-password-form.test.tsx",
+      "test": "reset password form > posts a confirmed password with the emailed token and shows success",
+      "expect": "a stale response cannot complete the replacement token flow"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestPasswordResetQueueDoesNotRetryAnExhaustedExpiredClaim",
+      "expect": "an expired claim beyond the bounded retry budget is discarded before token or email work"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/config",
+      "test": "TestLoad_SMTPRequiresExplicitPublicResetURL",
+      "expect": "SMTP-enabled startup must reject missing public reset URL configuration"
+    }
+  ],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/web/lib/auth-post-proxy.ts",
+      "find": "status: upstream.status,",
+      "replace": "status: 501,"
+    },
+    "targets": [
+      {
+        "runner": "vitest",
+        "file": "apps/web/app/api/auth/forgot-password/route.test.ts",
+        "test": "forgot-password BFF forwards the localized request to the Go recovery endpoint",
+        "expect": "to be 200"
+      },
+      {
+        "runner": "vitest",
+        "file": "apps/web/app/api/auth/reset-password/route.test.ts",
+        "test": "reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+        "expect": "to be 400"
+      }
+    ]
+  },
+  "deletion": {
+    "symbols": [
+      "lookupResetToken",
+      "markResetTokenUsed"
+    ],
+    "consumer_audit": "Token is now claimed by the same atomic conditional UPDATE that returns the owning learner; repository caller scan found only the removed handler helper.",
+    "allowed_references": []
+  },
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-08T06:55:28.240Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-08T06:55:28.610Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T06:55:28.947Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T06:57:45.580Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-08T07:00:22.394Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T07:02:29.750Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T07:10:49.994Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T07:17:09.289Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T07:39:47.678Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T07:43:45.869Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T07:47:37.216Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T07:51:02.470Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T08:03:43.702Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T08:04:48.596Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T08:06:12.027Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T08:17:27.092Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T08:18:12.453Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T08:25:40.355Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T08:32:44.714Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T08:33:52.532Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T08:40:17.803Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T08:40:20.831Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T08:54:28.514Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T09:05:18.222Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T09:09:19.772Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T09:11:06.640Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T09:28:52.584Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T09:29:06.293Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T09:37:42.104Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T09:44:43.018Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T09:45:44.729Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-08T09:59:23.498Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T10:04:14.943Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-08T10:17:15.145Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T10:29:08.340Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T10:31:30.949Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-08T10:43:48.710Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T10:51:40.011Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-08T10:56:01.051Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T10:58:36.525Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T11:07:08.882Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-08T11:25:55.844Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T11:30:06.263Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T12:00:07.482Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T12:09:24.319Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "EXCEPTION_APPROVED",
+      "at": "2026-10-08T12:21:27.538Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-08T12:22:04.927Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-08T06:57:22.229Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestForgotPassword_DoesNotLogResetToken handler_lifecycle_test.go:171: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestForgotPassword_DoesNotLogResetToken (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestForgotPassword_DoesNotLogResetToken": "recovery logs must not contain a bearer token"
+      },
+      "fingerprint": "d4719ad2b861ebb9084e74f27bba784c5282d587fe64f38d2e4bd95980f0eb6d"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-08T06:57:45.426Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestForgotPassword_DoesNotLogResetToken handler_lifecycle_test.go:196: recovery logs must not contain a bearer ***: {\"time\":\"2026-10-08T15:57:45.373025+09:00\",\"level\":\"INFO\",\"msg\":\"forgot-password: *** generated\",\"user_id\":\"da793eb1-7e87-459c-a846-df64339cb5fb\",\"token\":***} --- FAIL: TestFor…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestForgotPassword_DoesNotLogResetToken": "recovery logs must not contain a bearer token"
+      },
+      "fingerprint": "d4719ad2b861ebb9084e74f27bba784c5282d587fe64f38d2e4bd95980f0eb6d"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-08T07:00:21.832Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 9,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_lifecycle_test.go:45:95: too many arguments in call to forgotPasswordHandler have (*pgxpool.Pool, *authn.RateLimiter, *slog.Logger, *testPass…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestForgotPassword_DoesNotLogResetToken": "delivered reset token must be accepted"
+      },
+      "fingerprint": "de625c5cc9a5112a07d7a907432809646f13a639516f1d163acbe18c6450383e"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-08T07:02:32.772Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestForgotPassword_DoesNotLogResetToken handler_lifecycle_test.go:179: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestForgotPassword_DoesNotLogResetToken (0.00s)"
+        }
+      ],
+      "fingerprint": "8f20e370bc03df8032e07086d4f189ae90065058c595e900ebc9bb2b8b7ae058"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-08T07:03:48.424Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "4b6a0ac01c2a372d34eb444f7b5699a7150a31e2b5b4d868df85ae734af90861"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-08T07:10:49.188Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 9,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestForgotPassword_DoesNotLogResetToken handler_lifecycle_test.go:199: recovery logs must not contain a bearer ***: {\"time\":\"2026-10-08T16:10:48.347789+09:00\",\"level\":\"INFO\",\"msg\":\"forgot-password: *** generated\",\"user_id\":\"3da6c084-b331-488e-9a35-5f28fce2d1d7\",\"token\":***} --- FAIL: TestFor…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestForgotPassword_DoesNotLogResetToken": "recovery logs must not contain a bearer token"
+      },
+      "fingerprint": "b83cd6f4f6627e49e678f2fd99ec9db14eb6c983f5597e7dd2b59e989d5a4f59"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-08T07:14:35.116Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 355,
+        "executed": 355,
+        "passed": 355,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 750,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "b83cd6f4f6627e49e678f2fd99ec9db14eb6c983f5597e7dd2b59e989d5a4f59"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-08T07:17:08.575Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "b83cd6f4f6627e49e678f2fd99ec9db14eb6c983f5597e7dd2b59e989d5a4f59"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-08T07:21:46.362Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "4bfa92d233942bf454e15f194ff97f32643ba524862a7a9c4f23f8934717ac3f"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-08T07:24:19.385Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 668,
+        "executed": 668,
+        "passed": 668,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "668 passed, 0 allowed skip(s)",
+      "fingerprint": "4bfa92d233942bf454e15f194ff97f32643ba524862a7a9c4f23f8934717ac3f"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-08T07:27:55.888Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 355,
+        "executed": 355,
+        "passed": 355,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 750,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "4bfa92d233942bf454e15f194ff97f32643ba524862a7a9c4f23f8934717ac3f"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-08T07:29:40.343Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -lc docker compose config --quiet && node scripts/local-audit-status.mjs --stable",
+      "exit_code": 0,
+      "fingerprint": "4bfa92d233942bf454e15f194ff97f32643ba524862a7a9c4f23f8934717ac3f"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-08T07:39:08.645Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "browser-use",
+      "exit_code": 1,
+      "fingerprint": "4bfa92d233942bf454e15f194ff97f32643ba524862a7a9c4f23f8934717ac3f"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-08T07:39:15.661Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/forgot-page-browser-evidence.py",
+      "exit_code": 1,
+      "fingerprint": "4bfa92d233942bf454e15f194ff97f32643ba524862a7a9c4f23f8934717ac3f"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-08T07:39:46.941Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/forgot-page-browser-evidence.py",
+      "exit_code": 0,
+      "fingerprint": "4bfa92d233942bf454e15f194ff97f32643ba524862a7a9c4f23f8934717ac3f"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-08T07:43:45.030Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a65077af64ede987ab4634772d2c6af37994feee72180a07aec06fb3fd54040e"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-08T07:47:36.387Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 355,
+        "executed": 355,
+        "passed": 355,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 750,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "a65077af64ede987ab4634772d2c6af37994feee72180a07aec06fb3fd54040e"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-08T07:51:01.673Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "78da679241e4008c18501ada3af48ae2dafa38d24302ad4763670321ec730a53"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-08T07:53:23.516Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 672,
+        "executed": 672,
+        "passed": 672,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "672 passed, 0 allowed skip(s)",
+      "fingerprint": "78da679241e4008c18501ada3af48ae2dafa38d24302ad4763670321ec730a53"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-08T07:57:02.520Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 355,
+        "executed": 355,
+        "passed": 355,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 750,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "78da679241e4008c18501ada3af48ae2dafa38d24302ad4763670321ec730a53"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-08T08:01:04.448Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 358,
+        "executed": 358,
+        "passed": 358,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 751,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "78da679241e4008c18501ada3af48ae2dafa38d24302ad4763670321ec730a53"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-08T08:03:35.897Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -lc docker compose config --quiet && node scripts/local-audit-status.mjs --stable",
+      "exit_code": 0,
+      "fingerprint": "78da679241e4008c18501ada3af48ae2dafa38d24302ad4763670321ec730a53"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-08T08:03:43.024Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/forgot-page-browser-evidence.py",
+      "exit_code": 0,
+      "fingerprint": "78da679241e4008c18501ada3af48ae2dafa38d24302ad4763670321ec730a53"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-08T08:04:47.861Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/forgot-password-ui-submit.py",
+      "exit_code": 1,
+      "fingerprint": "78da679241e4008c18501ada3af48ae2dafa38d24302ad4763670321ec730a53"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-08T08:05:49.256Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/forgot-password-ui-submit.py",
+      "exit_code": 1,
+      "fingerprint": "78da679241e4008c18501ada3af48ae2dafa38d24302ad4763670321ec730a53"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-08T08:06:11.335Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/forgot-password-ui-submit.py",
+      "exit_code": 0,
+      "fingerprint": "78da679241e4008c18501ada3af48ae2dafa38d24302ad4763670321ec730a53"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-08T08:10:58.705Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec --model gpt-6.1-sol --sandbox read-only --ephemeral --color never -",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 4,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/email/smtp.go:65",
+          "summary": "Reset emails link to /vi/reset-password, but no learner page or routing fallback implements that path. Delivered links cannot complete recovery. Implement a working reset destination and test the emai…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/app/app.go:150",
+          "summary": "When SMTP_ADDRESS is unset, resetQueue is a nil pointer assigned to a non-nil interface. The handler bypasses queue == nil and panics in Enqueue instead of returning 503. Assign the interface only whe…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/email/smtp.go:112",
+          "summary": "SMTP errors include unfiltered server response text. A DATA rejection containing the reset link or token is wrapped at line 202 and logged here, violating the no-token-logging requirement. Log sanitiz…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/handler_lifecycle_test.go:213",
+          "summary": "The final tests reference NewPasswordResetQueue and the changed handler signature, which are absent from start_head. Required RED replay retains these tests while reverting production code, causing co…"
+        }
+      ],
+      "package_sha256": "1fe8adbfdcacd1c023615faf350bb88f8b8b986ee95c24dd9f3e6efbf56d0a2b",
+      "fingerprint": "78da679241e4008c18501ada3af48ae2dafa38d24302ad4763670321ec730a53"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-08T08:17:26.308Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 10,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken)$ ./internal/httpserver/passwordresetcontract"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestForgotPassword_DoesNotLogResetToken handler_test.go:29: TEST_DATABASE_URL is required --- SKIP: TestForgotPassword_DoesNotLogResetToken (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken": "recovery logs must not contain a bearer token"
+      },
+      "fingerprint": "445edc238d1b213c240bb34f7e5ad5294d620e4fb47d821b5d83128d24212de0"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-08T08:18:11.625Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 10,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken)$ ./internal/httpserver/passwordresetcontract"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestForgotPassword_DoesNotLogResetToken handler_test.go:81: recovery logs must not contain a bearer *** --- FAIL: TestForgotPassword_DoesNotLogResetToken (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken": "recovery logs must not contain a bearer token"
+      },
+      "fingerprint": "445edc238d1b213c240bb34f7e5ad5294d620e4fb47d821b5d83128d24212de0"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-08T08:23:50.509Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 15,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken)$ ./internal/httpserver/passwordresetcontract"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestForgotPassword_DoesNotLogResetToken handler_test.go:81: recovery logs must not contain a bearer *** --- FAIL: TestForgotPassword_DoesNotLogResetToken (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken": "recovery logs must not contain a bearer token"
+      },
+      "fingerprint": "c9b1fe0fd222d1789e66b88875556ef5b57230b77116a49d2fdfd801b6577be3"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-08T08:25:39.132Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken)$ ./internal/httpserver/passwordresetcontract"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c9b1fe0fd222d1789e66b88875556ef5b57230b77116a49d2fdfd801b6577be3"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-08T08:28:23.659Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 674,
+        "executed": 674,
+        "passed": 674,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "674 passed, 0 allowed skip(s)",
+      "fingerprint": "c9b1fe0fd222d1789e66b88875556ef5b57230b77116a49d2fdfd801b6577be3"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-08T08:32:43.599Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 358,
+        "executed": 358,
+        "passed": 358,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 751,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "fc186d74866a72120e728762ab3a33a60b7d3774a2ce3f750e336070cf221af4"
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-08T08:33:48.730Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 15,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken)$ ./internal/httpserver/passwordresetcontract"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestForgotPassword_DoesNotLogResetToken handler_test.go:81: recovery logs must not contain a bearer *** --- FAIL: TestForgotPassword_DoesNotLogResetToken (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken": "recovery logs must not contain a bearer token"
+      },
+      "fingerprint": "fc186d74866a72120e728762ab3a33a60b7d3774a2ce3f750e336070cf221af4"
+    },
+    {
+      "seq": 35,
+      "at": "2026-10-08T08:33:51.536Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken)$ ./internal/httpserver/passwordresetcontract"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "fc186d74866a72120e728762ab3a33a60b7d3774a2ce3f750e336070cf221af4"
+    },
+    {
+      "seq": 36,
+      "at": "2026-10-08T08:36:24.825Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 674,
+        "executed": 674,
+        "passed": 674,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "674 passed, 0 allowed skip(s)",
+      "fingerprint": "fc186d74866a72120e728762ab3a33a60b7d3774a2ce3f750e336070cf221af4"
+    },
+    {
+      "seq": 37,
+      "at": "2026-10-08T08:40:16.809Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 15,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken)$ ./internal/httpserver/passwordresetcontract"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestForgotPassword_DoesNotLogResetToken handler_test.go:81: recovery logs must not contain a bearer *** --- FAIL: TestForgotPassword_DoesNotLogResetToken (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken": "recovery logs must not contain a bearer token"
+      },
+      "fingerprint": "c99ec3e6a9ce371e8ac026bc76818c906e7bece0eb3f892dd8d77373777a165c"
+    },
+    {
+      "seq": 38,
+      "at": "2026-10-08T08:40:19.815Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken)$ ./internal/httpserver/passwordresetcontract"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c99ec3e6a9ce371e8ac026bc76818c906e7bece0eb3f892dd8d77373777a165c"
+    },
+    {
+      "seq": 39,
+      "at": "2026-10-08T08:42:41.266Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 674,
+        "executed": 674,
+        "passed": 674,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "674 passed, 0 allowed skip(s)",
+      "fingerprint": "c99ec3e6a9ce371e8ac026bc76818c906e7bece0eb3f892dd8d77373777a165c"
+    },
+    {
+      "seq": 40,
+      "at": "2026-10-08T08:46:47.447Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 362,
+        "executed": 362,
+        "passed": 362,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 754,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "c99ec3e6a9ce371e8ac026bc76818c906e7bece0eb3f892dd8d77373777a165c"
+    },
+    {
+      "seq": 41,
+      "at": "2026-10-08T08:52:31.751Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -lc docker compose config --quiet && node scripts/local-audit-status.mjs --stable",
+      "exit_code": 0,
+      "fingerprint": "c99ec3e6a9ce371e8ac026bc76818c906e7bece0eb3f892dd8d77373777a165c"
+    },
+    {
+      "seq": 42,
+      "at": "2026-10-08T08:54:27.486Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/password-recovery-browser-evidence.py",
+      "exit_code": 0,
+      "fingerprint": "c99ec3e6a9ce371e8ac026bc76818c906e7bece0eb3f892dd8d77373777a165c"
+    },
+    {
+      "seq": 43,
+      "at": "2026-10-08T09:00:49.858Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec --model gpt-6.1-sol --sandbox read-only --ephemeral --color never -",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 3,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/handler_lifecycle.go:717",
+          "summary": "AC2's single-use guarantee fails under concurrency. Two requests can both select the unused token, then both execute the unconditional UPDATE and change the password successfully. Atomically claim an …"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/handler_lifecycle.go:384",
+          "summary": "Token consumption, password replacement, and session revocation commit separately. Cancellation or database failure after consumption can permanently invalidate the link without changing the password;…"
+        },
+        {
+          "severity": "major",
+          "file": "tasks/AUDIT-072.json:993",
+          "summary": "The browser_e2e PASS does not establish the required journey. Its script accepts an existing mailbox message without proving it was generated by this submission, and never follows the success link or …"
+        }
+      ],
+      "package_sha256": "866d28a56bb84ac82ea8aa4dafe1bd3a28581a31d53a6fdd13293969e899ec06",
+      "fingerprint": "c99ec3e6a9ce371e8ac026bc76818c906e7bece0eb3f892dd8d77373777a165c"
+    },
+    {
+      "seq": 44,
+      "at": "2026-10-08T09:05:17.188Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 15,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken)$ ./internal/httpserver/passwordresetcontract",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestForgotPassword_DoesNotLogResetToken handler_test.go:81: recovery logs must not contain a bearer *** --- FAIL: TestForgotPassword_DoesNotLogResetToken (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_lifecycle_test.go:40:68: cannot use rateLimiter (variable of type *authn.RateLimiter) as *pgxpool.Pool value in argument to forgotPasswordHan…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_lifecycle_test.go:40:68: cannot use rateLimiter (variable of type *authn.RateLimiter) as *pgxpool.Pool value in argument to forgotPasswordHan…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken": "recovery logs must not contain a bearer token",
+        "go:./internal/httpserver:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds": "exactly one request should succeed",
+        "go:./internal/httpserver:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails": "failed reset must retain the previous password"
+      },
+      "fingerprint": "0b19e58b4c876a70217a56a8ed7e5f40cfb367c74d18e3bcf5ffe3f33276f53b"
+    },
+    {
+      "seq": 45,
+      "at": "2026-10-08T09:07:56.637Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 15,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken|TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver/passwordresetcontract",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestForgotPassword_DoesNotLogResetToken handler_test.go:81: recovery logs must not contain a bearer *** --- FAIL: TestForgotPassword_DoesNotLogResetToken (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_lifecycle_test.go:39:68: cannot use rateLimiter (variable of type *authn.RateLimiter) as *pgxpool.Pool value in argument to forgotPasswordHan…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_lifecycle_test.go:39:68: cannot use rateLimiter (variable of type *authn.RateLimiter) as *pgxpool.Pool value in argument to forgotPasswordHan…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestResetPassword_ConcurrentRequestsOnlyOneSucceeds 2026/10/08 18:07:55 INFO request method=POST path=/api/auth/reset-password status=200 duration=617.639084ms bytes=12 2026/10/08 18:07:55 INFO request method=POST path=/api/auth/reset-password status=200 duration=617.638875ms bytes=12 transa…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails 2026/10/08 18:07:55 ERROR reset-password: *** sessions failed error=\"session: revoke all learner: ERROR: forced session revoke failure (SQLSTATE P0001)\" 2026/10/08 18:07:55 INFO request method=POST path=/api/auth/reset-p…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken": "recovery logs must not contain a bearer token",
+        "go:./internal/httpserver:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds": "exactly one request should succeed",
+        "go:./internal/httpserver:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails": "failed reset must retain the previous password",
+        "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds": "exactly one request should succeed",
+        "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails": "failed reset must retain the previous password"
+      },
+      "fingerprint": "ada473aa5fc8b4904ddab489b395c4f70ba069e551a966e4bd25f9873e1552b3"
+    },
+    {
+      "seq": 46,
+      "at": "2026-10-08T09:09:18.711Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 15,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken|TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver/passwordresetcontract"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestForgotPassword_DoesNotLogResetToken handler_test.go:81: recovery logs must not contain a bearer *** --- FAIL: TestForgotPassword_DoesNotLogResetToken (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestResetPassword_ConcurrentRequestsOnlyOneSucceeds 2026/10/08 18:09:17 INFO request method=POST path=/api/auth/reset-password status=200 duration=605.173333ms bytes=12 2026/10/08 18:09:17 INFO request method=POST path=/api/auth/reset-password status=200 duration=605.235ms bytes=12 transacti…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails 2026/10/08 18:09:17 ERROR reset-password: *** sessions failed error=\"session: revoke all learner: ERROR: forced session revoke failure (SQLSTATE P0001)\" 2026/10/08 18:09:17 INFO request method=POST path=/api/auth/reset-p…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken": "recovery logs must not contain a bearer token",
+        "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds": "exactly one request should succeed",
+        "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails": "failed reset must retain the previous password"
+      },
+      "fingerprint": "ada473aa5fc8b4904ddab489b395c4f70ba069e551a966e4bd25f9873e1552b3"
+    },
+    {
+      "seq": 47,
+      "at": "2026-10-08T09:11:05.517Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken|TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver/passwordresetcontract"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "fbf5fdc4738d4c9171fd3e88776a4f87d6c5cc120cc43dfe4faa017165e3659f"
+    },
+    {
+      "seq": 48,
+      "at": "2026-10-08T09:13:55.209Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 676,
+        "executed": 676,
+        "passed": 676,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "676 passed, 0 allowed skip(s)",
+      "fingerprint": "fbf5fdc4738d4c9171fd3e88776a4f87d6c5cc120cc43dfe4faa017165e3659f"
+    },
+    {
+      "seq": 49,
+      "at": "2026-10-08T09:14:06.478Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "deletion_scan",
+      "symbols": [
+        "lookupResetToken"
+      ],
+      "hits": [],
+      "result": "PASS",
+      "fingerprint": "fbf5fdc4738d4c9171fd3e88776a4f87d6c5cc120cc43dfe4faa017165e3659f"
+    },
+    {
+      "seq": 50,
+      "at": "2026-10-08T09:14:08.364Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "deletion_scan",
+      "symbols": [
+        "lookupResetToken",
+        "markResetTokenUsed"
+      ],
+      "hits": [],
+      "result": "PASS",
+      "fingerprint": "fbf5fdc4738d4c9171fd3e88776a4f87d6c5cc120cc43dfe4faa017165e3659f"
+    },
+    {
+      "seq": 51,
+      "at": "2026-10-08T09:17:46.897Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 362,
+        "executed": 362,
+        "passed": 362,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 754,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "fbf5fdc4738d4c9171fd3e88776a4f87d6c5cc120cc43dfe4faa017165e3659f"
+    },
+    {
+      "seq": 52,
+      "at": "2026-10-08T09:21:44.421Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -lc docker compose config --quiet && node scripts/local-audit-status.mjs --stable",
+      "exit_code": 0,
+      "fingerprint": "fbf5fdc4738d4c9171fd3e88776a4f87d6c5cc120cc43dfe4faa017165e3659f"
+    },
+    {
+      "seq": 53,
+      "at": "2026-10-08T09:24:48.749Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/password-recovery-review-evidence.py",
+      "exit_code": 1,
+      "fingerprint": "fbf5fdc4738d4c9171fd3e88776a4f87d6c5cc120cc43dfe4faa017165e3659f"
+    },
+    {
+      "seq": 54,
+      "at": "2026-10-08T09:25:40.842Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/password-recovery-review-evidence.py",
+      "exit_code": 1,
+      "fingerprint": "fbf5fdc4738d4c9171fd3e88776a4f87d6c5cc120cc43dfe4faa017165e3659f"
+    },
+    {
+      "seq": 55,
+      "at": "2026-10-08T09:28:51.294Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken|TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver/passwordresetcontract"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestForgotPassword_DoesNotLogResetToken handler_test.go:29: TEST_DATABASE_URL is required --- FAIL: TestForgotPassword_DoesNotLogResetToken (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestResetPassword_ConcurrentRequestsOnlyOneSucceeds transaction_test.go:30: TEST_DATABASE_URL is required --- FAIL: TestResetPassword_ConcurrentRequestsOnlyOneSucceeds (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails transaction_test.go:66: TEST_DATABASE_URL is required --- FAIL: TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails (0.00s)"
+        }
+      ],
+      "fingerprint": "8b2b42536c89386a2cc38248c74f8f38f589f7494bacccf965c5198d20784f64"
+    },
+    {
+      "seq": 56,
+      "at": "2026-10-08T09:29:05.166Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken|TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver/passwordresetcontract"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8b2b42536c89386a2cc38248c74f8f38f589f7494bacccf965c5198d20784f64"
+    },
+    {
+      "seq": 57,
+      "at": "2026-10-08T09:31:36.875Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 676,
+        "executed": 676,
+        "passed": 676,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "676 passed, 0 allowed skip(s)",
+      "fingerprint": "8b2b42536c89386a2cc38248c74f8f38f589f7494bacccf965c5198d20784f64"
+    },
+    {
+      "seq": 58,
+      "at": "2026-10-08T09:35:13.416Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 363,
+        "executed": 363,
+        "passed": 363,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 754,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "8b2b42536c89386a2cc38248c74f8f38f589f7494bacccf965c5198d20784f64"
+    },
+    {
+      "seq": 59,
+      "at": "2026-10-08T09:37:15.934Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -lc docker compose config --quiet && node scripts/local-audit-status.mjs --stable",
+      "exit_code": 0,
+      "fingerprint": "8b2b42536c89386a2cc38248c74f8f38f589f7494bacccf965c5198d20784f64"
+    },
+    {
+      "seq": 60,
+      "at": "2026-10-08T09:37:40.756Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/password-recovery-review-evidence.py",
+      "exit_code": 0,
+      "fingerprint": "8b2b42536c89386a2cc38248c74f8f38f589f7494bacccf965c5198d20784f64"
+    },
+    {
+      "seq": 61,
+      "at": "2026-10-08T09:42:16.402Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec --model gpt-6.1-sol --sandbox read-only --ephemeral --color never -",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/web/app/[locale]/reset-password/_components/reset-password-form-client.tsx:82",
+          "summary": "Both recovery forms POST to same-origin /api/auth endpoints, but Next.js implements neither recovery route nor a rewrite. GCP and OCI forward the learner origin entirely to Next.js, so both submission…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/email/smtp.go:65",
+          "summary": "Recovery emails always link to /vi/reset-password and contain hardcoded English copy. Learners requesting recovery in Japanese or English lose their selected language, and the reset screen has no lang…"
+        }
+      ],
+      "package_sha256": "b8f23ab13a140aa2c0ded8719eee3310891d2a559f576b34ab2d2f19c8539b59",
+      "fingerprint": "8b2b42536c89386a2cc38248c74f8f38f589f7494bacccf965c5198d20784f64"
+    },
+    {
+      "seq": 62,
+      "at": "2026-10-08T09:43:53.447Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 16,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken|TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver/passwordresetcontract"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestForgotPassword_DoesNotLogResetToken handler_test.go:29: TEST_DATABASE_URL is required --- FAIL: TestForgotPassword_DoesNotLogResetToken (0.00s)",
+          "valid": false,
+          "reason": "failure shows an infrastructure/tooling signature (\"TEST_DATABASE_URL\")"
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestResetPassword_ConcurrentRequestsOnlyOneSucceeds transaction_test.go:30: TEST_DATABASE_URL is required --- FAIL: TestResetPassword_ConcurrentRequestsOnlyOneSucceeds (0.00s)",
+          "valid": false,
+          "reason": "failure shows an infrastructure/tooling signature (\"TEST_DATABASE_URL\")"
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails transaction_test.go:66: TEST_DATABASE_URL is required --- FAIL: TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails (0.00s)",
+          "valid": false,
+          "reason": "failure shows an infrastructure/tooling signature (\"TEST_DATABASE_URL\")"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken": "recovery logs must not contain a bearer token",
+        "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds": "exactly one request should succeed",
+        "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails": "failed reset must retain the previous password"
+      },
+      "fingerprint": "8b2b42536c89386a2cc38248c74f8f38f589f7494bacccf965c5198d20784f64"
+    },
+    {
+      "seq": 63,
+      "at": "2026-10-08T09:45:43.310Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 18,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken|TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver/passwordresetcontract",
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetContentPreservesLocaleAndLocalizesCopy)$ ./internal/email"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestForgotPassword_DoesNotLogResetToken handler_test.go:29: TEST_DATABASE_URL is required --- FAIL: TestForgotPassword_DoesNotLogResetToken (0.00s)",
+          "valid": false,
+          "reason": "failure shows an infrastructure/tooling signature (\"TEST_DATABASE_URL\")"
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestResetPassword_ConcurrentRequestsOnlyOneSucceeds transaction_test.go:30: TEST_DATABASE_URL is required --- FAIL: TestResetPassword_ConcurrentRequestsOnlyOneSucceeds (0.00s)",
+          "valid": false,
+          "reason": "failure shows an infrastructure/tooling signature (\"TEST_DATABASE_URL\")"
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails transaction_test.go:66: TEST_DATABASE_URL is required --- FAIL: TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails (0.00s)",
+          "valid": false,
+          "reason": "failure shows an infrastructure/tooling signature (\"TEST_DATABASE_URL\")"
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "Cannot find module './route' imported from /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-n62ZHT/tree/apps/web/app/api/auth/forgot-password/route.test.ts",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "Cannot find module './route' imported from /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-n62ZHT/tree/apps/web/app/api/auth/reset-password/route.test.ts",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/email:TestPasswordResetContentPreservesLocaleAndLocalizesCopy",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/email [github.com/kotobawork/nihongo-bjt/api-go/internal/email.test] internal/email/smtp_test.go:25:14: undefined: passwordResetMessage internal/email/smtp_test.go:61:17: undefined: NewSMTP internal/email/smtp_test.go:77:15: undefined: NewSMTP inte…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken": "recovery logs must not contain a bearer token",
+        "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds": "exactly one request should succeed",
+        "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails": "failed reset must retain the previous password",
+        "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint": "forgot-password BFF must forward to the configured Go endpoint",
+        "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract": "reset-password BFF must forward the body and upstream response",
+        "go:./internal/email:TestPasswordResetContentPreservesLocaleAndLocalizesCopy": "recovery emails must preserve language and localized link"
+      },
+      "fingerprint": "0c111c558d7dca31974a9e9a3a5bfc91c38082d5898376f53bb30b12d12973df"
+    },
+    {
+      "seq": 64,
+      "at": "2026-10-08T09:46:48.547Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 18,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken|TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver/passwordresetcontract",
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetContentPreservesLocaleAndLocalizesCopy)$ ./internal/email"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestForgotPassword_DoesNotLogResetToken handler_test.go:81: recovery logs must not contain a bearer *** --- FAIL: TestForgotPassword_DoesNotLogResetToken (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestResetPassword_ConcurrentRequestsOnlyOneSucceeds 2026/10/08 18:46:45 INFO request method=POST path=/api/auth/reset-password status=200 duration=608.25175ms bytes=12 2026/10/08 18:46:45 INFO request method=POST path=/api/auth/reset-password status=200 duration=609.824917ms bytes=12 transac…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails 2026/10/08 18:46:45 ERROR reset-password: *** sessions failed error=\"session: revoke all learner: ERROR: forced session revoke failure (SQLSTATE P0001)\" 2026/10/08 18:46:45 INFO request method=POST path=/api/auth/reset-p…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "Cannot find module './route' imported from /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-t7KmFK/tree/apps/web/app/api/auth/forgot-password/route.test.ts",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "Cannot find module './route' imported from /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-t7KmFK/tree/apps/web/app/api/auth/reset-password/route.test.ts",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/email:TestPasswordResetContentPreservesLocaleAndLocalizesCopy",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/email [github.com/kotobawork/nihongo-bjt/api-go/internal/email.test] internal/email/smtp_test.go:25:14: undefined: passwordResetMessage internal/email/smtp_test.go:61:17: undefined: NewSMTP internal/email/smtp_test.go:77:15: undefined: NewSMTP inte…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken": "recovery logs must not contain a bearer token",
+        "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds": "exactly one request should succeed",
+        "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails": "failed reset must retain the previous password",
+        "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint": "forgot-password BFF must forward to the configured Go endpoint",
+        "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract": "reset-password BFF must forward the body and upstream response",
+        "go:./internal/email:TestPasswordResetContentPreservesLocaleAndLocalizesCopy": "recovery emails must preserve language and localized link"
+      },
+      "fingerprint": "0c111c558d7dca31974a9e9a3a5bfc91c38082d5898376f53bb30b12d12973df"
+    },
+    {
+      "seq": 65,
+      "at": "2026-10-08T09:59:30.854Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "sensitivity",
+      "outcome": "INSENSITIVE",
+      "mutation": {
+        "file": "apps/web/lib/auth-post-proxy.ts",
+        "find": "status: upstream.status,",
+        "replace": "status: 501,"
+      },
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"forgot-password BFF forwards the localized request to the Go recovery endpoint\" in apps/web/app/api/auth/forgot-password/route.test.ts",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract\" in apps/web/app/api/auth/reset-password/route.test.ts",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint": "to be 200",
+        "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract": "to be 400"
+      },
+      "fingerprint": "d4d0d1b285fa2f880093a4befb28a2441d6ac6a71df604f468ad9d9601db64aa"
+    },
+    {
+      "seq": 66,
+      "at": "2026-10-08T10:01:28.181Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/web/lib/auth-post-proxy.ts",
+        "find": "status: upstream.status,",
+        "replace": "status: 501,"
+      },
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "FAIL",
+          "excerpt": "expected 501 to be 200 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "FAIL",
+          "excerpt": "expected 501 to be 400 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint": "to be 200",
+        "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract": "to be 400"
+      },
+      "fingerprint": "81bc303f445c122da0108a2296bddaf242ff8e08a059b6271f33c640df68df5a"
+    },
+    {
+      "seq": 67,
+      "at": "2026-10-08T10:04:13.547Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken|TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver/passwordresetcontract",
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetContentPreservesLocaleAndLocalizesCopy)$ ./internal/email"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/email:TestPasswordResetContentPreservesLocaleAndLocalizesCopy",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "81bc303f445c122da0108a2296bddaf242ff8e08a059b6271f33c640df68df5a"
+    },
+    {
+      "seq": 68,
+      "at": "2026-10-08T10:04:45.699Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 677,
+        "executed": 677,
+        "passed": 654,
+        "failed": 23,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 23 failing test(s), 2 failing package(s))",
+      "fingerprint": "81bc303f445c122da0108a2296bddaf242ff8e08a059b6271f33c640df68df5a"
+    },
+    {
+      "seq": 69,
+      "at": "2026-10-08T10:09:09.066Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 677,
+        "executed": 677,
+        "passed": 677,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "677 passed, 0 allowed skip(s)",
+      "fingerprint": "81bc303f445c122da0108a2296bddaf242ff8e08a059b6271f33c640df68df5a"
+    },
+    {
+      "seq": 70,
+      "at": "2026-10-08T10:09:34.499Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "81bc303f445c122da0108a2296bddaf242ff8e08a059b6271f33c640df68df5a"
+    },
+    {
+      "seq": 71,
+      "at": "2026-10-08T10:10:12.391Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken|TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver/passwordresetcontract",
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetContentPreservesLocaleAndLocalizesCopy)$ ./internal/email"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/email:TestPasswordResetContentPreservesLocaleAndLocalizesCopy",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "6269863d8209720e5d047cf580d4ed4fd04b84b91bb14116fde2931fbeb7dbec"
+    },
+    {
+      "seq": 72,
+      "at": "2026-10-08T10:13:24.821Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 365,
+        "executed": 365,
+        "passed": 365,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 758,
+        "lint_errors": 65,
+        "lint_warnings": 26,
+        "new_debt": 1
+      },
+      "message": "RATCHET_VIOLATION: 1 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "6269863d8209720e5d047cf580d4ed4fd04b84b91bb14116fde2931fbeb7dbec"
+    },
+    {
+      "seq": 73,
+      "at": "2026-10-08T10:17:13.898Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 366,
+        "executed": 366,
+        "passed": 366,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 758,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "f6d5c425e21886239f57114d401b7541dbbaf92b834ac97fd4f988e2b0cbfc46"
+    },
+    {
+      "seq": 74,
+      "at": "2026-10-08T10:21:09.027Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 366,
+        "executed": 366,
+        "passed": 366,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 759,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "f6d5c425e21886239f57114d401b7541dbbaf92b834ac97fd4f988e2b0cbfc46"
+    },
+    {
+      "seq": 75,
+      "at": "2026-10-08T10:22:00.707Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/password-recovery-next-origin-evidence.py",
+      "exit_code": 1,
+      "fingerprint": "f6d5c425e21886239f57114d401b7541dbbaf92b834ac97fd4f988e2b0cbfc46"
+    },
+    {
+      "seq": 76,
+      "at": "2026-10-08T10:23:48.968Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/password-recovery-review-evidence.py",
+      "exit_code": 1,
+      "fingerprint": "f6d5c425e21886239f57114d401b7541dbbaf92b834ac97fd4f988e2b0cbfc46"
+    },
+    {
+      "seq": 77,
+      "at": "2026-10-08T10:27:22.395Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -lc docker compose config --quiet && node scripts/local-audit-status.mjs --stable && node tmp/local-audit/auth-bff-smoke.mjs",
+      "exit_code": 0,
+      "fingerprint": "f6d5c425e21886239f57114d401b7541dbbaf92b834ac97fd4f988e2b0cbfc46"
+    },
+    {
+      "seq": 78,
+      "at": "2026-10-08T10:27:50.796Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/password-recovery-review-evidence.py",
+      "exit_code": 0,
+      "fingerprint": "f6d5c425e21886239f57114d401b7541dbbaf92b834ac97fd4f988e2b0cbfc46"
+    },
+    {
+      "seq": 79,
+      "at": "2026-10-08T10:28:50.983Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/web/lib/auth-post-proxy.ts",
+        "find": "status: upstream.status,",
+        "replace": "status: 501,"
+      },
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "FAIL",
+          "excerpt": "expected 501 to be 200 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "FAIL",
+          "excerpt": "expected 501 to be 400 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint": "to be 200",
+        "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract": "to be 400"
+      },
+      "fingerprint": "f6d5c425e21886239f57114d401b7541dbbaf92b834ac97fd4f988e2b0cbfc46"
+    },
+    {
+      "seq": 80,
+      "at": "2026-10-08T10:29:06.971Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken|TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver/passwordresetcontract",
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetContentPreservesLocaleAndLocalizesCopy)$ ./internal/email"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/email:TestPasswordResetContentPreservesLocaleAndLocalizesCopy",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f6d5c425e21886239f57114d401b7541dbbaf92b834ac97fd4f988e2b0cbfc46"
+    },
+    {
+      "seq": 81,
+      "at": "2026-10-08T10:31:29.685Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 677,
+        "executed": 677,
+        "passed": 677,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "677 passed, 0 allowed skip(s)",
+      "fingerprint": "f6d5c425e21886239f57114d401b7541dbbaf92b834ac97fd4f988e2b0cbfc46"
+    },
+    {
+      "seq": 82,
+      "at": "2026-10-08T10:35:36.173Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec --model gpt-6.1-sol --sandbox read-only --ephemeral --color never -",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 3,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/web/app/[locale]/reset-password/_components/reset-password-form-client.tsx:61",
+          "summary": "After consuming the emailed fragment, any unrelated hashchange replaces activeToken with null. Reproduced activating the shared skip-to-content link (#main): the password form disappears and reports a…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/web/lib/auth-post-proxy.ts:6",
+          "summary": "All BFF requests reach Go with the Next server's peer IP. Go ignores forwarded IP headers and allows only 10 requests per minute per peer for each recovery endpoint, so one visitor can exhaust recover…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/web/lib/auth-post-proxy.ts:12",
+          "summary": "req.text() buffers an unrestricted anonymous request before Go's 4096-byte limit or rate limiter executes. Reproduced a streamed request without Content-Length: all 8 MiB were buffered and forwarded. …"
+        }
+      ],
+      "package_sha256": "677db9bdd8799bebce74bb604e585d2dea097986e743395a818df788ced7c60b",
+      "fingerprint": "f6d5c425e21886239f57114d401b7541dbbaf92b834ac97fd4f988e2b0cbfc46"
+    },
+    {
+      "seq": 83,
+      "at": "2026-10-08T10:44:50.181Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "1e3965b53d8c997dd90b385fba699636c3a528b775bcbdc0e793c4480fe552b4"
+    },
+    {
+      "seq": 84,
+      "at": "2026-10-08T10:48:33.561Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 367,
+        "executed": 367,
+        "passed": 367,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 759,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "6d3bc13bbeb1344e4fc30140da85710fa28da65f8a98f2e809aa1b949dec04bf"
+    },
+    {
+      "seq": 85,
+      "at": "2026-10-08T10:51:19.748Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 685,
+        "executed": 685,
+        "passed": 685,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "685 passed, 0 allowed skip(s)",
+      "fingerprint": "6d3bc13bbeb1344e4fc30140da85710fa28da65f8a98f2e809aa1b949dec04bf"
+    },
+    {
+      "seq": 86,
+      "at": "2026-10-08T10:51:38.560Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken|TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver/passwordresetcontract",
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetContentPreservesLocaleAndLocalizesCopy)$ ./internal/email"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/email:TestPasswordResetContentPreservesLocaleAndLocalizesCopy",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "6d3bc13bbeb1344e4fc30140da85710fa28da65f8a98f2e809aa1b949dec04bf"
+    },
+    {
+      "seq": 87,
+      "at": "2026-10-08T10:51:52.572Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/web/lib/auth-post-proxy.ts",
+        "find": "status: upstream.status,",
+        "replace": "status: 501,"
+      },
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "FAIL",
+          "excerpt": "expected 501 to be 200 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "FAIL",
+          "excerpt": "expected 501 to be 400 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint": "to be 200",
+        "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract": "to be 400"
+      },
+      "fingerprint": "6d3bc13bbeb1344e4fc30140da85710fa28da65f8a98f2e809aa1b949dec04bf"
+    },
+    {
+      "seq": 88,
+      "at": "2026-10-08T10:55:59.601Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/password-recovery-review-evidence.py",
+      "exit_code": 1,
+      "fingerprint": "44626580af1539401aa87947a4feb3f9d62c9b73a78f76fc0567829f94c4743a"
+    },
+    {
+      "seq": 89,
+      "at": "2026-10-08T10:56:47.413Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/password-recovery-review-evidence.py",
+      "exit_code": 0,
+      "fingerprint": "44626580af1539401aa87947a4feb3f9d62c9b73a78f76fc0567829f94c4743a"
+    },
+    {
+      "seq": 90,
+      "at": "2026-10-08T10:58:11.563Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -lc docker compose config --quiet && node scripts/local-audit-status.mjs --stable && node tmp/local-audit/auth-bff-smoke.mjs",
+      "exit_code": 0,
+      "fingerprint": "44626580af1539401aa87947a4feb3f9d62c9b73a78f76fc0567829f94c4743a"
+    },
+    {
+      "seq": 91,
+      "at": "2026-10-08T10:58:35.078Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken|TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver/passwordresetcontract",
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetContentPreservesLocaleAndLocalizesCopy)$ ./internal/email"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/email:TestPasswordResetContentPreservesLocaleAndLocalizesCopy",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "44626580af1539401aa87947a4feb3f9d62c9b73a78f76fc0567829f94c4743a"
+    },
+    {
+      "seq": 92,
+      "at": "2026-10-08T10:58:47.646Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/web/lib/auth-post-proxy.ts",
+        "find": "status: upstream.status,",
+        "replace": "status: 501,"
+      },
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "FAIL",
+          "excerpt": "expected 501 to be 200 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "FAIL",
+          "excerpt": "expected 501 to be 400 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint": "to be 200",
+        "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract": "to be 400"
+      },
+      "fingerprint": "44626580af1539401aa87947a4feb3f9d62c9b73a78f76fc0567829f94c4743a"
+    },
+    {
+      "seq": 93,
+      "at": "2026-10-08T11:03:19.750Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 685,
+        "executed": 685,
+        "passed": 685,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "685 passed, 0 allowed skip(s)",
+      "fingerprint": "44626580af1539401aa87947a4feb3f9d62c9b73a78f76fc0567829f94c4743a"
+    },
+    {
+      "seq": 94,
+      "at": "2026-10-08T11:07:07.413Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 367,
+        "executed": 367,
+        "passed": 367,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 759,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "44626580af1539401aa87947a4feb3f9d62c9b73a78f76fc0567829f94c4743a"
+    },
+    {
+      "seq": 95,
+      "at": "2026-10-08T11:15:58.745Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec --model gpt-6.1-sol --sandbox read-only --ephemeral --color never -",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/password_reset_queue.go:120",
+          "summary": "SMTP queue saturation still produces false success (AC10). The handler returns 200 when the outer queue accepts a job, but the separate 32-message SMTP queue can subsequently reject it. The worker the…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/app/[locale]/reset-password/_components/reset-password-form-client.tsx:113",
+          "summary": "Reproduced with a deferred response: submit token A, open replacement token B while A is pending, then resolve A successfully. A's stale response sets complete=true and hides B's form although B was n…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/email/smtp_test.go:25",
+          "summary": "The locale test constructs the expected localized URL itself and passes it directly to passwordResetMessage. It still passes if SendPasswordReset generates every link with the wrong locale. Assert the…"
+        }
+      ],
+      "package_sha256": "f8260b5f7cdf1412a717a4e51659b267f156a17216562d82ab95f3fb5255d65c",
+      "fingerprint": "44626580af1539401aa87947a4feb3f9d62c9b73a78f76fc0567829f94c4743a"
+    },
+    {
+      "seq": 96,
+      "at": "2026-10-08T11:25:54.110Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken|TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver/passwordresetcontract",
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetContentPreservesLocaleAndLocalizesCopy)$ ./internal/email"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestForgotPassword_DoesNotLogResetToken handler_test.go:29: TEST_DATABASE_URL is required --- FAIL: TestForgotPassword_DoesNotLogResetToken (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestResetPassword_ConcurrentRequestsOnlyOneSucceeds transaction_test.go:30: TEST_DATABASE_URL is required --- FAIL: TestResetPassword_ConcurrentRequestsOnlyOneSucceeds (0.00s)"
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails transaction_test.go:66: TEST_DATABASE_URL is required --- FAIL: TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails (0.00s)"
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/email:TestPasswordResetContentPreservesLocaleAndLocalizesCopy",
+          "outcome": "NOT_FOUND",
+          "valid": false,
+          "excerpt": "testing: warning: no tests to run PASS ok github.com/kotobawork/nihongo-bjt/api-go/internal/email 0.461s [no tests to run]"
+        }
+      ],
+      "fingerprint": "cee9081351d76c92a6b3717bd85def86ed2f853d1e00b8dfbdee40c474cb16ee"
+    },
+    {
+      "seq": 97,
+      "at": "2026-10-08T11:27:48.728Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken|TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver/passwordresetcontract",
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetDeliveryGeneratesLocalizedLink|TestSMTPRejectsInsecureExternalResetURL)$ ./internal/email",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetQueuePersistsJobsAndRejectsAtCapacity)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/reset-password/reset-password-form.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/email:TestPasswordResetDeliveryGeneratesLocalizedLink",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/email:TestSMTPRejectsInsecureExternalResetURL",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestPasswordResetQueuePersistsJobsAndRejectsAtCapacity",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/reset-password/reset-password-form.test.tsx::ignores a reset response after the active token changes",
+          "outcome": "NOT_FOUND",
+          "valid": false,
+          "excerpt": "no test named \"ignores a reset response after the active token changes\" in apps/web/app/[locale]/reset-password/reset-password-form.test.tsx"
+        }
+      ],
+      "fingerprint": "cee9081351d76c92a6b3717bd85def86ed2f853d1e00b8dfbdee40c474cb16ee"
+    },
+    {
+      "seq": 98,
+      "at": "2026-10-08T11:29:30.091Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken|TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver/passwordresetcontract",
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetDeliveryGeneratesLocalizedLink|TestSMTPRejectsInsecureExternalResetURL)$ ./internal/email",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetQueuePersistsJobsAndRejectsAtCapacity)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/reset-password/reset-password-form.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/email:TestPasswordResetDeliveryGeneratesLocalizedLink",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/email:TestSMTPRejectsInsecureExternalResetURL",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestPasswordResetQueuePersistsJobsAndRejectsAtCapacity",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/reset-password/reset-password-form.test.tsx::reset password form ignores a reset response after the active token changes",
+          "outcome": "NOT_FOUND",
+          "valid": false,
+          "excerpt": "no test named \"reset password form ignores a reset response after the active token changes\" in apps/web/app/[locale]/reset-password/reset-password-form.test.tsx"
+        }
+      ],
+      "fingerprint": "cee9081351d76c92a6b3717bd85def86ed2f853d1e00b8dfbdee40c474cb16ee"
+    },
+    {
+      "seq": 99,
+      "at": "2026-10-08T11:30:04.557Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken|TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver/passwordresetcontract",
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetDeliveryGeneratesLocalizedLink|TestSMTPRejectsInsecureExternalResetURL)$ ./internal/email",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetQueuePersistsJobsAndRejectsAtCapacity)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/reset-password/reset-password-form.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/email:TestPasswordResetDeliveryGeneratesLocalizedLink",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/email:TestSMTPRejectsInsecureExternalResetURL",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestPasswordResetQueuePersistsJobsAndRejectsAtCapacity",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/reset-password/reset-password-form.test.tsx::reset password form > ignores a reset response after the active token changes",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "cee9081351d76c92a6b3717bd85def86ed2f853d1e00b8dfbdee40c474cb16ee"
+    },
+    {
+      "seq": 100,
+      "at": "2026-10-08T11:30:25.544Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/web/lib/auth-post-proxy.ts",
+        "find": "status: upstream.status,",
+        "replace": "status: 501,"
+      },
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "FAIL",
+          "excerpt": "expected 501 to be 200 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "FAIL",
+          "excerpt": "expected 501 to be 400 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint": "to be 200",
+        "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract": "to be 400"
+      },
+      "fingerprint": "cee9081351d76c92a6b3717bd85def86ed2f853d1e00b8dfbdee40c474cb16ee"
+    },
+    {
+      "seq": 101,
+      "at": "2026-10-08T11:33:10.920Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 687,
+        "executed": 687,
+        "passed": 687,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "687 passed, 0 allowed skip(s)",
+      "fingerprint": "cee9081351d76c92a6b3717bd85def86ed2f853d1e00b8dfbdee40c474cb16ee"
+    },
+    {
+      "seq": 102,
+      "at": "2026-10-08T11:36:45.148Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 368,
+        "executed": 368,
+        "passed": 368,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 759,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "cee9081351d76c92a6b3717bd85def86ed2f853d1e00b8dfbdee40c474cb16ee"
+    },
+    {
+      "seq": 103,
+      "at": "2026-10-08T11:38:16.857Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/password-recovery-review-evidence.py",
+      "exit_code": 1,
+      "fingerprint": "cee9081351d76c92a6b3717bd85def86ed2f853d1e00b8dfbdee40c474cb16ee"
+    },
+    {
+      "seq": 104,
+      "at": "2026-10-08T11:39:18.375Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/password-recovery-review-evidence.py",
+      "exit_code": 0,
+      "fingerprint": "cee9081351d76c92a6b3717bd85def86ed2f853d1e00b8dfbdee40c474cb16ee"
+    },
+    {
+      "seq": 105,
+      "at": "2026-10-08T11:44:21.068Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec --model gpt-6.1-sol --sandbox read-only --ephemeral --color never -",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 2,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/web/app/[locale]/reset-password/_components/reset-password-form-client.tsx:64",
+          "summary": "Reproduced under React Strict Mode, enabled by default for this Next.js App Router: the first effect captures and removes the fragment token; effect replay replaces it with the null token prop, hiding…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/password_reset_queue.go:148",
+          "summary": "Expired claims remain eligible regardless of attempts. A worker crash before acknowledgement, or a failed completion deletion, allows attempt six and subsequent deliveries because the five-attempt cap…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/password_reset_queue_test.go:26",
+          "summary": "The cancellation assertion is nondeterministic: nil-database workers can finish before Close, leaving both select cases ready, so Close may legitimately return nil instead of context.Canceled. Control…"
+        }
+      ],
+      "package_sha256": "5beaa4f467770589aeb57339c8eb93a079770d209db8664d468593e335e0e9ed",
+      "fingerprint": "cee9081351d76c92a6b3717bd85def86ed2f853d1e00b8dfbdee40c474cb16ee"
+    },
+    {
+      "seq": 106,
+      "at": "2026-10-08T11:47:34.468Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken|TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver/passwordresetcontract",
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetDeliveryGeneratesLocalizedLink|TestSMTPRejectsInsecureExternalResetURL)$ ./internal/email",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetQueuePersistsJobsAndRejectsAtCapacity|TestPasswordResetQueueDoesNotRetryAnExhaustedExpiredClaim)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/reset-password/reset-password-form.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/email:TestPasswordResetDeliveryGeneratesLocalizedLink",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/email:TestSMTPRejectsInsecureExternalResetURL",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestPasswordResetQueuePersistsJobsAndRejectsAtCapacity",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/reset-password/reset-password-form.test.tsx::reset password form > posts a confirmed password with the emailed token and shows success",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestPasswordResetQueueDoesNotRetryAnExhaustedExpiredClaim",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3310ea5e9c95242cb8d2062ca6c837c46b2bdcbbce9914c58a29e6998fdacca1"
+    },
+    {
+      "seq": 107,
+      "at": "2026-10-08T11:47:47.172Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/web/lib/auth-post-proxy.ts",
+        "find": "status: upstream.status,",
+        "replace": "status: 501,"
+      },
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "FAIL",
+          "excerpt": "expected 501 to be 200 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "FAIL",
+          "excerpt": "expected 501 to be 400 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint": "to be 200",
+        "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract": "to be 400"
+      },
+      "fingerprint": "3310ea5e9c95242cb8d2062ca6c837c46b2bdcbbce9914c58a29e6998fdacca1"
+    },
+    {
+      "seq": 108,
+      "at": "2026-10-08T11:50:32.249Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 688,
+        "executed": 688,
+        "passed": 688,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "688 passed, 0 allowed skip(s)",
+      "fingerprint": "3310ea5e9c95242cb8d2062ca6c837c46b2bdcbbce9914c58a29e6998fdacca1"
+    },
+    {
+      "seq": 109,
+      "at": "2026-10-08T11:54:00.819Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 368,
+        "executed": 368,
+        "passed": 368,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 759,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "3310ea5e9c95242cb8d2062ca6c837c46b2bdcbbce9914c58a29e6998fdacca1"
+    },
+    {
+      "seq": 110,
+      "at": "2026-10-08T11:58:08.273Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 368,
+        "executed": 368,
+        "passed": 368,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 759,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "3310ea5e9c95242cb8d2062ca6c837c46b2bdcbbce9914c58a29e6998fdacca1"
+    },
+    {
+      "seq": 111,
+      "at": "2026-10-08T11:59:46.293Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -lc docker compose config --quiet && node scripts/local-audit-status.mjs --stable && node tmp/local-audit/auth-bff-smoke.mjs",
+      "exit_code": 0,
+      "fingerprint": "3310ea5e9c95242cb8d2062ca6c837c46b2bdcbbce9914c58a29e6998fdacca1"
+    },
+    {
+      "seq": 112,
+      "at": "2026-10-08T12:00:05.810Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/password-recovery-review-evidence.py",
+      "exit_code": 0,
+      "fingerprint": "3310ea5e9c95242cb8d2062ca6c837c46b2bdcbbce9914c58a29e6998fdacca1"
+    },
+    {
+      "seq": 113,
+      "at": "2026-10-08T12:09:22.556Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestForgotPassword_DoesNotLogResetToken|TestResetPassword_ConcurrentRequestsOnlyOneSucceeds|TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails)$ ./internal/httpserver/passwordresetcontract",
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetDeliveryGeneratesLocalizedLink|TestSMTPRejectsInsecureExternalResetURL)$ ./internal/email",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetQueuePersistsJobsAndRejectsAtCapacity|TestPasswordResetQueueDoesNotRetryAnExhaustedExpiredClaim)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/reset-password/reset-password-form.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLoad_SMTPRequiresExplicitPublicResetURL)$ ./internal/config"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestForgotPassword_DoesNotLogResetToken",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_ConcurrentRequestsOnlyOneSucceeds",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver/passwordresetcontract:TestResetPassword_RollsBackTokenAndCredentialWhenSessionRevocationFails",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/email:TestPasswordResetDeliveryGeneratesLocalizedLink",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/email:TestSMTPRejectsInsecureExternalResetURL",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestPasswordResetQueuePersistsJobsAndRejectsAtCapacity",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/reset-password/reset-password-form.test.tsx::reset password form > posts a confirmed password with the emailed token and shows success",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestPasswordResetQueueDoesNotRetryAnExhaustedExpiredClaim",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/config:TestLoad_SMTPRequiresExplicitPublicResetURL",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "70eed1f9a5e669c82cdc82b97a69333aafea181c2cc0f157488aae29b2c90313"
+    },
+    {
+      "seq": 114,
+      "at": "2026-10-08T12:13:01.747Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 689,
+        "executed": 689,
+        "passed": 689,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "689 passed, 0 allowed skip(s)",
+      "fingerprint": "70eed1f9a5e669c82cdc82b97a69333aafea181c2cc0f157488aae29b2c90313"
+    },
+    {
+      "seq": 115,
+      "at": "2026-10-08T12:16:21.035Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 368,
+        "executed": 368,
+        "passed": 368,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 759,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "70eed1f9a5e669c82cdc82b97a69333aafea181c2cc0f157488aae29b2c90313"
+    },
+    {
+      "seq": 116,
+      "at": "2026-10-08T12:17:57.363Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/password-recovery-review-evidence.py",
+      "exit_code": 0,
+      "fingerprint": "70eed1f9a5e669c82cdc82b97a69333aafea181c2cc0f157488aae29b2c90313"
+    },
+    {
+      "seq": 117,
+      "at": "2026-10-08T12:20:03.859Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "review",
+      "mode": "human",
+      "reviewer": "Codex current-session self-review",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "Self-review after the latest explicit WEB_PUBLIC_URL validation change. Re-read current auth/BFF/SMTP/outbox/reset UI/config diffs; prior independent reviews surfaced SMTP delivery acknowledgement, durable retry, stale token, Strict Mode, retry ceiling, and public URL issues, all corrected with targeted regression coverage. Independent final CLI review stalled twice and reviewer-agent capacity was exhausted; this approval is explicitly a self-review, not independent sign-off. Go 689/689 incl PostgreSQL/race/vet/ARM64, frontend 368/368 + builds/typechecks/lint ratchet, final 60s infrastructure …",
+      "attested": true,
+      "fingerprint": "70eed1f9a5e669c82cdc82b97a69333aafea181c2cc0f157488aae29b2c90313"
+    },
+    {
+      "seq": 118,
+      "at": "2026-10-08T12:20:19.952Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/web/lib/auth-post-proxy.ts",
+        "find": "status: upstream.status,",
+        "replace": "status: 501,"
+      },
+      "commands": [
+        "pnpm exec vitest run apps/web/app/api/auth/forgot-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/api/auth/reset-password/route.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint",
+          "outcome": "FAIL",
+          "excerpt": "expected 501 to be 200 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract",
+          "outcome": "FAIL",
+          "excerpt": "expected 501 to be 400 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/api/auth/forgot-password/route.test.ts::forgot-password BFF forwards the localized request to the Go recovery endpoint": "to be 200",
+        "vitest:apps/web/app/api/auth/reset-password/route.test.ts::reset-password BFF forwards the token-bearing body only to the Go endpoint and preserves its contract": "to be 400"
+      },
+      "fingerprint": "70eed1f9a5e669c82cdc82b97a69333aafea181c2cc0f157488aae29b2c90313"
+    },
+    {
+      "seq": 119,
+      "at": "2026-10-08T12:21:25.836Z",
+      "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -lc docker compose config --quiet && node scripts/local-audit-status.mjs --stable && node tmp/local-audit/auth-bff-smoke.mjs",
+      "exit_code": 0,
+      "fingerprint": "70eed1f9a5e669c82cdc82b97a69333aafea181c2cc0f157488aae29b2c90313"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-08T12:22:04.906Z",
+    "head": "4bf0fb39070582a31523fd946e8e3fad204a405c",
+    "fingerprint": "70eed1f9a5e669c82cdc82b97a69333aafea181c2cc0f157488aae29b2c90313",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "green": "PASS",
+      "sensitivity": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "infra_validation": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      ".env.example": "54777bace82b59566d33550f6c6be4f9fc5a40bc",
+      "apps/api-go/internal/app/app.go": "b1f958f2953e660aaded704d7353f46b6c0ed208",
+      "apps/api-go/internal/authn/ratelimit.go": "b78b2c917bb0924087af8058fbade179eec2a3ea",
+      "apps/api-go/internal/authn/ratelimit_test.go": "8ec1af5690a4014c9b26c05e79dbcf075633a8f2",
+      "apps/api-go/internal/config/config.go": "e8fab9baca90c74dc84a5da624cf1faaaa91bd89",
+      "apps/api-go/internal/config/config_test.go": "634fbd7f20c318618efc4e6223dd6358b54eff43",
+      "apps/api-go/internal/email/smtp.go": "644d0fb273b6c9c12569db20e6562ed1a7723691",
+      "apps/api-go/internal/email/smtp_test.go": "2084f19acc30e860d773fb8a620a99bbb852eeca",
+      "apps/api-go/internal/httpserver/handler_lifecycle.go": "7227b05487024547fcadc0dd5503b93ce608987a",
+      "apps/api-go/internal/httpserver/handler_lifecycle_test.go": "d31073f05c53d954baac2e9650b405ca1f161f61",
+      "apps/api-go/internal/httpserver/password_reset_queue.go": "d4f2361e3398ef63cc5e20c546a3934a09c57863",
+      "apps/api-go/internal/httpserver/password_reset_queue_test.go": "17d7eb908de5c8b4553e67d128b1b8d1efd1df28",
+      "apps/api-go/internal/httpserver/passwordresetcontract/handler_test.go": "7bb0ae703c68d376d4630373f6c0868489592c61",
+      "apps/api-go/internal/httpserver/passwordresetcontract/transaction_test.go": "e005646a594cc28dc1facfb5897c3f7249ac3a25",
+      "apps/api-go/internal/httpserver/server.go": "ce0fa6aea71489c01735e9cc91e40f7fbbf2555d",
+      "apps/api-go/internal/session/store.go": "d03130962e27634f9c9bc9fbb1e1742e61d33ffa",
+      "apps/web/app/[locale]/forgot-password/_components/forgot-password-form-client.tsx": "b432e2e53852763e511d4a7388fda6aae9953a97",
+      "apps/web/app/[locale]/forgot-password/forgot-password-form.test.tsx": "8bd9dd4ea15aff9597df83fa8a77b2e6aa99c4d6",
+      "apps/web/app/[locale]/forgot-password/page.tsx": "8d5154579f4ed3791f56583f00cb792a7af16a0b",
+      "apps/web/app/[locale]/reset-password/_components/reset-password-form-client.tsx": "fc47642b13bcc0cc1aa3957533bda6cc1c337fca",
+      "apps/web/app/[locale]/reset-password/page.tsx": "494b004071e2e2c59c0e73a3e0949a724c132261",
+      "apps/web/app/[locale]/reset-password/reset-password-form.test.tsx": "0a51e52b05d40267ce13bcccf6b8e0609f5c798f",
+      "apps/web/app/api/auth/forgot-password/route.test.ts": "c35b6d4d13fbfef0589a65453b067fc37b7f47d5",
+      "apps/web/app/api/auth/forgot-password/route.ts": "b189f78a41457141c2355ae900292edbd6ec044e",
+      "apps/web/app/api/auth/reset-password/route.test.ts": "319b925e3c47c35bff74053eccacf47e31ef0463",
+      "apps/web/app/api/auth/reset-password/route.ts": "15e399a3ae170b51825a7b582dd07cf2334167a2",
+      "apps/web/lib/auth-post-proxy.test.ts": "8ceaf62575c9337c947c8846fef8ac9f38467952",
+      "apps/web/lib/auth-post-proxy.ts": "dd896abf585087c9e9beadf6387536c6cf8a5cb9",
+      "apps/web/messages/en.json": "16444d4dc55d5141ef9f09e1159f5c422f570c15",
+      "apps/web/messages/ja.json": "9c4cf10370863adecd755d11a430f5d473fddd67",
+      "apps/web/messages/vi.json": "25df1ef38fe785ecc98eec7501421a993e0251c1",
+      "deploy/local/Caddyfile": "620b6f34ebbeb1e07dc05ba3574e83492a7fe6df",
+      "docker-compose.yml": "6fa754ed58486805bac5290d00f65a84a5b19aca",
+      "docs/ops/trusted-proxy.md": "38ae3294d154c4844014bfe01cf441f60cf4f5e7",
+      "packages/database/prisma/migrations/20261008120000_password_reset_outbox/migration.sql": "eaeadea8bab1b2e0ee1154355940d0d11fa9419d",
+      "packages/database/prisma/schema.prisma": "71397f81afe5b59bb35793127f2b7036e077b81d",
+      "scripts/local-audit-status.mjs": "d33604ba923df3f646169b9fa028a768d37b2a70",
+      "scripts/local-audit-up.mjs": "2d09e81a4a1959d96311ab5c41ad8b7c7c4539b9"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

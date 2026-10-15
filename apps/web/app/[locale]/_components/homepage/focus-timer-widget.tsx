@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@nihongo-bjt/ui";
+import Link from "next/link";
 import { useState } from "react";
 import { useFocusTimer } from "../../../_hooks/use-focus-timer";
 
@@ -8,7 +9,15 @@ const DURATION_OPTIONS = [15, 25, 45];
 const RING_RADIUS = 40;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
-export function FocusTimerWidget({ locale: _locale }: { locale: string }) {
+export function FocusTimerWidget({
+  isLoggedIn,
+  locale,
+  signInLabel
+}: {
+  isLoggedIn: boolean;
+  locale: string;
+  signInLabel: string;
+}) {
   const {
     loading,
     activeSession,
@@ -130,12 +139,21 @@ export function FocusTimerWidget({ locale: _locale }: { locale: string }) {
         ))}
       </div>
 
-      <button
-        onClick={() => void startSession(selectedDuration)}
-        className="mt-3 w-full rounded-xl bg-[var(--color-matcha)] py-2.5 text-sm font-bold text-white shadow-sm transition-transform active:scale-[0.97]"
-      >
-        Bắt đầu tập trung
-      </button>
+      {isLoggedIn ? (
+        <button
+          onClick={() => void startSession(selectedDuration)}
+          className="mt-3 w-full rounded-xl bg-[var(--color-matcha)] py-2.5 text-sm font-bold text-white shadow-sm transition-transform active:scale-[0.97]"
+        >
+          Bắt đầu tập trung
+        </button>
+      ) : (
+        <Link
+          href={`/${locale}/login?returnTo=${encodeURIComponent(`/${locale}`)}`}
+          className="mt-3 flex min-h-11 w-full items-center justify-center rounded-xl bg-[var(--color-matcha)] px-3 py-2.5 text-sm font-bold text-white shadow-sm transition-transform active:scale-[0.97]"
+        >
+          {signInLabel}
+        </Link>
+      )}
     </div>
   );
 }

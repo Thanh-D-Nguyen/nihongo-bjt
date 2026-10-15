@@ -1,0 +1,994 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-108",
+  "title": "Implement learner in-app notification feed endpoints",
+  "start_head": "222502cf995967f5161c6c9917bb4d6b204bdfcd",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "GET /api/learner/in-app-notifications returns 200 with only the signed-in learner's notifications, newest first, limit default 20 (1..100, invalid limit 400), fields id/kind/payload/readAt/createdAt; anonymous requests return 401."
+      },
+      {
+        "id": "AC2",
+        "text": "POST /api/learner/in-app-notifications/{id}/read marks only the learner's own notification read (201, idempotent, keeps first read_at); other users' or unknown ids return 404; malformed id returns 400; anonymous returns 401; CSRF origin check enforced on the write."
+      },
+      {
+        "id": "AC3",
+        "text": "The notifications settings page loads preferences and feed without a 404 and marks an item read in the visible browser at 390x844."
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY",
+      "DOMAIN_LOGIC"
+    ],
+    "change_kind": "add",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestInAppNotificationsListReturnsOwnRowsNewestFirst",
+      "expect": "list status = 404, want 200"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent",
+      "expect": "mark own read status = 404, want 201"
+    }
+  ],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/api-go/internal/httpserver/handler_in_app_notification.go",
+      "find": "parsed > inAppNotificationMaxLimit",
+      "replace": "parsed > 1000000"
+    },
+    "targets": [
+      {
+        "runner": "go",
+        "package": "./internal/httpserver",
+        "test": "TestInAppNotificationListLimitContract",
+        "expect": "status = 200, want 400"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-11T15:09:46.262Z",
+      "head": "222502cf995967f5161c6c9917bb4d6b204bdfcd"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-11T15:09:46.632Z",
+      "head": "222502cf995967f5161c6c9917bb4d6b204bdfcd"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T15:09:48.694Z",
+      "head": "222502cf995967f5161c6c9917bb4d6b204bdfcd"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T15:10:33.062Z",
+      "head": "222502cf995967f5161c6c9917bb4d6b204bdfcd"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T15:11:36.839Z",
+      "head": "222502cf995967f5161c6c9917bb4d6b204bdfcd"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T15:19:40.112Z",
+      "head": "d4d049c34dbf8fc599fb00250cd48936bc928c89"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T15:20:16.647Z",
+      "head": "d4d049c34dbf8fc599fb00250cd48936bc928c89"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-11T15:24:18.874Z",
+      "head": "d4d049c34dbf8fc599fb00250cd48936bc928c89"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T16:16:13.269Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T16:16:50.759Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-11T16:23:58.935Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T16:24:53.335Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T16:25:09.805Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-11T16:31:33.539Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T23:43:12.077Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-11T23:50:11.032Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T23:53:23.174Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-11T23:59:40.393Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T00:02:05.718Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-12T00:08:20.304Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-12T00:11:28.322Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-12T00:11:31.820Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-11T15:10:32.757Z",
+      "head": "222502cf995967f5161c6c9917bb4d6b204bdfcd",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestInAppNotificationsListReturnsOwnRowsNewestFirst)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationsListReturnsOwnRowsNewestFirst",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestInAppNotificationsListReturnsOwnRowsNewestFirst handler_in_app_notification_test.go:74: list status = 404, want 200: 404 page not found --- FAIL: TestInAppNotificationsListReturnsOwnRowsNewestFirst (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestInAppNotificationsListReturnsOwnRowsNewestFirst": "list status = 404, want 200"
+      },
+      "fingerprint": "d1798afa25e327b21e191114c9d761db8f10cf5f2add77cb0380fa527a47f085"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-11T15:10:44.151Z",
+      "head": "222502cf995967f5161c6c9917bb4d6b204bdfcd",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestInAppNotificationsListReturnsOwnRowsNewestFirst|TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationsListReturnsOwnRowsNewestFirst",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestInAppNotificationsListReturnsOwnRowsNewestFirst handler_in_app_notification_test.go:74: list status = 404, want 200: 404 page not found --- FAIL: TestInAppNotificationsListReturnsOwnRowsNewestFirst (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent handler_in_app_notification_test.go:127: mark own read status = 404, want 201: 404 page not found --- FAIL: TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestInAppNotificationsListReturnsOwnRowsNewestFirst": "list status = 404, want 200",
+        "go:./internal/httpserver:TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent": "mark own read status = 404, want 201"
+      },
+      "fingerprint": "d1798afa25e327b21e191114c9d761db8f10cf5f2add77cb0380fa527a47f085"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-11T15:11:36.386Z",
+      "head": "222502cf995967f5161c6c9917bb4d6b204bdfcd",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestInAppNotificationsListReturnsOwnRowsNewestFirst|TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationsListReturnsOwnRowsNewestFirst",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "dc187fdcfcbc0cdfb7ba634047cb169a8979ca4f5ae7ca0fc7802059ffd140fc"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-11T15:12:21.098Z",
+      "head": "222502cf995967f5161c6c9917bb4d6b204bdfcd",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 762,
+        "executed": 762,
+        "passed": 758,
+        "failed": 4,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 4 failing test(s), 1 failing package(s))",
+      "fingerprint": "dc187fdcfcbc0cdfb7ba634047cb169a8979ca4f5ae7ca0fc7802059ffd140fc"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-11T15:19:39.699Z",
+      "head": "d4d049c34dbf8fc599fb00250cd48936bc928c89",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 762,
+        "executed": 762,
+        "passed": 762,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "762 passed, 0 allowed skip(s)",
+      "fingerprint": "edc4a957b7c10c3cc7a5f66b39825eb0d1c99ded649df40b7b9d3803b0313145"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-11T15:20:16.180Z",
+      "head": "d4d049c34dbf8fc599fb00250cd48936bc928c89",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestInAppNotificationsListReturnsOwnRowsNewestFirst|TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationsListReturnsOwnRowsNewestFirst",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "edc4a957b7c10c3cc7a5f66b39825eb0d1c99ded649df40b7b9d3803b0313145"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-11T15:24:18.488Z",
+      "head": "d4d049c34dbf8fc599fb00250cd48936bc928c89",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /private/tmp/claude-501/-Users-thanhnguyen-Documents-Projects-nihongo-bjt/f6059b3a-dbe0-4a3f-ac37-5edbd1a160ca/scratchpad/audit108-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "edc4a957b7c10c3cc7a5f66b39825eb0d1c99ded649df40b7b9d3803b0313145"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-11T16:16:12.592Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "sensitivity",
+      "outcome": "INSENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_in_app_notification.go",
+        "find": "parsed > inAppNotificationMaxLimit",
+        "replace": "parsed > 1000000"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestInAppNotificationListLimitContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationListLimitContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestInAppNotificationListLimitContract === RUN TestInAppNotificationListLimitContract/default_limit_is_20 --- PASS: TestInAppNotificationListLimitContract/default_limit_is_20 (0.01s) === RUN TestInAppNotificationListLimitContract/explicit_limit_1 --- PASS: TestInAppNotificationListLimitContr…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"above 100 rejected\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestInAppNotificationListLimitContract": "above 100 rejected"
+      },
+      "fingerprint": "1d93434705c2ddc1a7945ba1d874d229e1707164935c31e4e863989e54e2091d"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-11T16:16:34.863Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_in_app_notification.go",
+        "find": "parsed > inAppNotificationMaxLimit",
+        "replace": "parsed > 1000000"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestInAppNotificationListLimitContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationListLimitContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestInAppNotificationListLimitContract === RUN TestInAppNotificationListLimitContract/default_limit_is_20 --- PASS: TestInAppNotificationListLimitContract/default_limit_is_20 (0.01s) === RUN TestInAppNotificationListLimitContract/explicit_limit_1 --- PASS: TestInAppNotificationListLimitContr…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestInAppNotificationListLimitContract": "status = 200, want 400"
+      },
+      "fingerprint": "1d93434705c2ddc1a7945ba1d874d229e1707164935c31e4e863989e54e2091d"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-11T16:16:50.071Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestInAppNotificationsListReturnsOwnRowsNewestFirst|TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent|TestInAppNotificationListLimitContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationsListReturnsOwnRowsNewestFirst",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationListLimitContract",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1d93434705c2ddc1a7945ba1d874d229e1707164935c31e4e863989e54e2091d"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-11T16:19:34.585Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 771,
+        "executed": 771,
+        "passed": 771,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "771 passed, 0 allowed skip(s)",
+      "fingerprint": "1d93434705c2ddc1a7945ba1d874d229e1707164935c31e4e863989e54e2091d"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-11T16:23:26.684Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 459,
+        "executed": 459,
+        "passed": 459,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 790,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "1d93434705c2ddc1a7945ba1d874d229e1707164935c31e4e863989e54e2091d"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-11T16:23:58.363Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /private/tmp/claude-501/-Users-thanhnguyen-Documents-Projects-nihongo-bjt/f6059b3a-dbe0-4a3f-ac37-5edbd1a160ca/scratchpad/audit108-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "1d93434705c2ddc1a7945ba1d874d229e1707164935c31e4e863989e54e2091d"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-11T16:24:52.770Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash docs/migrations/go-backend-v2/scripts/audit108-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "57756b94f00823d912bdfaf53cf05afe2f31bb390499ab0e3afc7d57e2d6da4a"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-11T16:25:09.169Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestInAppNotificationsListReturnsOwnRowsNewestFirst|TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent|TestInAppNotificationListLimitContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationsListReturnsOwnRowsNewestFirst",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationListLimitContract",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "57756b94f00823d912bdfaf53cf05afe2f31bb390499ab0e3afc7d57e2d6da4a"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-11T16:27:44.193Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 771,
+        "executed": 771,
+        "passed": 771,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "771 passed, 0 allowed skip(s)",
+      "fingerprint": "57756b94f00823d912bdfaf53cf05afe2f31bb390499ab0e3afc7d57e2d6da4a"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-11T16:31:32.969Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 459,
+        "executed": 459,
+        "passed": 459,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 790,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "57756b94f00823d912bdfaf53cf05afe2f31bb390499ab0e3afc7d57e2d6da4a"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-11T16:31:57.133Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash docs/migrations/go-backend-v2/scripts/audit108-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "57756b94f00823d912bdfaf53cf05afe2f31bb390499ab0e3afc7d57e2d6da4a"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-11T23:43:11.374Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestInAppNotificationsListReturnsOwnRowsNewestFirst|TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent|TestInAppNotificationListLimitContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationsListReturnsOwnRowsNewestFirst",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationListLimitContract",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "6c028c5c69032e5fc518022e3f684f84034e54b8bad78a258dc0155d629f9c51"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-11T23:45:46.049Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 771,
+        "executed": 771,
+        "passed": 771,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "771 passed, 0 allowed skip(s)",
+      "fingerprint": "6c028c5c69032e5fc518022e3f684f84034e54b8bad78a258dc0155d629f9c51"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-11T23:49:39.496Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 459,
+        "executed": 459,
+        "passed": 459,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 790,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "6c028c5c69032e5fc518022e3f684f84034e54b8bad78a258dc0155d629f9c51"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-11T23:50:10.430Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash docs/migrations/go-backend-v2/scripts/audit108-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "6c028c5c69032e5fc518022e3f684f84034e54b8bad78a258dc0155d629f9c51"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-11T23:53:22.472Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestInAppNotificationsListReturnsOwnRowsNewestFirst|TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent|TestInAppNotificationListLimitContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationsListReturnsOwnRowsNewestFirst",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationListLimitContract",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e01ebbc56d0fbf531e0be22e65b358443febd21480dcf1861c64fcd53425f3b0"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-11T23:55:58.798Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 771,
+        "executed": 771,
+        "passed": 771,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "771 passed, 0 allowed skip(s)",
+      "fingerprint": "e01ebbc56d0fbf531e0be22e65b358443febd21480dcf1861c64fcd53425f3b0"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-11T23:59:07.964Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 459,
+        "executed": 459,
+        "passed": 459,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 790,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "e01ebbc56d0fbf531e0be22e65b358443febd21480dcf1861c64fcd53425f3b0"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-11T23:59:39.789Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash docs/migrations/go-backend-v2/scripts/audit108-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "e01ebbc56d0fbf531e0be22e65b358443febd21480dcf1861c64fcd53425f3b0"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-12T00:02:04.964Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestInAppNotificationsListReturnsOwnRowsNewestFirst|TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent|TestInAppNotificationListLimitContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationsListReturnsOwnRowsNewestFirst",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationMarkReadIsOwnerScopedAndIdempotent",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestInAppNotificationListLimitContract",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ec497283766caf4e668842631ef8f41bec8327e8f72573e5df0c116c30e86dc9"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-12T00:04:39.938Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 771,
+        "executed": 771,
+        "passed": 771,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "771 passed, 0 allowed skip(s)",
+      "fingerprint": "ec497283766caf4e668842631ef8f41bec8327e8f72573e5df0c116c30e86dc9"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-12T00:07:52.676Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 459,
+        "executed": 459,
+        "passed": 459,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 790,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "ec497283766caf4e668842631ef8f41bec8327e8f72573e5df0c116c30e86dc9"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-12T00:08:19.663Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit108-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "ec497283766caf4e668842631ef8f41bec8327e8f72573e5df0c116c30e86dc9"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-12T00:11:27.695Z",
+      "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "fresh-review-round5",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "77888b6143bc5efb5f993fcb9435dd072a5dc68a9c17cbfec23f859674f646d6",
+      "attested": true,
+      "fingerprint": "ec497283766caf4e668842631ef8f41bec8327e8f72573e5df0c116c30e86dc9"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-12T00:11:31.801Z",
+    "head": "5cab832aead2c3f02a8cc02b008fcc4cccacbabd",
+    "fingerprint": "ec497283766caf4e668842631ef8f41bec8327e8f72573e5df0c116c30e86dc9",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_in_app_notification.go": "a952f9ab3947494fe18354536192601f3ab7133e",
+      "apps/api-go/internal/httpserver/handler_in_app_notification_test.go": "70ec084d84a2704c76b6d2d3d29c2e7196289427",
+      "apps/api-go/internal/httpserver/handler_quiz_test.go": "896fbe46253d53b94841511e284a7d33f802f36a",
+      "apps/api-go/internal/httpserver/server.go": "4ba47739ae8dcf66399aec6cf2f734e1cf4b8fbc",
+      "apps/api-go/internal/notification/store.go": "29ca652631f5514a11349d0ffb6ec5e3c25d1a6a",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "f04d827ca5f9e2acdcbae03bd6b408767c609a74",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "81f27656fd608c8051bd6a72fc7a3aa291a3eafa",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "512dcdc751bbe4a551deb39f1fe075326b5b1ca8",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "5f519c3e6946176ef7c489e9d9677a09ab66b9ea",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "027ba0a30d0125c51bae11fed1deaa97418e3a5c",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "47629ddb8060a5b4168ebefd303e82e81c313cc1",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "efd7ca90bf95fc6548e4cdde6f13fc4bd5ed187f",
+      "e2e/audit/audit108-browser-check.sh": "b71fee792259f264ed5a0cb6f2aa8f3380f5877d",
+      "packages/shared/src/index.js": "57902f43634813acf6b5ff66711a532399ced41d",
+      "packages/shared/src/index.ts": "a8bf889dc1291bc0677b8ebc2ab8f3371bb82cad"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": [
+      {
+        "id": "83ce2266-a68a-4573-973c-28f29d3abef5",
+        "task": "AUDIT-108",
+        "action": {
+          "kind": "delete_persistent_data",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "cd9db25017c780496eae9806f1ee2a52030b0589a6ffe78c326455b1b35c5f15",
+            "environment": "local"
+          },
+          "impact": "Destroy potentially persistent data",
+          "command": "rm -f tmp/.review-run.log && SCR=/private/tmp/claude-501/-Users-thanhnguyen-Documents-Projects-nihongo-bjt/f6059b3a-dbe0-4a3f-ac37-5edbd1a160ca/scratchpad && rm -rf $SCR/mut && mkdir -p $SCR/mut && cp -R apps/api-go $SCR/mut/ && grep -n 'replace\\|^go ' $SCR/mut/api-go/go.mod | head; F=$SCR/mut/api-go/internal/httpserver/handler_in_app_notification.go && sed -i '' 's/parsed > inAppNotificationMaxLimit {/parsed > 1000000 {/' $F && grep -n 'parsed > ' $F && echo \"mutation applied to scratch copy only\""
+        },
+        "impact": "Destroy potentially persistent data",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "cd9db25017c780496eae9806f1ee2a52030b0589a6ffe78c326455b1b35c5f15",
+          "environment": "local"
+        },
+        "digest": "a5bf31f20a1eda0b058093bd07f38258a7156b488a0bddb8631876f9e5b29545",
+        "continuation": {
+          "step": "native:toolu_01N5jCWjU1gYMBX2xsL9gKAg",
+          "native_tool_use_id": "toolu_01N5jCWjU1gYMBX2xsL9gKAg"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "native_permission_once",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-11T16:33:33.592Z"
+      },
+      {
+        "id": "ddf9fd30-43bd-430d-b3f1-25a001ff977f",
+        "task": "AUDIT-108",
+        "action": {
+          "kind": "delete_persistent_data",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "75c096edc0ba337745572c4ad7a3836b0a044b4e25cd4e9f2603e297bd4359fa",
+            "environment": "local"
+          },
+          "impact": "Destroy potentially persistent data",
+          "command": "mkdir -p e2e/audit && python3 -I - <<'EOF'\nsrc=\"docs/migrations/go-backend-v2/scripts/audit108-browser-check.sh\"\ndst=\"e2e/audit/audit108-browser-check.sh\"\ns=open(src,encoding=\"utf-8\").read()\ndef rep(old,new):\n    global s\n    assert s.count(old)==1,(s.count(old),old[:80])\n    s=s.replace(old,new)\nrep(\"\"\"[[ \"$anon_list\" == *'401'* ]] || { echo \"anon list status=$anon_list, want 401\"; exit 1; }\"\"\",\n    \"\"\"[[ \"$anon_list\" == \"401\" ]] || { echo \"anon list status=$anon_list, want exactly 401\"; exit 1; }\"\"\")\nrep(\"\"\"[[ \"$anon_mark\" == *'401'* ]] || { echo \"anon mark-read status=$anon_mark, want 401\"; exit 1; }\"\"\",\n    \"\"\"[[ \"$anon_mark\" == \"401\" ]] || { echo \"anon mark-read status=$anon_mark, want exactly 401\"; exit 1; }\"\"\")\nrep(\"\"\"cleanup() { docker exec nihongo-bjt-postgres psql -U postgres -d nihongo_bjt -At -c \"DELETE FROM profile.in_app_notification WHERE user_id='$user_id'::uuid AND kind='audit108_fixture';\" >/dev/null || true; }\"\"\",\n    \"\"\"cleanup() {\n  if ! docker exec nihongo-bjt-postgres psql -U postgres -d nihongo_bjt -At -c \"DELETE FROM profile.in_app_notification WHERE user_id='$user_id'::uuid AND kind='audit108_fixture';\" >/dev/null; then\n    echo \"WARNING: failed to delete audit108 fixtures for $user_id\" >&2\n  fi\n}\"\"\")\nrep(\"\"\"docker exec nihongo-bjt-postgres psql -U postgres -d nihongo_bjt -At -c \"INSERT INTO profile.in_app_notification\"\"\",\n    \"\"\"docker exec nihongo-bjt-postgres psql -U postgres -d nihongo_bjt -At -c \"DELETE FROM profile.in_app_notification WHERE user_id='$user_id'::uuid AND kind='audit108_fixture';\" >/dev/null\ndocker exec nihongo-bjt-postgres psql -U postgres -d nihongo_bjt -At -c \"INSERT INTO profile.in_app_notification\"\"\")\nopen(dst,\"w\",encoding=\"utf-8\").write(s)\nprint(\"written\", dst)\nEOF\nchmod +x e2e/audit/audit108-browser-check.sh && bash -n e2e/audit/audit108-browser-check.sh && echo SYNTAX_OK && git rm -q --cached docs/migrations/go-backend-v2/scripts/audit108-browser-check.sh 2>/dev/null; rm -f docs/migrations/go-backend-v2/scripts/audit108-browser-check.sh && git status --short"
+        },
+        "impact": "Destroy potentially persistent data",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "75c096edc0ba337745572c4ad7a3836b0a044b4e25cd4e9f2603e297bd4359fa",
+          "environment": "local"
+        },
+        "digest": "b7608be8251daad3e26044d4fc8df9148555db844a4309b07ce6c0185853e336",
+        "continuation": {
+          "step": "native:toolu_01YNuuqCQBJaBe8HDg5u2MHb",
+          "native_tool_use_id": "toolu_01YNuuqCQBJaBe8HDg5u2MHb"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "native_permission_once",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-12T00:01:18.731Z"
+      }
+    ]
+  }
+}

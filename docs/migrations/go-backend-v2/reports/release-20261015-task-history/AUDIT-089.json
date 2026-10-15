@@ -1,0 +1,283 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-089",
+  "title": "Audit learner privacy screen",
+  "start_head": "eb5ffcf2bebb7c3aff0203e75931bd4974ee3cac",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Learner Privacy Policy tells readers to open Settings > Privacy or the Feedback page, but those references are plain text and cannot take readers to the actual data controls or support route.",
+    "observed_behavior": "The public policy renders localized body copy without working links from the data-rights and contact sections.",
+    "expected_behavior": "In vi/en/ja, the data-rights section exposes a localized link to the learner privacy settings, and the contact section exposes a localized link to Feedback; the policy remains public and fits a 390x844 viewport.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Anonymous /:locale/privacy renders the five policy sections and locale-specific metadata/copy for vi, en and ja."
+      },
+      {
+        "id": "AC2",
+        "text": "The data-rights and contact sections expose keyboard-accessible, locale-preserving links to /:locale/settings/privacy and /:locale/feedback."
+      },
+      {
+        "id": "AC3",
+        "text": "At 390x844 the policy has no horizontal overflow and linked destinations resolve on the public learner origin."
+      }
+    ],
+    "rollback_plan": "Revert only the Privacy Policy page link rendering, its localized link labels, and regression test; no user or policy data is changed."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Make existing policy instructions actionable with localized links; no legal claims or stored data change."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/privacy/page.test.tsx",
+      "test": "Privacy policy links > directs data rights readers to privacy settings",
+      "expect": "href=\"/vi/settings/privacy\""
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-09T20:46:10.281Z",
+      "head": "eb5ffcf2bebb7c3aff0203e75931bd4974ee3cac"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-09T21:04:37.224Z",
+      "head": "eb5ffcf2bebb7c3aff0203e75931bd4974ee3cac"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T21:04:43.257Z",
+      "head": "eb5ffcf2bebb7c3aff0203e75931bd4974ee3cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T22:24:53.144Z",
+      "head": "eb5ffcf2bebb7c3aff0203e75931bd4974ee3cac"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T23:06:17.921Z",
+      "head": "eb5ffcf2bebb7c3aff0203e75931bd4974ee3cac"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-09T23:40:51.011Z",
+      "head": "eb5ffcf2bebb7c3aff0203e75931bd4974ee3cac"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-10T02:44:22.427Z",
+      "head": "eb5ffcf2bebb7c3aff0203e75931bd4974ee3cac"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-09T21:10:07.744Z",
+      "head": "eb5ffcf2bebb7c3aff0203e75931bd4974ee3cac",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/privacy/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/privacy/page.test.tsx::Privacy policy links > directs data rights readers to privacy settings",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"Privacy policy links > directs data rights readers to privacy settings\" in apps/web/app/[locale]/privacy/page.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/privacy/page.test.tsx::Privacy policy links > directs data rights readers to privacy settings (vi)",
+          "outcome": "FAIL",
+          "excerpt": "expected '<main class=\"mx-auto w-full max-w-2xl…' to contain 'href=\"/vi/settings/privacy\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/privacy/page.test.tsx::Privacy policy links > directs data rights readers to privacy settings": "href=\"/vi/settings/privacy\"",
+        "vitest:apps/web/app/[locale]/privacy/page.test.tsx::Privacy policy links > directs data rights readers to privacy settings (vi)": "href=\"/vi/settings/privacy\""
+      },
+      "fingerprint": "87c158c8d1fa26c4c873374e6159e0a8f62b5ed479dc7b03c66402e02051348b"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-09T21:10:18.620Z",
+      "head": "eb5ffcf2bebb7c3aff0203e75931bd4974ee3cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/privacy/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/privacy/page.test.tsx::Privacy policy links > directs data rights readers to privacy settings (vi)",
+          "outcome": "FAIL",
+          "excerpt": "expected '<main class=\"mx-auto w-full max-w-2xl…' to contain 'href=\"/vi/settings/privacy\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/privacy/page.test.tsx::Privacy policy links > directs data rights readers to privacy settings (vi)": "href=\"/vi/settings/privacy\""
+      },
+      "fingerprint": "87c158c8d1fa26c4c873374e6159e0a8f62b5ed479dc7b03c66402e02051348b"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-09T21:11:43.436Z",
+      "head": "eb5ffcf2bebb7c3aff0203e75931bd4974ee3cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/privacy/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/privacy/page.test.tsx::Privacy policy links > directs data rights readers to privacy settings (vi)",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "6ec2ab4d4aca0745b1595b55d2c6b9088c18535a9f0f2b2f5e60606349aa8b1a"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-09T21:36:10.226Z",
+      "head": "eb5ffcf2bebb7c3aff0203e75931bd4974ee3cac",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 419,
+        "executed": 419,
+        "passed": 419,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 776,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "6ec2ab4d4aca0745b1595b55d2c6b9088c18535a9f0f2b2f5e60606349aa8b1a"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-09T22:24:52.762Z",
+      "head": "eb5ffcf2bebb7c3aff0203e75931bd4974ee3cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/privacy/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/privacy/page.test.tsx::Privacy policy links > directs data rights readers to privacy settings",
+          "outcome": "FAIL",
+          "excerpt": "expected '<main class=\"mx-auto w-full max-w-2xl…' to contain 'href=\"/vi/settings/privacy\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/privacy/page.test.tsx::Privacy policy links > directs data rights readers to privacy settings": "href=\"/vi/settings/privacy\""
+      },
+      "fingerprint": "0f09309ef5b67244265f03e3facc16aacafcf7ef1bfb870fdf439f6b8fb3fb6d"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-09T23:06:17.529Z",
+      "head": "eb5ffcf2bebb7c3aff0203e75931bd4974ee3cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/privacy/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/privacy/page.test.tsx::Privacy policy links > directs data rights readers to privacy settings",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0f09309ef5b67244265f03e3facc16aacafcf7ef1bfb870fdf439f6b8fb3fb6d"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-09T23:40:50.679Z",
+      "head": "eb5ffcf2bebb7c3aff0203e75931bd4974ee3cac",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 415,
+        "executed": 415,
+        "passed": 415,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 776,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "0f09309ef5b67244265f03e3facc16aacafcf7ef1bfb870fdf439f6b8fb3fb6d"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-10T02:44:22.403Z",
+    "head": "eb5ffcf2bebb7c3aff0203e75931bd4974ee3cac",
+    "fingerprint": "0f09309ef5b67244265f03e3facc16aacafcf7ef1bfb870fdf439f6b8fb3fb6d",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/privacy/page.test.tsx": "65746446f04e109f9ba9661e183a6bd9d3284dd1",
+      "apps/web/app/[locale]/privacy/page.tsx": "fb9f25e75d9dc186f4b3313d47647afeff3fedf2",
+      "apps/web/messages/en.json": "0dbc040411fd9223c3dcb3cd412cd748bc813c0c",
+      "apps/web/messages/ja.json": "29fc895c416d7cb21cfd1569c9f52321f05df2b5",
+      "apps/web/messages/vi.json": "7d3ea44243aa5d1110407dee4f51deadf78df8b3"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

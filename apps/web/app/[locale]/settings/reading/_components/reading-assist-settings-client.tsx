@@ -49,6 +49,7 @@ type Props = {
 export function ReadingAssistSettingsClient({ labels }: Props) {
   const { userId } = useGoAuth();
   const [displayMode, setDisplayMode] = useState<ReadingAssistDisplayMode>("hover");
+  const [showRomaji, setShowRomaji] = useState(false);
   const [examTimed, setExamTimed] = useState(false);
   const [prefsMessage, setPrefsMessage] = useState<string | null>(null);
 
@@ -65,6 +66,7 @@ export function ReadingAssistSettingsClient({ labels }: Props) {
       if (j.displayMode) {
         setDisplayMode(j.displayMode);
       }
+      setShowRomaji(j.showRomaji);
     }
   }, [userId]);
 
@@ -76,7 +78,7 @@ export function ReadingAssistSettingsClient({ labels }: Props) {
       return;
     }
     const r = await learnerApiFetch("/api/reading-assist/preferences", {
-      body: JSON.stringify({ displayMode, userId: uid }),
+      body: JSON.stringify({ displayMode, showRomaji, userId: uid }),
       headers: { "content-type": "application/json" },
       method: "PUT"
     });
@@ -85,7 +87,7 @@ export function ReadingAssistSettingsClient({ labels }: Props) {
       return;
     }
     setPrefsMessage(labels.prefsSaved);
-  }, [displayMode, labels.prefsError, labels.prefsSaved, userId]);
+  }, [displayMode, labels.prefsError, labels.prefsSaved, showRomaji, userId]);
 
   useEffect(() => {
     void loadPrefs();

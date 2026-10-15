@@ -1,0 +1,720 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-067",
+  "title": "Restore learner daily detail and actions",
+  "start_head": "08bcb4826389c06531222c3e032164688ca71094",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Visible anonymous daily detail renders canonical published item."
+      },
+      {
+        "id": "AC2",
+        "text": "Authenticated flashcard, quiz, and useful actions persist and return contract responses; anonymous/invalid requests are rejected."
+      },
+      {
+        "id": "AC3",
+        "text": "Missing items return 404; database failures return 5xx with stable JSON error contract; no content tables are mutated by detail reads."
+      }
+    ],
+    "expected_behavior": "Published daily content detail loads from PostgreSQL for anonymous and authenticated learners; learner actions persist through authenticated, CSRF-protected APIs and return meaningful results.",
+    "observed_behavior": "DailyDetailClient requests /api/daily/items/{id}, but Go exposes no matching route; published local item c254ac94-8611-4689-81f3-6b6f072c6f51 renders 'Không tìm thấy nội dung này' from real visible browser.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DOMAIN_LOGIC",
+      "AUTH_SECURITY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestDailyDetailRouteReadsPublishedContent",
+      "expect": "daily detail status=404"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF",
+      "expect": "untrusted origin status=404"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-08T03:23:45.622Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-08T03:23:46.027Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T03:23:46.401Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T03:25:51.114Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T03:29:45.317Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T03:50:36.041Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T03:54:54.783Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T04:00:26.860Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T04:06:05.965Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T04:09:12.842Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T04:09:53.740Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-08T04:16:38.324Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-08T04:17:40.692Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-08T03:25:30.892Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDailyDetailRouteReadsPublishedContent)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestDailyDetailRouteReadsPublishedContent handler_daily_detail_contract_test.go:16: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestDailyDetailRouteReadsPublishedContent (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent": "daily detail status=404"
+      },
+      "fingerprint": "1d21d1bc48f93a44a0672723f3d30a1623e8f5aa7552e5012666572fe47e920a"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-08T03:25:37.851Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDailyDetailRouteReadsPublishedContent)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDailyDetailRouteReadsPublishedContent handler_daily_detail_contract_test.go:23: insert daily content fixture: ERROR: null value in column \"updated_at\" of relation \"daily_content_item\" violates not-null constraint (SQLSTATE 23502) --- FAIL: TestDailyDetailRouteReadsPublishedContent (0.02s…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"daily detail status=404\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent": "daily detail status=404"
+      },
+      "fingerprint": "1d21d1bc48f93a44a0672723f3d30a1623e8f5aa7552e5012666572fe47e920a"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-08T03:25:50.830Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDailyDetailRouteReadsPublishedContent)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDailyDetailRouteReadsPublishedContent handler_daily_detail_contract_test.go:35: daily detail status=404 body=404 page not found --- FAIL: TestDailyDetailRouteReadsPublishedContent (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent": "daily detail status=404"
+      },
+      "fingerprint": "a2fc1cbbcc7845ff02f588c2eb68be531011b723710099af0784b0f6d9cd602e"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-08T03:29:32.884Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDailyDetailRouteReadsPublishedContent)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestDailyDetailRouteReadsPublishedContent handler_daily_detail_contract_test.go:19: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestDailyDetailRouteReadsPublishedContent (0.00s)"
+        }
+      ],
+      "fingerprint": "2ca020fa9eb83cc72dfcb78301b43f857e3f2c81b21bf5be5e4356f5d0fd3aa7"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-08T03:29:44.984Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDailyDetailRouteReadsPublishedContent)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "2ca020fa9eb83cc72dfcb78301b43f857e3f2c81b21bf5be5e4356f5d0fd3aa7"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-08T03:31:28.548Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 660,
+        "executed": 660,
+        "passed": 638,
+        "failed": 22,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 22 failing test(s), 2 failing package(s))",
+      "fingerprint": "2ca020fa9eb83cc72dfcb78301b43f857e3f2c81b21bf5be5e4356f5d0fd3aa7"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-08T03:33:40.209Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 351,
+        "executed": 351,
+        "passed": 351,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 748,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "2ca020fa9eb83cc72dfcb78301b43f857e3f2c81b21bf5be5e4356f5d0fd3aa7"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-08T03:36:06.825Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 660,
+        "executed": 660,
+        "passed": 660,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "660 passed, 0 allowed skip(s)",
+      "fingerprint": "2ca020fa9eb83cc72dfcb78301b43f857e3f2c81b21bf5be5e4356f5d0fd3aa7"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-08T03:38:04.585Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 351,
+        "executed": 351,
+        "passed": 351,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 748,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "2ca020fa9eb83cc72dfcb78301b43f857e3f2c81b21bf5be5e4356f5d0fd3aa7"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-08T03:50:35.723Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 661,
+        "executed": 661,
+        "passed": 661,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "661 passed, 0 allowed skip(s)",
+      "fingerprint": "6d3871c4277a9f04d3b984053c125680a17995c6e4f7b8ead3de260e2d4aa898"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-08T03:54:42.922Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDailyDetailRouteReadsPublishedContent)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestDailyDetailRouteReadsPublishedContent handler_daily_detail_contract_test.go:20: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestDailyDetailRouteReadsPublishedContent (0.00s)"
+        }
+      ],
+      "fingerprint": "6d3871c4277a9f04d3b984053c125680a17995c6e4f7b8ead3de260e2d4aa898"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-08T03:54:54.401Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDailyDetailRouteReadsPublishedContent)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "6d3871c4277a9f04d3b984053c125680a17995c6e4f7b8ead3de260e2d4aa898"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-08T03:58:32.185Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 351,
+        "executed": 351,
+        "passed": 351,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 748,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "6d3871c4277a9f04d3b984053c125680a17995c6e4f7b8ead3de260e2d4aa898"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-08T04:00:26.563Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "tmp/local-audit/daily-detail-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "6d3871c4277a9f04d3b984053c125680a17995c6e4f7b8ead3de260e2d4aa898"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-08T04:06:05.667Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDailyDetailRouteReadsPublishedContent|TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_daily_detail_contract_test.go:98:13: undefined: dailyItemActionHandler internal/httpserver/handler_daily_detail_contract_test.go:160:13: unde…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_daily_detail_contract_test.go:98:13: undefined: dailyItemActionHandler internal/httpserver/handler_daily_detail_contract_test.go:160:13: unde…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent": "daily detail status=404",
+        "go:./internal/httpserver:TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF": "mounted authenticated daily actions persist the returned quiz and generated deck; CSRF rejects untrusted origins and learner guard rejects anonymous calls"
+      },
+      "fingerprint": "dd0fd9a143e2edb551716bb10de1982060a23372ee6db44249af9f4542335c26"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-08T04:07:55.146Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDailyDetailRouteReadsPublishedContent|TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_daily_detail_contract_test.go:12:2: \"github.com/jackc/pgx/v5/pgxpool\" imported and not used internal/httpserver/handler_daily_detail_contract…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_daily_detail_contract_test.go:12:2: \"github.com/jackc/pgx/v5/pgxpool\" imported and not used internal/httpserver/handler_daily_detail_contract…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent": "daily detail status=404",
+        "go:./internal/httpserver:TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF": "mounted authenticated daily actions persist returned quiz and generated deck; CSRF rejects untrusted origins and learner guard rejects anonymous calls"
+      },
+      "fingerprint": "2ac1e47676ef5905f7ab6bceaed30c1153cadd4974513bd13a28e82e0f21cd1a"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-08T04:08:17.548Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDailyDetailRouteReadsPublishedContent|TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_daily_detail_contract_test.go:233:8: undefined: dailySuggestedQuiz internal/httpserver/handler_daily_detail_contract_test.go:238:16: undefine…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_daily_detail_contract_test.go:233:8: undefined: dailySuggestedQuiz internal/httpserver/handler_daily_detail_contract_test.go:238:16: undefine…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent": "daily detail status=404",
+        "go:./internal/httpserver:TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF": "mounted authenticated daily actions persist returned quiz and generated deck; CSRF rejects untrusted origins and learner guard rejects anonymous calls"
+      },
+      "fingerprint": "c7f25e56df5d9c7f7dec1ec4ca3a7e7e9c4d847bb49eb1bb4a4f55c13795b558"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-08T04:08:48.529Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDailyDetailRouteReadsPublishedContent|TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDailyDetailRouteReadsPublishedContent handler_daily_detail_contract_test.go:44: daily detail status=404 body=404 page not found --- FAIL: TestDailyDetailRouteReadsPublishedContent (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF handler_daily_detail_contract_test.go:226: untrusted origin status=404 body=404 page not found --- FAIL: TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF (0.03s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"mounted authenticated daily actions persist returned quiz and generated deck; CSRF rejects untrusted origins and learner guard rejects anonymous calls\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent": "daily detail status=404",
+        "go:./internal/httpserver:TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF": "mounted authenticated daily actions persist returned quiz and generated deck; CSRF rejects untrusted origins and learner guard rejects anonymous calls"
+      },
+      "fingerprint": "f617d45dad0602e3037d745390fbd06221bfe5631e2d3c3c7ba136e0459a186b"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-08T04:09:12.560Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDailyDetailRouteReadsPublishedContent|TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDailyDetailRouteReadsPublishedContent handler_daily_detail_contract_test.go:44: daily detail status=404 body=404 page not found --- FAIL: TestDailyDetailRouteReadsPublishedContent (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF handler_daily_detail_contract_test.go:226: untrusted origin status=404 body=404 page not found --- FAIL: TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent": "daily detail status=404",
+        "go:./internal/httpserver:TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF": "untrusted origin status=404"
+      },
+      "fingerprint": "f617d45dad0602e3037d745390fbd06221bfe5631e2d3c3c7ba136e0459a186b"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-08T04:09:53.460Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDailyDetailRouteReadsPublishedContent|TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDailyDetailRouteReadsPublishedContent",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestDailyItemActionsThroughRouterPersistPayloadsAndEnforceCSRF",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f617d45dad0602e3037d745390fbd06221bfe5631e2d3c3c7ba136e0459a186b"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-08T04:12:22.107Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 662,
+        "executed": 662,
+        "passed": 662,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "662 passed, 0 allowed skip(s)",
+      "fingerprint": "f617d45dad0602e3037d745390fbd06221bfe5631e2d3c3c7ba136e0459a186b"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-08T04:15:38.413Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 351,
+        "executed": 351,
+        "passed": 351,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 748,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "f617d45dad0602e3037d745390fbd06221bfe5631e2d3c3c7ba136e0459a186b"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-08T04:15:54.037Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Feynman",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "f617d45dad0602e3037d745390fbd06221bfe5631e2d3c3c7ba136e0459a186b"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-08T04:16:38.046Z",
+      "head": "08bcb4826389c06531222c3e032164688ca71094",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "tmp/local-audit/daily-detail-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "f617d45dad0602e3037d745390fbd06221bfe5631e2d3c3c7ba136e0459a186b"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-08T04:17:40.675Z",
+    "head": "08bcb4826389c06531222c3e032164688ca71094",
+    "fingerprint": "f617d45dad0602e3037d745390fbd06221bfe5631e2d3c3c7ba136e0459a186b",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_daily_detail.go": "3b313daa903115e0128927b2273f44ac206fc5d5",
+      "apps/api-go/internal/httpserver/handler_daily_detail_contract_test.go": "fcdcf3674a9056483c50ab62080a208fbc72da04",
+      "apps/api-go/internal/httpserver/server.go": "537ed0eac0dc15880037c6dbc21e8474b5ed560f",
+      "apps/web/app/[locale]/daily/[id]/daily-detail-client.tsx": "77fc59ea6068784e0d5b2bc1666bab175e5d42d2"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

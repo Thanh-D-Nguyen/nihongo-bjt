@@ -1,0 +1,221 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-017",
+  "title": "Align SQL conformance baseline with resolved audit defects",
+  "start_head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+  "preexisting_changes": {
+    ".quality/tasks/ctx-resume-1791168424.json": "39fe89f3617bfb95a702c09ce4aabffcaeb8f7bb",
+    "apps/admin/app/[locale]/access-denied/page.tsx": "c68e8af2a6f0746cd0e318a8de0db38e4b2f60b0",
+    "apps/admin/app/[locale]/login/_components/admin-login-form-client.tsx": "b82c38674e498f144d717ff592ac5dc4c5c54c19",
+    "apps/admin/app/[locale]/login/admin-login.regression.test.tsx": "5b11d85a87934d8ed3680c1754d03b34fc030a68",
+    "apps/admin/app/[locale]/login/page.tsx": "8c33a7b540c4ebf9de86a6d1dd8f9f3e5bc1f92c",
+    "apps/admin/app/auth/logout/page.tsx": "d86ad68fb3dfa9bdbac704899c04f131ab2fc0b3",
+    "apps/admin/lib/admin-api.ts": "e19f64369f0723fa79326a86f6ae83ea8c095bbc",
+    "apps/admin/lib/admin-overview-fetch.test.ts": "c551ec079ff3a0e04cb06d72801ee9eb59559234",
+    "apps/admin/lib/admin-overview-fetch.ts": "c2267b606100d8faae7be2c6bf6c5968402cd6c4",
+    "apps/admin/lib/admin-shell.regression.test.tsx": "55b1e94d273dca2be418c6026c6a879f045c0dd0",
+    "apps/admin/lib/resolve-admin-nav.ts": "54024b5d6443067d48eb4f771443046cc4f0256d",
+    "apps/admin/messages/en.json": "69bdc28b22618f0c3a5be64b5be770f56bcdc053",
+    "apps/admin/messages/ja.json": "8c371c5c05bfde3e8a37c84341de226e88b46e7e",
+    "apps/admin/messages/vi.json": "fd886017500b5ad3666721edfe15a31e5dd6311a",
+    "apps/admin/next-env.d.ts": "c4b7818fbb2c2c34c24feb1b627ee824507c5600",
+    "apps/admin/next.config.mjs": "a29e69ddd1777373ddc577abfd3ce85cce649af7",
+    "apps/admin/tsconfig.tsbuildinfo": "20868aaaf05dd14b127250d119cbda97e473f205",
+    "apps/api-go/cmd/create-test-creds/main.go": "eae3b397a5f12f5c5401c3484da23e845686aabd",
+    "apps/api-go/cmd/reset-admin-cred/main.go": "c39d53f0ce4fa29c2a3ef6b813b1abfe9af28cad",
+    "apps/api-go/deploy/local/Caddyfile": "880720642204d8f7afb53bf961224b25afac9016",
+    "apps/api-go/internal/httpserver/handler_admin_ads.go": "079e708b10af9fff5de7707fb525ac1b53ace481",
+    "apps/api-go/internal/httpserver/handler_admin_analytics.go": "1b6248374040a38c57f9463fcd1139c79a44ea26",
+    "apps/api-go/internal/httpserver/handler_admin_analytics_executive_test.go": "1d78fa48e0fbf965087b8a6bec1b89f4ec5a0a00",
+    "apps/api-go/internal/httpserver/handler_admin_assessment_mock_exams.go": "0c64712699968ab196989c54a5fde0458007de4e",
+    "apps/api-go/internal/httpserver/handler_admin_assessment_mock_exams_test.go": "a6b6ae21254e337f0bf6c76691b9f12687e0e032",
+    "apps/api-go/internal/httpserver/handler_admin_core.go": "f17d7b7d4a0f96932d605765c50c96bf1922048d",
+    "apps/api-go/internal/httpserver/handler_admin_me_test.go": "702bbebb362a7b4924e50e5e7fc2db18b09eca4f",
+    "apps/api-go/internal/httpserver/handler_admin_rbac.go": "edcf8f767ba33fa949309f2bfbd7456af9378556",
+    "apps/api-go/internal/httpserver/handler_admin_rbac_test.go": "51c421cc9f311295136e78baa23d03258280c4ba",
+    "apps/api-go/internal/httpserver/handler_final_batch.go": "3124d1ab46c12045c588aa5967a942d2bbde4516",
+    "apps/api-go/internal/httpserver/handler_final_batch_test.go": "7c8265158d350c4a3c60a7af697931e59fef7de8",
+    "apps/api-go/internal/httpserver/handler_quiz.go": "0cb4f89fa3fe44b25bc0564c933de25db659713f",
+    "apps/api-go/internal/httpserver/handler_study_feed_test.go": "a1e9da063ed6d1d083be495926d4ea159d391a4a",
+    "apps/api-go/internal/httpserver/server.go": "5699a5e983617866e4c0d716bee2be936da04a8f",
+    "apps/api-go/internal/onboarding/store.go": "48c19592ef4012165d6b010f2763aa5ebfaebaa0",
+    "apps/api-go/internal/onboarding/store_test.go": "9f5a1ab847bdd26d7ede15081049197f63e7b387",
+    "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "50f7434a56612d2a1085f350b810b6f251b1c836",
+    "apps/web/app/[locale]/login/auth-pages.regression.test.tsx": "4dd7a5db264e70ef930ec4f1579b34eabbfbbec6",
+    "apps/web/app/[locale]/login/page.tsx": "654fc22c46535743d2f08cd76715e44690140a95",
+    "apps/web/app/[locale]/register/page.tsx": "2aa45faeea0da3a919c884dc6b95f7f367cda8b2",
+    "apps/web/next-env.d.ts": "c4b7818fbb2c2c34c24feb1b627ee824507c5600",
+    "apps/web/public/__local-audit-api-probe.html": "5698fee7077de4433c4062b33a4a46bef0cfc9ee",
+    "deploy/local/Caddyfile": "72470e3b466c4a48dd7a573271d8458479e27266",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "c6d8aa42ba809bbe2060f7f2b6b5e52f193d937d",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "8487728d2aac033244e52e9e2ea67c51069b9110",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "7f9286023badf026519f9af68c7e21d10e96ccda",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "9cde135cae4e26adc1eac9947bed1944422e11f9",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "de91e8bda3c6d4f4a7ddfa301e73ffbc62373b61",
+    "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "aad8f5a79cca5fc3e43f63ba7891d238e7938115",
+    "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "10dcb526bb33c73f06ca40c9b0ebe99bfe993565",
+    "packages/database/prisma/migrations/20261006100000_onboarding_profile_preferences/migration.sql": "3da2325aa59c04dc632a7a515f4fdff2a6b1dd65",
+    "packages/database/prisma/schema.prisma": "0646140a9869abc692fbda4414286194ae581ff5",
+    "packages/ui/src/admin-shell.tsx": "ba1339c8c34da6b93fe433bbe260f2928ffa867e",
+    "prisma.config.ts": "02db95a7ee97e32ead17e9e82602c0e78e38924e",
+    "scripts/local-audit-status.mjs": "d0f98373f463c744dc6d03e40f4ef588c7490ab4",
+    "scripts/local-audit-up.mjs": "d68ac30f32a1113b3e9958508757667267dd90e8"
+  },
+  "spec": {
+    "problem": "The Go SQL conformance baseline still lists known-missing-table failures for queries already removed by active local audit fixes.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Canonical SQL conformance test passes and no known-fixed audit query remains in its stale-baseline list."
+      }
+    ],
+    "expected_behavior": "The shared baseline contains only current unresolved SQL drift and its checked-statement floor accurately reflects the current Go source set.",
+    "observed_behavior": "Full suite reported fixed drift entries for analytics.analytics_rollup_run, assessment.bjt_mock_test_question and analytics.event, as well as unrelated local SQL fixes; canonical baseline refresh passes the conformance test.",
+    "rollback_plan": "Restore the tracked baseline file; this changes only test expectations and no database or production data."
+  },
+  "classification": {
+    "classes": [
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-06T01:21:55.769Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-06T01:22:21.453Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-06T01:22:21.919Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-06T01:30:51.881Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-06T01:32:45.103Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-06T01:33:15.388Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-06T01:33:16.002Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-06T01:28:17.300Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "a2007a337a0de92ff1b47be2426f3d46a750136dab8849d32c03291a1c4b8ad1"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-06T01:30:51.648Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 483,
+        "executed": 477,
+        "passed": 477,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "477 passed, 6 allowed skip(s)",
+      "fingerprint": "a2007a337a0de92ff1b47be2426f3d46a750136dab8849d32c03291a1c4b8ad1"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-06T01:32:44.916Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Carson",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "443008619b366bed40bccca35ac085e8fcc1c19ce1eecda9dd95333aa6526c00",
+      "attested": true,
+      "fingerprint": "d4ab035275f0aa748506a1a60101661d2878c725995cb6cd5656f2905d56aac8"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-06T01:33:15.219Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Carson",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "a0be69ccad4f4e7316fcd93289b2f0c77109f7400387c66ecfd742de71e9560e",
+      "attested": true,
+      "fingerprint": "a2007a337a0de92ff1b47be2426f3d46a750136dab8849d32c03291a1c4b8ad1"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-06T01:33:15.983Z",
+    "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+    "fingerprint": "a2007a337a0de92ff1b47be2426f3d46a750136dab8849d32c03291a1c4b8ad1",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "50f7434a56612d2a1085f350b810b6f251b1c836"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [
+    "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json"
+  ]
+}

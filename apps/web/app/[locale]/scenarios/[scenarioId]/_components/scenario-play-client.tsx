@@ -26,6 +26,7 @@ interface Step {
 interface ScenarioData {
   id: string;
   titleVi: string;
+  titleJa?: string | null;
   difficulty: string;
   steps: Step[];
 }
@@ -38,12 +39,22 @@ interface ChoiceResult {
   feedbackVi: string | null;
 }
 
+interface AttemptResult { id: string; totalPoints: number; maxPoints: number }
+interface ScenarioPlayCopy {
+  loadError: string; answerError: string; completeError: string; notFound: string;
+  score: string; replay: string; back: string; step: string; stepLabel: string;
+  optimal: string; optimalAnswer: string; suboptimalAnswer: string; points: string;
+  showResult: string; continue: string; retry: string;
+}
+
 export function ScenarioPlayClient({
   locale,
   scenarioId,
+  copy,
 }: {
   locale: string;
   scenarioId: string;
+  copy: ScenarioPlayCopy;
 }) {
   const { userId } = useGoAuth();
   const router = useRouter();
@@ -58,25 +69,37 @@ export function ScenarioPlayClient({
   } | null>(null);
   const [results, setResults] = useState<ChoiceResult[]>([]);
   const [finished, setFinished] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState<AttemptResult | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const load = useCallback(async () => {
     if (!userId) return;
+    setLoading(true);
+    setError(null);
     try {
       const r = await learnerApiFetch(`/api/scenarios/${scenarioId}`);
-      if (r.ok) setScenario(await r.json());
+      if (r.status === 404) {
+        setError(copy.notFound);
+        return;
+      }
+      if (!r.ok) throw new Error("load");
+      setScenario(await r.json());
     } catch {
-      /* no-op */
+      setError(copy.loadError);
     } finally {
       setLoading(false);
     }
-  }, [userId, scenarioId]);
+  }, [userId, scenarioId, copy]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
   const handleChoice = async (step: Step, choiceKey: string) => {
-    if (selectedChoice) return;
+    if (selectedChoice || submitting) return;
+    setError(null);
+    setSubmitting(true);
     setSelectedChoice(choiceKey);
     try {
       const r = await learnerApiFetch(
@@ -87,22 +110,15 @@ export function ScenarioPlayClient({
           body: JSON.stringify({ choiceKey }),
         },
       );
-      if (r.ok) {
-        const data = await r.json();
-        setFeedback(data);
-        setResults((prev) => [
-          ...prev,
-          {
-            stepOrder: step.stepOrder,
-            choiceKey,
-            points: data.pointsAwarded,
-            isOptimal: data.isOptimal,
-            feedbackVi: data.feedbackVi,
-          },
-        ]);
-      }
+      if (!r.ok) throw new Error("answer");
+      const data = await r.json();
+      setFeedback(data);
+      setResults((prev) => [...prev, { stepOrder: step.stepOrder, choiceKey, points: data.pointsAwarded, isOptimal: data.isOptimal, feedbackVi: data.feedbackVi }]);
     } catch {
-      /* no-op */
+      setSelectedChoice(null);
+      setError(copy.answerError);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -110,15 +126,21 @@ export function ScenarioPlayClient({
     if (!scenario) return;
     if (currentStep >= scenario.steps.length - 1) {
       try {
-        await learnerApiFetch(`/api/scenarios/${scenarioId}/complete`, {
+        setError(null);
+        setSubmitting(true);
+        const response = await learnerApiFetch(`/api/scenarios/${scenarioId}/complete`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ choices: results }),
+          body: JSON.stringify({ choices: results.map(({ stepOrder, choiceKey, points }) => ({ stepOrder, choiceKey, points })) }),
         });
+        if (!response.ok) throw new Error("complete");
+        setAttempt(await response.json());
+        setFinished(true);
       } catch {
-        /* no-op */
+        setError(copy.completeError);
+      } finally {
+        setSubmitting(false);
       }
-      setFinished(true);
     } else {
       setCurrentStep((s) => s + 1);
       setSelectedChoice(null);
@@ -138,16 +160,17 @@ export function ScenarioPlayClient({
   if (!scenario) {
     return (
       <div className="mx-auto max-w-2xl p-4 text-center py-20">
-        <p className="text-muted">Không tìm thấy tình huống.</p>
+        <p className="text-muted">{error ?? copy.notFound}</p>
+        {error !== copy.notFound && <button className="mt-4 min-h-12 rounded-xl border px-5" onClick={() => void load()}>{copy.retry}</button>}
       </div>
     );
   }
 
   // Finished — show summary
   if (finished) {
-    const totalPoints = results.reduce((sum, r) => sum + r.points, 0);
-    const maxPossible = scenario.steps.length * 10;
-    const pct = Math.round((totalPoints / maxPossible) * 100);
+    const totalPoints = attempt?.totalPoints ?? 0;
+    const maxPossible = attempt?.maxPoints ?? 0;
+    const pct = maxPossible > 0 ? Math.round((totalPoints / maxPossible) * 100) : 0;
     const optimal = results.filter((r) => r.isOptimal).length;
 
     return (
@@ -157,13 +180,13 @@ export function ScenarioPlayClient({
             {pct >= 80 ? "🎉" : pct >= 50 ? "👍" : "💪"}
           </p>
           <h2 className="mt-3 text-lg font-black text-ink">
-            {scenario.titleVi}
+            {locale === "ja" ? scenario.titleJa || scenario.titleVi : scenario.titleVi}
           </h2>
           <p className="mt-2 text-2xl font-black text-[var(--color-matcha)]">
-            {totalPoints}/{maxPossible} điểm
+            {copy.score.replace("{total}", String(totalPoints)).replace("{max}", String(maxPossible))}
           </p>
           <p className="mt-1 text-sm text-muted">
-            {optimal}/{scenario.steps.length} câu tối ưu · {pct}%
+            {copy.optimal.replace("{count}", String(optimal)).replace("{total}", String(scenario.steps.length)).replace("{percent}", String(pct))}
           </p>
 
           <div className="mt-6 space-y-2 text-left">
@@ -177,7 +200,7 @@ export function ScenarioPlayClient({
                     : "bg-[var(--color-sakura)]/10",
                 )}
               >
-                <span className="font-bold">Bước {r.stepOrder}:</span>{" "}
+                <span className="font-bold">{copy.stepLabel.replace("{step}", String(r.stepOrder))}</span>{" "}
                 {r.feedbackVi}
                 <span className="ml-2 font-bold">+{r.points}</span>
               </div>
@@ -189,19 +212,20 @@ export function ScenarioPlayClient({
               onClick={() => {
                 setCurrentStep(0);
                 setResults([]);
+                setAttempt(null);
                 setFinished(false);
                 setSelectedChoice(null);
                 setFeedback(null);
               }}
               className="rounded-xl bg-[var(--color-matcha)] px-6 py-2.5 text-sm font-bold text-white"
             >
-              Chơi lại
+              {copy.replay}
             </button>
             <button
               onClick={() => router.push(`/${locale}/scenarios`)}
               className="rounded-xl border border-ink/15 px-6 py-2.5 text-sm font-medium text-muted"
             >
-              Quay lại
+              {copy.back}
             </button>
           </div>
         </div>
@@ -215,9 +239,9 @@ export function ScenarioPlayClient({
     <div className="mx-auto max-w-2xl p-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-bold text-ink">{scenario.titleVi}</h2>
+        <h2 className="text-sm font-bold text-ink">{locale === "ja" ? scenario.titleJa || scenario.titleVi : scenario.titleVi}</h2>
         <span className="text-xs text-muted">
-          Bước {currentStep + 1}/{scenario.steps.length}
+          {copy.step.replace("{current}", String(currentStep + 1)).replace("{total}", String(scenario.steps.length))}
         </span>
       </div>
 
@@ -251,8 +275,8 @@ export function ScenarioPlayClient({
           </div>
         )}
 
-        <p className="text-sm text-ink leading-[1.8]">{step.situationVi}</p>
-        {step.situationJa && (
+        <p className="text-sm text-ink leading-[1.8]">{locale === "ja" ? step.situationJa || step.situationVi : step.situationVi}</p>
+        {step.situationJa && locale !== "ja" && (
           <p className="mt-2 text-xs text-muted leading-[1.8] italic">
             {step.situationJa}
           </p>
@@ -275,7 +299,7 @@ export function ScenarioPlayClient({
               disabled={!!selectedChoice}
               onClick={() => void handleChoice(step, c.choiceKey)}
               className={cn(
-                "w-full rounded-xl border p-3 text-left text-sm transition-all",
+                "min-h-12 w-full rounded-xl border p-3 text-left text-sm transition-all",
                 choiceStyle,
                 !selectedChoice && "active:scale-[0.98]",
               )}
@@ -283,8 +307,8 @@ export function ScenarioPlayClient({
               <span className="font-bold text-ink/40 mr-2">
                 {c.choiceKey}.
               </span>
-              <span className="text-ink">{c.textVi}</span>
-              {c.textJa && (
+              <span className="text-ink">{locale === "ja" ? c.textJa || c.textVi : c.textVi}</span>
+              {c.textJa && locale !== "ja" && (
                 <p className="mt-1 text-xs text-muted">{c.textJa}</p>
               )}
             </button>
@@ -293,6 +317,7 @@ export function ScenarioPlayClient({
       </div>
 
       {/* Feedback */}
+      {error && <p role="alert" className="mt-3 text-sm text-[var(--color-sakura)]">{error}</p>}
       {feedback && (
         <div
           className={cn(
@@ -305,8 +330,8 @@ export function ScenarioPlayClient({
           <div className="flex items-center gap-2 mb-1">
             <span>{feedback.isOptimal ? "✅" : "💡"}</span>
             <span className="font-bold text-xs">
-              {feedback.isOptimal ? "Tuyệt vời!" : "Chưa tối ưu"} (+
-              {feedback.pointsAwarded} điểm)
+              {feedback.isOptimal ? copy.optimalAnswer : copy.suboptimalAnswer} (+
+              {feedback.pointsAwarded} {copy.points})
             </span>
           </div>
           {feedback.feedbackVi && (
@@ -318,12 +343,13 @@ export function ScenarioPlayClient({
       {/* Next button */}
       {feedback && (
         <button
+          disabled={submitting}
           onClick={() => void handleNext()}
-          className="mt-4 w-full rounded-xl bg-[var(--color-matcha)] py-3 text-sm font-bold text-white shadow-sm transition-transform active:scale-[0.97]"
+          className="mt-4 min-h-12 w-full rounded-xl bg-[var(--color-matcha)] py-3 text-sm font-bold text-white shadow-sm transition-transform active:scale-[0.97]"
         >
           {currentStep >= scenario.steps.length - 1
-            ? "Xem kết quả"
-            : "Tiếp tục →"}
+            ? copy.showResult
+            : copy.continue}
         </button>
       )}
     </div>

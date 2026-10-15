@@ -49,14 +49,31 @@ export function OnboardingClient({ labels }: { labels: OnboardingLabels }) {
     }
     setError(null);
     try {
-      const r = await learnerApiFetch(`/api/learner/onboarding?userId=${encodeURIComponent(uid)}`);
+      const r = await learnerApiFetch("/api/learner/onboarding");
       if (!r.ok) {
         throw new Error("load");
       }
-      const row = (await r.json()) as { currentStep: string };
-      if (row.currentStep === "completed") {
+      const row = (await r.json()) as {
+        correctCount?: number;
+        currentStep: string;
+        estimatedBjtBand?: string | null;
+        questions?: Q[];
+        sessionId?: string;
+      };
+      if (row.currentStep === "placement_complete") {
         setStep("result");
-        setSummary({ correctCount: 0, estimatedBjtBand: null });
+        setSummary({ correctCount: row.correctCount ?? 0, estimatedBjtBand: row.estimatedBjtBand ?? null });
+      } else if (row.currentStep === "placement_active" && row.sessionId && row.questions?.length) {
+        setSessionId(row.sessionId);
+        setQuestions(row.questions);
+        setAnswers({});
+        setStep("placement");
+      } else {
+        setStep("form");
+        setSessionId(null);
+        setQuestions([]);
+        setAnswers({});
+        setSummary(null);
       }
     } catch {
       setError(labels.error);
@@ -71,8 +88,6 @@ export function OnboardingClient({ labels }: { labels: OnboardingLabels }) {
     setError(null);
     try {
       const r = await learnerApiFetch("/api/learner/placement/start", {
-        body: JSON.stringify({ userId: uid }),
-        headers: { "Content-Type": "application/json" },
         method: "POST"
       });
       if (!r.ok) {
@@ -97,7 +112,7 @@ export function OnboardingClient({ labels }: { labels: OnboardingLabels }) {
     setError(null);
     try {
       const r = await learnerApiFetch("/api/learner/placement/submit", {
-        body: JSON.stringify({ answers, sessionId, userId: uid }),
+        body: JSON.stringify({ answers, sessionId }),
         headers: { "Content-Type": "application/json" },
         method: "POST"
       });

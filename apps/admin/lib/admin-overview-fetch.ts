@@ -52,7 +52,7 @@ export async function loadOverviewBundle(input: {
   tasks.push(
     (async () => {
       try {
-        const res = await adminApiFetch(`/api/health/ready`);
+        const res = await adminApiFetch(`/health/ready`);
         if (res.ok) {
           results.health = (await res.json()) as HealthReadyResponse;
         } else {

@@ -1,0 +1,73 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-082",
+  "title": "Audit learner login screen",
+  "start_head": "3b320fe7307d2c167d05a21c35fcaddd9a04e17c",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Complete the pending authenticated and mobile audit states for the active learner localized login screen and record evidence without bypassing the real browser authentication flow.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Visible anonymous login form is accessible and responsive; required/email validation blocks malformed submissions; wrong credentials produce localized feedback without exposing backend codes; a disposable learner can sign in via the real form, retain session after refresh, and return to the requested same-locale route; authenticated state and 390x844 layout are recorded in the screen inventory."
+      }
+    ],
+    "expected_behavior": "The public localized login form validates required credentials, provides localized wrong-credential feedback, accepts a real learner session through its visible form, safely returns within the same locale, and retains the session across refresh; the screen remains usable at 390x844.",
+    "observed_behavior": "Visible Chrome audit on localhost:18081: anonymous vi login blocks empty and malformed email via native validation; wrong credentials submit POST /api/auth/login and show localized 401 feedback; fresh disposable learner was created through the visible Register UI, logged out through the UI, then signed in through the visible Login form with returnTo=/vi/exercises (POST 200, /api/auth/me 200), and the authenticated session survived a full refresh. Visiting /vi/login while authenticated still renders its public form. UI logout returned /api/auth/me 401. vi/en/ja copy rendered; at 390x844 document width stayed 390, email/password inputs were 50px and submit target 48px. No captured page/console errors; anonymous /api/auth/me 401 is expected. Existing frontend regressions cover login error localization and safe returnTo behavior.",
+    "rollback_plan": "Revert only the login screen inventory, audit state, and report checkpoint changes; no product code or learner content is changed."
+  },
+  "classification": {
+    "classes": [
+      "DOC_ONLY"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": "Visible-browser audit of the learner login screen; only durable audit evidence and lifecycle task records will change unless runtime testing reveals a locally fixable defect."
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-09T11:54:05.317Z",
+      "head": "3b320fe7307d2c167d05a21c35fcaddd9a04e17c"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-09T11:56:54.553Z",
+      "head": "3b320fe7307d2c167d05a21c35fcaddd9a04e17c"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-09T11:56:57.731Z",
+      "head": "3b320fe7307d2c167d05a21c35fcaddd9a04e17c"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-09T12:03:25.810Z",
+      "head": "3b320fe7307d2c167d05a21c35fcaddd9a04e17c"
+    }
+  ],
+  "evidence": [],
+  "closed": {
+    "at": "2026-10-09T12:03:25.790Z",
+    "head": "3b320fe7307d2c167d05a21c35fcaddd9a04e17c",
+    "fingerprint": "15f39eb415b298fc1ebb309ee928026b5a5e6c71e23eb04fa33817a250ed9d91",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS"
+    },
+    "files": {
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "93bc84f1839d567f036b9aef2ab0058396905f73",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "61fc569a71f60ebddc6ab6744f4ad77240d8c673",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "417211e6fba48d0f0bd714232612849782bac2fb"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

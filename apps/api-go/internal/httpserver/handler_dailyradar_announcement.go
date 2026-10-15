@@ -2,20 +2,56 @@ package httpserver
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
 )
 
+type publicDailyRadarModule struct {
+	DisclaimerVi *string `json:"disclaimerVi,omitempty"`
+	ModuleKey    string  `json:"moduleKey"`
+	TitleJa      string  `json:"titleJa"`
+	TitleVi      string  `json:"titleVi"`
+}
+
+type publicDailyRadarCard struct {
+	ID                     string                 `json:"id"`
+	Slug                   string                 `json:"slug"`
+	TitleVi                string                 `json:"titleVi"`
+	TitleJa                *string                `json:"titleJa"`
+	DescriptionVi          string                 `json:"descriptionVi"`
+	Category               string                 `json:"category"`
+	Module                 publicDailyRadarModule `json:"module"`
+	ImageURL               *string                `json:"imageUrl,omitempty"`
+	PublishedAt            time.Time              `json:"publishedAt"`
+	BadgeTextVi            *string                `json:"badgeTextVi"`
+	CTALabelVi             string                 `json:"ctaLabelVi"`
+	EstimatedMinutes       *int                   `json:"estimatedMinutes"`
+	LevelLabel             *string                `json:"levelLabel"`
+	Metadata               json.RawMessage        `json:"metadata"`
+	ModuleType             string                 `json:"moduleType"`
+	RecommendationReasonVi *string                `json:"recommendationReasonVi"`
+	TargetRoute            *string                `json:"targetRoute"`
+	VisualTheme            *string                `json:"visualTheme"`
+	Title                  string                 `json:"title,omitempty"`
+	Summary                *string                `json:"summary,omitempty"`
+	Body                   *string                `json:"body,omitempty"`
+	ModuleKey              string                 `json:"moduleKey,omitempty"`
+}
+
 // listDailyRadarModulesHandler implements GET /api/daily-radar/modules.
 // Public route — no authentication required.
 func listDailyRadarModulesHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const q = `SELECT id, module_key, title_vi, description_vi, icon_key, default_priority, status
+		const q = `SELECT module_key, title_vi, description_vi, disclaimer_vi, route_path, metadata
 FROM daily.daily_radar_module_config
 WHERE status = 'published' AND is_enabled = true
 ORDER BY default_priority DESC, created_at ASC`
@@ -28,23 +64,27 @@ ORDER BY default_priority DESC, created_at ASC`
 		defer rows.Close()
 
 		type Module struct {
-			ID          string  `json:"id"`
-			Key         string  `json:"key"`
-			Title       string  `json:"title"`
-			Description *string `json:"description,omitempty"`
-			Icon        *string `json:"icon,omitempty"`
-			SortOrder   int     `json:"sortOrder"`
-			Status      string  `json:"status"`
+			ModuleKey    string          `json:"moduleKey"`
+			TitleVi      string          `json:"titleVi"`
+			Description  string          `json:"descriptionVi"`
+			DisclaimerVi *string         `json:"disclaimerVi"`
+			RoutePath    *string         `json:"routePath"`
+			Metadata     json.RawMessage `json:"metadata"`
 		}
 		var modules []Module
 		for rows.Next() {
 			var m Module
-			if err := rows.Scan(&m.ID, &m.Key, &m.Title, &m.Description, &m.Icon, &m.SortOrder, &m.Status); err != nil {
+			if err := rows.Scan(&m.ModuleKey, &m.TitleVi, &m.Description, &m.DisclaimerVi, &m.RoutePath, &m.Metadata); err != nil {
 				logger.Error("scan daily radar module", "error", err)
 				writeJSONError(w, "internal error", http.StatusInternalServerError)
 				return
 			}
 			modules = append(modules, m)
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate daily radar modules", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if modules == nil {
 			modules = []Module{}
@@ -62,41 +102,45 @@ func listDailyRadarCardsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 		moduleKey := r.URL.Query().Get("moduleKey")
 		category := r.URL.Query().Get("category")
 		limit := 48
-
-		type Card struct {
-			ID          string  `json:"id"`
-			Slug        string  `json:"slug"`
-			Title       string  `json:"title"`
-			Summary     *string `json:"summary,omitempty"`
-			Category    string  `json:"category"`
-			ModuleKey   *string `json:"moduleKey,omitempty"`
-			ImageURL    *string `json:"imageUrl,omitempty"`
-			PublishedAt *string `json:"publishedAt,omitempty"`
+		if rawLimit := r.URL.Query().Get("limit"); rawLimit != "" {
+			if parsedLimit, err := strconv.Atoi(rawLimit); err == nil && parsedLimit > 0 && parsedLimit <= 100 {
+				limit = parsedLimit
+			}
 		}
-
 		var q string
 		var args []interface{}
 		if moduleKey != "" {
-			q = `SELECT c.id, c.slug, c.title_vi, c.description_vi, c.category, m.module_key, c.image_url, c.created_at
+			q = `SELECT c.id, c.slug, c.title_vi, c.title_ja, c.description_vi, c.metadata->>'body',
+	c.category, m.module_key, c.image_url, c.created_at, c.badge_text_vi, c.cta_label_vi, c.estimated_minutes,
+	c.level_label, c.metadata, c.module_type, c.recommendation_reason_vi, c.target_route, c.visual_theme,
+	m.title_vi, m.title_ja, m.disclaimer_vi
 FROM daily.daily_radar_card c
-JOIN daily.daily_radar_module_config m ON m.id = c.module_config_id
-WHERE c.status = 'published' AND m.module_key = $1
-ORDER BY c.priority DESC, c.updated_at DESC LIMIT $2`
+JOIN daily.daily_radar_module_config m ON m.id = c.module_config_id`
 			args = []interface{}{moduleKey, limit}
 		} else if category != "" {
-			q = `SELECT c.id, c.slug, c.title_vi, c.description_vi, c.category, m.module_key, c.image_url, c.created_at
+			q = `SELECT c.id, c.slug, c.title_vi, c.title_ja, c.description_vi, c.metadata->>'body',
+	c.category, m.module_key, c.image_url, c.created_at, c.badge_text_vi, c.cta_label_vi, c.estimated_minutes,
+	c.level_label, c.metadata, c.module_type, c.recommendation_reason_vi, c.target_route, c.visual_theme,
+	m.title_vi, m.title_ja, m.disclaimer_vi
 FROM daily.daily_radar_card c
-JOIN daily.daily_radar_module_config m ON m.id = c.module_config_id
-WHERE c.status = 'published' AND c.category = $1
-ORDER BY c.priority DESC, c.updated_at DESC LIMIT $2`
+JOIN daily.daily_radar_module_config m ON m.id = c.module_config_id`
 			args = []interface{}{category, limit}
+			q += ` WHERE c.status = 'published' AND m.status = 'published' AND m.is_enabled AND c.category = $1
+ORDER BY c.priority DESC, c.updated_at DESC LIMIT $2`
 		} else {
-			q = `SELECT c.id, c.slug, c.title_vi, c.description_vi, c.category, m.module_key, c.image_url, c.created_at
+			q = `SELECT c.id, c.slug, c.title_vi, c.title_ja, c.description_vi, c.metadata->>'body',
+	c.category, m.module_key, c.image_url, c.created_at, c.badge_text_vi, c.cta_label_vi, c.estimated_minutes,
+	c.level_label, c.metadata, c.module_type, c.recommendation_reason_vi, c.target_route, c.visual_theme,
+	m.title_vi, m.title_ja, m.disclaimer_vi
 FROM daily.daily_radar_card c
-JOIN daily.daily_radar_module_config m ON m.id = c.module_config_id
-WHERE c.status = 'published'
-ORDER BY c.is_pinned DESC, c.priority DESC, c.updated_at DESC LIMIT $1`
+JOIN daily.daily_radar_module_config m ON m.id = c.module_config_id`
 			args = []interface{}{limit}
+			q += ` WHERE c.status = 'published' AND m.status = 'published' AND m.is_enabled
+ORDER BY c.is_pinned DESC, c.priority DESC, c.updated_at DESC LIMIT $1`
+		}
+		if moduleKey != "" {
+			q += ` WHERE c.status = 'published' AND m.status = 'published' AND m.is_enabled AND m.module_key = $1
+ORDER BY c.priority DESC, c.updated_at DESC LIMIT $2`
 		}
 
 		rows, err := db.Query(r.Context(), q, args...)
@@ -107,18 +151,29 @@ ORDER BY c.is_pinned DESC, c.priority DESC, c.updated_at DESC LIMIT $1`
 		}
 		defer rows.Close()
 
-		var cards []Card
+		var cards []publicDailyRadarCard
 		for rows.Next() {
-			var c Card
-			if err := rows.Scan(&c.ID, &c.Slug, &c.Title, &c.Summary, &c.Category, &c.ModuleKey, &c.ImageURL, &c.PublishedAt); err != nil {
+			var c publicDailyRadarCard
+			if err := rows.Scan(&c.ID, &c.Slug, &c.TitleVi, &c.TitleJa, &c.DescriptionVi, &c.Body, &c.Category,
+				&c.Module.ModuleKey, &c.ImageURL, &c.PublishedAt, &c.BadgeTextVi, &c.CTALabelVi, &c.EstimatedMinutes,
+				&c.LevelLabel, &c.Metadata, &c.ModuleType, &c.RecommendationReasonVi, &c.TargetRoute, &c.VisualTheme,
+				&c.Module.TitleVi, &c.Module.TitleJa, &c.Module.DisclaimerVi); err != nil {
 				logger.Error("scan daily radar card", "error", err)
 				writeJSONError(w, "internal error", http.StatusInternalServerError)
 				return
 			}
+			c.Title = c.TitleVi
+			c.Summary = &c.DescriptionVi
+			c.ModuleKey = c.Module.ModuleKey
 			cards = append(cards, c)
 		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate daily radar cards", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		if cards == nil {
-			cards = []Card{}
+			cards = []publicDailyRadarCard{}
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -144,26 +199,28 @@ func getDailyRadarCardBySlugHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			return
 		}
 
-		type Card struct {
-			ID          string  `json:"id"`
-			Slug        string  `json:"slug"`
-			Title       string  `json:"title"`
-			Summary     *string `json:"summary,omitempty"`
-			Body        *string `json:"body,omitempty"`
-			Category    string  `json:"category"`
-			ModuleKey   *string `json:"moduleKey,omitempty"`
-			ImageURL    *string `json:"imageUrl,omitempty"`
-			PublishedAt *string `json:"publishedAt,omitempty"`
-		}
-
-		const q = `SELECT c.id, c.slug, c.title_vi, c.description_vi, c.metadata->>'body', c.category, m.module_key, c.image_url, c.created_at
+		const q = `SELECT c.id, c.slug, c.title_vi, c.title_ja, c.description_vi, c.metadata->>'body',
+	c.category, m.module_key, c.image_url, c.created_at, c.badge_text_vi, c.cta_label_vi, c.estimated_minutes,
+	c.level_label, c.metadata, c.module_type, c.recommendation_reason_vi, c.target_route, c.visual_theme,
+	m.title_vi, m.title_ja, m.disclaimer_vi
 FROM daily.daily_radar_card c
 JOIN daily.daily_radar_module_config m ON m.id = c.module_config_id
-WHERE c.slug = $1 AND c.status = 'published'`
-		var c Card
-		err := db.QueryRow(r.Context(), q, slug).Scan(&c.ID, &c.Slug, &c.Title, &c.Summary, &c.Body, &c.Category, &c.ModuleKey, &c.ImageURL, &c.PublishedAt)
-		if err != nil {
+WHERE c.slug = $1 AND c.status = 'published' AND m.status = 'published' AND m.is_enabled`
+		var c publicDailyRadarCard
+		err := db.QueryRow(r.Context(), q, slug).Scan(&c.ID, &c.Slug, &c.TitleVi, &c.TitleJa, &c.DescriptionVi, &c.Body,
+			&c.Category, &c.Module.ModuleKey, &c.ImageURL, &c.PublishedAt, &c.BadgeTextVi, &c.CTALabelVi, &c.EstimatedMinutes,
+			&c.LevelLabel, &c.Metadata, &c.ModuleType, &c.RecommendationReasonVi, &c.TargetRoute, &c.VisualTheme,
+			&c.Module.TitleVi, &c.Module.TitleJa, &c.Module.DisclaimerVi)
+		if errors.Is(err, pgx.ErrNoRows) {
 			writeJSONError(w, "card not found", http.StatusNotFound)
+			return
+		}
+		c.Title = c.TitleVi
+		c.Summary = &c.DescriptionVi
+		c.ModuleKey = c.Module.ModuleKey
+		if err != nil {
+			logger.Error("get daily radar card", "error", err, "slug", slug)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -203,6 +260,10 @@ func dismissAnnouncementHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 			_ = json.NewEncoder(w).Encode(map[string]bool{"dismissed": true, "persisted": false})
 			return
 		}
+		if db == nil {
+			writeJSONError(w, "announcement dismissal is unavailable", http.StatusServiceUnavailable)
+			return
+		}
 
 		// Persist dismissal for authenticated user
 		const insertQ = `INSERT INTO content.announcement_dismissal (announcement_id, user_id, dismissed_at)
@@ -210,7 +271,8 @@ VALUES ($1, $2, NOW())
 ON CONFLICT (announcement_id, user_id) DO NOTHING`
 		if _, err := db.Exec(r.Context(), insertQ, annID, userID); err != nil {
 			logger.Error("dismiss announcement", "error", err, "announcement_id", annID, "user_id", userID)
-			// Non-fatal: still return dismissed=true
+			writeJSONError(w, "announcement dismissal is unavailable", http.StatusInternalServerError)
+			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")

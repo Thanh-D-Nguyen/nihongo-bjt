@@ -1,0 +1,989 @@
+{
+  "schema": "nihongo-engineering-policy/1",
+  "canonical_doc": "docs/engineering/ENGINEERING_POLICY.md",
+  "note": "Machine-readable half of the engineering policy. Consumed by scripts/quality/harness (local lifecycle, Claude Code hook, CI lifecycle check, RED/GREEN replay). Editing this file is a CI_QUALITY_SYSTEM change.",
+  "workflow": {
+    "understand": "required",
+    "classify": "required",
+    "acceptance": "required"
+  },
+  "tdd": {
+    "behavior_change_requires_valid_red": true,
+    "bugfix_requires_regression_red": true,
+    "red_must_fail_against_base_production_code": true,
+    "compile_or_import_failure_is_not_red": true,
+    "skipped_test_is_not_red": true,
+    "red_requires_expected_failure_text": true,
+    "characterization_requires_sensitivity_not_red": true
+  },
+  "verification": {
+    "evidence_required": true,
+    "unexpected_skips_forbidden": true,
+    "tool_failure_is_not_test_failure": true,
+    "zero_executed_tests_is_tool_failure": true,
+    "blocked_requires_protocol": true,
+    "artifact_identity": "per-file git blob ids of the task's changed files (fingerprint); never branch names"
+  },
+  "review": {
+    "independent_for_high_risk": true,
+    "reviewer_treats_builder_report_as_untrusted": true
+  },
+  "quality_system_changes": {
+    "adversarial_mutation_required": true
+  },
+  "deletion": {
+    "consumer_audit_required": true,
+    "stale_reference_scan_required": true
+  },
+  "status": {
+    "covered_is_not_verified": true,
+    "vocabulary": {
+      "COVERED": "an adequate executable automated test exists",
+      "VERIFIED": "every required gate ran against the task's final fingerprint and passed",
+      "PARTIAL": "some required gate is BLOCKED (with a valid blocker protocol); never reported as VERIFIED",
+      "BLOCKED": "a required gate could not run after the blocker protocol",
+      "UNTESTED": "no adequate executable coverage exists"
+    }
+  },
+  "autonomy": {
+    "schema": "nihongo-autonomy/1",
+    "auto": [
+      "read",
+      "write_project",
+      "build",
+      "test",
+      "lint",
+      "typecheck",
+      "local_browser",
+      "local_development",
+      "start_local_service",
+      "restart_local_service",
+      "install_project_dependencies",
+      "install_developer_tool",
+      "install_browser",
+      "pull_image",
+      "create_disposable",
+      "remove_disposable",
+      "create_worktree",
+      "kill_stale_process",
+      "reconstruct_evidence",
+      "rebuild_artifacts",
+      "retry_safe_alternative"
+    ],
+    "decisions": [
+      "delete_persistent_data",
+      "reset_database",
+      "delete_backup",
+      "external_mutation",
+      "production_mutation",
+      "staging_mutation",
+      "public_exposure",
+      "credential_change",
+      "security_scope_change",
+      "history_rewrite",
+      "paid_external_action",
+      "privileged_configuration",
+      "outside_workspace_irreversible"
+    ],
+    "forbidden": [
+      "expose_known_secret",
+      "bypass_gates",
+      "fabricate_evidence",
+      "delete_unverified_evidence",
+      "out_of_scope_production_destruction"
+    ],
+    "scopes": [
+      "ONCE",
+      "TASK",
+      "WORKSPACE_CLASS"
+    ],
+    "execution_states": [
+      "RUNNING",
+      "WAITING_FOR_DECISION"
+    ],
+    "recoverable": [
+      "local_service_stopped",
+      "missing_cli",
+      "missing_dependencies",
+      "missing_browser",
+      "missing_artifacts",
+      "missing_history",
+      "local_test_infrastructure",
+      "stale_project_process",
+      "first_path_failed"
+    ],
+    "external_blockers": [
+      "credential_unavailable",
+      "external_service_outage",
+      "human_identity_required",
+      "license_unavailable"
+    ],
+    "minimum_failed_attempts": 2,
+    "note": "The human makes consequential decisions, not local machine repairs. Consent journals are local authority, never portable task evidence. Recovery strategy remains model-policy enforced."
+  },
+  "states": [
+    "CREATED",
+    "SPECIFIED",
+    "CLASSIFIED",
+    "RED_REQUIRED",
+    "VALID_RED",
+    "IMPLEMENTING",
+    "GREEN",
+    "VERIFYING",
+    "REVIEW_REQUIRED",
+    "REVIEWED",
+    "READY_TO_CLOSE",
+    "CLOSED",
+    "BLOCKED",
+    "EXCEPTION_APPROVED",
+    "WAITING_FOR_DECISION"
+  ],
+  "transitions": {
+    "WAITING_FOR_DECISION": [
+      "IMPLEMENTING",
+      "VERIFYING",
+      "REVIEW_REQUIRED",
+      "READY_TO_CLOSE"
+    ],
+    "CREATED": [
+      "SPECIFIED"
+    ],
+    "SPECIFIED": [
+      "CLASSIFIED"
+    ],
+    "CLASSIFIED": [
+      "RED_REQUIRED",
+      "IMPLEMENTING"
+    ],
+    "RED_REQUIRED": [
+      "VALID_RED",
+      "BLOCKED"
+    ],
+    "VALID_RED": [
+      "IMPLEMENTING",
+      "GREEN"
+    ],
+    "IMPLEMENTING": [
+      "GREEN",
+      "VERIFYING",
+      "BLOCKED"
+    ],
+    "GREEN": [
+      "VERIFYING",
+      "IMPLEMENTING"
+    ],
+    "VERIFYING": [
+      "REVIEW_REQUIRED",
+      "READY_TO_CLOSE",
+      "BLOCKED",
+      "IMPLEMENTING"
+    ],
+    "REVIEW_REQUIRED": [
+      "REVIEWED",
+      "EXCEPTION_APPROVED",
+      "IMPLEMENTING"
+    ],
+    "REVIEWED": [
+      "READY_TO_CLOSE",
+      "IMPLEMENTING"
+    ],
+    "EXCEPTION_APPROVED": [
+      "READY_TO_CLOSE",
+      "IMPLEMENTING"
+    ],
+    "READY_TO_CLOSE": [
+      "CLOSED",
+      "IMPLEMENTING"
+    ],
+    "BLOCKED": [
+      "IMPLEMENTING",
+      "READY_TO_CLOSE"
+    ],
+    "CLOSED": []
+  },
+  "classes": {
+    "DOC_ONLY": {
+      "behavior": false,
+      "high_risk": false,
+      "gates": []
+    },
+    "TEST_ONLY": {
+      "behavior": false,
+      "high_risk": false,
+      "gates": []
+    },
+    "FORMAT_ONLY": {
+      "behavior": false,
+      "high_risk": false,
+      "gates": []
+    },
+    "GENERATED": {
+      "behavior": false,
+      "high_risk": false,
+      "gates": []
+    },
+    "DEPENDENCY_METADATA": {
+      "behavior": false,
+      "high_risk": false,
+      "gates": []
+    },
+    "UI_ONLY": {
+      "behavior": true,
+      "high_risk": false,
+      "gates": []
+    },
+    "DOMAIN_LOGIC": {
+      "behavior": true,
+      "high_risk": false,
+      "gates": []
+    },
+    "API_CONTRACT": {
+      "behavior": true,
+      "high_risk": false,
+      "gates": []
+    },
+    "AUTH_SECURITY": {
+      "behavior": true,
+      "high_risk": true,
+      "gates": [
+        "browser_e2e"
+      ]
+    },
+    "DATABASE": {
+      "behavior": true,
+      "high_risk": true,
+      "gates": [
+        "rollback_analysis"
+      ]
+    },
+    "CACHE": {
+      "behavior": true,
+      "high_risk": false,
+      "gates": []
+    },
+    "SEARCH": {
+      "behavior": true,
+      "high_risk": false,
+      "gates": [
+        "search_integration"
+      ]
+    },
+    "REALTIME": {
+      "behavior": true,
+      "high_risk": true,
+      "gates": []
+    },
+    "INFRASTRUCTURE": {
+      "behavior": true,
+      "high_risk": true,
+      "gates": [
+        "infra_validation"
+      ]
+    },
+    "CI_QUALITY_SYSTEM": {
+      "behavior": true,
+      "high_risk": true,
+      "gates": [
+        "suite_harness"
+      ]
+    },
+    "CROSS_CUTTING": {
+      "behavior": true,
+      "high_risk": true,
+      "gates": []
+    },
+    "FUNCTION_DELETION": {
+      "behavior": true,
+      "high_risk": false,
+      "gates": [
+        "deletion_audit"
+      ]
+    }
+  },
+  "change_kinds": {
+    "add": {
+      "red": true,
+      "requires_behavior_class": true
+    },
+    "modify": {
+      "red": true,
+      "requires_behavior_class": true
+    },
+    "bugfix": {
+      "red": true,
+      "requires_behavior_class": true,
+      "requires_spec": [
+        "observed_behavior",
+        "expected_behavior"
+      ]
+    },
+    "delete": {
+      "red": true,
+      "requires_behavior_class": true,
+      "requires_classes": [
+        "FUNCTION_DELETION"
+      ]
+    },
+    "characterization": {
+      "red": false,
+      "gates": [
+        "sensitivity",
+        "green"
+      ],
+      "description": "Tests for existing, unchanged behavior. No RED is possible or claimed; sensitivity (a deliberate mutation makes the test fail) is required instead."
+    },
+    "refactor": {
+      "red": false,
+      "gates": [
+        "review"
+      ],
+      "description": "Behavior-preserving restructuring; the unchanged suites are the verification; independent review guards against hidden behavior change."
+    },
+    "non_behavioral": {
+      "red": false,
+      "allowed_classes": [
+        "DOC_ONLY",
+        "TEST_ONLY",
+        "FORMAT_ONLY",
+        "GENERATED",
+        "DEPENDENCY_METADATA",
+        "INFRASTRUCTURE",
+        "CI_QUALITY_SYSTEM"
+      ]
+    }
+  },
+  "red_exceptions": {
+    "new_component": {
+      "replacement_gates": [
+        "sensitivity",
+        "green",
+        "review"
+      ],
+      "description": "Entirely new module/function whose tests cannot compile or import against the base code; a RED would be a meaningless compile error. Sensitivity proves the tests detect a broken implementation."
+    },
+    "config_only": {
+      "replacement_gates": [
+        "review"
+      ],
+      "allowed_classes": [
+        "INFRASTRUCTURE",
+        "CI_QUALITY_SYSTEM",
+        "DEPENDENCY_METADATA"
+      ],
+      "description": "Configuration/workflow change with no unit-testable behavior."
+    },
+    "not_reproducible": {
+      "replacement_gates": [
+        "review"
+      ],
+      "allowed_kinds": [
+        "bugfix"
+      ],
+      "description": "Bug cannot be reproduced in an automated test; the reason must be stated in red_exception.reason. Review-attested only (see merge_policy)."
+    },
+    "visual_only": {
+      "replacement_gates": [
+        "review"
+      ],
+      "allowed_classes": [
+        "UI_ONLY"
+      ],
+      "allowed_kinds": [
+        "add",
+        "modify"
+      ],
+      "description": "Purely visual change with no assertable behavior. Review-attested only (see merge_policy)."
+    },
+    "schema_only": {
+      "replacement_gates": [
+        "review"
+      ],
+      "allowed_classes": [
+        "DATABASE"
+      ],
+      "forbid_revertible_production": true,
+      "allowed_production_globs": [
+        "packages/database/prisma/schema.prisma",
+        "packages/database/prisma/migrations/*/migration.sql",
+        "packages/database/prisma/migrations/migration_lock.toml",
+        "apps/api-go/internal/postgres/migrations/*.sql"
+      ],
+      "description": "Canonical schema/migration files only: verified by suite_go on the provisioned canonical schema + SQL conformance, rollback_analysis and review. Executable database helpers are not exempt."
+    }
+  },
+  "gates": {
+    "acceptance": {
+      "type": "spec",
+      "layer": "CI",
+      "blockable": false,
+      "description": "spec.acceptance has at least one {id,text}; bugfix also needs observed_behavior and expected_behavior"
+    },
+    "red": {
+      "type": "red",
+      "layer": "CI",
+      "blockable": false,
+      "description": "Every red target executed and failed with its expected text while production files were at the base state; replayed in CI"
+    },
+    "green": {
+      "type": "green",
+      "layer": "CI",
+      "blockable": false,
+      "description": "Every red/sensitivity target passes on the implementation; replayed in CI"
+    },
+    "sensitivity": {
+      "type": "sensitivity",
+      "layer": "CI",
+      "blockable": false,
+      "description": "A recorded mutation of production code makes every target fail; replayed in CI"
+    },
+    "deletion_audit": {
+      "type": "deletion",
+      "layer": "CI",
+      "blockable": false,
+      "description": "Stale-reference scan for every deleted symbol finds nothing outside the allow-list; consumer audit written"
+    },
+    "suite_go": {
+      "type": "suite",
+      "layer": "CI",
+      "blockable": true,
+      "command": [
+        "bash",
+        "scripts/quality/verify-go.sh"
+      ],
+      "summary": "go",
+      "needs_db": true,
+      "known_alternatives": [
+        "with-test-db-docker",
+        "existing-test-database-url"
+      ],
+      "description": "gofmt, vet, full go test with PostgreSQL + skip audit + pass floor, race, ARM64 build"
+    },
+    "suite_frontend": {
+      "type": "suite",
+      "layer": "CI",
+      "blockable": true,
+      "command": [
+        "bash",
+        "scripts/quality/verify-frontend.sh"
+      ],
+      "summary": "frontend",
+      "known_alternatives": [
+        "pnpm-install-frozen-lockfile"
+      ],
+      "description": "typecheck, lint/test identity ratchet, production build"
+    },
+    "suite_harness": {
+      "type": "suite",
+      "layer": "CI",
+      "blockable": false,
+      "command": [
+        "bash",
+        "scripts/quality/verify-harness.sh"
+      ],
+      "summary": "harness",
+      "description": "quality-system invariants + harness unit/e2e/adversarial mutation tests"
+    },
+    "review": {
+      "type": "review",
+      "layer": "REVIEW",
+      "attested": true,
+      "blockable": false,
+      "description": "Fresh-context independent review of the review package (diff + contract + evidence), bound to the final fingerprint. CI cannot prove who reviewed: attested evidence."
+    },
+    "rollback_analysis": {
+      "type": "spec_field",
+      "field": "rollback_plan",
+      "layer": "REVIEW",
+      "attested": true,
+      "blockable": false,
+      "description": "spec.rollback_plan explains how the schema change is rolled back / kept compatible (EXPAND -> MIGRATE -> CONTRACT)"
+    },
+    "infra_validation": {
+      "type": "command",
+      "layer": "LOCAL",
+      "attested": true,
+      "blockable": true,
+      "known_alternatives": [
+        "docker-compose-config",
+        "local-docker-build"
+      ],
+      "description": "Config validation / build / smoke command recorded with `pnpm quality evidence infra_validation -- <cmd>`"
+    },
+    "browser_e2e": {
+      "type": "command",
+      "layer": "LOCAL",
+      "attested": true,
+      "blockable": true,
+      "known_alternatives": [
+        "playwright-local-webserver",
+        "playwright-staging-config"
+      ],
+      "description": "Real-browser login journey (`pnpm test:e2e ...`) recorded with `pnpm quality evidence browser_e2e -- <cmd>`"
+    },
+    "search_integration": {
+      "type": "command",
+      "layer": "LOCAL",
+      "attested": true,
+      "blockable": true,
+      "known_alternatives": [
+        "docker-meilisearch"
+      ],
+      "description": "Real Meilisearch integration run recorded with `pnpm quality evidence search_integration -- <cmd>`"
+    }
+  },
+  "suite_summary_schema": "quality-suite-summary/1",
+  "path_rules": [
+    {
+      "kind": "task_record",
+      "globs": [
+        "tasks/**"
+      ],
+      "requires_any": null,
+      "production": false,
+      "replay_revert": false
+    },
+    {
+      "kind": "test",
+      "globs": [
+        "scripts/quality/**/*.test.ts"
+      ],
+      "requires_any": [
+        "CI_QUALITY_SYSTEM"
+      ],
+      "production": false,
+      "replay_revert": false
+    },
+    {
+      "kind": "quality_system",
+      "globs": [
+        ".github/**",
+        "scripts/quality/**",
+        "docs/engineering/**",
+        ".claude/**",
+        ".cursor/**",
+        ".githooks/**",
+        "vitest.config.ts",
+        "eslint.config.mjs",
+        "playwright.config.ts",
+        "playwright.staging.config.ts",
+        "turbo.json",
+        "CLAUDE.md",
+        "AGENTS.md",
+        "AI_CONTEXT.md",
+        "apps/api-go/internal/postgres/sql_conformance_test.go",
+        "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json"
+      ],
+      "requires_any": [
+        "CI_QUALITY_SYSTEM"
+      ],
+      "production": true,
+      "replay_revert": true
+    },
+    {
+      "kind": "test",
+      "globs": [
+        "**/*_test.go",
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/*.test.mjs",
+        "**/*.spec.ts",
+        "**/*.spec.tsx",
+        "e2e/**",
+        "**/testdata/**",
+        "**/__tests__/**"
+      ],
+      "requires_any": "*",
+      "production": false,
+      "replay_revert": false
+    },
+    {
+      "kind": "doc",
+      "globs": [
+        "**/*.md",
+        "docs/**"
+      ],
+      "requires_any": null,
+      "production": false,
+      "replay_revert": false
+    },
+    {
+      "kind": "generated",
+      "globs": [
+        "generated/**",
+        "packages/database/generated/**"
+      ],
+      "requires_any": "*",
+      "production": false,
+      "replay_revert": false
+    },
+    {
+      "kind": "dependency",
+      "globs": [
+        "pnpm-lock.yaml",
+        "**/go.sum",
+        "**/go.mod",
+        "**/package.json",
+        "pnpm-workspace.yaml"
+      ],
+      "requires_any": "*",
+      "production": true,
+      "replay_revert": false
+    },
+    {
+      "kind": "infrastructure",
+      "globs": [
+        "deploy/**",
+        "docker/**",
+        "infrastructure/**",
+        "docker-compose*.yml",
+        "**/Dockerfile*",
+        "**/Caddyfile*"
+      ],
+      "requires_any": [
+        "INFRASTRUCTURE"
+      ],
+      "production": true,
+      "replay_revert": false
+    },
+    {
+      "kind": "database",
+      "globs": [
+        "packages/database/prisma/**",
+        "apps/api-go/internal/postgres/migrations/**",
+        "database/**"
+      ],
+      "requires_any": [
+        "DATABASE"
+      ],
+      "production": true,
+      "replay_revert": false
+    },
+    {
+      "kind": "realtime",
+      "globs": [
+        "apps/api-go/internal/realtime/**"
+      ],
+      "requires_any": [
+        "REALTIME"
+      ],
+      "production": true,
+      "replay_revert": true
+    },
+    {
+      "kind": "auth",
+      "globs": [
+        "apps/api-go/internal/authn/**",
+        "apps/api-go/internal/authz/**",
+        "apps/api-go/internal/authlink/**",
+        "apps/api-go/internal/session/**",
+        "apps/api-go/internal/credential/**"
+      ],
+      "requires_any": [
+        "AUTH_SECURITY"
+      ],
+      "production": true,
+      "replay_revert": true
+    },
+    {
+      "kind": "search",
+      "globs": [
+        "apps/api-go/internal/search/**"
+      ],
+      "requires_any": [
+        "SEARCH"
+      ],
+      "production": true,
+      "replay_revert": true
+    },
+    {
+      "kind": "cache",
+      "globs": [
+        "apps/api-go/internal/redisx/**"
+      ],
+      "requires_any": [
+        "CACHE"
+      ],
+      "production": true,
+      "replay_revert": true
+    },
+    {
+      "kind": "backend",
+      "globs": [
+        "apps/api-go/**"
+      ],
+      "requires_any": [
+        "DOMAIN_LOGIC",
+        "API_CONTRACT",
+        "AUTH_SECURITY",
+        "DATABASE",
+        "CACHE",
+        "SEARCH",
+        "REALTIME",
+        "FUNCTION_DELETION",
+        "CROSS_CUTTING"
+      ],
+      "production": true,
+      "replay_revert": true
+    },
+    {
+      "kind": "frontend",
+      "globs": [
+        "apps/web/**",
+        "apps/admin/**",
+        "apps/mobile/**",
+        "packages/**"
+      ],
+      "requires_any": [
+        "UI_ONLY",
+        "DOMAIN_LOGIC",
+        "API_CONTRACT",
+        "AUTH_SECURITY",
+        "REALTIME",
+        "FUNCTION_DELETION",
+        "CROSS_CUTTING"
+      ],
+      "production": true,
+      "replay_revert": true
+    },
+    {
+      "kind": "other",
+      "globs": [
+        "**"
+      ],
+      "requires_any": "*",
+      "production": true,
+      "replay_revert": true
+    }
+  ],
+  "area_rules": [
+    {
+      "suite": "suite_go",
+      "globs": [
+        "apps/api-go/**",
+        "scripts/quality/verify-go.sh",
+        "scripts/quality/check-go-test-report.mjs",
+        "scripts/quality/go-test-skips-baseline.json",
+        "scripts/quality/with-test-db.sh",
+        "scripts/quality/provision-test-schema.sh",
+        "packages/database/prisma/**"
+      ]
+    },
+    {
+      "suite": "suite_frontend",
+      "globs": [
+        "apps/web/**",
+        "apps/admin/**",
+        "packages/**",
+        "package.json",
+        "pnpm-lock.yaml",
+        "tsconfig.json",
+        "turbo.json",
+        "vitest.config.ts",
+        "eslint.config.mjs",
+        "scripts/quality/verify-frontend.sh",
+        "scripts/quality/check-frontend-debt.mjs",
+        "scripts/quality/frontend-debt-lib.mjs",
+        "scripts/quality/vitest-debt-reporter.mjs",
+        "scripts/quality/frontend-debt-baseline.json"
+      ]
+    },
+    {
+      "suite": "suite_harness",
+      "globs": [
+        "scripts/quality/**",
+        ".github/**",
+        "docs/engineering/**",
+        ".claude/settings.json",
+        ".githooks/**"
+      ]
+    }
+  ],
+  "runners": {
+    "go": {
+      "module_dir": "apps/api-go",
+      "timeout_minutes": 15
+    },
+    "vitest": {
+      "default_config": "vitest.config.ts",
+      "configs": [
+        {
+          "globs": [
+            "scripts/quality/harness/**"
+          ],
+          "config": "scripts/quality/harness/vitest.config.mjs"
+        }
+      ],
+      "timeout_minutes": 15
+    }
+  },
+  "invalid_red_signatures": [
+    "connection refused",
+    "ECONNREFUSED",
+    "no such host",
+    "ENOTFOUND",
+    "i/o timeout",
+    "context deadline exceeded",
+    "TEST_DATABASE_URL",
+    "password authentication failed",
+    "does not exist (SQLSTATE 3D000)",
+    "Cannot find module",
+    "Failed to load url",
+    "ERR_MODULE_NOT_FOUND",
+    "undefined: ",
+    "[build failed]",
+    "[setup failed]"
+  ],
+  "risk_rules": [
+    {
+      "id": "test_focus_only",
+      "severity": "forbidden",
+      "kinds": [
+        "test"
+      ],
+      "added_line": "\\b(?:it|test|describe|suite)\\.only\\s*\\(|\\bf(?:it|describe)\\s*\\(",
+      "description": "focused test (.only) silently disables the rest of the suite"
+    },
+    {
+      "id": "ci_continue_on_error",
+      "severity": "forbidden",
+      "globs": [
+        ".github/workflows/**"
+      ],
+      "added_line": "continue-on-error\\s*:\\s*(?!false)",
+      "description": "continue-on-error turns a failing gate green"
+    },
+    {
+      "id": "ci_swallowed_failure",
+      "severity": "forbidden",
+      "globs": [
+        ".github/workflows/**"
+      ],
+      "added_line": "\\|\\|\\s*(?:true|:|exit 0)\\b",
+      "description": "|| true in CI swallows failures"
+    },
+    {
+      "id": "ci_baseline_write",
+      "severity": "forbidden",
+      "globs": [
+        ".github/workflows/**"
+      ],
+      "added_line": "--update-baseline|--accept-new-debt|UPDATE_SQL_CONFORMANCE_BASELINE",
+      "description": "CI must never write a debt baseline"
+    },
+    {
+      "id": "test_skip_added",
+      "severity": "high",
+      "kinds": [
+        "test"
+      ],
+      "added_line": "\\b(?:it|test|describe|suite)\\.(?:skip|todo|skipIf)\\s*\\(|\\bx(?:it|describe)\\s*\\(|\\bt\\.Skip(?:f|Now)?\\s*\\(",
+      "description": "test skipped or disabled"
+    },
+    {
+      "id": "quality_swallowed_failure",
+      "severity": "high",
+      "globs": [
+        "scripts/quality/**",
+        "scripts/**/*.sh",
+        "deploy/**"
+      ],
+      "added_line": "\\|\\|\\s*(?:true|:|exit 0)\\b",
+      "description": "failure swallowed in a script"
+    },
+    {
+      "id": "suppression_added",
+      "severity": "high",
+      "globs": [
+        "apps/**",
+        "packages/**",
+        "scripts/**"
+      ],
+      "added_line": "eslint-disable|@ts-ignore|@ts-nocheck|//\\s*nolint|@ts-expect-error",
+      "description": "lint/type suppression added"
+    },
+    {
+      "id": "assertions_reduced",
+      "severity": "high",
+      "kinds": [
+        "test"
+      ],
+      "assertion_line": "\\bexpect\\s*\\(|\\bassert\\.|\\brequire\\.|\\bt\\.(?:Error|Errorf|Fatal|Fatalf|Fail)\\b|toThrow|toBe|toEqual",
+      "description": "test file loses more assertions than it gains"
+    },
+    {
+      "id": "test_file_deleted",
+      "severity": "high",
+      "kinds": [
+        "test"
+      ],
+      "deleted_file": true,
+      "description": "test file deleted"
+    },
+    {
+      "id": "test_registration_changed",
+      "severity": "high",
+      "globs": [
+        "vitest.config.ts",
+        "playwright.config.ts",
+        "scripts/quality/harness/vitest.config.mjs"
+      ],
+      "any_change": true,
+      "description": "test discovery configuration changed (include/exclude)"
+    },
+    {
+      "id": "baseline_expanded",
+      "severity": "high",
+      "baseline": true,
+      "description": "a debt baseline or pass floor was weakened"
+    },
+    {
+      "id": "formatting_only_change",
+      "severity": "high",
+      "whitespace_only": true,
+      "exempt_classes": [
+        "FORMAT_ONLY"
+      ],
+      "description": "whitespace-only diff mixed into a non-FORMAT_ONLY task (isolate mass formatting in its own FORMAT_ONLY task)"
+    }
+  ],
+  "baselines": {
+    "scripts/quality/go-test-skips-baseline.json": "go_skips",
+    "scripts/quality/frontend-debt-baseline.json": "frontend_debt",
+    "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "sql_conformance"
+  },
+  "exempt_from_task": [
+    "doc"
+  ],
+  "merge_policy": {
+    "partial_requires_acceptance": true,
+    "partial_acceptance_env": "QUALITY_ACCEPT_PARTIAL",
+    "note": "A task closed PARTIAL (a gate BLOCKED) fails the CI lifecycle check unless QUALITY_ACCEPT_PARTIAL=true (set from the PR label quality:accept-partial). Attested gates (review, command gates, rollback analysis) cannot be recomputed by CI and are listed as ATTESTED in the job summary; independent human approval for them is a PLATFORM setting (branch protection / CODEOWNERS)."
+  },
+  "volatile_paths": {
+    "note": "Tracked files rewritten by the gate tools themselves (tsc incremental state, Next.js type shim). Excluded from task ownership and fingerprints so a suite run cannot change the state it is verifying. Keep this list minimal; untracking these files is the real fix.",
+    "globs": [
+      "**/tsconfig.tsbuildinfo",
+      "**/next-env.d.ts"
+    ]
+  },
+  "harness": {
+    "tasks_dir": "tasks",
+    "active_pointer": "tasks/.active",
+    "logs_dir": "tasks/.logs",
+    "review_dir": "tasks/.review",
+    "required_self_test_files": [
+      "scripts/quality/harness/policy.test.ts",
+      "scripts/quality/harness/autonomy.test.ts",
+      "scripts/quality/harness/recovery.test.ts",
+      "scripts/autonomy-regression.test.ts",
+      "scripts/quality/harness/guard.test.ts",
+      "scripts/quality/harness/runners.test.ts",
+      "scripts/quality/harness/diffscan.test.ts",
+      "scripts/quality/harness/invariants.test.ts",
+      "scripts/quality/harness/lifecycle.e2e.test.ts",
+      "scripts/quality/harness/adversarial.test.ts",
+      "scripts/quality/frontend-debt-lib.test.ts",
+      "scripts/quality/harness/context-policy.test.ts"
+    ]
+  }
+}

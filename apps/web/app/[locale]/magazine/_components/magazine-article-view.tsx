@@ -1,12 +1,14 @@
 "use client";
 
 import { BackNavigation } from "../../_components/back-navigation";
+import type { ContentActionLabels } from "../../_components/content-actions";
 import { VocabExpressionList, type VocabExpression } from "../../_components/vocab-expression-list";
 import { MiniQuiz } from "./mini-quiz";
 
 /* ─── Types ─── */
 
 interface VocabItem {
+  id?: string;
   wordJp: string;
   reading?: string;
   meaningVi: string;
@@ -38,6 +40,7 @@ interface MagazineArticle {
   summaryVi?: string;
   jlptLevel?: string;
   publishDate: string;
+  publishedAt?: string;
   contentJson?: Record<string, unknown>;
   vocabItems?: VocabItem[];
   vocabWords?: { word: string; reading?: string; meaning?: string }[];
@@ -55,24 +58,48 @@ interface MagazineTranslations {
   quizPerfect: string;
   quizGood: string;
   quizTryAgain: string;
+  quizSaveFailed: string;
+  addFlashcard: string;
+  addedFlashcard: string;
+  signInHint: string;
+  chooseDeck: string;
+  createDeck: string;
+  newDeckPlaceholder: string;
+  nDecks: string;
+  flashcardError: string;
   readMore: string;
+  backToMagazine: string;
   [key: string]: string;
 }
 
 /* ─── Helpers ─── */
 
-function formatDateVi(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("vi-VN", {
+function formatDate(dateStr: string, locale: string): string | null {
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return null;
+  const dateLocale = { vi: "vi-VN", en: "en-US", ja: "ja-JP" }[locale] ?? "vi-VN";
+  return new Intl.DateTimeFormat(dateLocale, {
     weekday: "long",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
-  });
+    timeZone: "UTC",
+  }).format(date);
 }
 
 /* ─── Content Renderer ─── */
 
 function ContentBody({ content }: { content: Record<string, unknown> }) {
+  const introduction = content.introduction as string | undefined;
+  const introductionVi = content.introductionVi as string | undefined;
+  if (introduction || introductionVi) {
+    return (
+      <div className="space-y-3 rounded-2xl border border-border/30 bg-card/50 p-5">
+        {introduction && <p className="text-base leading-[1.85] text-foreground">{introduction}</p>}
+        {introductionVi && <p className="border-t border-border/20 pt-3 text-sm italic leading-relaxed text-muted-foreground">{introductionVi}</p>}
+      </div>
+    );
+  }
   const paragraphsJp = content.paragraphsJp as string[] | undefined;
   const paragraphsVi = content.paragraphsVi as string[] | undefined;
 
@@ -210,10 +237,13 @@ export function MagazineArticleView({
       []);
 
   const quizzes = article.quizzes ?? [];
+  const publishedAt = article.publishedAt ?? article.publishDate;
+  const formattedDate = publishedAt ? formatDate(publishedAt, locale) : null;
 
   // Convert VocabItems to VocabExpression format for shared component
   const expressions: VocabExpression[] = vocabItems.map((item) => ({
     word: item.wordJp,
+    sourceId: item.id,
     reading: item.reading ?? "",
     meaning: item.meaningVi,
     jlptLevel: item.jlptLevel,
@@ -232,16 +262,28 @@ export function MagazineArticleView({
     tapToExpand: t.tapToExpand ?? "Nhấn để mở rộng",
     usageNote: t.usageNote ?? "Ghi chú",
   };
+  const flashcardLabels: ContentActionLabels = {
+    addFlashcard: t.addFlashcard,
+    addedFlashcard: t.addedFlashcard,
+    bookmark: "",
+    bookmarked: "",
+    signInHint: t.signInHint,
+    chooseDeck: t.chooseDeck,
+    createDeck: t.createDeck,
+    newDeckPlaceholder: t.newDeckPlaceholder,
+    nDecks: t.nDecks,
+    flashcardError: t.flashcardError,
+  };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-background via-background to-accent/5 px-4 pb-28 pt-6 sm:px-6">
       <article className="mx-auto max-w-3xl">
-        <BackNavigation href={`/${locale}/magazine`} label="Magazine" />
+        <BackNavigation href={`/${locale}/magazine`} label={t.backToMagazine} />
 
         {/* ─── Header ─── */}
         <header className="mb-10 rounded-3xl bg-gradient-to-br from-primary/5 via-accent/5 to-transparent p-6 sm:p-8">
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <time dateTime={article.publishDate}>{formatDateVi(article.publishDate)}</time>
+            {formattedDate && <time dateTime={publishedAt}>{formattedDate}</time>}
             {article.jlptLevel && (
               <span className="rounded-full bg-primary/10 px-3 py-0.5 text-xs font-semibold text-primary">
                 {article.jlptLevel}
@@ -285,6 +327,7 @@ export function MagazineArticleView({
               expressions={expressions}
               gradient="from-indigo-500 to-purple-600"
               labels={expressionLabels}
+              flashcardLabels={flashcardLabels}
             />
           </section>
         )}

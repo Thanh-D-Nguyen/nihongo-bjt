@@ -1,0 +1,183 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-078",
+  "title": "Correct learner Help localization copy",
+  "start_head": "821216c9a15c3316873e1a0a9d9fdd7adad9cd4c",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "English Help copy has correct spacing, capitalization, and button case; Vietnamese support text promises only the available feedback route."
+      }
+    ],
+    "expected_behavior": "Localized help text is grammatical and describes contact channels that the page actually provides.",
+    "observed_behavior": "English subtitle is missing a space and two answers start lowercase; Vietnamese contact copy mentions email support but provides no email address.",
+    "rollback_plan": "Revert the three locale message string changes and their assertions."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/help/help-copy.test.ts",
+      "test": "localized Help copy > uses grammatical English and only advertises the available feedback route",
+      "expect": "Need help? Find the answer here."
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-09T01:02:56.303Z",
+      "head": "821216c9a15c3316873e1a0a9d9fdd7adad9cd4c"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-09T01:02:56.797Z",
+      "head": "821216c9a15c3316873e1a0a9d9fdd7adad9cd4c"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T01:02:57.235Z",
+      "head": "821216c9a15c3316873e1a0a9d9fdd7adad9cd4c"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T01:03:13.503Z",
+      "head": "821216c9a15c3316873e1a0a9d9fdd7adad9cd4c"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T01:03:41.355Z",
+      "head": "821216c9a15c3316873e1a0a9d9fdd7adad9cd4c"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-09T01:22:11.909Z",
+      "head": "821216c9a15c3316873e1a0a9d9fdd7adad9cd4c"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-09T01:24:17.896Z",
+      "head": "821216c9a15c3316873e1a0a9d9fdd7adad9cd4c"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-09T01:03:13.314Z",
+      "head": "821216c9a15c3316873e1a0a9d9fdd7adad9cd4c",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/help/help-copy.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/help/help-copy.test.ts::localized Help copy > uses grammatical English and only advertises the available feedback route",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Need help?Find the answer here.' to be 'Need help? Find the answer here.' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/help/help-copy.test.ts::localized Help copy > uses grammatical English and only advertises the available feedback route": "Need help? Find the answer here."
+      },
+      "fingerprint": "712b5f5f62210db64e8e67fc91480df2a2ca0a538ebb403ef59eb033edea92d8"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-09T01:03:41.080Z",
+      "head": "821216c9a15c3316873e1a0a9d9fdd7adad9cd4c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/help/help-copy.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/help/help-copy.test.ts::localized Help copy > uses grammatical English and only advertises the available feedback route",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "cbe17330d0ae94e141a2abdb5df438de31f43b553f4b3b2d96b2b7ed3070dffb"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-09T01:22:11.616Z",
+      "head": "821216c9a15c3316873e1a0a9d9fdd7adad9cd4c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 378,
+        "executed": 378,
+        "passed": 378,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 763,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "cbe17330d0ae94e141a2abdb5df438de31f43b553f4b3b2d96b2b7ed3070dffb"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-09T01:24:16.889Z",
+      "head": "821216c9a15c3316873e1a0a9d9fdd7adad9cd4c",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Lorentz independent reviewer 01a11e41-25d0-7be0-82c2-2e65cf3d83b8",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "5916819201e48073bc027a1f9ca237957b943f28ee35142e3ebf5999522199aa",
+      "attested": true,
+      "fingerprint": "cbe17330d0ae94e141a2abdb5df438de31f43b553f4b3b2d96b2b7ed3070dffb"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-09T01:24:17.873Z",
+    "head": "821216c9a15c3316873e1a0a9d9fdd7adad9cd4c",
+    "fingerprint": "cbe17330d0ae94e141a2abdb5df438de31f43b553f4b3b2d96b2b7ed3070dffb",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/help/help-copy.test.ts": "fe5e68fda5600293dae5b256635b2bb6fe6974b9",
+      "apps/web/messages/en.json": "a72543058d26b1aef05081d2a5e2466328504cfb",
+      "apps/web/messages/vi.json": "a3a6a106a4aef8db25a7ad0816d15cf46703a4b9"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

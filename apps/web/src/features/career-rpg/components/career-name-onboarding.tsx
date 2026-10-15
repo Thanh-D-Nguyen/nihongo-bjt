@@ -5,8 +5,6 @@ import { useCallback, useState } from "react";
 import { updateCareerProfile } from "../api";
 import type { UserCareerState } from "../types";
 
-const DEFAULT_JP_WORK_NAME = "田中 太郎";
-
 const SUGGESTED_NAMES = [
   { surname: "佐藤", given: "ゆうき", full: "佐藤 ゆうき" },
   { surname: "鈴木", given: "あおい", full: "鈴木 あおい" },
@@ -35,7 +33,7 @@ interface Props {
 }
 
 export function needsNameOnboarding(career: UserCareerState): boolean {
-  return career.jpWorkName === DEFAULT_JP_WORK_NAME;
+  return career.jpWorkName.trim() === "";
 }
 
 export function CareerNameOnboarding({ labels, onComplete }: Props) {
@@ -58,7 +56,7 @@ export function CareerNameOnboarding({ labels, onComplete }: Props) {
   }, [labels.error, name, onComplete]);
 
   const handleSkip = useCallback(() => {
-    // Keep default name — just dismiss
+    // Leave the name unset and dismiss for this session.
     onComplete(null as unknown as UserCareerState);
   }, [onComplete]);
 

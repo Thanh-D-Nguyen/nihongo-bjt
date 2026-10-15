@@ -1,0 +1,483 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-147",
+  "title": "Keep Admin basePath in session-gate returnTo",
+  "start_head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357",
+  "preexisting_changes": {
+    "apps/admin/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/admin/tsconfig.tsbuildinfo": "65efd44dfcd41ca6824bee6dc5a262ff7b8bafd3",
+    "apps/web/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/web/tsconfig.tsbuildinfo": "e16cf963ec5eeb9832ca0a54b78e7dca8e6be331"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "AC1: the session gate sends returnTo=/admin/<locale>/... (the full Admin path including the basePath) on 401 redirects."
+      },
+      {
+        "id": "AC2",
+        "text": "AC2: the login page's existing returnTo validation is unchanged and still rejects external or traversal values."
+      },
+      {
+        "id": "AC3",
+        "text": "AC3: a headed browser login from an anonymous deep link to /admin/vi/growth/campaigns returns to /admin/vi/growth/campaigns with no console errors."
+      }
+    ],
+    "expected_behavior": "A protected Admin route redirected to login carries a returnTo that includes /admin, so after sign-in the browser returns to the same Admin route.",
+    "observed_behavior": "Admin session gate builds returnTo from the locale-relative pathname without the /admin basePath (apps/admin/app/_components/admin-session-gate.tsx). The login form then calls window.location.assign(returnTo), so a deep link to /admin/vi/growth/campaigns lands on /vi/growth/campaigns, which Caddy routes to the learner app.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/admin/app/_components/admin-session-gate.test.tsx",
+      "test": "AdminSessionGate > redirects an expired session to login with the full Admin path, including the basePath",
+      "expect": "returnTo=%2Fvi%2Fgrowth%2Fcampaigns"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-14T09:42:16.609Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-14T09:42:23.286Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-14T09:42:23.680Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T09:44:03.262Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T09:44:16.574Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-14T10:02:23.466Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T10:03:29.599Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T10:03:43.009Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-14T10:08:29.974Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-14T10:08:55.136Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-14T09:42:46.997Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/_components/admin-session-gate.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::AdminSessionGate redirects an expired session to login with the full Admin path, including the basePath",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"AdminSessionGate redirects an expired session to login with the full Admin path, including the basePath\" in apps/admin/app/_components/admin-session-gate.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::AdminSessionGate redirects an expired session to login with the full Admin path, including the basePath": "returnTo=%2Fvi%2Fgrowth%2Fcampaigns"
+      },
+      "fingerprint": "f10273f283f5e69b17f5fbebc3c4efdc9ea8dd816f140459de7e2680637afe9d"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-14T09:42:57.580Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/_components/admin-session-gate.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::AdminSessionGate redirects an expired session to login with the full Admin path, including the basePath",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"AdminSessionGate redirects an expired session to login with the full Admin path, including the basePath\" in apps/admin/app/_components/admin-session-gate.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::redirects an expired session to login with the full Admin path, including the basePath",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"redirects an expired session to login with the full Admin path, including the basePath\" in apps/admin/app/_components/admin-session-gate.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::AdminSessionGate redirects an expired session to login with the full Admin path, including the basePath": "returnTo=%2Fvi%2Fgrowth%2Fcampaigns",
+        "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::redirects an expired session to login with the full Admin path, including the basePath": "returnTo=%2Fvi%2Fgrowth%2Fcampaigns"
+      },
+      "fingerprint": "f10273f283f5e69b17f5fbebc3c4efdc9ea8dd816f140459de7e2680637afe9d"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-14T09:43:34.162Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/_components/admin-session-gate.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::AdminSessionGate redirects an expired session to login with the full Admin path, including the basePath",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"AdminSessionGate redirects an expired session to login with the full Admin path, including the basePath\" in apps/admin/app/_components/admin-session-gate.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::redirects an expired session to login with the full Admin path, including the basePath",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"redirects an expired session to login with the full Admin path, including the basePath\" in apps/admin/app/_components/admin-session-gate.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::AdminSessionGate redirects an expired session to login with the full Admin path, including the basePath": "returnTo=%2Fvi%2Fgrowth%2Fcampaigns",
+        "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::redirects an expired session to login with the full Admin path, including the basePath": "returnTo=%2Fvi%2Fgrowth%2Fcampaigns"
+      },
+      "fingerprint": "83ff26518122cc5705f5c442d822ba3ef839024934aa53837b533e6645b1cea3"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-14T09:43:52.608Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/_components/admin-session-gate.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::AdminSessionGate redirects an expired session to login with the full Admin path, including the basePath",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"AdminSessionGate redirects an expired session to login with the full Admin path, including the basePath\" in apps/admin/app/_components/admin-session-gate.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::redirects an expired session to login with the full Admin path, including the basePath",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"redirects an expired session to login with the full Admin path, including the basePath\" in apps/admin/app/_components/admin-session-gate.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::AdminSessionGate > redirects an expired session to login with the full Admin path, including the basePath",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Received: 1st vi.fn() call: [ - \"/vi/login?returnTo=%2Fadmin%2Fvi%2Fgrowth%2Fcampaigns\", + \"/vi/login?returnTo=%2Fvi%2Fgrowth%2Fcampaigns\", ] Number of calls: 1",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::AdminSessionGate redirects an expired session to login with the full Admin path, including the basePath": "returnTo=%2Fvi%2Fgrowth%2Fcampaigns",
+        "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::redirects an expired session to login with the full Admin path, including the basePath": "returnTo=%2Fvi%2Fgrowth%2Fcampaigns",
+        "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::AdminSessionGate > redirects an expired session to login with the full Admin path, including the basePath": "returnTo=%2Fvi%2Fgrowth%2Fcampaigns"
+      },
+      "fingerprint": "83ff26518122cc5705f5c442d822ba3ef839024934aa53837b533e6645b1cea3"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-14T09:44:03.078Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/_components/admin-session-gate.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::AdminSessionGate > redirects an expired session to login with the full Admin path, including the basePath",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Received: 1st vi.fn() call: [ - \"/vi/login?returnTo=%2Fadmin%2Fvi%2Fgrowth%2Fcampaigns\", + \"/vi/login?returnTo=%2Fvi%2Fgrowth%2Fcampaigns\", ] Number of calls: 1",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::AdminSessionGate > redirects an expired session to login with the full Admin path, including the basePath": "returnTo=%2Fvi%2Fgrowth%2Fcampaigns"
+      },
+      "fingerprint": "83ff26518122cc5705f5c442d822ba3ef839024934aa53837b533e6645b1cea3"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-14T09:44:16.331Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/_components/admin-session-gate.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::AdminSessionGate > redirects an expired session to login with the full Admin path, including the basePath",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c7ce581f91ce79a8fa2beda7aeb158aaf34b86a209330a4e652b337db0e8a0a3"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-14T09:44:30.332Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "c7ce581f91ce79a8fa2beda7aeb158aaf34b86a209330a4e652b337db0e8a0a3"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-14T09:46:02.191Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/_components/admin-session-gate.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::AdminSessionGate > redirects an expired session to login with the full Admin path, including the basePath",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "abade39f15621ffb6d52a088b99f0fc681970b0631ea9b041c6a7e3d4b3c33ba"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-14T09:50:47.662Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 802,
+        "lint_errors": 82,
+        "lint_warnings": 22,
+        "new_debt": 1
+      },
+      "message": "RATCHET_VIOLATION: 1 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "abade39f15621ffb6d52a088b99f0fc681970b0631ea9b041c6a7e3d4b3c33ba"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-14T09:57:22.596Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/_components/admin-session-gate.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::AdminSessionGate > redirects an expired session to login with the full Admin path, including the basePath",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1a744fe842c2d835f2704f398264447ad0f0b43ea39922f679a2d9c86b5ad6db"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-14T10:02:23.112Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 802,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "1a744fe842c2d835f2704f398264447ad0f0b43ea39922f679a2d9c86b5ad6db"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-14T10:02:48.631Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit147-admin-session-returnto.mjs",
+      "exit_code": 1,
+      "fingerprint": "1a744fe842c2d835f2704f398264447ad0f0b43ea39922f679a2d9c86b5ad6db"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-14T10:03:29.244Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit147-admin-session-returnto.mjs",
+      "exit_code": 0,
+      "fingerprint": "a0cbeaded065ab70455d8a4e2adabe8d71494e31ea56519afab8e2873bd6160f"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-14T10:03:42.627Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/admin/app/_components/admin-session-gate.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/admin/app/_components/admin-session-gate.test.tsx::AdminSessionGate > redirects an expired session to login with the full Admin path, including the basePath",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a0cbeaded065ab70455d8a4e2adabe8d71494e31ea56519afab8e2873bd6160f"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-14T10:08:29.624Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 802,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "a0cbeaded065ab70455d8a4e2adabe8d71494e31ea56519afab8e2873bd6160f"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-14T10:08:49.895Z",
+      "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit147-admin-session-returnto.mjs",
+      "exit_code": 0,
+      "fingerprint": "a0cbeaded065ab70455d8a4e2adabe8d71494e31ea56519afab8e2873bd6160f"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-14T10:08:55.117Z",
+    "head": "f6355eab538ecf5015ab9ca312f5bcb142fdf357",
+    "fingerprint": "a0cbeaded065ab70455d8a4e2adabe8d71494e31ea56519afab8e2873bd6160f",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/admin/app/_components/admin-session-gate.test.tsx": "2ad4af307e7850bfeb3a5f7fa3a869edf9af61c3",
+      "apps/admin/app/_components/admin-session-gate.tsx": "1eb5769e45932aa578fd63d9b352e86edb9ef77d",
+      "e2e/audit/audit146-admin-growth-campaigns-postcards.mjs": "8d9d280d1a590fc69340b49a11415ff7003329e7",
+      "e2e/audit/audit147-admin-session-returnto.mjs": "22f6f5db3b3eabef96695f7ef0f79fb28cb9438d"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

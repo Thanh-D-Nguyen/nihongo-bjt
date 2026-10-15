@@ -1,0 +1,551 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-163",
+  "title": "Harden Admin system health, queue controls, release, and kill switch list APIs",
+  "start_head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+  "preexisting_changes": {
+    ".codegraph/.gitignore": "6cef7cd23c43635be9f0b43b9f5287242413c467",
+    "apps/admin/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/admin/app/[locale]/growth/social/admin-mobile-events.test.ts": "d624fdc5e4bcb66672a4c9d27fe8aacc4fb83bb9",
+    "apps/admin/app/[locale]/growth/social/growth-social-client.tsx": "f87a00d4e9497e7c1cb971d6b978c6a43dd96441",
+    "apps/admin/app/[locale]/i18n/admin-mobile-tables.test.ts": "4b361483cf53a2df8ab2b20f77db064d22194939",
+    "apps/admin/app/[locale]/media/media-admin-client.tsx": "02cde6ae4bc6666404815ed74459065620bb7a5e",
+    "apps/admin/app/[locale]/ops/notifications/ops-notifications-client.test.tsx": "67f81a58382974d681bc3a1eb578a953c1c60e4e",
+    "apps/admin/app/[locale]/ops/notifications/ops-notifications-client.tsx": "83e79b25bb46954c81f3f30dcc6f0b1c3184e776",
+    "apps/admin/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/admin/tsconfig.tsbuildinfo": "b7b2f1339e0d7cca509b94db76bc43909118d62c",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_iam_test.go": "aee00270d49976ed76fe616f9893de4a8ac7431c",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_postcard_test.go": "b7b6da529effa42f1634a4574eecd87727b6a002",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_rbac_test.go": "996ba6a016727ad3f7cd9a5c033c569e93b9ff8e",
+    "apps/api-go/internal/httpserver/handler_admin_audit159_ads_test.go": "794ce0986e37f8795466c9a2092830cdfe6803e4",
+    "apps/api-go/internal/httpserver/handler_admin_audit159_auth_test.go": "acccc05e5d1cd3e7e5684a276d2f1401c7ec9797",
+    "apps/api-go/internal/httpserver/handler_admin_audit159_loto_test.go": "ed436c6004232bc8f1bd1af3fd2822917aacff26",
+    "apps/api-go/internal/httpserver/handler_admin_audit159_media_test.go": "7a0edaa033382390dc069acf25050f5930edd262",
+    "apps/api-go/internal/httpserver/handler_admin_audit160_ads_test.go": "0d222e4f6ceb78a70d2eba0a77b14ebe0bdd8c79",
+    "apps/api-go/internal/httpserver/handler_admin_audit160_catalog_test.go": "671dec55b6ec44ab449f7c32b830730035684b44",
+    "apps/api-go/internal/httpserver/handler_admin_audit160_core_test.go": "ff4569af6d970726c08ded9b11c0eab2cbd19c6b",
+    "apps/api-go/internal/httpserver/handler_admin_growth_campaigns.go": "d1cf6a0cd0d109b9ff59523da87e8d640db8b7b8",
+    "apps/api-go/internal/httpserver/handler_admin_growth_postcards.go": "e11ab671f08d22059bbec5af508661e68ddc49ed",
+    "apps/api-go/internal/httpserver/handler_admin_growth_referrals.go": "c0b0be1c757bc3b9526a353419b666325c30c489",
+    "apps/api-go/internal/httpserver/handler_admin_growth_referrals_contract_test.go": "555404bcc2f1d41e28dfa55269555540dc9f30d6",
+    "apps/api-go/internal/httpserver/handler_admin_growth_social.go": "b19a01e21cdc971d318ce6756d782db9c0059a08",
+    "apps/api-go/internal/httpserver/handler_admin_growth_social_audit153_test.go": "d706bec6b5c70a6a8ffd1405c6dad3647458407d",
+    "apps/api-go/internal/httpserver/handler_admin_magazine.go": "3d5c119e275ac95bee4659b95933ab39a9705e96",
+    "apps/api-go/internal/httpserver/handler_admin_media_companion_privacy.go": "80e51a6824d1ba2d62a88e751266cf3f81db63c9",
+    "apps/api-go/internal/httpserver/handler_admin_monetization_ads.go": "078221f4513a44b9bae18d2c1af81054e91d0f16",
+    "apps/api-go/internal/httpserver/handler_admin_monetization_core.go": "932fc0ce6b96d980f9f90e2bc1adb2ab34fe9fe1",
+    "apps/api-go/internal/httpserver/handler_admin_monetization_entitlements_quotas.go": "d086f787fa94aff3ba1d2be164f39289348f8c80",
+    "apps/api-go/internal/httpserver/handler_admin_monetization_subscriptions_coupons.go": "cb88901fcb04c08f1381bc6c1501cef817281187",
+    "apps/api-go/internal/httpserver/handler_admin_monetization_wave3_test.go": "7424150fe29c141383530d29319a26005e0224bc",
+    "apps/api-go/internal/httpserver/handler_admin_nhknews.go": "b7f1a9528f8e414ba92a57dcacc2190b74eee68e",
+    "apps/api-go/internal/httpserver/handler_admin_nhknews_audit161_test.go": "071a629fe92725e0a32eff73c816ca8b77673c31",
+    "apps/api-go/internal/httpserver/handler_admin_operations_audit161_test.go": "4475706868a3cf6ea41c91aa89b716308b1c10e0",
+    "apps/api-go/internal/httpserver/handler_admin_operations_bjt.go": "1852ff5b6e6546bd0ef7f8305fd648484f06d41a",
+    "apps/api-go/internal/httpserver/handler_admin_operations_broadcasts.go": "a7791d54dda6f1507188321b0133b44e48a8f1c3",
+    "apps/api-go/internal/httpserver/handler_admin_operations_dead_letter.go": "7d4017771cbe82d7a1e2ac6b8d0ddd404e41dd7d",
+    "apps/api-go/internal/httpserver/handler_admin_operations_dead_letter_wave4_test.go": "f5a9c30aa0ec79149863f9abf5082d9a51503983",
+    "apps/api-go/internal/httpserver/handler_admin_operations_feature_flags.go": "fb5ad13553c700254bebfe76dae7448a4eca8b0a",
+    "apps/api-go/internal/httpserver/handler_admin_operations_feature_flags_audit162_test.go": "50728731dcd1a0b5e92ec546655282437ef192d4",
+    "apps/api-go/internal/httpserver/handler_admin_operations_import_audit162_test.go": "073a33f4b36c4144c4f15fe620a5a00e4c810257",
+    "apps/api-go/internal/httpserver/handler_admin_operations_import_batches.go": "f90cb87a7d3cce0f557c65649e24dc99fe919e76",
+    "apps/api-go/internal/httpserver/handler_admin_operations_import_manifests.go": "986b75990633ac01cfc0502ff4f3fb362a4b84ea",
+    "apps/api-go/internal/httpserver/handler_admin_operations_import_requests_test.go": "fa0da842b51973f4885c17df20886d76103e360e",
+    "apps/api-go/internal/httpserver/handler_admin_operations_import_staging.go": "ec9fb8d9234c92b56195762b01da68299a414630",
+    "apps/api-go/internal/httpserver/handler_admin_operations_kill_switches.go": "9735962aa3783976ea3c5cc8285a12002db1d7f8",
+    "apps/api-go/internal/httpserver/handler_final_batch.go": "65d591f83985bef41c5e752421963fd68575acb3",
+    "apps/api-go/internal/httpserver/server.go": "1490070af04e5c74db146d6ba7c7eb16920b081a",
+    "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "69c68e611b59cec10c00b545f211e0d75badaa2b",
+    "apps/web/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/web/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/web/tsconfig.tsbuildinfo": "91d48d855b4f16f10809b5e9d91bae8ed06c76dc",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "e95f9a914bf3a93f3a4ea58ef40da2d0a35ae0c2",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "518736c82a3d10da4304d885f6ca9bc254d1e2be",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "11bb7c06285ee5f1357ce774401795a4ab471899",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "d21f9bab36b978f2e4735d3ce16cd86294e64868",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "872a763c7e750ae982497898172a4c05bdd55ed9",
+    "e2e/audit/audit155-admin-mobile-tables.mjs": "531258892354c4a96065d4b0110598f72d909910",
+    "e2e/audit/audit156-share-moderation.mjs": "f8da1d95be1066e0e3af2ade35e23a8886eec028",
+    "packages/database/prisma/migrations/20261015100000_nhk_news_admin_config/migration.sql": "29dff004ae36f7ab44cb5ef3f8cb5f6fed7bfd49",
+    "packages/database/prisma/migrations/20261015110000_content_import_operation_requests/migration.sql": "483663ecadca994a65f2608b3a3637081a789435",
+    "packages/database/prisma/schema.prisma": "d27d9a847a04ad6e14d516695fd836f065a071c1",
+    "apps/web/app/[locale]/settings/reading/_components/reading-assist-settings-client.tsx": "3c11e89fdc03ba08fa9dc383b191914d0b15d641",
+    "apps/web/app/[locale]/settings/reading/_components/reading-assist-settings-client.test.tsx": "7766dea0ac9d0fa69748da06d76b7df46f24244e"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "All 11 scoped GET/POST method-paths have individually asserted auth, permission/CSRF, contract, and database/error behavior."
+      },
+      {
+        "id": "AC2",
+        "text": "Queue controls persist safe disposable state and audit atomically; repeated controls are idempotent or documented as audit events."
+      },
+      {
+        "id": "AC3",
+        "text": "Release control actions validate confirmation and persist auditable requests; no real deployment or queue drain side effect is triggered by tests."
+      },
+      {
+        "id": "AC4",
+        "text": "Focused PostgreSQL RED/GREEN test passes; full suite is deferred and no commit is created."
+      }
+    ],
+    "expected_behavior": "Each scoped route enforces its documented admin session/RBAC/CSRF boundary, returns a caller-compatible contract, propagates persistence errors, and records control changes safely.",
+    "observed_behavior": "The current handler silently tolerates health-query and row errors, queue pause/resume mutations and audit writes are separate, history payloads do not match Admin callers, and queue controls lack strict permission/input validation.",
+    "rollback_plan": "Revert the scoped handler and focused AUDIT-163 test; no persistent migrations or production data changes were made."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY",
+      "DATABASE"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminOperationsSystemAUDIT163",
+      "expect": "admin without viewer.audit status=200"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLASSIFIED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-15T05:25:32.083Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-15T05:25:43.775Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-15T05:25:44.175Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-15T05:28:19.875Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-15T05:33:06.013Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-15T05:33:47.695Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-15T05:34:04.214Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-15T05:36:48.709Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-15T05:37:02.604Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-15T05:39:49.136Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-15T06:12:35.185Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-15T05:26:41.927Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsSystemAUDIT163)$ ./apps/api-go/internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestAdminOperationsSystemAUDIT163",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestAdminOperationsSystemAUDIT163": "admin without viewer.audit status=200"
+      },
+      "fingerprint": "02b6122e756f5808a05f844b17bff8562fce46ea516994b0ff293a1dad6e09bc"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-15T05:26:59.640Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsSystemAUDIT163)$ ./apps/api-go/internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsSystemAUDIT163)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestAdminOperationsSystemAUDIT163",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-6I0i69/tree/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_admin_operations_system_audit163_test.go:147:161: undefined: auditCount internal/httpserver/handler_admin_operations_system_audit163_test.go:…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestAdminOperationsSystemAUDIT163": "admin without viewer.audit status=200",
+        "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163": "admin without viewer.audit status=200"
+      },
+      "fingerprint": "f617ed1c0861e12b5bc125ce1b8f59052c072241ea5abd84e89d5f332b2cf56f"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-15T05:27:16.721Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsSystemAUDIT163)$ ./apps/api-go/internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsSystemAUDIT163)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestAdminOperationsSystemAUDIT163",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-wl7eWp/tree/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminOperationsSystemAUDIT163 handler_admin_operations_system_audit163_test.go:14: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminOperationsSystemAUDIT163 (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestAdminOperationsSystemAUDIT163": "admin without viewer.audit status=200",
+        "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163": "admin without viewer.audit status=200"
+      },
+      "fingerprint": "fc67bd49bd2454b1ca64c8b04fbd80026ae632dc4d98eac53fa2ccf6d73a2beb"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-15T05:27:40.671Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsSystemAUDIT163)$ ./apps/api-go/internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsSystemAUDIT163)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestAdminOperationsSystemAUDIT163",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-Tn09dg/tree/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminOperationsSystemAUDIT163 === RUN TestAdminOperationsSystemAUDIT163/GET_/api/admin/operations/system/health 2026/10/15 14:27:39 INFO request method=GET path=/api/admin/operations/system/health status=401 duration=134.833µs bytes=25 2026/10/15 14:27:39 INFO request method=GET path=/ap…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestAdminOperationsSystemAUDIT163": "admin without viewer.audit status=200",
+        "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163": "admin without viewer.audit status=200"
+      },
+      "fingerprint": "0646cdb5621d3d32e16dcb56168eeee3a79e9ef87d3cd32c9d34ff5735f1aefd"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-15T05:28:19.431Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsSystemAUDIT163)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminOperationsSystemAUDIT163 === RUN TestAdminOperationsSystemAUDIT163/GET_/api/admin/operations/system/health 2026/10/15 14:28:18 INFO request method=GET path=/api/admin/operations/system/health status=401 duration=188.958µs bytes=25 2026/10/15 14:28:18 INFO request method=GET path=/ap…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163": "admin without viewer.audit status=200"
+      },
+      "fingerprint": "565aee25a1c8deaa4dbffb1002c166347683f76d2bf46dd9636a12df3227f5a6"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-15T05:33:05.484Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsSystemAUDIT163)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "5246cddcfa954921de9f970fb366aa9b26bab39b97e1cc4dfa83fd2fc1f2d2a1"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-15T05:33:47.170Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsSystemAUDIT163)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminOperationsSystemAUDIT163 === RUN TestAdminOperationsSystemAUDIT163/GET_/api/admin/operations/system/health 2026/10/15 14:33:46 INFO request method=GET path=/api/admin/operations/system/health status=401 duration=273.5µs bytes=25 2026/10/15 14:33:46 INFO request method=GET path=/api/…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163": "admin without viewer.audit status=200"
+      },
+      "fingerprint": "4fbf3c30f190a58ac107ba42dc28163c3be2c50dd691f9592ed4305b54bc448f"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-15T05:34:03.696Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsSystemAUDIT163)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c9df8ba840647bb3f9c2b0fe96b1b722451a474056b02783c5461a0c0b524c1b"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-15T05:35:32.704Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsSystemAUDIT163)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "02bb963cde68dcf31a9bb7fe936879b40350dcb9ee3fed349b15522cb0919f0c"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-15T05:35:39.823Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsSystemAUDIT163)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "02bb963cde68dcf31a9bb7fe936879b40350dcb9ee3fed349b15522cb0919f0c"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-15T05:36:48.180Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsSystemAUDIT163)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminOperationsSystemAUDIT163 === RUN TestAdminOperationsSystemAUDIT163/GET_/api/admin/operations/system/health 2026/10/15 14:36:47 INFO request method=GET path=/api/admin/operations/system/health status=401 duration=142.125µs bytes=25 2026/10/15 14:36:47 INFO request method=GET path=/ap…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163": "admin without viewer.audit status=200"
+      },
+      "fingerprint": "4ec43b98168ef9634bd7a217ebf4f25d26ead2be4361061994676b474f983d1f"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-15T05:37:02.078Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsSystemAUDIT163)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "4ec43b98168ef9634bd7a217ebf4f25d26ead2be4361061994676b474f983d1f"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-15T05:38:22.528Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsSystemAUDIT163)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1c00c42d7e359aa1225adee1ead643230f4eb630ed8ccd079d94f011eb9090c7"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-15T05:39:48.346Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsSystemAUDIT163)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "cc2c9b70b20d85a2b8f6c0b83870e53e72981e4b0219c769da2ba0b5af74a25a"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-15T06:22:41.131Z",
+      "head": "6e11cf076110fe7fbc8135754446747013db5ec0",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOperationsSystemAUDIT163)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOperationsSystemAUDIT163",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminOperationsSystemAUDIT163 handler_admin_operations_system_audit163_test.go:14: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminOperationsSystemAUDIT163 (0.00s)"
+        }
+      ],
+      "fingerprint": "15e90596546e18732918e507c5c9e0605868ac3146d0a77402a61060b9c1d2e8"
+    }
+  ],
+  "closed": null,
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [],
+  "disowned": [
+    {
+      "path": "apps/web/app/[locale]/settings/reading/_components/reading-assist-settings-client.tsx",
+      "reason": "User takeover: Reading changes move to dedicated READING-1",
+      "at": "2026-10-15T08:47:05.020Z"
+    },
+    {
+      "path": "apps/web/app/[locale]/settings/reading/_components/reading-assist-settings-client.test.tsx",
+      "reason": "User takeover: Reading regression moves to dedicated READING-1",
+      "at": "2026-10-15T08:47:08.816Z"
+    }
+  ]
+}

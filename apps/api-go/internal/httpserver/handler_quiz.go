@@ -28,6 +28,7 @@ const (
 // startQuizSessionRequest is the JSON body for POST /api/quiz/start.
 type startQuizSessionRequest struct {
 	TemplateID string `json:"templateId"`
+	TestID     string `json:"testId"` // legacy alias; some clients send testId instead of templateId
 }
 
 // submitQuizAnswerRequest is the JSON body for POST /api/quiz/session/:id/answer.
@@ -89,6 +90,9 @@ func startQuizSessionHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 		}
 
 		templateID := strings.TrimSpace(req.TemplateID)
+		if templateID == "" {
+			templateID = strings.TrimSpace(req.TestID)
+		}
 		if templateID == "" {
 			writeJSONError(w, "templateId is required", http.StatusBadRequest)
 			return

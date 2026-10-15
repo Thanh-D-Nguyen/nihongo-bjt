@@ -1,0 +1,1571 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-081",
+  "title": "Audit learner BJT levels index screen",
+  "start_head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The active /:locale/levels page and homepage roadmap section request GET /api/levels, but the Go router has no collection handler. The levels page therefore cannot show its six BJT levels; where content renders, it also uses Vietnamese metadata and hard-coded English copy across locales.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Anonymous GET /api/levels returns all six canonical BJT levels in J5-to-J1+ order, with active vocabulary/kanji/grammar counts and localized name/description fields; J1+ does not alias N1."
+      },
+      {
+        "id": "AC2",
+        "text": "The /:locale/levels screen displays all six levels in vi, en, and ja using localized names, descriptions, readiness/assessment copy, and error/empty states; level links preserve locale."
+      },
+      {
+        "id": "AC3",
+        "text": "The homepage BJT level section uses the same public API and locale-aware level names; canonical vocabulary, kanji, and grammar remain read-only."
+      },
+      {
+        "id": "AC4",
+        "text": "The page distinguishes an analytics request failure from a learner with no completed sessions, without silently discarding the failure."
+      },
+      {
+        "id": "AC5",
+        "text": "At 390x844 the anonymous levels screen renders without horizontal overflow, with all six level links reachable and no unresolved console/network errors."
+      }
+    ],
+    "expected_behavior": "GET /api/levels returns canonical ordered BJT level summaries with active master-data counts; learner levels and homepage links render and navigate in each supported locale, with user-facing copy localized and analytics failures distinguished from empty history.",
+    "observed_behavior": "LevelsClient fetches /api/levels and enters an error state on 404; BjtLevelsSection suppresses itself on the same missing endpoint. LevelsClient renders nameVi/descriptionVi for every locale and embeds English-only readiness/assessment text.",
+    "rollback_plan": "Revert the new public collection handler, locale label fields, and screen copy/test changes together; keep the existing individual level-detail APIs unchanged."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DATABASE",
+      "AUTH_SECURITY",
+      "DOMAIN_LOGIC",
+      "UI_ONLY",
+      "CROSS_CUTTING",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Fix the levels screen and stabilize its browser acceptance by serializing smoke tests against shared Next dev caches; keep canonical content read-only."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLevelListReturnsLocalizedCanonicalLevels",
+      "expect": "public level list: expected 200"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/levels/_components/levels-client.test.tsx",
+      "test": "LevelsClient > renders localized levels and actions for en",
+      "expect": "J5 English"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx",
+      "test": "BjtLevelsSection > loads the shared collection and uses the selected locale",
+      "expect": "J5 English"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/levels/_components/levels-client.test.tsx",
+      "test": "LevelsClient > hides the empty-history prompt when analytics fails",
+      "expect": "Empty-history CTA is shown after analytics failure"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [
+    {
+      "finding": "test_registration_changed:playwright.config.ts",
+      "reason": "Only the worker count changes: all Playwright tests remain collected, and serial execution prevents a reproduced concurrent-write corruption of the shared Admin Next dev prerender manifest. CI was already configured for one worker."
+    }
+  ],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-09T08:32:43.975Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-09T08:35:46.507Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T08:35:47.099Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T08:51:21.072Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T08:55:09.803Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T11:06:02.798Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T11:08:16.746Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T11:13:04.333Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T11:14:38.688Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T11:21:52.955Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T11:26:50.440Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T11:34:01.293Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-09T11:38:41.363Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-09T11:40:01.496Z",
+      "head": "782c8caf6c9b825b75258dee0b673afa466cb983"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T11:41:25.324Z",
+      "head": "782c8caf6c9b825b75258dee0b673afa466cb983"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T11:41:57.771Z",
+      "head": "782c8caf6c9b825b75258dee0b673afa466cb983"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-09T11:49:59.067Z",
+      "head": "782c8caf6c9b825b75258dee0b673afa466cb983"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-09T11:53:18.081Z",
+      "head": "782c8caf6c9b825b75258dee0b673afa466cb983"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-09T11:53:22.666Z",
+      "head": "782c8caf6c9b825b75258dee0b673afa466cb983"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-09T08:37:53.847Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestLevelListReturnsLocalizedCanonicalLevels handler_levels_test.go:93: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLevelListReturnsLocalizedCanonicalLevels (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "FAIL",
+          "excerpt": "expected 'ScoreBJT levelsChoose a levelJ5J5J5 t…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels": "public level list: expected 200",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en": "J5 English"
+      },
+      "fingerprint": "8e10876601257ce08d9d38f309bedd21eacf49b6d50e6891d641a832062590bd"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-09T08:38:09.431Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelListReturnsLocalizedCanonicalLevels handler_levels_test.go:121: public level list: expected 200, got 404: 404 page not found --- FAIL: TestLevelListReturnsLocalizedCanonicalLevels (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "FAIL",
+          "excerpt": "expected 'ScoreBJT levelsChoose a levelJ5J5J5 t…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels": "public level list: expected 200",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en": "J5 English"
+      },
+      "fingerprint": "8e10876601257ce08d9d38f309bedd21eacf49b6d50e6891d641a832062590bd"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-09T08:42:57.169Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "BUILD_FAIL",
+          "valid": false,
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_levels.go:73:3: declared and not used: jlpt internal/httpserver/handler_levels.go:73:9: declared and not used: kanji FAIL github.com/kotobawo…"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "346caad199571c3db4ea7d4023f9439ee09f7a93b03a92a3794dae919eb01fe2"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-09T08:43:31.648Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0fee72b57ea84a57336e990b85cdec2a39aff02e70f730fd84ef61ffbb38c4c2"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-09T08:44:24.490Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 8,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelListReturnsLocalizedCanonicalLevels handler_levels_test.go:121: public level list: expected 200, got 404: 404 page not found --- FAIL: TestLevelListReturnsLocalizedCanonicalLevels (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "FAIL",
+          "excerpt": "expected 'ScoreBJT levelsChoose a levelJ5J5J5 t…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale",
+          "outcome": "FAIL",
+          "excerpt": "expected 'BJTSee all →J5J5 tiếng Việt2Words3Kan…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels": "public level list: expected 200",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en": "J5 English",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale": "J5 English"
+      },
+      "fingerprint": "94919d3e68581ef80427b21d014afa0e4ce4a07e3d6aa2ebf25a57d7c5d4cf25"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-09T08:44:41.343Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "94919d3e68581ef80427b21d014afa0e4ce4a07e3d6aa2ebf25a57d7c5d4cf25"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-09T08:48:07.467Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 8,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelListReturnsLocalizedCanonicalLevels handler_levels_test.go:121: public level list: expected 200, got 404: 404 page not found --- FAIL: TestLevelListReturnsLocalizedCanonicalLevels (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "FAIL",
+          "excerpt": "expected 'ScoreBJT levelsChoose a levelJ5J5J5 t…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale",
+          "outcome": "FAIL",
+          "excerpt": "expected 'BJTSee all →J5J5 tiếng Việt2Words3Kan…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels": "public level list: expected 200",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en": "J5 English",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale": "J5 English"
+      },
+      "fingerprint": "51ef90628db0d3f44026023b598f90f1e1ffe8f2548335e4e66a6dda5ca3eea9"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-09T08:48:22.340Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "51ef90628db0d3f44026023b598f90f1e1ffe8f2548335e4e66a6dda5ca3eea9"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-09T08:51:20.332Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 719,
+        "executed": 719,
+        "passed": 719,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "51ef90628db0d3f44026023b598f90f1e1ffe8f2548335e4e66a6dda5ca3eea9"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-09T08:54:44.305Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 382,
+        "executed": 382,
+        "passed": 382,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 766,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "dc0c32b00f9d2b4a95b3b0729cdcb7915f570dc61e4b0434316770e8b8c5b9af"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-09T08:55:09.079Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "dc0c32b00f9d2b4a95b3b0729cdcb7915f570dc61e4b0434316770e8b8c5b9af"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-09T09:08:41.096Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "81860ab7c6706d812cd2a6b1a21289033476b3d87b9681e299b5679ed30aac82"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-09T10:52:52.930Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 719,
+        "executed": 719,
+        "passed": 719,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "719 passed, 0 allowed skip(s)",
+      "fingerprint": "81860ab7c6706d812cd2a6b1a21289033476b3d87b9681e299b5679ed30aac82"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-09T11:01:39.805Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 382,
+        "executed": 382,
+        "passed": 382,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 766,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "81860ab7c6706d812cd2a6b1a21289033476b3d87b9681e299b5679ed30aac82"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-09T11:02:29.504Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium",
+      "exit_code": 1,
+      "fingerprint": "81860ab7c6706d812cd2a6b1a21289033476b3d87b9681e299b5679ed30aac82"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-09T11:06:02.012Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium",
+      "exit_code": 0,
+      "fingerprint": "81860ab7c6706d812cd2a6b1a21289033476b3d87b9681e299b5679ed30aac82"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-09T11:07:34.033Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec -s read-only -C /Users/thanhnguyen/Documents/Projects/nihongo-bjt -",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/web/app/[locale]/levels/_components/levels-client.tsx",
+          "summary": "When analytics fails, `hasSessions` is still false, so the page shows the assessment prompt and CTA as if the learner has no completed sessions, alongside the analytics error. Suppress that no-history…"
+        }
+      ],
+      "package_sha256": "b3ccd8a70fbc98e7260cbf80eaeb1fb4e9e8092b82cdd2141ef3abff8ba0e7cf",
+      "fingerprint": "81860ab7c6706d812cd2a6b1a21289033476b3d87b9681e299b5679ed30aac82"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-09T11:08:15.932Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 8,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestLevelListReturnsLocalizedCanonicalLevels handler_levels_test.go:93: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLevelListReturnsLocalizedCanonicalLevels (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "FAIL",
+          "excerpt": "expected 'ScoreBJT levelsChoose a levelJ5J5J5 t…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale",
+          "outcome": "FAIL",
+          "excerpt": "expected 'BJTSee all →J5J5 tiếng Việt2Words3Kan…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::\"LevelsClient > shows an analytics failure separately from empty learner history\"",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"\\\"LevelsClient > shows an analytics failure separately from empty learner history\\\"\" in apps/web/app/[locale]/levels/_components/levels-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels": "public level list: expected 200",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en": "J5 English",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale": "J5 English",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::\"LevelsClient > shows an analytics failure separately from empty learner history\"": "Assessment prompt is hidden when analytics fails"
+      },
+      "fingerprint": "27cf810eb9d51fb96501943d9fabdc7f3d98ef77b6a451974baf01304d6ec5c8"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-09T11:08:44.495Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 8,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelListReturnsLocalizedCanonicalLevels handler_levels_test.go:121: public level list: expected 200, got 404: 404 page not found --- FAIL: TestLevelListReturnsLocalizedCanonicalLevels (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "FAIL",
+          "excerpt": "expected 'ScoreBJT levelsChoose a levelJ5J5J5 t…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale",
+          "outcome": "FAIL",
+          "excerpt": "expected 'BJTSee all →J5J5 tiếng Việt2Words3Kan…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::\"LevelsClient > shows an analytics failure separately from empty learner history\"",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"\\\"LevelsClient > shows an analytics failure separately from empty learner history\\\"\" in apps/web/app/[locale]/levels/_components/levels-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > shows an analytics failure separately from empty learner history",
+          "outcome": "FAIL",
+          "excerpt": "expected 'ScoreBJT levelsChoose a levelComplete…' to contain 'Unable to load analytics'",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"Assessment prompt is hidden when analytics fails\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels": "public level list: expected 200",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en": "J5 English",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale": "J5 English",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::\"LevelsClient > shows an analytics failure separately from empty learner history\"": "Assessment prompt is hidden when analytics fails",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > shows an analytics failure separately from empty learner history": "Assessment prompt is hidden when analytics fails"
+      },
+      "fingerprint": "27cf810eb9d51fb96501943d9fabdc7f3d98ef77b6a451974baf01304d6ec5c8"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-09T11:09:23.849Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 8,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelListReturnsLocalizedCanonicalLevels handler_levels_test.go:121: public level list: expected 200, got 404: 404 page not found --- FAIL: TestLevelListReturnsLocalizedCanonicalLevels (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "FAIL",
+          "excerpt": "expected 'ScoreBJT levelsChoose a levelJ5J5J5 t…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale",
+          "outcome": "FAIL",
+          "excerpt": "expected 'BJTSee all →J5J5 tiếng Việt2Words3Kan…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > shows an analytics failure separately from empty learner history",
+          "outcome": "FAIL",
+          "excerpt": "expected 'ScoreBJT levelsChoose a levelComplete…' to contain 'Unable to load analytics'",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"Assessment prompt is visible after analytics failure\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels": "public level list: expected 200",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en": "J5 English",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale": "J5 English",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > shows an analytics failure separately from empty learner history": "Assessment prompt is visible after analytics failure"
+      },
+      "fingerprint": "f089115ba522cdcdee2f7879f4b60a45e974274798e4aa2712bf81e0cad0c39d"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-09T11:10:09.973Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 8,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelListReturnsLocalizedCanonicalLevels handler_levels_test.go:121: public level list: expected 200, got 404: 404 page not found --- FAIL: TestLevelListReturnsLocalizedCanonicalLevels (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "FAIL",
+          "excerpt": "expected 'ScoreBJT levelsChoose a levelJ5J5J5 t…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale",
+          "outcome": "FAIL",
+          "excerpt": "expected 'BJTSee all →J5J5 tiếng Việt2Words3Kan…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > shows an analytics failure separately from empty learner history",
+          "outcome": "FAIL",
+          "excerpt": "expected 'ScoreBJT levelsChoose a levelComplete…' to contain 'Unable to load analytics'",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"Assessment prompt is visible after analytics failure\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels": "public level list: expected 200",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en": "J5 English",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale": "J5 English",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > shows an analytics failure separately from empty learner history": "Assessment prompt is visible after analytics failure"
+      },
+      "fingerprint": "c09c0bc960d0f15be5682beaa4098e2a8aebd85724b7f3b4c04c47d7d87928d7"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-09T11:10:52.681Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 8,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelListReturnsLocalizedCanonicalLevels handler_levels_test.go:121: public level list: expected 200, got 404: 404 page not found --- FAIL: TestLevelListReturnsLocalizedCanonicalLevels (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "FAIL",
+          "excerpt": "expected 'ScoreBJT levelsChoose a levelJ5J5J5 t…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale",
+          "outcome": "FAIL",
+          "excerpt": "expected 'BJTSee all →J5J5 tiếng Việt2Words3Kan…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > shows an analytics failure separately from empty learner history",
+          "outcome": "FAIL",
+          "excerpt": "expected 'ScoreBJT levelsChoose a levelComplete…' to contain 'Unable to load analytics'",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"Assessment prompt is visible after analytics failure\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels": "public level list: expected 200",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en": "J5 English",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale": "J5 English",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > shows an analytics failure separately from empty learner history": "Assessment prompt is visible after analytics failure"
+      },
+      "fingerprint": "c09c0bc960d0f15be5682beaa4098e2a8aebd85724b7f3b4c04c47d7d87928d7"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-09T11:12:19.763Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 8,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelListReturnsLocalizedCanonicalLevels handler_levels_test.go:121: public level list: expected 200, got 404: 404 page not found --- FAIL: TestLevelListReturnsLocalizedCanonicalLevels (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "FAIL",
+          "excerpt": "expected 'ScoreBJT levelsChoose a levelJ5J5J5 t…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale",
+          "outcome": "FAIL",
+          "excerpt": "expected 'BJTSee all →J5J5 tiếng Việt2Words3Kan…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > shows an analytics failure separately from empty learner history",
+          "outcome": "FAIL",
+          "excerpt": "expected 'ScoreBJT levelsChoose a levelComplete…' to contain 'Unable to load analytics'",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"Assessment prompt is visible after analytics failure\""
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > hides the empty-history prompt when analytics fails",
+          "outcome": "PASS",
+          "excerpt": "",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels": "public level list: expected 200",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en": "J5 English",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale": "J5 English",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > shows an analytics failure separately from empty learner history": "Assessment prompt is visible after analytics failure",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > hides the empty-history prompt when analytics fails": "Empty-history prompt is shown after analytics failure"
+      },
+      "fingerprint": "fd52124d1a2b1c22d708a7c6dd7cec372fd08a8a43c2dc4967eed342879ad465"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-09T11:13:03.499Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 8,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelListReturnsLocalizedCanonicalLevels handler_levels_test.go:121: public level list: expected 200, got 404: 404 page not found --- FAIL: TestLevelListReturnsLocalizedCanonicalLevels (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "FAIL",
+          "excerpt": "expected 'ScoreBJT levelsChoose a levelJ5J5J5 t…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale",
+          "outcome": "FAIL",
+          "excerpt": "expected 'BJTSee all →J5J5 tiếng Việt2Words3Kan…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > hides the empty-history prompt when analytics fails",
+          "outcome": "FAIL",
+          "excerpt": "Empty-history CTA is shown after analytics failure: expected <a href=\"/en/quiz\" …(1)></a> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels": "public level list: expected 200",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en": "J5 English",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale": "J5 English",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > hides the empty-history prompt when analytics fails": "Empty-history CTA is shown after analytics failure"
+      },
+      "fingerprint": "642b0cbb1bb89c9f18e10c4152999dcdba875e4b4304c6d9a47986a29314249b"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-09T11:13:16.055Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestLevelListReturnsLocalizedCanonicalLevels handler_levels_test.go:93: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLevelListReturnsLocalizedCanonicalLevels (0.00s)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > hides the empty-history prompt when analytics fails",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "Empty-history CTA is shown after analytics failure: expected <a href=\"/en/quiz\" …(1)></a> to be null"
+        }
+      ],
+      "fingerprint": "3d84cf4a7472bc43e49832656c237eb9c23cb8bcbfcfb76416acf6458194a5c5"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-09T11:13:29.010Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > hides the empty-history prompt when analytics fails",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "Empty-history CTA is shown after analytics failure: expected <a href=\"/en/quiz\" …(1)></a> to be null"
+        }
+      ],
+      "fingerprint": "3d84cf4a7472bc43e49832656c237eb9c23cb8bcbfcfb76416acf6458194a5c5"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-09T11:14:22.164Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 8,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelListReturnsLocalizedCanonicalLevels handler_levels_test.go:121: public level list: expected 200, got 404: 404 page not found --- FAIL: TestLevelListReturnsLocalizedCanonicalLevels (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "FAIL",
+          "excerpt": "expected 'ScoreBJT levelsChoose a levelJ5J5J5 t…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale",
+          "outcome": "FAIL",
+          "excerpt": "expected 'BJTSee all →J5J5 tiếng Việt2Words3Kan…' to contain 'J5 English'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > hides the empty-history prompt when analytics fails",
+          "outcome": "FAIL",
+          "excerpt": "Empty-history CTA is shown after analytics failure: expected <a href=\"/en/quiz\" …(1)></a> to be undefined",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels": "public level list: expected 200",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en": "J5 English",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale": "J5 English",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > hides the empty-history prompt when analytics fails": "Empty-history CTA is shown after analytics failure"
+      },
+      "fingerprint": "26336c81590df5b38b54b994d444932bec6321e1fcff31779afd6d92a7c2868e"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-09T11:14:37.936Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > hides the empty-history prompt when analytics fails",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "26336c81590df5b38b54b994d444932bec6321e1fcff31779afd6d92a7c2868e"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-09T11:17:08.437Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 719,
+        "executed": 719,
+        "passed": 719,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "719 passed, 0 allowed skip(s)",
+      "fingerprint": "26336c81590df5b38b54b994d444932bec6321e1fcff31779afd6d92a7c2868e"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-09T11:20:25.792Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 382,
+        "executed": 382,
+        "passed": 382,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 766,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "26336c81590df5b38b54b994d444932bec6321e1fcff31779afd6d92a7c2868e"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-09T11:20:55.732Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium",
+      "exit_code": 1,
+      "fingerprint": "26336c81590df5b38b54b994d444932bec6321e1fcff31779afd6d92a7c2868e"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-09T11:21:52.239Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium",
+      "exit_code": 0,
+      "fingerprint": "26336c81590df5b38b54b994d444932bec6321e1fcff31779afd6d92a7c2868e"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-09T11:24:21.583Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec -s read-only -C /Users/thanhnguyen/Documents/Projects/nihongo-bjt -",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "e2e/smoke.spec.ts",
+          "summary": "AC5 is not covered by the recorded browser gate: this suite never visits /levels or checks the 390×844 layout, all six reachable links, or page/network errors. The inventory narrative is the only evid…"
+        },
+        {
+          "severity": "minor",
+          "file": "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md",
+          "summary": "The new API row appears before the Markdown table separator, so the separator is parsed as a data row and the inventory table no longer renders as a table."
+        }
+      ],
+      "package_sha256": "282f029aec94ce0f26dd1f1b1a03b0bc41ec34d84c858a0a27bbaac1be90ad1f",
+      "fingerprint": "26336c81590df5b38b54b994d444932bec6321e1fcff31779afd6d92a7c2868e"
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-09T11:26:49.637Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > hides the empty-history prompt when analytics fails",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "572c9149fc0f53fc998ec0ca41e598785357268b4cea098a1bcc9698451a7516"
+    },
+    {
+      "seq": 35,
+      "at": "2026-10-09T11:29:19.267Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 719,
+        "executed": 719,
+        "passed": 719,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "719 passed, 0 allowed skip(s)",
+      "fingerprint": "572c9149fc0f53fc998ec0ca41e598785357268b4cea098a1bcc9698451a7516"
+    },
+    {
+      "seq": 36,
+      "at": "2026-10-09T11:32:30.315Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 382,
+        "executed": 382,
+        "passed": 382,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 766,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "572c9149fc0f53fc998ec0ca41e598785357268b4cea098a1bcc9698451a7516"
+    },
+    {
+      "seq": 37,
+      "at": "2026-10-09T11:33:04.708Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium",
+      "exit_code": 1,
+      "fingerprint": "572c9149fc0f53fc998ec0ca41e598785357268b4cea098a1bcc9698451a7516"
+    },
+    {
+      "seq": 38,
+      "at": "2026-10-09T11:34:00.440Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium --workers=1",
+      "exit_code": 0,
+      "fingerprint": "572c9149fc0f53fc998ec0ca41e598785357268b4cea098a1bcc9698451a7516"
+    },
+    {
+      "seq": 39,
+      "at": "2026-10-09T11:38:40.633Z",
+      "head": "ddefa5a24d24394b8a835f1e11c7ca6a4c45ca19",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec -s read-only -C /Users/thanhnguyen/Documents/Projects/nihongo-bjt -",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [],
+      "package_sha256": "1b40ff9c3cb8f51b9f8bb1e139e5cf2f44c1068c49e0c29ed972e1e4357ebddd",
+      "fingerprint": "572c9149fc0f53fc998ec0ca41e598785357268b4cea098a1bcc9698451a7516"
+    },
+    {
+      "seq": 40,
+      "at": "2026-10-09T11:40:00.658Z",
+      "head": "782c8caf6c9b825b75258dee0b673afa466cb983",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium",
+      "exit_code": 0,
+      "fingerprint": "b679adcafebb82fe0f99fc6174fd3e8e34dcec3a6bdbf12e51e06b3d3b3e5af4"
+    },
+    {
+      "seq": 41,
+      "at": "2026-10-09T11:41:57.068Z",
+      "head": "782c8caf6c9b825b75258dee0b673afa466cb983",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLevelListReturnsLocalizedCanonicalLevels)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLevelListReturnsLocalizedCanonicalLevels",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders localized levels and actions for en",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > loads the shared collection and uses the selected locale",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > hides the empty-history prompt when analytics fails",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1443dd2b36aa11d8528ffcaf27719f1fc8e677a515e384efc4bed4dde3d19a08"
+    },
+    {
+      "seq": 42,
+      "at": "2026-10-09T11:44:05.017Z",
+      "head": "782c8caf6c9b825b75258dee0b673afa466cb983",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "1443dd2b36aa11d8528ffcaf27719f1fc8e677a515e384efc4bed4dde3d19a08"
+    },
+    {
+      "seq": 43,
+      "at": "2026-10-09T11:46:24.520Z",
+      "head": "782c8caf6c9b825b75258dee0b673afa466cb983",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 719,
+        "executed": 719,
+        "passed": 719,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "719 passed, 0 allowed skip(s)",
+      "fingerprint": "1443dd2b36aa11d8528ffcaf27719f1fc8e677a515e384efc4bed4dde3d19a08"
+    },
+    {
+      "seq": 44,
+      "at": "2026-10-09T11:49:22.197Z",
+      "head": "782c8caf6c9b825b75258dee0b673afa466cb983",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 392,
+        "executed": 392,
+        "passed": 392,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 768,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "1443dd2b36aa11d8528ffcaf27719f1fc8e677a515e384efc4bed4dde3d19a08"
+    },
+    {
+      "seq": 45,
+      "at": "2026-10-09T11:49:58.340Z",
+      "head": "782c8caf6c9b825b75258dee0b673afa466cb983",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_BASE_URL=http://localhost:18081 PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --project=chromium",
+      "exit_code": 0,
+      "fingerprint": "1443dd2b36aa11d8528ffcaf27719f1fc8e677a515e384efc4bed4dde3d19a08"
+    },
+    {
+      "seq": 46,
+      "at": "2026-10-09T11:53:17.378Z",
+      "head": "782c8caf6c9b825b75258dee0b673afa466cb983",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex exec -s read-only -C /Users/thanhnguyen/Documents/Projects/nihongo-bjt -",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [],
+      "package_sha256": "16892ddb3f5ba439e8428ef5ca285dc299541a6cb4da584f45b8dcc16d41eb60",
+      "fingerprint": "1443dd2b36aa11d8528ffcaf27719f1fc8e677a515e384efc4bed4dde3d19a08"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-09T11:53:22.649Z",
+    "head": "782c8caf6c9b825b75258dee0b673afa466cb983",
+    "fingerprint": "1443dd2b36aa11d8528ffcaf27719f1fc8e677a515e384efc4bed4dde3d19a08",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_levels.go": "699a68513400351be14319ee34a7298c2e84f35f",
+      "apps/api-go/internal/httpserver/handler_levels_test.go": "5d858c91567570fa2b0d06784ebccc62aaa5704f",
+      "apps/api-go/internal/httpserver/server.go": "1f5f13fb6c47c73a14c80aaa069fc8c9e712831e",
+      "apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx": "0045493618196058fa123df1ba167694996afe49",
+      "apps/web/app/[locale]/_components/homepage/bjt-levels-section.tsx": "2a6b6537d4a2e4a725ee7fd7a6ba4e4deaebde1d",
+      "apps/web/app/[locale]/_components/homepage/types.ts": "9659a61acd43cdf403e50fd13e25702e0055817e",
+      "apps/web/app/[locale]/levels/_components/levels-client.test.tsx": "913cab0de8d3b66ac2b4114c6825d0aace7e2dc5",
+      "apps/web/app/[locale]/levels/_components/levels-client.tsx": "d71b97f249e7bb2a9bcd02aa6a8271051b63228a",
+      "apps/web/messages/en.json": "ac7025a4c3969b0a10241d596bbd37a2e4f192cc",
+      "apps/web/messages/ja.json": "91463e51ad6fe066d49de9692632cbfd023dd6ee",
+      "apps/web/messages/vi.json": "4d8dc369999d422dbe21332b1cca751840dc0180",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "b51a840c3125589d78815fcceb9386bbd76173eb",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "aa6066757e54ee7b0f99f2998e25480288e5e4dd",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "4fbbf280ed22cb2c88059899d4b4f8578bbd32fd",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "d4046ade21db18fae3f2dbc0a43c1382671c146c",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "070d6e3a28061d3ecc1273459d0905f7c62bcc2c",
+      "e2e/smoke.spec.ts": "774f595251571462dbb0cdd4c2bda64932b19b7c",
+      "playwright.config.ts": "1b230ba87156928377afcda889c6bb87932fbc67"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-137",
+  "title": "Checkpoint Admin login audit and queue five API wave",
+  "start_head": "d4ea2e93abb0f3abd502df907806e5643008bc70",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Audit checkpoint inventories record AUDIT-136 Admin login screen and POST API as PASS with evidence and invariant totals."
+      },
+      {
+        "id": "AC2",
+        "text": "Morning report and handoff name the next five API endpoints and current git head."
+      }
+    ],
+    "expected_behavior": "AUDIT-136 browser evidence exists in committed test/evidence and the checkpoint was absent from inventory reports.",
+    "observed_behavior": "The inventory still lists POST /api/admin/login as REMAINING and report counters/head reflect AUDIT-134.",
+    "rollback_plan": "Revert only the checkpoint documentation commit; no runtime behavior changes."
+  },
+  "classification": {
+    "classes": [
+      "DOC_ONLY"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-13T05:56:29.302Z",
+      "head": "d4ea2e93abb0f3abd502df907806e5643008bc70"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-13T05:57:44.246Z",
+      "head": "d4ea2e93abb0f3abd502df907806e5643008bc70"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-13T05:57:44.599Z",
+      "head": "d4ea2e93abb0f3abd502df907806e5643008bc70"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-13T05:59:04.681Z",
+      "head": "d4ea2e93abb0f3abd502df907806e5643008bc70"
+    }
+  ],
+  "evidence": [],
+  "closed": {
+    "at": "2026-10-13T05:59:04.662Z",
+    "head": "d4ea2e93abb0f3abd502df907806e5643008bc70",
+    "fingerprint": "802176b0876915cf96d7a4f3739f530163c7767ed31098eff6745990e1308706",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS"
+    },
+    "files": {
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "4112b536c65f817c60aa2f35ea8ed8528015f3a1",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "27ed7bc02af510391cd28e2c3875d8d276ceabc1",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "09f908aae7e39db571e1899bb336b90ef21cb364",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "cb33addd1fd78b4842c5566fd63efb046be9d01b",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "0e79002347144acf8d8e8117a6d02e1b1efdb51f",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "54549c4b729a672163e3caba8209183c5b2c5b37",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "552fa091dcb1d27ad587e0ca25613871e7ac7e8d",
+      "docs/migrations/go-backend-v2/reports/HANDOFF_NEXT_AUDIT.md": "fad13fed9aac4470017dffc26728d4635530cf2a"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

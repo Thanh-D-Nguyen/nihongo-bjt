@@ -2,9 +2,11 @@
 
 ## Engineering policy (mandatory, takes precedence)
 
-All behavior-changing work follows [`docs/engineering/ENGINEERING_POLICY.md`](docs/engineering/ENGINEERING_POLICY.md): change classification, VALID_RED / regression TDD, ADD/MODIFY/DELETE rigor, exception process, and the canonical gates (`scripts/quality/with-test-db.sh scripts/quality/verify-all.sh`). Where any other guide below conflicts with it, the policy wins.
+All work follows [`docs/engineering/ENGINEERING_POLICY.md`](docs/engineering/ENGINEERING_POLICY.md): change classification, VALID_RED / regression TDD, ADD/MODIFY/DELETE rigor, exception process, and the canonical gates. Every non-doc change runs through the lifecycle harness — start with `pnpm quality begin <ID-123> "<title>"` and follow `pnpm quality status` until `pnpm quality close` (policy §16). CI rejects changes without a CLOSED task. Where any other guide below conflicts with the policy, the policy wins.
 
 ## AI quickstart
+
+Autonomy-first execution is mandatory under policy §17: recover ordinary local tooling/services and durable context yourself. Ask interactively only for consequential decisions, preserve WAITING_FOR_DECISION and resume the saved operation; continue independent safe work. A first failure is never BLOCKED.
 
 Read `AI_CONTEXT.md` first. It is the compact, current project brief for any AI assistant joining this repository. Then follow this file and all active Cursor rules.
 

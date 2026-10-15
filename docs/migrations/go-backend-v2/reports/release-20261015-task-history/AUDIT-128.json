@@ -1,0 +1,595 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-128",
+  "title": "Repair learner flashcard style data-source parity",
+  "start_head": "64496518adf89291e629e047cd707789aa22d718",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "PostgreSQL tests prove learner GET /api/flashcards/styles returns active Admin-managed rows, GET /active returns the selected canonical style config, PUT /active persists/reset preferences and rejects inactive/missing styles without mutation; visible learner flashcard style picker consumes the real contracts and persistence survives refresh."
+      }
+    ],
+    "expected_behavior": "Learner list, active-style lookup and selection use the canonical learning.flashcard_style table and profile preference, preserve JSON/API contracts, and persist only active valid selections.",
+    "observed_behavior": "Admin styles persist in learning.flashcard_style, but the learner style store reads content.flashcard_style; the learner list and active-style APIs cannot consume Admin-managed styles.",
+    "rollback_plan": "Revert only the AUDIT-128 Go store/handler, test, and component regression changes; no schema migration or canonical content mutation is involved. Test fixtures are isolated by generated IDs and cleaned up after each test/browser run."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DOMAIN_LOGIC",
+      "DATABASE",
+      "AUTH_SECURITY",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Fix canonical table drift and remove the now-resolved SQL conformance debt entry"
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/flashcardstyle",
+      "test": "TestListForLearner_ActiveAdminStyleAndConfig",
+      "expect": "list active learner styles from canonical schema"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLearnerFlashcardStyleListMatchesPickerContract",
+      "expect": "style picker list status=500"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-13T00:41:46.766Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-13T00:41:47.102Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-13T00:41:47.439Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T00:50:31.031Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-13T00:52:52.200Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T00:53:46.177Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T00:55:16.469Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T01:01:38.515Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T01:01:51.188Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-13T01:46:54.131Z",
+      "head": "228ec7f31af59be7f8fd39e7b1712e000ab402ce"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-13T01:50:55.506Z",
+      "head": "228ec7f31af59be7f8fd39e7b1712e000ab402ce"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-13T01:51:02.494Z",
+      "head": "228ec7f31af59be7f8fd39e7b1712e000ab402ce"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-13T00:50:30.776Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListForLearner_ActiveAdminStyleAndConfig)$ ./internal/flashcardstyle"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcardstyle:TestListForLearner_ActiveAdminStyleAndConfig",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestListForLearner_ActiveAdminStyleAndConfig store_test.go:78: list active learner styles from canonical schema: flashcardstyle: list styles: ERROR: relation \"content.flashcard_style\" does not exist (SQLSTATE 42P01) --- FAIL: TestListForLearner_ActiveAdminStyleAndConfig (0.08s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/flashcardstyle:TestListForLearner_ActiveAdminStyleAndConfig": "list active learner styles from canonical schema"
+      },
+      "fingerprint": "effa746cc510699c7a2e2bbade192802ba8b0a93ac25f06854ce26c4a870287b"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-13T00:52:51.915Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListForLearner_ActiveAdminStyleAndConfig)$ ./internal/flashcardstyle",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerFlashcardStyleListMatchesPickerContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcardstyle:TestListForLearner_ActiveAdminStyleAndConfig",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestListForLearner_ActiveAdminStyleAndConfig store_test.go:78: list active learner styles from canonical schema: flashcardstyle: list styles: ERROR: relation \"content.flashcard_style\" does not exist (SQLSTATE 42P01) --- FAIL: TestListForLearner_ActiveAdminStyleAndConfig (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLearnerFlashcardStyleListMatchesPickerContract",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_flashcard_style_contract_test.go:9:2: \"time\" imported and not used FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [build f…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/flashcardstyle:TestListForLearner_ActiveAdminStyleAndConfig": "list active learner styles from canonical schema",
+        "go:./internal/httpserver:TestLearnerFlashcardStyleListMatchesPickerContract": "style picker list status=500"
+      },
+      "fingerprint": "e85e22378996d575f0171ace510aa31babf097a73e6bd2e95390ea8ae990258c"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-13T00:53:45.883Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListForLearner_ActiveAdminStyleAndConfig)$ ./internal/flashcardstyle",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerFlashcardStyleListMatchesPickerContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcardstyle:TestListForLearner_ActiveAdminStyleAndConfig",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestListForLearner_ActiveAdminStyleAndConfig store_test.go:78: list active learner styles from canonical schema: flashcardstyle: list styles: ERROR: relation \"content.flashcard_style\" does not exist (SQLSTATE 42P01) --- FAIL: TestListForLearner_ActiveAdminStyleAndConfig (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLearnerFlashcardStyleListMatchesPickerContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerFlashcardStyleListMatchesPickerContract {\"time\":\"2026-10-13T09:53:45.838755+09:00\",\"level\":\"ERROR\",\"msg\":\"list flashcard styles\",\"error\":\"flashcardstyle: list styles: ERROR: relation \\\"content.flashcard_style\\\" does not exist (SQLSTATE 42P01)\",\"user_id\":\"7681533b-10b3-4806-875c-00…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/flashcardstyle:TestListForLearner_ActiveAdminStyleAndConfig": "list active learner styles from canonical schema",
+        "go:./internal/httpserver:TestLearnerFlashcardStyleListMatchesPickerContract": "style picker list status=500"
+      },
+      "fingerprint": "1aa7f46ebf995c91a4364eee267ebf9fed69ab6490a1b1b659c067832e1fcf87"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-13T00:54:36.890Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListForLearner_ActiveAdminStyleAndConfig)$ ./internal/flashcardstyle",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerFlashcardStyleListMatchesPickerContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcardstyle:TestListForLearner_ActiveAdminStyleAndConfig",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLearnerFlashcardStyleListMatchesPickerContract",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestLearnerFlashcardStyleListMatchesPickerContract handler_flashcard_style_contract_test.go:66: style = {Config:[123 34 97 99 99 101 110 116 34 58 34 35 50 53 54 51 101 98 34 44 34 98 97 99 107 103 114 111 117 110 100 34 58 34 35 102 56 102 97 102 99 34 44 34 102 111 114 101 103 114 111 117 …"
+        }
+      ],
+      "fingerprint": "76176cee7f6acfd753c3282e2bf74b283b5b74c4c4ceaa5a97222800b90388ea"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-13T00:55:16.107Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListForLearner_ActiveAdminStyleAndConfig)$ ./internal/flashcardstyle",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerFlashcardStyleListMatchesPickerContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcardstyle:TestListForLearner_ActiveAdminStyleAndConfig",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLearnerFlashcardStyleListMatchesPickerContract",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0f4ee81961a823a4eef6cf584e76cfd8f1fd1c2c3863b4314157a15ef96fbe88"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-13T00:57:53.430Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListForLearner_ActiveAdminStyleAndConfig)$ ./internal/flashcardstyle",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerFlashcardStyleListMatchesPickerContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcardstyle:TestListForLearner_ActiveAdminStyleAndConfig",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLearnerFlashcardStyleListMatchesPickerContract",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a3301bf4452fe2df66a753570b91804c272762c9e2eef93efaa0e08c5d789cd1"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-13T00:59:05.969Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 844,
+        "executed": 844,
+        "passed": 843,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "a3301bf4452fe2df66a753570b91804c272762c9e2eef93efaa0e08c5d789cd1"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-13T01:00:23.085Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 844,
+        "executed": 844,
+        "passed": 843,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "a3301bf4452fe2df66a753570b91804c272762c9e2eef93efaa0e08c5d789cd1"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-13T01:01:50.818Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListForLearner_ActiveAdminStyleAndConfig)$ ./internal/flashcardstyle",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerFlashcardStyleListMatchesPickerContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcardstyle:TestListForLearner_ActiveAdminStyleAndConfig",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLearnerFlashcardStyleListMatchesPickerContract",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "079111d30ed7a34ec11aa6c10cd2684e2f891ac23dfdf27ec7f5a14d976b38ca"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-13T01:04:51.665Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 844,
+        "executed": 844,
+        "passed": 844,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "844 passed, 0 allowed skip(s)",
+      "fingerprint": "079111d30ed7a34ec11aa6c10cd2684e2f891ac23dfdf27ec7f5a14d976b38ca"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-13T01:09:51.181Z",
+      "head": "64496518adf89291e629e047cd707789aa22d718",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 466,
+        "executed": 466,
+        "passed": 466,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 792,
+        "lint_errors": 66,
+        "lint_warnings": 22,
+        "new_debt": 1
+      },
+      "message": "RATCHET_VIOLATION: 1 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "079111d30ed7a34ec11aa6c10cd2684e2f891ac23dfdf27ec7f5a14d976b38ca"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-13T01:17:30.621Z",
+      "head": "228ec7f31af59be7f8fd39e7b1712e000ab402ce",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListForLearner_ActiveAdminStyleAndConfig)$ ./internal/flashcardstyle",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerFlashcardStyleListMatchesPickerContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcardstyle:TestListForLearner_ActiveAdminStyleAndConfig",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLearnerFlashcardStyleListMatchesPickerContract",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "432041048b3f78a5824be8eba2bc704656a41a4220dfab846981276ff9cf371a"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-13T01:20:26.221Z",
+      "head": "228ec7f31af59be7f8fd39e7b1712e000ab402ce",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 844,
+        "executed": 844,
+        "passed": 844,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "844 passed, 0 allowed skip(s)",
+      "fingerprint": "432041048b3f78a5824be8eba2bc704656a41a4220dfab846981276ff9cf371a"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-13T01:25:22.904Z",
+      "head": "228ec7f31af59be7f8fd39e7b1712e000ab402ce",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 466,
+        "executed": 466,
+        "passed": 466,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 792,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "432041048b3f78a5824be8eba2bc704656a41a4220dfab846981276ff9cf371a"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-13T01:27:46.886Z",
+      "head": "228ec7f31af59be7f8fd39e7b1712e000ab402ce",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "432041048b3f78a5824be8eba2bc704656a41a4220dfab846981276ff9cf371a"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-13T01:43:09.899Z",
+      "head": "228ec7f31af59be7f8fd39e7b1712e000ab402ce",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/audit-128-browser.py",
+      "exit_code": 1,
+      "fingerprint": "432041048b3f78a5824be8eba2bc704656a41a4220dfab846981276ff9cf371a"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-13T01:44:12.241Z",
+      "head": "228ec7f31af59be7f8fd39e7b1712e000ab402ce",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/audit-128-browser.py",
+      "exit_code": 1,
+      "fingerprint": "432041048b3f78a5824be8eba2bc704656a41a4220dfab846981276ff9cf371a"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-13T01:44:59.522Z",
+      "head": "228ec7f31af59be7f8fd39e7b1712e000ab402ce",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/audit-128-browser.py",
+      "exit_code": 1,
+      "fingerprint": "432041048b3f78a5824be8eba2bc704656a41a4220dfab846981276ff9cf371a"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-13T01:45:47.902Z",
+      "head": "228ec7f31af59be7f8fd39e7b1712e000ab402ce",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/audit-128-browser.py",
+      "exit_code": 1,
+      "fingerprint": "432041048b3f78a5824be8eba2bc704656a41a4220dfab846981276ff9cf371a"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-13T01:46:23.061Z",
+      "head": "228ec7f31af59be7f8fd39e7b1712e000ab402ce",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/audit-128-browser.py",
+      "exit_code": 1,
+      "fingerprint": "432041048b3f78a5824be8eba2bc704656a41a4220dfab846981276ff9cf371a"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-13T01:46:53.734Z",
+      "head": "228ec7f31af59be7f8fd39e7b1712e000ab402ce",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/audit-128-browser.py",
+      "exit_code": 0,
+      "fingerprint": "432041048b3f78a5824be8eba2bc704656a41a4220dfab846981276ff9cf371a"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-13T01:50:55.113Z",
+      "head": "228ec7f31af59be7f8fd39e7b1712e000ab402ce",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Banach",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "bd9ba34e7b7c2a3148598685d308f832652b36bd25233dc2a000b1ab092231df",
+      "attested": true,
+      "fingerprint": "432041048b3f78a5824be8eba2bc704656a41a4220dfab846981276ff9cf371a"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-13T01:51:02.478Z",
+    "head": "228ec7f31af59be7f8fd39e7b1712e000ab402ce",
+    "fingerprint": "432041048b3f78a5824be8eba2bc704656a41a4220dfab846981276ff9cf371a",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/admin/app/[locale]/flashcards/styles/flashcard-styles-admin-client.test.tsx": "5f687939c03e630970b8a34d6b8eed9d20eac84e",
+      "apps/api-go/internal/flashcardstyle/store.go": "e21d09015be95cec5f15bcace51f0a60b4036717",
+      "apps/api-go/internal/flashcardstyle/store_test.go": "896964c4fb91062b93e007f214eaf480ccc193f6",
+      "apps/api-go/internal/httpserver/handler_flashcard_style.go": "5c3aa084de68ccaa623cc707f91045ed5c69cf97",
+      "apps/api-go/internal/httpserver/handler_flashcard_style_contract_test.go": "be616f5f85cf531305eb70b4c0208aa19ecc862d",
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "fda1abec4d59ba4b71000077b1fa3c88d71a7f76",
+      "apps/web/app/[locale]/flashcards/_components/flashcard-style-picker.test.tsx": "7d471186b665b11e51588f6e6296082ad975f88a"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

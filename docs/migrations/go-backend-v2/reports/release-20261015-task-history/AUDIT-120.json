@@ -1,0 +1,828 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-120",
+  "title": "Wire Redis presence service into authenticated WebSocket handler",
+  "start_head": "39f527acb458dbea099206632b0b348970853a89",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "GET /ws/presence upgrades and the real learner page sends presence:heartbeat, but no Redis presence is recorded because httpserver constructs realtime.Server without attaching Dependencies.PresenceService to PresenceHandler.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Add an integration regression that fails before the fix when an authenticated session upgrades and heartbeat is sent but Redis remains offline; the failing assertion must identify missing service wiring."
+      },
+      {
+        "id": "AC2",
+        "text": "Wire the existing Redis-backed PresenceService to the realtime handler using the smallest compatible API; do not change WebSocket protocol or auth policy."
+      },
+      {
+        "id": "AC3",
+        "text": "After fix, authenticated upgrade marks the user online, heartbeat refreshes last-seen, and closing the last connection clears online state; preserve anonymous rejection and multi-connection semantics."
+      }
+    ],
+    "expected_behavior": "HTTP server composition passes Dependencies.PresenceService to /ws/presence; connect and heartbeat update Redis, last disconnect marks offline.",
+    "observed_behavior": "Real headed browser upgraded successfully and sent presence:heartbeat, but disposable learner id was absent from Redis presence:online and presence:last_seen; rg confirms the app constructs PresenceService but no caller invokes PresenceHandler.SetService.",
+    "rollback_plan": "Revert the HTTP-server wiring and its regression test; no schema or persistent canonical content changes."
+  },
+  "classification": {
+    "classes": [
+      "REALTIME"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestRealtimePresenceRouterTracksAuthenticatedLearner",
+      "expect": "timed out waiting for connected learner to be online"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/realtime",
+      "test": "TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace",
+      "expect": "reconnect wrote online while the prior disconnect was still removing it"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [
+    {
+      "finding": "test_skip_added:apps/api-go/internal/httpserver/handler_realtime_presence_test.go",
+      "reason": "The Redis integration is optional when no isolated test Redis is configured, following the existing TEST_DATABASE_URL integration-test pattern. The canonical local RED/GREEN and full Go verification use TEST_REDIS_URL=redis://127.0.0.1:6379/15, an isolated database on the confirmed local Redis service; no production Redis data is touched."
+    },
+    {
+      "finding": "test_skip_added:apps/api-go/internal/realtime/upgrade_integration_test.go",
+      "reason": "The Redis integration is optional when TEST_REDIS_URL is absent, following the existing integration-test convention. Canonical RED/GREEN and full verification run it against isolated local Redis DB 15; no production Redis data is touched."
+    }
+  ],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-12T07:31:55.635Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-12T07:31:56.009Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-12T07:31:56.414Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T07:36:31.486Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T07:37:11.038Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-12T07:40:54.096Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-12T07:53:03.802Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T08:02:29.711Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T08:02:52.773Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-12T08:05:52.547Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T08:08:43.636Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T08:09:05.190Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T08:10:18.314Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T08:10:36.219Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-12T08:13:41.604Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T08:14:11.606Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-12T08:17:20.360Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-12T08:19:02.506Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-12T08:19:03.192Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-12T07:35:00.065Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./apps/api-go/internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner": "timed out waiting for connected learner to be online"
+      },
+      "fingerprint": "a131d61288f56ab12f35fa91ff69cfaf3247649435fae3424482e32fa1a273f8"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-12T07:35:06.822Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./apps/api-go/internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestRealtimePresenceRouterTracksAuthenticatedLearner handler_realtime_presence_test.go:21: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestRealtimePresenceRouterTracksAuthenticatedLearner (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner": "timed out waiting for connected learner to be online",
+        "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner": "timed out waiting for connected learner to be online"
+      },
+      "fingerprint": "a131d61288f56ab12f35fa91ff69cfaf3247649435fae3424482e32fa1a273f8"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-12T07:35:25.887Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./apps/api-go/internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRealtimePresenceRouterTracksAuthenticatedLearner handler_realtime_presence_test.go:71: timed out waiting for connected learner to be online --- FAIL: TestRealtimePresenceRouterTracksAuthenticatedLearner (3.07s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner": "timed out waiting for connected learner to be online",
+        "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner": "timed out waiting for connected learner to be online"
+      },
+      "fingerprint": "a131d61288f56ab12f35fa91ff69cfaf3247649435fae3424482e32fa1a273f8"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-12T07:36:31.156Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRealtimePresenceRouterTracksAuthenticatedLearner handler_realtime_presence_test.go:71: timed out waiting for connected learner to be online --- FAIL: TestRealtimePresenceRouterTracksAuthenticatedLearner (3.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner": "timed out waiting for connected learner to be online"
+      },
+      "fingerprint": "a131d61288f56ab12f35fa91ff69cfaf3247649435fae3424482e32fa1a273f8"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-12T07:37:10.568Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ff0c5ca0ffabc6776bc11dacd0fb005f0b5a1deb64e077566dc89af0042c1744"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-12T07:40:53.705Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 789,
+        "executed": 789,
+        "passed": 789,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "789 passed, 0 allowed skip(s)",
+      "fingerprint": "ff0c5ca0ffabc6776bc11dacd0fb005f0b5a1deb64e077566dc89af0042c1744"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-12T07:49:11.200Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Copernicus",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 2,
+      "notes": "",
+      "output_sha256": "acfdefbe78c340442442c2111c4a0254314dee77a79c169d1efae2fa65b69ae4",
+      "attested": true,
+      "fingerprint": "ff0c5ca0ffabc6776bc11dacd0fb005f0b5a1deb64e077566dc89af0042c1744"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-12T07:53:03.368Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRealtimePresenceRouterTracksAuthenticatedLearner handler_realtime_presence_test.go:72: timed out waiting for connected learner to be online --- FAIL: TestRealtimePresenceRouterTracksAuthenticatedLearner (3.05s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"new connection updated Redis before the last connection finished going offline\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner": "new connection updated Redis before the last connection finished going offline"
+      },
+      "fingerprint": "255e7a01e38822f40b8e754980e02a80fb48f61a19dd25ead64d6c5cfbe2e294"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-12T07:53:56.861Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRealtimePresenceRouterTracksAuthenticatedLearner handler_realtime_presence_test.go:72: timed out waiting for connected learner to be online --- FAIL: TestRealtimePresenceRouterTracksAuthenticatedLearner (3.06s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"new connection updated Redis before the last connection finished going offline\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner": "new connection updated Redis before the last connection finished going offline"
+      },
+      "fingerprint": "255e7a01e38822f40b8e754980e02a80fb48f61a19dd25ead64d6c5cfbe2e294"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-12T07:55:27.153Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRealtimePresenceRouterTracksAuthenticatedLearner handler_realtime_presence_test.go:72: timed out waiting for connected learner to be online: presence:online=\"\", redis_error=redis: nil --- FAIL: TestRealtimePresenceRouterTracksAuthenticatedLearner (3.05s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"new connection updated Redis before the last connection finished going offline\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner": "new connection updated Redis before the last connection finished going offline"
+      },
+      "fingerprint": "4c6ce86599e81c4beb5f052034bd4a32150251e8fb68a1da25a91a01da925936"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-12T08:00:28.787Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestRealtimePresenceRouterTracksAuthenticatedLearner handler_realtime_presence_test.go:21: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestRealtimePresenceRouterTracksAuthenticatedLearner (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner": "new connection updated Redis before the last connection finished going offline"
+      },
+      "fingerprint": "f73a48dbc1cc909d05b37f1c10c92ca71f217cda157f6e5adc1f6b201b5a7aec"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-12T08:01:34.460Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestRealtimePresenceRouterTracksAuthenticatedLearner handler_realtime_presence_test.go:21: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestRealtimePresenceRouterTracksAuthenticatedLearner (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/realtime:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/realtime [github.com/kotobawork/nihongo-bjt/api-go/internal/realtime.test] internal/realtime/upgrade_integration_test.go:89:8: f.srv.SetPresenceService undefined (type *Server has no field or method SetPresenceService) FAIL github.com/kotobawork/ni…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner": "timed out waiting for connected learner to be online",
+        "go:./internal/realtime:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace": "new connection updated Redis before the last connection finished going offline"
+      },
+      "fingerprint": "3dfe73d2d409dd90a19e299eafb2405057dafa9c4e07ce77ffe1ec77707c9e8c"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-12T08:02:03.086Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRealtimePresenceRouterTracksAuthenticatedLearner handler_realtime_presence_test.go:71: timed out waiting for connected learner to be online: presence:online=\"\", redis_error=redis: nil --- FAIL: TestRealtimePresenceRouterTracksAuthenticatedLearner (3.06s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/realtime:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace upgrade_integration_test.go:118: reconnect wrote online while the prior disconnect was still removing it --- FAIL: TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace (0.03s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"new connection updated Redis before the last connection finished going offline\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner": "timed out waiting for connected learner to be online",
+        "go:./internal/realtime:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace": "new connection updated Redis before the last connection finished going offline"
+      },
+      "fingerprint": "3b583c820060478b0754eae8fb6ea0f992eca02f41f3eb705ebbfb2ea79c4421"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-12T08:02:29.410Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRealtimePresenceRouterTracksAuthenticatedLearner handler_realtime_presence_test.go:71: timed out waiting for connected learner to be online: presence:online=\"\", redis_error=redis: nil --- FAIL: TestRealtimePresenceRouterTracksAuthenticatedLearner (3.09s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/realtime:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace upgrade_integration_test.go:118: reconnect wrote online while the prior disconnect was still removing it --- FAIL: TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner": "timed out waiting for connected learner to be online",
+        "go:./internal/realtime:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace": "reconnect wrote online while the prior disconnect was still removing it"
+      },
+      "fingerprint": "3b583c820060478b0754eae8fb6ea0f992eca02f41f3eb705ebbfb2ea79c4421"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-12T08:02:52.457Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/realtime:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3b583c820060478b0754eae8fb6ea0f992eca02f41f3eb705ebbfb2ea79c4421"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-12T08:05:52.235Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 790,
+        "executed": 790,
+        "passed": 790,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "790 passed, 0 allowed skip(s)",
+      "fingerprint": "3b583c820060478b0754eae8fb6ea0f992eca02f41f3eb705ebbfb2ea79c4421"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-12T08:08:43.319Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRealtimePresenceRouterTracksAuthenticatedLearner handler_realtime_presence_test.go:73: timed out waiting for connected learner to be online: presence:online=\"\", redis_error=redis: nil --- FAIL: TestRealtimePresenceRouterTracksAuthenticatedLearner (3.05s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/realtime:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace upgrade_integration_test.go:134: reconnect wrote online while the prior disconnect was still removing it --- FAIL: TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner": "timed out waiting for connected learner to be online",
+        "go:./internal/realtime:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace": "reconnect wrote online while the prior disconnect was still removing it"
+      },
+      "fingerprint": "9f47fb76b02d8e28e262b997c16b3e525a63df863bfbe759250860051c8f2b24"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-12T08:09:04.877Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/realtime:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9f47fb76b02d8e28e262b997c16b3e525a63df863bfbe759250860051c8f2b24"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-12T08:09:14.935Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "9f47fb76b02d8e28e262b997c16b3e525a63df863bfbe759250860051c8f2b24"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-12T08:10:18.013Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRealtimePresenceRouterTracksAuthenticatedLearner handler_realtime_presence_test.go:73: timed out waiting for connected learner to be online: presence:online=\"\", redis_error=redis: nil --- FAIL: TestRealtimePresenceRouterTracksAuthenticatedLearner (3.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/realtime:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace upgrade_integration_test.go:134: reconnect wrote online while the prior disconnect was still removing it --- FAIL: TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner": "timed out waiting for connected learner to be online",
+        "go:./internal/realtime:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace": "reconnect wrote online while the prior disconnect was still removing it"
+      },
+      "fingerprint": "f990bf15a1297b107828b4000cd8fc0cdb9bf3c6990dc918fb4425d30d9a4d1f"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-12T08:10:35.883Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/realtime:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f990bf15a1297b107828b4000cd8fc0cdb9bf3c6990dc918fb4425d30d9a4d1f"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-12T08:13:41.276Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 790,
+        "executed": 790,
+        "passed": 790,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "790 passed, 0 allowed skip(s)",
+      "fingerprint": "f990bf15a1297b107828b4000cd8fc0cdb9bf3c6990dc918fb4425d30d9a4d1f"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-12T08:14:11.283Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealtimePresenceRouterTracksAuthenticatedLearner)$ ./internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRealtimePresenceRouterTracksAuthenticatedLearner",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/realtime:TestRealUpgrade_PresenceReconnectSurvivesLastDisconnectRace",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e21186874333fe97ed0b7fdfe9445fcd8b85255b194a1c1facad5e3ff4f579a3"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-12T08:17:20.049Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 790,
+        "executed": 790,
+        "passed": 790,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "790 passed, 0 allowed skip(s)",
+      "fingerprint": "e21186874333fe97ed0b7fdfe9445fcd8b85255b194a1c1facad5e3ff4f579a3"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-12T08:19:02.225Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Hubble (01a12f2c-ee61-7742-8180-a4b756e7a3c1)",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb0f7e821d19770d68ab87f2f76785c0a570b77bd4b0d80997de84d6a1c60714",
+      "attested": true,
+      "fingerprint": "e21186874333fe97ed0b7fdfe9445fcd8b85255b194a1c1facad5e3ff4f579a3"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-12T08:19:03.172Z",
+    "head": "39f527acb458dbea099206632b0b348970853a89",
+    "fingerprint": "e21186874333fe97ed0b7fdfe9445fcd8b85255b194a1c1facad5e3ff4f579a3",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_realtime_presence_test.go": "5a479989a2ceddc3ceb2a34b17ae5477c8a37445",
+      "apps/api-go/internal/httpserver/server.go": "f4276313c561bb08ced26924cd686446f785a2da",
+      "apps/api-go/internal/realtime/server.go": "54e65d55367313010ab2b2a5cbc3faea17634a92",
+      "apps/api-go/internal/realtime/upgrade_integration_test.go": "3ff64efb95cbd71a15f8bc6857dc6adf840dccb1"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

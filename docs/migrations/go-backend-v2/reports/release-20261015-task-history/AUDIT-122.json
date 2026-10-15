@@ -1,0 +1,539 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-122",
+  "title": "Audit Daily Radar publish and module endpoints",
+  "start_head": "16234213e3ec09699c6f684984353e64811772c7",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Three pending Admin Daily Radar APIs need individual verification. Card publish is missing admin.content.write and CSRF middleware and its status update/audit writes are not atomic. Module detail must return its persisted API contract and correct missing-record response. Module archive uses the required write guard but ignores audit errors after mutating the module, which can leave an unaudited state change.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "POST /api/admin/daily-radar/cards/{id}/publish rejects roleless Admin and untrusted Origin without mutation; authorized writer gets 200 with persisted published status/updated_at and exactly one audit event; missing card returns 404."
+      },
+      {
+        "id": "AC2",
+        "text": "GET /api/admin/daily-radar/modules/{id} returns the persisted detail fields and timestamps for an existing module, and 404 for a missing module; anonymous access is rejected by AdminGuard."
+      },
+      {
+        "id": "AC3",
+        "text": "POST /api/admin/daily-radar/modules/{id}/archive persists archived status and exactly one audit row; if audit insertion fails, return 500 and leave module unchanged; missing module returns 404."
+      }
+    ],
+    "expected_behavior": "Audit each METHOD+PATH independently with a real Admin browser session and isolated PostgreSQL fixtures. Publish and archive must not commit state without their audit record; writes require backend RBAC and trusted-origin CSRF. Persist only fields present in the canonical Prisma schema.",
+    "observed_behavior": "Card publish has no content-write or CSRF route middleware, updates a nonexistent published_at column, and uses independent update/audit calls. Module archive uses independent update/audit calls and discards audit errors. Module detail has not been validated against a persisted fixture/contract.",
+    "rollback_plan": "Revert only AUDIT-122 handler/router/test changes and its audit checkpoint; all database fixtures are disposable and cleaned in test/visible-browser scripts."
+  },
+  "classification": {
+    "classes": [
+      "AUTH_SECURITY",
+      "API_CONTRACT",
+      "DATABASE",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Protect the publishing route and make Daily Radar status transitions atomic with audit. Shrink only the canonical SQL drift signature proven resolved by the publish handler change."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminDailyRadarCardPublishRequiresContentWrite",
+      "expect": "roleless publish status="
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminDailyRadarCardPublishRequiresTrustedOrigin",
+      "expect": "untrusted-origin publish status="
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails",
+      "expect": "archive status after audit failure=200"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [
+    {
+      "finding": "baseline_expanded:apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json:min_statements_checked_lowered",
+      "reason": "The audit confirmed two daily-radar publish SQL failures against the canonical Prisma schema (ambiguous status from the unnecessary join and nonexistent published_at). The fixed query removes those two inspected SQL statements, so the generated baseline floor reflects the actual 1155 statements checked after the code change; no unrelated debt was deleted and the canonical conformance test passes."
+    }
+  ],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-12T13:23:31.609Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-12T13:25:39.350Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T13:26:11.275Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T13:28:17.801Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T13:34:53.630Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-12T13:39:44.514Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T13:41:43.218Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-12T13:46:40.993Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-12T13:50:14.366Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-12T13:50:15.215Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-12T13:25:39.181Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardPublishRequiresContentWrite|TestAdminDailyRadarCardPublishRequiresTrustedOrigin|TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresContentWrite",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminDailyRadarCardPublishRequiresContentWrite handler_admin_dailyradar_publish_archive_audit_test.go:14: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminDailyRadarCardPublishRequiresContentWrite (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresTrustedOrigin",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminDailyRadarCardPublishRequiresTrustedOrigin handler_admin_dailyradar_publish_archive_audit_test.go:37: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminDailyRadarCardPublishRequiresTrustedOrigin (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails handler_admin_dailyradar_publish_archive_audit_test.go:141: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresContentWrite": "roleless publish status=",
+        "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresTrustedOrigin": "untrusted-origin publish status=",
+        "go:./internal/httpserver:TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails": "archive status after audit failure=\"draft\""
+      },
+      "fingerprint": "e27c85497006c60d9ae217bb5fed55077846e4d970b2d6e0ceeba8dc229dce93"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-12T13:25:54.200Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardPublishRequiresContentWrite|TestAdminDailyRadarCardPublishRequiresTrustedOrigin|TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresContentWrite",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminDailyRadarCardPublishRequiresContentWrite 2026/10/12 22:25:54 INFO request method=POST path=/api/admin/daily-radar/cards/b67d4e1a-42f4-48ae-aac7-49253a17a7b3/publish status=404 duration=2.052417ms bytes=27 handler_admin_dailyradar_publish_archive_audit_test.go:25: roleless publish s…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresTrustedOrigin",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminDailyRadarCardPublishRequiresTrustedOrigin 2026/10/12 22:25:54 INFO request method=POST path=/api/admin/daily-radar/cards/084e93f6-0519-4893-8015-98d5943720a2/publish status=404 duration=1.727584ms bytes=27 handler_admin_dailyradar_publish_archive_audit_test.go:49: untrusted-origin …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails handler_admin_dailyradar_publish_archive_audit_test.go:163: archive status after audit failure=200 body={\"id\":\"01b48f4f-4c12-4b70-9499-d9d8145f30e1\",\"status\":\"archived\"} ; want 500 --- FAIL: TestAdminDailyRadarModuleArchiveRollsBackWhen…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"archive status after audit failure=\\\"draft\\\"\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresContentWrite": "roleless publish status=",
+        "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresTrustedOrigin": "untrusted-origin publish status=",
+        "go:./internal/httpserver:TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails": "archive status after audit failure=\"draft\""
+      },
+      "fingerprint": "e27c85497006c60d9ae217bb5fed55077846e4d970b2d6e0ceeba8dc229dce93"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-12T13:26:11.102Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardPublishRequiresContentWrite|TestAdminDailyRadarCardPublishRequiresTrustedOrigin|TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresContentWrite",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminDailyRadarCardPublishRequiresContentWrite 2026/10/12 22:26:11 INFO request method=POST path=/api/admin/daily-radar/cards/86e33abc-d616-421c-8d89-f610d1af6bb9/publish status=404 duration=2.508875ms bytes=27 handler_admin_dailyradar_publish_archive_audit_test.go:25: roleless publish s…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresTrustedOrigin",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminDailyRadarCardPublishRequiresTrustedOrigin 2026/10/12 22:26:11 INFO request method=POST path=/api/admin/daily-radar/cards/9f8beac7-1045-4b6a-a67a-df65473a49f3/publish status=404 duration=1.50925ms bytes=27 handler_admin_dailyradar_publish_archive_audit_test.go:49: untrusted-origin p…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails handler_admin_dailyradar_publish_archive_audit_test.go:163: archive status after audit failure=200 body={\"id\":\"cf9dc8ef-34dc-401d-af12-5aa17ce39075\",\"status\":\"archived\"} ; want 500 --- FAIL: TestAdminDailyRadarModuleArchiveRollsBackWhen…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresContentWrite": "roleless publish status=",
+        "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresTrustedOrigin": "untrusted-origin publish status=",
+        "go:./internal/httpserver:TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails": "archive status after audit failure=200"
+      },
+      "fingerprint": "e27c85497006c60d9ae217bb5fed55077846e4d970b2d6e0ceeba8dc229dce93"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-12T13:28:17.500Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardPublishRequiresContentWrite|TestAdminDailyRadarCardPublishRequiresTrustedOrigin|TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresContentWrite",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresTrustedOrigin",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1a96a00f500a1d9f526543b2d49cf89ceddf09dd59f3cfb08551f9732a2425a4"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-12T13:30:22.600Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardPublishRequiresContentWrite|TestAdminDailyRadarCardPublishRequiresTrustedOrigin|TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresContentWrite",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresTrustedOrigin",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "03bf1d3e53f30944b940345a42fa45a508d562ed3579bb84ad953e968bb308b0"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-12T13:31:15.728Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardPublishRequiresContentWrite|TestAdminDailyRadarCardPublishRequiresTrustedOrigin|TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresContentWrite",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresTrustedOrigin",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a571eb6d2759638d8d84bbcfe3b5fdb4713be87163f5de8aa8ab1c65a105d254"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-12T13:34:53.245Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "051d1bbeee0f72544b7cbe2269af19512e8b0f8719960fa556dfea48de7a38aa"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-12T13:37:45.092Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 801,
+        "executed": 801,
+        "passed": 801,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "801 passed, 0 allowed skip(s)",
+      "fingerprint": "051d1bbeee0f72544b7cbe2269af19512e8b0f8719960fa556dfea48de7a38aa"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-12T13:39:10.314Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit122-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "051d1bbeee0f72544b7cbe2269af19512e8b0f8719960fa556dfea48de7a38aa"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-12T13:39:44.132Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardPublishRequiresContentWrite|TestAdminDailyRadarCardPublishRequiresTrustedOrigin|TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresContentWrite",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresTrustedOrigin",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "051d1bbeee0f72544b7cbe2269af19512e8b0f8719960fa556dfea48de7a38aa"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-12T13:41:42.732Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit122-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "a880fb59a58fd8c6979fb479048e6d3415958de428b7a78898dda0f7a2865c67"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-12T13:43:44.507Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "a880fb59a58fd8c6979fb479048e6d3415958de428b7a78898dda0f7a2865c67"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-12T13:46:13.704Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 801,
+        "executed": 801,
+        "passed": 801,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "801 passed, 0 allowed skip(s)",
+      "fingerprint": "a880fb59a58fd8c6979fb479048e6d3415958de428b7a78898dda0f7a2865c67"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-12T13:46:40.520Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminDailyRadarCardPublishRequiresContentWrite|TestAdminDailyRadarCardPublishRequiresTrustedOrigin|TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresContentWrite",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarCardPublishRequiresTrustedOrigin",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminDailyRadarModuleArchiveRollsBackWhenAuditFails",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a880fb59a58fd8c6979fb479048e6d3415958de428b7a78898dda0f7a2865c67"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-12T13:50:13.928Z",
+      "head": "16234213e3ec09699c6f684984353e64811772c7",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a1305d-ec17-7da3-ad0c-79bf8fac071b",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "973888e2756e05bd72fe6ea10dc5c10e122928c3faa3eee829ddfb93d1820fda",
+      "attested": true,
+      "fingerprint": "a880fb59a58fd8c6979fb479048e6d3415958de428b7a78898dda0f7a2865c67"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-12T13:50:15.199Z",
+    "head": "16234213e3ec09699c6f684984353e64811772c7",
+    "fingerprint": "a880fb59a58fd8c6979fb479048e6d3415958de428b7a78898dda0f7a2865c67",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_admin_dailyradar_exercises.go": "7c9108fe1e53e4ff22f2cb2802c89623adcf4a9a",
+      "apps/api-go/internal/httpserver/handler_admin_dailyradar_publish_archive_audit_test.go": "226cf44c1875bb773f8b78f2e1869260e9d58c0c",
+      "apps/api-go/internal/httpserver/server.go": "b940e9612137f2235e1a784fe53caadfab2f6899",
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "9c13a37d8c128498fdc66bee19be0f7a48d5fedc",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "afc3c3eb77ee2ceae7658389dc37cbb79e72bfcb",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "5fd434dc1417d12d2e7c006f730aad368b9a04d5",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "654b3b4be3d022fd32da258a99c0b54fbeb1906f",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "4e7f34813853979fe3bf4daf5eb7c9aacd40a086",
+      "docs/migrations/go-backend-v2/reports/HANDOFF_NEXT_AUDIT.md": "5797c8f8c70ca73a89530f89e34344f7873617bd",
+      "e2e/audit/audit122-browser-check.sh": "3293175992900af13cb4e6e323672bd8b70d9536"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

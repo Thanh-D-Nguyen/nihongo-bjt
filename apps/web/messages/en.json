@@ -73,6 +73,7 @@
       "authDisabledHint": "Registration isn't enabled on this system. Please contact an administrator."
     },
     "forgotPassword": {
+      "languageLabel": "Language",
       "metaTitle": "Forgot your password? — KotobaWorks",
       "title": "Forgot your password?",
       "subtitle": "Enter the email you registered with and we'll send a password reset link.",
@@ -84,6 +85,24 @@
       "backToLogin": "Back to sign in",
       "genericError": "Something went wrong. Please try again later.",
       "validationError": "Please enter a valid email address."
+    },
+    "resetPassword": {
+      "languageLabel": "Language",
+      "metaTitle": "Reset your password — KotobaWorks",
+      "title": "Set a new password",
+      "subtitle": "Choose a new password to continue learning.",
+      "passwordLabel": "New password",
+      "confirmPasswordLabel": "Confirm new password",
+      "passwordHint": "Use at least 8 characters.",
+      "passwordTooLong": "This password is too long.",
+      "preparing": "Preparing the password reset form…",
+      "primaryCta": "Save new password",
+      "submitting": "Saving…",
+      "successMessage": "Your password has changed. Sign in with your new password.",
+      "backToLogin": "Back to sign in",
+      "genericError": "Could not change your password. Please try again.",
+      "invalidToken": "This reset link is invalid or expired. Request a new link.",
+      "mismatch": "Passwords do not match."
     }
   },
   "nav": {
@@ -378,7 +397,8 @@
       "viewAll": "See all",
       "vocab": "Vocabulary",
       "kanji": "Kanji",
-      "grammar": "Grammar"
+      "grammar": "Grammar",
+      "error": "Unable to load the BJT roadmap."
     },
     "tabs": {
       "today": "Today",
@@ -424,6 +444,7 @@
     "bookmarkAdd": "save",
     "bookmarkRemove": "saved",
     "summaryNote": "This is a summary. You can read the full text in the original NHK article.",
+    "contentUnavailable": "Only the headline is available here. Open the original NHK article to read the full story.",
     "readFullArticle": "Read the full story on NHK",
     "furiganaToggle": "Furigana display",
     "furiganaOn": "Furigana",
@@ -1431,6 +1452,53 @@
       "descriptionLabel": "Image description",
       "pendingLabel": "Image pending generation",
       "promptLabel": "Image-generation prompt"
+    },
+    "print": {
+      "loading": "Loading the practice exam…",
+      "loadError": "This practice exam could not be loaded. Try again or return to practice.",
+      "retry": "Try again",
+      "back": "Go back",
+      "showAnswers": "Show answers",
+      "printButton": "Print exam",
+      "coverKicker": "KotobaWorks · Practice material",
+      "practiceTitle": "Practice exam",
+      "level": "Level",
+      "questionCount": "Questions",
+      "questionUnit": "questions",
+      "timeLimit": "Time limit",
+      "minuteUnit": "minutes",
+      "structure": "Exam structure",
+      "sectionCount": "sections",
+      "total": "Total",
+      "instructions": "Instructions",
+      "chooseAnswer": "Choose the best answer from the options.",
+      "independentNotice": "This is independent KotobaWorks practice material, not an official exam.",
+      "listeningNotice": "Listening questions print as text scripts; audio does not play on paper.",
+      "answerSheet": "Answer sheet",
+      "answerSheetHint": "Mark your choices, then select “Show answers” to check them.",
+      "scoreTitle": "BJT level reference",
+      "scoreDescription": "Score ranges and level descriptions are indicative only.",
+      "rank": "Level",
+      "scoreRange": "Score range",
+      "description": "Description",
+      "footerTitle": "KotobaWorks · Independent practice material",
+      "footerDisclaimer": "This is not an official BJT exam. Practice results do not predict an official score.",
+      "levelDescriptions": {
+        "J1+": "Outstanding business communication ability",
+        "J1": "Strong business communication ability",
+        "J2": "Good business communication ability",
+        "J3": "Intermediate business communication ability",
+        "J4": "Basic business communication ability",
+        "J5": "Foundational business communication ability"
+      },
+      "examTitle": "Business Japanese Proficiency Test (BJT)",
+      "part": "Part",
+      "section": "Section",
+      "partNames": {
+        "LC": "Listening",
+        "LR": "Listening and reading",
+        "RC": "Reading"
+      }
     }
   },
   "onboarding": {
@@ -1487,6 +1555,8 @@
     "error": "Loading or application failed.",
     "userId": "Learner ID",
     "export": "Request a copy of your data",
+    "download": "Download data export",
+    "exportExpired": "This export has expired. Request a new data export to download it.",
     "delete": "Request account deletion",
     "listTitle": "recent requests",
     "empty": "There are no requests yet.",
@@ -1600,6 +1670,9 @@
     }
   },
   "accounts": {
+    "linkedAccountsEmpty": "No existing linked accounts are available to manage.",
+    "linkedAccountsSubtitle": "Manage accounts from past connections. New social account linking is unavailable.",
+    "linkedAccountsTitle": "Linked accounts",
     "connected": "Already linked",
     "exchangeError": "We were unable to exchange login codes.",
     "exchangeOk": "Synced with Google account.",
@@ -1633,7 +1706,7 @@
     "accuracy": "BJT correct answer rate",
     "completedSessions": "Completed BJT session",
     "empty": "There is no analytical data for this period yet.",
-    "emptyTitle": "7 days of data is still not enough",
+    "emptyTitleDynamic": "Not enough data for {n} days yet",
     "emptyDescription": "As you continue reviewing or doing BJT exercises, they will accumulate here.",
     "emptyCtaFlashcards": "card review",
     "emptyCtaQuiz": "BJT exercises",
@@ -1668,11 +1741,11 @@
     "nudgeWeak": "I see a skill I want to focus on — a little bit at a time.",
     "nudgeStreak": "{n} days in a row — at my own pace.",
     "nudgeCalm": "Don't rush, choose the first step you can take today.",
-    "activityTitle": "Daily activity amount",
-    "activityDescription": "Green: SRS review, dark blue: BJT answers, orange: completed session. Actual data for the selected period.",
-    "activityReviewsShort": "SRS",
-    "activityQuizShort": "BJT",
-    "activitySessionsShort": "Session",
+    "activityTitle": "Daily study activity",
+    "activityDescription": "Bars show study minutes per day; details include XP and study sessions for the selected period.",
+    "activityLessonsShort": "Study sessions",
+    "activityMinutesShort": "Minutes studied",
+    "activityXpShort": "XP",
     "activityEmpty": "There is no activity yet during this period.",
     "activityTableCaption": "Daily learning activities (UTC)",
     "activityColDateUtc": "Date (UTC)",
@@ -1681,7 +1754,7 @@
     "learningPathsEmpty": "There are no public passes yet.",
     "learningPathsCta": "BJT practice",
     "learningPathsLevel": "Goal: {level}",
-    "heatmapLabel": "Activity heatmap (12 weeks)",
+    "heatmapLabel": "Activity heatmap",
     "shareProgress": "Share progress",
     "viewAchievements": "View achievements",
     "trendVsPrevious": "Compared to previous {n} days"
@@ -1689,19 +1762,19 @@
   "helpPage": {
     "metaTitle": "Help — KotobaWorks",
     "title": "Help center",
-    "subtitle": "Need help?Find the answer here.",
+    "subtitle": "Need help? Find the answer here.",
     "faqTitle": "Frequently asked questions",
     "faq1q": "What is KotobaWorks?",
     "faq1a": "KotobaWorks is a Japanese learning and BJT (Business Japanese Test) prep platform.",
     "faq2q": "Can I use it for free?",
-    "faq2a": "yes. Flashcard reviews, dictionary searches, and basic BJT practice questions are free.",
+    "faq2a": "Yes. Flashcard reviews, dictionary searches, and basic BJT practice questions are free.",
     "faq3q": "How to start BJT preparation?",
     "faq3a": "Log in, select \"BJT\" from the menu, and start practicing according to your level.",
     "faq4q": "Is my learning data safe?",
-    "faq4a": "yes. Your data is stored securely and you can request to export or delete it at any time in your settings.",
+    "faq4a": "Yes. Your data is stored securely and you can request to export or delete it at any time in your settings.",
     "contactTitle": "Contact us",
     "contactDesc": "If you can't find your answer, please contact us through our feedback page.",
-    "contactLink": "send feedback"
+    "contactLink": "Send feedback"
   },
   "termsPage": {
     "metaTitle": "Terms of Use — KotobaWorks",
@@ -1731,7 +1804,9 @@
     "section4Title": "4. Your rights",
     "section4Body": "You can request to export your data or delete your account at any time by going to Settings > Privacy.",
     "section5Title": "5. Contact us",
-    "section5Body": "If you have any questions regarding our privacy policy, please contact us via our feedback page."
+    "section5Body": "If you have any questions regarding our privacy policy, please contact us via our feedback page.",
+    "settingsPrivacyLink": "Open Privacy Settings",
+    "feedbackLink": "Send feedback"
   },
   "feedbackPage": {
     "metaTitle": "Feedback — KotobaWorks",
@@ -1749,7 +1824,9 @@
     "messageLabel": "Content",
     "messagePlaceholder": "Please describe in detail...",
     "submit": "Send",
-    "success": "Thank you for your feedback!Please check as soon as possible.",
+    "submitting": "Sending…",
+    "rateLimit": "You're sending feedback too quickly. Please wait a moment and try again.",
+    "success": "Thank you for your feedback! We'll review it soon.",
     "error": "Unable to send. Please try again later."
   },
   "explore": {
@@ -1772,6 +1849,7 @@
     "statsWords": "vocabulary",
     "statsKanji": "Kanji",
     "statsGrammar": "grammar",
+    "statsUnavailable": "Stats unavailable",
     "recentTitle": "Recent searches",
     "recentEmpty": "No search history",
     "progressTitle": "My Progress",
@@ -1971,6 +2049,7 @@
       "daily_auto": "Daily auto"
     },
     "sourceType": "source",
+    "topic": "Topic or keyword",
     "sources": {
       "lexeme": "vocabulary",
       "grammar": "grammar",
@@ -1985,7 +2064,7 @@
     "count": "Card count",
     "generating": "Generating cards...",
     "success": "Created {count} cards!",
-    "viewDeck": "View deck",
+    "viewDeck": "Review generated cards",
     "previewResult": "Estimated: {count} cards",
     "jobs": "Generation history",
     "error": "An error has occurred. Please try again."
@@ -2017,11 +2096,17 @@
       "eyebrow": "employee file",
       "title": "carrier file",
       "subtitle": "Rank, skills, internal and external relationships.",
+      "loading": "Loading career profile…",
+      "loadError": "Career data could not be loaded. Please try again.",
+      "retry": "Try again",
+      "loginLink": "Sign in",
       "rankBadgeStamp": "appointment",
       "nextRankLabel": "Next rank:",
       "rankProgressLabel": "Rank XP",
       "skillsTitle": "skill map",
       "skillsSubtitle": "6 axes of business Japanese.",
+      "skillsEmpty": "No skill data yet.",
+      "ranksEmpty": "No rank data yet.",
       "skillsAxisLabels": {
         "keigo": "honorific language",
         "written": "business documents",
@@ -2032,6 +2117,7 @@
       },
       "relationsTitle": "Internal/external relations",
       "relationsSubtitle": "Reliability varies depending on the selections made in each chapter.",
+      "relationsEmpty": "No relationship data yet.",
       "trustLabel": "Reliability",
       "relationUchi": "inside (uchi)",
       "relationSoto": "outside (soto)",
@@ -2117,6 +2203,10 @@
       "eyebrow": "look back tray",
       "title": "Review inbox",
       "subtitle": "A note from a senior. It's not a flashcard, it's a review that comes after you make a mistake.",
+      "empty": "Your inbox is clear. New review memos will appear here.",
+      "loadError": "We couldn't load your Review Inbox.",
+      "retry": "Try again",
+      "feedbackError": "We couldn't save your feedback. Please try again.",
       "fromLabel": "From",
       "surfaceLabel": "meaning of surface",
       "realIntentLabel": "true intention",
@@ -2235,7 +2325,15 @@
     "kanji": "Kanji",
     "grammar": "grammar",
     "loading": "Loading...",
-    "error": "Failed to load data."
+    "error": "Failed to load data.",
+    "assessmentIntro": "Take a BJT assessment to establish your level and track your learning roadmap.",
+    "assessmentCta": "Take assessment",
+    "readinessTitle": "Mock exam readiness",
+    "readinessSubtitle": "Based on recent performance",
+    "readinessCta": "Take mock exam",
+    "accuracyAcross": "accuracy across {count} sessions",
+    "noSessions": "No completed sessions yet",
+    "analyticsError": "Unable to load mock exam analytics. Please try again later."
   },
   "levelDetail": {
     "back": "BJT level",
@@ -2285,6 +2383,9 @@
     "expandSection": "expand",
     "completed": "Completed",
     "markComplete": "complete",
+    "loginToSave": "Sign in to save progress",
+    "savingProgress": "Saving...",
+    "progressError": "Could not save progress. Please try again.",
     "close": "Close",
     "posLabel": "part of speech",
     "onyomiLabel": "On-yomi",
@@ -2373,6 +2474,7 @@
     "densityCompact": "Compact",
     "densityComfortable": "Comfortable",
     "saved": "Saved.",
+    "saveError": "Could not sync your settings. This device will keep using them.",
     "preview": "Preview",
     "previewText": "In Japanese business settings, knowing when to use humble and respectful language matters."
   },
@@ -2439,11 +2541,18 @@
     "backHome": "← Back to home",
     "enforcementOff": "All features are currently free. Enjoy full access.",
     "checkoutLoading": "Processing...",
-    "checkoutError": "Payment failed. Please try again."
+    "checkoutError": "Could not start the subscription request. Please try again.",
+    "checkoutPending": "Your upgrade request is awaiting confirmation. The plan becomes active only after payment is confirmed.",
+    "checkoutPendingShort": "Pending",
+    "retry": "Try again",
+    "signInToUpgrade": "Sign in to upgrade"
   },
   "magazine": {
     "title": "Daily Magazine",
     "subtitle": "Learn Japanese every day through interesting content",
+    "loadErrorTitle": "Magazine could not be loaded",
+    "loadErrorDescription": "The service is temporarily unavailable. Please try again.",
+    "retry": "Try again",
     "filterAll": "All",
     "filterVocab": "Vocabulary",
     "filterWeather": "Weather",
@@ -2462,6 +2571,16 @@
     "quizPerfect": "Perfect! You got them all right!",
     "quizGood": "Great job! Keep it up!",
     "quizTryAgain": "Keep trying! Review the vocabulary above.",
+    "quizSaveFailed": "Your result could not be saved. Sign in and try again.",
+    "addFlashcard": "Add to flashcards",
+    "addedFlashcard": "Added to flashcards",
+    "signInHint": "Sign in to use this feature",
+    "chooseDeck": "Choose a deck",
+    "createDeck": "Create a new deck",
+    "newDeckPlaceholder": "New deck name...",
+    "nDecks": "No decks yet",
+    "flashcardError": "Could not add this word to the deck. Please try again.",
+    "backToMagazine": "Back to Magazine",
     "todayTitle": "Today",
     "todayViewAll": "View all →",
     "readMore": "Read more",
@@ -2626,5 +2745,36 @@
     "selfPreview": "This is how others see your profile",
     "copyUrl": "Copy URL",
     "editProfile": "Edit"
+  },
+  "scenarios": {
+    "list": {
+      "title": "Business scenarios",
+      "description": "Practice communicating in Japanese workplaces.",
+      "difficulty": { "beginner": "Beginner", "intermediate": "Intermediate", "advanced": "Advanced" },
+      "duration": "⏱️ ~{count} min",
+      "steps": "📋 {count} steps",
+      "attempts": "🎮 {count} plays",
+      "empty": "No scenarios yet.",
+      "loadError": "Couldn't load scenarios.",
+      "retry": "Retry"
+    },
+    "play": {
+      "loadError": "Could not load this scenario. Please reload and try again.",
+      "answerError": "Your choice was not submitted. You can choose again.",
+      "completeError": "Your result was not saved. Please try again.",
+      "notFound": "Scenario not found.",
+      "score": "{total}/{max} points",
+      "replay": "Play again",
+      "back": "Back",
+      "step": "Step {current}/{total}",
+      "stepLabel": "Step {step}:",
+      "optimal": "{count}/{total} optimal answers · {percent}%",
+      "optimalAnswer": "Great choice!",
+      "suboptimalAnswer": "There is a better choice",
+      "points": "points",
+      "showResult": "View result",
+      "continue": "Continue →",
+      "retry": "Try again"
+    }
   }
 }

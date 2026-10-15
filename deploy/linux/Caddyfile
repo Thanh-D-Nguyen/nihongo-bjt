@@ -6,7 +6,7 @@ respond "OK" 200
 
 # API — routes already include /api prefix, so do NOT strip
 handle /api/* {
-reverse_proxy api:4001
+reverse_proxy api-proxy:4001
 }
 
 # Public media (read-only via Caddy)

@@ -30,12 +30,12 @@ export function useProfileImageUpload() {
       if (!presignRes.ok) {
         throw new Error("presign_failed");
       }
-      const { assetId, uploadUrl } = await presignRes.json();
+      const { assetId, uploadUrl, uploadToken } = await presignRes.json();
 
       // 2. Upload file directly to storage (Go API presigned upload)
       const putRes = await fetch(uploadUrl, {
         method: "PUT",
-        headers: { "Content-Type": file.type },
+        headers: { "Content-Type": file.type, "X-Media-Upload-Token": uploadToken },
         body: file,
       });
       if (!putRes.ok) {

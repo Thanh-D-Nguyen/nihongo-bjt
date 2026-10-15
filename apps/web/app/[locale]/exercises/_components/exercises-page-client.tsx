@@ -262,12 +262,21 @@ export function ExercisesPageClient({
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ type: selectedType, count: "10" });
-      if (selectedLevel !== "all") params.set("level", selectedLevel);
-
-      const res = await learnerApiFetch(`/api/exercises/generate?${params}`);
+      const res = await learnerApiFetch("/api/exercises/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: selectedType, count: 10, level: selectedLevel !== "all" ? selectedLevel : "" })
+      });
+      if (res.status === 404) {
+        setError(labels.noExercises);
+        return;
+      }
       if (!res.ok) throw new Error("Failed to generate");
       const data = await res.json();
+      if (!Array.isArray(data) || data.length === 0) {
+        setError(labels.noExercises);
+        return;
+      }
       setExercises(data);
 
       // Start session
@@ -277,6 +286,7 @@ export function ExercisesPageClient({
         body: JSON.stringify({
           sessionType: "practice_tab",
           exerciseType: selectedType,
+          exerciseIds: data.map((exercise: Exercise) => exercise.id),
           level: selectedLevel !== "all" ? selectedLevel : undefined
         })
       });
@@ -293,7 +303,7 @@ export function ExercisesPageClient({
     } finally {
       setLoading(false);
     }
-  }, [selectedType, selectedLevel, labels.error]);
+  }, [selectedType, selectedLevel, labels.error, labels.noExercises]);
 
   /* ── Submit answer ───────────────────────────────────────────────────── */
 

@@ -75,12 +75,16 @@ func submitStepAnswerHandler(store *scenario.Store, logger *slog.Logger) http.Ha
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		if req.ChoiceID == "" {
-			writeJSONError(w, "choiceId required", http.StatusBadRequest)
+		choice := req.ChoiceKey
+		if choice == "" {
+			choice = req.ChoiceID
+		}
+		if choice == "" {
+			writeJSONError(w, "choiceKey required", http.StatusBadRequest)
 			return
 		}
 
-		result, err := store.SubmitStepAnswer(r.Context(), stepID, req.ChoiceID)
+		result, err := store.SubmitStepAnswer(r.Context(), stepID, choice)
 		if err != nil {
 			if errors.Is(err, scenario.ErrNotFound) {
 				writeJSONError(w, "choice not found", http.StatusNotFound)
@@ -118,14 +122,23 @@ func completeScenarioHandler(store *scenario.Store, logger *slog.Logger) http.Ha
 			return
 		}
 
-		if err := store.CompleteScenario(r.Context(), identity.UserID, scenarioID, req.Choices); err != nil {
+		result, err := store.CompleteScenario(r.Context(), identity.UserID, scenarioID, req.Choices)
+		if err != nil {
+			if errors.Is(err, scenario.ErrNotFound) {
+				writeJSONError(w, "scenario not found", http.StatusNotFound)
+				return
+			}
+			if errors.Is(err, scenario.ErrInvalidCompletion) {
+				writeJSONError(w, "invalid scenario answers", http.StatusBadRequest)
+				return
+			}
 			logger.Error("complete scenario", "error", err, "user_id", identity.UserID, "scenario_id", scenarioID)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]bool{"completed": true})
+		_ = json.NewEncoder(w).Encode(result)
 	}
 }
 

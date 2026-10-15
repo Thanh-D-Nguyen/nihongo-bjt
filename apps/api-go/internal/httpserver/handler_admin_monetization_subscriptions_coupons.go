@@ -2,16 +2,63 @@ package httpserver
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/authz"
 )
+
+func requireMonetizationPermission(w http.ResponseWriter, r *http.Request, db *pgxpool.Pool, permissions ...string) bool {
+	identity, ok := authn.GetAdminIdentity(r.Context())
+	if !ok || identity.ActorID == "" {
+		writeJSONError(w, "unauthorized", http.StatusUnauthorized)
+		return false
+	}
+	principal, err := authz.NewStore(db).LoadPrincipal(r.Context(), identity.ActorID)
+	if errors.Is(err, authz.ErrActorNotActive) {
+		writeJSONError(w, "forbidden", http.StatusForbidden)
+		return false
+	}
+	if err != nil || principal == nil {
+		writeJSONError(w, "internal error", http.StatusInternalServerError)
+		return false
+	}
+	if !principal.HasAnyPermission(permissions) {
+		writeJSONError(w, "forbidden", http.StatusForbidden)
+		return false
+	}
+	return true
+}
+
+func parseMonetizationUUID(value string) (string, bool) {
+	id, err := uuid.Parse(value)
+	return id.String(), err == nil
+}
+
+func validCouponPlanSlugs(raw json.RawMessage) bool {
+	if !json.Valid(raw) || !strings.HasPrefix(strings.TrimSpace(string(raw)), "[") {
+		return false
+	}
+	var slugs []string
+	return json.Unmarshal(raw, &slugs) == nil
+}
+
+func validCouponDate(value *string) bool {
+	if value == nil {
+		return true
+	}
+	_, err := time.Parse(time.RFC3339, *value)
+	return err == nil
+}
 
 // ── P1-A5.3: Admin Monetization — Subscriptions + Coupons Sub-Domain (5 routes) ─
 // All routes require admin session + appropriate permissions.
@@ -21,18 +68,29 @@ import (
 // adminMonetizationSubscriptionsListHandler implements GET /api/admin/monetization/subscriptions.
 func adminMonetizationSubscriptionsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.read", "billing.subscription.view") {
+			return
+		}
 		ctx := r.Context()
 		q := r.URL.Query().Get("q")
 		statusFilter := r.URL.Query().Get("status")
 		page := queryInt(r, "page", 1)
-		pageSize := queryInt(r, "pageSize", 20)
+		pageSize := queryInt(r, "pageSize", queryInt(r, "limit", 20))
+		offset := queryInt(r, "offset", (page-1)*pageSize)
 		if page < 1 {
 			page = 1
 		}
 		if pageSize < 1 || pageSize > 100 {
 			pageSize = 20
 		}
-		offset := (page - 1) * pageSize
+		if offset < 0 {
+			offset = 0
+		}
+		if r.URL.Query().Has("offset") {
+			page = offset/pageSize + 1
+		} else {
+			offset = (page - 1) * pageSize
+		}
 
 		whereParts := []string{}
 		args := []any{}
@@ -108,19 +166,27 @@ func adminMonetizationSubscriptionsListHandler(db *pgxpool.Pool, logger *slog.Lo
 			if err := rows.Scan(&s.ID, &s.UserID, &s.UserEmail, &s.UserDisplayName,
 				&s.PlanID, &s.PlanSlug, &s.PlanNameKey, &s.Status,
 				&periodStart, &periodEnd, &s.CancelAtPeriodEnd,
-				&createdAt, &updatedAt); err == nil {
-				s.CreatedAt = createdAt.UTC().Format(time.RFC3339)
-				s.UpdatedAt = updatedAt.UTC().Format(time.RFC3339)
-				if periodStart != nil {
-					ps := periodStart.UTC().Format(time.RFC3339)
-					s.CurrentPeriodStart = &ps
-				}
-				if periodEnd != nil {
-					pe := periodEnd.UTC().Format(time.RFC3339)
-					s.CurrentPeriodEnd = &pe
-				}
-				items = append(items, s)
+				&createdAt, &updatedAt); err != nil {
+				logger.Error("scan subscriptions", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			s.CreatedAt = createdAt.UTC().Format(time.RFC3339)
+			s.UpdatedAt = updatedAt.UTC().Format(time.RFC3339)
+			if periodStart != nil {
+				ps := periodStart.UTC().Format(time.RFC3339)
+				s.CurrentPeriodStart = &ps
+			}
+			if periodEnd != nil {
+				pe := periodEnd.UTC().Format(time.RFC3339)
+				s.CurrentPeriodEnd = &pe
+			}
+			items = append(items, s)
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate subscriptions", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if items == nil {
 			items = []Subscription{}
@@ -137,14 +203,17 @@ func adminMonetizationSubscriptionsListHandler(db *pgxpool.Pool, logger *slog.Lo
 // adminMonetizationSubscriptionsPatchHandler implements PATCH /api/admin/monetization/subscriptions/{id}.
 func adminMonetizationSubscriptionsPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.write", "billing.subscription.manage") {
+			return
+		}
 		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
-		id := extractPathParam(r.URL.Path, "subscriptions", 1)
-		if id == "" {
-			writeJSONError(w, "subscription id required", http.StatusBadRequest)
+		id, validID := parseMonetizationUUID(extractPathParam(r.URL.Path, "subscriptions", 1))
+		if !validID {
+			writeJSONError(w, "invalid subscription id", http.StatusBadRequest)
 			return
 		}
 		var req struct {
@@ -156,13 +225,19 @@ func adminMonetizationSubscriptionsPatchHandler(db *pgxpool.Pool, logger *slog.L
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		ctx := r.Context()
-		var exists bool
-		db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM monetization.user_subscription WHERE id = $1)", id).Scan(&exists)
-		if !exists {
-			writeJSONError(w, "subscription not found", http.StatusNotFound)
+		if len(strings.TrimSpace(req.Reason)) < 3 || len(req.Reason) > 500 {
+			writeJSONError(w, "invalid subscription fields", http.StatusBadRequest)
 			return
 		}
+		if req.Status != nil {
+			switch *req.Status {
+			case "active", "trialing", "past_due", "canceled", "expired":
+			default:
+				writeJSONError(w, "invalid subscription status", http.StatusBadRequest)
+				return
+			}
+		}
+		ctx := r.Context()
 
 		setClauses := []string{}
 		args := []any{}
@@ -182,10 +257,22 @@ func adminMonetizationSubscriptionsPatchHandler(db *pgxpool.Pool, logger *slog.L
 			return
 		}
 		setClauses = append(setClauses, "updated_at = NOW()")
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin patch subscription", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 		query := "UPDATE monetization.user_subscription SET " + joinStrings(setClauses, ", ") +
-			" WHERE id = $" + itoa(argIdx)
+			" WHERE id = $" + itoa(argIdx) + " RETURNING id"
 		args = append(args, id)
-		if _, err := db.Exec(ctx, query, args...); err != nil {
+		var updatedID string
+		if err := tx.QueryRow(ctx, query, args...).Scan(&updatedID); err != nil {
+			if err == pgx.ErrNoRows {
+				writeJSONError(w, "subscription not found", http.StatusNotFound)
+				return
+			}
 			logger.Error("patch subscription", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
@@ -193,9 +280,18 @@ func adminMonetizationSubscriptionsPatchHandler(db *pgxpool.Pool, logger *slog.L
 
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true, "fields": setClauses})
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		if _, err := tx.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.monetization.subscription.updated', $1, $2, 'monetization.user_subscription', $3, $4, $5, NOW())`,
-			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
+			identity.ActorID, id, strings.TrimSpace(req.Reason), afterJSON, beforeJSON); err != nil {
+			logger.Error("audit patch subscription", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit patch subscription", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "updated": true})
 	}
@@ -204,6 +300,9 @@ func adminMonetizationSubscriptionsPatchHandler(db *pgxpool.Pool, logger *slog.L
 // adminMonetizationCouponsListHandler implements GET /api/admin/monetization/coupons.
 func adminMonetizationCouponsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.read", "billing.coupon.manage") {
+			return
+		}
 		ctx := r.Context()
 		statusFilter := r.URL.Query().Get("status")
 		page := queryInt(r, "page", 1)
@@ -291,7 +390,16 @@ func adminMonetizationCouponsListHandler(db *pgxpool.Pool, logger *slog.Logger) 
 					c.AllowedPlanSlugs = allowedSlugsBytes
 				}
 				items = append(items, c)
+			} else {
+				logger.Error("scan coupon", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate coupons", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if items == nil {
 			items = []Coupon{}
@@ -308,6 +416,9 @@ func adminMonetizationCouponsListHandler(db *pgxpool.Pool, logger *slog.Logger) 
 // adminMonetizationCouponsCreateHandler implements POST /api/admin/monetization/coupons.
 func adminMonetizationCouponsCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.write", "billing.coupon.manage") {
+			return
+		}
 		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
@@ -316,7 +427,7 @@ func adminMonetizationCouponsCreateHandler(db *pgxpool.Pool, logger *slog.Logger
 		var req struct {
 			Code             string          `json:"code"`
 			DiscountType     string          `json:"discountType"`
-			DiscountValue    float64         `json:"discountValue"`
+			DiscountValue    int             `json:"discountValue"`
 			Status           string          `json:"status"`
 			MaxRedemptions   *int            `json:"maxRedemptions,omitempty"`
 			StartsAt         *string         `json:"startsAt,omitempty"`
@@ -327,7 +438,7 @@ func adminMonetizationCouponsCreateHandler(db *pgxpool.Pool, logger *slog.Logger
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		if req.Code == "" || req.DiscountType == "" {
+		if strings.TrimSpace(req.Code) == "" || len(req.Code) > 64 || strings.TrimSpace(req.DiscountType) == "" || len(req.DiscountType) > 24 || req.DiscountValue <= 0 || len(req.Status) > 32 || (req.MaxRedemptions != nil && *req.MaxRedemptions <= 0) {
 			writeJSONError(w, "code and discountType are required", http.StatusBadRequest)
 			return
 		}
@@ -338,9 +449,20 @@ func adminMonetizationCouponsCreateHandler(db *pgxpool.Pool, logger *slog.Logger
 		if allowedSlugsJSON == nil {
 			allowedSlugsJSON = json.RawMessage("[]")
 		}
+		if !validCouponPlanSlugs(allowedSlugsJSON) || !validCouponDate(req.StartsAt) || !validCouponDate(req.EndsAt) {
+			writeJSONError(w, "invalid coupon schedule or allowedPlanSlugs", http.StatusBadRequest)
+			return
+		}
 		ctx := r.Context()
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin create coupon", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 		var createdID string
-		err := db.QueryRow(ctx, `
+		err = tx.QueryRow(ctx, `
 			INSERT INTO monetization.promotion_coupon (code, discount_type, discount_value, status,
 				max_redemptions, redemption_count, starts_at, ends_at, allowed_plan_slugs,
 				created_at, updated_at)
@@ -353,9 +475,18 @@ func adminMonetizationCouponsCreateHandler(db *pgxpool.Pool, logger *slog.Logger
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"code": req.Code, "discountType": req.DiscountType, "status": req.Status})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		if _, err := tx.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.monetization.coupon.created', $1, $2, 'monetization.promotion_coupon', $3, $4, NOW())`,
-			identity.ActorID, createdID, "coupon created via admin console", afterJSON)
+			identity.ActorID, createdID, "coupon created via admin console", afterJSON); err != nil {
+			logger.Error("audit create coupon", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit create coupon", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		writeJSON(w, http.StatusCreated, map[string]any{"id": createdID, "code": req.Code, "status": req.Status})
 	}
@@ -364,19 +495,22 @@ func adminMonetizationCouponsCreateHandler(db *pgxpool.Pool, logger *slog.Logger
 // adminMonetizationCouponsPatchHandler implements PATCH /api/admin/monetization/coupons/{id}.
 func adminMonetizationCouponsPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.write", "billing.coupon.manage") {
+			return
+		}
 		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
-		id := extractPathParam(r.URL.Path, "coupons", 1)
-		if id == "" {
-			writeJSONError(w, "coupon id required", http.StatusBadRequest)
+		id, validID := parseMonetizationUUID(extractPathParam(r.URL.Path, "coupons", 1))
+		if !validID {
+			writeJSONError(w, "invalid coupon id", http.StatusBadRequest)
 			return
 		}
 		var req struct {
 			DiscountType     *string         `json:"discountType,omitempty"`
-			DiscountValue    *float64        `json:"discountValue,omitempty"`
+			DiscountValue    *int            `json:"discountValue,omitempty"`
 			Status           *string         `json:"status,omitempty"`
 			MaxRedemptions   *int            `json:"maxRedemptions,omitempty"`
 			StartsAt         *string         `json:"startsAt,omitempty"`
@@ -387,9 +521,28 @@ func adminMonetizationCouponsPatchHandler(db *pgxpool.Pool, logger *slog.Logger)
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
+		if (req.DiscountType != nil && (strings.TrimSpace(*req.DiscountType) == "" || len(*req.DiscountType) > 24)) || (req.DiscountValue != nil && *req.DiscountValue <= 0) || (req.Status != nil && (strings.TrimSpace(*req.Status) == "" || len(*req.Status) > 32)) || (req.MaxRedemptions != nil && *req.MaxRedemptions <= 0) || !validCouponDate(req.StartsAt) || !validCouponDate(req.EndsAt) {
+			writeJSONError(w, "invalid coupon fields", http.StatusBadRequest)
+			return
+		}
+		if req.AllowedPlanSlugs != nil && !validCouponPlanSlugs(req.AllowedPlanSlugs) {
+			writeJSONError(w, "allowedPlanSlugs must be an array of strings", http.StatusBadRequest)
+			return
+		}
 		ctx := r.Context()
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin patch coupon", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 		var exists bool
-		db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM monetization.promotion_coupon WHERE id = $1)", id).Scan(&exists)
+		if err := tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM monetization.promotion_coupon WHERE id = $1)", id).Scan(&exists); err != nil {
+			logger.Error("check coupon", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		if !exists {
 			writeJSONError(w, "coupon not found", http.StatusNotFound)
 			return
@@ -441,7 +594,7 @@ func adminMonetizationCouponsPatchHandler(db *pgxpool.Pool, logger *slog.Logger)
 		query := "UPDATE monetization.promotion_coupon SET " + joinStrings(setClauses, ", ") +
 			" WHERE id = $" + itoa(argIdx)
 		args = append(args, id)
-		if _, err := db.Exec(ctx, query, args...); err != nil {
+		if _, err := tx.Exec(ctx, query, args...); err != nil {
 			logger.Error("patch coupon", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
@@ -449,9 +602,18 @@ func adminMonetizationCouponsPatchHandler(db *pgxpool.Pool, logger *slog.Logger)
 
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true, "fields": setClauses})
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		if _, err := tx.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.monetization.coupon.updated', $1, $2, 'monetization.promotion_coupon', $3, $4, $5, NOW())`,
-			identity.ActorID, id, "coupon updated via admin console", afterJSON, beforeJSON)
+			identity.ActorID, id, "coupon updated via admin console", afterJSON, beforeJSON); err != nil {
+			logger.Error("audit patch coupon", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit patch coupon", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "updated": true})
 	}

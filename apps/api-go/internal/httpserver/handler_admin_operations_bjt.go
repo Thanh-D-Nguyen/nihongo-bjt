@@ -16,24 +16,23 @@ import (
 // adminOpsBJTDashboardHandler implements GET /api/admin/operations/bjt/dashboard.
 func adminOpsBJTDashboardHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireOperationsPermission(w, r, db, logger, "iam.manage", "admin.content.read") {
+			return
+		}
 		ctx := r.Context()
 
 		var testsTotal, testsActive, sessionsTotal, attempts30d, completedAttempts int
 
-		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM assessment.bjt_mock_test").Scan(&testsTotal); err != nil {
-			logger.Error("count bjt tests", "error", err)
-		}
-		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM assessment.bjt_mock_test WHERE status = 'active'").Scan(&testsActive); err != nil {
-			logger.Error("count active bjt tests", "error", err)
-		}
-		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM assessment.quiz_session").Scan(&sessionsTotal); err != nil {
-			logger.Error("count quiz sessions", "error", err)
-		}
-		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM assessment.quiz_session WHERE started_at >= NOW() - INTERVAL '30 days'").Scan(&attempts30d); err != nil {
-			logger.Error("count recent quiz attempts", "error", err)
-		}
-		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM assessment.quiz_session WHERE status = 'submitted'").Scan(&completedAttempts); err != nil {
-			logger.Error("count completed quiz attempts", "error", err)
+		if err := db.QueryRow(ctx, `
+		SELECT (SELECT COUNT(*) FROM assessment.bjt_mock_test),
+		       (SELECT COUNT(*) FROM assessment.bjt_mock_test WHERE status = 'active'),
+		       (SELECT COUNT(*) FROM assessment.quiz_session),
+		       (SELECT COUNT(*) FROM assessment.quiz_session WHERE started_at >= NOW() - INTERVAL '30 days'),
+		       (SELECT COUNT(*) FROM assessment.quiz_session WHERE status = 'submitted')
+	`).Scan(&testsTotal, &testsActive, &sessionsTotal, &attempts30d, &completedAttempts); err != nil {
+			logger.Error("query BJT dashboard totals", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 
 		var passRate *float64
@@ -49,17 +48,28 @@ func adminOpsBJTDashboardHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 			Count int    `json:"count"`
 		}
 		var byLevel []LevelCount
-		if err == nil {
-			defer rows.Close()
-			for rows.Next() {
-				var lc LevelCount
-				if err := rows.Scan(&lc.Level, &lc.Count); err == nil {
-					if lc.Level == "" {
-						lc.Level = "unknown"
-					}
-					byLevel = append(byLevel, lc)
-				}
+		if err != nil {
+			logger.Error("query BJT dashboard levels", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var lc LevelCount
+			if err := rows.Scan(&lc.Level, &lc.Count); err != nil {
+				logger.Error("scan BJT dashboard level", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			if lc.Level == "" {
+				lc.Level = "unknown"
+			}
+			byLevel = append(byLevel, lc)
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate BJT dashboard levels", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if byLevel == nil {
 			byLevel = []LevelCount{}

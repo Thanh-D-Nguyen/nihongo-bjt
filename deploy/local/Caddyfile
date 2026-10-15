@@ -1,0 +1,30 @@
+:18081 {
+	handle /health {
+		respond "OK" 200
+	}
+	handle /health/live {
+		reverse_proxy [::1]:4001
+	}
+	handle /health/ready {
+		reverse_proxy [::1]:4001
+	}
+	@learnerRecovery path /api/auth/forgot-password /api/auth/reset-password
+	handle @learnerRecovery {
+		reverse_proxy [::1]:3000
+	}
+	handle /api/* {
+		reverse_proxy [::1]:4001
+	}
+	handle /ws/* {
+		reverse_proxy [::1]:4001
+	}
+	handle /admin/* {
+		reverse_proxy [::1]:3001
+	}
+	handle /app/* {
+		reverse_proxy localhost:3000
+	}
+	handle {
+		reverse_proxy localhost:3000
+	}
+}

@@ -1,0 +1,439 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-102",
+  "title": "Audit learner linked accounts settings screen",
+  "start_head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Audit the current /:locale/settings/accounts screen and its security behavior, visible state, primary interactions and mobile layout.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Open the visible authenticated route; inspect account-link state, actions, requests, console/page errors and 390x844 layout."
+      },
+      {
+        "id": "AC2",
+        "text": "Verify anonymous access behavior and any linked-account mutation only through the UI; do not change real linked accounts."
+      },
+      {
+        "id": "AC3",
+        "text": "Real learner UI loads identities with HTTP 200 and shows a localized empty or connected state; anonymous access is rejected and caller-supplied userId cannot read or delete another learner's identity."
+      },
+      {
+        "id": "AC4",
+        "text": "A real UI unlink request is protected by CSRF and only deletes the authenticated learner's identity; both account-settings routes using this API remain compatible."
+      }
+    ],
+    "expected_behavior": "GET/DELETE identities are session-scoped and derive ownership from the authenticated learner, never the userId query; writes require CSRF, and the screen renders an empty/connected/error state rather than remaining stuck.",
+    "observed_behavior": "Visible authenticated /vi/settings/accounts issues GET /api/auth/identities?userId=... twice, both return 404, leaving the page on raw 'load' text; the Go router has no identities GET/DELETE route despite an OAuth identity table and two web callers.",
+    "rollback_plan": "Remove the identities routes and handlers/tests and restore the prior client only if no other caller depends on them."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY",
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "The active UI uses missing Go endpoints; ownership and mutation must be enforced server-side from the authenticated session."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLearnerIdentitiesAreSessionScopedAndCSRFProtected",
+      "expect": "anonymous list status=404"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx",
+      "test": "linked account error contract > shows the API error on the accounts screen",
+      "expect": "Google identity could not be revoked"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-11T07:27:16.533Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-11T07:27:16.875Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-11T07:27:17.219Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T07:29:19.295Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T07:31:08.565Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T07:31:51.424Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T07:41:09.030Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T07:41:29.298Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T07:41:49.817Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T07:42:05.288Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-11T07:49:00.052Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-11T07:49:06.332Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-11T07:49:56.278Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-11T07:31:08.393Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerIdentitiesAreSessionScopedAndCSRFProtected)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerIdentitiesAreSessionScopedAndCSRFProtected",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerIdentitiesAreSessionScopedAndCSRFProtected handler_auth_identity_test.go:46: anonymous list status=404, want 401 --- FAIL: TestLearnerIdentitiesAreSessionScopedAndCSRFProtected (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLearnerIdentitiesAreSessionScopedAndCSRFProtected": "anonymous list status=404"
+      },
+      "fingerprint": "d9ca84b2f0173ab2bf41fb62f69561d6d9d6ab79c3d7c41ccf016c7f18b65102"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-11T07:31:51.155Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerIdentitiesAreSessionScopedAndCSRFProtected)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerIdentitiesAreSessionScopedAndCSRFProtected",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "7105a7ff353f919cd40a986c7afebd1c8cb00d50815d4bc9ba8dd5c40676fd6f"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-11T07:38:49.933Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/audit102-browser-evidence.sh",
+      "exit_code": 1,
+      "fingerprint": "7105a7ff353f919cd40a986c7afebd1c8cb00d50815d4bc9ba8dd5c40676fd6f"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-11T07:39:41.704Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/audit102-browser-evidence.sh",
+      "exit_code": 0,
+      "fingerprint": "7105a7ff353f919cd40a986c7afebd1c8cb00d50815d4bc9ba8dd5c40676fd6f"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-11T07:39:51.568Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/audit102-browser-evidence.sh",
+      "exit_code": 0,
+      "fingerprint": "7105a7ff353f919cd40a986c7afebd1c8cb00d50815d4bc9ba8dd5c40676fd6f"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-11T07:41:08.648Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerIdentitiesAreSessionScopedAndCSRFProtected)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerIdentitiesAreSessionScopedAndCSRFProtected",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestLearnerIdentitiesAreSessionScopedAndCSRFProtected handler_auth_identity_test.go:18: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLearnerIdentitiesAreSessionScopedAndCSRFProtected (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLearnerIdentitiesAreSessionScopedAndCSRFProtected": "anonymous list status=404"
+      },
+      "fingerprint": "c63fdee3a5a4e753700c97e36c4c741268798944611b8de3acaee17471cf96fc"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-11T07:41:10.912Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerIdentitiesAreSessionScopedAndCSRFProtected)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerIdentitiesAreSessionScopedAndCSRFProtected",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestLearnerIdentitiesAreSessionScopedAndCSRFProtected handler_auth_identity_test.go:18: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLearnerIdentitiesAreSessionScopedAndCSRFProtected (0.00s)"
+        }
+      ],
+      "fingerprint": "c63fdee3a5a4e753700c97e36c4c741268798944611b8de3acaee17471cf96fc"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-11T07:41:28.913Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerIdentitiesAreSessionScopedAndCSRFProtected)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerIdentitiesAreSessionScopedAndCSRFProtected",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestLearnerIdentitiesAreSessionScopedAndCSRFProtected handler_auth_identity_test.go:18: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLearnerIdentitiesAreSessionScopedAndCSRFProtected (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > shows the API error on the accounts screen",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Googleunlinkgoogle (linked@example.te…' to contain 'Google identity could not be revoked'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLearnerIdentitiesAreSessionScopedAndCSRFProtected": "anonymous list status=404",
+        "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > shows the API error on the accounts screen": "Google identity could not be revoked"
+      },
+      "fingerprint": "c63fdee3a5a4e753700c97e36c4c741268798944611b8de3acaee17471cf96fc"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-11T07:41:49.428Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerIdentitiesAreSessionScopedAndCSRFProtected)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerIdentitiesAreSessionScopedAndCSRFProtected",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerIdentitiesAreSessionScopedAndCSRFProtected handler_auth_identity_test.go:46: anonymous list status=404, want 401 --- FAIL: TestLearnerIdentitiesAreSessionScopedAndCSRFProtected (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > shows the API error on the accounts screen",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Googleunlinkgoogle (linked@example.te…' to contain 'Google identity could not be revoked'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLearnerIdentitiesAreSessionScopedAndCSRFProtected": "anonymous list status=404",
+        "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > shows the API error on the accounts screen": "Google identity could not be revoked"
+      },
+      "fingerprint": "c63fdee3a5a4e753700c97e36c4c741268798944611b8de3acaee17471cf96fc"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-11T07:42:04.895Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerIdentitiesAreSessionScopedAndCSRFProtected)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerIdentitiesAreSessionScopedAndCSRFProtected",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx::linked account error contract > shows the API error on the accounts screen",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c63fdee3a5a4e753700c97e36c4c741268798944611b8de3acaee17471cf96fc"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-11T07:44:51.587Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 757,
+        "executed": 757,
+        "passed": 757,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "757 passed, 0 allowed skip(s)",
+      "fingerprint": "c63fdee3a5a4e753700c97e36c4c741268798944611b8de3acaee17471cf96fc"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-11T07:48:21.684Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 436,
+        "executed": 436,
+        "passed": 436,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 784,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "c63fdee3a5a4e753700c97e36c4c741268798944611b8de3acaee17471cf96fc"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-11T07:48:59.627Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash /tmp/audit102-browser-evidence.sh",
+      "exit_code": 0,
+      "fingerprint": "c63fdee3a5a4e753700c97e36c4c741268798944611b8de3acaee17471cf96fc"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-11T07:49:05.921Z",
+      "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64",
+      "kind": "review",
+      "mode": "human",
+      "reviewer": "Franklin",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "Independent read-only review of current AUDIT-102 fingerprint after API/UI error handling fixes.",
+      "attested": true,
+      "fingerprint": "c63fdee3a5a4e753700c97e36c4c741268798944611b8de3acaee17471cf96fc"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-11T07:49:56.263Z",
+    "head": "fbf8db95c2d5dd61ee3f9e09b477062360269e64",
+    "fingerprint": "c63fdee3a5a4e753700c97e36c4c741268798944611b8de3acaee17471cf96fc",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_auth_identity.go": "f154be761e3d5b9539d520db2010329b6500ec52",
+      "apps/api-go/internal/httpserver/handler_auth_identity_test.go": "b6ce78114a85927825acc24c3339ad835b666c99",
+      "apps/api-go/internal/httpserver/server.go": "2e661b6b78c2e7846e88b966efde99a6cc879e3d",
+      "apps/web/app/[locale]/settings/accounts/_components/accounts-settings-client.tsx": "3469f44d45a8daf708223ede044f6d29a431bb6b",
+      "apps/web/app/[locale]/settings/accounts/accounts-settings-client.error-contract.test.tsx": "ac0c7f78d5021a884ab7b3fcce0decf6ea806e36",
+      "apps/web/app/[locale]/settings/linked-accounts/_components/accounts-settings-client.tsx": "ab6d1b47dd864962538eeee99b3901475fbad061"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

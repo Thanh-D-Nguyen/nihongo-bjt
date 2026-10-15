@@ -17,18 +17,22 @@ import (
 // Returns aggregated notification health summary based on dead letters and import errors.
 func adminOpsNotificationsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireOperationsPermission(w, r, db, logger, "iam.manage", "admin.content.read") {
+			return
+		}
 		ctx := r.Context()
 
 		var openDeadLetters, failedDeadLetters, importErrorsHighSeverity int
-
-		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM ops.dead_letter_entry WHERE status = 'open'").Scan(&openDeadLetters); err != nil {
-			logger.Error("count open dead letters", "error", err)
-		}
-		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM ops.dead_letter_entry WHERE status = 'failed'").Scan(&failedDeadLetters); err != nil {
-			logger.Error("count failed dead letters", "error", err)
-		}
-		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM content.content_import_error WHERE severity IN ('critical', 'high')").Scan(&importErrorsHighSeverity); err != nil {
-			logger.Error("count high severity import errors", "error", err)
+		err := db.QueryRow(ctx, `
+			SELECT
+				(SELECT COUNT(*) FROM ops.dead_letter_entry WHERE status = 'open'),
+				(SELECT COUNT(*) FROM ops.dead_letter_entry WHERE status = 'failed'),
+				(SELECT COUNT(*) FROM content.content_import_error WHERE severity = 'error')`).Scan(
+			&openDeadLetters, &failedDeadLetters, &importErrorsHighSeverity)
+		if err != nil {
+			logger.Error("load notification operations summary", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 
 		status := "healthy"

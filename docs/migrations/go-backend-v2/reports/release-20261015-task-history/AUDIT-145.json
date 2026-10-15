@@ -1,0 +1,803 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-145",
+  "title": "Secure Admin streak and growth campaign APIs",
+  "start_head": "54949fd17b539e707f19d08015271bf3f5024b96",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Five Admin streak and growth campaign APIs have missing method-level permissions, weak validation, swallowed database/audit errors, and inaccurate mutation persistence contracts.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "POST /api/admin/gamification/streaks requires content-write plus trusted-origin CSRF, validates fields, persists the row and actor audit atomically, and returns its created ID."
+      },
+      {
+        "id": "AC2",
+        "text": "PUT /api/admin/gamification/streaks/{id} requires content-write plus CSRF, validates ID and fields, returns 404 for missing rows, and commits update plus actor audit atomically."
+      },
+      {
+        "id": "AC3",
+        "text": "DELETE /api/admin/gamification/streaks/{id} requires content-write plus CSRF, reports DB/missing-row errors accurately, and commits deletion plus actor audit atomically."
+      },
+      {
+        "id": "AC4",
+        "text": "GET /api/admin/growth/campaigns requires content-read, preserves the existing filtered/paginated contract, and surfaces query, scan, and iteration failures."
+      },
+      {
+        "id": "AC5",
+        "text": "POST /api/admin/growth/campaigns requires content-write plus CSRF, validates name/channel/schedule/reason, persists its response and audit atomically, and reports DB failures."
+      }
+    ],
+    "expected_behavior": "Each METHOD+PATH independently enforces route-level RBAC and CSRF, returns accurate validation/not-found/server errors, and persists expected rows and actor-attributed audit state. Closed-database tests return 500, audit-trigger failures roll back mutations, and the visible Admin callers continue to work.",
+    "observed_behavior": "Streak POST/PUT/DELETE handlers rely on AdminGuard only, accept weak/unbounded inputs, ignore missing rows and DELETE errors, and do not audit writes. Growth campaign list silently skips row scan failures and omits rows.Err checks; create ignores audit insert failure, does not transact mutation/audit, and relies on a later detail query.",
+    "rollback_plan": "Revert the isolated AUDIT-145 code commit. No schema migration is expected; streak and campaign mutations use uniquely named disposable rows and actor audit fixtures that tests remove."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY",
+      "DATABASE"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Repair existing Admin API authorization, validation, error and atomic-audit contracts without schema changes."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions",
+      "expect": "roleless status="
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-14T05:31:34.524Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T05:33:35.380Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T05:36:03.592Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T05:41:10.978Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T05:43:31.405Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T05:49:22.332Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T05:49:55.276Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T05:58:50.075Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T05:59:13.837Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T06:08:46.054Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T06:09:35.417Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T06:12:48.277Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T06:13:11.822Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T06:16:08.190Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T06:16:29.324Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T06:27:52.122Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-14T06:30:35.048Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-14T06:39:00.856Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-14T06:39:28.988Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-14T06:39:35.882Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-14T05:33:35.097Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions === RUN TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions/POST_/api/admin/gamification/streaks 2026/10/14 14:33:35 INFO request method=POST path=/api/admin/gamification/streaks status=201 duration=3.706542ms bytes=64 handler_adm…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions": "roleless status="
+      },
+      "fingerprint": "d36e0e682b83a57c32f65afb0f9c9a32c8d2db0e050e535b2b7e4cf1fe091d09"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-14T05:35:50.777Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions handler_admin_streak_growth_audit145_test.go:15: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions (0.00s)"
+        }
+      ],
+      "fingerprint": "28c19dfd0c8250b10509fc2f699c0693b6312bb1bcda9e6633bcd12680c0148b"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-14T05:36:03.135Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "28c19dfd0c8250b10509fc2f699c0693b6312bb1bcda9e6633bcd12680c0148b"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-14T05:36:16.938Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "28c19dfd0c8250b10509fc2f699c0693b6312bb1bcda9e6633bcd12680c0148b"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-14T05:41:10.526Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 800,
+        "lint_errors": 66,
+        "lint_warnings": 22,
+        "new_debt": 1
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "28c19dfd0c8250b10509fc2f699c0693b6312bb1bcda9e6633bcd12680c0148b"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-14T05:43:13.862Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions === RUN TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions/POST_/api/admin/gamification/streaks 2026/10/14 14:43:12 INFO request method=POST path=/api/admin/gamification/streaks status=201 duration=3.771875ms bytes=64 handler_adm…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions": "roleless status="
+      },
+      "fingerprint": "b3c99928d3e1441f634608a0ba9019bb9818d0ccfae4eec9f559a09511f82aa5"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-14T05:43:30.821Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "b3c99928d3e1441f634608a0ba9019bb9818d0ccfae4eec9f559a09511f82aa5"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-14T05:44:21.111Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 939,
+        "executed": 937,
+        "passed": 936,
+        "failed": 1,
+        "skipped": 2,
+        "expected_skips": 0,
+        "unexpected_skips": 2,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "b3c99928d3e1441f634608a0ba9019bb9818d0ccfae4eec9f559a09511f82aa5"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-14T05:49:21.864Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 800,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "b3c99928d3e1441f634608a0ba9019bb9818d0ccfae4eec9f559a09511f82aa5"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-14T05:49:54.678Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a8ce4a7d7fee6aeeda9df3bf8a4b88fb9c7d14fe1738806309f82b5de725b242"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-14T05:50:48.091Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 939,
+        "executed": 937,
+        "passed": 937,
+        "failed": 0,
+        "skipped": 2,
+        "expected_skips": 0,
+        "unexpected_skips": 2,
+        "min_passed_tests": 431
+      },
+      "message": "2 test(s) skipped that are not in go-test-skips-baseline.json — skipped tests are not verification",
+      "fingerprint": "a8ce4a7d7fee6aeeda9df3bf8a4b88fb9c7d14fe1738806309f82b5de725b242"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-14T05:55:48.025Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 800,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "a8ce4a7d7fee6aeeda9df3bf8a4b88fb9c7d14fe1738806309f82b5de725b242"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-14T05:58:49.501Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions handler_admin_streak_growth_audit145_test.go:15: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions (0.00s)"
+        }
+      ],
+      "fingerprint": "e5b52daf2c6063efd743ce73aff0965cecf9b4565586ba47d4b89d7f9a68c1c3"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-14T05:59:13.265Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e5b52daf2c6063efd743ce73aff0965cecf9b4565586ba47d4b89d7f9a68c1c3"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-14T06:02:56.207Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 939,
+        "executed": 939,
+        "passed": 939,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "939 passed, 0 allowed skip(s)",
+      "fingerprint": "e5b52daf2c6063efd743ce73aff0965cecf9b4565586ba47d4b89d7f9a68c1c3"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-14T06:08:45.555Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 939,
+        "executed": 939,
+        "passed": 939,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "939 passed, 0 allowed skip(s)",
+      "fingerprint": "884ebfe57b47eaaaa38062dc3b06854eb2862830b04b5e0a31209d5193936a66"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-14T06:09:34.787Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "5923fc70dcc1b5069f289eab9301f1bce912a06e015d39ebed6d300f7f36323e"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-14T06:12:47.717Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 939,
+        "executed": 939,
+        "passed": 939,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "5923fc70dcc1b5069f289eab9301f1bce912a06e015d39ebed6d300f7f36323e"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-14T06:13:11.172Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "786fad10eec296fb7c0a860075412e8b6b2efd5e33729a9fa8e8c885df1884ba"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-14T06:16:07.598Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 939,
+        "executed": 939,
+        "passed": 939,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "786fad10eec296fb7c0a860075412e8b6b2efd5e33729a9fa8e8c885df1884ba"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-14T06:16:28.665Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "04fe2cac65db54222f16a35cbab4ed27136af3dae8034e85934a8c83438fc88f"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-14T06:19:17.427Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 939,
+        "executed": 939,
+        "passed": 939,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "939 passed, 0 allowed skip(s)",
+      "fingerprint": "04fe2cac65db54222f16a35cbab4ed27136af3dae8034e85934a8c83438fc88f"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-14T06:19:34.710Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Mendel",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "5d5a428bc4ddffcb8132ef260adb2e42715c8bc15f7912edb8ff9930f75cc441",
+      "attested": true,
+      "fingerprint": "04fe2cac65db54222f16a35cbab4ed27136af3dae8034e85934a8c83438fc88f"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-14T06:24:35.610Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 800,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "04fe2cac65db54222f16a35cbab4ed27136af3dae8034e85934a8c83438fc88f"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-14T06:26:52.475Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit145-admin-streak-campaigns.mjs",
+      "exit_code": 1,
+      "fingerprint": "04fe2cac65db54222f16a35cbab4ed27136af3dae8034e85934a8c83438fc88f"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-14T06:27:51.554Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit145-admin-streak-campaigns.mjs",
+      "exit_code": 1,
+      "fingerprint": "99337006015badfad7199f5ff198e3bcfcedc8c44f8de0c12999178ddb8d3216"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-14T06:30:08.136Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit145-admin-streak-campaigns.mjs",
+      "exit_code": 0,
+      "fingerprint": "d2cbb350fc30d04ed5911cb5ffb6368cfa5035b30eb16148d159a114555bbba6"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-14T06:30:34.374Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminStreakAndGrowthCampaignRoutesEnforcePermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d2cbb350fc30d04ed5911cb5ffb6368cfa5035b30eb16148d159a114555bbba6"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-14T06:33:32.858Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 939,
+        "executed": 939,
+        "passed": 939,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "939 passed, 0 allowed skip(s)",
+      "fingerprint": "d2cbb350fc30d04ed5911cb5ffb6368cfa5035b30eb16148d159a114555bbba6"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-14T06:39:00.231Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 800,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "d2cbb350fc30d04ed5911cb5ffb6368cfa5035b30eb16148d159a114555bbba6"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-14T06:39:28.438Z",
+      "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Mendel",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "c29c44ec285441fc3abe9075c2deb54dcb63047d5578971cfc766c30a2780478",
+      "attested": true,
+      "fingerprint": "d2cbb350fc30d04ed5911cb5ffb6368cfa5035b30eb16148d159a114555bbba6"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-14T06:39:35.857Z",
+    "head": "54949fd17b539e707f19d08015271bf3f5024b96",
+    "fingerprint": "d2cbb350fc30d04ed5911cb5ffb6368cfa5035b30eb16148d159a114555bbba6",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/admin/app/[locale]/gamification/gamification-admin-client.tsx": "70ab1859674cfa7dc646762178ad41fe6360c7d3",
+      "apps/admin/app/[locale]/growth/campaigns/growth-campaigns-client.tsx": "5b57fb87c49197a605f4acce1748d576a7c149a8",
+      "apps/api-go/internal/httpserver/handler_admin_gamification.go": "1eff1c04ef0f182be7be4686f272eabae0ab03c4",
+      "apps/api-go/internal/httpserver/handler_admin_growth_campaigns.go": "a7761b9c5a6c13ce82742768e97e9e2eb86832be",
+      "apps/api-go/internal/httpserver/handler_admin_streak_growth_audit145_test.go": "575975219b97c5c232bc3c7e92d8b829298a2980",
+      "apps/api-go/internal/httpserver/server.go": "ede4a525b1902ddda1aebc1eeae3157d11e35f79",
+      "docs/openapi.json": "7c9c84f74809513a83df59bf67ac7e512d1253e0",
+      "e2e/audit/audit144-admin-pets-streaks.mjs": "f242e00be25594461a99f5005d4cc976552f5324",
+      "e2e/audit/audit145-admin-streak-campaigns.mjs": "b9c1a8dafc0cf8d4db3735378cc756f3c3dd1456"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

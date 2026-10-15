@@ -3,8 +3,8 @@ package studyplan
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -13,11 +13,12 @@ import (
 
 // TodayPlan represents the auto-generated daily study plan for a learner.
 type TodayPlan struct {
-	Date       string      `json:"date"`
-	Tasks      []StudyTask `json:"tasks"`
-	Completed  int         `json:"completed"`
-	Total      int         `json:"total"`
-	StreakDays int         `json:"streakDays"`
+	Date          string      `json:"date"`
+	TargetMinutes int         `json:"targetMinutes"`
+	Tasks         []StudyTask `json:"tasks"`
+	Completed     int         `json:"completed"`
+	Total         int         `json:"total"`
+	StreakDays    int         `json:"streakDays"`
 }
 
 // StudyTask is one item in the daily study plan.
@@ -53,49 +54,53 @@ func (s *Store) GetTodayPlan(ctx context.Context, userID string) (*TodayPlan, er
 	defer cancel()
 
 	today := time.Now().Format("2006-01-02")
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("studyplan: begin plan read: %w", err)
+	}
+	defer tx.Rollback(ctx)
 
-	// Try to load existing plan
-	const q = `SELECT date, tasks, completed, total, streak_days
-		FROM gamification.daily_study_plan
-		WHERE user_id = $1 AND date = $2`
-	var plan TodayPlan
-	var tasksJSON []byte
-	err := s.db.QueryRow(ctx, q, userID, today).Scan(&plan.Date, &tasksJSON, &plan.Completed, &plan.Total, &plan.StreakDays)
-	if err == nil {
-		if len(tasksJSON) > 0 {
-			_ = json.Unmarshal(tasksJSON, &plan.Tasks)
+	planID, err := ensureTodayPlan(ctx, tx, userID, today)
+	if err != nil {
+		return nil, err
+	}
+	plan := &TodayPlan{Date: today, Tasks: []StudyTask{}}
+	if err := tx.QueryRow(ctx, `SELECT target_minutes FROM gamification.daily_study_plan WHERE id=$1`, planID).Scan(&plan.TargetMinutes); err != nil {
+		return nil, fmt.Errorf("studyplan: load target minutes: %w", err)
+	}
+	rows, err := tx.Query(ctx, `SELECT task_type,target_count,done_count,completed_at
+		FROM gamification.daily_study_task WHERE plan_id=$1 ORDER BY sort_order,created_at`, planID)
+	if err != nil {
+		return nil, fmt.Errorf("studyplan: load tasks: %w", err)
+	}
+	for rows.Next() {
+		var task StudyTask
+		var completedAt *time.Time
+		if err := rows.Scan(&task.TaskType, &task.TargetCount, &task.DoneCount, &completedAt); err != nil {
+			rows.Close()
+			return nil, fmt.Errorf("studyplan: scan task: %w", err)
 		}
-		if plan.Tasks == nil {
-			plan.Tasks = []StudyTask{}
+		task.Label = taskLabel(task.TaskType)
+		task.IsComplete = completedAt != nil || task.DoneCount >= task.TargetCount
+		if task.IsComplete {
+			plan.Completed++
 		}
-		return &plan, nil
+		plan.Tasks = append(plan.Tasks, task)
 	}
-
-	// Auto-generate default plan if not found
-	defaultTasks := []StudyTask{
-		{TaskType: "srs_review", Label: "SRS Review", TargetCount: 20, DoneCount: 0, IsComplete: false},
-		{TaskType: "bjt_quiz", Label: "BJT Quiz", TargetCount: 1, DoneCount: 0, IsComplete: false},
-		{TaskType: "daily_phrase", Label: "Daily Phrase", TargetCount: 1, DoneCount: 0, IsComplete: false},
-		{TaskType: "battle_bot", Label: "Battle Bot", TargetCount: 1, DoneCount: 0, IsComplete: false},
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return nil, fmt.Errorf("studyplan: iterate tasks: %w", err)
 	}
-	tasksBytes, _ := json.Marshal(defaultTasks)
-
-	const insertQ = `INSERT INTO gamification.daily_study_plan (user_id, date, tasks, completed, total, streak_days)
-		VALUES ($1, $2, $3, 0, 4, COALESCE(
-			(SELECT streak_days FROM gamification.daily_study_plan WHERE user_id = $1 ORDER BY date DESC LIMIT 1), 0
-		))
-		ON CONFLICT (user_id, date) DO NOTHING`
-	if _, err := s.db.Exec(ctx, insertQ, userID, today, tasksBytes); err != nil {
-		// Non-fatal: return default plan even if insert fails
+	rows.Close()
+	plan.Total = len(plan.Tasks)
+	plan.StreakDays, err = loadStreakDays(ctx, tx, userID, today)
+	if err != nil {
+		return nil, err
 	}
-
-	return &TodayPlan{
-		Date:       today,
-		Tasks:      defaultTasks,
-		Completed:  0,
-		Total:      4,
-		StreakDays: 0,
-	}, nil
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("studyplan: commit plan read: %w", err)
+	}
+	return plan, nil
 }
 
 // RecordProgress increments the done count for a task type and returns updated state.
@@ -103,59 +108,122 @@ func (s *Store) RecordProgress(ctx context.Context, userID, taskType string) (*P
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	today := time.Now().Format("2006-01-02")
-
-	// Ensure plan exists
-	if _, err := s.GetTodayPlan(ctx, userID); err != nil {
-		return nil, fmt.Errorf("studyplan: get today plan: %w", err)
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("studyplan: begin progress: %w", err)
 	}
+	defer tx.Rollback(ctx)
+	result, err := s.RecordProgressTx(ctx, tx, userID, taskType)
+	if err != nil {
+		return nil, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("studyplan: commit progress: %w", err)
+	}
+	return result, nil
+}
 
-	// Load current tasks
-	const loadQ = `SELECT tasks, completed, total, streak_days FROM gamification.daily_study_plan WHERE user_id = $1 AND date = $2`
-	var tasksJSON []byte
-	var completed, total, streakDays int
-	if err := s.db.QueryRow(ctx, loadQ, userID, today).Scan(&tasksJSON, &completed, &total, &streakDays); err != nil {
+// RecordProgressTx records task progress inside the caller's transaction.
+func (s *Store) RecordProgressTx(ctx context.Context, tx pgx.Tx, userID, taskType string) (*ProgressResult, error) {
+	today := time.Now().Format("2006-01-02")
+	var planID string
+	planID, err := ensureTodayPlan(ctx, tx, userID, today)
+	if err != nil {
 		return nil, fmt.Errorf("studyplan: load plan: %w", err)
 	}
-
-	var tasks []StudyTask
-	if len(tasksJSON) > 0 {
-		_ = json.Unmarshal(tasksJSON, &tasks)
-	}
-
-	// Find and update the matching task
 	var result ProgressResult
 	result.TaskType = taskType
-	found := false
-	for i, t := range tasks {
-		if t.TaskType == taskType {
-			tasks[i].DoneCount++
-			if tasks[i].DoneCount >= tasks[i].TargetCount {
-				tasks[i].IsComplete = true
-				if !t.IsComplete {
-					completed++
-				}
-			}
-			result.DoneCount = tasks[i].DoneCount
-			result.IsComplete = tasks[i].IsComplete
-			found = true
-			break
+	var completedAt *time.Time
+	var targetCount int
+	if err := tx.QueryRow(ctx, `UPDATE gamification.daily_study_task
+		SET done_count=done_count+1,
+		    completed_at=CASE WHEN done_count+1 >= target_count THEN COALESCE(completed_at,NOW()) ELSE NULL END
+		WHERE plan_id=$1 AND task_type=$2
+		RETURNING done_count,target_count,completed_at`, planID, taskType).Scan(&result.DoneCount, &targetCount, &completedAt); err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, fmt.Errorf("studyplan: unknown task type: %s", taskType)
 		}
+		return nil, fmt.Errorf("studyplan: update task: %w", err)
 	}
-	if !found {
-		return nil, fmt.Errorf("studyplan: unknown task type: %s", taskType)
+	result.IsComplete = completedAt != nil || result.DoneCount >= targetCount
+	if _, err := tx.Exec(ctx, `UPDATE gamification.daily_study_plan
+		SET completed_at=CASE WHEN NOT EXISTS (
+			SELECT 1 FROM gamification.daily_study_task WHERE plan_id=$1 AND done_count < target_count
+		) THEN COALESCE(completed_at,NOW()) ELSE NULL END, updated_at=NOW()
+		WHERE id=$1`, planID); err != nil {
+		return nil, fmt.Errorf("studyplan: update plan completion: %w", err)
 	}
-
-	// Save updated tasks
-	updatedBytes, _ := json.Marshal(tasks)
-	const updateQ = `UPDATE gamification.daily_study_plan SET tasks = $3, completed = $4, updated_at = NOW() WHERE user_id = $1 AND date = $2`
-	if _, err := s.db.Exec(ctx, updateQ, userID, today, updatedBytes, completed); err != nil {
-		return nil, fmt.Errorf("studyplan: update plan: %w", err)
+	result.StreakDays, err = loadStreakDays(ctx, tx, userID, today)
+	if err != nil {
+		return nil, err
 	}
-
-	result.StreakDays = streakDays
 	return &result, nil
 }
 
-// Ensure imports are used.
-var _ = pgx.ErrNoRows
+func ensureTodayPlan(ctx context.Context, tx pgx.Tx, userID, today string) (string, error) {
+	if _, err := tx.Exec(ctx, `INSERT INTO gamification.daily_study_plan(user_id,plan_date,target_minutes,updated_at)
+		SELECT $1,$2::date,COALESCE((SELECT target_minutes FROM gamification.daily_study_goal WHERE user_id=$1),20),NOW()
+		ON CONFLICT(user_id,plan_date) DO NOTHING`, userID, today); err != nil {
+		return "", fmt.Errorf("studyplan: create plan: %w", err)
+	}
+	var planID string
+	if err := tx.QueryRow(ctx, `SELECT id::text FROM gamification.daily_study_plan WHERE user_id=$1 AND plan_date=$2::date FOR UPDATE`, userID, today).Scan(&planID); err != nil {
+		return "", fmt.Errorf("studyplan: lock plan: %w", err)
+	}
+	var taskCount int
+	if err := tx.QueryRow(ctx, `SELECT COUNT(*) FROM gamification.daily_study_task WHERE plan_id=$1`, planID).Scan(&taskCount); err != nil {
+		return "", fmt.Errorf("studyplan: count tasks: %w", err)
+	}
+	if taskCount == 0 {
+		if _, err := tx.Exec(ctx, `INSERT INTO gamification.daily_study_task(plan_id,task_type,target_count,sort_order) VALUES
+			($1,'srs_review',20,1),($1,'bjt_quiz',1,2),($1,'daily_phrase',1,3),($1,'battle_bot',1,4)`, planID); err != nil {
+			return "", fmt.Errorf("studyplan: create tasks: %w", err)
+		}
+	}
+	return planID, nil
+}
+
+func taskLabel(taskType string) string {
+	labels := map[string]string{"srs_review": "SRS Review", "bjt_quiz": "BJT Quiz", "daily_phrase": "Daily Phrase", "battle_bot": "Battle Bot"}
+	if label, ok := labels[taskType]; ok {
+		return label
+	}
+	return strings.ReplaceAll(taskType, "_", " ")
+}
+
+func loadStreakDays(ctx context.Context, tx pgx.Tx, userID, today string) (int, error) {
+	rows, err := tx.Query(ctx, `SELECT plan_date::text FROM gamification.daily_study_plan
+		WHERE user_id=$1 AND completed_at IS NOT NULL AND plan_date <= $2::date ORDER BY plan_date DESC LIMIT 366`, userID, today)
+	if err != nil {
+		return 0, fmt.Errorf("studyplan: load completed dates: %w", err)
+	}
+	defer rows.Close()
+	todayDate, err := time.Parse("2006-01-02", today)
+	if err != nil {
+		return 0, fmt.Errorf("studyplan: parse today: %w", err)
+	}
+	expected := todayDate
+	streak := 0
+	for rows.Next() {
+		var rawDate string
+		if err := rows.Scan(&rawDate); err != nil {
+			return 0, fmt.Errorf("studyplan: scan completed date: %w", err)
+		}
+		date, err := time.Parse("2006-01-02", rawDate)
+		if err != nil {
+			return 0, fmt.Errorf("studyplan: parse completed date: %w", err)
+		}
+		if streak == 0 && date.Equal(expected.AddDate(0, 0, -1)) {
+			expected = expected.AddDate(0, 0, -1)
+		}
+		if !date.Equal(expected) {
+			break
+		}
+		streak++
+		expected = expected.AddDate(0, 0, -1)
+	}
+	if err := rows.Err(); err != nil {
+		return 0, fmt.Errorf("studyplan: iterate completed dates: %w", err)
+	}
+	return streak, nil
+}

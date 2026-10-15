@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Button,
-  Card,
-  CardContent,
-  ErrorState,
-  PageHeader
-} from "@nihongo-bjt/ui";
+import { Button, Card, CardContent, ErrorState, PageHeader } from "@nihongo-bjt/ui";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 
@@ -39,6 +33,7 @@ export interface CardgenLabels {
   modes: Record<string, string>;
   sourceType: string;
   sources: Record<string, string>;
+  topic: string;
   direction: string;
   directions: Record<string, string>;
   count: string;
@@ -57,17 +52,12 @@ const LEVELS = ["N5", "N4", "N3", "N2", "N1"] as const;
 
 /* ── Component ─────────────────────────────────────────────────────────── */
 
-export function CardgenPageClient({
-  labels,
-  locale
-}: {
-  labels: CardgenLabels;
-  locale: string;
-}) {
+export function CardgenPageClient({ labels, locale }: { labels: CardgenLabels; locale: string }) {
   const [mode, setMode] = useState<string>("by_level");
   const [sourceType, setSourceType] = useState<string>("lexeme");
   const [direction, setDirection] = useState<string>("both");
   const [level, setLevel] = useState<string>("N5");
+  const [topic, setTopic] = useState("");
   const [count, setCount] = useState<number>(20);
 
   const [loading, setLoading] = useState(false);
@@ -86,7 +76,7 @@ export function CardgenPageClient({
       const res = await learnerApiFetch("/api/cardgen/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode, sourceType, level, direction, count })
+        body: JSON.stringify({ mode, sourceType, level, direction, count, topic })
       });
       if (!res.ok) {
         const err = await res.json().catch(() => null);
@@ -98,7 +88,7 @@ export function CardgenPageClient({
     } finally {
       setLoading(false);
     }
-  }, [mode, sourceType, level, direction, count, labels.error]);
+  }, [mode, sourceType, level, direction, count, topic, labels.error]);
 
   /* ── Preview ─────────────────────────────────────────────────────────── */
 
@@ -110,7 +100,7 @@ export function CardgenPageClient({
       const res = await learnerApiFetch("/api/cardgen/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode, sourceType, level, direction, count })
+        body: JSON.stringify({ mode, sourceType, level, direction, count, topic })
       });
       if (!res.ok) throw new Error("Preview failed");
       setPreviewData(await res.json());
@@ -119,7 +109,7 @@ export function CardgenPageClient({
     } finally {
       setLoading(false);
     }
-  }, [mode, sourceType, level, direction, count, labels.error]);
+  }, [mode, sourceType, level, direction, count, topic, labels.error]);
 
   /* ── Render ──────────────────────────────────────────────────────────── */
 
@@ -143,7 +133,7 @@ export function CardgenPageClient({
               </p>
             </div>
             <Link
-              href={`/${locale}/flashcards?deckId=${result.deck.id}`}
+              href={`/${locale}/flashcards?tab=review`}
               className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
             >
               {labels.viewDeck}
@@ -157,9 +147,7 @@ export function CardgenPageClient({
         <CardContent className="space-y-6 p-6">
           {/* Mode */}
           <div>
-            <label className="mb-2 block text-sm font-medium text-ink/70">
-              {labels.mode}
-            </label>
+            <label className="mb-2 block text-sm font-medium text-ink/70">{labels.mode}</label>
             <div className="flex flex-wrap gap-2">
               {MODES.map((m) => (
                 <button
@@ -202,11 +190,26 @@ export function CardgenPageClient({
           )}
 
           {/* Level */}
+          {mode === "by_topic" && (
+            <div>
+              <label htmlFor="cardgen-topic" className="mb-2 block text-sm font-medium text-ink/70">
+                {labels.topic}
+              </label>
+              <input
+                id="cardgen-topic"
+                value={topic}
+                onChange={(event) => setTopic(event.target.value)}
+                maxLength={120}
+                required
+                className="min-h-11 w-full rounded-xl border border-ink/15 bg-white px-3 text-ink"
+              />
+            </div>
+          )}
+
+          {/* Level */}
           {(mode === "by_level" || mode === "daily_auto") && (
             <div>
-              <label className="mb-2 block text-sm font-medium text-ink/70">
-                JLPT Level
-              </label>
+              <label className="mb-2 block text-sm font-medium text-ink/70">JLPT Level</label>
               <div className="flex flex-wrap gap-2">
                 {LEVELS.map((l) => (
                   <button
@@ -227,9 +230,7 @@ export function CardgenPageClient({
 
           {/* Direction */}
           <div>
-            <label className="mb-2 block text-sm font-medium text-ink/70">
-              {labels.direction}
-            </label>
+            <label className="mb-2 block text-sm font-medium text-ink/70">{labels.direction}</label>
             <div className="flex flex-wrap gap-2">
               {DIRECTIONS.map((d) => (
                 <button
@@ -270,20 +271,10 @@ export function CardgenPageClient({
 
           {/* Actions */}
           <div className="flex gap-3 pt-2">
-            <Button
-              onClick={handleGenerate}
-              variant="primary"
-              size="lg"
-              disabled={loading}
-            >
+            <Button onClick={handleGenerate} variant="primary" size="lg" disabled={loading}>
               {loading ? labels.generating : labels.generate}
             </Button>
-            <Button
-              onClick={handlePreview}
-              variant="secondary"
-              size="lg"
-              disabled={loading}
-            >
+            <Button onClick={handlePreview} variant="secondary" size="lg" disabled={loading}>
               {labels.preview}
             </Button>
           </div>
@@ -300,21 +291,12 @@ export function CardgenPageClient({
             {previewData.sampleCards.length > 0 && (
               <div className="mt-4 space-y-3">
                 {previewData.sampleCards.map((card, i) => (
-                  <div
-                    key={i}
-                    className="flex gap-4 rounded-lg bg-surface p-3"
-                  >
+                  <div key={i} className="flex gap-4 rounded-lg bg-surface p-3">
                     <div className="flex-1">
-                      <div className="text-sm font-medium text-ink">
-                        {card.frontText}
-                      </div>
-                      {card.reading && (
-                        <div className="text-xs text-ink/50">{card.reading}</div>
-                      )}
+                      <div className="text-sm font-medium text-ink">{card.frontText}</div>
+                      {card.reading && <div className="text-xs text-ink/50">{card.reading}</div>}
                     </div>
-                    <div className="flex-1 text-right text-sm text-ink/70">
-                      {card.backText}
-                    </div>
+                    <div className="flex-1 text-right text-sm text-ink/70">{card.backText}</div>
                   </div>
                 ))}
               </div>

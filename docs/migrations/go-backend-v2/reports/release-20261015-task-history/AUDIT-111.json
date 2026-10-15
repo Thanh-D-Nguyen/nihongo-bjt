@@ -1,0 +1,455 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-111",
+  "title": "Learner subscription summary fields for the settings page",
+  "start_head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43",
+  "preexisting_changes": {
+    "apps/admin/tsconfig.tsbuildinfo": "1ebcbc1e512aaf84682dc85cbd10250c8d5ad6e3",
+    "apps/web/tsconfig.tsbuildinfo": "1aa596f82d2ab2a600f0a8ab9e86410958783e30"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "A learner with an active subscription gets source 'subscription' with its plan slug, localized plan names from plan config, status, currentPeriodEnd, cancelAtPeriodEnd, entitlement keys and quota rows."
+      },
+      {
+        "id": "AC2",
+        "text": "A learner without a subscription gets source 'default' with the free plan."
+      },
+      {
+        "id": "AC3",
+        "text": "The existing subscription and pendingSubscription fields keep their current values."
+      },
+      {
+        "id": "AC4",
+        "text": "The settings/subscription page renders the plan with no error boundary at 390x844 in visible Chrome."
+      }
+    ],
+    "expected_behavior": "The response also includes the SubscriptionData fields (planSlug, planName, planNameVi, planNameJa, source, status, currentPeriodEnd, cancelAtPeriodEnd, entitlements, quotas) while keeping subscription and pendingSubscription unchanged.",
+    "observed_behavior": "GET /api/learner/monetization/subscription returns only subscription and pendingSubscription; the settings/subscription page reads planSlug, planName, source, entitlements and quotas, so it crashes with 'Cannot read properties of undefined (reading length)' and shows the error page.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DOMAIN_LOGIC"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLearnerSubscriptionSummaryDescribesActivePlan",
+      "expect": "expected source subscription for plan"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLearnerSubscriptionSummaryFallsBackToFreePlan",
+      "expect": "expected default free plan without subscription status"
+    }
+  ],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/api-go/internal/httpserver/handler_learner_subscription_summary.go",
+      "find": "response[\"entitlements\"] = s.Entitlements",
+      "replace": "response[\"entitlementsDisabled\"] = s.Entitlements"
+    },
+    "targets": [
+      {
+        "runner": "go",
+        "package": "./internal/httpserver",
+        "test": "TestLearnerSubscriptionSummaryDescribesActivePlan",
+        "expect": "entitlements = [], want"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-12T00:27:27.153Z",
+      "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-12T00:27:27.536Z",
+      "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-12T00:27:27.917Z",
+      "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T00:28:21.432Z",
+      "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T00:29:06.918Z",
+      "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-12T00:32:30.644Z",
+      "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T00:36:19.843Z",
+      "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-12T00:38:54.778Z",
+      "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-12T00:39:17.344Z",
+      "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-12T00:27:50.893Z",
+      "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerSubscriptionSummaryDescribesActivePlan)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerSubscriptionSummaryDescribesActivePlan",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_learner_subscription_summary_test.go:66:62: undefined: entitlementID internal/httpserver/handler_learner_subscription_summary_test.go:76:58: …",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLearnerSubscriptionSummaryDescribesActivePlan": "expected source subscription for plan"
+      },
+      "fingerprint": "3c49375608828dab5f9bc7fbe27bd509f8c9bc7dff851e4ce3e18cc3b62ea778"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-12T00:27:58.804Z",
+      "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerSubscriptionSummaryDescribesActivePlan|TestLearnerSubscriptionSummaryFallsBackToFreePlan)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerSubscriptionSummaryDescribesActivePlan",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_learner_subscription_summary_test.go:66:62: undefined: entitlementID internal/httpserver/handler_learner_subscription_summary_test.go:76:58: …",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLearnerSubscriptionSummaryFallsBackToFreePlan",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_learner_subscription_summary_test.go:66:62: undefined: entitlementID internal/httpserver/handler_learner_subscription_summary_test.go:76:58: …",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLearnerSubscriptionSummaryDescribesActivePlan": "expected source subscription for plan",
+        "go:./internal/httpserver:TestLearnerSubscriptionSummaryFallsBackToFreePlan": "expected default free plan without subscription status"
+      },
+      "fingerprint": "3c49375608828dab5f9bc7fbe27bd509f8c9bc7dff851e4ce3e18cc3b62ea778"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-12T00:28:21.151Z",
+      "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerSubscriptionSummaryDescribesActivePlan|TestLearnerSubscriptionSummaryFallsBackToFreePlan)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerSubscriptionSummaryDescribesActivePlan",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerSubscriptionSummaryDescribesActivePlan handler_learner_subscription_summary_test.go:105: expected source subscription for plan summary-78a47dac, got source=\"\" planSlug=\"\": {\"pendingSubscription\":null,\"subscription\":{\"id\":\"d9b72df2-41fc-4d04-b102-8f9235faac78\",\"planId\":\"78a47dac-c8…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLearnerSubscriptionSummaryFallsBackToFreePlan",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerSubscriptionSummaryFallsBackToFreePlan handler_learner_subscription_summary_test.go:144: expected default free plan without subscription status, got {\"pendingSubscription\":null,\"subscription\":null} --- FAIL: TestLearnerSubscriptionSummaryFallsBackToFreePlan (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLearnerSubscriptionSummaryDescribesActivePlan": "expected source subscription for plan",
+        "go:./internal/httpserver:TestLearnerSubscriptionSummaryFallsBackToFreePlan": "expected default free plan without subscription status"
+      },
+      "fingerprint": "3567b081326a2567f6e1505e709b7bc7e25617a461e55f5d8257cb6799682826"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-12T00:28:29.836Z",
+      "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerSubscriptionSummaryDescribesActivePlan|TestLearnerSubscriptionSummaryFallsBackToFreePlan)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerSubscriptionSummaryDescribesActivePlan",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerSubscriptionSummaryDescribesActivePlan handler_learner_subscription_summary_test.go:105: expected source subscription for plan summary-e235aa9a, got source=\"\" planSlug=\"\": {\"pendingSubscription\":null,\"subscription\":{\"id\":\"aabbee5d-876d-4ab0-8444-a35c4f092298\",\"planId\":\"e235aa9a-ec…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLearnerSubscriptionSummaryFallsBackToFreePlan",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerSubscriptionSummaryFallsBackToFreePlan handler_learner_subscription_summary_test.go:144: expected default free plan without subscription status, got {\"pendingSubscription\":null,\"subscription\":null} --- FAIL: TestLearnerSubscriptionSummaryFallsBackToFreePlan (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLearnerSubscriptionSummaryDescribesActivePlan": "expected source subscription for plan",
+        "go:./internal/httpserver:TestLearnerSubscriptionSummaryFallsBackToFreePlan": "expected default free plan without subscription status"
+      },
+      "fingerprint": "3567b081326a2567f6e1505e709b7bc7e25617a461e55f5d8257cb6799682826"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-12T00:29:06.530Z",
+      "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerSubscriptionSummaryDescribesActivePlan|TestLearnerSubscriptionSummaryFallsBackToFreePlan)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerSubscriptionSummaryDescribesActivePlan",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLearnerSubscriptionSummaryFallsBackToFreePlan",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "428d48c14cb011b605126ddc81fc3997a76cbe85d0fdfd481a9f2cd1d2e255ef"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-12T00:29:30.406Z",
+      "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_learner_subscription_summary.go",
+        "find": "response[\"entitlements\"] = s.Entitlements",
+        "replace": "response[\"entitlementsDisabled\"] = s.Entitlements"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerSubscriptionSummaryDescribesActivePlan)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerSubscriptionSummaryDescribesActivePlan",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerSubscriptionSummaryDescribesActivePlan handler_learner_subscription_summary_test.go:114: entitlements = [], want [summary.ent.1a41e71e]: {\"cancelAtPeriodEnd\":true,\"currentPeriodEnd\":\"2026-11-11 00:29:29+00\",\"entitlementsDisabled\":[\"summary.ent.1a41e71e\"],\"pendingSubscription\":null…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLearnerSubscriptionSummaryDescribesActivePlan": "entitlements = [], want"
+      },
+      "fingerprint": "428d48c14cb011b605126ddc81fc3997a76cbe85d0fdfd481a9f2cd1d2e255ef"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-12T00:32:30.329Z",
+      "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 774,
+        "executed": 774,
+        "passed": 774,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "774 passed, 0 allowed skip(s)",
+      "fingerprint": "428d48c14cb011b605126ddc81fc3997a76cbe85d0fdfd481a9f2cd1d2e255ef"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-12T00:36:19.396Z",
+      "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerSubscriptionSummaryDescribesActivePlan|TestLearnerSubscriptionSummaryFallsBackToFreePlan)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerSubscriptionSummaryDescribesActivePlan",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLearnerSubscriptionSummaryFallsBackToFreePlan",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "6117f2db35ba8bbc12a9fbbe30fef75fe6798a93dceae0893980b071cfa87b8a"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-12T00:38:54.412Z",
+      "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 774,
+        "executed": 774,
+        "passed": 774,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "774 passed, 0 allowed skip(s)",
+      "fingerprint": "6117f2db35ba8bbc12a9fbbe30fef75fe6798a93dceae0893980b071cfa87b8a"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-12T00:39:10.807Z",
+      "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit111-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "6117f2db35ba8bbc12a9fbbe30fef75fe6798a93dceae0893980b071cfa87b8a"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-12T00:39:17.324Z",
+    "head": "24030f8a173fe7f2b9e5c6e8af071bff8ee2bd43",
+    "fingerprint": "6117f2db35ba8bbc12a9fbbe30fef75fe6798a93dceae0893980b071cfa87b8a",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_learner_subscription_summary.go": "5c3ec73e6b20e74f4a715d2cfff15bd75b09d58c",
+      "apps/api-go/internal/httpserver/handler_learner_subscription_summary_test.go": "dc82fb05653f85e2978cfefd6ed2a54458ec9580",
+      "apps/api-go/internal/httpserver/handler_monetization_reading_onboarding.go": "edcf9a35fd55b45960f45212676f2711e0e0b5f2",
+      "e2e/audit/audit111-browser-check.sh": "05ea47d6ce711d211904224c61a292f0d0e8e35e"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": [
+      {
+        "id": "d39a4344-0da8-44c0-bf2a-d8a87a0be218",
+        "task": "AUDIT-111",
+        "action": {
+          "kind": "delete_persistent_data",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "5a43fc090f6e8e0e0e356179454c8019b79f94ebba798403df7ac2a21b473bb8",
+            "environment": "local"
+          },
+          "impact": "Destroy potentially persistent data",
+          "command": "pkill -f \"scripts/local-audit-up.mjs\"; pkill -f \"tmp/local-audit/api\"; pkill -f \"caddy run\"; pkill -f \"next/dist/bin/next\"; sleep 8; git check-ignore -q apps/web/.next && echo WEB_NEXT_IGNORED; rm -rf apps/web/.next apps/admin/.next; LOG=/private/tmp/claude-501/-Users-thanhnguyen-Documents-Projects-nihongo-bjt/f6059b3a-dbe0-4a3f-ac37-5edbd1a160ca/scratchpad/supervisor4.log; nohup node scripts/local-audit-up.mjs > \"$LOG\" 2>&1 &\nsleep 5; echo started"
+        },
+        "impact": "Destroy potentially persistent data",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "5a43fc090f6e8e0e0e356179454c8019b79f94ebba798403df7ac2a21b473bb8",
+          "environment": "local"
+        },
+        "digest": "1c77f5647302d022858a83e5b54fe3677768bec773e3af6ccd4823db5b27acd2",
+        "continuation": {
+          "step": "native:toolu_01WtrxJragFVEVYoiZZem5qM",
+          "native_tool_use_id": "toolu_01WtrxJragFVEVYoiZZem5qM"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "native_permission_once",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-12T00:34:14.811Z"
+      }
+    ]
+  }
+}

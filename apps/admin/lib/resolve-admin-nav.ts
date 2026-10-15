@@ -63,7 +63,7 @@ export function buildResolvedAdminNav(
         }
       }
 
-      const fullHref = i.href === "/" ? `/${locale}` : `/${locale}${i.href}`;
+      const fullHref = i.href === "/" ? `/admin/${locale}` : `/admin/${locale}${i.href}`;
       const featureDisabled = Boolean(
         i.featureFlag && isAdminFeatureExplicitlyOff(i.featureFlag, featureFlags) && i.featureOffBehavior === "disabled"
       );

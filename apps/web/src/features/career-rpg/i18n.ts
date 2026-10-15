@@ -31,14 +31,21 @@ export interface CareerRpgLabels {
     eyebrow: string;
     title: string;
     subtitle: string;
+    loading: string;
+    loadError: string;
+    retry: string;
+    loginLink: string;
     rankBadgeStamp: string;
     nextRankLabel: string;
     rankProgressLabel: string;
     skillsTitle: string;
     skillsSubtitle: string;
+    skillsEmpty: string;
     skillsAxisLabels: Record<SkillAxisCode, string>;
+    ranksEmpty: string;
     relationsTitle: string;
     relationsSubtitle: string;
+    relationsEmpty: string;
     trustLabel: string;
     relationUchi: string;
     relationSoto: string;
@@ -135,6 +142,10 @@ export interface CareerRpgLabels {
     feelUseful: string;
     feelStillFuzzy: string;
     feelLost: string;
+    empty: string;
+    loadError: string;
+    retry: string;
+    feedbackError: string;
     markReadCta: string;
     reviewCompleteCta: string;
     cardKindLabels: Record<

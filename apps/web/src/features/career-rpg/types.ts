@@ -8,21 +8,9 @@
 
 export type RankCode = "R1" | "R2" | "R3" | "R4" | "R5" | "R6" | "R7" | "R8";
 
-export type SkillAxisCode =
-  | "keigo"
-  | "written"
-  | "meeting"
-  | "customer"
-  | "chart"
-  | "nuance";
+export type SkillAxisCode = "keigo" | "written" | "meeting" | "customer" | "chart" | "nuance";
 
-export type ScenarioType =
-  | "email"
-  | "meeting"
-  | "chat"
-  | "complaint"
-  | "deadline"
-  | "report_chart";
+export type ScenarioType = "email" | "meeting" | "chat" | "complaint" | "deadline" | "report_chart";
 
 export type ErrorTypeCode =
   | "keyword_trap"
@@ -206,6 +194,7 @@ export interface ContextMemo {
   fromNpcNameJa?: string;
   generatedAt: string;
   status: "unread" | "read";
+  feedback?: "useful" | "fuzzy" | "lost" | null;
 }
 
 export interface ChapterResult {

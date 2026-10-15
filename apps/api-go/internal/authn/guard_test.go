@@ -120,6 +120,44 @@ func TestLearnerGuard_InvalidToken_Returns401(t *testing.T) {
 	assertJSONError(t, w, "unauthorized")
 }
 
+func TestOptionalLearnerGuardResolvesValidSessionAndFailsOnStoreErrors(t *testing.T) {
+	tests := []struct {
+		name       string
+		store      *mockSessionLookup
+		cookie     string
+		wantStatus int
+		wantUserID string
+	}{
+		{name: "guest", store: &mockSessionLookup{}, wantStatus: http.StatusNoContent},
+		{name: "valid learner", store: &mockSessionLookup{learnerSess: &session.LearnerSession{ID: "session", UserID: "learner"}}, cookie: "valid", wantStatus: http.StatusNoContent, wantUserID: "learner"},
+		{name: "expired session becomes guest", store: &mockSessionLookup{learnerErr: session.ErrSessionNotFound}, cookie: "expired", wantStatus: http.StatusNoContent},
+		{name: "store failure", store: &mockSessionLookup{learnerErr: errors.New("database unavailable")}, cookie: "valid", wantStatus: http.StatusInternalServerError},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var userID string
+			handler := OptionalLearnerGuard(tt.store, DefaultGuardConfig(testLogger()))(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if identity, ok := GetLearnerIdentity(r.Context()); ok {
+					userID = identity.UserID
+				}
+				w.WriteHeader(http.StatusNoContent)
+			}))
+			req := httptest.NewRequest(http.MethodPost, "/api/test", nil)
+			if tt.cookie != "" {
+				req.AddCookie(&http.Cookie{Name: "bjt_web_session", Value: tt.cookie})
+			}
+			w := httptest.NewRecorder()
+			handler.ServeHTTP(w, req)
+			if w.Code != tt.wantStatus {
+				t.Fatalf("status = %d, want %d", w.Code, tt.wantStatus)
+			}
+			if userID != tt.wantUserID {
+				t.Fatalf("identity user = %q, want %q", userID, tt.wantUserID)
+			}
+		})
+	}
+}
+
 func TestLearnerGuard_BackendError_Returns500(t *testing.T) {
 	store := &mockSessionLookup{learnerErr: errors.New("database connection refused")}
 	cfg := DefaultGuardConfig(testLogger())

@@ -7,8 +7,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -33,13 +36,67 @@ func lifecycleTestServer(t *testing.T) *httptest.Server {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/auth/register", registerHandler(pool, credStore, rateLimiter, logger))
-	mux.HandleFunc("/api/auth/forgot-password", forgotPasswordHandler(pool, rateLimiter, logger))
+	mux.HandleFunc("/api/auth/forgot-password", forgotPasswordHandler(rateLimiter, logger, testPasswordResetRequestQueue(true)))
 	mux.HandleFunc("/api/auth/reset-password", resetPasswordHandler(pool, credStore, sessionStore, rateLimiter, logger))
 	mux.HandleFunc("/api/auth/change-password", changePasswordHandler(pool, credStore, sessionStore, rateLimiter, logger))
 	mux.HandleFunc("/api/auth/disable", disableAccountHandler(pool, sessionStore, rateLimiter, logger))
 	mux.HandleFunc("/api/auth/delete", deleteAccountHandler(pool, sessionStore, rateLimiter, logger))
 
 	return httptest.NewServer(mux)
+}
+
+type testPasswordResetRequestQueue bool
+
+func (q testPasswordResetRequestQueue) Enqueue(string, string) bool { return bool(q) }
+
+func TestForgotPasswordRateLimitsForwardedClientsIndependently(t *testing.T) {
+	rateLimiter, err := authn.NewRateLimiter(authn.RateLimiterConfig{
+		Limit: 1, Window: time.Minute, TTL: 5 * time.Minute, MaxKeys: 100, EvictEvery: time.Minute,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(rateLimiter.Stop)
+	handler := forgotPasswordHandler(rateLimiter, slog.Default(), testPasswordResetRequestQueue(true))
+	request := func(ip, email string) int {
+		t.Helper()
+		body, _ := json.Marshal(map[string]string{"email": email})
+		r := httptest.NewRequest(http.MethodPost, "/api/auth/forgot-password", bytes.NewReader(body))
+		r.RemoteAddr = "127.0.0.1:4001"
+		r.Header.Set("Content-Type", "application/json")
+		r.Header.Set("X-Forwarded-For", ip)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, r)
+		return w.Code
+	}
+
+	if got := request("198.51.100.1", "first@example.test"); got != http.StatusOK {
+		t.Fatalf("first client status = %d, want 200", got)
+	}
+	if got := request("198.51.100.2", "second@example.test"); got != http.StatusOK {
+		t.Fatalf("independent client status = %d, want 200", got)
+	}
+	if got := request("198.51.100.1", "third@example.test"); got != http.StatusTooManyRequests {
+		t.Fatalf("repeated client status = %d, want 429", got)
+	}
+}
+
+type testPasswordResetMailer struct {
+	mu                       sync.Mutex
+	recipient, token, locale string
+}
+
+func (m *testPasswordResetMailer) SendPasswordReset(_ context.Context, recipient, token, locale string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.recipient, m.token, m.locale = recipient, token, locale
+	return nil
+}
+
+func (m *testPasswordResetMailer) snapshot() (string, string, string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.recipient, m.token, m.locale
 }
 
 func TestRegister_Success(t *testing.T) {
@@ -131,9 +188,15 @@ func TestRegister_WeakPassword(t *testing.T) {
 	}
 }
 
-func TestForgotPassword_Success(t *testing.T) {
+func TestForgotPassword_UnconfiguredMailer(t *testing.T) {
 	pool := testPool(t)
-	srv := lifecycleTestServer(t)
+	rateLimiter, err := authn.NewRateLimiter(authn.DefaultRateLimiterConfig())
+	if err != nil {
+		t.Fatalf("create rate limiter: %v", err)
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/auth/forgot-password", forgotPasswordHandler(rateLimiter, slog.Default(), nil))
+	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
 	// Seed a user first.
@@ -150,8 +213,8 @@ func TestForgotPassword_Success(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("expected 200, got %d", resp.StatusCode)
+	if resp.StatusCode != http.StatusServiceUnavailable {
+		t.Errorf("expected 503 for unconfigured mail delivery, got %d", resp.StatusCode)
 	}
 
 	// Verify token was created in DB.
@@ -161,8 +224,85 @@ func TestForgotPassword_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("query token count: %v", err)
 	}
-	if tokenCount != 1 {
-		t.Errorf("expected 1 reset token, got %d", tokenCount)
+	if tokenCount != 0 {
+		t.Errorf("must not create an unusable reset token, got %d", tokenCount)
+	}
+}
+
+func TestForgotPassword_DoesNotLogResetToken(t *testing.T) {
+	pool := testPool(t)
+	userID := newUUID(t)
+	email := fmt.Sprintf("forgot-log-%s@example.com", userID[:8])
+	seedActiveUser(t, pool, userID, "Forgot User", email, "")
+	rateLimiter, err := authn.NewRateLimiter(authn.DefaultRateLimiterConfig())
+	if err != nil {
+		t.Fatalf("create rate limiter: %v", err)
+	}
+	var logs bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&logs, nil))
+	mux := http.NewServeMux()
+	mailer := &testPasswordResetMailer{}
+	queue := NewPasswordResetQueue(pool, mailer, logger)
+	defer queue.Close(context.Background())
+	mux.HandleFunc("/api/auth/forgot-password", forgotPasswordHandler(rateLimiter, logger, queue))
+	mux.HandleFunc("/api/auth/reset-password", resetPasswordHandler(pool, credential.NewStore(pool), session.NewStore(pool), rateLimiter, logger))
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	body, _ := json.Marshal(map[string]string{"email": email, "locale": "ja"})
+	resp, err := http.Post(srv.URL+"/api/auth/forgot-password", "application/json", bytes.NewReader(body))
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	defer resp.Body.Close()
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read response: %v", err)
+	}
+	var recipient, token, locale string
+	for i := 0; i < 100; i++ {
+		recipient, token, locale = mailer.snapshot()
+		if token != "" {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if token == "" || recipient != email || locale != "ja" {
+		t.Fatal("expected reset token to be delivered to the requested account")
+	}
+	if strings.Contains(logs.String(), token) {
+		t.Fatal("recovery logs must not contain the bearer token")
+	}
+	if strings.Contains(string(responseBody), `"token"`) {
+		t.Fatal("reset token must not be exposed in the API response")
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected generic 200 after queuing delivery, got %d", resp.StatusCode)
+	}
+	var storedHash string
+	if err := pool.QueryRow(context.Background(), `SELECT token_hash FROM auth.password_reset_token WHERE user_id = $1 AND used_at IS NULL`, userID).Scan(&storedHash); err != nil {
+		t.Fatalf("load stored reset token: %v", err)
+	}
+	h := sha256.Sum256([]byte(token))
+	if storedHash != hex.EncodeToString(h[:]) {
+		t.Fatal("stored token hash must match the delivered token")
+	}
+	resetBody, _ := json.Marshal(map[string]string{"token": token, "password": "new-secure-password"})
+	resetResp, err := http.Post(srv.URL+"/api/auth/reset-password", "application/json", bytes.NewReader(resetBody))
+	if err != nil {
+		t.Fatalf("reset request failed: %v", err)
+	}
+	resetResp.Body.Close()
+	if resetResp.StatusCode != http.StatusOK {
+		t.Fatalf("delivered token should be accepted by reset endpoint, got %d", resetResp.StatusCode)
+	}
+	replayResp, err := http.Post(srv.URL+"/api/auth/reset-password", "application/json", bytes.NewReader(resetBody))
+	if err != nil {
+		t.Fatalf("replay request failed: %v", err)
+	}
+	replayResp.Body.Close()
+	if replayResp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("single-use token replay should fail, got %d", replayResp.StatusCode)
 	}
 }
 
@@ -185,6 +325,43 @@ func TestForgotPassword_UnknownEmail(t *testing.T) {
 	}
 }
 
+func TestForgotPassword_QueueFullReturnsGenericRetryableFailure(t *testing.T) {
+	rateLimiter, err := authn.NewRateLimiter(authn.DefaultRateLimiterConfig())
+	if err != nil {
+		t.Fatalf("create rate limiter: %v", err)
+	}
+	srv := httptest.NewServer(forgotPasswordHandler(rateLimiter, slog.Default(), testPasswordResetRequestQueue(false)))
+	defer srv.Close()
+	body, _ := json.Marshal(map[string]string{"email": "learner@example.com"})
+	resp, err := http.Post(srv.URL, "application/json", bytes.NewReader(body))
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	defer resp.Body.Close()
+	var response map[string]string
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if resp.StatusCode != http.StatusServiceUnavailable || response["error"] != "service unavailable" {
+		t.Fatalf("queue saturation must return a generic retryable failure, got status %d body %#v", resp.StatusCode, response)
+	}
+}
+
+func TestLookupUserIDByEmail_ExcludesDisabledLearners(t *testing.T) {
+	db := testPool(t)
+	userID := newUUID(t)
+	email := "disabled-reset-" + userID[:8] + "@example.test"
+	if _, err := db.Exec(context.Background(), `INSERT INTO profile.user_profile (id, display_name, email, status, updated_at) VALUES ($1, 'Disabled learner', $2, 'disabled', now())`, userID, email); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _, _ = db.Exec(context.Background(), `DELETE FROM profile.user_profile WHERE id=$1`, userID) })
+
+	got, err := lookupUserIDByEmail(context.Background(), db, email)
+	if err != nil || got != "" {
+		t.Fatalf("disabled account should not be eligible for recovery: id=%q err=%v", got, err)
+	}
+}
+
 func TestResetPassword_Success(t *testing.T) {
 	pool := testPool(t)
 	srv := lifecycleTestServer(t)
@@ -198,13 +375,18 @@ func TestResetPassword_Success(t *testing.T) {
 	if err := credStore.SetLearnerCredential(context.Background(), userID, []byte("oldpassword123")); err != nil {
 		t.Fatalf("set credential: %v", err)
 	}
+	sessions := session.NewStore(pool)
+	oldSession, err := sessions.CreateLearnerSession(context.Background(), userID, "audit-test", "127.0.0.1", time.Now().Add(time.Hour))
+	if err != nil {
+		t.Fatalf("create pre-reset session: %v", err)
+	}
 
 	// Create reset token.
 	rawToken := newUUID(t)
 	tokenHash := sha256.Sum256([]byte(rawToken))
 	hashHex := hex.EncodeToString(tokenHash[:])
 	expiresAt := time.Now().Add(1 * time.Hour)
-	_, err := pool.Exec(context.Background(),
+	_, err = pool.Exec(context.Background(),
 		`INSERT INTO auth.password_reset_token (id, user_id, token_hash, expires_at, created_at)
 		 VALUES ($1, $2, $3, $4, now())`, newUUID(t), userID, hashHex, expiresAt)
 	if err != nil {
@@ -225,6 +407,15 @@ func TestResetPassword_Success(t *testing.T) {
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected 200, got %d", resp.StatusCode)
+	}
+	if err := credStore.VerifyLearner(context.Background(), userID, []byte("newsecurepass123")); err != nil {
+		t.Fatalf("new credential was not persisted: %v", err)
+	}
+	if err := credStore.VerifyLearner(context.Background(), userID, []byte("oldpassword123")); err == nil {
+		t.Fatal("old password must stop authenticating after reset")
+	}
+	if _, err := sessions.LookupLearnerSession(context.Background(), oldSession); err != session.ErrSessionNotFound {
+		t.Fatalf("password reset must revoke the old session, got %v", err)
 	}
 
 	// Verify token is marked used.

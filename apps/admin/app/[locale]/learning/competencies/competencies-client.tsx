@@ -132,7 +132,10 @@ export function CompetenciesAdminClient({
   const [submitting, setSubmitting] = useState(false);
   const toast = useAdminToast();
 
-  const [reasonModal, setReasonModal] = useState<{ action: "publish" | "archive" | "delete"; targetId: string } | null>(null);
+  const [reasonModal, setReasonModal] = useState<{
+    action: "publish" | "archive" | "delete";
+    targetId: string;
+  } | null>(null);
   const [reason, setReason] = useState("");
 
   const load = useCallback(async () => {
@@ -212,10 +215,23 @@ export function CompetenciesAdminClient({
   const submitForm = async () => {
     fe.clearAll();
     const errs = validateFields([
-      { field: "code", value: form.code, message: t("errorCodeRequired"), validate: validators.required },
-      { field: "titleVi", value: form.titleVi, message: t("errorTitleViRequired"), validate: validators.required },
+      {
+        field: "code",
+        value: form.code,
+        message: t("errorCodeRequired"),
+        validate: validators.required
+      },
+      {
+        field: "titleVi",
+        value: form.titleVi,
+        message: t("errorTitleViRequired"),
+        validate: validators.required
+      }
     ]);
-    if (Object.keys(errs).length > 0) { fe.setFieldErrors(errs); return; }
+    if (Object.keys(errs).length > 0) {
+      fe.setFieldErrors(errs);
+      return;
+    }
 
     const reasonText = window.prompt(t("promptReason") ?? "Reason");
     if (!reasonText || reasonText.trim().length < 3) {
@@ -232,9 +248,10 @@ export function CompetenciesAdminClient({
         titleJa: form.titleJa || null,
         titleVi: form.titleVi.trim()
       };
-      const url = editing === "create"
-        ? "/api/admin/learning/competencies"
-        : `/api/admin/learning/competencies/${detail?.id}`;
+      const url =
+        editing === "create"
+          ? "/api/admin/learning/competencies"
+          : `/api/admin/learning/competencies/${detail?.id}`;
       const method = editing === "create" ? "POST" : "PATCH";
       const r = await adminApiFetch(url, {
         body: JSON.stringify(payload),
@@ -263,9 +280,10 @@ export function CompetenciesAdminClient({
     setSubmitting(true);
     try {
       const { action, targetId } = reasonModal;
-      const url = action === "delete"
-        ? `/api/admin/learning/competencies/${targetId}`
-        : `/api/admin/learning/competencies/${targetId}/${action}`;
+      const url =
+        action === "delete"
+          ? `/api/admin/learning/competencies/${targetId}`
+          : `/api/admin/learning/competencies/${targetId}/${action}`;
       const method = action === "delete" ? "DELETE" : "POST";
       const r = await adminApiFetch(url, {
         body: JSON.stringify({ reason: reason.trim() }),
@@ -304,7 +322,9 @@ export function CompetenciesAdminClient({
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {[...COMPETENCY_STATUSES].map((s) => (
           <div key={s} className="rounded-lg border border-slate-200 bg-white px-4 py-3">
-            <div className="text-[10px] uppercase tracking-wide text-slate-500">{t(`status_${s}`)}</div>
+            <div className="text-[10px] uppercase tracking-wide text-slate-500">
+              {t(`status_${s}`)}
+            </div>
             <div className="mt-1 text-2xl font-semibold text-slate-900">{counters[s] ?? 0}</div>
           </div>
         ))}
@@ -372,47 +392,49 @@ export function CompetenciesAdminClient({
           <AdminEmptyState title={t("empty")}>{t("emptyHint")}</AdminEmptyState>
         ) : (
           <>
-            <AdminDataTable>
-              <AdminDataTableHead>
-                <AdminDataTableRow>
-                  <AdminDataTableTh>{t("colCode")}</AdminDataTableTh>
-                  <AdminDataTableTh>{t("colTitle")}</AdminDataTableTh>
-                  <AdminDataTableTh>{t("colLevel")}</AdminDataTableTh>
-                  <AdminDataTableTh>{t("colStatus")}</AdminDataTableTh>
-                  <AdminDataTableTh>{t("colUpdatedAt")}</AdminDataTableTh>
-                </AdminDataTableRow>
-              </AdminDataTableHead>
-              <AdminDataTableBody>
-                {items.map((row) => (
-                  <AdminDataTableRow
-                    key={row.id}
-                    className="cursor-pointer hover:bg-indigo-50/40"
-                    onClick={() => void openDetail(row.id)}
-                  >
-                    <AdminDataTableTd>
-                      <span className="font-mono text-xs text-slate-700">{row.code}</span>
-                    </AdminDataTableTd>
-                    <AdminDataTableTd>
-                      <span className="font-medium">{row.titleVi}</span>
-                      {row.titleJa ? (
-                        <div className="text-xs text-slate-500">{row.titleJa}</div>
-                      ) : null}
-                    </AdminDataTableTd>
-                    <AdminDataTableTd>{row.level}</AdminDataTableTd>
-                    <AdminDataTableTd>
-                      <AdminStatusBadge tone={statusTone(row.status)}>
-                        {t(`status_${row.status}`)}
-                      </AdminStatusBadge>
-                    </AdminDataTableTd>
-                    <AdminDataTableTd>
-                      <span className="text-xs text-slate-500">
-                        {new Date(row.updatedAt).toLocaleString()}
-                      </span>
-                    </AdminDataTableTd>
+            <div className="max-w-full overflow-x-auto">
+              <AdminDataTable>
+                <AdminDataTableHead>
+                  <AdminDataTableRow>
+                    <AdminDataTableTh>{t("colCode")}</AdminDataTableTh>
+                    <AdminDataTableTh>{t("colTitle")}</AdminDataTableTh>
+                    <AdminDataTableTh>{t("colLevel")}</AdminDataTableTh>
+                    <AdminDataTableTh>{t("colStatus")}</AdminDataTableTh>
+                    <AdminDataTableTh>{t("colUpdatedAt")}</AdminDataTableTh>
                   </AdminDataTableRow>
-                ))}
-              </AdminDataTableBody>
-            </AdminDataTable>
+                </AdminDataTableHead>
+                <AdminDataTableBody>
+                  {items.map((row) => (
+                    <AdminDataTableRow
+                      key={row.id}
+                      className="cursor-pointer hover:bg-indigo-50/40"
+                      onClick={() => void openDetail(row.id)}
+                    >
+                      <AdminDataTableTd>
+                        <span className="font-mono text-xs text-slate-700">{row.code}</span>
+                      </AdminDataTableTd>
+                      <AdminDataTableTd>
+                        <span className="font-medium">{row.titleVi}</span>
+                        {row.titleJa ? (
+                          <div className="text-xs text-slate-500">{row.titleJa}</div>
+                        ) : null}
+                      </AdminDataTableTd>
+                      <AdminDataTableTd>{row.level}</AdminDataTableTd>
+                      <AdminDataTableTd>
+                        <AdminStatusBadge tone={statusTone(row.status)}>
+                          {t(`status_${row.status}`)}
+                        </AdminStatusBadge>
+                      </AdminDataTableTd>
+                      <AdminDataTableTd>
+                        <span className="text-xs text-slate-500">
+                          {new Date(row.updatedAt).toLocaleString()}
+                        </span>
+                      </AdminDataTableTd>
+                    </AdminDataTableRow>
+                  ))}
+                </AdminDataTableBody>
+              </AdminDataTable>
+            </div>
             <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
               <span>
                 {t("pageLabel")}: {data?.page ?? page} / {totalPages}
@@ -448,7 +470,9 @@ export function CompetenciesAdminClient({
           >
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
               <h2 className="text-base font-semibold text-slate-900">
-                {editing === "create" ? t("drawerTitleCreate") : detail?.titleVi ?? t("drawerTitleLoading")}
+                {editing === "create"
+                  ? t("drawerTitleCreate")
+                  : (detail?.titleVi ?? t("drawerTitleLoading"))}
               </h2>
               <button className="text-sm text-slate-500" onClick={closeDrawer} type="button">
                 {t("close")}
@@ -461,13 +485,29 @@ export function CompetenciesAdminClient({
                 <div className="space-y-3">
                   <FormError message={fe.errors.form} className="mb-3" />
                   <div className="grid grid-cols-2 gap-3">
-                    <FormField label={<>{t("formCode")} <span className="text-red-500">*</span></>}>
+                    <FormField
+                      label={
+                        <>
+                          {t("formCode")} <span className="text-red-500">*</span>
+                        </>
+                      }
+                    >
                       <input
-                        className={cn("w-full rounded-md px-2 py-1.5 text-sm", fe.fieldError("code") ? "border border-red-400 bg-red-50/50" : "border border-slate-300")}
-                        onChange={(e) => { fe.clearFieldError("code"); setForm({ ...form, code: e.target.value.toUpperCase() }); }}
+                        className={cn(
+                          "w-full rounded-md px-2 py-1.5 text-sm",
+                          fe.fieldError("code")
+                            ? "border border-red-400 bg-red-50/50"
+                            : "border border-slate-300"
+                        )}
+                        onChange={(e) => {
+                          fe.clearFieldError("code");
+                          setForm({ ...form, code: e.target.value.toUpperCase() });
+                        }}
                         value={form.code}
                       />
-                      {fe.fieldError("code") && <p className="text-xs text-red-600">{fe.fieldError("code")}</p>}
+                      {fe.fieldError("code") && (
+                        <p className="text-xs text-red-600">{fe.fieldError("code")}</p>
+                      )}
                     </FormField>
                     <FormField label={t("formLevel")}>
                       <select
@@ -482,13 +522,29 @@ export function CompetenciesAdminClient({
                         ))}
                       </select>
                     </FormField>
-                    <FormField label={<>{t("formTitleVi")} <span className="text-red-500">*</span></>}>
+                    <FormField
+                      label={
+                        <>
+                          {t("formTitleVi")} <span className="text-red-500">*</span>
+                        </>
+                      }
+                    >
                       <input
-                        className={cn("w-full rounded-md px-2 py-1.5 text-sm", fe.fieldError("titleVi") ? "border border-red-400 bg-red-50/50" : "border border-slate-300")}
-                        onChange={(e) => { fe.clearFieldError("titleVi"); setForm({ ...form, titleVi: e.target.value }); }}
+                        className={cn(
+                          "w-full rounded-md px-2 py-1.5 text-sm",
+                          fe.fieldError("titleVi")
+                            ? "border border-red-400 bg-red-50/50"
+                            : "border border-slate-300"
+                        )}
+                        onChange={(e) => {
+                          fe.clearFieldError("titleVi");
+                          setForm({ ...form, titleVi: e.target.value });
+                        }}
                         value={form.titleVi}
                       />
-                      {fe.fieldError("titleVi") && <p className="text-xs text-red-600">{fe.fieldError("titleVi")}</p>}
+                      {fe.fieldError("titleVi") && (
+                        <p className="text-xs text-red-600">{fe.fieldError("titleVi")}</p>
+                      )}
                     </FormField>
                     <FormField label={t("formTitleJa")}>
                       <input
@@ -509,7 +565,10 @@ export function CompetenciesAdminClient({
                   <div className="flex justify-end gap-2">
                     <button
                       className="rounded-md border border-slate-200 px-3 py-1.5 text-sm"
-                      onClick={() => { fe.clearAll(); setEditing(null); }}
+                      onClick={() => {
+                        fe.clearAll();
+                        setEditing(null);
+                      }}
                       type="button"
                     >
                       {t("formCancel")}
@@ -665,10 +724,15 @@ function AuditList({ audit, labels }: { audit: AuditEntry[]; labels: Labels }) {
       <div className="text-[11px] uppercase tracking-wide text-slate-500">{t("auditTitle")}</div>
       <ul className="space-y-1.5">
         {audit.map((row) => (
-          <li key={row.id} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs">
+          <li
+            key={row.id}
+            className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs"
+          >
             <div className="flex items-baseline justify-between gap-3">
               <span className="font-mono font-medium text-slate-700">{row.action}</span>
-              <span className="text-[10px] text-slate-500">{new Date(row.createdAt).toLocaleString()}</span>
+              <span className="text-[10px] text-slate-500">
+                {new Date(row.createdAt).toLocaleString()}
+              </span>
             </div>
             {row.actor ? (
               <div className="text-[10px] text-slate-500">

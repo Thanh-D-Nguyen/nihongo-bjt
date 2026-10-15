@@ -1,0 +1,583 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-070",
+  "title": "Audit learner shared deck screen",
+  "start_head": "c926046421c8c142981a629eadd7ea5488286737",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "A valid learner deck shared from its detail UI renders as not found because the public preview reads the legacy study.public_deck table and a different DTO; the page also caches preview content after unsharing.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "GET /api/public/decks/{token} resolves only active, non-archived learning.deck share_token values and returns the screen DTO: Vietnamese/Japanese title and description, total card count, clone count, and at most five frontText/reading samples; it never returns backText or owner identity."
+      },
+      {
+        "id": "AC2",
+        "text": "Unshared, archived, or unknown tokens return 404; public preview requests are not cached so unshare takes effect immediately."
+      },
+      {
+        "id": "AC3",
+        "text": "The real visible anonymous shared-deck page renders a valid token, shows the correct Vietnamese/Japanese title selection and sample fronts, never exposes answers, and shows the existing not-found state for a revoked token at 390x844 without horizontal overflow."
+      },
+      {
+        "id": "AC4",
+        "text": "The clone call-to-action remains navigable and the source deck's card content and owner fields remain private; tests use disposable deck fixtures and do not change canonical vocabulary, kanji, grammar, or BJT authored data."
+      }
+    ],
+    "expected_behavior": "Valid active learning.deck share tokens render the privacy-safe preview immediately; unshared or archived tokens stop resolving immediately without stale cached content.",
+    "observed_behavior": "A disposable deck created and shared through the visible learner UI returned POST /api/flashcards/decks/{id}/share 200 with a token, but opening /vi/decks/shared/{token} at 390x844 rendered 'Bộ thẻ không tìm thấy'. The Go public handler queries study.public_deck, while shareToken is stored on learning.deck.",
+    "rollback_plan": "Revert the public preview store/handler and page cache-policy changes; keep the regression tests and restore the previous route behavior."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DOMAIN_LOGIC",
+      "AUTH_SECURITY",
+      "UI_ONLY",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "The active public share route is bound to a legacy persistence model and DTO, and stale Next data caching can preserve a revoked public preview; fix the shared store boundary and screen fetch policy."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestPublicSharedDeckPreviewMatchesLearnerTokenContract",
+      "expect": "public shared deck must resolve to preview"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-08T05:35:29.276Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-08T05:40:41.100Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T05:40:41.448Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T05:42:28.101Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T05:44:04.676Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-08T05:48:12.247Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T05:48:29.686Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T05:59:00.961Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T06:05:48.093Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T06:13:30.082Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T06:16:33.599Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T06:17:00.922Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-08T06:20:16.879Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-08T06:20:17.700Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-08T05:41:29.399Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicSharedDeckPreviewMatchesLearnerTokenContract)$ ./apps/api-go/internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestPublicSharedDeckPreviewMatchesLearnerTokenContract",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestPublicSharedDeckPreviewMatchesLearnerTokenContract": "public shared deck must resolve to preview"
+      },
+      "fingerprint": "3f2bdfc2dab55a66d6674d309ea130bd739ddab7a24f6fda2db55a8528f05ff0"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-08T05:41:35.072Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicSharedDeckPreviewMatchesLearnerTokenContract)$ ./apps/api-go/internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicSharedDeckPreviewMatchesLearnerTokenContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestPublicSharedDeckPreviewMatchesLearnerTokenContract",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestPublicSharedDeckPreviewMatchesLearnerTokenContract",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver internal/httpserver/handler_public_deck_test.go:12:2: no required module provides package github.com/kotobaw/nihongo-bjt/api-go/internal/flashcarddeck; to add it: go get github.com/kotobaw/nihongo-bjt/api-go/internal/flashcarddeck FAIL g…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestPublicSharedDeckPreviewMatchesLearnerTokenContract": "public shared deck must resolve to preview",
+        "go:./internal/httpserver:TestPublicSharedDeckPreviewMatchesLearnerTokenContract": "public shared deck must resolve to preview"
+      },
+      "fingerprint": "3f2bdfc2dab55a66d6674d309ea130bd739ddab7a24f6fda2db55a8528f05ff0"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-08T05:42:03.310Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicSharedDeckPreviewMatchesLearnerTokenContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicSharedDeckPreviewMatchesLearnerTokenContract",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestPublicSharedDeckPreviewMatchesLearnerTokenContract handler_public_deck_test.go:16: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestPublicSharedDeckPreviewMatchesLearnerTokenContract (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestPublicSharedDeckPreviewMatchesLearnerTokenContract": "public shared deck must resolve to preview"
+      },
+      "fingerprint": "69727db554aefb479b84d3dc48f29fdd99ae97d4ba3690eb545d24133c08bdd2"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-08T05:42:27.898Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicSharedDeckPreviewMatchesLearnerTokenContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicSharedDeckPreviewMatchesLearnerTokenContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPublicSharedDeckPreviewMatchesLearnerTokenContract handler_public_deck_test.go:54: public shared deck must resolve to preview: status=404 body={\"error\":\"deck not found\"} --- FAIL: TestPublicSharedDeckPreviewMatchesLearnerTokenContract (0.05s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestPublicSharedDeckPreviewMatchesLearnerTokenContract": "public shared deck must resolve to preview"
+      },
+      "fingerprint": "69727db554aefb479b84d3dc48f29fdd99ae97d4ba3690eb545d24133c08bdd2"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-08T05:44:04.347Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicSharedDeckPreviewMatchesLearnerTokenContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicSharedDeckPreviewMatchesLearnerTokenContract",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "7f6db0430fef7bd7922b86cc2ab31809b28422405f7799228cd4a8e4d73950f2"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-08T05:44:45.644Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 665,
+        "executed": 665,
+        "passed": 664,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "7f6db0430fef7bd7922b86cc2ab31809b28422405f7799228cd4a8e4d73950f2"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-08T05:48:11.867Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicSharedDeckPreviewMatchesLearnerTokenContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicSharedDeckPreviewMatchesLearnerTokenContract",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "fd88532a98775b4a6220a42f19a4ae85b9856b6f2df737d81c00d6cc130bb6fd"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-08T05:53:21.830Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "fd88532a98775b4a6220a42f19a4ae85b9856b6f2df737d81c00d6cc130bb6fd"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-08T05:55:42.764Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 665,
+        "executed": 665,
+        "passed": 665,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "665 passed, 0 allowed skip(s)",
+      "fingerprint": "fd88532a98775b4a6220a42f19a4ae85b9856b6f2df737d81c00d6cc130bb6fd"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-08T05:59:00.559Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 353,
+        "executed": 353,
+        "passed": 353,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 749,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "fd88532a98775b4a6220a42f19a4ae85b9856b6f2df737d81c00d6cc130bb6fd"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-08T06:02:59.114Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 353,
+        "executed": 353,
+        "passed": 353,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 749,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "b33fb0e528fd1525fc08bf76f68ca8edd0557139a40103398553a84afe49f0a8"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-08T06:05:26.625Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 665,
+        "executed": 665,
+        "passed": 665,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "665 passed, 0 allowed skip(s)",
+      "fingerprint": "b33fb0e528fd1525fc08bf76f68ca8edd0557139a40103398553a84afe49f0a8"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-08T06:05:47.710Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicSharedDeckPreviewMatchesLearnerTokenContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicSharedDeckPreviewMatchesLearnerTokenContract",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "b33fb0e528fd1525fc08bf76f68ca8edd0557139a40103398553a84afe49f0a8"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-08T06:07:59.863Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "b33fb0e528fd1525fc08bf76f68ca8edd0557139a40103398553a84afe49f0a8"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-08T06:13:29.609Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicSharedDeckPreviewMatchesLearnerTokenContract)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicSharedDeckPreviewMatchesLearnerTokenContract",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_public_deck_test.go:56:23: cannot use store (variable of type *flashcarddeck.Store) as *pgxpool.Pool value in argument to getPublicDeckHandle…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx::DeckBrowser shared clone > submits one clone request under React StrictMode",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "Failed to resolve import \"../../../messages/vi.json\" from \"apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx\". Does the file exist?",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestPublicSharedDeckPreviewMatchesLearnerTokenContract": "public shared deck must resolve to preview",
+        "vitest:apps/web/app/[locale]/flashcards/_components/deck-browser.clone.test.tsx::DeckBrowser shared clone > submits one clone request under React StrictMode": "toHaveLength(1)"
+      },
+      "fingerprint": "df6b01d9988e1d8e4b3aa8ff8b240c0761f80fe1cb40087ac84ba35d841dd749"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-08T06:16:33.210Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash tmp/local-audit/audit-070-valid-preview.sh",
+      "exit_code": 1,
+      "fingerprint": "b33fb0e528fd1525fc08bf76f68ca8edd0557139a40103398553a84afe49f0a8"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-08T06:16:43.405Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash tmp/local-audit/audit-070-valid-preview.sh",
+      "exit_code": 1,
+      "fingerprint": "b33fb0e528fd1525fc08bf76f68ca8edd0557139a40103398553a84afe49f0a8"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-08T06:16:50.605Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash tmp/local-audit/audit-070-valid-preview.sh",
+      "exit_code": 1,
+      "fingerprint": "b33fb0e528fd1525fc08bf76f68ca8edd0557139a40103398553a84afe49f0a8"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-08T06:17:00.516Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash tmp/local-audit/audit-070-valid-preview.sh",
+      "exit_code": 0,
+      "fingerprint": "b33fb0e528fd1525fc08bf76f68ca8edd0557139a40103398553a84afe49f0a8"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-08T06:17:07.214Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash tmp/local-audit/audit-070-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "b33fb0e528fd1525fc08bf76f68ca8edd0557139a40103398553a84afe49f0a8"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-08T06:20:16.501Z",
+      "head": "c926046421c8c142981a629eadd7ea5488286737",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Epicurus",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "b33fb0e528fd1525fc08bf76f68ca8edd0557139a40103398553a84afe49f0a8"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-08T06:20:17.677Z",
+    "head": "c926046421c8c142981a629eadd7ea5488286737",
+    "fingerprint": "b33fb0e528fd1525fc08bf76f68ca8edd0557139a40103398553a84afe49f0a8",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/flashcarddeck/store.go": "cd92e65415fab344aebcc36513eb8ed04ce708ee",
+      "apps/api-go/internal/httpserver/handler_final_batch.go": "d7163775d3b0440d1c6edeac114176e8fe952211",
+      "apps/api-go/internal/httpserver/handler_public_deck_test.go": "21c476ebeb2deba94055f5c299dd39d385e80a46",
+      "apps/api-go/internal/httpserver/server.go": "6523cb4a99f8008df47c48fdf5243320628f171b",
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "1b8e346fc16434dc45fa5204907b5ca969b0495c",
+      "apps/web/app/[locale]/decks/shared/[token]/page.tsx": "bc35a1eb530972ed93b62eeb473c3d52b71216cc"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

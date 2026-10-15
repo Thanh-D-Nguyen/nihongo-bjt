@@ -1,0 +1,1645 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-020",
+  "title": "Repair question-bank write contracts and authorization",
+  "start_head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+  "preexisting_changes": {
+    ".quality/tasks/ctx-resume-1791168424.json": "39fe89f3617bfb95a702c09ce4aabffcaeb8f7bb",
+    "apps/admin/app/[locale]/access-denied/page.tsx": "c68e8af2a6f0746cd0e318a8de0db38e4b2f60b0",
+    "apps/admin/app/[locale]/login/_components/admin-login-form-client.tsx": "b82c38674e498f144d717ff592ac5dc4c5c54c19",
+    "apps/admin/app/[locale]/login/admin-login.regression.test.tsx": "5b11d85a87934d8ed3680c1754d03b34fc030a68",
+    "apps/admin/app/[locale]/login/page.tsx": "8c33a7b540c4ebf9de86a6d1dd8f9f3e5bc1f92c",
+    "apps/admin/app/auth/logout/page.tsx": "d86ad68fb3dfa9bdbac704899c04f131ab2fc0b3",
+    "apps/admin/lib/admin-api.ts": "e19f64369f0723fa79326a86f6ae83ea8c095bbc",
+    "apps/admin/lib/admin-overview-fetch.test.ts": "c551ec079ff3a0e04cb06d72801ee9eb59559234",
+    "apps/admin/lib/admin-overview-fetch.ts": "c2267b606100d8faae7be2c6bf6c5968402cd6c4",
+    "apps/admin/lib/admin-shell.regression.test.tsx": "55b1e94d273dca2be418c6026c6a879f045c0dd0",
+    "apps/admin/lib/resolve-admin-nav.ts": "54024b5d6443067d48eb4f771443046cc4f0256d",
+    "apps/admin/messages/en.json": "69bdc28b22618f0c3a5be64b5be770f56bcdc053",
+    "apps/admin/messages/ja.json": "8c371c5c05bfde3e8a37c84341de226e88b46e7e",
+    "apps/admin/messages/vi.json": "fd886017500b5ad3666721edfe15a31e5dd6311a",
+    "apps/admin/next-env.d.ts": "c4b7818fbb2c2c34c24feb1b627ee824507c5600",
+    "apps/admin/next.config.mjs": "a29e69ddd1777373ddc577abfd3ce85cce649af7",
+    "apps/admin/tsconfig.tsbuildinfo": "20868aaaf05dd14b127250d119cbda97e473f205",
+    "apps/api-go/cmd/create-test-creds/main.go": "eae3b397a5f12f5c5401c3484da23e845686aabd",
+    "apps/api-go/cmd/reset-admin-cred/main.go": "c39d53f0ce4fa29c2a3ef6b813b1abfe9af28cad",
+    "apps/api-go/deploy/local/Caddyfile": "880720642204d8f7afb53bf961224b25afac9016",
+    "apps/api-go/internal/httpserver/handler_admin_ads.go": "079e708b10af9fff5de7707fb525ac1b53ace481",
+    "apps/api-go/internal/httpserver/handler_admin_analytics.go": "1b6248374040a38c57f9463fcd1139c79a44ea26",
+    "apps/api-go/internal/httpserver/handler_admin_analytics_executive_test.go": "1d78fa48e0fbf965087b8a6bec1b89f4ec5a0a00",
+    "apps/api-go/internal/httpserver/handler_admin_assessment_mock_exams.go": "15ab736563f516d2b832728b1be917102432668a",
+    "apps/api-go/internal/httpserver/handler_admin_assessment_mock_exams_duplicate_test.go": "0bf275dfaf651c1ce94119c81b7d605934adcdce",
+    "apps/api-go/internal/httpserver/handler_admin_assessment_mock_exams_publish_test.go": "a9c81a75fe875373d15ca5931f497425d891f2b5",
+    "apps/api-go/internal/httpserver/handler_admin_assessment_mock_exams_test.go": "a6b6ae21254e337f0bf6c76691b9f12687e0e032",
+    "apps/api-go/internal/httpserver/handler_admin_core.go": "f17d7b7d4a0f96932d605765c50c96bf1922048d",
+    "apps/api-go/internal/httpserver/handler_admin_me_test.go": "702bbebb362a7b4924e50e5e7fc2db18b09eca4f",
+    "apps/api-go/internal/httpserver/handler_admin_rbac.go": "edcf8f767ba33fa949309f2bfbd7456af9378556",
+    "apps/api-go/internal/httpserver/handler_admin_rbac_test.go": "51c421cc9f311295136e78baa23d03258280c4ba",
+    "apps/api-go/internal/httpserver/handler_final_batch.go": "3124d1ab46c12045c588aa5967a942d2bbde4516",
+    "apps/api-go/internal/httpserver/handler_final_batch_test.go": "7c8265158d350c4a3c60a7af697931e59fef7de8",
+    "apps/api-go/internal/httpserver/handler_quiz.go": "0cb4f89fa3fe44b25bc0564c933de25db659713f",
+    "apps/api-go/internal/httpserver/handler_study_feed_test.go": "a1e9da063ed6d1d083be495926d4ea159d391a4a",
+    "apps/api-go/internal/httpserver/server.go": "82239c2370f6b3f47f91f6ba4f1b69efae7a7b3a",
+    "apps/api-go/internal/onboarding/store.go": "48c19592ef4012165d6b010f2763aa5ebfaebaa0",
+    "apps/api-go/internal/onboarding/store_test.go": "9f5a1ab847bdd26d7ede15081049197f63e7b387",
+    "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "50f7434a56612d2a1085f350b810b6f251b1c836",
+    "apps/web/app/[locale]/login/auth-pages.regression.test.tsx": "4dd7a5db264e70ef930ec4f1579b34eabbfbbec6",
+    "apps/web/app/[locale]/login/page.tsx": "654fc22c46535743d2f08cd76715e44690140a95",
+    "apps/web/app/[locale]/register/page.tsx": "2aa45faeea0da3a919c884dc6b95f7f367cda8b2",
+    "apps/web/next-env.d.ts": "c4b7818fbb2c2c34c24feb1b627ee824507c5600",
+    "apps/web/public/__local-audit-api-probe.html": "825f3a16cd883b2376c4a6f7b26cd6186826764b",
+    "deploy/local/Caddyfile": "72470e3b466c4a48dd7a573271d8458479e27266",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "40bc007e089ff650d3896710fe0686c086827c89",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "8487728d2aac033244e52e9e2ea67c51069b9110",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "f7f62e353e2b71a817ff3485abc03ff9a23d8c9b",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "9cde135cae4e26adc1eac9947bed1944422e11f9",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "8c2542bd39d0934780c508c99bd1a7c032378035",
+    "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "aad8f5a79cca5fc3e43f63ba7891d238e7938115",
+    "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "10dcb526bb33c73f06ca40c9b0ebe99bfe993565",
+    "packages/database/prisma/migrations/20261006100000_onboarding_profile_preferences/migration.sql": "3da2325aa59c04dc632a7a515f4fdff2a6b1dd65",
+    "packages/database/prisma/schema.prisma": "0646140a9869abc692fbda4414286194ae581ff5",
+    "packages/ui/src/admin-shell.tsx": "ba1339c8c34da6b93fe433bbe260f2928ffa867e",
+    "prisma.config.ts": "02db95a7ee97e32ead17e9e82602c0e78e38924e",
+    "scripts/local-audit-status.mjs": "d0f98373f463c744dc6d03e40f4ef588c7490ab4",
+    "scripts/local-audit-up.mjs": "d68ac30f32a1113b3e9958508757667267dd90e8"
+  },
+  "spec": {
+    "problem": "Question-bank writes/permissions and Admin quiz-session detail/list/time-extension/abort contracts are broken.",
+    "acceptance": [
+      {
+        "id": "create",
+        "text": "A valid UI-shaped request with JSON string-array tags creates a question, options, and audit entry; detail and list return the persisted question and tags."
+      },
+      {
+        "id": "atomic",
+        "text": "Question, options, and creation audit commit atomically; a child or audit write failure returns HTTP 500 and persists none of the created rows."
+      },
+      {
+        "id": "tags",
+        "text": "PATCH, bulk tag, and bulk untag read and write PostgreSQL text[] tags successfully and return truthful persisted state."
+      },
+      {
+        "id": "rbac",
+        "text": "Question-bank content mutations require assessment.manage; suggestion edits require assessment.review or assessment.manage. Admin session, CSRF, and unauthorized-role behavior are enforced by the backend."
+      },
+      {
+        "id": "schema",
+        "text": "Local question.section_id references bjt_test_section after a safe additive migration; the migration preserves any existing orphan rows without weakening enforcement for new writes and validates when data permits."
+      },
+      {
+        "id": "AC6",
+        "text": "Required frontend verification passes: Loto pagination regression fixture supplies an authenticated state, and frontend lint introduces no new debt."
+      },
+      {
+        "id": "AC7",
+        "text": "GET /api/admin/assessment/quiz-sessions/{id} returns the persisted session and answer contract for an existing session; missing IDs return 404, and database query failures are surfaced rather than mislabeled or silently omitted."
+      },
+      {
+        "id": "AC8",
+        "text": "GET /api/admin/assessment/quiz-sessions returns persisted rows with nullable estimatedScore and the test summary expected by the Admin page; scan/query errors return 500 instead of silently dropping rows."
+      },
+      {
+        "id": "AC9",
+        "text": "Admin time extension requires an in_progress session, shifts started_at by the requested seconds, and commits an audit entry atomically; DB failures must not be reported as success."
+      },
+      {
+        "id": "AC10",
+        "text": "Aborting an in_progress Admin quiz session updates status to abandoned and stores the audit record atomically without relying on nonexistent updated_at; terminal-session no-op remains auditable."
+      }
+    ],
+    "expected_behavior": "A valid create either persists the question, all options, and audit record together, or persists none and returns a failure.",
+    "observed_behavior": "Visible authenticated Admin abort confirmation for an in_progress disposable session returned HTTP 500 because the handler references quiz_session.updated_at, which is absent from the canonical schema.",
+    "rollback_plan": "Revert only the scoped Go handler/router/tests and corrective migration. The FK change is additive; prior mismatches remain data-preserving because the FK starts NOT VALID if legacy orphans exist."
+  },
+  "classification": {
+    "classes": [
+      "DOMAIN_LOGIC",
+      "API_CONTRACT",
+      "DATABASE",
+      "AUTH_SECURITY",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+      "expect": "want 200"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers",
+      "expect": "detail status=404"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminQuizSessionListIncludesNullEstimatedScore",
+      "expect": "list omitted persisted row with NULL estimated_score"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminQuizSessionExtendTimePersistsTimeAndAudit",
+      "expect": "extend status=500"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminQuizSessionAbortPersistsStatusAndAudit",
+      "expect": "abort status=500"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "VERIFYING",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-06T02:13:44.002Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-06T02:14:23.434Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-06T02:14:49.009Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-06T02:18:43.231Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-06T02:22:06.672Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-06T02:25:18.040Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-06T02:32:48.372Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-06T02:40:40.625Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-06T02:45:25.469Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-06T02:46:02.609Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-06T02:48:50.399Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-06T02:55:57.394Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-06T03:04:09.335Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-06T03:08:20.155Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-06T03:09:37.683Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-06T03:09:58.298Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-06T03:14:27.858Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-06T03:17:39.820Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-06T03:21:54.798Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-06T03:25:41.560Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-06T03:26:13.530Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-06T03:28:21.410Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-06T03:34:32.042Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-06T03:38:04.754Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-06T03:40:08.317Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-06T03:49:44.107Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-06T03:51:03.008Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-06T03:53:38.547Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-06T03:55:35.291Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-06T02:16:35.061Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreateRollsBackWhenChildWriteFails)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreateRollsBackWhenChildWriteFails",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminQuestionCreateRollsBackWhenChildWriteFails handler_admin_assessment_question_bank_create_test.go:13: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminQuestionCreateRollsBackWhenChildWriteFails (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminQuestionCreateRollsBackWhenChildWriteFails": "want 500 on option write failure"
+      },
+      "fingerprint": "bf580d22c6e486a5c7f4dac6b195d6af6bbce6ba6aa5bf81d8d6a70123873713"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-06T02:17:15.049Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreateRollsBackWhenChildWriteFails)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreateRollsBackWhenChildWriteFails",
+          "outcome": "PASS",
+          "excerpt": "=== RUN TestAdminQuestionCreateRollsBackWhenChildWriteFails === RUN TestAdminQuestionCreateRollsBackWhenChildWriteFails/option_write 2026/10/06 11:17:14 ERROR create question error=\"ERROR: malformed array literal: \\\"[]\\\" (SQLSTATE 22P02)\" 2026/10/06 11:17:14 INFO request method=POST path=/api/admin/…",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminQuestionCreateRollsBackWhenChildWriteFails": "want 500 on option write failure"
+      },
+      "fingerprint": "bf580d22c6e486a5c7f4dac6b195d6af6bbce6ba6aa5bf81d8d6a70123873713"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-06T02:18:08.095Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreateRollsBackWhenChildWriteFails|TestAdminQuestionCreatePersistsQuestionOptionsAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreateRollsBackWhenChildWriteFails",
+          "outcome": "PASS",
+          "excerpt": "=== RUN TestAdminQuestionCreateRollsBackWhenChildWriteFails === RUN TestAdminQuestionCreateRollsBackWhenChildWriteFails/option_write 2026/10/06 11:18:08 ERROR create question error=\"ERROR: malformed array literal: \\\"[]\\\" (SQLSTATE 22P02)\" 2026/10/06 11:18:08 INFO request method=POST path=/api/admin/…",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuestionCreatePersistsQuestionOptionsAndAudit 2026/10/06 11:18:08 ERROR create question error=\"ERROR: malformed array literal: \\\"[\\\"fixture\\\"]\\\" (SQLSTATE 22P02)\" 2026/10/06 11:18:08 INFO request method=POST path=/api/admin/assessment/question-bank status=500 duration=3.158417ms byt…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminQuestionCreateRollsBackWhenChildWriteFails": "want 500 on option write failure",
+        "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit": "want 200"
+      },
+      "fingerprint": "0245214a51d506a8cb4078fb96ca1aa87ebdc412a23f4f9c516d7d9064979d0f"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-06T02:18:43.042Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuestionCreatePersistsQuestionOptionsAndAudit 2026/10/06 11:18:42 ERROR create question error=\"ERROR: malformed array literal: \\\"[\\\"fixture\\\"]\\\" (SQLSTATE 22P02)\" 2026/10/06 11:18:42 INFO request method=POST path=/api/admin/assessment/question-bank status=500 duration=3.1185ms bytes…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit": "want 200"
+      },
+      "fingerprint": "0245214a51d506a8cb4078fb96ca1aa87ebdc412a23f4f9c516d7d9064979d0f"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-06T02:19:21.085Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminQuestionCreatePersistsQuestionOptionsAndAudit 2026/10/06 11:19:21 INFO request method=POST path=/api/admin/assessment/question-bank/145a73b4-ee23-4080-8b16-ff1120b55e66 status=404 duration=9.146209ms bytes=31 handler_admin_assessment_question_bank_create_test.go:40: create status=40…"
+        }
+      ],
+      "fingerprint": "6829572c1e5aa874b3b57d1838feb16990bfe636e6056cf9254b4dcd30cb11ae"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-06T02:21:37.934Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuestionCreatePersistsQuestionOptionsAndAudit 2026/10/06 11:21:37 ERROR create question error=\"ERROR: malformed array literal: \\\"[\\\"fixture\\\"]\\\" (SQLSTATE 22P02)\" 2026/10/06 11:21:37 INFO request method=POST path=/api/admin/assessment/question-bank status=500 duration=4.057292ms byt…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit": "want 200"
+      },
+      "fingerprint": "a0d61df7cbab2ee3482d42cb64a33de85e5a52674b6b5aedec723d9752b75497"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-06T02:22:06.442Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a0d61df7cbab2ee3482d42cb64a33de85e5a52674b6b5aedec723d9752b75497"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-06T02:22:47.225Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a0d61df7cbab2ee3482d42cb64a33de85e5a52674b6b5aedec723d9752b75497"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-06T02:25:17.795Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 489,
+        "executed": 483,
+        "passed": 483,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "483 passed, 6 allowed skip(s)",
+      "fingerprint": "a0d61df7cbab2ee3482d42cb64a33de85e5a52674b6b5aedec723d9752b75497"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-06T02:34:58.445Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuestionCreatePersistsQuestionOptionsAndAudit 2026/10/06 11:34:57 ERROR create question error=\"ERROR: malformed array literal: \\\"[\\\"fixture\\\"]\\\" (SQLSTATE 22P02)\" 2026/10/06 11:34:57 INFO request method=POST path=/api/admin/assessment/question-bank status=500 duration=5.335834ms byt…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit": "want 200"
+      },
+      "fingerprint": "e9f931466d1afe9626939028de389707cecb1bc8b57ce4d06dd58eae7b49553e"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-06T02:35:42.806Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 495,
+        "executed": 489,
+        "passed": 488,
+        "failed": 1,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "e9f931466d1afe9626939028de389707cecb1bc8b57ce4d06dd58eae7b49553e"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-06T02:36:21.064Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 242,
+        "executed": 242,
+        "passed": 241,
+        "failed": 1,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 716,
+        "lint_errors": 68,
+        "lint_warnings": 25,
+        "new_debt": 2
+      },
+      "message": "RATCHET_VIOLATION: 2 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "e9f931466d1afe9626939028de389707cecb1bc8b57ce4d06dd58eae7b49553e"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-06T02:37:51.460Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuestionCreatePersistsQuestionOptionsAndAudit 2026/10/06 11:37:50 ERROR create question error=\"ERROR: malformed array literal: \\\"[\\\"fixture\\\"]\\\" (SQLSTATE 22P02)\" 2026/10/06 11:37:50 INFO request method=POST path=/api/admin/assessment/question-bank status=500 duration=5.480708ms byt…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit": "want 200"
+      },
+      "fingerprint": "e9f931466d1afe9626939028de389707cecb1bc8b57ce4d06dd58eae7b49553e"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-06T02:40:05.952Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 495,
+        "executed": 489,
+        "passed": 489,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "489 passed, 6 allowed skip(s)",
+      "fingerprint": "e9f931466d1afe9626939028de389707cecb1bc8b57ce4d06dd58eae7b49553e"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-06T02:40:57.334Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f07d9a11380b6071c97f3dc37485a2c560b3eb83793e7f2904c18c545debbd11"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-06T02:46:02.134Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "95e738e4eb04409f3b78ccba05b451f51edb6ab9da97361bd5d9a5bdda21179f"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-06T02:48:49.941Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "95e738e4eb04409f3b78ccba05b451f51edb6ab9da97361bd5d9a5bdda21179f"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-06T02:50:40.937Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 495,
+        "executed": 489,
+        "passed": 489,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "489 passed, 6 allowed skip(s)",
+      "fingerprint": "df8a67cdb1bcad6c94d2af639fda823226bf5ae11ac0270c3446c82f820493e2"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-06T02:55:43.695Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminQuestionCreatePersistsQuestionOptionsAndAudit handler_admin_assessment_question_bank_create_test.go:15: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminQuestionCreatePersistsQuestionOptionsAndAudit (0.00s)"
+        }
+      ],
+      "fingerprint": "ae49b140ca2c0295c55ff739f6e7c1af4ed390d24742b963e465488faeaa48f3"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-06T02:55:56.894Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ae49b140ca2c0295c55ff739f6e7c1af4ed390d24742b963e465488faeaa48f3"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-06T02:58:27.373Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "ae49b140ca2c0295c55ff739f6e7c1af4ed390d24742b963e465488faeaa48f3"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-06T03:00:19.923Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 495,
+        "executed": 489,
+        "passed": 489,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "489 passed, 6 allowed skip(s)",
+      "fingerprint": "ae49b140ca2c0295c55ff739f6e7c1af4ed390d24742b963e465488faeaa48f3"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-06T03:01:00.468Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 242,
+        "executed": 242,
+        "passed": 241,
+        "failed": 1,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 716,
+        "lint_errors": 68,
+        "lint_warnings": 25,
+        "new_debt": 2
+      },
+      "message": "RATCHET_VIOLATION: 2 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "ae49b140ca2c0295c55ff739f6e7c1af4ed390d24742b963e465488faeaa48f3"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-06T03:04:08.747Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 242,
+        "executed": 242,
+        "passed": 242,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 716,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "BASELINE_STALE: 1 fixed item(s) still in the baseline",
+      "fingerprint": "1d50c8fc5f797e2c235a627ab55edb5c15e4dea02f0024dd087b0e25fdb59ec9"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-06T03:08:19.297Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9bd8896774d96a0b350fa0e27e81ee1f00f8b9a6618236d0f18c436a5e6e5452"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-06T03:08:27.563Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "9bd8896774d96a0b350fa0e27e81ee1f00f8b9a6618236d0f18c436a5e6e5452"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-06T03:09:36.847Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 242,
+        "executed": 242,
+        "passed": 242,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 716,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "e746fefa8bdea3d3a265dd8aec21319d5ca8af5c06857710095cedf4905bfa96"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-06T03:09:57.452Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e746fefa8bdea3d3a265dd8aec21319d5ca8af5c06857710095cedf4905bfa96"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-06T03:12:21.820Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "e746fefa8bdea3d3a265dd8aec21319d5ca8af5c06857710095cedf4905bfa96"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-06T03:14:26.944Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 496,
+        "executed": 490,
+        "passed": 490,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "e746fefa8bdea3d3a265dd8aec21319d5ca8af5c06857710095cedf4905bfa96"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-06T03:14:43.390Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "pnpm exec playwright test e2e/smoke.spec.ts --reporter=line",
+      "exit_code": 0,
+      "fingerprint": "b08bc808d282b2195b55a0a1a88d4652ec766b393061f2fcf008ec74cb7a8cd2"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-06T03:15:57.975Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 242,
+        "executed": 242,
+        "passed": 242,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 716,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "b08bc808d282b2195b55a0a1a88d4652ec766b393061f2fcf008ec74cb7a8cd2"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-06T03:16:48.966Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "pnpm exec playwright test e2e/smoke.spec.ts --reporter=line",
+      "exit_code": 0,
+      "fingerprint": "1dbd9bedfa5947631cefb55cf28ce1ff4d464500251202bde02620473d15daba"
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-06T03:17:22.804Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 242,
+        "executed": 242,
+        "passed": 242,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 716,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "1dbd9bedfa5947631cefb55cf28ce1ff4d464500251202bde02620473d15daba"
+    },
+    {
+      "seq": 35,
+      "at": "2026-10-06T03:17:38.912Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1dbd9bedfa5947631cefb55cf28ce1ff4d464500251202bde02620473d15daba"
+    },
+    {
+      "seq": 36,
+      "at": "2026-10-06T03:20:04.347Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "1dbd9bedfa5947631cefb55cf28ce1ff4d464500251202bde02620473d15daba"
+    },
+    {
+      "seq": 37,
+      "at": "2026-10-06T03:21:53.855Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 496,
+        "executed": 490,
+        "passed": 490,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "490 passed, 6 allowed skip(s)",
+      "fingerprint": "1dbd9bedfa5947631cefb55cf28ce1ff4d464500251202bde02620473d15daba"
+    },
+    {
+      "seq": 38,
+      "at": "2026-10-06T03:25:40.462Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 9,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit|TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuestionCreatePersistsQuestionOptionsAndAudit 2026/10/06 12:25:39 ERROR create question error=\"ERROR: malformed array literal: \\\"[\\\"fixture\\\"]\\\" (SQLSTATE 22P02)\" 2026/10/06 12:25:39 INFO request method=POST path=/api/admin/assessment/question-bank status=500 duration=3.093334ms byt…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers handler_admin_quiz_session_detail_test.go:32: ERROR: null value in column \"updated_at\" of relation \"bjt_question\" violates not-null constraint (SQLSTATE 23502) --- FAIL: TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers (0…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"detail status=404\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit": "want 200",
+        "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers": "detail status=404"
+      },
+      "fingerprint": "e81163a5a1f59214fcbc7adb7aeac444a05f4a9c53eccb905822e4f1c14e4a66"
+    },
+    {
+      "seq": 39,
+      "at": "2026-10-06T03:26:12.441Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 9,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit|TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuestionCreatePersistsQuestionOptionsAndAudit 2026/10/06 12:26:11 ERROR create question error=\"ERROR: malformed array literal: \\\"[\\\"fixture\\\"]\\\" (SQLSTATE 22P02)\" 2026/10/06 12:26:11 INFO request method=POST path=/api/admin/assessment/question-bank status=500 duration=2.97425ms byte…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers 2026/10/06 12:26:11 INFO request method=GET path=/api/admin/assessment/quiz-sessions/a827fc93-8a4d-4faa-b591-9bd251711e3f status=404 duration=1.89425ms bytes=35 handler_admin_quiz_session_detail_test.go:58: detail status=404 body={\"…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit": "want 200",
+        "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers": "detail status=404"
+      },
+      "fingerprint": "9d420dbd64ed84996d890fe145bb4eaec0ce7a477a430c27736c7c02bbf2586f"
+    },
+    {
+      "seq": 40,
+      "at": "2026-10-06T03:28:20.214Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit|TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3ef25cfa653bbfe4272cef5ba931db1878a4762d987407e8de1e5b35194302f9"
+    },
+    {
+      "seq": 41,
+      "at": "2026-10-06T03:35:17.231Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 10,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit|TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers|TestAdminQuizSessionListIncludesNullEstimatedScore)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuestionCreatePersistsQuestionOptionsAndAudit 2026/10/06 12:35:16 ERROR create question error=\"ERROR: malformed array literal: \\\"[\\\"fixture\\\"]\\\" (SQLSTATE 22P02)\" 2026/10/06 12:35:16 INFO request method=POST path=/api/admin/assessment/question-bank status=500 duration=3.08775ms byte…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers 2026/10/06 12:35:16 INFO request method=GET path=/api/admin/assessment/quiz-sessions/b1269bb2-b09c-4846-ba37-a7a4125d7922 status=404 duration=2.118292ms bytes=35 handler_admin_quiz_session_detail_test.go:58: detail status=404 body={…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionListIncludesNullEstimatedScore",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuizSessionListIncludesNullEstimatedScore 2026/10/06 12:35:16 INFO request method=GET path=/api/admin/assessment/quiz-sessions status=200 duration=2.778ms bytes=46 handler_admin_quiz_session_detail_test.go:159: list omitted persisted row with NULL estimated_score: total=1 page=1 pag…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit": "want 200",
+        "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers": "detail status=404",
+        "go:./internal/httpserver:TestAdminQuizSessionListIncludesNullEstimatedScore": "list omitted persisted row with NULL estimated_score"
+      },
+      "fingerprint": "85647eda04164cc72f915d7ea77529acdf749a80d71ba44038180133cd355a05"
+    },
+    {
+      "seq": 42,
+      "at": "2026-10-06T03:37:42.241Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit|TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers|TestAdminQuizSessionListIncludesNullEstimatedScore)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionListIncludesNullEstimatedScore",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminQuizSessionListIncludesNullEstimatedScore 2026/10/06 12:37:42 ERROR scan assessment quiz session error=\"number of field descriptions must equal number of destinations, got 16 and 17\" 2026/10/06 12:37:42 INFO request method=GET path=/api/admin/assessment/quiz-sessions status=500 dura…"
+        }
+      ],
+      "fingerprint": "eb791ed745d1893a6e5c5b19adc24ed34efb4dd737e8120c44c02993a669b9b3"
+    },
+    {
+      "seq": 43,
+      "at": "2026-10-06T03:38:03.495Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit|TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers|TestAdminQuizSessionListIncludesNullEstimatedScore)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionListIncludesNullEstimatedScore",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "aeba91df00103c08ce87756f067a9f0492044c3f6cd76e3c560caafee51804d0"
+    },
+    {
+      "seq": 44,
+      "at": "2026-10-06T03:40:07.016Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 10,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit|TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers|TestAdminQuizSessionListIncludesNullEstimatedScore)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuestionCreatePersistsQuestionOptionsAndAudit 2026/10/06 12:40:06 ERROR create question error=\"ERROR: malformed array literal: \\\"[\\\"fixture\\\"]\\\" (SQLSTATE 22P02)\" 2026/10/06 12:40:06 INFO request method=POST path=/api/admin/assessment/question-bank status=500 duration=3.492833ms byt…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers 2026/10/06 12:40:06 INFO request method=GET path=/api/admin/assessment/quiz-sessions/3ea9b92b-86f6-41c8-9fed-c2044f9c24dc status=404 duration=2.105333ms bytes=35 handler_admin_quiz_session_detail_test.go:58: detail status=404 body={…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionListIncludesNullEstimatedScore",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuizSessionListIncludesNullEstimatedScore 2026/10/06 12:40:06 INFO request method=GET path=/api/admin/assessment/quiz-sessions status=200 duration=3.214ms bytes=46 handler_admin_quiz_session_detail_test.go:159: list omitted persisted row with NULL estimated_score: total=1 page=1 pag…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"nullable score and test time limit remain valid in session list response\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit": "want 200",
+        "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers": "detail status=404",
+        "go:./internal/httpserver:TestAdminQuizSessionListIncludesNullEstimatedScore": "nullable score and test time limit remain valid in session list response"
+      },
+      "fingerprint": "67fa13f7ebebce3cb6b2cf070384bdc44b7e2a1b4ea8ffc825171f966ca22799"
+    },
+    {
+      "seq": 45,
+      "at": "2026-10-06T03:40:35.573Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit|TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers|TestAdminQuizSessionListIncludesNullEstimatedScore)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionListIncludesNullEstimatedScore",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "67fa13f7ebebce3cb6b2cf070384bdc44b7e2a1b4ea8ffc825171f966ca22799"
+    },
+    {
+      "seq": 46,
+      "at": "2026-10-06T03:48:33.440Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 10,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit|TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers|TestAdminQuizSessionListIncludesNullEstimatedScore|TestAdminQuizSessionExtendTimePersistsTimeAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuestionCreatePersistsQuestionOptionsAndAudit 2026/10/06 12:48:32 ERROR create question error=\"ERROR: malformed array literal: \\\"[\\\"fixture\\\"]\\\" (SQLSTATE 22P02)\" 2026/10/06 12:48:32 INFO request method=POST path=/api/admin/assessment/question-bank status=500 duration=2.825666ms byt…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers 2026/10/06 12:48:32 INFO request method=GET path=/api/admin/assessment/quiz-sessions/4e8e4364-f3d4-4c6a-bffd-cf3639001071 status=404 duration=2.702334ms bytes=35 handler_admin_quiz_session_detail_test.go:59: detail status=404 body={…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionListIncludesNullEstimatedScore",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuizSessionListIncludesNullEstimatedScore 2026/10/06 12:48:32 INFO request method=GET path=/api/admin/assessment/quiz-sessions status=200 duration=3.680125ms bytes=46 handler_admin_quiz_session_detail_test.go:160: list omitted persisted row with NULL estimated_score: total=1 page=1 …",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"nullable score and test time limit remain valid in session list response\""
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionExtendTimePersistsTimeAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuizSessionExtendTimePersistsTimeAndAudit 2026/10/06 12:48:32 ERROR extend quiz session time error=\"ERROR: column \\\"updated_at\\\" of relation \\\"quiz_session\\\" does not exist (SQLSTATE 42703)\" 2026/10/06 12:48:32 INFO request method=POST path=/api/admin/assessment/quiz-sessions/674ba5…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"column \\\"updated_at\\\" of relation \\\"quiz_session\\\" does not exist\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit": "want 200",
+        "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers": "detail status=404",
+        "go:./internal/httpserver:TestAdminQuizSessionListIncludesNullEstimatedScore": "nullable score and test time limit remain valid in session list response",
+        "go:./internal/httpserver:TestAdminQuizSessionExtendTimePersistsTimeAndAudit": "column \"updated_at\" of relation \"quiz_session\" does not exist"
+      },
+      "fingerprint": "b35d0eabcc0f7fc2c4204ead6b17f189d5ae6fc241430a379a8adf82e02b9d83"
+    },
+    {
+      "seq": 47,
+      "at": "2026-10-06T03:49:43.046Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 10,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit|TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers|TestAdminQuizSessionListIncludesNullEstimatedScore|TestAdminQuizSessionExtendTimePersistsTimeAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuestionCreatePersistsQuestionOptionsAndAudit 2026/10/06 12:49:42 ERROR create question error=\"ERROR: malformed array literal: \\\"[\\\"fixture\\\"]\\\" (SQLSTATE 22P02)\" 2026/10/06 12:49:42 INFO request method=POST path=/api/admin/assessment/question-bank status=500 duration=2.548666ms byt…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers 2026/10/06 12:49:42 INFO request method=GET path=/api/admin/assessment/quiz-sessions/fed70a5e-0e88-4a91-994f-bdd6004b801b status=404 duration=2.756875ms bytes=35 handler_admin_quiz_session_detail_test.go:59: detail status=404 body={…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionListIncludesNullEstimatedScore",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuizSessionListIncludesNullEstimatedScore 2026/10/06 12:49:42 INFO request method=GET path=/api/admin/assessment/quiz-sessions status=200 duration=3.033958ms bytes=46 handler_admin_quiz_session_detail_test.go:160: list omitted persisted row with NULL estimated_score: total=1 page=1 …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionExtendTimePersistsTimeAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuizSessionExtendTimePersistsTimeAndAudit 2026/10/06 12:49:42 ERROR extend quiz session time error=\"ERROR: column \\\"updated_at\\\" of relation \\\"quiz_session\\\" does not exist (SQLSTATE 42703)\" 2026/10/06 12:49:42 INFO request method=POST path=/api/admin/assessment/quiz-sessions/c762ee…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit": "want 200",
+        "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers": "detail status=404",
+        "go:./internal/httpserver:TestAdminQuizSessionListIncludesNullEstimatedScore": "list omitted persisted row with NULL estimated_score",
+        "go:./internal/httpserver:TestAdminQuizSessionExtendTimePersistsTimeAndAudit": "extend status=500"
+      },
+      "fingerprint": "b35d0eabcc0f7fc2c4204ead6b17f189d5ae6fc241430a379a8adf82e02b9d83"
+    },
+    {
+      "seq": 48,
+      "at": "2026-10-06T03:50:36.183Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit|TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers|TestAdminQuizSessionListIncludesNullEstimatedScore|TestAdminQuizSessionExtendTimePersistsTimeAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionListIncludesNullEstimatedScore",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionExtendTimePersistsTimeAndAudit",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminQuizSessionExtendTimePersistsTimeAndAudit 2026/10/06 12:50:36 ERROR extend quiz session time error=\"failed to encode args[0]: unable to encode 120 into text format for text (OID 25): cannot find encode plan\" 2026/10/06 12:50:36 INFO request method=POST path=/api/admin/assessment/qui…"
+        }
+      ],
+      "fingerprint": "8b59136159e5cad10fa460fa30ea92dc94efd57083553e71fb2a3e3bf5eb2d43"
+    },
+    {
+      "seq": 49,
+      "at": "2026-10-06T03:51:01.969Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit|TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers|TestAdminQuizSessionListIncludesNullEstimatedScore|TestAdminQuizSessionExtendTimePersistsTimeAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionListIncludesNullEstimatedScore",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionExtendTimePersistsTimeAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "b81c222f15426fa10cd92811f35d1679cd02c688a85e57ad4bc3045b4249a76a"
+    },
+    {
+      "seq": 50,
+      "at": "2026-10-06T03:54:31.557Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 10,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit|TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers|TestAdminQuizSessionListIncludesNullEstimatedScore|TestAdminQuizSessionExtendTimePersistsTimeAndAudit|TestAdminQuizSessionAbortPersistsStatusAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuestionCreatePersistsQuestionOptionsAndAudit 2026/10/06 12:54:30 ERROR create question error=\"ERROR: malformed array literal: \\\"[\\\"fixture\\\"]\\\" (SQLSTATE 22P02)\" 2026/10/06 12:54:30 INFO request method=POST path=/api/admin/assessment/question-bank status=500 duration=7.572833ms byt…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers 2026/10/06 12:54:30 INFO request method=GET path=/api/admin/assessment/quiz-sessions/fc3eee8b-3f43-49a8-95ca-26766201651c status=404 duration=7.306125ms bytes=35 handler_admin_quiz_session_detail_test.go:59: detail status=404 body={…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionListIncludesNullEstimatedScore",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuizSessionListIncludesNullEstimatedScore 2026/10/06 12:54:30 INFO request method=GET path=/api/admin/assessment/quiz-sessions status=200 duration=4.748584ms bytes=46 handler_admin_quiz_session_detail_test.go:160: list omitted persisted row with NULL estimated_score: total=1 page=1 …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionExtendTimePersistsTimeAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuizSessionExtendTimePersistsTimeAndAudit 2026/10/06 12:54:30 ERROR extend quiz session time error=\"ERROR: column \\\"updated_at\\\" of relation \\\"quiz_session\\\" does not exist (SQLSTATE 42703)\" 2026/10/06 12:54:30 INFO request method=POST path=/api/admin/assessment/quiz-sessions/0caf3a…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionAbortPersistsStatusAndAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminQuizSessionAbortPersistsStatusAndAudit 2026/10/06 12:54:30 ERROR abort quiz session error=\"ERROR: column \\\"updated_at\\\" of relation \\\"quiz_session\\\" does not exist (SQLSTATE 42703)\" 2026/10/06 12:54:30 INFO request method=POST path=/api/admin/assessment/quiz-sessions/04a0c98f-6cac-4…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit": "want 200",
+        "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers": "detail status=404",
+        "go:./internal/httpserver:TestAdminQuizSessionListIncludesNullEstimatedScore": "list omitted persisted row with NULL estimated_score",
+        "go:./internal/httpserver:TestAdminQuizSessionExtendTimePersistsTimeAndAudit": "extend status=500",
+        "go:./internal/httpserver:TestAdminQuizSessionAbortPersistsStatusAndAudit": "abort status=500"
+      },
+      "fingerprint": "88b0c95285ad1e2fea2cdd478df39b09626dcc48e56a5b7a1f14e40d2ed8f82f"
+    },
+    {
+      "seq": 51,
+      "at": "2026-10-06T03:55:34.295Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit|TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers|TestAdminQuizSessionListIncludesNullEstimatedScore|TestAdminQuizSessionExtendTimePersistsTimeAndAudit|TestAdminQuizSessionAbortPersistsStatusAndAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminQuestionCreatePersistsQuestionOptionsAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionDetailReturnsPersistedSessionAndAnswers",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionListIncludesNullEstimatedScore",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionExtendTimePersistsTimeAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminQuizSessionAbortPersistsStatusAndAudit",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "51dd4dd105d085d8a75e25ce92d2abd21e27392e72cc9e5004f1bf0e33f7fcfe"
+    }
+  ],
+  "closed": null,
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [
+    "apps/api-go/internal/httpserver/server.go",
+    "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md"
+  ]
+}

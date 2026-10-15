@@ -4,13 +4,33 @@ import { useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useGoAuth } from "../../../lib/go-auth-provider";
+import en from "../../../messages/en.json";
+import ja from "../../../messages/ja.json";
+import vi from "../../../messages/vi.json";
+
+export function getSafeLoginReturnTo(value: string | null, locale: string, origin: string): string {
+ const safeLocale = locale === "vi" || locale === "ja" || locale === "en" ? locale : "en";
+ const fallback = `/${safeLocale}`;
+ if (!value) return fallback;
+ try {
+ const target = new URL(value, origin);
+ if (target.origin !== origin || (target.pathname !== fallback && !target.pathname.startsWith(`${fallback}/`))) return fallback;
+ return `${target.pathname}${target.search}${target.hash}`;
+ } catch {
+ return fallback;
+ }
+}
 
 export default function LoginPage() {
  const params = useParams<{ locale: string }>();
  const router = useRouter();
  const searchParams = useSearchParams();
  const locale = params.locale ?? "en";
- const returnTo = searchParams.get("returnTo") || `/${locale}`;
+ const messages = locale === "vi" ? vi : locale === "ja" ? ja : en;
+ const t = messages.auth.login;
+ const { reload } = useGoAuth();
+ const requestedReturnTo = searchParams.get("returnTo");
 
  const [email, setEmail] = useState("");
  const [password, setPassword] = useState("");
@@ -31,17 +51,14 @@ export default function LoginPage() {
  });
 
  if (!res.ok) {
- const body = await res.json().catch(() => ({}));
- const msg =
- (body as { error?: string }).error ??
- (res.status === 401 ? "Invalid email or password" : "Login failed");
- setError(msg);
+ setError(res.status === 401 ? t.wrongCredentials : t.errorLoginFailed);
  return;
  }
 
- router.replace(returnTo);
+ await reload();
+ router.replace(getSafeLoginReturnTo(requestedReturnTo, locale, window.location.origin));
  } catch {
- setError("Network error. Please try again.");
+ setError(t.errorLoginFailed);
  } finally {
  setSubmitting(false);
  }
@@ -51,22 +68,22 @@ export default function LoginPage() {
  <div className="min-h-screen flex items-center justify-center px-4">
  <div className="w-full max-w-md space-y-8">
  <div className="text-center">
- <h1 className="text-3xl font-bold text-ink">Sign in to KotobaWorks</h1>
+ <h1 className="text-3xl font-bold text-ink">{t.title}</h1>
  <p className="mt-2 text-sm text-muted">
- Welcome back! Enter your credentials to continue learning.
+ {t.subtitle}
  </p>
  </div>
 
  <form onSubmit={handleSubmit} className="space-y-5">
  {error && (
- <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+ <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
  {error}
  </div>
  )}
 
  <div className="space-y-1.5">
  <label htmlFor="email" className="block text-sm font-medium text-ink">
- Email
+ {messages.auth.register.emailLabel}
  </label>
  <input
  id="email"
@@ -76,13 +93,13 @@ export default function LoginPage() {
  value={email}
  onChange={(e) => setEmail(e.target.value)}
  className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-ink placeholder:text-muted/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all"
- placeholder="you@example.com"
+ placeholder={messages.auth.register.emailPlaceholder}
  />
  </div>
 
  <div className="space-y-1.5">
  <label htmlFor="password" className="block text-sm font-medium text-ink">
- Password
+ {t.passwordLabel}
  </label>
  <input
  id="password"
@@ -92,7 +109,7 @@ export default function LoginPage() {
  value={password}
  onChange={(e) => setPassword(e.target.value)}
  className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-ink placeholder:text-muted/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all"
- placeholder="Enter your password"
+ placeholder={t.passwordPlaceholder}
  />
  </div>
 
@@ -101,7 +118,7 @@ export default function LoginPage() {
  disabled={submitting}
  className="w-full rounded-xl bg-gradient-to-r from-sakura to-sakura/80 px-4 py-3 text-sm font-semibold text-white shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed min-h-[48px]"
  >
- {submitting ? "Signing in…" : "Sign in"}
+ {submitting ? t.submitting : t.primaryCta}
  </button>
  </form>
 
@@ -110,13 +127,13 @@ export default function LoginPage() {
  href={`/${locale}/forgot-password`}
  className="text-accent hover:text-accent/80 font-medium transition-colors"
  >
- Forgot password?
+ {t.forgotPassword}
  </Link>
  <Link
  href={`/${locale}/register`}
  className="text-accent hover:text-accent/80 font-medium transition-colors"
  >
- Create an account
+ {t.registerCta}
  </Link>
  </div>
  </div>

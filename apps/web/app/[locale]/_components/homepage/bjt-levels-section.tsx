@@ -8,6 +8,8 @@ import { learnerApiFetchOptional } from "../../../../lib/learner-api";
 interface LevelItem {
   code: string;
   nameVi: string;
+  nameJa?: string;
+  nameEn?: string;
   color: string;
   vocabCount: number;
   kanjiCount: number;
@@ -20,22 +22,27 @@ interface Labels {
   vocab: string;
   kanji: string;
   grammar: string;
+  error: string;
 }
 
 export function BjtLevelsSection({ labels, locale }: { labels: Labels; locale: string }) {
   const [levels, setLevels] = useState<LevelItem[]>([]);
   const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     void learnerApiFetchOptional("/api/levels")
       .then(async (res) => {
         if (res.ok) setLevels(await res.json());
+        else setFailed(true);
       })
-      .catch(() => {})
+      .catch(() => setFailed(true))
       .finally(() => setReady(true));
   }, []);
 
-  if (!ready || levels.length === 0) return null;
+  if (!ready) return null;
+  if (failed) return <p className="text-sm text-muted">{labels.error}</p>;
+  if (levels.length === 0) return null;
 
   return (
     <section>
@@ -56,7 +63,9 @@ export function BjtLevelsSection({ labels, locale }: { labels: Labels; locale: s
             <div className="h-1.5" style={{ background: `linear-gradient(90deg, ${lv.color}, ${lv.color}80)` }} />
             <div className="p-4">
               <span className="text-base font-extrabold text-slate-800">{lv.code}</span>
-              <span className="ml-2 text-xs font-medium text-slate-500">{lv.nameVi}</span>
+              <span className="ml-2 text-xs font-medium text-slate-500">
+                {locale === "ja" ? lv.nameJa ?? lv.nameVi : locale === "en" ? lv.nameEn ?? lv.nameVi : lv.nameVi}
+              </span>
               <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                 <div>
                   <p className="text-sm font-bold tabular-nums text-slate-700">{lv.vocabCount}</p>

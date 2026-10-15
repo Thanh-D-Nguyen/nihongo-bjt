@@ -35,7 +35,7 @@ type ActiveStyleResponse struct {
 	Config json.RawMessage `json:"config"`
 }
 
-// Store provides read/write access to content.flashcard_style and profile.user_profile.flashcard_style_slug.
+// Store provides read/write access to learning.flashcard_style and profile.user_profile.flashcard_style_slug.
 type Store struct {
 	db *pgxpool.Pool
 }
@@ -52,7 +52,7 @@ func (s *Store) ListForLearner(ctx context.Context, userID string) ([]Style, err
 	defer cancel()
 
 	const q = `SELECT id, slug, name_key, description_key, thumbnail_url, config, tier, sort_order, status
-FROM content.flashcard_style
+FROM learning.flashcard_style
 WHERE status = 'active'
 ORDER BY sort_order ASC, created_at ASC`
 
@@ -109,7 +109,7 @@ func (s *Store) GetActiveStyle(ctx context.Context, userID string) (*ActiveStyle
 	}
 
 	// Load the style config
-	const styleQ = `SELECT config FROM content.flashcard_style WHERE slug = $1 AND status = 'active'`
+	const styleQ = `SELECT config FROM learning.flashcard_style WHERE slug = $1 AND status = 'active'`
 	var configBytes []byte
 	if err := s.db.QueryRow(ctx, styleQ, *slug).Scan(&configBytes); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -134,7 +134,7 @@ func (s *Store) SetActiveStyle(ctx context.Context, userID string, slug *string)
 
 	if slug != nil && *slug != "" {
 		// Validate style exists and is active
-		const checkQ = `SELECT slug FROM content.flashcard_style WHERE slug = $1 AND status = 'active'`
+		const checkQ = `SELECT slug FROM learning.flashcard_style WHERE slug = $1 AND status = 'active'`
 		var validSlug string
 		if err := s.db.QueryRow(ctx, checkQ, *slug).Scan(&validSlug); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {

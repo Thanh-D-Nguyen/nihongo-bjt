@@ -1,0 +1,319 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-086",
+  "title": "Hide untranslated announcements in non-Vietnamese locales",
+  "start_head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+  "preexisting_changes": {
+    "apps/api-go/internal/httpserver/handler_career_content_gamification_misc.go": "627b346ffb047211ce0cda834c9e5741123015b5",
+    "apps/api-go/internal/httpserver/handler_loto_test.go": "a01ce5819d061673fb622160d08106cc451dcf27",
+    "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "a4dafa0b4dbc4dfbe608f53d8d6d1c988f14346a",
+    "apps/web/app/[locale]/_components/homepage/loto-teaser-widget.tsx": "517824367ccc6cefa779189d908448f57e986506",
+    "apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx": "57e2a488260d461a36f850dd3e0f2022dfeb9504",
+    "apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.tsx": "13590f859c4ea644f31f3a4af6af39bdd968ea67",
+    "apps/web/tsconfig.tsbuildinfo": "f7d7bcd238ce27687a14d8ee82532f56adb15cab"
+  },
+  "spec": {
+    "problem": "The shared AnnouncementStrip renders the legacy Vietnamese message on English and Japanese pages when the CMS entry has no translation for that locale.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Vietnamese pages continue to show legacy announcements; English/Japanese pages show only announcements with title text for that exact locale and never leak Vietnamese fallback copy."
+      },
+      {
+        "id": "AC2",
+        "text": "Localized banner copy renders from the corresponding CMS title field, and existing banner/modal dismissal and rotation behavior remains intact."
+      }
+    ],
+    "expected_behavior": "Choose announcement content by the current document locale. Legacy Vietnamese-only records remain visible in Vietnamese and are omitted from English/Japanese surfaces until translated.",
+    "observed_behavior": "Visible Chrome showed the Vietnamese 500k promotion and other Vietnamese announcements on /en/magazine/loto and /ja/magazine/loto; GET /api/announcements confirmed titleEn/titleJa are null for the active banner records.",
+    "rollback_plan": "Revert the AUDIT-086 shared component/test change; no CMS or database rows are modified."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/announcement-strip.cardgen.test.tsx",
+      "test": "AnnouncementStrip learner modal placement > uses an English CMS title instead of the legacy Vietnamese message",
+      "expect": "English announcement"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/announcement-strip.cardgen.test.tsx",
+      "test": "AnnouncementStrip learner modal placement > hides a Japanese announcement when only its English translation exists",
+      "expect": "to be null"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-09T15:53:46.463Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-09T15:54:23.953Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T15:54:24.332Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T15:54:47.846Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-09T15:54:58.749Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-09T15:55:08.352Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-09T15:56:13.331Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-09T16:00:19.848Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-09T16:04:19.014Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-09T15:54:47.687Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/announcement-strip.cardgen.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/announcement-strip.cardgen.test.tsx::AnnouncementStrip learner modal placement > uses an English CMS title instead of the legacy Vietnamese message",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Thông báo tiếng Việt' to contain 'English announcement'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/announcement-strip.cardgen.test.tsx::AnnouncementStrip learner modal placement > uses an English CMS title instead of the legacy Vietnamese message": "English announcement"
+      },
+      "fingerprint": "b0e4c36a406cf020611a5f23c4d333337af10ccac6044e496d50c14c95dc3962"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-09T15:54:58.518Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/announcement-strip.cardgen.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/announcement-strip.cardgen.test.tsx::AnnouncementStrip learner modal placement > uses an English CMS title instead of the legacy Vietnamese message",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Thông báo tiếng Việt' to contain 'English announcement'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/announcement-strip.cardgen.test.tsx::AnnouncementStrip learner modal placement > hides a Japanese announcement when only its English translation exists",
+          "outcome": "FAIL",
+          "excerpt": "expected <div …(3)>…(3)</div> to be null",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"toBeNull\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/announcement-strip.cardgen.test.tsx::AnnouncementStrip learner modal placement > uses an English CMS title instead of the legacy Vietnamese message": "English announcement",
+        "vitest:apps/web/app/_components/announcement-strip.cardgen.test.tsx::AnnouncementStrip learner modal placement > hides a Japanese announcement when only its English translation exists": "toBeNull"
+      },
+      "fingerprint": "b0e4c36a406cf020611a5f23c4d333337af10ccac6044e496d50c14c95dc3962"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-09T15:55:08.125Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/announcement-strip.cardgen.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/announcement-strip.cardgen.test.tsx::AnnouncementStrip learner modal placement > uses an English CMS title instead of the legacy Vietnamese message",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Thông báo tiếng Việt' to contain 'English announcement'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/announcement-strip.cardgen.test.tsx::AnnouncementStrip learner modal placement > hides a Japanese announcement when only its English translation exists",
+          "outcome": "FAIL",
+          "excerpt": "expected <div …(3)>…(3)</div> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/announcement-strip.cardgen.test.tsx::AnnouncementStrip learner modal placement > uses an English CMS title instead of the legacy Vietnamese message": "English announcement",
+        "vitest:apps/web/app/_components/announcement-strip.cardgen.test.tsx::AnnouncementStrip learner modal placement > hides a Japanese announcement when only its English translation exists": "to be null"
+      },
+      "fingerprint": "b0e4c36a406cf020611a5f23c4d333337af10ccac6044e496d50c14c95dc3962"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-09T15:56:13.134Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/announcement-strip.cardgen.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/announcement-strip.cardgen.test.tsx::AnnouncementStrip learner modal placement > uses an English CMS title instead of the legacy Vietnamese message",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/announcement-strip.cardgen.test.tsx::AnnouncementStrip learner modal placement > hides a Japanese announcement when only its English translation exists",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f3d3cf08b9155b6685206291e5eed22ad9a20f749b8471b2051112b6fe173fee"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-09T15:56:24.479Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "f3d3cf08b9155b6685206291e5eed22ad9a20f749b8471b2051112b6fe173fee"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-09T15:57:00.173Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/announcement-strip.cardgen.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/announcement-strip.cardgen.test.tsx::AnnouncementStrip learner modal placement > uses an English CMS title instead of the legacy Vietnamese message",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/announcement-strip.cardgen.test.tsx::AnnouncementStrip learner modal placement > hides a Japanese announcement when only its English translation exists",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a12c87f40ed178efc9a3c5b10ad6b30c10c7a18f4622ed7888f27ca50ff16101"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-09T16:00:19.659Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 404,
+        "executed": 404,
+        "passed": 404,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 773,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "a12c87f40ed178efc9a3c5b10ad6b30c10c7a18f4622ed7888f27ca50ff16101"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-09T16:04:18.236Z",
+      "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a12166-2d3f-7492-9125-0af732567d46",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "Locale leak fix reviewed in fresh session; zero blocking findings.",
+      "output_sha256": "9f1d612e87af6ddd4235d93b65a5cd2994e40875ad5d1c14ca2c9588d4ac974b",
+      "attested": true,
+      "fingerprint": "a12c87f40ed178efc9a3c5b10ad6b30c10c7a18f4622ed7888f27ca50ff16101"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-09T16:04:18.996Z",
+    "head": "d6ac0e9c810a74a1a13aba26b30c8a240bea3175",
+    "fingerprint": "a12c87f40ed178efc9a3c5b10ad6b30c10c7a18f4622ed7888f27ca50ff16101",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/_components/announcement-strip.cardgen.test.tsx": "6529623ac9b7ff6a21c945abacc1ab2d21ce5b74",
+      "apps/web/app/_components/announcement-strip.tsx": "c52afbb83fae0a60e52fa4315b9ccaef5be27de0"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

@@ -27,6 +27,7 @@ interface ExploreLabels {
   statsWords: string;
   statsKanji: string;
   statsGrammar: string;
+  statsUnavailable: string;
   recentTitle: string;
   recentEmpty: string;
   progressTitle?: string;
@@ -42,9 +43,10 @@ interface ExploreStats {
   grammar: number;
 }
 
-interface ContentListSummary {
-  total?: number;
-}
+type ExploreStatsState =
+  | { status: "loading" }
+  | { status: "ready"; stats: ExploreStats }
+  | { status: "unavailable" };
 
 /* ── Constants ─────────────────────────────────────────────────────────── */
 
@@ -61,48 +63,48 @@ const SECTIONS = [
     key: "magazine",
     href: (l: string) => `/${l}/magazine`,
     icon: "📰",
-    gradient: "from-orange-50 to-orange-50/50",
-    border: "border-orange-200/40 hover:border-orange-300/60",
+    gradient: "from-orange-50 to-orange-50/50 dark:from-orange-950/20 dark:to-orange-950/10",
+    border: "border-orange-200/40 hover:border-orange-300/60 dark:border-orange-800/30 dark:hover:border-orange-700/50",
     hero: false,
   },
   {
     key: "dictionary",
     href: (l: string) => `/${l}/dictionary`,
     icon: "📖",
-    gradient: "from-blue-50 to-blue-50/50",
-    border: "border-blue-200/40 hover:border-blue-300/60",
+    gradient: "from-blue-50 to-blue-50/50 dark:from-blue-950/20 dark:to-blue-950/10",
+    border: "border-blue-200/40 hover:border-blue-300/60 dark:border-blue-800/30 dark:hover:border-blue-700/50",
     hero: false,
   },
   {
     key: "kanji",
     href: (l: string) => `/${l}/kanji`,
     icon: "漢",
-    gradient: "from-violet-50 to-violet-50/50",
-    border: "border-violet-200/40 hover:border-violet-300/60",
+    gradient: "from-violet-50 to-violet-50/50 dark:from-violet-950/20 dark:to-violet-950/10",
+    border: "border-violet-200/40 hover:border-violet-300/60 dark:border-violet-800/30 dark:hover:border-violet-700/50",
     hero: false,
   },
   {
     key: "grammar",
     href: (l: string) => `/${l}/grammar`,
     icon: "📝",
-    gradient: "from-emerald-50 to-emerald-50/50",
-    border: "border-emerald-200/40 hover:border-emerald-300/60",
+    gradient: "from-emerald-50 to-emerald-50/50 dark:from-emerald-950/20 dark:to-emerald-950/10",
+    border: "border-emerald-200/40 hover:border-emerald-300/60 dark:border-emerald-800/30 dark:hover:border-emerald-700/50",
     hero: false,
   },
   {
     key: "exercises",
     href: (l: string) => `/${l}/exercises`,
     icon: "🧩",
-    gradient: "from-amber-50 to-amber-50/50",
-    border: "border-amber-200/40 hover:border-amber-300/60",
+    gradient: "from-amber-50 to-amber-50/50 dark:from-amber-950/20 dark:to-amber-950/10",
+    border: "border-amber-200/40 hover:border-amber-300/60 dark:border-amber-800/30 dark:hover:border-amber-700/50",
     hero: false,
   },
   {
     key: "levels",
     href: (l: string) => `/${l}/levels`,
     icon: "📊",
-    gradient: "from-rose-50 to-rose-50/50",
-    border: "border-rose-200/40 hover:border-rose-300/60",
+    gradient: "from-rose-50 to-rose-50/50 dark:from-rose-950/20 dark:to-rose-950/10",
+    border: "border-rose-200/40 hover:border-rose-300/60 dark:border-rose-800/30 dark:hover:border-rose-700/50",
     hero: false,
   },
 ] as const;
@@ -110,26 +112,13 @@ const SECTIONS = [
 /* ── Component ─────────────────────────────────────────────────────────── */
 
 export function ExploreClient({ labels, locale }: { labels: ExploreLabels; locale: string }) {
-  const [stats, setStats] = useState<ExploreStats | null>(null);
+  const [stats, setStats] = useState<ExploreStatsState>({ status: "loading" });
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      try {
-        const [lexRes, kanjiRes, gramRes] = await Promise.all([
-          loadContentSummary("/api/content/lexemes?limit=0"),
-          loadContentSummary("/api/content/kanji?limit=0"),
-          loadContentSummary("/api/content/grammar?limit=0"),
-        ]);
-        if (cancelled) return;
-        setStats({
-          lexemes: lexRes?.total ?? 0,
-          kanji: kanjiRes?.total ?? 0,
-          grammar: gramRes?.total ?? 0,
-        });
-      } catch {
-        /* stats are optional — fail silently */
-      }
+      const summary = await loadContentSummary();
+      if (!cancelled) setStats(summary ? { status: "ready", stats: summary } : { status: "unavailable" });
     }
     void load();
     return () => { cancelled = true; };
@@ -150,13 +139,13 @@ export function ExploreClient({ labels, locale }: { labels: ExploreLabels; local
       <PageHeader description={labels.subtitle} title={labels.title} />
 
       {/* ── Stats ribbon ── */}
-      {stats ? (
-        <div className="explore-stats-ribbon flex items-center justify-center gap-6 rounded-2xl border border-ink/6 bg-gradient-to-r from-paper to-surface px-4 py-3">
-          <StatChip label={labels.statsWords} value={stats.lexemes} />
-          <div className="h-5 w-px bg-ink/10" />
-          <StatChip label={labels.statsKanji} value={stats.kanji} />
-          <div className="h-5 w-px bg-ink/10" />
-          <StatChip label={labels.statsGrammar} value={stats.grammar} />
+      {stats.status !== "loading" ? (
+        <div className="explore-stats-ribbon flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-2xl border border-ink/6 bg-gradient-to-r from-paper to-surface px-4 py-3 sm:gap-6">
+          <StatChip label={labels.statsWords} unavailableLabel={labels.statsUnavailable} value={stats.status === "ready" ? stats.stats.lexemes : null} />
+          <div className="hidden h-5 w-px bg-ink/10 sm:block" />
+          <StatChip label={labels.statsKanji} unavailableLabel={labels.statsUnavailable} value={stats.status === "ready" ? stats.stats.kanji : null} />
+          <div className="hidden h-5 w-px bg-ink/10 sm:block" />
+          <StatChip label={labels.statsGrammar} unavailableLabel={labels.statsUnavailable} value={stats.status === "ready" ? stats.stats.grammar : null} />
         </div>
       ) : (
         <div className="flex items-center justify-center gap-6 rounded-2xl border border-ink/6 bg-paper px-4 py-3">
@@ -182,7 +171,7 @@ export function ExploreClient({ labels, locale }: { labels: ExploreLabels; local
             >
               {/* icon */}
               <span
-                className={`mb-3 flex items-center justify-center rounded-xl bg-white/70 shadow-sm ${
+                className={`mb-3 flex items-center justify-center rounded-xl bg-white/70 shadow-sm dark:bg-gray-800/50 ${
                   isHero ? "size-14 text-2xl" : "size-11 text-xl"
                 } ${section.key === "kanji" ? "font-bold text-violet-600" : ""}`}
               >
@@ -260,20 +249,24 @@ export function ExploreClient({ labels, locale }: { labels: ExploreLabels; local
 
 /* ── Helpers ────────────────────────────────────────────────────────────── */
 
-async function loadContentSummary(path: string): Promise<ContentListSummary | null> {
+async function loadContentSummary(): Promise<ExploreStats | null> {
   try {
-    const response = await learnerApiFetch(path);
+    const response = await learnerApiFetch("/api/content/summary");
     if (!response.ok) return null;
-    return (await response.json()) as ContentListSummary;
+    const summary = (await response.json()) as ExploreStats;
+    if (![summary.lexemes, summary.kanji, summary.grammar].every((count) => Number.isSafeInteger(count) && count >= 0)) return null;
+    return summary;
   } catch {
     return null;
   }
 }
 
-function StatChip({ label, value }: { label: string; value: number }) {
+function StatChip({ label, unavailableLabel, value }: { label: string; unavailableLabel: string; value: number | null }) {
   return (
     <div className="flex items-baseline gap-1.5">
-      <span className="text-lg font-bold tabular-nums text-ink">{value.toLocaleString()}</span>
+      <span aria-label={value === null ? unavailableLabel : `${value.toLocaleString()} ${label}`} className="text-lg font-bold tabular-nums text-ink">
+        {value === null ? "—" : value.toLocaleString()}
+      </span>
       <span className="text-xs text-muted">{label}</span>
     </div>
   );

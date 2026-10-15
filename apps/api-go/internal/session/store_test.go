@@ -117,6 +117,9 @@ func TestCreateAndLookupLearnerSession(t *testing.T) {
 	if sess.UserID != userID {
 		t.Errorf("UserID = %q, want %q", sess.UserID, userID)
 	}
+	if sess.DisplayName != "Test User" {
+		t.Errorf("DisplayName = %q, want %q", sess.DisplayName, "Test User")
+	}
 	if sess.UserAgent != "test-agent" {
 		t.Errorf("UserAgent = %q, want %q", sess.UserAgent, "test-agent")
 	}

@@ -26,6 +26,7 @@ interface QuizTranslations {
   quizPerfect: string;
   quizGood: string;
   quizTryAgain: string;
+  quizSaveFailed: string;
   [key: string]: string;
 }
 
@@ -45,6 +46,7 @@ export function MiniQuiz({
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [completed, setCompleted] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
 
   const current = quizzes[currentIndex];
   const total = quizzes.length;
@@ -65,15 +67,14 @@ export function MiniQuiz({
   const handleNext = useCallback(() => {
     if (isLast) {
       setCompleted(true);
-      const apiBase = (
-        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
-      ).replace(/\/$/u, "");
-      fetch(`${apiBase}/api/magazine/${articleSlug}/read`, {
+      fetch(`/api/magazine/${encodeURIComponent(articleSlug)}/read`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quizScore: score, quizTotal: total }),
-      }).catch(() => {});
+      }).then((response) => {
+        if (!response.ok) setSaveFailed(true);
+      }).catch(() => setSaveFailed(true));
     } else {
       setCurrentIndex((i) => i + 1);
       setSelected(null);
@@ -97,6 +98,7 @@ export function MiniQuiz({
         <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">
           {message}
         </p>
+        {saveFailed && <p role="alert" className="mt-3 text-sm text-destructive">{t.quizSaveFailed}</p>}
       </div>
     );
   }

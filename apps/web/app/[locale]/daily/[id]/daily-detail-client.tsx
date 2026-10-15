@@ -52,6 +52,7 @@ type AnnotatedLabels = {
 
 type DailyLabels = Record<string, string>;
 type DetailLabels = Record<string, string>;
+type DailyQuickQuiz = { prompt: string; options: string[]; answer: string };
 
 const WIDGET_KIND_LABELS: Record<string, { emoji: string; vi: string }> = {
   weather: { emoji: "🌤", vi: "Thời tiết" },
@@ -111,6 +112,10 @@ export function DailyDetailClient({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [quickQuiz, setQuickQuiz] = useState<DailyQuickQuiz | null>(null);
+  const [quizAnswer, setQuizAnswer] = useState<string | null>(null);
+  const [markedUseful, setMarkedUseful] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
   /* load item */
@@ -140,20 +145,36 @@ export function DailyDetailClient({
 
   /* actions */
   const postAction = async (action: "generate-flashcards" | "quick-quiz" | "mark-useful") => {
-    if (!userId) return;
+    if (!userId || pendingAction) return;
+    setPendingAction(action);
     try {
       const r = await learnerApiFetch(`/api/daily/items/${id}/${action}`, {
         body: JSON.stringify({ userId }),
         headers: { "content-type": "application/json" },
         method: "POST"
       });
-      if (r.ok) {
-        if (action === "generate-flashcards") setActionMsg(dailyLabels.cardsCreated ?? "OK");
-        else if (action === "mark-useful") setActionMsg(t("markedUseful"));
-        else setActionMsg("OK");
+      if (!r.ok) {
+        setActionMsg(dailyLabels.widgetActionError ?? "Error");
+        return;
+      }
+      if (action === "generate-flashcards") {
+        setActionMsg(dailyLabels.cardsCreated ?? "OK");
+      } else if (action === "mark-useful") {
+        setMarkedUseful(true);
+        setActionMsg(t("markedUseful"));
+      } else {
+        const result = (await r.json()) as { quiz?: DailyQuickQuiz };
+        if (result.quiz) {
+          setQuickQuiz(result.quiz);
+          setQuizAnswer(null);
+        } else {
+          setActionMsg(dailyLabels.widgetActionError ?? "Error");
+        }
       }
     } catch {
       setActionMsg(dailyLabels.widgetActionError ?? "Error");
+    } finally {
+      setPendingAction(null);
     }
     setTimeout(() => setActionMsg(null), 3000);
   };
@@ -339,6 +360,7 @@ export function DailyDetailClient({
           <button
             className="rounded-xl border border-ink/12 bg-paper/80 px-4 py-2.5 text-sm font-medium text-ink hover:bg-paper transition-colors"
             type="button"
+            disabled={pendingAction !== null}
             onClick={() => void postAction("generate-flashcards")}
           >
             {dailyLabels.addCards}
@@ -346,6 +368,7 @@ export function DailyDetailClient({
           <button
             className="rounded-xl border border-ink/12 bg-paper/80 px-4 py-2.5 text-sm font-medium text-ink hover:bg-paper transition-colors"
             type="button"
+            disabled={pendingAction !== null}
             onClick={() => void postAction("quick-quiz")}
           >
             {dailyLabels.quickQuiz}
@@ -353,6 +376,7 @@ export function DailyDetailClient({
           <button
             className="rounded-xl border border-ink/12 bg-paper/80 px-4 py-2.5 text-sm font-medium text-ink hover:bg-paper transition-colors"
             type="button"
+            disabled={pendingAction !== null || markedUseful}
             onClick={() => void postAction("mark-useful")}
           >
             {dailyLabels.markUseful}
@@ -373,6 +397,33 @@ export function DailyDetailClient({
             payload={{ phraseLabel: item.title || item.japaneseText || "" }}
             userId={userId}
           />
+        </section>
+      ) : null}
+
+      {quickQuiz ? (
+        <section aria-label={dailyLabels.quickQuiz} className="mb-6 rounded-2xl border border-ink/10 bg-surface p-5">
+          <h2 className="mb-3 text-base font-semibold text-ink">{quickQuiz.prompt}</h2>
+          <div className="grid gap-2">
+            {quickQuiz.options.map((option) => (
+              <button
+                aria-pressed={quizAnswer === option}
+                className="min-h-11 rounded-xl border border-ink/12 bg-paper px-4 py-2 text-left text-sm text-ink hover:border-accent disabled:cursor-default"
+                disabled={quizAnswer !== null}
+                key={option}
+                onClick={() => setQuizAnswer(option)}
+                type="button"
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+          {quizAnswer ? (
+            <p aria-live="polite" className="mt-3 text-sm font-medium text-ink">
+              {quizAnswer === quickQuiz.answer
+                ? dailyLabels.quickQuizCorrect
+                : (dailyLabels.quickQuizWrong ?? "").replace("{answer}", quickQuiz.answer)}
+            </p>
+          ) : <p className="mt-3 text-xs text-muted">{dailyLabels.quickQuizChoose}</p>}
         </section>
       ) : null}
 

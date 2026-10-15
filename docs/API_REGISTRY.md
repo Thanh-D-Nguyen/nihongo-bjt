@@ -186,7 +186,7 @@ Added 2026-05-15. Full implementation details: `docs/RETENTION_ENGAGEMENT_FEATUR
 | GET | /api/admin/analytics | analytics | AdminAnalyticsController | `viewer.analytics`, `admin.analytics.view`, `analytics.view` | apps/api/src/growth/growth-admin.controller.referral-share-analytics.test.ts |
 | GET | /api/admin/growth/share-templates | growth | GrowthAdminController | `admin.growth.read` | apps/api/src/growth/growth-admin.controller.referral-share-analytics.test.ts |
 | GET | /api/admin/growth/referral-share-analytics | growth | GrowthAdminController | `admin.growth.read` | apps/api/src/growth/growth-admin.controller.referral-share-analytics.test.ts |
-| POST | /api/admin/growth/share-template/preview | growth | GrowthAdminController | `admin.growth.read` | apps/api/src/growth/growth-admin.controller.referral-share-analytics.test.ts |
+| POST | /api/admin/growth/share-template/preview | growth | Go API (share template preview, SVG) | `admin.growth.read` | apps/api-go/internal/httpserver/handler_admin_growth_share_preview_test.go |
 | GET | /api/admin/daily/widgets | daily | AdminDailyController | `admin.content.read` | apps/api/src/admin/admin.controller.user-detail-privacy.test.ts |
 | PATCH | /api/admin/daily/widgets/:id | daily | AdminDailyController | `admin.content.write` | apps/api/src/admin/admin.controller.user-detail-privacy.test.ts |
 | GET | /api/admin/legal/policies | legal | LegalPolicyAdminController | `admin.legal.read`, `admin.legal.write`, `legal.admin` | apps/api/src/admin/admin.controller.user-detail-privacy.test.ts |

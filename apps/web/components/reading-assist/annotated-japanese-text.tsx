@@ -117,7 +117,7 @@ export function AnnotatedJapaneseText({
     }
     try {
       const response = await learnerApiFetch(
-        `/api/decks?userId=${encodeURIComponent(userId)}&limit=1`,
+        `/api/flashcards/decks?userId=${encodeURIComponent(userId)}&limit=1`,
         {
           method: "GET"
         }

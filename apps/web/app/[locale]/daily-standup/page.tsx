@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
-import { CareerRpgProvider } from "../../../src/features/career-rpg/store";
 import { DailyStandupPage } from "../../../src/features/career-rpg/components/daily-standup-page";
 
 const messages = { ja, vi, en } as const;
@@ -26,9 +25,5 @@ export default async function DailyStandupRoute({
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
 
-  return (
-    <CareerRpgProvider>
-      <DailyStandupPage labels={t.careerRpg} locale={locale} />
-    </CareerRpgProvider>
-  );
+  return <DailyStandupPage labels={t.careerRpg} locale={locale} />;
 }

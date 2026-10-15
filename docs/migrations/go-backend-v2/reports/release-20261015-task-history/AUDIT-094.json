@@ -1,0 +1,297 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-094",
+  "title": "Audit learner Daily Radar card detail",
+  "start_head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Audit the source-discovered learner Daily Radar card detail route and complete its visible anonymous/authenticated, localization, responsive, API, and error-state checks.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Test the real visible Daily Radar card detail screen with public and authenticated browser states in vi/en/ja and desktop/mobile; inspect primary content/actions, API/Network, Console, metadata and missing-content behavior. Fix locally solvable defects with regression coverage and quality gates, then commit the completed screen and update durable screen/API audit state."
+      },
+      {
+        "id": "AC2",
+        "text": "Complete the visible Daily Radar detail screen audit and fix any locally solvable defect before committing this screen."
+      }
+    ],
+    "expected_behavior": "A published radar card detail loads from canonical data, presents its content and related expressions accurately, and offers localized navigation/actions; unavailable or unknown content has truthful, recoverable behavior without false 404s.",
+    "observed_behavior": "Not yet re-tested in the current runtime. Source currently maps every fetch failure and non-200 response to the same not-found state; confirm whether this occurs for the published card and verify actual locales, API and UI behavior.",
+    "rollback_plan": "Revert only AUDIT-094-owned route/API/UI/test changes and its audit checkpoint."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Daily Radar detail cannot load published cards because public detail/list handlers scan canonical timestamptz values into string pointers and the detail handler misreports database errors as 404; fix the shared API contract and validate its visible caller."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestPublicDailyRadarCardListAndDetailReturnPublishedAt",
+      "expect": "list status=500"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-10T11:19:36.978Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-10T11:19:56.819Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-10T11:22:13.186Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-10T11:22:45.248Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T11:23:17.444Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-10T11:26:36.546Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-10T11:29:22.840Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T11:29:49.784Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-10T11:34:53.214Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-10T11:37:46.337Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-10T11:22:45.000Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicDailyRadarCardListAndDetailReturnPublishedAt)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicDailyRadarCardListAndDetailReturnPublishedAt",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPublicDailyRadarCardListAndDetailReturnPublishedAt === RUN TestPublicDailyRadarCardListAndDetailReturnPublishedAt/published_list {\"time\":\"2026-10-10T20:22:44.9466+09:00\",\"level\":\"ERROR\",\"msg\":\"scan daily radar card\",\"error\":\"can't scan into dest[7] (col: created_at): cannot scan timestam…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestPublicDailyRadarCardListAndDetailReturnPublishedAt": "list status=500"
+      },
+      "fingerprint": "b29ae1717db4d606d887c3974a473096f358b2f0cc64e2451c7042d4a2e6d660"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-10T11:23:17.172Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicDailyRadarCardListAndDetailReturnPublishedAt)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicDailyRadarCardListAndDetailReturnPublishedAt",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d36e6a487d9a99050b4f89e17a87efd6c64aec32c6a52b310c41b8234e216759"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-10T11:26:36.324Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 746,
+        "executed": 746,
+        "passed": 746,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "746 passed, 0 allowed skip(s)",
+      "fingerprint": "d36e6a487d9a99050b4f89e17a87efd6c64aec32c6a52b310c41b8234e216759"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-10T11:29:22.606Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicDailyRadarCardListAndDetailReturnPublishedAt)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicDailyRadarCardListAndDetailReturnPublishedAt",
+          "outcome": "BUILD_FAIL",
+          "valid": false,
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_dailyradar_announcement.go:149:14: undefined: Card FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [build failed]"
+        }
+      ],
+      "fingerprint": "71a1e4bde17a1216ebde24a84a3a6a0907977d52e436e12981063ce75c6a7941"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-10T11:29:49.494Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicDailyRadarCardListAndDetailReturnPublishedAt)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicDailyRadarCardListAndDetailReturnPublishedAt",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "541858bd6400d568d0b04a06b91436d5cce1080ddbf5badc5bafd9710bac2cea"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-10T11:30:46.777Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 746,
+        "executed": 746,
+        "passed": 745,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "541858bd6400d568d0b04a06b91436d5cce1080ddbf5badc5bafd9710bac2cea"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-10T11:31:22.462Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPublicDailyRadarCardListAndDetailReturnPublishedAt)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestPublicDailyRadarCardListAndDetailReturnPublishedAt",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "b9574ebfa929d99a633ee86d070b7d8cf37f2d40f94fd35e827176e15cef267e"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-10T11:34:52.982Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 746,
+        "executed": 746,
+        "passed": 746,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "746 passed, 0 allowed skip(s)",
+      "fingerprint": "b9574ebfa929d99a633ee86d070b7d8cf37f2d40f94fd35e827176e15cef267e"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-10T11:35:04.273Z",
+      "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Linnaeus",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "8428ad196f4c9023fd5c3b649be72d4a3e9e0c10a7baa85e0676e9e34031aed9",
+      "attested": true,
+      "fingerprint": "b9574ebfa929d99a633ee86d070b7d8cf37f2d40f94fd35e827176e15cef267e"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-10T11:37:46.318Z",
+    "head": "a5155a757efdb25faa4e6df4a1c2a76d310557dd",
+    "fingerprint": "b9574ebfa929d99a633ee86d070b7d8cf37f2d40f94fd35e827176e15cef267e",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_daily_radar_card_public_test.go": "5d2df7e7a4b6594c253cf9a9b117d4e163e7f5f6",
+      "apps/api-go/internal/httpserver/handler_dailyradar_announcement.go": "19048deaa799e6e6acd1dd7e42d64423d1020df8"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-153",
+  "title": "Complete admin social growth API contracts",
+  "start_head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+  "preexisting_changes": {
+    "apps/admin/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/admin/tsconfig.tsbuildinfo": "6b0c7bc84ee49d33491f829cb00b397b9e0b3723",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_iam_test.go": "aee00270d49976ed76fe616f9893de4a8ac7431c",
+    "apps/api-go/internal/httpserver/handler_admin_audit151_rbac_test.go": "996ba6a016727ad3f7cd9a5c033c569e93b9ff8e",
+    "apps/api-go/internal/httpserver/handler_admin_core.go": "c12a0160d9718accb5db77ed259c1d56e6ac3990",
+    "apps/api-go/internal/httpserver/handler_admin_growth_campaigns.go": "d1cf6a0cd0d109b9ff59523da87e8d640db8b7b8",
+    "apps/api-go/internal/httpserver/handler_admin_growth_postcards.go": "34013e9db95374d6ef0771be9f09f251202b17ca",
+    "apps/api-go/internal/httpserver/handler_admin_growth_referrals.go": "c6d8f2c781ca0962fec1e24305cc8933e9608c9d",
+    "apps/api-go/internal/httpserver/handler_admin_growth_social.go": "b04e7dad08821f1c419273227d71a26dd8a521c5",
+    "apps/api-go/internal/httpserver/server.go": "083ee51c8d1f15f4ed7d720f3f429009ebaee23a",
+    "apps/web/AGENTS.md": "af3b7c84114bafeee578bf1adff2ef74af2cc6a2",
+    "apps/web/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/web/tsconfig.tsbuildinfo": "91d48d855b4f16f10809b5e9d91bae8ed06c76dc"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Social events GET returns persisted rows in the admin UI response shape; moderation POST persists moderation and audit atomically."
+      },
+      {
+        "id": "AC2",
+        "text": "Social template GET list and detail plus POST create, PATCH update, POST archive and publish match admin UI response shapes and persist changes with atomic audit records."
+      },
+      {
+        "id": "AC3",
+        "text": "Registered social routes enforce read/manage permissions and successful writes require a meaningful audit reason."
+      }
+    ],
+    "expected_behavior": "Positive HTTP request/response/persistence coverage matches the canonical PostgreSQL schema and UI contracts; mutations and audit rows commit or roll back together.",
+    "observed_behavior": "The social admin screen consumes nested user/template/summary fields and complete template detail; existing endpoint tests only check that the social event list responds.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Correct endpoint response and transaction behavior where positive integration coverage exposes gaps; permissions remain registered in the router."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows",
+      "expect": "events status=500"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "VALID_RED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-14T22:51:02.695Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-14T22:51:03.103Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-14T22:51:03.489Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-14T22:54:14.361Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-14T22:53:44.679Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows 2026/10/15 07:53:43 ERROR list social events error=\"ERROR: column \\\"payload\\\" does not exist (SQLSTATE 42703)\" 2026/10/15 07:53:43 INFO request method=GET path=/api/admin/growth/social/events status=500 duration=6.300166ms by…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"event UI field \\\"publicToken\\\" missing\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows": "event UI field \"publicToken\" missing"
+      },
+      "fingerprint": "b7507494959c3ff79f1fd14fdc3d4addec0d2fe7adc10646ba81bb126673ef93"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-14T22:54:13.881Z",
+      "head": "80085cd18dea040d4aaa2fac106408e54aedf6c7",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows 2026/10/15 07:54:12 ERROR list social events error=\"ERROR: column \\\"payload\\\" does not exist (SQLSTATE 42703)\" 2026/10/15 07:54:12 INFO request method=GET path=/api/admin/growth/social/events status=500 duration=4.773417ms by…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAudit153SocialAdminContractsPersistAcrossTemplateAndEventFlows": "events status=500"
+      },
+      "fingerprint": "0833fce9bd0832f4390ed89a5981ff4cf3a9085dd17e9517f8f2342e917149e7"
+    }
+  ],
+  "closed": null,
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [
+    "apps/api-go/internal/httpserver/handler_admin_growth_social.go"
+  ]
+}

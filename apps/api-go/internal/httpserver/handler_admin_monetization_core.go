@@ -2,25 +2,36 @@ package httpserver
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
 )
 
-// ── P1-A5.1: Admin Monetization — Core Sub-Domain (7 routes) ───────────────
+// ── P1-A5.1: Admin Monetization — Core Sub-Domain ──────────────────────────
 // All routes require admin session + appropriate permissions.
 // Contracts derived from NestJS apps/api/src/monetization/monetization-admin-console.service.ts
 // overview, summary (alias), analytics, audit, plans list, plans create, plans patch.
 
 // adminMonetizationOverviewHandler implements GET /api/admin/monetization/overview.
 func adminMonetizationOverviewHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
+	return adminMonetizationOverviewDataHandler(db, logger, true)
+}
+
+func adminMonetizationOverviewDataHandler(db *pgxpool.Pool, logger *slog.Logger, checkPermission bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if checkPermission && !requireMonetizationPermission(w, r, db, "admin.monetization.read", "billing.plan.view") {
+			return
+		}
 		ctx := r.Context()
 
 		type KPIs struct {
@@ -78,22 +89,44 @@ func adminMonetizationOverviewHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		ov.Tasks.FailedBillingSyncAvailable = false
 
 		// KPIs
-		db.QueryRow(ctx, "SELECT COUNT(*) FROM profile.user_profile").Scan(&ov.KPIs.TotalUsers)
-		db.QueryRow(ctx, "SELECT COUNT(*) FROM monetization.user_subscription WHERE status IN ('active','trialing')").Scan(&ov.KPIs.ActiveSubscriptions)
-		db.QueryRow(ctx, "SELECT COUNT(*) FROM monetization.user_subscription WHERE status = 'past_due'").Scan(&ov.KPIs.PastDueSubscriptions)
-		db.QueryRow(ctx, "SELECT COUNT(*) FROM monetization.ad_placement WHERE active = true").Scan(&ov.KPIs.AdsEnabledPlacements)
+		for _, metric := range []struct {
+			query string
+			dest  *int
+		}{
+			{"SELECT COUNT(*) FROM profile.user_profile", &ov.KPIs.TotalUsers},
+			{"SELECT COUNT(*) FROM monetization.user_subscription WHERE status IN ('active','trialing')", &ov.KPIs.ActiveSubscriptions},
+			{"SELECT COUNT(*) FROM monetization.user_subscription WHERE status = 'past_due'", &ov.KPIs.PastDueSubscriptions},
+			{"SELECT COUNT(*) FROM monetization.ad_placement WHERE active = true", &ov.KPIs.AdsEnabledPlacements},
+		} {
+			if err := db.QueryRow(ctx, metric.query).Scan(metric.dest); err != nil {
+				adminMonetizationQueryError(w, logger, "load monetization overview metric", err)
+				return
+			}
+		}
 
 		// Free plan ID
 		var freePlanID *string
-		db.QueryRow(ctx, "SELECT id FROM monetization.plan WHERE slug = 'free' LIMIT 1").Scan(&freePlanID)
+		if err := db.QueryRow(ctx, "SELECT id FROM monetization.plan WHERE slug = 'free' LIMIT 1").Scan(&freePlanID); err != nil && err != pgx.ErrNoRows {
+			adminMonetizationQueryError(w, logger, "load free monetization plan", err)
+			return
+		}
 
 		if freePlanID != nil {
-			db.QueryRow(ctx, "SELECT COUNT(*) FROM monetization.user_subscription WHERE status IN ('active','trialing') AND plan_id != $1", *freePlanID).Scan(&ov.KPIs.PaidUsersActive)
-			db.QueryRow(ctx, "SELECT COUNT(*) FROM monetization.user_subscription WHERE status IN ('active','trialing') AND plan_id = $1", *freePlanID).Scan(&ov.KPIs.FreeUsersActive)
+			if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM monetization.user_subscription WHERE status IN ('active','trialing') AND plan_id != $1", *freePlanID).Scan(&ov.KPIs.PaidUsersActive); err != nil {
+				adminMonetizationQueryError(w, logger, "load paid monetization users", err)
+				return
+			}
+			if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM monetization.user_subscription WHERE status IN ('active','trialing') AND plan_id = $1", *freePlanID).Scan(&ov.KPIs.FreeUsersActive); err != nil {
+				adminMonetizationQueryError(w, logger, "load free monetization users", err)
+				return
+			}
 		}
 
 		// Trial users
-		db.QueryRow(ctx, "SELECT COUNT(*) FROM monetization.user_subscription WHERE status = 'trialing'").Scan(&ov.KPIs.TrialUsers)
+		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM monetization.user_subscription WHERE status = 'trialing'").Scan(&ov.KPIs.TrialUsers); err != nil {
+			adminMonetizationQueryError(w, logger, "load monetization trial users", err)
+			return
+		}
 
 		// Conversion rate
 		denom := ov.KPIs.PaidUsersActive + ov.KPIs.FreeUsersActive
@@ -109,15 +142,25 @@ func adminMonetizationOverviewHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 			JOIN monetization.plan p ON p.id = us.plan_id
 			GROUP BY p.slug, us.status
 			ORDER BY p.slug, us.status`)
-		if err == nil {
-			for distRows.Next() {
-				var pd PlanDist
-				if distRows.Scan(&pd.PlanSlug, &pd.Status, &pd.Count) == nil {
-					ov.Charts.PlanDistribution = append(ov.Charts.PlanDistribution, pd)
-				}
-			}
-			distRows.Close()
+		if err != nil {
+			adminMonetizationQueryError(w, logger, "load monetization plan distribution", err)
+			return
 		}
+		for distRows.Next() {
+			var pd PlanDist
+			if err := distRows.Scan(&pd.PlanSlug, &pd.Status, &pd.Count); err != nil {
+				distRows.Close()
+				adminMonetizationQueryError(w, logger, "scan monetization plan distribution", err)
+				return
+			}
+			ov.Charts.PlanDistribution = append(ov.Charts.PlanDistribution, pd)
+		}
+		if err := distRows.Err(); err != nil {
+			distRows.Close()
+			adminMonetizationQueryError(w, logger, "iterate monetization plan distribution", err)
+			return
+		}
+		distRows.Close()
 		if ov.Charts.PlanDistribution == nil {
 			ov.Charts.PlanDistribution = []PlanDist{}
 		}
@@ -128,45 +171,74 @@ func adminMonetizationOverviewHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 			FROM monetization.user_subscription
 			WHERE created_at >= NOW() - INTERVAL '14 days'
 			GROUP BY 1 ORDER BY 1 ASC`)
-		if err == nil {
-			for trendRows.Next() {
-				var tp TrendPoint
-				var day time.Time
-				if trendRows.Scan(&day, &tp.Count) == nil {
-					tp.Day = day.Format("2006-01-02")
-					ov.Charts.SubscriptionTrend = append(ov.Charts.SubscriptionTrend, tp)
-				}
-			}
-			trendRows.Close()
+		if err != nil {
+			adminMonetizationQueryError(w, logger, "load monetization subscription trend", err)
+			return
 		}
+		for trendRows.Next() {
+			var tp TrendPoint
+			var day time.Time
+			if err := trendRows.Scan(&day, &tp.Count); err != nil {
+				trendRows.Close()
+				adminMonetizationQueryError(w, logger, "scan monetization subscription trend", err)
+				return
+			}
+			tp.Day = day.Format("2006-01-02")
+			ov.Charts.SubscriptionTrend = append(ov.Charts.SubscriptionTrend, tp)
+		}
+		if err := trendRows.Err(); err != nil {
+			trendRows.Close()
+			adminMonetizationQueryError(w, logger, "iterate monetization subscription trend", err)
+			return
+		}
+		trendRows.Close()
 		if ov.Charts.SubscriptionTrend == nil {
 			ov.Charts.SubscriptionTrend = []TrendPoint{}
 		}
 
 		// Paywall funnel
-		db.QueryRow(ctx, "SELECT COUNT(*) FROM analytics.event WHERE event_name = 'monetization_paywall_view'").Scan(&ov.Charts.PaywallFunnel.PaywallViews)
-		db.QueryRow(ctx, "SELECT COUNT(*) FROM analytics.event WHERE event_name = 'monetization_checkout_session'").Scan(&ov.Charts.PaywallFunnel.CheckoutSessions)
+		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM analytics.analytics_event WHERE event_name = 'monetization_paywall_view'").Scan(&ov.Charts.PaywallFunnel.PaywallViews); err != nil {
+			adminMonetizationQueryError(w, logger, "load monetization paywall views", err)
+			return
+		}
+		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM analytics.analytics_event WHERE event_name = 'monetization_checkout_session'").Scan(&ov.Charts.PaywallFunnel.CheckoutSessions); err != nil {
+			adminMonetizationQueryError(w, logger, "load monetization checkout sessions", err)
+			return
+		}
 
 		// Plans missing entitlements
 		missingRows, err := db.Query(ctx, `
 			SELECT p.id FROM monetization.plan p
 			WHERE NOT EXISTS (SELECT 1 FROM monetization.plan_entitlement pe WHERE pe.plan_id = p.id)`)
-		if err == nil {
-			for missingRows.Next() {
-				var pid string
-				if missingRows.Scan(&pid) == nil {
-					ov.Tasks.PlansMissingEntitlementIds = append(ov.Tasks.PlansMissingEntitlementIds, pid)
-				}
-			}
-			missingRows.Close()
+		if err != nil {
+			adminMonetizationQueryError(w, logger, "load plans missing entitlements", err)
+			return
 		}
+		for missingRows.Next() {
+			var pid string
+			if err := missingRows.Scan(&pid); err != nil {
+				missingRows.Close()
+				adminMonetizationQueryError(w, logger, "scan plans missing entitlements", err)
+				return
+			}
+			ov.Tasks.PlansMissingEntitlementIds = append(ov.Tasks.PlansMissingEntitlementIds, pid)
+		}
+		if err := missingRows.Err(); err != nil {
+			missingRows.Close()
+			adminMonetizationQueryError(w, logger, "iterate plans missing entitlements", err)
+			return
+		}
+		missingRows.Close()
 		ov.Tasks.PlansMissingEntitlementCount = len(ov.Tasks.PlansMissingEntitlementIds)
 		if ov.Tasks.PlansMissingEntitlementIds == nil {
 			ov.Tasks.PlansMissingEntitlementIds = []string{}
 		}
 
 		// Disabled ad placements
-		db.QueryRow(ctx, "SELECT COUNT(*) FROM monetization.ad_placement WHERE active = false").Scan(&ov.Tasks.DisabledAdPlacements)
+		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM monetization.ad_placement WHERE active = false").Scan(&ov.Tasks.DisabledAdPlacements); err != nil {
+			adminMonetizationQueryError(w, logger, "load disabled monetization placements", err)
+			return
+		}
 
 		writeJSON(w, http.StatusOK, ov)
 	}
@@ -175,12 +247,20 @@ func adminMonetizationOverviewHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 // adminMonetizationSummaryHandler implements GET /api/admin/monetization/summary.
 // Alias for overview — same contract.
 func adminMonetizationSummaryHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
-	return adminMonetizationOverviewHandler(db, logger)
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.read", "billing.plan.view") {
+			return
+		}
+		adminMonetizationOverviewDataHandler(db, logger, false)(w, r)
+	}
 }
 
 // adminMonetizationAnalyticsHandler implements GET /api/admin/monetization/analytics.
 func adminMonetizationAnalyticsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.read", "billing.plan.view") {
+			return
+		}
 		ctx := r.Context()
 
 		type EventCount struct {
@@ -201,20 +281,30 @@ func adminMonetizationAnalyticsHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 
 		rows, err := db.Query(ctx, `
 			SELECT event_name, COUNT(*)::int as cnt
-			FROM analytics.event
+			FROM analytics.analytics_event
 			WHERE created_at >= NOW() - INTERVAL '30 days'
 			  AND event_name LIKE 'monetization_%'
 			GROUP BY event_name
 			ORDER BY event_name`)
-		if err == nil {
-			for rows.Next() {
-				var ec EventCount
-				if rows.Scan(&ec.Name, &ec.Count) == nil {
-					a.EventsByName = append(a.EventsByName, ec)
-				}
-			}
-			rows.Close()
+		if err != nil {
+			adminMonetizationQueryError(w, logger, "load monetization analytics", err)
+			return
 		}
+		for rows.Next() {
+			var ec EventCount
+			if err := rows.Scan(&ec.Name, &ec.Count); err != nil {
+				rows.Close()
+				adminMonetizationQueryError(w, logger, "scan monetization analytics", err)
+				return
+			}
+			a.EventsByName = append(a.EventsByName, ec)
+		}
+		if err := rows.Err(); err != nil {
+			rows.Close()
+			adminMonetizationQueryError(w, logger, "iterate monetization analytics", err)
+			return
+		}
+		rows.Close()
 		if a.EventsByName == nil {
 			a.EventsByName = []EventCount{}
 		}
@@ -226,10 +316,27 @@ func adminMonetizationAnalyticsHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 // adminMonetizationAuditHandler implements GET /api/admin/monetization/audit.
 func adminMonetizationAuditHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.read", "billing.plan.view") {
+			return
+		}
 		ctx := r.Context()
 		actionFilter := r.URL.Query().Get("action")
 		fromStr := r.URL.Query().Get("from")
 		toStr := r.URL.Query().Get("to")
+		fromTime, err := parseMonetizationAuditTime(fromStr)
+		if err != nil {
+			writeJSONError(w, "invalid from date", http.StatusBadRequest)
+			return
+		}
+		toTime, err := parseMonetizationAuditTime(toStr)
+		if err != nil {
+			writeJSONError(w, "invalid to date", http.StatusBadRequest)
+			return
+		}
+		if fromTime != nil && toTime != nil && fromTime.After(*toTime) {
+			writeJSONError(w, "from date must not be after to date", http.StatusBadRequest)
+			return
+		}
 		take := queryInt(r, "take", 50)
 		if take < 1 || take > 200 {
 			take = 50
@@ -257,76 +364,75 @@ func adminMonetizationAuditHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 			args = append(args, "%"+actionFilter+"%")
 			argIdx++
 		}
-		if fromStr != "" {
+		if fromTime != nil {
 			whereParts = append(whereParts, fmt.Sprintf("a.created_at >= $%d", argIdx))
-			args = append(args, fromStr)
+			args = append(args, *fromTime)
 			argIdx++
 		}
-		if toStr != "" {
+		if toTime != nil {
 			whereParts = append(whereParts, fmt.Sprintf("a.created_at <= $%d", argIdx))
-			args = append(args, toStr)
+			args = append(args, *toTime)
 			argIdx++
-		}
-
-		whereClause := ""
-		if len(whereParts) > 0 {
-			whereClause = "WHERE " + strings.Join(whereParts, " AND ")
 		}
 
 		// Admin audit logs related to monetization
+		adminFilters := append([]string(nil), whereParts...)
+		adminFilters = append(adminFilters, "(a.target_type ILIKE '%%monetization%%' OR a.action ILIKE '%%monetization%%' OR a.action ILIKE '%%billing%%')")
 		adminQuery := fmt.Sprintf(`
 			SELECT a.id, 'ops.admin_audit' as source, a.action, a.actor_id,
 			       NULL::text as user_id, NULL::text as actor_kind,
 			       a.target_id, a.target_type, NULL::jsonb as payload,
 			       a.created_at
 			FROM ops.admin_audit_log a
-			%s AND (a.target_type ILIKE '%%monetization%%' OR a.action ILIKE '%%monetization%%' OR a.action ILIKE '%%billing%%')
+			WHERE %s
 			ORDER BY a.created_at DESC LIMIT $%d`,
-			strings.Replace(whereClause, "WHERE", "WHERE", 1), argIdx)
-		if whereClause == "" {
-			adminQuery = fmt.Sprintf(`
-				SELECT a.id, 'ops.admin_audit' as source, a.action, a.actor_id,
-				       NULL::text as user_id, NULL::text as actor_kind,
-				       a.target_id, a.target_type, NULL::jsonb as payload,
-				       a.created_at
-				FROM ops.admin_audit_log a
-				WHERE (a.target_type ILIKE '%%monetization%%' OR a.action ILIKE '%%monetization%%' OR a.action ILIKE '%%billing%%')
-				ORDER BY a.created_at DESC LIMIT $1`)
-			args = []any{take}
-			argIdx = 2
-		} else {
-			args = append(args, take)
-		}
+			strings.Join(adminFilters, " AND "), argIdx)
+		adminArgs := append(append([]any(nil), args...), take)
 
 		var items []AuditItem
 
-		rows, err := db.Query(ctx, adminQuery, args...)
-		if err == nil {
-			for rows.Next() {
-				var ai AuditItem
-				var ts time.Time
-				if rows.Scan(&ai.ID, &ai.Source, &ai.Action, &ai.ActorID,
-					&ai.UserID, &ai.ActorKind, &ai.TargetID, &ai.TargetType,
-					&ai.Payload, &ts) == nil {
-					ai.At = ts.UTC().Format(time.RFC3339)
-					items = append(items, ai)
-				}
-			}
-			rows.Close()
+		rows, err := db.Query(ctx, adminQuery, adminArgs...)
+		if err != nil {
+			adminMonetizationQueryError(w, logger, "load admin monetization audit", err)
+			return
 		}
+		for rows.Next() {
+			var ai AuditItem
+			var ts time.Time
+			if err := rows.Scan(&ai.ID, &ai.Source, &ai.Action, &ai.ActorID,
+				&ai.UserID, &ai.ActorKind, &ai.TargetID, &ai.TargetType,
+				&ai.Payload, &ts); err != nil {
+				rows.Close()
+				adminMonetizationQueryError(w, logger, "scan admin monetization audit", err)
+				return
+			}
+			ai.At = ts.UTC().Format(time.RFC3339)
+			items = append(items, ai)
+		}
+		if err := rows.Err(); err != nil {
+			rows.Close()
+			adminMonetizationQueryError(w, logger, "iterate admin monetization audit", err)
+			return
+		}
+		rows.Close()
 
 		// Monetization-specific audit logs
 		mWhereParts := []string{}
 		mArgs := []any{}
 		mArgIdx := 1
-		if fromStr != "" {
+		if fromTime != nil {
 			mWhereParts = append(mWhereParts, fmt.Sprintf("created_at >= $%d", mArgIdx))
-			mArgs = append(mArgs, fromStr)
+			mArgs = append(mArgs, *fromTime)
 			mArgIdx++
 		}
-		if toStr != "" {
+		if toTime != nil {
 			mWhereParts = append(mWhereParts, fmt.Sprintf("created_at <= $%d", mArgIdx))
-			mArgs = append(mArgs, toStr)
+			mArgs = append(mArgs, *toTime)
+			mArgIdx++
+		}
+		if actionFilter != "" {
+			mWhereParts = append(mWhereParts, fmt.Sprintf("action ILIKE $%d", mArgIdx))
+			mArgs = append(mArgs, "%"+actionFilter+"%")
 			mArgIdx++
 		}
 		mWhereClause := ""
@@ -342,19 +448,29 @@ func adminMonetizationAuditHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		mArgs = append(mArgs, take)
 
 		mRows, err := db.Query(ctx, mQuery, mArgs...)
-		if err == nil {
-			for mRows.Next() {
-				var ai AuditItem
-				var ts time.Time
-				if mRows.Scan(&ai.ID, &ai.Source, &ai.Action, &ai.ActorID,
-					&ai.UserID, &ai.ActorKind, &ai.TargetID, &ai.TargetType,
-					&ai.Payload, &ts) == nil {
-					ai.At = ts.UTC().Format(time.RFC3339)
-					items = append(items, ai)
-				}
-			}
-			mRows.Close()
+		if err != nil {
+			adminMonetizationQueryError(w, logger, "load monetization audit", err)
+			return
 		}
+		for mRows.Next() {
+			var ai AuditItem
+			var ts time.Time
+			if err := mRows.Scan(&ai.ID, &ai.Source, &ai.Action, &ai.ActorID,
+				&ai.UserID, &ai.ActorKind, &ai.TargetID, &ai.TargetType,
+				&ai.Payload, &ts); err != nil {
+				mRows.Close()
+				adminMonetizationQueryError(w, logger, "scan monetization audit", err)
+				return
+			}
+			ai.At = ts.UTC().Format(time.RFC3339)
+			items = append(items, ai)
+		}
+		if err := mRows.Err(); err != nil {
+			mRows.Close()
+			adminMonetizationQueryError(w, logger, "iterate monetization audit", err)
+			return
+		}
+		mRows.Close()
 
 		if items == nil {
 			items = []AuditItem{}
@@ -367,6 +483,9 @@ func adminMonetizationAuditHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 // adminMonetizationPlansListHandler implements GET /api/admin/monetization/plans.
 func adminMonetizationPlansListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.read", "billing.plan.view") {
+			return
+		}
 		ctx := r.Context()
 
 		type PlanEntitlement struct {
@@ -416,7 +535,11 @@ func adminMonetizationPlansListHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			var configBytes []byte
 			if err := rows.Scan(&pl.ID, &pl.Slug, &pl.NameKey, &pl.Status,
 				&configBytes, &pl.SortOrder, &createdAt, &updatedAt,
-				&pl.SubscriptionsCount); err == nil {
+				&pl.SubscriptionsCount); err != nil {
+				logger.Error("scan monetization plan", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			} else {
 				pl.CreatedAt = createdAt.UTC().Format(time.RFC3339)
 				pl.UpdatedAt = updatedAt.UTC().Format(time.RFC3339)
 				if configBytes != nil {
@@ -431,15 +554,28 @@ func adminMonetizationPlansListHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 					FROM monetization.plan_entitlement pe
 					JOIN monetization.entitlement_definition ed ON ed.id = pe.entitlement_id
 					WHERE pe.plan_id = $1`, pl.ID)
-				if eErr == nil {
-					for eRows.Next() {
-						var ent PlanEntitlement
-						if eRows.Scan(&ent.ID, &ent.Key, &ent.Category, &ent.Description) == nil {
-							pl.Entitlements = append(pl.Entitlements, ent)
-						}
-					}
-					eRows.Close()
+				if eErr != nil {
+					logger.Error("list monetization plan entitlements", "error", eErr)
+					writeJSONError(w, "internal error", http.StatusInternalServerError)
+					return
 				}
+				for eRows.Next() {
+					var ent PlanEntitlement
+					if err := eRows.Scan(&ent.ID, &ent.Key, &ent.Category, &ent.Description); err != nil {
+						eRows.Close()
+						logger.Error("scan monetization plan entitlement", "error", err)
+						writeJSONError(w, "internal error", http.StatusInternalServerError)
+						return
+					}
+					pl.Entitlements = append(pl.Entitlements, ent)
+				}
+				if err := eRows.Err(); err != nil {
+					eRows.Close()
+					logger.Error("iterate monetization plan entitlements", "error", err)
+					writeJSONError(w, "internal error", http.StatusInternalServerError)
+					return
+				}
+				eRows.Close()
 				if pl.Entitlements == nil {
 					pl.Entitlements = []PlanEntitlement{}
 				}
@@ -449,21 +585,39 @@ func adminMonetizationPlansListHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 					SELECT pq.id, pq.quota_policy_id, pq.limit_value
 					FROM monetization.plan_quota pq
 					WHERE pq.plan_id = $1`, pl.ID)
-				if qErr == nil {
-					for qRows.Next() {
-						var pq PlanQuota
-						if qRows.Scan(&pq.ID, &pq.QuotaPolicyID, &pq.LimitValue) == nil {
-							pl.PlanQuotas = append(pl.PlanQuotas, pq)
-						}
-					}
-					qRows.Close()
+				if qErr != nil {
+					logger.Error("list monetization plan quotas", "error", qErr)
+					writeJSONError(w, "internal error", http.StatusInternalServerError)
+					return
 				}
+				for qRows.Next() {
+					var pq PlanQuota
+					if err := qRows.Scan(&pq.ID, &pq.QuotaPolicyID, &pq.LimitValue); err != nil {
+						qRows.Close()
+						logger.Error("scan monetization plan quota", "error", err)
+						writeJSONError(w, "internal error", http.StatusInternalServerError)
+						return
+					}
+					pl.PlanQuotas = append(pl.PlanQuotas, pq)
+				}
+				if err := qRows.Err(); err != nil {
+					qRows.Close()
+					logger.Error("iterate monetization plan quotas", "error", err)
+					writeJSONError(w, "internal error", http.StatusInternalServerError)
+					return
+				}
+				qRows.Close()
 				if pl.PlanQuotas == nil {
 					pl.PlanQuotas = []PlanQuota{}
 				}
 
 				plans = append(plans, pl)
 			}
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate monetization plans", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if plans == nil {
 			plans = []Plan{}
@@ -476,6 +630,9 @@ func adminMonetizationPlansListHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 // adminMonetizationPlansCreateHandler implements POST /api/admin/monetization/plans.
 func adminMonetizationPlansCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.write", "billing.plan.manage") {
+			return
+		}
 		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
@@ -496,6 +653,13 @@ func adminMonetizationPlansCreateHandler(db *pgxpool.Pool, logger *slog.Logger) 
 			writeJSONError(w, "slug and nameKey are required", http.StatusBadRequest)
 			return
 		}
+		req.Slug = strings.TrimSpace(req.Slug)
+		req.NameKey = strings.TrimSpace(req.NameKey)
+		req.Status = strings.TrimSpace(req.Status)
+		if req.Slug == "" || req.NameKey == "" || len(req.Slug) > 64 || len(req.NameKey) > 160 || len(req.Status) > 32 {
+			writeJSONError(w, "invalid plan fields", http.StatusBadRequest)
+			return
+		}
 		if req.Status == "" {
 			req.Status = "draft"
 		}
@@ -505,21 +669,42 @@ func adminMonetizationPlansCreateHandler(db *pgxpool.Pool, logger *slog.Logger) 
 		}
 
 		ctx := r.Context()
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			adminMonetizationQueryError(w, logger, "begin monetization plan create", err)
+			return
+		}
+		defer tx.Rollback(ctx)
 		var createdID string
-		err := db.QueryRow(ctx, `
+		err = tx.QueryRow(ctx, `
 			INSERT INTO monetization.plan (slug, name_key, status, config, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING id`,
 			req.Slug, req.NameKey, req.Status, configJSON).Scan(&createdID)
 		if err != nil {
-			logger.Error("create monetization plan", "error", err)
-			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+				writeJSONError(w, "plan slug already exists", http.StatusConflict)
+				return
+			}
+			adminMonetizationQueryError(w, logger, "create monetization plan", err)
 			return
 		}
 
-		afterJSON, _ := json.Marshal(map[string]any{"slug": req.Slug, "nameKey": req.NameKey, "status": req.Status})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		afterJSON, err := json.Marshal(map[string]any{"slug": req.Slug, "nameKey": req.NameKey, "status": req.Status})
+		if err != nil {
+			adminMonetizationQueryError(w, logger, "encode monetization plan audit", err)
+			return
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.monetization.plan.created', $1, $2, 'monetization.plan', $3, $4, NOW())`,
-			identity.ActorID, createdID, "plan created via admin console", afterJSON)
+			identity.ActorID, createdID, "plan created via admin console", afterJSON); err != nil {
+			adminMonetizationQueryError(w, logger, "audit monetization plan create", err)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			adminMonetizationQueryError(w, logger, "commit monetization plan create", err)
+			return
+		}
 
 		writeJSON(w, http.StatusCreated, map[string]any{"id": createdID, "slug": req.Slug, "nameKey": req.NameKey, "status": req.Status})
 	}
@@ -528,6 +713,9 @@ func adminMonetizationPlansCreateHandler(db *pgxpool.Pool, logger *slog.Logger) 
 // adminMonetizationPlansPatchHandler implements PATCH /api/admin/monetization/plans/{id}.
 func adminMonetizationPlansPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !requireMonetizationPermission(w, r, db, "admin.monetization.write", "billing.plan.manage") {
+			return
+		}
 		identity, ok := authn.GetAdminIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
@@ -537,6 +725,11 @@ func adminMonetizationPlansPatchHandler(db *pgxpool.Pool, logger *slog.Logger) h
 		id := extractPathParam(r.URL.Path, "plans", 1)
 		if id == "" {
 			writeJSONError(w, "plan id required", http.StatusBadRequest)
+			return
+		}
+		var parsedID pgtype.UUID
+		if err := parsedID.Scan(id); err != nil {
+			writeJSONError(w, "invalid plan id", http.StatusBadRequest)
 			return
 		}
 
@@ -550,10 +743,29 @@ func adminMonetizationPlansPatchHandler(db *pgxpool.Pool, logger *slog.Logger) h
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
+		if req.NameKey != nil && (strings.TrimSpace(*req.NameKey) == "" || len(strings.TrimSpace(*req.NameKey)) > 160) {
+			writeJSONError(w, "invalid nameKey", http.StatusBadRequest)
+			return
+		}
+		if req.Status != nil && (strings.TrimSpace(*req.Status) == "" || len(strings.TrimSpace(*req.Status)) > 32) {
+			writeJSONError(w, "invalid status", http.StatusBadRequest)
+			return
+		}
+		if req.NameKey != nil {
+			nameKey := strings.TrimSpace(*req.NameKey)
+			req.NameKey = &nameKey
+		}
+		if req.Status != nil {
+			status := strings.TrimSpace(*req.Status)
+			req.Status = &status
+		}
 
 		ctx := r.Context()
 		var exists bool
-		db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM monetization.plan WHERE id = $1)", id).Scan(&exists)
+		if err := db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM monetization.plan WHERE id = $1)", id).Scan(&exists); err != nil {
+			adminMonetizationQueryError(w, logger, "find monetization plan", err)
+			return
+		}
 		if !exists {
 			writeJSONError(w, "plan not found", http.StatusNotFound)
 			return
@@ -594,18 +806,59 @@ func adminMonetizationPlansPatchHandler(db *pgxpool.Pool, logger *slog.Logger) h
 			" WHERE id = $" + itoa(argIdx)
 		args = append(args, id)
 
-		if _, err := db.Exec(ctx, query, args...); err != nil {
-			logger.Error("patch monetization plan", "error", err)
-			writeJSONError(w, "internal error", http.StatusInternalServerError)
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			adminMonetizationQueryError(w, logger, "begin monetization plan update", err)
+			return
+		}
+		defer tx.Rollback(ctx)
+		if _, err := tx.Exec(ctx, query, args...); err != nil {
+			adminMonetizationQueryError(w, logger, "update monetization plan", err)
 			return
 		}
 
-		afterJSON, _ := json.Marshal(map[string]any{"updated": true, "fields": setClauses})
-		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		afterJSON, err := json.Marshal(map[string]any{"updated": true, "fields": setClauses})
+		if err != nil {
+			adminMonetizationQueryError(w, logger, "encode monetization plan update audit", err)
+			return
+		}
+		beforeJSON, err := json.Marshal(map[string]any{"id": id})
+		if err != nil {
+			adminMonetizationQueryError(w, logger, "encode monetization plan before audit", err)
+			return
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.monetization.plan.updated', $1, $2, 'monetization.plan', $3, $4, $5, NOW())`,
-			identity.ActorID, id, "plan updated via admin console", afterJSON, beforeJSON)
+			identity.ActorID, id, "plan updated via admin console", afterJSON, beforeJSON); err != nil {
+			adminMonetizationQueryError(w, logger, "audit monetization plan update", err)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			adminMonetizationQueryError(w, logger, "commit monetization plan update", err)
+			return
+		}
 
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "updated": true})
 	}
+}
+
+func adminMonetizationQueryError(w http.ResponseWriter, logger *slog.Logger, operation string, err error) {
+	if logger == nil {
+		logger = slog.Default()
+	}
+	logger.Error(operation, "error", err)
+	writeJSONError(w, "internal error", http.StatusInternalServerError)
+}
+
+func parseMonetizationAuditTime(value string) (*time.Time, error) {
+	if value == "" {
+		return nil, nil
+	}
+	for _, layout := range []string{time.RFC3339Nano, "2006-01-02"} {
+		parsed, err := time.Parse(layout, value)
+		if err == nil {
+			return &parsed, nil
+		}
+	}
+	return nil, fmt.Errorf("invalid timestamp")
 }

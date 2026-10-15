@@ -110,6 +110,49 @@ func LearnerGuard(store SessionLookup, cfg GuardConfig) func(http.Handler) http.
 	}
 }
 
+// OptionalLearnerGuard injects a learner identity when the request carries a valid
+// session and otherwise continues as a guest. Session-store failures still fail closed.
+func OptionalLearnerGuard(store SessionLookup, cfg GuardConfig) func(http.Handler) http.Handler {
+	cookieName := cfg.LearnerCookieName
+	if cookieName == "" {
+		cookieName = "bjt_web_session"
+	}
+	logger := cfg.Logger
+	if logger == nil {
+		logger = slog.Default()
+	}
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			raw := extractCookie(r, cookieName)
+			if raw == "" {
+				raw = extractBearerToken(r)
+			}
+			if raw == "" || store == nil {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			sess, err := store.LookupLearnerSession(r.Context(), raw)
+			if errors.Is(err, session.ErrSessionNotFound) || errors.Is(err, session.ErrInvalidToken) {
+				next.ServeHTTP(w, r)
+				return
+			}
+			if err != nil || sess == nil {
+				logger.Error("optional learner session lookup failed", "error", err)
+				jsonError(w, "internal", http.StatusInternalServerError)
+				return
+			}
+
+			ctx := context.WithValue(r.Context(), learnerIdentityKey, LearnerIdentity{
+				SessionID: sess.ID,
+				UserID:    sess.UserID,
+			})
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
 // AdminGuard returns middleware that validates an admin session cookie and injects
 // AdminIdentity into the request context. Returns 401 for missing/invalid/expired/revoked/disabled sessions.
 func AdminGuard(store SessionLookup, cfg GuardConfig) func(http.Handler) http.Handler {

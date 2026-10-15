@@ -67,12 +67,14 @@ export interface ContentActionLabels {
   createDeck?: string;
   newDeckPlaceholder?: string;
   nDecks?: string;
+  flashcardError?: string;
 }
 
 /* ── Deck type ───────────────────────────────── */
 
 interface DeckItem {
   id: string;
+  ownerUserId: string | null;
   titleVi: string | null;
   titleJa: string | null;
   _count?: { cards: number };
@@ -104,7 +106,7 @@ function DeckPicker({
         const r = await learnerApiFetch(`/api/flashcards/decks?userId=${userId}&limit=50`);
         if (r.ok) {
           const data = (await r.json()) as DeckItem[];
-          setDecks(data);
+          setDecks(data.filter((deck) => deck.ownerUserId === userId));
         }
       } catch { /* ignore */ } finally {
         setLoading(false);
@@ -218,6 +220,64 @@ function DeckPicker({
           </button>
         )}
       </div>
+    </div>
+  );
+}
+
+export function FlashcardAddAction({
+  backText,
+  frontText,
+  labels,
+  reading,
+  sourceId,
+  sourceType,
+}: {
+  backText: string;
+  frontText: string;
+  labels: ContentActionLabels;
+  reading?: string;
+  sourceId: string;
+  sourceType: string;
+}) {
+  const userId = useGoAuth().userId ?? "";
+  const [added, setAdded] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  const addToDeck = async (deckId: string) => {
+    if (loading || added) return;
+    setLoading(true);
+    setShowPicker(false);
+    try {
+      const response = await learnerApiFetch("/api/flashcards/cards/from-content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, deckId, sourceId, sourceType, frontText, backText, reading }),
+      });
+      if (response.ok) setAdded(true);
+      else setFailed(true);
+    } catch {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!userId) return <p className="text-[11px] text-[#9CA3AF]">{labels.signInHint}</p>;
+  return (
+    <div className="relative">
+      <button
+        className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold ${added ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700 hover:bg-amber-100"}`}
+        disabled={loading || added}
+        onClick={() => setShowPicker((current) => !current)}
+        type="button"
+      >
+        {loading ? <SpinnerIcon /> : <PlusIcon />}
+        {added ? labels.addedFlashcard : labels.addFlashcard}
+      </button>
+      {failed && <p className="mt-1 text-xs text-red-600" role="alert">{labels.flashcardError ?? labels.addFlashcard}</p>}
+      {showPicker && <DeckPicker labels={labels} onClose={() => setShowPicker(false)} onSelect={(deckId) => void addToDeck(deckId)} />}
     </div>
   );
 }

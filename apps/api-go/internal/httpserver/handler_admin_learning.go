@@ -2,12 +2,14 @@ package httpserver
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
@@ -294,16 +296,37 @@ func adminLearningPathPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		setClauses = append(setClauses, "updated_at = NOW()")
 		query := "UPDATE learning.learning_path SET " + joinStrings(setClauses, ", ") + " WHERE id = $" + itoa(argIdx)
 		args = append(args, id)
-		if _, err := db.Exec(ctx, query, args...); err != nil {
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin patch learning path", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
+		tag, err := tx.Exec(ctx, query, args...)
+		if err != nil {
 			logger.Error("patch learning path", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+		if tag.RowsAffected() == 0 {
+			writeJSONError(w, "learning path not found", http.StatusNotFound)
+			return
+		}
 		reason, _ := req["reason"].(string)
 		afterJSON, _ := json.Marshal(req)
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		if _, err := tx.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.learning.path.updated', $1, $2, 'learning.learning_path', $3, $4, NOW())`,
-			identity.ActorID, id, reason, afterJSON)
+			identity.ActorID, id, reason, afterJSON); err != nil {
+			logger.Error("audit patch learning path", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit patch learning path", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "updated": true})
 	}
 }
@@ -364,11 +387,36 @@ func adminLearningPathArchiveHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		}
 		json.NewDecoder(r.Body).Decode(&body)
 		ctx := r.Context()
-		db.Exec(ctx, "UPDATE learning.learning_path SET status = 'archived', updated_at = NOW() WHERE id = $1", id)
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin archive learning path", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
+		tag, err := tx.Exec(ctx, "UPDATE learning.learning_path SET status = 'archived', updated_at = NOW() WHERE id = $1", id)
+		if err != nil {
+			logger.Error("archive learning path", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if tag.RowsAffected() == 0 {
+			writeJSONError(w, "learning path not found", http.StatusNotFound)
+			return
+		}
 		afterJSON, _ := json.Marshal(map[string]any{"status": "archived"})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		if _, err := tx.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.learning.path.archived', $1, $2, 'learning.learning_path', $3, $4, NOW())`,
-			identity.ActorID, id, body.Reason, afterJSON)
+			identity.ActorID, id, body.Reason, afterJSON); err != nil {
+			logger.Error("audit archive learning path", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit archive learning path", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": "archived"})
 	}
 }
@@ -633,6 +681,15 @@ func adminCompetencyDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 }
 
 // adminCompetencyCreateHandler implements POST /api/admin/learning/competencies.
+func validCompetencyLevel(level string) bool {
+	switch level {
+	case "beginner", "intermediate", "advanced", "BJT-J5", "BJT-J4", "BJT-J3", "BJT-J2", "BJT-J1":
+		return true
+	default:
+		return false
+	}
+}
+
 func adminCompetencyCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		identity, ok := authn.GetAdminIdentity(r.Context())
@@ -652,19 +709,32 @@ func adminCompetencyCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		if req.Code == "" || req.TitleVi == "" || req.Level == "" {
-			writeJSONError(w, "code, titleVi, and level required", http.StatusBadRequest)
+		req.Code, req.TitleVi, req.Level, req.Reason = strings.TrimSpace(req.Code), strings.TrimSpace(req.TitleVi), strings.TrimSpace(req.Level), strings.TrimSpace(req.Reason)
+		if req.Code == "" || req.TitleVi == "" || req.Reason == "" || !validCompetencyLevel(req.Level) {
+			writeJSONError(w, "valid code, titleVi, level, and reason required", http.StatusBadRequest)
 			return
 		}
 		ctx := r.Context()
-		var exists bool
-		db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM learning.competency WHERE code = $1)", req.Code).Scan(&exists)
-		if exists {
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin competency create", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
+		var createdID string
+		var before json.RawMessage
+		err = tx.QueryRow(ctx, `SELECT to_jsonb(c) FROM learning.competency c WHERE code=$1`, req.Code).Scan(&before)
+		if err == nil {
 			writeJSONError(w, "code already exists", http.StatusConflict)
 			return
 		}
-		var createdID string
-		err := db.QueryRow(ctx, `INSERT INTO learning.competency
+		if !errors.Is(err, pgx.ErrNoRows) {
+			logger.Error("check competency code", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		err = tx.QueryRow(ctx, `INSERT INTO learning.competency
 			(code, title_vi, title_ja, description_vi, level, status, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, 'draft', NOW(), NOW()) RETURNING id`,
 			req.Code, req.TitleVi, req.TitleJa, req.DescriptionVi, req.Level).Scan(&createdID)
@@ -673,11 +743,39 @@ func adminCompetencyCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-		afterJSON, _ := json.Marshal(map[string]any{"id": createdID, "code": req.Code})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
-			VALUES ('admin.learning.competency.created', $1, $2, 'learning.competency', $3, $4, NOW())`,
-			identity.ActorID, createdID, req.Reason, afterJSON)
-		writeJSON(w, http.StatusCreated, map[string]any{"id": createdID, "code": req.Code, "status": "draft"})
+		var after json.RawMessage
+		if err := tx.QueryRow(ctx, `SELECT to_jsonb(c) FROM learning.competency c WHERE id=$1`, createdID).Scan(&after); err != nil {
+			logger.Error("read created competency", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.learning.competency.created", "learning.competency", createdID, req.Reason, nil, after); err != nil {
+			logger.Error("audit competency create", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit competency create", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		var stored struct {
+			ID            string    `json:"id"`
+			Code          string    `json:"code"`
+			TitleVi       string    `json:"title_vi"`
+			TitleJa       *string   `json:"title_ja"`
+			DescriptionVi *string   `json:"description_vi"`
+			Level         string    `json:"level"`
+			Status        string    `json:"status"`
+			CreatedAt     time.Time `json:"created_at"`
+			UpdatedAt     time.Time `json:"updated_at"`
+		}
+		if err := json.Unmarshal(after, &stored); err != nil {
+			logger.Error("decode created competency", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		writeJSON(w, http.StatusCreated, map[string]any{"id": stored.ID, "code": stored.Code, "titleVi": stored.TitleVi, "titleJa": stored.TitleJa, "descriptionVi": stored.DescriptionVi, "level": stored.Level, "status": stored.Status, "createdAt": stored.CreatedAt.UTC().Format(time.RFC3339), "updatedAt": stored.UpdatedAt.UTC().Format(time.RFC3339), "audit": []any{}})
 	}
 }
 
@@ -700,37 +798,72 @@ func adminCompetencyPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 			return
 		}
 		ctx := r.Context()
-		setClauses := []string{}
-		args := []any{}
-		argIdx := 1
-		fieldMap := map[string]string{
-			"code": "code", "titleVi": "title_vi", "titleJa": "title_ja",
-			"descriptionVi": "description_vi", "level": "level",
+		reason, _ := req["reason"].(string)
+		reason = strings.TrimSpace(reason)
+		if len([]rune(reason)) < 3 {
+			writeJSONError(w, "reason is required", http.StatusBadRequest)
+			return
 		}
-		for k, col := range fieldMap {
-			if v, ok := req[k]; ok {
-				setClauses = append(setClauses, col+" = $"+itoa(argIdx))
-				args = append(args, v)
-				argIdx++
+		fieldMap := []struct{ key, column string }{{"code", "code"}, {"titleVi", "title_vi"}, {"titleJa", "title_ja"}, {"descriptionVi", "description_vi"}, {"level", "level"}}
+		setClauses, args := []string{}, []any{}
+		for _, field := range fieldMap {
+			if value, exists := req[field.key]; exists {
+				if value != nil {
+					text, ok := value.(string)
+					if !ok || ((field.key == "code" || field.key == "titleVi") && strings.TrimSpace(text) == "") || (field.key == "level" && !validCompetencyLevel(strings.TrimSpace(text))) {
+						writeJSONError(w, "invalid "+field.key, http.StatusBadRequest)
+						return
+					}
+					value = strings.TrimSpace(text)
+				}
+				setClauses = append(setClauses, field.column+" = $"+itoa(len(args)+1))
+				args = append(args, value)
 			}
 		}
 		if len(setClauses) == 0 {
 			writeJSONError(w, "at least one field to update is required", http.StatusBadRequest)
 			return
 		}
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin competency patch", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
+		var before json.RawMessage
+		if err := tx.QueryRow(ctx, `SELECT to_jsonb(c) FROM learning.competency c WHERE id=$1 FOR UPDATE`, id).Scan(&before); errors.Is(err, pgx.ErrNoRows) {
+			writeJSONError(w, "competency not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			logger.Error("load competency", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		setClauses = append(setClauses, "updated_at = NOW()")
-		query := "UPDATE learning.competency SET " + joinStrings(setClauses, ", ") + " WHERE id = $" + itoa(argIdx)
+		query := "UPDATE learning.competency SET " + joinStrings(setClauses, ", ") + " WHERE id = $" + itoa(len(args)+1)
 		args = append(args, id)
-		if _, err := db.Exec(ctx, query, args...); err != nil {
+		if _, err := tx.Exec(ctx, query, args...); err != nil {
 			logger.Error("patch competency", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-		reason, _ := req["reason"].(string)
-		afterJSON, _ := json.Marshal(req)
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
-			VALUES ('admin.learning.competency.updated', $1, $2, 'learning.competency', $3, $4, NOW())`,
-			identity.ActorID, id, reason, afterJSON)
+		var after json.RawMessage
+		if err := tx.QueryRow(ctx, `SELECT to_jsonb(c) FROM learning.competency c WHERE id=$1`, id).Scan(&after); err != nil {
+			logger.Error("read patched competency", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.learning.competency.updated", "learning.competency", id, reason, before, after); err != nil {
+			logger.Error("audit competency patch", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit competency patch", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "updated": true})
 	}
 }
@@ -751,11 +884,31 @@ func adminCompetencyPublishHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		var body struct {
 			Reason string `json:"reason"`
 		}
-		json.NewDecoder(r.Body).Decode(&body)
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			writeJSONError(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+		body.Reason = strings.TrimSpace(body.Reason)
+		if len([]rune(body.Reason)) < 3 {
+			writeJSONError(w, "reason is required", http.StatusBadRequest)
+			return
+		}
 		ctx := r.Context()
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin competency publish", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 		var currentStatus string
-		if err := db.QueryRow(ctx, "SELECT status FROM learning.competency WHERE id = $1", id).Scan(&currentStatus); err != nil {
+		var before json.RawMessage
+		if err := tx.QueryRow(ctx, "SELECT status,to_jsonb(c) FROM learning.competency c WHERE id=$1 FOR UPDATE", id).Scan(&currentStatus, &before); errors.Is(err, pgx.ErrNoRows) {
 			writeJSONError(w, "competency not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			logger.Error("load competency for publish", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 		if currentStatus == "archived" {
@@ -763,12 +916,28 @@ func adminCompetencyPublishHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 			return
 		}
 		if currentStatus != "published" {
-			db.Exec(ctx, "UPDATE learning.competency SET status = 'published', updated_at = NOW() WHERE id = $1", id)
+			if _, err := tx.Exec(ctx, "UPDATE learning.competency SET status='published',updated_at=NOW() WHERE id=$1", id); err != nil {
+				logger.Error("publish competency", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
 		}
-		afterJSON, _ := json.Marshal(map[string]any{"status": "published"})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
-			VALUES ('admin.learning.competency.published', $1, $2, 'learning.competency', $3, $4, NOW())`,
-			identity.ActorID, id, body.Reason, afterJSON)
+		var after json.RawMessage
+		if err := tx.QueryRow(ctx, "SELECT to_jsonb(c) FROM learning.competency c WHERE id=$1", id).Scan(&after); err != nil {
+			logger.Error("read published competency", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.learning.competency.published", "learning.competency", id, body.Reason, before, after); err != nil {
+			logger.Error("audit competency publish", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit competency publish", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": "published"})
 	}
 }
@@ -789,13 +958,53 @@ func adminCompetencyArchiveHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		var body struct {
 			Reason string `json:"reason"`
 		}
-		json.NewDecoder(r.Body).Decode(&body)
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			writeJSONError(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+		body.Reason = strings.TrimSpace(body.Reason)
+		if len([]rune(body.Reason)) < 3 {
+			writeJSONError(w, "reason is required", http.StatusBadRequest)
+			return
+		}
 		ctx := r.Context()
-		db.Exec(ctx, "UPDATE learning.competency SET status = 'archived', updated_at = NOW() WHERE id = $1", id)
-		afterJSON, _ := json.Marshal(map[string]any{"status": "archived"})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
-			VALUES ('admin.learning.competency.archived', $1, $2, 'learning.competency', $3, $4, NOW())`,
-			identity.ActorID, id, body.Reason, afterJSON)
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin competency archive", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
+		var before json.RawMessage
+		if err := tx.QueryRow(ctx, "SELECT to_jsonb(c) FROM learning.competency c WHERE id=$1 FOR UPDATE", id).Scan(&before); errors.Is(err, pgx.ErrNoRows) {
+			writeJSONError(w, "competency not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			logger.Error("load competency for archive", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if _, err := tx.Exec(ctx, "UPDATE learning.competency SET status='archived',updated_at=NOW() WHERE id=$1", id); err != nil {
+			logger.Error("archive competency", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		var after json.RawMessage
+		if err := tx.QueryRow(ctx, "SELECT to_jsonb(c) FROM learning.competency c WHERE id=$1", id).Scan(&after); err != nil {
+			logger.Error("read archived competency", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.learning.competency.archived", "learning.competency", id, body.Reason, before, after); err != nil {
+			logger.Error("audit competency archive", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit competency archive", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": "archived"})
 	}
 }
@@ -816,22 +1025,52 @@ func adminCompetencyDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		var body struct {
 			Reason string `json:"reason"`
 		}
-		json.NewDecoder(r.Body).Decode(&body)
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			writeJSONError(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+		body.Reason = strings.TrimSpace(body.Reason)
+		if len([]rune(body.Reason)) < 3 {
+			writeJSONError(w, "reason is required", http.StatusBadRequest)
+			return
+		}
 		ctx := r.Context()
+		tx, err := db.Begin(ctx)
+		if err != nil {
+			logger.Error("begin competency delete", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
 		var currentStatus string
-		if err := db.QueryRow(ctx, "SELECT status FROM learning.competency WHERE id = $1", id).Scan(&currentStatus); err != nil {
+		var before json.RawMessage
+		if err := tx.QueryRow(ctx, "SELECT status,to_jsonb(c) FROM learning.competency c WHERE id=$1 FOR UPDATE", id).Scan(&currentStatus, &before); errors.Is(err, pgx.ErrNoRows) {
 			writeJSONError(w, "competency not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			logger.Error("load competency for delete", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 		if currentStatus != "draft" {
 			writeJSONError(w, "only draft competencies can be deleted", http.StatusBadRequest)
 			return
 		}
-		db.Exec(ctx, "DELETE FROM learning.competency WHERE id = $1", id)
-		beforeJSON, _ := json.Marshal(map[string]any{"id": id, "status": currentStatus})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
-			VALUES ('admin.learning.competency.deleted', $1, $2, 'learning.competency', $3, $4, NOW())`,
-			identity.ActorID, id, body.Reason, beforeJSON)
+		if _, err := tx.Exec(ctx, "DELETE FROM learning.competency WHERE id=$1", id); err != nil {
+			logger.Error("delete competency", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.learning.competency.deleted", "learning.competency", id, body.Reason, before, nil); err != nil {
+			logger.Error("audit competency delete", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit competency delete", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true, "id": id})
 	}
 }
@@ -861,24 +1100,52 @@ func adminLearningReviewSummaryHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		s.WindowDays = windowDays
 		s.ReviewsByRating = map[string]int{}
 
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM learning.user_flashcard").Scan(&s.TotalCards)
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM learning.user_flashcard WHERE due_at <= NOW()").Scan(&s.DueNow)
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM learning.user_flashcard WHERE leeched = true").Scan(&s.Leeched)
+		for _, query := range []struct {
+			sql    string
+			target *int
+		}{
+			{"SELECT COUNT(*) FROM learning.user_flashcard", &s.TotalCards},
+			{"SELECT COUNT(*) FROM learning.user_flashcard WHERE due_at <= NOW()", &s.DueNow},
+			{"SELECT COUNT(*) FROM learning.user_flashcard WHERE leeched = true", &s.Leeched},
+		} {
+			if err := db.QueryRow(r.Context(), query.sql).Scan(query.target); err != nil {
+				logger.Error("learning review summary", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+		}
 
 		interval := fmt.Sprintf("%d days", windowDays)
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM learning.review_event WHERE reviewed_at >= NOW() - $1::interval", interval).Scan(&s.ReviewsTotal)
-
-		ratingRows, _ := db.Query(r.Context(), "SELECT rating, COUNT(*) FROM learning.review_event WHERE reviewed_at >= NOW() - $1::interval GROUP BY rating", interval)
-		if ratingRows != nil {
-			for ratingRows.Next() {
-				var rating string
-				var cnt int
-				if ratingRows.Scan(&rating, &cnt) == nil {
-					s.ReviewsByRating[rating] = cnt
-				}
-			}
-			ratingRows.Close()
+		if err := db.QueryRow(r.Context(), "SELECT COUNT(*) FROM learning.review_event WHERE reviewed_at >= NOW() - $1::interval", interval).Scan(&s.ReviewsTotal); err != nil {
+			logger.Error("learning review event count", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
+
+		ratingRows, err := db.Query(r.Context(), "SELECT rating, COUNT(*) FROM learning.review_event WHERE reviewed_at >= NOW() - $1::interval GROUP BY rating", interval)
+		if err != nil {
+			logger.Error("learning review ratings", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		for ratingRows.Next() {
+			var rating string
+			var cnt int
+			if err := ratingRows.Scan(&rating, &cnt); err != nil {
+				ratingRows.Close()
+				logger.Error("scan learning review rating", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			s.ReviewsByRating[rating] = cnt
+		}
+		if err := ratingRows.Err(); err != nil {
+			ratingRows.Close()
+			logger.Error("iterate learning review ratings", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		ratingRows.Close()
 
 		goodCount := s.ReviewsByRating["good"] + s.ReviewsByRating["easy"]
 		if s.ReviewsTotal > 0 {
@@ -886,8 +1153,11 @@ func adminLearningReviewSummaryHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			s.RetentionPct = &pct
 		}
 
-		db.QueryRow(r.Context(), "SELECT AVG(ease_factor), AVG(lapses), AVG(interval_days) FROM learning.user_flashcard").
-			Scan(&s.AvgEaseFactor, &s.AvgLapses, &s.AvgIntervalDays)
+		if err := db.QueryRow(r.Context(), "SELECT AVG(ease_factor), AVG(lapses), AVG(interval_days) FROM learning.user_flashcard").Scan(&s.AvgEaseFactor, &s.AvgLapses, &s.AvgIntervalDays); err != nil {
+			logger.Error("learning review averages", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		writeJSON(w, http.StatusOK, s)
 	}
@@ -908,34 +1178,41 @@ func adminLearningReviewRetentionCurveHandler(db *pgxpool.Pool, logger *slog.Log
 			GROUP BY 1 ORDER BY 1 ASC`, interval)
 		if err != nil {
 			logger.Error("retention curve", "error", err)
-			writeJSON(w, http.StatusOK, []any{})
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 		defer rows.Close()
 
 		type Point struct {
-			Day          string   `json:"day"`
-			Total        int      `json:"total"`
-			Good         int      `json:"good"`
-			RetentionPct *float64 `json:"retentionPct,omitempty"`
+			Day          string  `json:"day"`
+			Reviews      int     `json:"reviews"`
+			GoodReviews  int     `json:"goodReviews"`
+			RetentionPct float64 `json:"retentionPct"`
 		}
 		var points []Point
 		for rows.Next() {
 			var p Point
 			var day time.Time
-			if rows.Scan(&day, &p.Total, &p.Good) == nil {
-				p.Day = day.Format("2006-01-02")
-				if p.Total > 0 {
-					pct := float64(p.Good) / float64(p.Total) * 100
-					p.RetentionPct = &pct
-				}
-				points = append(points, p)
+			if err := rows.Scan(&day, &p.Reviews, &p.GoodReviews); err != nil {
+				logger.Error("scan retention point", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			p.Day = day.Format("2006-01-02")
+			if p.Reviews > 0 {
+				p.RetentionPct = float64(p.GoodReviews) / float64(p.Reviews) * 100
+			}
+			points = append(points, p)
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate retention points", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if points == nil {
 			points = []Point{}
 		}
-		writeJSON(w, http.StatusOK, points)
+		writeJSON(w, http.StatusOK, map[string]any{"points": points})
 	}
 }
 
@@ -944,7 +1221,12 @@ func adminLearningReviewProblemCardsHandler(db *pgxpool.Pool, logger *slog.Logge
 	return func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query().Get("q")
 		minLapses := queryInt(r, "minLapses", 2)
-		_ = queryInt(r, "maxRetention", 60) // reserved for post-filter; NestJS applies client-side
+		maxRetention := queryInt(r, "maxRetention", 100)
+		if maxRetention < 0 {
+			maxRetention = 0
+		} else if maxRetention > 100 {
+			maxRetention = 100
+		}
 		leeched := r.URL.Query().Get("leeched")
 		page := queryInt(r, "page", 1)
 		pageSize := queryInt(r, "pageSize", 25)
@@ -956,10 +1238,13 @@ func adminLearningReviewProblemCardsHandler(db *pgxpool.Pool, logger *slog.Logge
 		}
 		offset := (page - 1) * pageSize
 
-		whereParts := []string{fmt.Sprintf("uf.lapses >= $1")}
-		args := []any{minLapses}
-		argIdx := 2
-		if leeched == "leeched" {
+		whereParts := []string{
+			"uf.lapses >= $1",
+			"(SELECT CASE WHEN COUNT(*) = 0 THEN 0 ELSE COUNT(*) FILTER (WHERE rating IN ('good','easy')) * 100.0 / COUNT(*) END FROM learning.review_event re WHERE re.user_flashcard_id=uf.id AND re.reviewed_at>=NOW()-INTERVAL '30 days') <= $2",
+		}
+		args := []any{minLapses, maxRetention}
+		argIdx := 3
+		if leeched == "leeched" || leeched == "true" {
 			whereParts = append(whereParts, fmt.Sprintf("uf.leeched = $%d", argIdx))
 			args = append(args, true)
 			argIdx++
@@ -977,12 +1262,18 @@ func adminLearningReviewProblemCardsHandler(db *pgxpool.Pool, logger *slog.Logge
 		whereClause := "WHERE " + strings.Join(whereParts, " AND ")
 
 		var total int
-		countQ := "SELECT COUNT(*) FROM learning.user_flashcard uf LEFT JOIN learning.deck_card c ON c.id = uf.card_id LEFT JOIN learning.flashcard_variant fv ON fv.id = c.card_id " + whereClause
-		db.QueryRow(r.Context(), countQ, args...).Scan(&total)
+		countQ := "SELECT COUNT(*) FROM learning.user_flashcard uf LEFT JOIN learning.flashcard_variant fv ON fv.id = uf.card_id " + whereClause
+		if err := db.QueryRow(r.Context(), countQ, args...).Scan(&total); err != nil {
+			logger.Error("count problem cards", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
-		dataQ := fmt.Sprintf(`SELECT uf.id, uf.card_id, uf.lapses, uf.leeched, uf.state, uf.ease_factor, uf.interval_days,
-			fv.front_text, fv.back_text, fv.reading
-			FROM learning.user_flashcard uf LEFT JOIN learning.deck_card c ON c.id = uf.card_id LEFT JOIN learning.flashcard_variant fv ON fv.id = c.card_id
+		dataQ := fmt.Sprintf(`SELECT uf.id, uf.user_id, uf.card_id, uf.lapses, uf.leeched, uf.state, uf.ease_factor, uf.interval_days, uf.repetitions, uf.due_at,
+			fv.source_type, fv.front_text,
+			(SELECT COUNT(*)::int FROM learning.review_event re WHERE re.user_flashcard_id=uf.id AND re.reviewed_at>=NOW()-INTERVAL '30 days'),
+			(SELECT COUNT(*)::int FROM learning.review_event re WHERE re.user_flashcard_id=uf.id AND re.reviewed_at>=NOW()-INTERVAL '30 days' AND re.rating IN ('good','easy'))
+			FROM learning.user_flashcard uf LEFT JOIN learning.flashcard_variant fv ON fv.id = uf.card_id
 			%s ORDER BY uf.lapses DESC, uf.updated_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, pageSize, offset)
@@ -996,26 +1287,51 @@ func adminLearningReviewProblemCardsHandler(db *pgxpool.Pool, logger *slog.Logge
 		defer rows.Close()
 
 		type ProblemCard struct {
-			ID                 string   `json:"id"`
-			CardID             string   `json:"cardId"`
-			Lapses             int      `json:"lapses"`
-			Leeched            bool     `json:"leeched"`
-			State              string   `json:"state"`
-			EaseFactor         float64  `json:"easeFactor"`
-			IntervalDays       int      `json:"intervalDays"`
-			FrontText          *string  `json:"frontText,omitempty"`
-			BackText           *string  `json:"backText,omitempty"`
-			Reading            *string  `json:"reading,omitempty"`
-			RecentReviews      int      `json:"recentReviews"`
-			RecentRetentionPct *float64 `json:"recentRetentionPct,omitempty"`
+			ID     string `json:"id"`
+			UserID string `json:"userId"`
+			Card   struct {
+				ID       string  `json:"id"`
+				CardType *string `json:"cardType"`
+				Title    *string `json:"title"`
+			} `json:"card"`
+			State        string  `json:"state"`
+			IntervalDays int     `json:"intervalDays"`
+			EaseFactor   float64 `json:"easeFactor"`
+			Lapses       int     `json:"lapses"`
+			Repetitions  int     `json:"repetitions"`
+			IsLeech      bool    `json:"isLeech"`
+			DueAt        *string `json:"dueAt"`
+			Recent       struct {
+				Reviews      int     `json:"reviews"`
+				GoodReviews  int     `json:"goodReviews"`
+				RetentionPct float64 `json:"retentionPct"`
+			} `json:"recent"`
 		}
 		var items []ProblemCard
 		for rows.Next() {
 			var pc ProblemCard
-			if rows.Scan(&pc.ID, &pc.CardID, &pc.Lapses, &pc.Leeched, &pc.State, &pc.EaseFactor, &pc.IntervalDays,
-				&pc.FrontText, &pc.BackText, &pc.Reading) == nil {
-				items = append(items, pc)
+			var cardID string
+			var dueAt *time.Time
+			var reviews, goodReviews int
+			if err := rows.Scan(&pc.ID, &pc.UserID, &cardID, &pc.Lapses, &pc.IsLeech, &pc.State, &pc.EaseFactor, &pc.IntervalDays, &pc.Repetitions, &dueAt, &pc.Card.CardType, &pc.Card.Title, &reviews, &goodReviews); err != nil {
+				logger.Error("scan problem card", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
+			pc.Card.ID, pc.Recent.Reviews, pc.Recent.GoodReviews = cardID, reviews, goodReviews
+			if reviews > 0 {
+				pc.Recent.RetentionPct = float64(goodReviews) / float64(reviews) * 100
+			}
+			if dueAt != nil {
+				formatted := dueAt.UTC().Format(time.RFC3339)
+				pc.DueAt = &formatted
+			}
+			items = append(items, pc)
+		}
+		if err := rows.Err(); err != nil {
+			logger.Error("iterate problem cards", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if items == nil {
 			items = []ProblemCard{}
@@ -1032,36 +1348,59 @@ func adminLearningReviewCardDetailHandler(db *pgxpool.Pool, logger *slog.Logger)
 			writeJSONError(w, "card id required", http.StatusBadRequest)
 			return
 		}
+		type RecentReview struct {
+			ID                string `json:"id"`
+			Rating            string `json:"rating"`
+			ReviewedAt        string `json:"reviewedAt"`
+			ElapsedSec        int    `json:"elapsedSec"`
+			IntervalAfterDays int    `json:"intervalAfterDays"`
+		}
+		type AuditActor struct {
+			ID          string `json:"id"`
+			DisplayName string `json:"displayName"`
+			Email       string `json:"email"`
+		}
+		type AuditEntry struct {
+			ID        string      `json:"id"`
+			Action    string      `json:"action"`
+			CreatedAt string      `json:"createdAt"`
+			Reason    *string     `json:"reason"`
+			Actor     *AuditActor `json:"actor"`
+		}
 		type CardDetail struct {
-			ID           string          `json:"id"`
-			CardID       string          `json:"cardId"`
-			UserID       string          `json:"userId"`
-			State        string          `json:"state"`
-			Lapses       int             `json:"lapses"`
-			Leeched      bool            `json:"leeched"`
-			EaseFactor   float64         `json:"easeFactor"`
-			IntervalDays int             `json:"intervalDays"`
-			Repetitions  int             `json:"repetitions"`
-			DueAt        *string         `json:"dueAt,omitempty"`
-			FrontText    *string         `json:"frontText,omitempty"`
-			BackText     *string         `json:"backText,omitempty"`
-			Reading      *string         `json:"reading,omitempty"`
-			Reviews      json.RawMessage `json:"reviews"`
-			Audit        json.RawMessage `json:"audit"`
+			ID           string  `json:"id"`
+			UserID       string  `json:"userId"`
+			CardType     string  `json:"cardType"`
+			State        string  `json:"state"`
+			IntervalDays int     `json:"intervalDays"`
+			EaseFactor   float64 `json:"easeFactor"`
+			Lapses       int     `json:"lapses"`
+			Repetitions  int     `json:"repetitions"`
+			IsLeech      bool    `json:"isLeech"`
+			DueAt        *string `json:"dueAt"`
+			ReviewedAt   *string `json:"reviewedAt"`
+			Card         struct {
+				ID    string  `json:"id"`
+				Title string  `json:"title"`
+				Level *string `json:"level"`
+			} `json:"card"`
+			RecentReviews []RecentReview `json:"recentReviews"`
+			Audit         []AuditEntry   `json:"audit"`
 		}
 		var cd CardDetail
+		var cardID string
 		var dueAt *time.Time
-		err := db.QueryRow(r.Context(), `SELECT uf.id, uf.card_id, uf.user_id, uf.state, uf.lapses, uf.leeched,
-			uf.ease_factor, uf.interval_days, uf.repetitions, uf.due_at,
-			fv.front_text, fv.back_text, fv.reading
-			FROM learning.user_flashcard uf LEFT JOIN learning.deck_card c ON c.id = uf.card_id LEFT JOIN learning.flashcard_variant fv ON fv.id = c.card_id
-			WHERE uf.id = $1`, id).
-			Scan(&cd.ID, &cd.CardID, &cd.UserID, &cd.State, &cd.Lapses, &cd.Leeched,
-				&cd.EaseFactor, &cd.IntervalDays, &cd.Repetitions, &dueAt,
-				&cd.FrontText, &cd.BackText, &cd.Reading)
+		var title *string
+		err := db.QueryRow(r.Context(), `SELECT uf.id, uf.user_id, fv.source_type, uf.state, uf.interval_days, uf.ease_factor, uf.lapses, uf.repetitions, uf.leeched, uf.due_at, fv.id, fv.front_text
+			FROM learning.user_flashcard uf LEFT JOIN learning.flashcard_variant fv ON fv.id = uf.card_id WHERE uf.id=$1`, id).
+			Scan(&cd.ID, &cd.UserID, &cd.CardType, &cd.State, &cd.IntervalDays, &cd.EaseFactor, &cd.Lapses, &cd.Repetitions, &cd.IsLeech, &dueAt, &cardID, &title)
 		if err != nil {
 			writeJSONError(w, "user flashcard not found", http.StatusNotFound)
 			return
+		}
+		cd.Card.ID = cardID
+		if title != nil {
+			cd.Card.Title = *title
 		}
 		if dueAt != nil {
 			s := dueAt.UTC().Format(time.RFC3339)
@@ -1069,54 +1408,75 @@ func adminLearningReviewCardDetailHandler(db *pgxpool.Pool, logger *slog.Logger)
 		}
 
 		// Recent reviews
-		reviewRows, _ := db.Query(r.Context(), `SELECT id, rating, response_ms, reviewed_at
+		reviewRows, err := db.Query(r.Context(), `SELECT id, rating, COALESCE(elapsed_ms,0),
+			(EXTRACT(EPOCH FROM (next_due_at-previous_due_at))/86400)::int, reviewed_at
 			FROM learning.review_event WHERE user_flashcard_id = $1 ORDER BY reviewed_at DESC LIMIT 30`, id)
-		reviews := []map[string]any{}
-		if reviewRows != nil {
-			for reviewRows.Next() {
-				var rid, rating string
-				var responseMs *int
-				var rat time.Time
-				if reviewRows.Scan(&rid, &rating, &responseMs, &rat) == nil {
-					item := map[string]any{"id": rid, "rating": rating, "reviewedAt": rat.UTC().Format(time.RFC3339)}
-					if responseMs != nil {
-						item["responseMs"] = *responseMs
-					}
-					reviews = append(reviews, item)
-				}
-			}
-			reviewRows.Close()
+		if err != nil {
+			logger.Error("query review card events", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
 		}
-		cd.Reviews, _ = json.Marshal(reviews)
+		defer reviewRows.Close()
+		cd.RecentReviews = []RecentReview{}
+		for reviewRows.Next() {
+			var review RecentReview
+			var elapsedMs int
+			var reviewedAt time.Time
+			if err := reviewRows.Scan(&review.ID, &review.Rating, &elapsedMs, &review.IntervalAfterDays, &reviewedAt); err != nil {
+				logger.Error("scan review card event", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			review.ElapsedSec, review.ReviewedAt = elapsedMs/1000, reviewedAt.UTC().Format(time.RFC3339)
+			if cd.ReviewedAt == nil {
+				value := review.ReviewedAt
+				cd.ReviewedAt = &value
+			}
+			cd.RecentReviews = append(cd.RecentReviews, review)
+		}
+		if err := reviewRows.Err(); err != nil {
+			logger.Error("iterate review card events", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 
 		// Audit
-		auditRows, _ := db.Query(r.Context(), `SELECT id, action, actor_id, reason, before, after, created_at
-			FROM ops.admin_audit_log WHERE target_id = $1 AND target_type = 'learning.user_flashcard'
+		auditRows, err := db.Query(r.Context(), `SELECT l.id, l.action, l.reason, l.created_at, a.id, a.display_name, a.email
+			FROM ops.admin_audit_log l LEFT JOIN authz.admin_actor a ON a.id=l.actor_id WHERE l.target_id = $1 AND l.target_type = 'learning.user_flashcard'
 			ORDER BY created_at DESC LIMIT 25`, id)
-		auditItems := []map[string]any{}
-		if auditRows != nil {
-			for auditRows.Next() {
-				var aid, action, actorID string
-				var reason *string
-				var before, after json.RawMessage
-				var cat time.Time
-				if auditRows.Scan(&aid, &action, &actorID, &reason, &before, &after, &cat) == nil {
-					item := map[string]any{"id": aid, "action": action, "actorId": actorID, "createdAt": cat.UTC().Format(time.RFC3339)}
-					if reason != nil {
-						item["reason"] = *reason
-					}
-					if len(before) > 0 {
-						item["before"] = before
-					}
-					if len(after) > 0 {
-						item["after"] = after
-					}
-					auditItems = append(auditItems, item)
+		if err != nil {
+			logger.Error("query review card audit", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer auditRows.Close()
+		cd.Audit = []AuditEntry{}
+		for auditRows.Next() {
+			var entry AuditEntry
+			var created time.Time
+			var actorID, displayName, email *string
+			if err := auditRows.Scan(&entry.ID, &entry.Action, &entry.Reason, &created, &actorID, &displayName, &email); err != nil {
+				logger.Error("scan review card audit", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			entry.CreatedAt = created.UTC().Format(time.RFC3339)
+			if actorID != nil {
+				entry.Actor = &AuditActor{ID: *actorID}
+				if displayName != nil {
+					entry.Actor.DisplayName = *displayName
+				}
+				if email != nil {
+					entry.Actor.Email = *email
 				}
 			}
-			auditRows.Close()
+			cd.Audit = append(cd.Audit, entry)
 		}
-		cd.Audit, _ = json.Marshal(auditItems)
+		if err := auditRows.Err(); err != nil {
+			logger.Error("iterate review card audit", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusOK, cd)
 	}
 }
@@ -1137,29 +1497,55 @@ func adminLearningReviewForceReintroduceHandler(db *pgxpool.Pool, logger *slog.L
 		var body struct {
 			Reason string `json:"reason"`
 		}
-		json.NewDecoder(r.Body).Decode(&body)
-		ctx := r.Context()
-
-		var exists bool
-		db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM learning.user_flashcard WHERE id = $1)", id).Scan(&exists)
-		if !exists {
-			writeJSONError(w, "user flashcard not found", http.StatusNotFound)
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-
-		_, err := db.Exec(ctx, `UPDATE learning.user_flashcard
-			SET due_at = NOW(), interval_days = 0, repetitions = 0, state = 'relearning', updated_at = NOW()
-			WHERE id = $1`, id)
+		body.Reason = strings.TrimSpace(body.Reason)
+		if len([]rune(body.Reason)) < 3 {
+			writeJSONError(w, "reason is required", http.StatusBadRequest)
+			return
+		}
+		ctx := r.Context()
+		tx, err := db.Begin(ctx)
 		if err != nil {
+			logger.Error("begin force reintroduce", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback(ctx)
+		var before json.RawMessage
+		if err := tx.QueryRow(ctx, `SELECT to_jsonb(uf) FROM learning.user_flashcard uf WHERE id=$1 FOR UPDATE`, id).Scan(&before); errors.Is(err, pgx.ErrNoRows) {
+			writeJSONError(w, "user flashcard not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			logger.Error("load flashcard for reintroduction", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if _, err := tx.Exec(ctx, `UPDATE learning.user_flashcard
+			SET due_at = NOW(), interval_days = 0, repetitions = 0, state = 'relearning', updated_at = NOW()
+			WHERE id = $1`, id); err != nil {
 			logger.Error("force reintroduce", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-
-		afterJSON, _ := json.Marshal(map[string]any{"state": "relearning", "intervalDays": 0, "dueAt": "now"})
-		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
-			VALUES ('admin.learning.review.force_reintroduce', $1, $2, 'learning.user_flashcard', $3, $4, NOW())`,
-			identity.ActorID, id, body.Reason, afterJSON)
+		var after json.RawMessage
+		if err := tx.QueryRow(ctx, `SELECT to_jsonb(uf) FROM learning.user_flashcard uf WHERE id=$1`, id).Scan(&after); err != nil {
+			logger.Error("read reintroduced flashcard", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := writeAdminAuditWithReason(ctx, tx, identity.ActorID, "admin.learning.review.force_reintroduce", "learning.user_flashcard", id, body.Reason, before, after); err != nil {
+			logger.Error("audit force reintroduce", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			logger.Error("commit force reintroduce", "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "reintroduced": true})
 	}
 }

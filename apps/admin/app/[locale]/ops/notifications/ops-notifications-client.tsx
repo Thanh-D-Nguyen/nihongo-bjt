@@ -235,7 +235,7 @@ export function OpsNotificationsClient({ common, labels }: { common: CommonLabel
       const r = await adminApiFetch(url, {
         body: JSON.stringify(payload),
         headers: { "content-type": "application/json" },
-        method: "PATCH"
+        method: editId ? "PATCH" : "POST"
       });
       if (!r.ok) {
         const text = await r.text();

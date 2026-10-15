@@ -11,7 +11,7 @@ vi.mock("../../../../components/reading-assist/annotated-japanese-text", () => (
   }
 }));
 
-import { QuizQuestionPanel, type QuizLabels } from "./quiz-client";
+import { formatEstimatedScore, isQuizAnswerExpired, QuizQuestionPanel, type QuizLabels } from "./quiz-client";
 
 const labels = {
   anotherRound: "another",
@@ -254,5 +254,23 @@ describe("QuizQuestionPanel reading assist wiring", () => {
 
     expect(html).toContain("Image pending");
     expect(html).toContain("A quiet Japanese meeting room with a wall schedule");
+  });
+});
+
+describe("estimated quiz score display", () => {
+  it("does not turn an unavailable estimate into a zero score", () => {
+    expect(formatEstimatedScore(null, 0)).toBe("—");
+  });
+
+  it("shows the animated score when an estimate exists", () => {
+    expect(formatEstimatedScore(615, 420)).toBe(420);
+  });
+});
+
+describe("quiz answer expiry recovery", () => {
+  it("recognizes expired-session conflicts without treating other conflicts as expiry", () => {
+    expect(isQuizAnswerExpired(409, "session expired")).toBe(true);
+    expect(isQuizAnswerExpired(409, "question is not current")).toBe(false);
+    expect(isQuizAnswerExpired(403, "forbidden")).toBe(true);
   });
 });

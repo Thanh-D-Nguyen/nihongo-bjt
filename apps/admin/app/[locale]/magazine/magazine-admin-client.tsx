@@ -316,6 +316,7 @@ export function MagazineAdminClient({
             title={labels.empty}
           />
         ) : (
+          <div className="w-full min-w-0 max-w-full overflow-x-auto" role="region" aria-label={labels.title} tabIndex={0}>
           <AdminDataTable>
             <AdminDataTableHead>
               <AdminDataTableRow>
@@ -383,6 +384,7 @@ export function MagazineAdminClient({
               ))}
             </AdminDataTableBody>
           </AdminDataTable>
+          </div>
         )}
       </AdminSection>
     </div>

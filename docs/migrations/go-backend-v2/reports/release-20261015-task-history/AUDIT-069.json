@@ -1,0 +1,343 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-069",
+  "title": "Audit learner Daily Standup screen",
+  "start_head": "2f9ba0f07dd504b443f93444d18282c3ce690967",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Anonymous Daily Standup exposes fallback/mock career identity when GET /api/career/me returns 401.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Anonymous 401 never renders fallback career identity or rank data and redirects through the real Login route with returnTo=/vi/daily-standup."
+      },
+      {
+        "id": "AC2",
+        "text": "Authenticated career API data renders on the Daily Standup screen and existing navigation/clock-in logic remains available."
+      },
+      {
+        "id": "AC3",
+        "text": "Critical learner screen remains usable at 390x844 with no horizontal overflow or browser errors."
+      }
+    ],
+    "expected_behavior": "Daily Standup content is withheld until the learner session is verified; anonymous sessions navigate to Login with a returnTo value, and authenticated learners see the persisted career profile.",
+    "observed_behavior": "Visible anonymous /vi/daily-standup rendered the default Japanese work identity and rank card; the same page's GET /api/career/me returned 401.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "AUTH_SECURITY",
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "The route renders private mock profile data before the authoritative learner session check and fails to redirect on 401."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/src/features/career-rpg/components/daily-standup-page.test.tsx",
+      "test": "DailyStandupPage > redirects anonymous visitors without rendering fallback career data",
+      "expect": "redirects anonymous visitors to Login"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-08T04:38:22.371Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-08T04:39:44.992Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-08T04:39:45.359Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T04:40:09.586Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T04:41:18.378Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T04:45:25.765Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T04:47:07.853Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-08T05:23:26.063Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-08T05:23:42.307Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-08T05:30:50.924Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-08T05:34:03.367Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-08T05:34:04.037Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-08T04:40:09.395Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/daily-standup-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/daily-standup-page.test.tsx::DailyStandupPage > redirects anonymous visitors without rendering fallback career data",
+          "outcome": "FAIL",
+          "excerpt": "redirects anonymous visitors to Login: expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/components/daily-standup-page.test.tsx::DailyStandupPage > redirects anonymous visitors without rendering fallback career data": "redirects anonymous visitors to Login"
+      },
+      "fingerprint": "869299da0915cdf4007274b4fd61867fd1e6de97815eff24bcd3dcdca59234e9"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-08T04:41:18.104Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/daily-standup-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/daily-standup-page.test.tsx::DailyStandupPage > redirects anonymous visitors without rendering fallback career data",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ad1cb626c997695e539e161273423ed059824b930925c3898897e0ddf81a6e60"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-08T04:45:25.497Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 351,
+        "executed": 351,
+        "passed": 351,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 748,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "ad1cb626c997695e539e161273423ed059824b930925c3898897e0ddf81a6e60"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-08T04:47:07.596Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/daily-standup-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/daily-standup-page.test.tsx::DailyStandupPage > redirects anonymous visitors without rendering fallback career data",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "aae542cf7eefa0fa9b5e82e0de2fd8755b0a6b61cc305eb3b8a25609fdf52370"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-08T04:50:46.942Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 351,
+        "executed": 351,
+        "passed": 351,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 748,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "aae542cf7eefa0fa9b5e82e0de2fd8755b0a6b61cc305eb3b8a25609fdf52370"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-08T05:23:25.796Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/daily-standup-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/daily-standup-page.test.tsx::DailyStandupPage > redirects anonymous visitors without rendering fallback career data",
+          "outcome": "FAIL",
+          "excerpt": "redirects anonymous visitors to Login: expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/components/daily-standup-page.test.tsx::DailyStandupPage > redirects anonymous visitors without rendering fallback career data": "redirects anonymous visitors to Login"
+      },
+      "fingerprint": "1ea1da8f666c521480f0b0bd4fd562e3f4df7f228aec040f86cb2a47e770b63f"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-08T05:23:42.027Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/daily-standup-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/daily-standup-page.test.tsx::DailyStandupPage > redirects anonymous visitors without rendering fallback career data",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8137e0685866ac86148645a2a530f6bd1d3166b502b4ea242bd76b9a087e6e1c"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-08T05:30:35.707Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 351,
+        "executed": 351,
+        "passed": 351,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 748,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "8137e0685866ac86148645a2a530f6bd1d3166b502b4ea242bd76b9a087e6e1c"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-08T05:30:50.669Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash tmp/local-audit/daily-standup-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "8137e0685866ac86148645a2a530f6bd1d3166b502b4ea242bd76b9a087e6e1c"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-08T05:34:03.110Z",
+      "head": "2f9ba0f07dd504b443f93444d18282c3ce690967",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a119fe-5e6c-7722-9d3e-b342f2efbd64",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "8137e0685866ac86148645a2a530f6bd1d3166b502b4ea242bd76b9a087e6e1c"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-08T05:34:04.018Z",
+    "head": "2f9ba0f07dd504b443f93444d18282c3ce690967",
+    "fingerprint": "8137e0685866ac86148645a2a530f6bd1d3166b502b4ea242bd76b9a087e6e1c",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/daily-standup/page.tsx": "3e69c4ad9aeb3b342937b789aaec06c299531b1c",
+      "apps/web/src/features/career-rpg/components/daily-standup-page.test.tsx": "3b6058c3edd2a4133d926429ca6acdf864a4cd4b",
+      "apps/web/src/features/career-rpg/components/daily-standup-page.tsx": "d2426163e112fcfb67bdd07154484ca1a8dce441"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

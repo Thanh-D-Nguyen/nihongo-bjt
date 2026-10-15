@@ -1,0 +1,78 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-135",
+  "title": "Checkpoint Admin retention audit results",
+  "start_head": "52dd6076592cb1b1841271f2dbabaf011318942d",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Update screen/API inventory, audit counts, completed-item evidence, morning report, and handoff to reflect verified AUDIT-134; preserve count invariants and advance NEXT_ITEM to the next single API."
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "DOC_ONLY"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-13T02:51:53.798Z",
+      "head": "52dd6076592cb1b1841271f2dbabaf011318942d"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-13T02:52:17.104Z",
+      "head": "52dd6076592cb1b1841271f2dbabaf011318942d"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-13T02:52:25.645Z",
+      "head": "52dd6076592cb1b1841271f2dbabaf011318942d"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-13T02:56:29.306Z",
+      "head": "52dd6076592cb1b1841271f2dbabaf011318942d"
+    }
+  ],
+  "evidence": [],
+  "closed": {
+    "at": "2026-10-13T02:56:29.289Z",
+    "head": "52dd6076592cb1b1841271f2dbabaf011318942d",
+    "fingerprint": "2491ee7045095897b828e692d8d3c20cff5ea739cdc8d1851207cdba0cbcddf0",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS"
+    },
+    "files": {
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "45caf2750a6d5c2040528bcb748a53e3e683c5a1",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "abf80675a58b34b2d59b44fd07d5c17263443e0c",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "749a88d7d30e1cf23877578468de89ad59ce0bd7",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "888b6d3cf7d814fbcbab66eb42e0720977ff4d6b",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "a344b8dff524ab920c27c29e4e7001a7385c1ae0",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "b46b902c961d651f14634dd4e58b86bde26c5470",
+      "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "02a0ef74d54cbecf25f498a409dbe1ba5731a761",
+      "docs/migrations/go-backend-v2/reports/HANDOFF_NEXT_AUDIT.md": "229aac95ec9422067437e43570aaf659e4e7e018"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

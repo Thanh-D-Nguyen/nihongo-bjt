@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Opt-in local gate (pnpm quality install-hooks --yes): runs the same lifecycle
+# check CI runs, on the committed range being pushed. CI remains the authority.
+set -euo pipefail
+
+root="$(git rev-parse --show-toplevel)"
+stdin_copy="$(cat)"
+
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+  [ -n "${local_sha:-}" ] || continue
+  [ "$local_sha" = "0000000000000000000000000000000000000000" ] && continue
+  base="$remote_sha"
+  if [ "$base" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+    base="$(git merge-base "$local_sha" origin/main 2>/dev/null || echo "$local_sha^")"
+  fi
+  node "$root/scripts/quality/harness/cli.mjs" check --base "$base" --head "$local_sha"
+done <<<"$stdin_copy"
+
+chain="$(git config --get quality.chainHooksPath || true)"
+if [ -n "$chain" ] && [ -x "$chain/pre-push" ]; then
+  printf '%s\n' "$stdin_copy" | "$chain/pre-push" "$@"
+fi

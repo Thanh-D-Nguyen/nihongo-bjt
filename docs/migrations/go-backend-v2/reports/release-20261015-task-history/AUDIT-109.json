@@ -1,0 +1,104 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-109",
+  "title": "Align quiz study-plan test date with production plan date",
+  "start_head": "222502cf995967f5161c6c9917bb4d6b204bdfcd",
+  "preexisting_changes": {
+    "apps/api-go/internal/httpserver/handler_in_app_notification.go": "a952f9ab3947494fe18354536192601f3ab7133e",
+    "apps/api-go/internal/httpserver/handler_in_app_notification_test.go": "c58a07264743ef63dcf14be7882684135966889d",
+    "apps/api-go/internal/httpserver/server.go": "4ba47739ae8dcf66399aec6cf2f734e1cf4b8fbc",
+    "apps/api-go/internal/notification/store.go": "29ca652631f5514a11349d0ffb6ec5e3c25d1a6a"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Quiz study-plan tests look up today's plan with the same date source production uses (Go time.Now), so they pass in every timezone; assertions are unchanged."
+      },
+      {
+        "id": "AC2",
+        "text": "The four failing tests (TestQuizAssessmentJourneyAndOwnership, TestQuizAnswerAfterExpiryReturnsPersistedResults, TestExpiredQuizQuestionReadRecordsStudyPlanProgress, TestQuizActiveSessionExpiresAndRecordsStudyPlanProgress) pass in the local JST morning as well as UTC-day hours; no production code changes."
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "TEST_ONLY"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-11T15:13:27.795Z",
+      "head": "222502cf995967f5161c6c9917bb4d6b204bdfcd"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-11T15:13:28.180Z",
+      "head": "222502cf995967f5161c6c9917bb4d6b204bdfcd"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-11T15:13:31.356Z",
+      "head": "222502cf995967f5161c6c9917bb4d6b204bdfcd"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-11T15:16:56.217Z",
+      "head": "222502cf995967f5161c6c9917bb4d6b204bdfcd"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-11T15:16:49.851Z",
+      "head": "222502cf995967f5161c6c9917bb4d6b204bdfcd",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 762,
+        "executed": 762,
+        "passed": 762,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "762 passed, 0 allowed skip(s)",
+      "fingerprint": "803e5b96da3427f9b9f1b77b6297ef671b4b9d392944ac0400101c5712d8685d"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-11T15:16:56.196Z",
+    "head": "222502cf995967f5161c6c9917bb4d6b204bdfcd",
+    "fingerprint": "803e5b96da3427f9b9f1b77b6297ef671b4b9d392944ac0400101c5712d8685d",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "suite_go": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_quiz_test.go": "896fbe46253d53b94841511e284a7d33f802f36a"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

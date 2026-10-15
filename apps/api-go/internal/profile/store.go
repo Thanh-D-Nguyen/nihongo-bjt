@@ -35,6 +35,42 @@ type LearnerPublicProfile struct {
 	SharePostcardOptIn bool    `json:"sharePostcardOptIn"`
 }
 
+// PublicProfile is the allowlisted contract for a learner's public profile.
+// It deliberately excludes email and authentication identifiers.
+type PublicProfile struct {
+	ID              string              `json:"id"`
+	DisplayName     string              `json:"displayName"`
+	AvatarURL       *string             `json:"avatarUrl"`
+	CoverURL        *string             `json:"coverUrl"`
+	TargetBJTBand   *string             `json:"targetBjtBand"`
+	LearningPurpose *string             `json:"learningPurpose"`
+	PrivacyLevel    string              `json:"privacyLevel"`
+	MemberSince     time.Time           `json:"memberSince"`
+	Stats           *PublicProfileStats `json:"stats"`
+	Achievements    []PublicAchievement `json:"achievements"`
+	Relationship    *string             `json:"relationship"`
+	Online          bool                `json:"online"`
+	LastSeenAt      *string             `json:"lastSeenAt"`
+}
+
+type PublicProfileStats struct {
+	CurrentStreak    int      `json:"currentStreak"`
+	LongestStreak    int      `json:"longestStreak"`
+	TotalStudyDays   int      `json:"totalStudyDays"`
+	AchievementCount int      `json:"achievementCount"`
+	BattleWins       int      `json:"battleWins"`
+	BattleTotal      int      `json:"battleTotal"`
+	BattleWinRate    *float64 `json:"battleWinRate"`
+}
+
+type PublicAchievement struct {
+	ID         string    `json:"id"`
+	Slug       string    `json:"slug"`
+	Name       string    `json:"name"`
+	IconURL    *string   `json:"iconUrl"`
+	UnlockedAt time.Time `json:"unlockedAt"`
+}
+
 // Store provides read-only profile access against PostgreSQL.
 type Store struct {
 	db *pgxpool.Pool
@@ -43,6 +79,110 @@ type Store struct {
 // NewStore creates a profile store backed by the given pool.
 func NewStore(db *pgxpool.Pool) *Store {
 	return &Store{db: db}
+}
+
+// GetPublicProfile returns a privacy-filtered profile for an optional viewer.
+func (s *Store) GetPublicProfile(ctx context.Context, userID string, viewerID *string) (*PublicProfile, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	p := &PublicProfile{}
+	var avatarID, coverID *string
+	var status string
+	err := s.db.QueryRow(ctx, `SELECT id, display_name, avatar_asset_id::text, cover_asset_id::text,
+		target_bjt_band, learning_purpose, COALESCE(privacy_level, 'standard'), created_at, status
+		FROM profile.user_profile WHERE id=$1 AND status='active'`, userID).Scan(
+		&p.ID, &p.DisplayName, &avatarID, &coverID, &p.TargetBJTBand, &p.LearningPurpose,
+		&p.PrivacyLevel, &p.MemberSince, &status,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrProfileNotFound
+		}
+		return nil, fmt.Errorf("profile: get public profile: %w", err)
+	}
+	if avatarID != nil {
+		url := "/api/media/" + *avatarID + "/stream"
+		p.AvatarURL = &url
+	}
+	if coverID != nil {
+		url := "/api/media/" + *coverID + "/stream"
+		p.CoverURL = &url
+	}
+
+	if viewerID != nil {
+		relationship := "stranger"
+		if *viewerID == userID {
+			relationship = "self"
+		} else {
+			err = s.db.QueryRow(ctx, `SELECT status FROM gamification.user_social_connection
+				WHERE (requester_user_id=$1 AND addressee_user_id=$2)
+				   OR (requester_user_id=$2 AND addressee_user_id=$1)
+				LIMIT 1`, *viewerID, userID).Scan(&relationship)
+			if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+				return nil, fmt.Errorf("profile: get public relationship: %w", err)
+			}
+			switch relationship {
+			case "accepted":
+				relationship = "friend"
+			case "blocked":
+			default:
+				relationship = "stranger"
+			}
+		}
+		p.Relationship = &relationship
+	}
+
+	canView := p.Relationship != nil && *p.Relationship == "self" ||
+		p.Relationship == nil && p.PrivacyLevel != "private" ||
+		p.Relationship != nil && *p.Relationship != "blocked" &&
+			(p.PrivacyLevel == "public" || p.PrivacyLevel == "standard" || *p.Relationship == "friend")
+	if !canView {
+		p.TargetBJTBand, p.LearningPurpose = nil, nil
+		return p, nil
+	}
+
+	p.Stats = &PublicProfileStats{}
+	err = s.db.QueryRow(ctx, `SELECT
+		COALESCE((SELECT current_streak FROM gamification.user_streak WHERE user_id=$1 ORDER BY current_streak DESC LIMIT 1), 0),
+		COALESCE((SELECT longest_streak FROM gamification.user_streak WHERE user_id=$1 ORDER BY current_streak DESC LIMIT 1), 0),
+		(SELECT count(DISTINCT reviewed_at::date)::int FROM learning.review_event WHERE user_id=$1),
+		(SELECT count(*)::int FROM gamification.user_achievement WHERE user_id=$1 AND earned_at IS NOT NULL),
+		(SELECT count(*) FILTER (WHERE (user_id=$1 AND user_score>opponent_score) OR (opponent_user_id=$1 AND opponent_score>user_score))::int FROM learning.battle_session WHERE status='completed' AND (user_id=$1 OR opponent_user_id=$1)),
+		(SELECT count(*)::int FROM learning.battle_session WHERE status='completed' AND (user_id=$1 OR opponent_user_id=$1))`, userID).Scan(
+		&p.Stats.CurrentStreak, &p.Stats.LongestStreak, &p.Stats.TotalStudyDays,
+		&p.Stats.AchievementCount, &p.Stats.BattleWins, &p.Stats.BattleTotal,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("profile: get public profile stats: %w", err)
+	}
+	if p.Stats.BattleTotal > 0 {
+		rate := float64((p.Stats.BattleWins*100 + p.Stats.BattleTotal/2) / p.Stats.BattleTotal)
+		p.Stats.BattleWinRate = &rate
+	}
+	p.Achievements = make([]PublicAchievement, 0, 5)
+	rows, err := s.db.Query(ctx, `SELECT ad.id, ad.slug, COALESCE(at.name_key, ad.name_key),
+		COALESCE(at.icon_url, ad.icon_url), ua.earned_at
+		FROM gamification.user_achievement ua
+		JOIN gamification.achievement_tier at ON at.id=ua.tier_id
+		JOIN gamification.achievement_definition ad ON ad.id=at.achievement_id
+		WHERE ua.user_id=$1 AND ua.earned_at IS NOT NULL
+		ORDER BY ua.earned_at DESC LIMIT 5`, userID)
+	if err != nil {
+		return nil, fmt.Errorf("profile: get public achievements: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var achievement PublicAchievement
+		if err := rows.Scan(&achievement.ID, &achievement.Slug, &achievement.Name, &achievement.IconURL, &achievement.UnlockedAt); err != nil {
+			return nil, fmt.Errorf("profile: scan public achievement: %w", err)
+		}
+		p.Achievements = append(p.Achievements, achievement)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("profile: iterate public achievements: %w", err)
+	}
+	return p, nil
 }
 
 // GetLearnerByEmail looks up an active learner by normalized email address.
@@ -148,6 +288,8 @@ type UpdateProfileParams struct {
 	FontSizePreference      *string
 	DensityPreference       *string
 	FlashcardStyleSlug      *string
+	AvatarAssetID           *string
+	ClearAvatarAssetID      bool
 	CoverAssetID            *string
 	ClearCoverAssetID       bool
 	AdsPersonalizationOptIn *bool
@@ -189,6 +331,13 @@ func (s *Store) UpdateLearnerProfile(ctx context.Context, userID string, params 
 	if params.FlashcardStyleSlug != nil {
 		setClauses = append(setClauses, fmt.Sprintf("flashcard_style_slug = $%d", argIdx))
 		args = append(args, *params.FlashcardStyleSlug)
+		argIdx++
+	}
+	if params.ClearAvatarAssetID {
+		setClauses = append(setClauses, "avatar_asset_id = NULL")
+	} else if params.AvatarAssetID != nil {
+		setClauses = append(setClauses, fmt.Sprintf("avatar_asset_id = $%d", argIdx))
+		args = append(args, *params.AvatarAssetID)
 		argIdx++
 	}
 	if params.ClearCoverAssetID {

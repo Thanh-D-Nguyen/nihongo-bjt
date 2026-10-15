@@ -106,11 +106,14 @@ function maskSubject(value: string | null | undefined): string {
 
 function formatDate(iso: string, locale: string) {
   try {
-    return new Intl.DateTimeFormat(locale === "ja" ? "ja-JP" : locale === "en" ? "en-US" : "vi-VN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric"
-    }).format(new Date(iso));
+    return new Intl.DateTimeFormat(
+      locale === "ja" ? "ja-JP" : locale === "en" ? "en-US" : "vi-VN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+      }
+    ).format(new Date(iso));
   } catch {
     return iso;
   }
@@ -118,13 +121,16 @@ function formatDate(iso: string, locale: string) {
 
 function formatWhen(iso: string, locale: string) {
   try {
-    return new Intl.DateTimeFormat(locale === "ja" ? "ja-JP" : locale === "en" ? "en-US" : "vi-VN", {
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      month: "short",
-      year: "numeric"
-    }).format(new Date(iso));
+    return new Intl.DateTimeFormat(
+      locale === "ja" ? "ja-JP" : locale === "en" ? "en-US" : "vi-VN",
+      {
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        month: "short",
+        year: "numeric"
+      }
+    ).format(new Date(iso));
   } catch {
     return iso;
   }
@@ -278,28 +284,25 @@ export function IamAdminsClient({
     void loadList();
   }, [loadList]);
 
-  const loadDetail = useCallback(
-    async (id: string) => {
-      setDetailLoading(true);
-      setDetailError(null);
-      try {
-        const r = await adminApiFetch(`/api/admin/iam/admins/${encodeURIComponent(id)}`);
-        if (!r.ok) {
-          setDetail(null);
-          setDetailError(t("errorDetail"));
-          return;
-        }
-        const data = (await r.json()) as AdminDetail;
-        setDetail(data);
-      } catch {
+  const loadDetail = useCallback(async (id: string) => {
+    setDetailLoading(true);
+    setDetailError(null);
+    try {
+      const r = await adminApiFetch(`/api/admin/iam/admins/${encodeURIComponent(id)}`);
+      if (!r.ok) {
         setDetail(null);
         setDetailError(t("errorDetail"));
-      } finally {
-        setDetailLoading(false);
+        return;
       }
-    },
-    []
-  );
+      const data = (await r.json()) as AdminDetail;
+      setDetail(data);
+    } catch {
+      setDetail(null);
+      setDetailError(t("errorDetail"));
+    } finally {
+      setDetailLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (!selectedId) {
@@ -313,10 +316,14 @@ export function IamAdminsClient({
   const sortedItems = useMemo(() => {
     if (!list) return [];
     return list.items.slice().sort((a, b) => {
-      const cmp = sortKey === "displayName" ? a.displayName.localeCompare(b.displayName)
-        : sortKey === "email" ? a.email.localeCompare(b.email)
-        : sortKey === "roleCount" ? a.roleCodes.length - b.roleCodes.length
-        : new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+      const cmp =
+        sortKey === "displayName"
+          ? a.displayName.localeCompare(b.displayName)
+          : sortKey === "email"
+            ? a.email.localeCompare(b.email)
+            : sortKey === "roleCount"
+              ? a.roleCodes.length - b.roleCodes.length
+              : new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
       return sortAsc ? cmp : -cmp;
     });
   }, [list, sortKey, sortAsc]);
@@ -391,11 +398,14 @@ export function IamAdminsClient({
     setMutating(true);
     setToast(null);
     try {
-      const res = await adminApiFetch(`/api/admin/iam/admins/${encodeURIComponent(detail.id)}/roles`, {
-        body: JSON.stringify({ reason: r, roleCode: assignRole }),
-        headers: { "content-type": "application/json" },
-        method: "POST"
-      });
+      const res = await adminApiFetch(
+        `/api/admin/iam/admins/${encodeURIComponent(detail.id)}/roles`,
+        {
+          body: JSON.stringify({ reason: r, roleCode: assignRole }),
+          headers: { "content-type": "application/json" },
+          method: "POST"
+        }
+      );
       if (!res.ok) {
         setToast({ kind: "err", text: t("errorMutation") });
         return;
@@ -505,7 +515,9 @@ export function IamAdminsClient({
       >
         <div className="mb-3 flex flex-wrap items-end gap-3">
           <label className="block flex-1 min-w-[220px] text-sm">
-            <span className="block text-xs font-medium text-slate-600">{t("searchPlaceholder")}</span>
+            <span className="block text-xs font-medium text-slate-600">
+              {t("searchPlaceholder")}
+            </span>
             <input
               className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
               onChange={(e) => setSearch(e.target.value)}
@@ -600,77 +612,87 @@ export function IamAdminsClient({
           </AdminEmptyState>
         ) : (
           <>
-            <AdminDataTable>
-              <AdminDataTableHead>
-                <AdminDataTableRow>
-                  <AdminDataTableTh>{t("colDisplayName")}</AdminDataTableTh>
-                  <AdminDataTableTh>{t("colEmail")}</AdminDataTableTh>
-                  <AdminDataTableTh>{t("colStatus")}</AdminDataTableTh>
-                  <AdminDataTableTh>{t("colRoles")}</AdminDataTableTh>
-                  <AdminDataTableTh>{t("colKeycloak")}</AdminDataTableTh>
-                  <AdminDataTableTh>{t("colUpdated")}</AdminDataTableTh>
-                </AdminDataTableRow>
-              </AdminDataTableHead>
-              <AdminDataTableBody>
-                {sortedItems.map((row) => {
-                  const isSelected = row.id === selectedId;
-                  return (
-                    <AdminDataTableRow
-                      key={row.id}
-                      className={cn(
-                        "cursor-pointer hover:bg-indigo-50/40",
-                        isSelected ? "bg-indigo-50" : undefined
-                      )}
-                    >
-                      <AdminDataTableTd>
-                        <button
-                          className="text-left text-xs font-semibold text-indigo-700 hover:underline"
-                          onClick={() => setSelectedId(row.id)}
-                          type="button"
-                        >
-                          {row.displayName}
-                        </button>
-                      </AdminDataTableTd>
-                      <AdminDataTableTd>
-                        <span className="font-mono text-xs text-slate-700">{row.email}</span>
-                      </AdminDataTableTd>
-                      <AdminDataTableTd>
-                        <AdminStatusBadge tone={statusTone(row.status)}>{row.status}</AdminStatusBadge>
-                      </AdminDataTableTd>
-                      <AdminDataTableTd>
-                        <div className="flex flex-wrap gap-1">
-                          {row.roleCodes.length === 0 ? (
-                            <span className="text-xs text-slate-500">—</span>
-                          ) : (
-                            row.roleCodes.map((code) => (
-                              <code
-                                className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-800"
-                                key={code}
-                              >
-                                {code}
-                              </code>
-                            ))
-                          )}
-                        </div>
-                      </AdminDataTableTd>
-                      <AdminDataTableTd>
-                        <span
-                          className="font-mono text-[11px] text-slate-600"
-                          title={t("keycloakMasked")}
-                        >
-                          {maskSubject(row.keycloakSubject)}
-                        </span>
-                      </AdminDataTableTd>
-                      <AdminDataTableTd>{formatDate(row.updatedAt, locale)}</AdminDataTableTd>
-                    </AdminDataTableRow>
-                  );
-                })}
-              </AdminDataTableBody>
-            </AdminDataTable>
+            <div
+              className="max-w-full overflow-x-auto"
+              role="region"
+              aria-label={t("title")}
+              tabIndex={0}
+            >
+              <AdminDataTable>
+                <AdminDataTableHead>
+                  <AdminDataTableRow>
+                    <AdminDataTableTh>{t("colDisplayName")}</AdminDataTableTh>
+                    <AdminDataTableTh>{t("colEmail")}</AdminDataTableTh>
+                    <AdminDataTableTh>{t("colStatus")}</AdminDataTableTh>
+                    <AdminDataTableTh>{t("colRoles")}</AdminDataTableTh>
+                    <AdminDataTableTh>{t("colKeycloak")}</AdminDataTableTh>
+                    <AdminDataTableTh>{t("colUpdated")}</AdminDataTableTh>
+                  </AdminDataTableRow>
+                </AdminDataTableHead>
+                <AdminDataTableBody>
+                  {sortedItems.map((row) => {
+                    const isSelected = row.id === selectedId;
+                    return (
+                      <AdminDataTableRow
+                        key={row.id}
+                        className={cn(
+                          "cursor-pointer hover:bg-indigo-50/40",
+                          isSelected ? "bg-indigo-50" : undefined
+                        )}
+                      >
+                        <AdminDataTableTd>
+                          <button
+                            className="text-left text-xs font-semibold text-indigo-700 hover:underline"
+                            onClick={() => setSelectedId(row.id)}
+                            type="button"
+                          >
+                            {row.displayName}
+                          </button>
+                        </AdminDataTableTd>
+                        <AdminDataTableTd>
+                          <span className="font-mono text-xs text-slate-700">{row.email}</span>
+                        </AdminDataTableTd>
+                        <AdminDataTableTd>
+                          <AdminStatusBadge tone={statusTone(row.status)}>
+                            {row.status}
+                          </AdminStatusBadge>
+                        </AdminDataTableTd>
+                        <AdminDataTableTd>
+                          <div className="flex flex-wrap gap-1">
+                            {row.roleCodes.length === 0 ? (
+                              <span className="text-xs text-slate-500">—</span>
+                            ) : (
+                              row.roleCodes.map((code) => (
+                                <code
+                                  className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-800"
+                                  key={code}
+                                >
+                                  {code}
+                                </code>
+                              ))
+                            )}
+                          </div>
+                        </AdminDataTableTd>
+                        <AdminDataTableTd>
+                          <span
+                            className="font-mono text-[11px] text-slate-600"
+                            title={t("keycloakMasked")}
+                          >
+                            {maskSubject(row.keycloakSubject)}
+                          </span>
+                        </AdminDataTableTd>
+                        <AdminDataTableTd>{formatDate(row.updatedAt, locale)}</AdminDataTableTd>
+                      </AdminDataTableRow>
+                    );
+                  })}
+                </AdminDataTableBody>
+              </AdminDataTable>
+            </div>
 
             <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
               <span>
-                {t("pageLabel")} {list?.page ?? 1} / {totalPages} · {total} {common.records.toLowerCase()}
+                {t("pageLabel")} {list?.page ?? 1} / {totalPages} · {total}{" "}
+                {common.records.toLowerCase()}
               </span>
               <div className="flex gap-1">
                 <button
@@ -708,7 +730,9 @@ export function IamAdminsClient({
             <div className="space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-3 text-xs text-slate-700">
-                  <AdminStatusBadge tone={statusTone(detail.status)}>{detail.status}</AdminStatusBadge>
+                  <AdminStatusBadge tone={statusTone(detail.status)}>
+                    {detail.status}
+                  </AdminStatusBadge>
                   <span>
                     {t("colKeycloak")}:{" "}
                     <code
@@ -861,7 +885,9 @@ export function IamAdminsClient({
                         key={entry.id}
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <code className="font-mono text-[11px] text-slate-700">{entry.action}</code>
+                          <code className="font-mono text-[11px] text-slate-700">
+                            {entry.action}
+                          </code>
                           <span className="text-slate-500">
                             {formatWhen(entry.createdAt, locale)}
                           </span>

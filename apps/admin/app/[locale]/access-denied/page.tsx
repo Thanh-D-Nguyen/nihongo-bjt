@@ -36,7 +36,7 @@ export default async function AdminAccessDeniedPage({
       <div className="flex flex-col gap-3 rounded-2xl border border-ink/10 bg-paper p-6 shadow-[0_12px_40px_rgba(23,33,31,0.06)]">
         <a
           className="flex w-full items-center justify-center rounded-xl border border-ink/15 bg-transparent px-4 py-3 text-sm font-semibold text-ink transition hover:bg-ink/5"
-          href="/auth/logout"
+          href={`/admin/auth/logout?locale=${locale}`}
         >
           {t.signOut}
         </a>

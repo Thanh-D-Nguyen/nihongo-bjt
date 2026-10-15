@@ -1,0 +1,1344 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-003",
+  "title": "Enforce RBAC and audit trail for Admin actor management",
+  "start_head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+  "preexisting_changes": {
+    ".quality/tasks/ctx-resume-1791168424.json": "39fe89f3617bfb95a702c09ce4aabffcaeb8f7bb",
+    "apps/admin/app/[locale]/access-denied/page.tsx": "c68e8af2a6f0746cd0e318a8de0db38e4b2f60b0",
+    "apps/admin/app/[locale]/login/_components/admin-login-form-client.tsx": "b82c38674e498f144d717ff592ac5dc4c5c54c19",
+    "apps/admin/app/[locale]/login/admin-login.regression.test.tsx": "5b11d85a87934d8ed3680c1754d03b34fc030a68",
+    "apps/admin/app/[locale]/login/page.tsx": "8c33a7b540c4ebf9de86a6d1dd8f9f3e5bc1f92c",
+    "apps/admin/app/auth/logout/page.tsx": "d86ad68fb3dfa9bdbac704899c04f131ab2fc0b3",
+    "apps/admin/lib/admin-api.ts": "e19f64369f0723fa79326a86f6ae83ea8c095bbc",
+    "apps/admin/lib/admin-overview-fetch.test.ts": "c551ec079ff3a0e04cb06d72801ee9eb59559234",
+    "apps/admin/lib/admin-overview-fetch.ts": "c2267b606100d8faae7be2c6bf6c5968402cd6c4",
+    "apps/admin/lib/admin-shell.regression.test.tsx": "55b1e94d273dca2be418c6026c6a879f045c0dd0",
+    "apps/admin/lib/resolve-admin-nav.ts": "54024b5d6443067d48eb4f771443046cc4f0256d",
+    "apps/admin/messages/en.json": "69bdc28b22618f0c3a5be64b5be770f56bcdc053",
+    "apps/admin/messages/ja.json": "8c371c5c05bfde3e8a37c84341de226e88b46e7e",
+    "apps/admin/messages/vi.json": "fd886017500b5ad3666721edfe15a31e5dd6311a",
+    "apps/admin/next-env.d.ts": "c4b7818fbb2c2c34c24feb1b627ee824507c5600",
+    "apps/admin/next.config.mjs": "a29e69ddd1777373ddc577abfd3ce85cce649af7",
+    "apps/admin/tsconfig.tsbuildinfo": "20868aaaf05dd14b127250d119cbda97e473f205",
+    "apps/api-go/cmd/create-test-creds/main.go": "eae3b397a5f12f5c5401c3484da23e845686aabd",
+    "apps/api-go/cmd/reset-admin-cred/main.go": "c39d53f0ce4fa29c2a3ef6b813b1abfe9af28cad",
+    "apps/api-go/deploy/local/Caddyfile": "880720642204d8f7afb53bf961224b25afac9016",
+    "apps/api-go/internal/httpserver/handler_admin_analytics.go": "4f67876cf0b1aca040f10c75fa76b9169e0fa373",
+    "apps/api-go/internal/httpserver/handler_admin_analytics_executive_test.go": "a06e3ffca3254f35b079ce9d2aee13bae86b10a1",
+    "apps/api-go/internal/httpserver/handler_admin_core.go": "f690a8b4336df400781b855a8f40e5e64e33e2be",
+    "apps/api-go/internal/httpserver/handler_admin_me_test.go": "702bbebb362a7b4924e50e5e7fc2db18b09eca4f",
+    "apps/api-go/internal/httpserver/handler_final_batch.go": "e43d747c10a5117fe413b69812627ef899812f32",
+    "apps/api-go/internal/httpserver/handler_quiz.go": "0cb4f89fa3fe44b25bc0564c933de25db659713f",
+    "apps/api-go/internal/httpserver/handler_study_feed_test.go": "a1e9da063ed6d1d083be495926d4ea159d391a4a",
+    "apps/api-go/internal/httpserver/server.go": "86ab79e1e030f1d2a03d179cc5a39430627eedb0",
+    "apps/api-go/internal/onboarding/store.go": "48c19592ef4012165d6b010f2763aa5ebfaebaa0",
+    "apps/api-go/internal/onboarding/store_test.go": "9f5a1ab847bdd26d7ede15081049197f63e7b387",
+    "apps/web/app/[locale]/login/auth-pages.regression.test.tsx": "4dd7a5db264e70ef930ec4f1579b34eabbfbbec6",
+    "apps/web/app/[locale]/login/page.tsx": "654fc22c46535743d2f08cd76715e44690140a95",
+    "apps/web/app/[locale]/register/page.tsx": "2aa45faeea0da3a919c884dc6b95f7f367cda8b2",
+    "apps/web/next-env.d.ts": "c4b7818fbb2c2c34c24feb1b627ee824507c5600",
+    "apps/web/public/__local-audit-api-probe.html": "5698fee7077de4433c4062b33a4a46bef0cfc9ee",
+    "deploy/local/Caddyfile": "72470e3b466c4a48dd7a573271d8458479e27266",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "14b4b16e97167ca563965d00c0cfbb12c9ed1734",
+    "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "8487728d2aac033244e52e9e2ea67c51069b9110",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "4f68d69cb7cdb863d35c39067768e15e95b1adb2",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "9cde135cae4e26adc1eac9947bed1944422e11f9",
+    "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "764545c1a51f378e709da98a7518e5d890487541",
+    "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.json": "aad8f5a79cca5fc3e43f63ba7891d238e7938115",
+    "docs/migrations/go-backend-v2/reports/FULL_SCREEN_INVENTORY.md": "10dcb526bb33c73f06ca40c9b0ebe99bfe993565",
+    "packages/database/prisma/migrations/20261006100000_onboarding_profile_preferences/migration.sql": "3da2325aa59c04dc632a7a515f4fdff2a6b1dd65",
+    "packages/database/prisma/schema.prisma": "0646140a9869abc692fbda4414286194ae581ff5",
+    "packages/ui/src/admin-shell.tsx": "ba1339c8c34da6b93fe433bbe260f2928ffa867e",
+    "prisma.config.ts": "02db95a7ee97e32ead17e9e82602c0e78e38924e",
+    "scripts/local-audit-status.mjs": "d0f98373f463c744dc6d03e40f4ef588c7490ab4",
+    "scripts/local-audit-up.mjs": "d68ac30f32a1113b3e9958508757667267dd90e8"
+  },
+  "spec": {
+    "problem": "M6 Admin actor and role management accepts any active Admin session and creates/changes access without permission checks or durable audit events.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "An Admin without iam.manage receives 403 on actor/role management reads and writes; an Admin with iam.manage retains the documented API contracts."
+      },
+      {
+        "id": "AC2",
+        "text": "Successful actor create, status change, role grant and role revoke write ops.admin_audit_log records with action, authenticated actor, target identity and safe before/after snapshots; password material is never recorded."
+      },
+      {
+        "id": "AC3",
+        "text": "GET /api/admin/ads/audit enforces ads.audit.view, admin.monetization.read, or viewer.audit in the Go backend; an Admin session without any accepted permission gets 403 while a least-privilege audit viewer succeeds."
+      },
+      {
+        "id": "AC4",
+        "text": "The Admin account management route renders an Admin list item returned by the current Go API contract (role codes in roles[]) without a page error and displays the assigned roles."
+      },
+      {
+        "id": "AC5",
+        "text": "POST /api/admin/ads/rules accepts a valid disposable rule, persists it and returns HTTP 200 with its id, ruleKey and enabled state; subsequent GET includes the rule."
+      },
+      {
+        "id": "AC6",
+        "text": "Every /api/admin/ads endpoint enforces its domain permission in the Go backend: campaign reads require admin.monetization.read or ads.campaign.view, campaign mutations require admin.monetization.write or ads.campaign.manage, and frontend route hiding cannot grant access."
+      },
+      {
+        "id": "AC7",
+        "text": "Admin analytics export summary, timeseries, and breakdown views contain values derived from their real analytics handlers; an empty period reports genuine empty/zero data rather than a placeholder, and unsupported views return 400."
+      },
+      {
+        "id": "AC8",
+        "text": "Admin analytics executive and domain read/export endpoints require viewer.analytics, admin.analytics.view, or analytics.view at the backend; export and refresh mutations also accept admin.analytics.manage."
+      }
+    ],
+    "expected_behavior": "Require iam.manage for actor and role management; persist auditable before/after events for successful mutations without logging credentials.",
+    "observed_behavior": "The Ads client hides the Audit tab by permission but loads the audit endpoint for every Admin session; the Go route is registered under AdminGuard only.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "AUTH_SECURITY",
+      "API_CONTRACT",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Enforce backend RBAC and transactional audit for Admin actor management; refresh the SQL conformance baseline for already-corrected canonical onboarding queries."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminAdsAuditRequiresPermission",
+      "expect": "expected 403 without ads audit permission, got 200"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestIAMAdminListExposesRoleCodesForAdminClient",
+      "expect": "expected roleCodes array for admin client"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminAdsRuleUpsertPersistsRule",
+      "expect": "expected 200, got 500"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminAdsCampaignRoutesRequireDomainPermissions",
+      "expect": "expected 403 campaign list without ads.campaign.view"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminAnalyticsExportUsesRealData",
+      "expect": "placeholder"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminAnalyticsRoutesRequireViewPermission",
+      "expect": "expected 403 without analytics permission"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "RED_REQUIRED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-05T16:00:43.700Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-05T16:01:01.308Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-05T16:01:01.707Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-05T16:02:58.661Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-05T16:05:15.498Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-05T16:06:07.273Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-05T16:08:12.869Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-05T16:09:16.960Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-05T16:12:22.936Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-05T16:33:09.330Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-05T16:37:51.544Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-05T16:39:45.987Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-05T16:46:43.229Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-05T16:52:49.741Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-05T16:53:43.833Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-05T16:59:53.344Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-05T17:00:28.124Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-05T17:06:06.660Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-05T17:07:19.108Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-05T17:17:11.716Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-05T17:18:38.573Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-05T17:23:13.064Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-05T16:02:01.687Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListActors_RequiresIAMManage)$ ./apps/api-go/internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestListActors_RequiresIAMManage",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestListActors_RequiresIAMManage": "expected 403 for Admin without iam.manage, got 200"
+      },
+      "fingerprint": "66c30834c722ce4a193567ea3f42f6fd10835cfbda57e4261ea565637b737156"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-05T16:02:09.451Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListActors_RequiresIAMManage)$ ./apps/api-go/internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListActors_RequiresIAMManage)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestListActors_RequiresIAMManage",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestListActors_RequiresIAMManage",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestListActors_RequiresIAMManage handler_admin_rbac_test.go:150: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestListActors_RequiresIAMManage (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestListActors_RequiresIAMManage": "expected 403 for Admin without iam.manage, got 200",
+        "go:./internal/httpserver:TestListActors_RequiresIAMManage": "expected 403 for Admin without iam.manage, got 200"
+      },
+      "fingerprint": "66c30834c722ce4a193567ea3f42f6fd10835cfbda57e4261ea565637b737156"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-05T16:02:33.054Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListActors_RequiresIAMManage)$ ./apps/api-go/internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListActors_RequiresIAMManage)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/httpserver:TestListActors_RequiresIAMManage",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/httpserver stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/httpserver: directory not found FAIL ./apps/api-go/internal/httpserver [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestListActors_RequiresIAMManage",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestListActors_RequiresIAMManage 2026/10/06 01:02:33 INFO request method=GET path=/api/admin/actors status=200 duration=4.95225ms bytes=266 handler_admin_rbac_test.go:168: expected 403 for Admin without iam.manage, got 200 --- FAIL: TestListActors_RequiresIAMManage (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/httpserver:TestListActors_RequiresIAMManage": "expected 403 for Admin without iam.manage, got 200",
+        "go:./internal/httpserver:TestListActors_RequiresIAMManage": "expected 403 for Admin without iam.manage, got 200"
+      },
+      "fingerprint": "66c30834c722ce4a193567ea3f42f6fd10835cfbda57e4261ea565637b737156"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-05T16:02:58.492Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListActors_RequiresIAMManage)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestListActors_RequiresIAMManage",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestListActors_RequiresIAMManage 2026/10/06 01:02:58 INFO request method=GET path=/api/admin/actors status=200 duration=4.486417ms bytes=266 handler_admin_rbac_test.go:168: expected 403 for Admin without iam.manage, got 200 --- FAIL: TestListActors_RequiresIAMManage (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestListActors_RequiresIAMManage": "expected 403 for Admin without iam.manage, got 200"
+      },
+      "fingerprint": "66c30834c722ce4a193567ea3f42f6fd10835cfbda57e4261ea565637b737156"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-05T16:05:15.321Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestListActors_RequiresIAMManage|TestCreateActor_Success)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestListActors_RequiresIAMManage",
+          "outcome": "PASS",
+          "excerpt": "=== RUN TestListActors_RequiresIAMManage 2026/10/06 01:05:15 INFO request method=GET path=/api/admin/actors status=403 duration=4.263583ms bytes=22 --- PASS: TestListActors_RequiresIAMManage (0.04s)",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        },
+        {
+          "id": "go:./internal/httpserver:TestCreateActor_Success",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestCreateActor_Success handler_admin_rbac_test.go:221: lookup iam.manage permission: no rows in result set --- FAIL: TestCreateActor_Success (0.01s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"expected one admin.iam.actor.created audit event\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestListActors_RequiresIAMManage": "expected 403 for Admin without iam.manage, got 200",
+        "go:./internal/httpserver:TestCreateActor_Success": "expected one admin.iam.actor.created audit event"
+      },
+      "fingerprint": "49d391d5ea3b0741f5b167234ee6ffc0dd2ceca63c108f96f7e7e29c542f5f58"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-05T16:06:07.101Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCreateActor_Success)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestCreateActor_Success",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestCreateActor_Success 2026/10/06 01:06:07 INFO request method=POST path=/api/admin/actors status=201 duration=98.3405ms bytes=46 handler_admin_rbac_test.go:266: expected one admin.iam.actor.created audit event for dc28c33a-12d0-4703-bbf2-ff9a095c7077, got 0 --- FAIL: TestCreateActor_Succes…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestCreateActor_Success": "expected one admin.iam.actor.created audit event"
+      },
+      "fingerprint": "5abf484dccc13629df0f6373060e496941bfd8e4e639858df64dca8b0323c670"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-05T16:08:12.647Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCreateActor_Success)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestCreateActor_Success",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a506a3097235a4fb8983d53e61ca34c112b043c0904283adc9ad2c2231ab7db9"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-05T16:08:48.831Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCreateActor_Success)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestCreateActor_Success",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c2cc3e2eec8831ed7b9f08e997c29425a064ccda9378caf6b7de5c91b8bff778"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-05T16:09:42.005Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "d22b80440092bdd710259e6990826ddf0162e9ff9db517d406de13be88e6973f"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-05T16:10:22.148Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "d22b80440092bdd710259e6990826ddf0162e9ff9db517d406de13be88e6973f"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-05T16:11:22.734Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 463,
+        "executed": 457,
+        "passed": 456,
+        "failed": 1,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "56c986de70679d5e74f4586a98510c26a57fd51edca9edd10892c2b5d0efba8c"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-05T16:12:22.569Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCreateActor_Success)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestCreateActor_Success",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "df771c87e8c6d9a6b44619cd1b5d5a5afb47245d978babf313f87f787874f59e"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-05T16:14:38.675Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "df771c87e8c6d9a6b44619cd1b5d5a5afb47245d978babf313f87f787874f59e"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-05T16:16:28.929Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 463,
+        "executed": 457,
+        "passed": 457,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "a later step of bash scripts/quality/verify-go.sh failed (exit 1)",
+      "fingerprint": "df771c87e8c6d9a6b44619cd1b5d5a5afb47245d978babf313f87f787874f59e"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-05T16:17:36.212Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestCreateActor_Success)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestCreateActor_Success",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d223599520eb265a73242ec0224196cdb6ae679de1e519b5bfc1c595cbbf0638"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-05T16:19:59.942Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 263,
+        "executed": 263,
+        "passed": 263,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "d223599520eb265a73242ec0224196cdb6ae679de1e519b5bfc1c595cbbf0638"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-05T16:21:55.249Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 463,
+        "executed": 457,
+        "passed": 457,
+        "failed": 0,
+        "skipped": 6,
+        "expected_skips": 6,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "457 passed, 6 allowed skip(s)",
+      "fingerprint": "d223599520eb265a73242ec0224196cdb6ae679de1e519b5bfc1c595cbbf0638"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-05T16:33:08.971Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "rtk proxy node -e const assert=require(\"node:assert/strict\");const fs=require(\"node:fs\");const d=\"docs/migrations/go-backend-v2/reports/\";const s=JSON.parse(fs.readFileSync(d+\"FULL_PRODUCT_AUDIT_STATE.json\",\"utf8\"));const a=JSON.parse(fs.readFileSync(d+\"FULL_API_INVENTORY.json\",\"utf8\"));assert(s.verdicts.some(v=>v.item===\"ADMIN_IAM_ROLELESS_BROWSER_DENIAL\"&&v.status===\"PASS\"));for(const id of [\"GE…",
+      "exit_code": 0,
+      "fingerprint": "d223599520eb265a73242ec0224196cdb6ae679de1e519b5bfc1c595cbbf0638"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-05T16:37:51.190Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAdsAuditRequiresPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAdsAuditRequiresPermission 2026/10/06 01:37:50 INFO request method=GET path=/api/admin/ads/audit status=200 duration=3.695541ms bytes=3 handler_admin_rbac_test.go:287: expected 403 without ads audit permission, got 200 --- FAIL: TestAdminAdsAuditRequiresPermission (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission": "expected 403 without ads audit permission, got 200"
+      },
+      "fingerprint": "822cf11538ebe57966d886278e40bf82caa9cfc85ef8b6354c692611888e22ca"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-05T16:39:45.632Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAdsAuditRequiresPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "cf18439a017990ce08527e451c72568d2df4a1831cf051c1c72aac27f862ddb2"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-05T16:46:42.785Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAdsAuditRequiresPermission)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/admin/app/[locale]/iam/admins/iam-admins-client.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminAdsAuditRequiresPermission handler_admin_rbac_test.go:266: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminAdsAuditRequiresPermission (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/iam/admins/iam-admins-client.regression.test.tsx::renders roles returned as string codes without crashing",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "Failed to resolve import \"@/lib/admin-api\" from \"apps/admin/app/[locale]/iam/admins/iam-admins-client.regression.test.tsx\". Does the file exist?",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission": "expected 403 without ads audit permission, got 200",
+        "vitest:apps/admin/app/[locale]/iam/admins/iam-admins-client.regression.test.tsx::renders roles returned as string codes without crashing": "expected admin.super in rendered Admin list"
+      },
+      "fingerprint": "c4629e2b8bbd77d335cd4c33c99e73db615c80e9e7c27024175afee46e5cfd79"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-05T16:47:42.104Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAdsAuditRequiresPermission)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/admin/app/[locale]/iam/admins/iam-admins-client.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/admin/app/[locale]/iam/admins/iam-admins-contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAdsAuditRequiresPermission 2026/10/06 01:47:39 INFO request method=GET path=/api/admin/ads/audit status=200 duration=4.88275ms bytes=3 handler_admin_rbac_test.go:287: expected 403 without ads audit permission, got 200 --- FAIL: TestAdminAdsAuditRequiresPermission (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/iam/admins/iam-admins-client.regression.test.tsx::renders roles returned as string codes without crashing",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "Failed to resolve import \"@/lib/admin-api\" from \"apps/admin/app/[locale]/iam/admins/iam-admins-client.regression.test.tsx\". Does the file exist?",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/iam/admins/iam-admins-contract.test.ts::reads role codes from the Go API roles field",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"reads role codes from the Go API roles field\" in apps/admin/app/[locale]/iam/admins/iam-admins-contract.test.ts",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission": "expected 403 without ads audit permission, got 200",
+        "vitest:apps/admin/app/[locale]/iam/admins/iam-admins-client.regression.test.tsx::renders roles returned as string codes without crashing": "expected admin.super in rendered Admin list",
+        "vitest:apps/admin/app/[locale]/iam/admins/iam-admins-contract.test.ts::reads role codes from the Go API roles field": "expected Go roles[] to normalize to roleCodes"
+      },
+      "fingerprint": "c909cc196433522cc640d743864fe9b89569591a4891b5b2be7b46643486fe1c"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-05T16:48:40.305Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAdsAuditRequiresPermission)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/admin/app/[locale]/iam/admins/iam-admins-contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAdsAuditRequiresPermission 2026/10/06 01:48:38 INFO request method=GET path=/api/admin/ads/audit status=200 duration=4.755167ms bytes=3 handler_admin_rbac_test.go:287: expected 403 without ads audit permission, got 200 --- FAIL: TestAdminAdsAuditRequiresPermission (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/iam/admins/iam-admins-contract.test.ts::IAM Admin list contract > reads role codes from the Go API roles field",
+          "outcome": "FAIL",
+          "excerpt": "adminRoleCodes is not a function",
+          "valid": false,
+          "reason": "runtime crash or non-assertion exception is not a valid RED/sensitivity failure"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission": "expected 403 without ads audit permission, got 200",
+        "vitest:apps/admin/app/[locale]/iam/admins/iam-admins-contract.test.ts::IAM Admin list contract > reads role codes from the Go API roles field": "expected Go roles[] to normalize to roleCodes"
+      },
+      "fingerprint": "75bf0ccf7358b23cc164472deab35d3a05faa31546574fd5589cd3dd46913107"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-05T16:49:33.030Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAdsAuditRequiresPermission)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/admin/app/[locale]/iam/admins/iam-admins-contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAdsAuditRequiresPermission 2026/10/06 01:49:31 INFO request method=GET path=/api/admin/ads/audit status=200 duration=3.835583ms bytes=3 handler_admin_rbac_test.go:287: expected 403 without ads audit permission, got 200 --- FAIL: TestAdminAdsAuditRequiresPermission (0.05s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/iam/admins/iam-admins-contract.test.ts::IAM Admin list contract > reads role codes from the Go API roles field",
+          "outcome": "FAIL",
+          "excerpt": "adminRoleCodes is not a function",
+          "valid": false,
+          "reason": "runtime crash or non-assertion exception is not a valid RED/sensitivity failure"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission": "expected 403 without ads audit permission, got 200",
+        "vitest:apps/admin/app/[locale]/iam/admins/iam-admins-contract.test.ts::IAM Admin list contract > reads role codes from the Go API roles field": "expected Go roles[] to normalize to roleCodes"
+      },
+      "fingerprint": "75bf0ccf7358b23cc164472deab35d3a05faa31546574fd5589cd3dd46913107"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-05T16:52:49.340Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAdsAuditRequiresPermission|TestIAMAdminListExposesRoleCodesForAdminClient)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAdsAuditRequiresPermission 2026/10/06 01:52:48 INFO request method=GET path=/api/admin/ads/audit status=200 duration=2.117125ms bytes=3 handler_admin_rbac_test.go:331: expected 403 without ads audit permission, got 200 --- FAIL: TestAdminAdsAuditRequiresPermission (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestIAMAdminListExposesRoleCodesForAdminClient",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestIAMAdminListExposesRoleCodesForAdminClient 2026/10/06 01:52:48 INFO request method=GET path=/api/admin/iam/admins status=200 duration=12.465125ms bytes=300 handler_admin_rbac_test.go:302: expected roleCodes array for admin client, got --- FAIL: TestIAMAdminListExposesRoleCodesForAdminCli…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission": "expected 403 without ads audit permission, got 200",
+        "go:./internal/httpserver:TestIAMAdminListExposesRoleCodesForAdminClient": "expected roleCodes array for admin client"
+      },
+      "fingerprint": "ce0eb37a33ef410224a2394b97c777ed90a37dd78150c3a49f8aa5c2b679cd48"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-05T16:53:09.052Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAdsAuditRequiresPermission|TestIAMAdminListExposesRoleCodesForAdminClient)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestIAMAdminListExposesRoleCodesForAdminClient",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestIAMAdminListExposesRoleCodesForAdminClient 2026/10/06 01:53:08 INFO request method=GET path=/api/admin/iam/admins status=200 duration=11.147208ms bytes=300 handler_admin_rbac_test.go:302: expected roleCodes array for admin client, got --- FAIL: TestIAMAdminListExposesRoleCodesForAdminCli…"
+        }
+      ],
+      "fingerprint": "f5dfe3ae0966d706c110d55920c92eabb8b9b3140992c654b7953dca3ed60996"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-05T16:53:43.439Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAdsAuditRequiresPermission|TestIAMAdminListExposesRoleCodesForAdminClient)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestIAMAdminListExposesRoleCodesForAdminClient",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9fcc38b0e5282c7cf476ae7d26b614f4da8ee4c6d927d2c987153870ae232b1c"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-05T16:59:52.947Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 4,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAdsAuditRequiresPermission|TestIAMAdminListExposesRoleCodesForAdminClient|TestAdminAdsRuleUpsertPersistsRule)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAdsAuditRequiresPermission 2026/10/06 01:59:52 INFO request method=GET path=/api/admin/ads/audit status=200 duration=2.892375ms bytes=3 handler_admin_rbac_test.go:379: expected 403 without ads audit permission, got 200 --- FAIL: TestAdminAdsAuditRequiresPermission (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestIAMAdminListExposesRoleCodesForAdminClient",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestIAMAdminListExposesRoleCodesForAdminClient 2026/10/06 01:59:52 INFO request method=GET path=/api/admin/iam/admins status=200 duration=12.321708ms bytes=300 handler_admin_rbac_test.go:302: expected roleCodes array for admin client, got --- FAIL: TestIAMAdminListExposesRoleCodesForAdminCli…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsRuleUpsertPersistsRule",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAdsRuleUpsertPersistsRule 2026/10/06 01:59:52 ERROR upsert ad safety rule error=\"ERROR: INSERT has more expressions than target columns (SQLSTATE 42601)\" 2026/10/06 01:59:52 INFO request method=POST path=/api/admin/ads/rules status=500 duration=2.727375ms bytes=27 handler_admin_rbac…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission": "expected 403 without ads audit permission, got 200",
+        "go:./internal/httpserver:TestIAMAdminListExposesRoleCodesForAdminClient": "expected roleCodes array for admin client",
+        "go:./internal/httpserver:TestAdminAdsRuleUpsertPersistsRule": "expected 200, got 500"
+      },
+      "fingerprint": "3a77730a5a3e658eb2e6c358ec5916ad6ffdca0703a2e87f187cb8717811f21c"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-05T17:00:27.696Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAdsAuditRequiresPermission|TestIAMAdminListExposesRoleCodesForAdminClient|TestAdminAdsRuleUpsertPersistsRule)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestIAMAdminListExposesRoleCodesForAdminClient",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsRuleUpsertPersistsRule",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3803f69b4a21ad0bbd93c481b0d79be8aafc1be6f217fdae62f36f7e6bcfc631"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-05T17:06:06.141Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAdsAuditRequiresPermission|TestIAMAdminListExposesRoleCodesForAdminClient|TestAdminAdsRuleUpsertPersistsRule|TestAdminAdsCampaignRoutesRequireDomainPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAdsAuditRequiresPermission 2026/10/06 02:06:05 INFO request method=GET path=/api/admin/ads/audit status=200 duration=2.184458ms bytes=3 handler_admin_rbac_test.go:437: expected 403 without ads audit permission, got 200 --- FAIL: TestAdminAdsAuditRequiresPermission (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestIAMAdminListExposesRoleCodesForAdminClient",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestIAMAdminListExposesRoleCodesForAdminClient 2026/10/06 02:06:05 INFO request method=GET path=/api/admin/iam/admins status=200 duration=12.769583ms bytes=300 handler_admin_rbac_test.go:302: expected roleCodes array for admin client, got --- FAIL: TestIAMAdminListExposesRoleCodesForAdminCli…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsRuleUpsertPersistsRule",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAdsRuleUpsertPersistsRule 2026/10/06 02:06:05 ERROR upsert ad safety rule error=\"ERROR: INSERT has more expressions than target columns (SQLSTATE 42601)\" 2026/10/06 02:06:05 INFO request method=POST path=/api/admin/ads/rules status=500 duration=2.2595ms bytes=27 handler_admin_rbac_t…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsCampaignRoutesRequireDomainPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAdsCampaignRoutesRequireDomainPermissions 2026/10/06 02:06:05 INFO request method=GET path=/api/admin/ads/campaigns status=200 duration=2.798084ms bytes=410 handler_admin_rbac_test.go:392: expected 403 campaign list without ads.campaign.view, got 200 --- FAIL: TestAdminAdsCampaignRo…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission": "expected 403 without ads audit permission, got 200",
+        "go:./internal/httpserver:TestIAMAdminListExposesRoleCodesForAdminClient": "expected roleCodes array for admin client",
+        "go:./internal/httpserver:TestAdminAdsRuleUpsertPersistsRule": "expected 200, got 500",
+        "go:./internal/httpserver:TestAdminAdsCampaignRoutesRequireDomainPermissions": "expected 403 campaign list without ads.campaign.view"
+      },
+      "fingerprint": "68058764c0c2c7762aaf03a4a09ca662a140cb0d37cf4321e62952ac884153c8"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-05T17:06:56.728Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAdsAuditRequiresPermission|TestIAMAdminListExposesRoleCodesForAdminClient|TestAdminAdsRuleUpsertPersistsRule|TestAdminAdsCampaignRoutesRequireDomainPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestIAMAdminListExposesRoleCodesForAdminClient",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsRuleUpsertPersistsRule",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminAdsRuleUpsertPersistsRule 2026/10/06 02:06:56 INFO request method=POST path=/api/admin/ads/rules status=403 duration=3.094167ms bytes=22 handler_admin_rbac_test.go:338: expected 200, got 403: {\"error\":\"forbidden\"} --- FAIL: TestAdminAdsRuleUpsertPersistsRule (0.03s)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsCampaignRoutesRequireDomainPermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c81912c4ab91d5e3156c23e34ccaae89fca0e4fbd96cbf08ababc07d3de15ad9"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-05T17:07:18.661Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAdsAuditRequiresPermission|TestIAMAdminListExposesRoleCodesForAdminClient|TestAdminAdsRuleUpsertPersistsRule|TestAdminAdsCampaignRoutesRequireDomainPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestIAMAdminListExposesRoleCodesForAdminClient",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsRuleUpsertPersistsRule",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsCampaignRoutesRequireDomainPermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "622cb4969d70129c9bfe11171ae710557896c2cb565b5c41f36bdc79ee14b144"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-05T17:17:11.272Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAdsAuditRequiresPermission|TestIAMAdminListExposesRoleCodesForAdminClient|TestAdminAdsRuleUpsertPersistsRule|TestAdminAdsCampaignRoutesRequireDomainPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminAdsAuditRequiresPermission handler_admin_rbac_test.go:462: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminAdsAuditRequiresPermission (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestIAMAdminListExposesRoleCodesForAdminClient",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestIAMAdminListExposesRoleCodesForAdminClient handler_admin_rbac_test.go:267: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestIAMAdminListExposesRoleCodesForAdminClient (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsRuleUpsertPersistsRule",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminAdsRuleUpsertPersistsRule handler_admin_rbac_test.go:311: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminAdsRuleUpsertPersistsRule (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsCampaignRoutesRequireDomainPermissions",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminAdsCampaignRoutesRequireDomainPermissions handler_admin_rbac_test.go:404: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminAdsCampaignRoutesRequireDomainPermissions (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission": "expected 403 without ads audit permission, got 200",
+        "go:./internal/httpserver:TestIAMAdminListExposesRoleCodesForAdminClient": "expected roleCodes array for admin client",
+        "go:./internal/httpserver:TestAdminAdsRuleUpsertPersistsRule": "expected 200, got 500",
+        "go:./internal/httpserver:TestAdminAdsCampaignRoutesRequireDomainPermissions": "expected 403 campaign list without ads.campaign.view"
+      },
+      "fingerprint": "282ae9791527f397e738d2f732935a44067b4a7aaad3986ed63b004266c4d12d"
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-05T17:17:30.281Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAdsAuditRequiresPermission|TestIAMAdminListExposesRoleCodesForAdminClient|TestAdminAdsRuleUpsertPersistsRule|TestAdminAdsCampaignRoutesRequireDomainPermissions|TestAdminAnalyticsExportUsesRealData)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAdsAuditRequiresPermission 2026/10/06 02:17:29 INFO request method=GET path=/api/admin/ads/audit status=200 duration=3.171042ms bytes=3 handler_admin_rbac_test.go:483: expected 403 without ads audit permission, got 200 --- FAIL: TestAdminAdsAuditRequiresPermission (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestIAMAdminListExposesRoleCodesForAdminClient",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestIAMAdminListExposesRoleCodesForAdminClient 2026/10/06 02:17:29 INFO request method=GET path=/api/admin/iam/admins status=200 duration=10.108084ms bytes=300 handler_admin_rbac_test.go:303: expected roleCodes array for admin client, got --- FAIL: TestIAMAdminListExposesRoleCodesForAdminCli…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsRuleUpsertPersistsRule",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAdsRuleUpsertPersistsRule 2026/10/06 02:17:29 ERROR upsert ad safety rule error=\"ERROR: INSERT has more expressions than target columns (SQLSTATE 42601)\" 2026/10/06 02:17:29 INFO request method=POST path=/api/admin/ads/rules status=500 duration=1.938ms bytes=27 handler_admin_rbac_te…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsCampaignRoutesRequireDomainPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAdsCampaignRoutesRequireDomainPermissions 2026/10/06 02:17:29 INFO request method=GET path=/api/admin/ads/campaigns status=200 duration=2.202334ms bytes=410 handler_admin_rbac_test.go:438: expected 403 campaign list without ads.campaign.view, got 200 --- FAIL: TestAdminAdsCampaignRo…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAnalyticsExportUsesRealData",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAnalyticsExportUsesRealData handler_admin_rbac_test.go:390: view summary: export contains fabricated placeholder data: id,value,previous,deltaRatio,format,available placeholder,0,0,0,int,true --- FAIL: TestAdminAnalyticsExportUsesRealData (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission": "expected 403 without ads audit permission, got 200",
+        "go:./internal/httpserver:TestIAMAdminListExposesRoleCodesForAdminClient": "expected roleCodes array for admin client",
+        "go:./internal/httpserver:TestAdminAdsRuleUpsertPersistsRule": "expected 200, got 500",
+        "go:./internal/httpserver:TestAdminAdsCampaignRoutesRequireDomainPermissions": "expected 403 campaign list without ads.campaign.view",
+        "go:./internal/httpserver:TestAdminAnalyticsExportUsesRealData": "placeholder"
+      },
+      "fingerprint": "282ae9791527f397e738d2f732935a44067b4a7aaad3986ed63b004266c4d12d"
+    },
+    {
+      "seq": 35,
+      "at": "2026-10-05T17:18:38.127Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAdsAuditRequiresPermission|TestIAMAdminListExposesRoleCodesForAdminClient|TestAdminAdsRuleUpsertPersistsRule|TestAdminAdsCampaignRoutesRequireDomainPermissions|TestAdminAnalyticsExportUsesRealData)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestIAMAdminListExposesRoleCodesForAdminClient",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsRuleUpsertPersistsRule",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsCampaignRoutesRequireDomainPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAnalyticsExportUsesRealData",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "282ae9791527f397e738d2f732935a44067b4a7aaad3986ed63b004266c4d12d"
+    },
+    {
+      "seq": 36,
+      "at": "2026-10-05T17:23:12.618Z",
+      "head": "c1ac21af48df5de85994ca8e8612a394b8c1a081",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminAdsAuditRequiresPermission|TestIAMAdminListExposesRoleCodesForAdminClient|TestAdminAdsRuleUpsertPersistsRule|TestAdminAdsCampaignRoutesRequireDomainPermissions|TestAdminAnalyticsExportUsesRealData|TestAdminAnalyticsRoutesRequireViewPermission)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAdsAuditRequiresPermission 2026/10/06 02:23:11 INFO request method=GET path=/api/admin/ads/audit status=200 duration=2.139667ms bytes=3 handler_admin_rbac_test.go:540: expected 403 without ads audit permission, got 200 --- FAIL: TestAdminAdsAuditRequiresPermission (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestIAMAdminListExposesRoleCodesForAdminClient",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestIAMAdminListExposesRoleCodesForAdminClient 2026/10/06 02:23:11 INFO request method=GET path=/api/admin/iam/admins status=200 duration=11.633125ms bytes=300 handler_admin_rbac_test.go:303: expected roleCodes array for admin client, got --- FAIL: TestIAMAdminListExposesRoleCodesForAdminCli…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsRuleUpsertPersistsRule",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAdsRuleUpsertPersistsRule 2026/10/06 02:23:11 ERROR upsert ad safety rule error=\"ERROR: INSERT has more expressions than target columns (SQLSTATE 42601)\" 2026/10/06 02:23:11 INFO request method=POST path=/api/admin/ads/rules status=500 duration=2.54425ms bytes=27 handler_admin_rbac_…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAdsCampaignRoutesRequireDomainPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAdsCampaignRoutesRequireDomainPermissions 2026/10/06 02:23:11 INFO request method=GET path=/api/admin/ads/campaigns status=200 duration=2.8425ms bytes=410 handler_admin_rbac_test.go:495: expected 403 campaign list without ads.campaign.view, got 200 --- FAIL: TestAdminAdsCampaignRout…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAnalyticsExportUsesRealData",
+          "outcome": "PASS",
+          "excerpt": "=== RUN TestAdminAnalyticsExportUsesRealData --- PASS: TestAdminAnalyticsExportUsesRealData (0.02s)",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminAnalyticsRoutesRequireViewPermission",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminAnalyticsRoutesRequireViewPermission 2026/10/06 02:23:11 INFO request method=GET path=/api/admin/analytics status=404 duration=21.25µs bytes=19 handler_admin_rbac_test.go:449: expected 403 without analytics permission for /api/admin/analytics, got 404 --- FAIL: TestAdminAnalyticsRou…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminAdsAuditRequiresPermission": "expected 403 without ads audit permission, got 200",
+        "go:./internal/httpserver:TestIAMAdminListExposesRoleCodesForAdminClient": "expected roleCodes array for admin client",
+        "go:./internal/httpserver:TestAdminAdsRuleUpsertPersistsRule": "expected 200, got 500",
+        "go:./internal/httpserver:TestAdminAdsCampaignRoutesRequireDomainPermissions": "expected 403 campaign list without ads.campaign.view",
+        "go:./internal/httpserver:TestAdminAnalyticsExportUsesRealData": "placeholder",
+        "go:./internal/httpserver:TestAdminAnalyticsRoutesRequireViewPermission": "expected 403 without analytics permission"
+      },
+      "fingerprint": "0c08e2ee27c29b542f2429fb9abd460f63c9874a234c0e3549762da056800907"
+    }
+  ],
+  "closed": null,
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [
+    "apps/api-go/internal/httpserver/server.go",
+    "apps/api-go/internal/httpserver/handler_admin_analytics_executive_test.go",
+    "apps/api-go/internal/httpserver/handler_admin_core.go"
+  ]
+}

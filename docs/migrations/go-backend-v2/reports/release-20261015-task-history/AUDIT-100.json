@@ -1,0 +1,385 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-100",
+  "title": "Audit learner search saved-entry deep link",
+  "start_head": "a7df3f6edcb9ad81f671a66e5c751e317176bb6e",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Saved-item Search URLs include a target entry, but hydration removes the entry and the intended item is not selected automatically.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Matching saved-entry links retain entry and automatically load the exact result detail."
+      },
+      {
+        "id": "AC2",
+        "text": "Missing entry targets never silently select a different result or erase the requested identity."
+      },
+      {
+        "id": "AC3",
+        "text": "Search remains usable at the existing 390x844 learner viewport."
+      }
+    ],
+    "expected_behavior": "A Search URL with a supported entry kind/id selects and loads the exact matching result after search completes, keeps entry in the URL, and never silently substitutes another result when the target is absent.",
+    "observed_behavior": "Visible authenticated 390x844 browser received /vi/search?entry=lexeme:<id>&q=<exact Japanese headword>; after GET /api/search returned the target ID, the URL became q-only and the user had to manually select the row.",
+    "rollback_plan": "Revert the Search URL selection fix and its regression test."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx",
+      "test": "SearchClient saved-entry deep links > keeps the requested entry and loads its exact detail after search results arrive",
+      "expect": "/api/content/lexemes/lexeme-1"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx",
+      "test": "SearchClient saved-entry deep links > does not replace a missing entry target with the first search result",
+      "expect": "/api/content/lexemes/lexeme-1"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx",
+      "test": "SearchClient saved-entry deep links > honors an entry added to an already-mounted query without replacing its identity",
+      "expect": "entry=lexeme%3Alexeme-1"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "VERIFYING",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-11T06:54:41.320Z",
+      "head": "a7df3f6edcb9ad81f671a66e5c751e317176bb6e"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-11T06:55:07.436Z",
+      "head": "a7df3f6edcb9ad81f671a66e5c751e317176bb6e"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T06:55:07.791Z",
+      "head": "a7df3f6edcb9ad81f671a66e5c751e317176bb6e"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T06:55:37.387Z",
+      "head": "a7df3f6edcb9ad81f671a66e5c751e317176bb6e"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T06:57:45.551Z",
+      "head": "a7df3f6edcb9ad81f671a66e5c751e317176bb6e"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T06:59:56.529Z",
+      "head": "a7df3f6edcb9ad81f671a66e5c751e317176bb6e"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T07:00:29.954Z",
+      "head": "a7df3f6edcb9ad81f671a66e5c751e317176bb6e"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T07:01:25.162Z",
+      "head": "a7df3f6edcb9ad81f671a66e5c751e317176bb6e"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T07:03:49.053Z",
+      "head": "a7df3f6edcb9ad81f671a66e5c751e317176bb6e"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-11T06:55:37.214Z",
+      "head": "a7df3f6edcb9ad81f671a66e5c751e317176bb6e",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > keeps the requested entry and loads its exact detail after search results arrive",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ StringContaining{…}, Anything ] Received: 1st vi.fn() call: [ - StringContaining \"/api/content/lexemes/lexeme-1\", - Anything, + \"http://localhost:4000/api/search?q=%E4%BC%9A%E8%AD%B0&limit=20\", ] 2nd vi.fn() call: [ - StringContaining \"/api/content/l…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > keeps the requested entry and loads its exact detail after search results arrive": "/api/content/lexemes/lexeme-1"
+      },
+      "fingerprint": "9636f065e4942adf071e9ae4fe796750bbaefd538308ccc98370063778eb29aa"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-11T06:57:45.372Z",
+      "head": "a7df3f6edcb9ad81f671a66e5c751e317176bb6e",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > keeps the requested entry and loads its exact detail after search results arrive",
+          "outcome": "PASS",
+          "excerpt": "",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > does not replace a missing entry target with the first search result",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to not be called with arguments: [ StringContaining{…} ] Received: 1st vi.fn() call: [ - StringContaining \"/api/content/lexemes/lexeme-1\", + \"http://localhost:4000/api/search?q=%E4%BC%9A%E8%AD%B0&limit=20\", ] 2nd vi.fn() call: [ - StringContaining \"/api/content/lexemes/lexeme-1\", …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > keeps the requested entry and loads its exact detail after search results arrive": "/api/content/lexemes/lexeme-1",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > does not replace a missing entry target with the first search result": "/api/content/lexemes/lexeme-1"
+      },
+      "fingerprint": "0c143ea9198b5e9cd9443edfa8314532841b3c5b4a531b183485ba3728c22497"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-11T06:59:56.352Z",
+      "head": "a7df3f6edcb9ad81f671a66e5c751e317176bb6e",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > keeps the requested entry and loads its exact detail after search results arrive",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to not be called with arguments: [ StringContaining{…} ] Received: 1st vi.fn() call: [ - StringContaining \"/api/content/lexemes/lexeme-1\", + \"http://localhost:4000/api/search?q=%E4%BC%9A%E8%AD%B0&limit=20\", ] 2nd vi.fn() call: [ - StringContaining \"/api/content/lexemes/lexeme-1\", …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > does not replace a missing entry target with the first search result",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to not be called with arguments: [ StringContaining{…} ] Received: 1st vi.fn() call: [ - StringContaining \"/api/content/lexemes/lexeme-1\", + \"http://localhost:4000/api/search?q=%E4%BC%9A%E8%AD%B0&limit=20\", ] 2nd vi.fn() call: [ - StringContaining \"/api/content/lexemes/lexeme-1\", …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > keeps the requested entry and loads its exact detail after search results arrive": "/api/content/lexemes/lexeme-1",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > does not replace a missing entry target with the first search result": "/api/content/lexemes/lexeme-1"
+      },
+      "fingerprint": "0c69856373aa6c6db243bf45c860b8ae914bf9f80c18c331ca494e8aea5b0776"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-11T07:00:29.776Z",
+      "head": "a7df3f6edcb9ad81f671a66e5c751e317176bb6e",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > keeps the requested entry and loads its exact detail after search results arrive",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to not be called with arguments: [ StringContaining{…} ] Received: 1st vi.fn() call: [ - StringContaining \"/api/content/lexemes/lexeme-1\", + \"http://localhost:4000/api/search?q=%E4%BC%9A%E8%AD%B0&limit=20\", ] 2nd vi.fn() call: [ - StringContaining \"/api/content/lexemes/lexeme-1\", …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > does not replace a missing entry target with the first search result",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to not be called with arguments: [ StringContaining{…} ] Received: 1st vi.fn() call: [ - StringContaining \"/api/content/lexemes/lexeme-1\", + \"http://localhost:4000/api/search?q=%E4%BC%9A%E8%AD%B0&limit=20\", ] 2nd vi.fn() call: [ - StringContaining \"/api/content/lexemes/lexeme-1\", …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > honors an entry added to an already-mounted query without replacing its identity",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ StringContaining{…} ] Number of calls: 0",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"/api/content/lexemes/lexeme-1\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > keeps the requested entry and loads its exact detail after search results arrive": "/api/content/lexemes/lexeme-1",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > does not replace a missing entry target with the first search result": "/api/content/lexemes/lexeme-1",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > honors an entry added to an already-mounted query without replacing its identity": "/api/content/lexemes/lexeme-1"
+      },
+      "fingerprint": "6110232b29760e68b38262a0c036f61f87ac126298204ac19b65d321a266d55f"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-11T07:01:24.985Z",
+      "head": "a7df3f6edcb9ad81f671a66e5c751e317176bb6e",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > keeps the requested entry and loads its exact detail after search results arrive",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to not be called with arguments: [ StringContaining{…} ] Received: 1st vi.fn() call: [ - StringContaining \"/api/content/lexemes/lexeme-1\", + \"http://localhost:4000/api/search?q=%E4%BC%9A%E8%AD%B0&limit=20\", ] 2nd vi.fn() call: [ - StringContaining \"/api/content/lexemes/lexeme-1\", …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > does not replace a missing entry target with the first search result",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to not be called with arguments: [ StringContaining{…} ] Received: 1st vi.fn() call: [ - StringContaining \"/api/content/lexemes/lexeme-1\", + \"http://localhost:4000/api/search?q=%E4%BC%9A%E8%AD%B0&limit=20\", ] 2nd vi.fn() call: [ - StringContaining \"/api/content/lexemes/lexeme-1\", …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > honors an entry added to an already-mounted query without replacing its identity",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to not be called with arguments: [ StringContaining{…}, Anything ] Received: 1st vi.fn() call: [ - StringContaining \"entry=lexeme%3Alexeme-1\", - Anything, + \"/vi/search?entry=lexeme%3Alexeme-1&q=%E4%BC%9A%E8%AD%B0\", + { + \"scroll\": false, + }, ] Number of calls: 1",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > keeps the requested entry and loads its exact detail after search results arrive": "/api/content/lexemes/lexeme-1",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > does not replace a missing entry target with the first search result": "/api/content/lexemes/lexeme-1",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > honors an entry added to an already-mounted query without replacing its identity": "entry=lexeme%3Alexeme-1"
+      },
+      "fingerprint": "c1071240854e0eabbbc08fc44ba92069e7b1caeb4587f25f96ef583e46d2f88b"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-11T07:03:48.839Z",
+      "head": "a7df3f6edcb9ad81f671a66e5c751e317176bb6e",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > keeps the requested entry and loads its exact detail after search results arrive",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > does not replace a missing entry target with the first search result",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > honors an entry added to an already-mounted query without replacing its identity",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "10d49694d85fe62479dc74f8cd755c2c5b4bc21ad8e6518bb07fa4f88a793ed6"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-11T07:07:16.761Z",
+      "head": "a7df3f6edcb9ad81f671a66e5c751e317176bb6e",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 432,
+        "executed": 432,
+        "passed": 432,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 782,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "10d49694d85fe62479dc74f8cd755c2c5b4bc21ad8e6518bb07fa4f88a793ed6"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-11T07:12:30.434Z",
+      "head": "a7df3f6edcb9ad81f671a66e5c751e317176bb6e",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 435,
+        "executed": 435,
+        "passed": 435,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 783,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "10d49694d85fe62479dc74f8cd755c2c5b4bc21ad8e6518bb07fa4f88a793ed6"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-11T07:14:01.423Z",
+      "head": "a7df3f6edcb9ad81f671a66e5c751e317176bb6e",
+      "kind": "review",
+      "mode": "human",
+      "reviewer": "Aristotle",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "attested": true,
+      "fingerprint": "10d49694d85fe62479dc74f8cd755c2c5b4bc21ad8e6518bb07fa4f88a793ed6"
+    }
+  ],
+  "closed": null,
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

@@ -1,0 +1,663 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-141",
+  "title": "Secure and repair five Admin flashcard variant APIs",
+  "start_head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Five active Admin Flashcard variant endpoints need individual API verification and repair; current source shows they bypass route-level permissions/CSRF and responses do not satisfy the actual detail editor.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "GET /api/admin/flashcards/variants individually verifies anonymous 401, roleless/read permission behavior, filters/pagination, response fields, and database error handling."
+      },
+      {
+        "id": "AC2",
+        "text": "GET /api/admin/flashcards/variants/{id} individually verifies authorization, not-found behavior, canonical and audit contract, and arrays required by the drawer."
+      },
+      {
+        "id": "AC3",
+        "text": "PATCH /api/admin/flashcards/variants/{id} verifies permission/CSRF, input validation, persistence, actor audit atomicity, and the client displays refreshed detail."
+      },
+      {
+        "id": "AC4",
+        "text": "PATCH /api/admin/flashcards/variants/{id}/source verifies permission/CSRF, supported active source, invalid/missing rows, persistence, audit atomicity, and refreshed detail."
+      },
+      {
+        "id": "AC5",
+        "text": "POST /api/admin/flashcards/variants/{id}/transition verifies permission/CSRF, allowed status transitions, persistence, audit atomicity, and refreshed detail."
+      },
+      {
+        "id": "AC6",
+        "text": "Visible headed 390x844 Admin browser uses real UI/session, loads detail without page errors, exercises each practical action and observes all five API requests and resulting persisted state."
+      },
+      {
+        "id": "AC7",
+        "text": "All fixtures are disposable and removed; canonical authored content remains untouched; update the five inventory verdicts/checkpoint and commit this five-API wave."
+      }
+    ],
+    "expected_behavior": "All five methods enforce server-side read/write permissions and trusted-Origin CSRF, return the contract consumed by the real UI, validate and persist safely with actor-attributed audit transactions, and expose database failures instead of false success.",
+    "observed_behavior": "The five routes are registered directly under AdminGuard without admin.content.read/write middleware or CSRF on mutations. List/detail mask SQL errors; detail omits arrays accessed by the drawer; mutation responses are partial though the client casts them to Detail; writes can succeed without durable atomic audit.",
+    "rollback_plan": "Revert the AUDIT-141 handler/client/test/report changes; changes are scoped to flashcard variants and disposable fixtures only."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY",
+      "DATABASE",
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Repair five registered Admin flashcard-variant API contracts, enforce route-level permissions and CSRF, preserve real PostgreSQL/audit guarantees, and align the existing Admin detail workflow."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminFlashcardVariantFiveAPIContracts",
+      "expect": "roleless list status=200; want 403"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-13T12:17:43.747Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-13T12:19:44.404Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-13T12:19:48.972Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T12:21:47.280Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T12:26:19.729Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T12:32:19.624Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T12:32:54.121Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T12:36:05.657Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T12:49:42.414Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T13:08:04.345Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-13T13:14:09.713Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T13:21:06.232Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-13T13:29:24.308Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T13:37:22.904Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-13T13:42:52.622Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-13T13:46:39.315Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-13T13:46:40.164Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-13T12:21:46.829Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardVariantFiveAPIContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardVariantFiveAPIContracts",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardVariantFiveAPIContracts === RUN TestAdminFlashcardVariantFiveAPIContracts/GET_/api/admin/flashcards/variants 2026/10/13 21:21:46 INFO request method=GET path=/api/admin/flashcards/variants status=401 duration=268.292µs bytes=25 2026/10/13 21:21:46 INFO request method=GET pa…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminFlashcardVariantFiveAPIContracts": "roleless list status=200; want 403"
+      },
+      "fingerprint": "3a07c6ebb5f4492672366da2aabde69abad07ae290b787529a3084d665b7909e"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-13T12:26:19.423Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardVariantFiveAPIContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardVariantFiveAPIContracts",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "15afc6553c097e2581f11c8a797daf957ab617c5f2a4cfcd7b72328ad73230c6"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-13T12:27:18.841Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 895,
+        "executed": 893,
+        "passed": 893,
+        "failed": 0,
+        "skipped": 2,
+        "expected_skips": 0,
+        "unexpected_skips": 2,
+        "min_passed_tests": 431
+      },
+      "message": "2 test(s) skipped that are not in go-test-skips-baseline.json — skipped tests are not verification",
+      "fingerprint": "15afc6553c097e2581f11c8a797daf957ab617c5f2a4cfcd7b72328ad73230c6"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-13T12:32:19.299Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 796,
+        "lint_errors": 69,
+        "lint_warnings": 22,
+        "new_debt": 2
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "15afc6553c097e2581f11c8a797daf957ab617c5f2a4cfcd7b72328ad73230c6"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-13T12:32:53.794Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardVariantFiveAPIContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardVariantFiveAPIContracts",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "5cc5e1586300b36c2e18aec28694eb65a0c6db7aec9ff70ff410ff3382c85ce6"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-13T12:36:05.324Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 895,
+        "executed": 895,
+        "passed": 895,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "5cc5e1586300b36c2e18aec28694eb65a0c6db7aec9ff70ff410ff3382c85ce6"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-13T12:41:03.106Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 797,
+        "lint_errors": 71,
+        "lint_warnings": 22,
+        "new_debt": 3
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "d77ce628d99854524b76b2179b83aaecb75af74519ca5e90e4fc8558cc2ce6db"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-13T12:49:42.087Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardVariantFiveAPIContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardVariantFiveAPIContracts",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9dc23d537b838fe63e29c432eeb61d70cdc0c3e8c2c871c026c90172bbb94197"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-13T12:52:33.243Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 895,
+        "executed": 895,
+        "passed": 895,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "895 passed, 0 allowed skip(s)",
+      "fingerprint": "9dc23d537b838fe63e29c432eeb61d70cdc0c3e8c2c871c026c90172bbb94197"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-13T12:57:22.116Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 797,
+        "lint_errors": 69,
+        "lint_warnings": 22,
+        "new_debt": 2
+      },
+      "message": "RATCHET_VIOLATION: 2 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "9dc23d537b838fe63e29c432eeb61d70cdc0c3e8c2c871c026c90172bbb94197"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-13T12:57:44.683Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit141-admin-flashcard-variants.mjs",
+      "exit_code": 0,
+      "fingerprint": "9dc23d537b838fe63e29c432eeb61d70cdc0c3e8c2c871c026c90172bbb94197"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-13T13:08:03.920Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 899,
+        "executed": 899,
+        "passed": 899,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "899 passed, 0 allowed skip(s)",
+      "fingerprint": "d215691f2f7ba35357c48b5d9c0cbca0b872b40d06bb50d98f42e7f9a2a9d871"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-13T13:13:28.335Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 797,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "d215691f2f7ba35357c48b5d9c0cbca0b872b40d06bb50d98f42e7f9a2a9d871"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-13T13:13:43.316Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit141-admin-flashcard-variants.mjs",
+      "exit_code": 0,
+      "fingerprint": "d215691f2f7ba35357c48b5d9c0cbca0b872b40d06bb50d98f42e7f9a2a9d871"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-13T13:14:09.280Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardVariantFiveAPIContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardVariantFiveAPIContracts",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d215691f2f7ba35357c48b5d9c0cbca0b872b40d06bb50d98f42e7f9a2a9d871"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-13T13:21:05.826Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit141-admin-flashcard-variants.mjs",
+      "exit_code": 0,
+      "fingerprint": "93ac2da7c396841e0083eab6d2d1e86c6137d6f9651163be7769f901c7427e88"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-13T13:24:16.426Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 899,
+        "executed": 899,
+        "passed": 899,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "899 passed, 0 allowed skip(s)",
+      "fingerprint": "93ac2da7c396841e0083eab6d2d1e86c6137d6f9651163be7769f901c7427e88"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-13T13:29:03.783Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 797,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "93ac2da7c396841e0083eab6d2d1e86c6137d6f9651163be7769f901c7427e88"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-13T13:29:23.861Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardVariantFiveAPIContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardVariantFiveAPIContracts",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "93ac2da7c396841e0083eab6d2d1e86c6137d6f9651163be7769f901c7427e88"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-13T13:37:22.417Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 899,
+        "executed": 899,
+        "passed": 899,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "899 passed, 0 allowed skip(s)",
+      "fingerprint": "a3f71144a7572dfbbfd20745dcd3d97a34d35fba525f06d19c9eb67b3e9242ea"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-13T13:42:06.646Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 467,
+        "executed": 467,
+        "passed": 467,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 797,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "a3f71144a7572dfbbfd20745dcd3d97a34d35fba525f06d19c9eb67b3e9242ea"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-13T13:42:36.793Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node e2e/audit/audit141-admin-flashcard-variants.mjs",
+      "exit_code": 0,
+      "fingerprint": "a3f71144a7572dfbbfd20745dcd3d97a34d35fba525f06d19c9eb67b3e9242ea"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-13T13:42:52.171Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardVariantFiveAPIContracts)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardVariantFiveAPIContracts",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a3f71144a7572dfbbfd20745dcd3d97a34d35fba525f06d19c9eb67b3e9242ea"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-13T13:46:38.897Z",
+      "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Singer",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "2775de8e208968960e50c19c9c1bb8b2272263812f94b3cbc3e11944c91d31b4",
+      "attested": true,
+      "fingerprint": "a3f71144a7572dfbbfd20745dcd3d97a34d35fba525f06d19c9eb67b3e9242ea"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-13T13:46:40.146Z",
+    "head": "3c138db3d83db24fa62cad611868b1d63c1990e1",
+    "fingerprint": "a3f71144a7572dfbbfd20745dcd3d97a34d35fba525f06d19c9eb67b3e9242ea",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/admin/app/[locale]/flashcards/templates/flashcard-variants-admin-client.tsx": "86c0dccf1650037ea6ef59dc6582090bc5c851d6",
+      "apps/api-go/internal/httpserver/handler_admin_flashcard_variants_contract_test.go": "be836199e421076e4b3d51ec17a25257b1f5a76b",
+      "apps/api-go/internal/httpserver/handler_admin_flashcards.go": "897e93ef339f2d7d25e2aef0a27f05de045e69d6",
+      "apps/api-go/internal/httpserver/server.go": "a815681dcaf1a97fcf7c9e4c7219fb3b603e5b22",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "cd9a6a3690490d8bfaf27c3dd49b7b75b4c881f8",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "b24abb00e07068bc04412dcafcebe22dcc32ac62",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "cd58cdc6df0827acc978c510f5b8e333b3c54a28",
+      "docs/migrations/go-backend-v2/reports/HANDOFF_NEXT_AUDIT.md": "481fdd557c60634179eb821894cf37f68a6596da",
+      "e2e/audit/audit140-admin-loto.mjs": "96ce47f28cb452ccb76987682078398de2535a35",
+      "e2e/audit/audit141-admin-flashcard-variants.mjs": "cad9bc844ff774d7cccd691b9c956650f1f066ba"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

@@ -42,5 +42,5 @@ export default defineConfig({
           url: "http://127.0.0.1:3001"
         }
       ],
-  workers: process.env.CI ? 1 : undefined
+  workers: 1
 });

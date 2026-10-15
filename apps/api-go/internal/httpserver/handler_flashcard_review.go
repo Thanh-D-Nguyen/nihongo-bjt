@@ -197,8 +197,12 @@ func getDistractorsHandler(store *flashcardreview.Store, logger *slog.Logger) ht
 			return
 		}
 		limit := 5
-		if l := r.URL.Query().Get("limit"); l != "" {
-			if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 {
+		requestedLimit := r.URL.Query().Get("n")
+		if requestedLimit == "" {
+			requestedLimit = r.URL.Query().Get("limit")
+		}
+		if requestedLimit != "" {
+			if parsed, err := strconv.Atoi(requestedLimit); err == nil && parsed > 0 {
 				limit = parsed
 			}
 		}
@@ -214,7 +218,11 @@ func getDistractorsHandler(store *flashcardreview.Store, logger *slog.Logger) ht
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(distractors)
+		items := make([]string, 0, len(distractors))
+		for _, distractor := range distractors {
+			items = append(items, distractor.Content)
+		}
+		_ = json.NewEncoder(w).Encode(map[string][]string{"items": items})
 	}
 }
 

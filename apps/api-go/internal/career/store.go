@@ -58,11 +58,37 @@ type CareerRankSummary struct {
 
 // ContextMemo is one inbox item for GET /api/career/inbox.
 type ContextMemo struct {
-	ID        string          `json:"id"`
-	MemoType  string          `json:"memoType"`
-	Payload   json.RawMessage `json:"payload"`
-	CreatedAt time.Time       `json:"createdAt"`
-	ReadAt    *time.Time      `json:"readAt,omitempty"`
+	ID                   string    `json:"id"`
+	CardKind             string    `json:"cardKind"`
+	ExpressionJa         string    `json:"expressionJa"`
+	Reading              string    `json:"reading"`
+	SurfaceMeaningVi     string    `json:"surfaceMeaningVi"`
+	RealIntentVi         string    `json:"realIntentVi"`
+	SceneJa              string    `json:"sceneJa"`
+	ToneVi               string    `json:"toneVi"`
+	BJTTrapVi            string    `json:"bjtTrapVi"`
+	FromNPCSlug          string    `json:"fromNpcSlug"`
+	FromNPCAvatarInitial string    `json:"fromNpcAvatarInitial,omitempty"`
+	FromNPCAvatarTint    string    `json:"fromNpcAvatarTint,omitempty"`
+	FromNPCNameJa        string    `json:"fromNpcNameJa,omitempty"`
+	GeneratedAt          time.Time `json:"generatedAt"`
+	Status               string    `json:"status"`
+	Feedback             *string   `json:"feedback,omitempty"`
+}
+
+type contextMemoPayload struct {
+	CardKind             string `json:"cardKind"`
+	ExpressionJa         string `json:"expressionJa"`
+	Reading              string `json:"reading"`
+	SurfaceMeaningVi     string `json:"surfaceMeaningVi"`
+	RealIntentVi         string `json:"realIntentVi"`
+	SceneJa              string `json:"sceneJa"`
+	ToneVi               string `json:"toneVi"`
+	BJTTrapVi            string `json:"bjtTrapVi"`
+	FromNPCSlug          string `json:"fromNpcSlug"`
+	FromNPCAvatarInitial string `json:"fromNpcAvatarInitial"`
+	FromNPCAvatarTint    string `json:"fromNpcAvatarTint"`
+	FromNPCNameJa        string `json:"fromNpcNameJa"`
 }
 
 // Store provides read/write access to career tables.
@@ -129,7 +155,7 @@ func (s *Store) GetMe(ctx context.Context, userID string) (*CareerMe, error) {
 
 func (s *Store) createDefaultCareerState(ctx context.Context, userID string) (*CareerMe, error) {
 	const insertQ = `INSERT INTO career.user_career_state (user_id, current_rank_code, rank_xp, jp_work_name, company_theme, hire_date, streak_days, updated_at)
-		VALUES ($1, 'R1', 0, '田中 太郎', 'mirai-shoji', CURRENT_DATE, 0, NOW())
+		VALUES ($1, 'R1', 0, '', '', CURRENT_DATE, 0, NOW())
 		ON CONFLICT (user_id) DO NOTHING`
 	if _, err := s.db.Exec(ctx, insertQ, userID); err != nil {
 		return nil, fmt.Errorf("career: create default: %w", err)
@@ -162,20 +188,25 @@ func (s *Store) ClockIn(ctx context.Context, userID string) (*CareerMe, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	now := time.Now()
-	today := now.Format("2006-01-02")
+	if _, err := s.GetMe(ctx, userID); err != nil {
+		return nil, err
+	}
+	tokyo := time.FixedZone("Asia/Tokyo", 9*60*60)
+	now := time.Now().In(tokyo)
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, tokyo)
+	yesterday := today.AddDate(0, 0, -1)
 
 	const q = `UPDATE career.user_career_state SET
-		last_clock_in_at = NOW(),
+		last_clock_in_at = CASE WHEN last_clock_in_at >= $2 THEN last_clock_in_at ELSE $3 END,
 		streak_days = CASE
-			WHEN last_clock_in_at >= $2::date THEN streak_days
-			WHEN last_clock_in_at >= ($2::date - INTERVAL '1 day') THEN streak_days + 1
+			WHEN last_clock_in_at >= $2 THEN streak_days
+			WHEN last_clock_in_at >= $4 THEN streak_days + 1
 			ELSE 1
 		END,
-		rank_xp = rank_xp + 10,
-		updated_at = NOW()
+		rank_xp = rank_xp + CASE WHEN last_clock_in_at >= $2 THEN 0 ELSE 10 END,
+		updated_at = CASE WHEN last_clock_in_at >= $2 THEN updated_at ELSE NOW() END
 		WHERE user_id = $1`
-	if _, err := s.db.Exec(ctx, q, userID, today); err != nil {
+	if _, err := s.db.Exec(ctx, q, userID, today, now, yesterday); err != nil {
 		return nil, fmt.Errorf("career: clock in: %w", err)
 	}
 	return s.GetMe(ctx, userID)
@@ -216,25 +247,62 @@ func (s *Store) GetInbox(ctx context.Context, userID string) ([]ContextMemo, err
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	const q = `SELECT id, memo_type, payload, created_at, read_at
+	const q = `SELECT id, memo_type, payload, created_at, read_at, feedback
 		FROM career.context_memo WHERE user_id = $1
 		ORDER BY created_at DESC LIMIT 50`
 	rows, err := s.db.Query(ctx, q, userID)
 	if err != nil {
-		return []ContextMemo{}, nil // table may not exist yet
+		return nil, err
 	}
 	defer rows.Close()
 
 	var memos []ContextMemo
 	for rows.Next() {
-		var m ContextMemo
-		if err := rows.Scan(&m.ID, &m.MemoType, &m.Payload, &m.CreatedAt, &m.ReadAt); err != nil {
-			continue
+		var id, memoType string
+		var payload []byte
+		var createdAt time.Time
+		var readAt *time.Time
+		var feedback *string
+		if err := rows.Scan(&id, &memoType, &payload, &createdAt, &readAt, &feedback); err != nil {
+			return nil, err
 		}
-		memos = append(memos, m)
+		var p contextMemoPayload
+		if err := json.Unmarshal(payload, &p); err != nil {
+			return nil, fmt.Errorf("decode context memo %s: %w", id, err)
+		}
+		if p.CardKind == "" {
+			p.CardKind = memoType
+		}
+		status := "unread"
+		if readAt != nil {
+			status = "read"
+		}
+		memos = append(memos, ContextMemo{
+			ID: id, CardKind: p.CardKind, ExpressionJa: p.ExpressionJa, Reading: p.Reading,
+			SurfaceMeaningVi: p.SurfaceMeaningVi, RealIntentVi: p.RealIntentVi, SceneJa: p.SceneJa,
+			ToneVi: p.ToneVi, BJTTrapVi: p.BJTTrapVi, FromNPCSlug: p.FromNPCSlug,
+			FromNPCAvatarInitial: p.FromNPCAvatarInitial, FromNPCAvatarTint: p.FromNPCAvatarTint,
+			FromNPCNameJa: p.FromNPCNameJa, GeneratedAt: createdAt, Status: status, Feedback: feedback,
+		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	if memos == nil {
 		memos = []ContextMemo{}
 	}
 	return memos, nil
+}
+
+// SetInboxFeedback stores a learner's response and marks that memo as read.
+func (s *Store) SetInboxFeedback(ctx context.Context, userID, memoID, feedback string) (bool, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	const q = `UPDATE career.context_memo SET feedback = $3, read_at = COALESCE(read_at, NOW()), updated_at = NOW()
+		WHERE id = $1 AND user_id = $2`
+	tag, err := s.db.Exec(ctx, q, memoID, userID, feedback)
+	if err != nil {
+		return false, err
+	}
+	return tag.RowsAffected() == 1, nil
 }

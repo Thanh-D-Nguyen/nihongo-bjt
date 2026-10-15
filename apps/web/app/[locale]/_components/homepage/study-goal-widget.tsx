@@ -6,19 +6,17 @@ import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 
 interface StudyTask {
-  id: string;
   taskType: string;
   targetCount: number;
   doneCount: number;
-  completedAt: string | null;
-  sortOrder: number;
+	isComplete: boolean;
 }
 
 interface StudyPlan {
-  planDate: string;
+	date: string;
   targetMinutes: number;
-  progressPct: number;
-  isComplete: boolean;
+	completed: number;
+	total: number;
   tasks: StudyTask[];
 }
 
@@ -47,7 +45,8 @@ export function StudyGoalWidget({ locale }: { locale: string }) {
     try {
       // Check if goal exists first
       const goalRes = await learnerApiFetch("/api/gamification/study-goal");
-      if (!goalRes.ok || !(await goalRes.json())) {
+      const goal = goalRes.ok ? (await goalRes.json()) as { isSet?: boolean } : null;
+      if (!goal?.isSet) {
         setGoalSet(false);
         setLoading(false);
         return;
@@ -136,14 +135,16 @@ export function StudyGoalWidget({ locale }: { locale: string }) {
   if (!plan) return null;
 
   // Progress ring calculation
+  const progressPct = plan.total ? Math.round((plan.completed / plan.total) * 100) : 0;
+  const isComplete = plan.total > 0 && plan.completed >= plan.total;
   const radius = 36;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (plan.progressPct / 100) * circumference;
+  const offset = circumference - (progressPct / 100) * circumference;
 
   return (
     <div className={cn(
       "rounded-2xl border bg-surface p-5 shadow-sm transition-all",
-      plan.isComplete
+      isComplete
         ? "border-[var(--color-matcha)]/30 bg-[var(--color-matcha)]/5"
         : "border-ink/8"
     )}>
@@ -168,23 +169,23 @@ export function StudyGoalWidget({ locale }: { locale: string }) {
               strokeDashoffset={offset}
               className={cn(
                 "transition-all duration-700 ease-out",
-                plan.isComplete ? "text-[var(--color-matcha)]" : "text-accent"
+                isComplete ? "text-[var(--color-matcha)]" : "text-accent"
               )}
               transform="rotate(-90 40 40)"
             />
           </svg>
           <span className="absolute inset-0 flex items-center justify-center text-lg font-black text-ink">
-            {plan.progressPct}%
+            {progressPct}%
           </span>
         </div>
 
         {/* Goal info */}
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-bold text-ink">
-            {plan.isComplete ? "🎉 Hoàn thành!" : "🎯 Mục tiêu hôm nay"}
+            {isComplete ? "🎉 Hoàn thành!" : "🎯 Mục tiêu hôm nay"}
           </h3>
           <p className="mt-0.5 text-xs text-muted">
-            {plan.targetMinutes} phút · {plan.tasks.filter((t) => t.completedAt).length}/{plan.tasks.length} nhiệm vụ
+            {plan.targetMinutes} phút · {plan.completed}/{plan.total} nhiệm vụ
           </p>
         </div>
       </div>
@@ -193,9 +194,9 @@ export function StudyGoalWidget({ locale }: { locale: string }) {
       <ul className="mt-4 space-y-2">
         {plan.tasks.map((task) => {
           const info = TASK_LABELS[task.taskType] ?? { label: task.taskType, emoji: "📌", href: "/" };
-          const isDone = task.completedAt !== null;
+          const isDone = task.isComplete || task.doneCount >= task.targetCount;
           return (
-            <li key={task.id}>
+            <li key={task.taskType}>
               <a
                 href={`/${locale}${info.href}`}
                 className={cn(

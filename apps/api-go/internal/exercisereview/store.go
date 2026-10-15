@@ -3,6 +3,7 @@ package exercisereview
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -26,6 +27,17 @@ type DueExercise struct {
 	IntervalDays int       `json:"intervalDays"`
 	Repetitions  int       `json:"repetitions"`
 	Lapses       int       `json:"lapses"`
+	Exercise     Exercise  `json:"exercise"`
+}
+
+type Exercise struct {
+	ID            string          `json:"id"`
+	ExerciseType  string          `json:"exerciseType"`
+	Prompt        json.RawMessage `json:"prompt"`
+	Choices       json.RawMessage `json:"choices"`
+	CorrectAnswer json.RawMessage `json:"correctAnswer"`
+	Explanation   *string         `json:"explanation"`
+	Level         *string         `json:"level"`
 }
 
 // ReviewState represents the current SRS state for a user+exercise pair.
@@ -40,7 +52,7 @@ type ReviewState struct {
 	DueAt        time.Time `json:"dueAt"`
 }
 
-// Store provides read/write access to learning.exercise_review_state.
+// Store provides read/write access to exercise.exercise_review_state.
 type Store struct {
 	db *pgxpool.Pool
 }
@@ -70,9 +82,16 @@ func (s *Store) GetDueExercises(ctx context.Context, userID string, limit int) (
 		ers.ease_factor,
 		ers.interval_days,
 		ers.repetitions,
-		ers.lapses
-	FROM learning.exercise_review_state ers
-	LEFT JOIN learning.exercise e ON e.id = ers.exercise_id
+		ers.lapses,
+		e.id::text,
+		e.exercise_type,
+		e.prompt,
+		e.choices,
+		e.correct_answer,
+		e.explanation,
+		e.level
+	FROM exercise.exercise_review_state ers
+	JOIN exercise.exercise e ON e.id = ers.exercise_id
 	WHERE ers.user_id = $1 AND ers.due_at <= NOW()
 	ORDER BY ers.due_at ASC
 	LIMIT $2`
@@ -86,13 +105,17 @@ func (s *Store) GetDueExercises(ctx context.Context, userID string, limit int) (
 	var exercises []DueExercise
 	for rows.Next() {
 		var de DueExercise
+		var exerciseID string
 		if err := rows.Scan(
 			&de.ExerciseID, &de.ExerciseType, &de.Level, &de.Difficulty,
 			&de.DueAt, &de.State, &de.EaseFactor, &de.IntervalDays,
-			&de.Repetitions, &de.Lapses,
+			&de.Repetitions, &de.Lapses, &exerciseID, &de.Exercise.ExerciseType,
+			&de.Exercise.Prompt, &de.Exercise.Choices, &de.Exercise.CorrectAnswer,
+			&de.Exercise.Explanation, &de.Exercise.Level,
 		); err != nil {
 			return nil, fmt.Errorf("exercisereview: scan due exercise: %w", err)
 		}
+		de.Exercise.ID = exerciseID
 		exercises = append(exercises, de)
 	}
 	if err := rows.Err(); err != nil {
@@ -111,7 +134,7 @@ func (s *Store) GetReviewState(ctx context.Context, userID, exerciseID string) (
 	defer cancel()
 
 	const q = `SELECT user_id, exercise_id, state, ease_factor, interval_days, repetitions, lapses, due_at
-	FROM learning.exercise_review_state WHERE user_id = $1 AND exercise_id = $2`
+	FROM exercise.exercise_review_state WHERE user_id = $1 AND exercise_id = $2`
 
 	var rs ReviewState
 	err := s.db.QueryRow(ctx, q, userID, exerciseID).Scan(
@@ -132,9 +155,9 @@ func (s *Store) UpsertReviewState(ctx context.Context, rs ReviewState) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	const q = `INSERT INTO learning.exercise_review_state
-		(user_id, exercise_id, state, ease_factor, interval_days, repetitions, lapses, due_at)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	const q = `INSERT INTO exercise.exercise_review_state
+		(user_id, exercise_id, state, ease_factor, interval_days, repetitions, lapses, due_at, updated_at)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
 	ON CONFLICT (user_id, exercise_id) DO UPDATE SET
 		state = EXCLUDED.state,
 		ease_factor = EXCLUDED.ease_factor,

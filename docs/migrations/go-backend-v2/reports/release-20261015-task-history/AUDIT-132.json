@@ -1,0 +1,323 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-132",
+  "title": "Enforce Admin RBAC on legal cookie categories API",
+  "start_head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Anonymous GET is 401; authenticated Admin with canonical legal-read permission gets exact four-category contract and status 200; session without permission is 403; visible Admin caller and same-origin request verified; regression test goes RED before route-level RBAC fix, then green and required security review."
+      },
+      {
+        "id": "AC2",
+        "text": "Add a real-router PostgreSQL integration regression that checks anonymous 401, roleless Admin 403, and iam.manage Admin 200 with exactly four unique category keys, total, partialSchemaPending, and required fields; record RED before implementation. Add RequirePermission(iam.manage) to GET /api/admin/legal/cookie-categories only. Rebuild runtime, check API via visible Admin UI/session and anonymous/roleless behavior, run Go suite, obtain independent AUTH_SECURITY APPROVE, update durable audit inventories, and commit."
+      }
+    ],
+    "expected_behavior": "Anonymous remains 401, authenticated Admin without iam.manage receives 403, and an Admin with iam.manage receives HTTP 200 and the documented four-category JSON contract.",
+    "observed_behavior": "GET /api/admin/legal/cookie-categories sits behind AdminGuard but has no route-level permission middleware. Frontend nav hides Legal Cookies unless iam.manage is present; docs/OpenAPI classify it as an Admin permissioned route.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "AUTH_SECURITY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "This fixes a verified missing backend authorization check on an Admin legal API, using the project's canonical permission guard."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminLegalCookieCategoriesRequiresIManage",
+      "expect": "expected roleless Admin to return 403, got 200"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-13T01:59:31.575Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-13T01:59:31.925Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-13T01:59:32.272Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T02:01:12.900Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T02:01:40.439Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-13T02:15:22.207Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-13T02:18:16.468Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-13T02:21:00.135Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-13T02:21:35.019Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-13T02:21:48.736Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-13T02:01:12.724Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLegalCookieCategoriesRequiresIManage)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLegalCookieCategoriesRequiresIManage",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminLegalCookieCategoriesRequiresIManage 2026/10/13 11:01:12 INFO request method=GET path=/api/admin/legal/cookie-categories status=401 duration=147.042µs bytes=25 2026/10/13 11:01:12 INFO request method=GET path=/api/admin/legal/cookie-categories status=200 duration=2.513666ms bytes=13…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminLegalCookieCategoriesRequiresIManage": "expected roleless Admin to return 403, got 200"
+      },
+      "fingerprint": "99735dccd3116061698093c0f50c9c7c861db6ea648c430b5bafa4a1d4b1b3cb"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-13T02:01:40.226Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLegalCookieCategoriesRequiresIManage)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLegalCookieCategoriesRequiresIManage",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8b9af7e4db15e0ca87e0c3b80ae35f3b5798c6102efd343227cf1d795c912e98"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-13T02:02:34.713Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 845,
+        "executed": 843,
+        "passed": 843,
+        "failed": 0,
+        "skipped": 2,
+        "expected_skips": 0,
+        "unexpected_skips": 2,
+        "min_passed_tests": 431
+      },
+      "message": "2 test(s) skipped that are not in go-test-skips-baseline.json — skipped tests are not verification",
+      "fingerprint": "8b9af7e4db15e0ca87e0c3b80ae35f3b5798c6102efd343227cf1d795c912e98"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-13T02:06:26.950Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 845,
+        "executed": 845,
+        "passed": 845,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "845 passed, 0 allowed skip(s)",
+      "fingerprint": "8b9af7e4db15e0ca87e0c3b80ae35f3b5798c6102efd343227cf1d795c912e98"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-13T02:12:13.287Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLegalCookieCategoriesRequiresIManage)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLegalCookieCategoriesRequiresIManage",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9ff90fee9006afe00b846e9ea0d154bb72b719225f995ff6482360f8ed44d820"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-13T02:15:21.868Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 845,
+        "executed": 845,
+        "passed": 845,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "9ff90fee9006afe00b846e9ea0d154bb72b719225f995ff6482360f8ed44d820"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-13T02:17:12.725Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit132-browser-check.sh",
+      "exit_code": 1,
+      "fingerprint": "42cc3b27165db95cb3c0161878ca9e42ab40a6e3ac01e5dde06be3e51d11844f"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-13T02:18:01.550Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/audit/audit132-browser-check.sh",
+      "exit_code": 0,
+      "fingerprint": "791c0411ee651fbbfe0ae96cad78e52c615e1d6535865379db146182422665fb"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-13T02:18:16.018Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminLegalCookieCategoriesRequiresIManage)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminLegalCookieCategoriesRequiresIManage",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "791c0411ee651fbbfe0ae96cad78e52c615e1d6535865379db146182422665fb"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-13T02:20:59.797Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 845,
+        "executed": 845,
+        "passed": 845,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "845 passed, 0 allowed skip(s)",
+      "fingerprint": "791c0411ee651fbbfe0ae96cad78e52c615e1d6535865379db146182422665fb"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-13T02:21:34.700Z",
+      "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a1330d-a8c1-7f32-819b-b4b6ac186cfc",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "3960b041921222a3d197ddcc059d4bdfbba305028ec88b676932316ae80c0c82",
+      "attested": true,
+      "fingerprint": "791c0411ee651fbbfe0ae96cad78e52c615e1d6535865379db146182422665fb"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-13T02:21:48.717Z",
+    "head": "ff8a058bde02d2f255060b3714d55a9d7e88a0e9",
+    "fingerprint": "791c0411ee651fbbfe0ae96cad78e52c615e1d6535865379db146182422665fb",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_admin_legal_rbac_test.go": "5836a9d9fe10f815fe857ce26b835dd716420178",
+      "apps/api-go/internal/httpserver/server.go": "eee3151b29c3abe0124186a2c8bc2494dfcae735",
+      "docs/openapi.json": "283677386198a47c9b6745825d056fb34042063d",
+      "e2e/audit/audit132-browser-check.sh": "aa1292bba5bc7de329ba53ca064eb36a114225e2"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

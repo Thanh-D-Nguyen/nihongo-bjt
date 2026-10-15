@@ -1,0 +1,113 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-119",
+  "title": "Audit authenticated learner presence WebSocket",
+  "start_head": "39f527acb458dbea099206632b0b348970853a89",
+  "preexisting_changes": {
+    "apps/api-go/internal/httpserver/server.go": "f4276313c561bb08ced26924cd686446f785a2da",
+    "apps/api-go/internal/realtime/server.go": "54e65d55367313010ab2b2a5cbc3faea17634a92",
+    "apps/api-go/internal/httpserver/handler_realtime_presence_test.go": "5a479989a2ceddc3ceb2a34b17ae5477c8a37445",
+    "apps/api-go/internal/realtime/upgrade_integration_test.go": "3ff64efb95cbd71a15f8bc6857dc6adf840dccb1"
+  },
+  "spec": {
+    "problem": "Validate the active authenticated learner presence WebSocket GET /ws/presence through the real browser session and record method-path-specific evidence.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Visible authenticated learner session completes a WebSocket upgrade to GET /ws/presence; anonymous access is rejected and heartbeat/event behavior is recorded."
+      },
+      {
+        "id": "AC2",
+        "text": "Observe browser Network/Console and verify server-side connection lifecycle, heartbeat/event contract, and disconnect/reconnect; update exactly this API inventory row and checkpoint counts/evidence."
+      },
+      {
+        "id": "AC3",
+        "text": "If runtime behavior is defective, preserve evidence and open a separate scoped REALTIME task with valid RED before changing production behavior."
+      }
+    ],
+    "expected_behavior": "Only authenticated browser sessions establish presence connections; heartbeat and events follow the Go protocol, and disconnect cleans up.",
+    "observed_behavior": "Visible learner UI registration established a real session; GET /ws/presence upgraded with 101 and browser heartbeat refreshed Redis. The audit found missing service wiring and a reconnect race; AUDIT-120 fixed them in a separate reviewed task.",
+    "rollback_plan": "Documentation-only audit record can be reverted; any code fix is independently scoped and regression-tested."
+  },
+  "classification": {
+    "classes": [
+      "DOC_ONLY"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-12T07:26:13.628Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-12T07:26:21.114Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-12T07:26:26.844Z",
+      "head": "39f527acb458dbea099206632b0b348970853a89"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-12T08:24:14Z",
+      "head": "0161f396cfed425d726ce59b7f1a2ec06d340d5a"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-12T08:24:34.701Z",
+      "head": "0161f396cfed425d726ce59b7f1a2ec06d340d5a"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-12T08:24:14Z",
+      "head": "0161f396cfed425d726ce59b7f1a2ec06d340d5a",
+      "kind": "browser",
+      "outcome": "PASS",
+      "method_path": "GET /ws/presence",
+      "result": "Visible headed browser registration form POST 201, authenticated /api/auth/me 200, same-origin presence WebSocket 101. Redis online and last_seen timestamps refreshed after the heartbeat interval; presence:user_online was observed in the prior visible capture. Anonymous and malformed session behavior plus trusted-origin policy were verified by real-upgrade integration tests."
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-12T08:24:14Z",
+      "head": "0161f396cfed425d726ce59b7f1a2ec06d340d5a",
+      "kind": "api",
+      "outcome": "PASS",
+      "method_path": "GET /ws/presence",
+      "result": "AUDIT-120 wired the Redis PresenceService and fixed same-user disconnect/reconnect ordering. Integration verifies heartbeat refresh, last disconnect offline, reconnect online, multiple connections, unrelated-user concurrency and cleanup. Go 790/790, zero skips, race/vet/ARM64 passed; independent review APPROVE; commit 0161f396."
+    }
+  ],
+  "closed": {
+    "at": "2026-10-12T08:24:34.683Z",
+    "head": "0161f396cfed425d726ce59b7f1a2ec06d340d5a",
+    "fingerprint": "be8b2ad97dcb28f4959a313befb437817ca7426f5e65bbdd50cf695aefdeb7bb",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS"
+    },
+    "files": {
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.json": "19bec9e5554924af7823b2e69e9c484c99b44a2c",
+      "docs/migrations/go-backend-v2/reports/FULL_API_INVENTORY.md": "d2a78c63d71a99e5ab4ecb7dab5ac42984febe1b",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.json": "127707058e84d9a205868479c0f130c74dda85ba",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_AUDIT_STATE.md": "1237d44bc366d5950f8c66a57f4a543bc06d7d3a",
+      "docs/migrations/go-backend-v2/reports/FULL_PRODUCT_BROWSER_AUDIT.md": "f5e889c808ab6417db1fc3c07290dfc81068e006",
+      "docs/migrations/go-backend-v2/reports/HANDOFF_NEXT_AUDIT.md": "37798dba7ee95fdefd6c0881be9f361be0a68a41"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

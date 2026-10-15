@@ -38,9 +38,8 @@ type SavedTab = "words" | "kanji" | "grammar";
 type BookmarkRow = {
   id: string;
   targetId: string;
-  targetType: string;
+  type: string;
   createdAt: string;
-  userId: string;
 };
 
 type BookmarkListResponse = {
@@ -74,7 +73,7 @@ function searchHref(locale: string, title: string, targetType: string, targetId:
 async function resolveBookmarkTitle(targetType: string, targetId: string): Promise<string | null> {
   try {
     if (targetType === "lexeme" || targetType === "word") {
-      const r = await learnerApiFetch(`/api/dictionary/words/${encodeURIComponent(targetId)}`);
+      const r = await learnerApiFetch(`/api/content/lexemes/${encodeURIComponent(targetId)}`);
       if (!r.ok) return null;
       const data = (await r.json()) as { headword?: string };
       return data.headword?.trim() || null;
@@ -87,7 +86,7 @@ async function resolveBookmarkTitle(targetType: string, targetId: string): Promi
       return dto.character?.trim() || null;
     }
     if (targetType === "grammar") {
-      const r = await learnerApiFetch(`/api/grammar/${encodeURIComponent(targetId)}`);
+      const r = await learnerApiFetch(`/api/content/grammar/${encodeURIComponent(targetId)}`);
       if (!r.ok) return null;
       const data = (await r.json()) as { pattern?: string };
       return data.pattern?.trim() || null;
@@ -106,7 +105,7 @@ export function SavedPageClient({ labels, locale }: { labels: SavedPageLabels; l
   const [error, setError] = useState(false);
   /** `null` = resolving, `""` = failed, string = label */
   const [titles, setTitles] = useState<Record<string, string | null>>({});
-  const titleKey = (r: BookmarkRow) => `${r.targetType}:${r.targetId}`;
+  const titleKey = (r: BookmarkRow) => `${r.type}:${r.targetId}`;
 
   const emptyLabel = useMemo(() => {
     if (tab === "kanji") return labels.emptyKanji;
@@ -152,7 +151,7 @@ export function SavedPageClient({ labels, locale }: { labels: SavedPageLabels; l
     let cancelled = false;
     for (const row of rows) {
       const key = titleKey(row);
-      void resolveBookmarkTitle(row.targetType, row.targetId).then((t) => {
+      void resolveBookmarkTitle(row.type, row.targetId).then((t) => {
         if (cancelled) return;
         setTitles((prev) => ({ ...prev, [key]: t ?? "" }));
       });
@@ -266,7 +265,7 @@ export function SavedPageClient({ labels, locale }: { labels: SavedPageLabels; l
                   ? labels.unknownTitle
                   : raw;
             const qTitle = resolved === "ok" && raw != null ? raw : "";
-            const href = searchHref(locale, qTitle, row.targetType, row.targetId, labels.searchFallbackQuery);
+            const href = searchHref(locale, qTitle, row.type, row.targetId, labels.searchFallbackQuery);
             const dateStr = formatSavedDate(row.createdAt);
             return (
               <li className="flex flex-col gap-2 px-4 py-4 sm:flex-row sm:items-center sm:justify-between" key={row.id}>

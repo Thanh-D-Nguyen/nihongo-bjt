@@ -303,55 +303,57 @@ export function IamPermissionsClient({
             </button>
           </AdminEmptyState>
         ) : (
-          <AdminDataTable>
-            <AdminDataTableHead>
-              <AdminDataTableRow>
-                <AdminDataTableTh>{t("colCode")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colGroup")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colDescription")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colRoleCount")}</AdminDataTableTh>
-                <AdminDataTableTh>{t("colAdminCount")}</AdminDataTableTh>
-              </AdminDataTableRow>
-            </AdminDataTableHead>
-            <AdminDataTableBody>
-              {filtered.map((row) => {
-                const isSelected = row.code === selectedCode;
-                return (
-                  <AdminDataTableRow
-                    key={row.id}
-                    className={cn(
-                      "cursor-pointer hover:bg-indigo-50/40",
-                      isSelected ? "bg-indigo-50" : undefined
-                    )}
-                  >
-                    <AdminDataTableTd>
-                      <button
-                        className="text-left font-mono text-xs font-semibold text-indigo-700 hover:underline"
-                        onClick={() => setSelectedCode(row.code)}
-                        type="button"
-                      >
-                        {row.code}
-                      </button>
-                    </AdminDataTableTd>
-                    <AdminDataTableTd>
-                      <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-800">
-                        {row.group}
-                      </code>
-                    </AdminDataTableTd>
-                    <AdminDataTableTd>
-                      <span className="text-xs text-slate-700">{row.description ?? "—"}</span>
-                    </AdminDataTableTd>
-                    <AdminDataTableTd>
-                      <span className="text-xs font-semibold text-slate-800">{row.roleCount}</span>
-                    </AdminDataTableTd>
-                    <AdminDataTableTd>
-                      <span className="text-xs font-semibold text-slate-800">{row.adminCount}</span>
-                    </AdminDataTableTd>
-                  </AdminDataTableRow>
-                );
-              })}
-            </AdminDataTableBody>
-          </AdminDataTable>
+          <div aria-label={t("title")} className="max-w-full overflow-x-auto" role="region" tabIndex={0}>
+            <AdminDataTable>
+              <AdminDataTableHead>
+                <AdminDataTableRow>
+                  <AdminDataTableTh>{t("colCode")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colGroup")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colDescription")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colRoleCount")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colAdminCount")}</AdminDataTableTh>
+                </AdminDataTableRow>
+              </AdminDataTableHead>
+              <AdminDataTableBody>
+                {filtered.map((row) => {
+                  const isSelected = row.code === selectedCode;
+                  return (
+                    <AdminDataTableRow
+                      key={row.id}
+                      className={cn(
+                        "cursor-pointer hover:bg-indigo-50/40",
+                        isSelected ? "bg-indigo-50" : undefined
+                      )}
+                    >
+                      <AdminDataTableTd>
+                        <button
+                          className="text-left font-mono text-xs font-semibold text-indigo-700 hover:underline"
+                          onClick={() => setSelectedCode(row.code)}
+                          type="button"
+                        >
+                          {row.code}
+                        </button>
+                      </AdminDataTableTd>
+                      <AdminDataTableTd>
+                        <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-800">
+                          {row.group}
+                        </code>
+                      </AdminDataTableTd>
+                      <AdminDataTableTd>
+                        <span className="text-xs text-slate-700">{row.description ?? "—"}</span>
+                      </AdminDataTableTd>
+                      <AdminDataTableTd>
+                        <span className="text-xs font-semibold text-slate-800">{row.roleCount}</span>
+                      </AdminDataTableTd>
+                      <AdminDataTableTd>
+                        <span className="text-xs font-semibold text-slate-800">{row.adminCount}</span>
+                      </AdminDataTableTd>
+                    </AdminDataTableRow>
+                  );
+                })}
+              </AdminDataTableBody>
+            </AdminDataTable>
+          </div>
         )}
       </AdminSection>
 

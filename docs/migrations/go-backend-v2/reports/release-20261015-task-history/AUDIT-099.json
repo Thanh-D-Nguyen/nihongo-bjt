@@ -1,0 +1,220 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-099",
+  "title": "Audit learner saved items screen",
+  "start_head": "b73a178148797469f82d5117c8c9608e01536f0a",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Saved items used obsolete learner detail paths and rendered localized unknown titles even though canonical Go routes serve these records.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Saved tabs load only the authenticated learner’s records, expose truthful loading/error/empty states, and do not show private data anonymously."
+      },
+      {
+        "id": "AC2",
+        "text": "Saved word, kanji, and grammar entries resolve their visible title from the canonical Go content detail endpoints; unresolved or missing content uses localized fallback copy."
+      },
+      {
+        "id": "AC3",
+        "text": "Opening a saved entry preserves its target identity in the localized Search route; bookmark add/remove actions persist through the real learner UI and refresh."
+      },
+      {
+        "id": "AC4",
+        "text": "The Saved screen remains usable at 390x844 without horizontal overflow."
+      }
+    ],
+    "expected_behavior": "Saved lexeme/grammar rows resolve their titles through registered canonical endpoints and keep the item identity in its Search deep link.",
+    "observed_behavior": "On the visible authenticated Saved screen, a real saved lexeme rendered “Không lấy được tiêu đề”; the route source maps the vocabulary and grammar calls to paths not registered by Go. The Go API registers GET /api/content/lexemes/{id} and GET /api/content/grammar/{id}.",
+    "rollback_plan": "Revert the two endpoint-path changes and focused Saved screen regression test."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/saved/_components/saved-page-client.test.tsx",
+      "test": "SavedPageClient > resolves saved word titles from the canonical content detail endpoint",
+      "expect": "/api/content/lexemes/word-1"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-11T06:31:01.897Z",
+      "head": "b73a178148797469f82d5117c8c9608e01536f0a"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-11T06:35:26.996Z",
+      "head": "b73a178148797469f82d5117c8c9608e01536f0a"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-11T06:35:27.345Z",
+      "head": "b73a178148797469f82d5117c8c9608e01536f0a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-11T06:35:58.640Z",
+      "head": "b73a178148797469f82d5117c8c9608e01536f0a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-11T06:45:26.124Z",
+      "head": "b73a178148797469f82d5117c8c9608e01536f0a"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-11T06:48:43.464Z",
+      "head": "b73a178148797469f82d5117c8c9608e01536f0a"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-11T06:50:19.866Z",
+      "head": "b73a178148797469f82d5117c8c9608e01536f0a"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-11T06:35:58.463Z",
+      "head": "b73a178148797469f82d5117c8c9608e01536f0a",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/saved/_components/saved-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/saved/_components/saved-page-client.test.tsx::SavedPageClient > resolves saved word titles from the canonical content detail endpoint",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ '/api/content/lexemes/word-1' ] Received: 1st vi.fn() call: [ - \"/api/content/lexemes/word-1\", + \"/api/bookmarks/words?limit=50&userId=learner-1\", ] 2nd vi.fn() call: [ - \"/api/content/lexemes/word-1\", + \"/api/dictionary/words/word-1\", ] Number of ca…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/saved/_components/saved-page-client.test.tsx::SavedPageClient > resolves saved word titles from the canonical content detail endpoint": "/api/dictionary/words/word-1"
+      },
+      "fingerprint": "0bc7ced398c946c5a3adbb0b1fb2157e087b1e794601941a884cd433bb9cda08"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-11T06:41:25.872Z",
+      "head": "b73a178148797469f82d5117c8c9608e01536f0a",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/saved/_components/saved-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/saved/_components/saved-page-client.test.tsx::SavedPageClient > resolves saved word titles from the canonical content detail endpoint",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ '/api/content/lexemes/word-1' ] Received: 1st vi.fn() call: [ - \"/api/content/lexemes/word-1\", + \"/api/bookmarks/words?limit=50&userId=learner-1\", ] Number of calls: 1",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/saved/_components/saved-page-client.test.tsx::SavedPageClient > resolves saved word titles from the canonical content detail endpoint": "/api/content/lexemes/word-1"
+      },
+      "fingerprint": "716a3be148968877962d4950094e2486bdc901cd6ea7ad2fd0fce970cdd8326d"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-11T06:45:25.909Z",
+      "head": "b73a178148797469f82d5117c8c9608e01536f0a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/saved/_components/saved-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/saved/_components/saved-page-client.test.tsx::SavedPageClient > resolves saved word titles from the canonical content detail endpoint",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f9680fb67a7ce8c329b0727a5c4d524ea3a4f0365686fc9acbe75b5220b4c584"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-11T06:48:43.222Z",
+      "head": "b73a178148797469f82d5117c8c9608e01536f0a",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 429,
+        "executed": 429,
+        "passed": 429,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 781,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "f9680fb67a7ce8c329b0727a5c4d524ea3a4f0365686fc9acbe75b5220b4c584"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-11T06:50:19.118Z",
+      "head": "b73a178148797469f82d5117c8c9608e01536f0a",
+      "kind": "review",
+      "mode": "human",
+      "reviewer": "Erdos",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "attested": true,
+      "fingerprint": "f9680fb67a7ce8c329b0727a5c4d524ea3a4f0365686fc9acbe75b5220b4c584"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-11T06:50:19.849Z",
+    "head": "b73a178148797469f82d5117c8c9608e01536f0a",
+    "fingerprint": "f9680fb67a7ce8c329b0727a5c4d524ea3a4f0365686fc9acbe75b5220b4c584",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/saved/_components/saved-page-client.test.tsx": "3e8d804a888eec084d00a11f967c3ce25b129bde",
+      "apps/web/app/[locale]/saved/_components/saved-page-client.tsx": "5d55d132ff0e22ea41f649a43bfb953b6440e209"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

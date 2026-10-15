@@ -1,0 +1,265 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-090",
+  "title": "Audit learner profile screen",
+  "start_head": "09777eb299a91bbe3a550b86c9b3aeec6046e6cb",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The legacy learner /:locale/profile route is an active alias to /:locale/me, but its anonymous routing, real authenticated rendering and mobile behavior are not yet inventoried.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Visible anonymous /vi/profile follows /vi/me to localized Login with returnTo and shows no private profile."
+      },
+      {
+        "id": "AC2",
+        "text": "A learner registered and logged in through the actual visible UI can open /vi/profile and see the profile overview plus key tabs; vi/en/ja alias URLs preserve locale."
+      },
+      {
+        "id": "AC3",
+        "text": "At 390x844 the authenticated profile overview and navigation tabs have no horizontal overflow or clipped controls."
+      },
+      {
+        "id": "AC4",
+        "text": "The authenticated overview loads learner totals from GET /api/analytics/learner and due-card count from GET /api/flashcards/reviews/due; it does not call the nonexistent /api/learner/analytics route."
+      }
+    ],
+    "expected_behavior": "All supported locales preserve the alias destination; anonymous users are routed through localized login without profile data; a real learner session reaches the profile overview and the mobile profile controls stay within 390px.",
+    "observed_behavior": "Source redirects /:locale/profile to /:locale/me and /me is wrapped in RequireAuth; verify the actual redirect chain and authenticated page in the visible browser.",
+    "rollback_plan": "Audit-only change; revert only the inventory/report/task evidence if a recorded verdict is incorrect."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "This task records source-driven screen audit evidence and inventory status only; no product behavior is being changed."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx",
+      "test": "MePageClient mobile tabs > lays out all four tabs within the available mobile row",
+      "expect": "/api/learner/analytics?days=7"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-10T02:46:03.169Z",
+      "head": "09777eb299a91bbe3a550b86c9b3aeec6046e6cb"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-10T02:47:53.988Z",
+      "head": "09777eb299a91bbe3a550b86c9b3aeec6046e6cb"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-10T02:47:54.344Z",
+      "head": "09777eb299a91bbe3a550b86c9b3aeec6046e6cb"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-10T03:01:20.640Z",
+      "head": "09777eb299a91bbe3a550b86c9b3aeec6046e6cb"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-10T03:01:57.785Z",
+      "head": "09777eb299a91bbe3a550b86c9b3aeec6046e6cb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T03:02:50.552Z",
+      "head": "09777eb299a91bbe3a550b86c9b3aeec6046e6cb"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-10T03:06:37.414Z",
+      "head": "09777eb299a91bbe3a550b86c9b3aeec6046e6cb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-10T03:07:01.512Z",
+      "head": "09777eb299a91bbe3a550b86c9b3aeec6046e6cb"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-10T03:10:41.210Z",
+      "head": "09777eb299a91bbe3a550b86c9b3aeec6046e6cb"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-10T03:10:55.164Z",
+      "head": "09777eb299a91bbe3a550b86c9b3aeec6046e6cb"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-10T03:01:45.328Z",
+      "head": "09777eb299a91bbe3a550b86c9b3aeec6046e6cb",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx::MePageClient mobile tabs > lays out all four tabs within the available mobile row",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ …(2) ] Received: 1st vi.fn() call: [ - \"/api/analytics/learner?days=7\", + \"/api/auth/me\", { + \"cache\": \"no-store\", \"credentials\": \"same-origin\", }, ] 2nd vi.fn() call: [ - \"/api/analytics/learner?days=7\", + \"/api/learner/analytics?days=7\", { \"credent…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"uses GET /api/analytics/learner?days=7 and GET /api/flashcards/reviews/due?limit=500\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx::MePageClient mobile tabs > lays out all four tabs within the available mobile row": "uses GET /api/analytics/learner?days=7 and GET /api/flashcards/reviews/due?limit=500"
+      },
+      "fingerprint": "b73dadba9961731cbf026267efb955c614c5ac75910f31b4099f296019e2204a"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-10T03:01:57.547Z",
+      "head": "09777eb299a91bbe3a550b86c9b3aeec6046e6cb",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx::MePageClient mobile tabs > lays out all four tabs within the available mobile row",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ …(2) ] Received: 1st vi.fn() call: [ - \"/api/analytics/learner?days=7\", + \"/api/auth/me\", { + \"cache\": \"no-store\", \"credentials\": \"same-origin\", }, ] 2nd vi.fn() call: [ - \"/api/analytics/learner?days=7\", + \"/api/learner/analytics?days=7\", { \"credent…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx::MePageClient mobile tabs > lays out all four tabs within the available mobile row": "/api/learner/analytics?days=7"
+      },
+      "fingerprint": "b73dadba9961731cbf026267efb955c614c5ac75910f31b4099f296019e2204a"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-10T03:02:50.270Z",
+      "head": "09777eb299a91bbe3a550b86c9b3aeec6046e6cb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx::MePageClient mobile tabs > lays out all four tabs within the available mobile row",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "043c584446658da90a3cbfc445c334746ba63967a3d4c0821e06ad90940ebfde"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-10T03:06:37.208Z",
+      "head": "09777eb299a91bbe3a550b86c9b3aeec6046e6cb",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 415,
+        "executed": 415,
+        "passed": 415,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 776,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "043c584446658da90a3cbfc445c334746ba63967a3d4c0821e06ad90940ebfde"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-10T03:07:01.309Z",
+      "head": "09777eb299a91bbe3a550b86c9b3aeec6046e6cb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx::MePageClient mobile tabs > lays out all four tabs within the available mobile row",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "5478522eeff8d8277024f806a4e214525338e6a5518dfd369350698b11bd0435"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-10T03:10:41.011Z",
+      "head": "09777eb299a91bbe3a550b86c9b3aeec6046e6cb",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 415,
+        "executed": 415,
+        "passed": 415,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 776,
+        "lint_errors": 65,
+        "lint_warnings": 25,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "5478522eeff8d8277024f806a4e214525338e6a5518dfd369350698b11bd0435"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-10T03:10:55.146Z",
+    "head": "09777eb299a91bbe3a550b86c9b3aeec6046e6cb",
+    "fingerprint": "5478522eeff8d8277024f806a4e214525338e6a5518dfd369350698b11bd0435",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx": "4f0678894f4584c28d40ab8c4b98d34766100e52",
+      "apps/web/app/[locale]/me/_components/me-page-client.tsx": "cfe1ee8876bfd3a690d1a6953dcc3c8e1b1eeb7c"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

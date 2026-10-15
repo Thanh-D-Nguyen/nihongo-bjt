@@ -1,0 +1,1227 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUDIT-126",
+  "title": "Audit Admin flashcard styles screen and APIs",
+  "start_head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Admin flashcard style screen and six API contracts need end-to-end audit against canonical profile/style persistence and admin protections.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Audit GET/POST /api/admin/flashcards/styles, GET adoption analytics, GET/PATCH /api/admin/flashcards/styles/{id}, POST /api/admin/flashcards/styles/{id}/transition individually; fix local contract defects with tests. Test /admin/:locale/flashcards/styles anonymous and authorized states, primary UI interactions, 390x844 rendering, console/network, and persistence. Record verdicts and next item in durable reports; commit the screen before the next screen."
+      },
+      {
+        "id": "AC2",
+        "text": "Audit six style METHOD+PATH contracts separately; validate profile-based adoption counting with PostgreSQL; verify CRUD/status validation, audit evidence, auth/CSRF; test Admin styles screen anonymous and authorized in headed 390x844; remove disposable fixtures before commit."
+      },
+      {
+        "id": "AC3",
+        "text": "A signed-in Admin without admin.content.read/write is denied on all six style routes; denied mutations leave the fixture unchanged."
+      },
+      {
+        "id": "AC4",
+        "text": "Create and patch flashcard styles reject missing or invalid theme config without persisting it."
+      },
+      {
+        "id": "AC5",
+        "text": "A valid mixed-case-gradient theme can be created, patched, and transitioned, with domain data and audit rows committed."
+      },
+      {
+        "id": "AC6",
+        "text": "A failed audit insert rolls back its flashcard style mutation."
+      }
+    ],
+    "expected_behavior": "Style adoption counts are derived from profile.user_profile.flashcard_style_slug; all six method/path contracts validate and persist safely; UI supports authorized use at mobile viewport.",
+    "observed_behavior": "The adoption handler joins reading_user_preference.user_id to flashcard_style.id, while ReadingUserPreference has no style field and UserProfile stores flashcard_style_slug.",
+    "rollback_plan": "Revert only the AUDIT-126 code commit; fixture rows are disposable and removed by tests/browser cleanup. No schema/data migration is planned."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY",
+      "AUTH_SECURITY",
+      "API_CONTRACT",
+      "DATABASE"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminFlashcardStyleAdoptionCountsProfileSelections",
+      "expect": "style adoption count"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus",
+      "expect": "invalid tier status=201"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminFlashcardStyleRoutesRequireContentPermissions",
+      "expect": "want 403 for Admin without content permissions"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminFlashcardStyleMutationsRejectMissingOrigin",
+      "expect": "want 403 without a trusted Origin or Referer"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminFlashcardStyleConfigRejectsInvalidOrMissing",
+      "expect": "want 400"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminFlashcardStyleValidMutationsCommitAudit",
+      "expect": "missing config status=201"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminFlashcardStyleAuditFailureRollsBackCreate",
+      "expect": "audit failure status=201"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-12T15:11:05.373Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-12T15:11:05.734Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-12T15:11:06.090Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T15:14:52.892Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T15:16:58.402Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T15:24:22.297Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T15:25:15.081Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T15:27:52.916Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T15:29:10.438Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T15:32:30.645Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T15:33:28.427Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-12T15:38:58.945Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T15:39:17.727Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T15:40:13.431Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T15:45:36.381Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T15:50:59.428Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-12T16:03:53.636Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-12T16:06:01.595Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-12T16:07:20.782Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-13T00:34:10.285Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-13T00:35:43.364Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-12T15:14:19.833Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardStyleAdoptionCountsProfileSelections)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminFlashcardStyleAdoptionCountsProfileSelections handler_admin_flashcard_styles_test.go:12: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminFlashcardStyleAdoptionCountsProfileSelections (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections": "style adoption count"
+      },
+      "fingerprint": "395f6f620bde62dc91a795e04af322362ee0852ab2454fe7726193cd21047949"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-12T15:14:52.530Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardStyleAdoptionCountsProfileSelections)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleAdoptionCountsProfileSelections handler_admin_flashcard_styles_test.go:45: style adoption count=0; want 2 --- FAIL: TestAdminFlashcardStyleAdoptionCountsProfileSelections (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections": "style adoption count"
+      },
+      "fingerprint": "a819a638b03f9acce13a034087c6ef6f5a4e63583a6c0a400d5d6f84ad9e3324"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-12T15:16:09.755Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardStyleAdoptionCountsProfileSelections)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminFlashcardStyleAdoptionCountsProfileSelections {\"time\":\"2026-10-13T00:16:09.696146+09:00\",\"level\":\"ERROR\",\"msg\":\"flashcard styles adoption\",\"error\":\"ERROR: column up.user_id does not exist (SQLSTATE 42703)\"} handler_admin_flashcard_styles_test.go:33: adoption status=500 body={\"error\"…"
+        }
+      ],
+      "fingerprint": "1e5888864adf81135b63fb114962607ae55420084f46a07dd8ca1aeebd8a1630"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-12T15:16:57.949Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardStyleAdoptionCountsProfileSelections)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "7d90080dc411c4ca7d9adf767b91f938879000ee940e13a8f30d8f80b26f765f"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-12T15:24:21.727Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardStyleAdoptionCountsProfileSelections|TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleAdoptionCountsProfileSelections handler_admin_flashcard_styles_test.go:48: style adoption count=0; want 2 --- FAIL: TestAdminFlashcardStyleAdoptionCountsProfileSelections (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus === RUN TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus/invalid_tier handler_admin_flashcard_styles_test.go:80: invalid invalid tier status=201 body={\"id\":\"e00bda8b-1254-417a-b21c-7af93e424927\",\"slug\":\"audit-invalid-unexpected…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections": "style adoption count",
+        "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus": "invalid tier status=201"
+      },
+      "fingerprint": "defcd1a4b7a56800bbecdc7f34f2c44a1db8b70d6bd4473431b3dfc2298bd2e1"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-12T15:25:14.557Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardStyleAdoptionCountsProfileSelections|TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "afc1d5fc42522b6288bf8f0f32be0202ce78410a9934db780d536cfacc6631c2"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-12T15:27:08.631Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 815,
+        "executed": 813,
+        "passed": 813,
+        "failed": 0,
+        "skipped": 2,
+        "expected_skips": 0,
+        "unexpected_skips": 2,
+        "min_passed_tests": 431
+      },
+      "message": "2 test(s) skipped that are not in go-test-skips-baseline.json — skipped tests are not verification",
+      "fingerprint": "afc1d5fc42522b6288bf8f0f32be0202ce78410a9934db780d536cfacc6631c2"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-12T15:28:15.190Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardStyleAdoptionCountsProfileSelections|TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus|TestAdminFlashcardStyleRoutesRequireContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleAdoptionCountsProfileSelections handler_admin_flashcard_styles_test.go:48: style adoption count=0; want 2 --- FAIL: TestAdminFlashcardStyleAdoptionCountsProfileSelections (0.06s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus === RUN TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus/invalid_tier handler_admin_flashcard_styles_test.go:80: invalid invalid tier status=201 body={\"id\":\"d4ed7b8c-765d-44c5-8cad-3ce052d58520\",\"slug\":\"audit-invalid-unexpected…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleRoutesRequireContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleRoutesRequireContentPermissions === RUN TestAdminFlashcardStyleRoutesRequireContentPermissions/GET_/api/admin/flashcards/styles handler_admin_flashcard_styles_test.go:118: status=200 body=[{\"id\":\"a9bebdfb-233f-4f3d-9fc2-9f6a7a69b7f6\",\"slug\":\"audit-rbac-a9bebdfb\",\"nameK…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections": "style adoption count",
+        "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus": "invalid tier status=201",
+        "go:./internal/httpserver:TestAdminFlashcardStyleRoutesRequireContentPermissions": "want 403 for Admin without content permissions"
+      },
+      "fingerprint": "88c860fd70865bc440cb1e5d34003ca490154342020e1b670916829c941ca96f"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-12T15:29:09.943Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardStyleAdoptionCountsProfileSelections|TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus|TestAdminFlashcardStyleRoutesRequireContentPermissions)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleRoutesRequireContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "19a927789c84810b7ee695faafd94beaf89d8256cccc2d420af5c12e1f5fcfa3"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-12T15:32:30.141Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 822,
+        "executed": 822,
+        "passed": 822,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "19a927789c84810b7ee695faafd94beaf89d8256cccc2d420af5c12e1f5fcfa3"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-12T15:33:05.078Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardStyleAdoptionCountsProfileSelections|TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus|TestAdminFlashcardStyleRoutesRequireContentPermissions|TestAdminFlashcardStyleMutationsRejectMissingOrigin)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleAdoptionCountsProfileSelections handler_admin_flashcard_styles_test.go:49: style adoption count=0; want 2 --- FAIL: TestAdminFlashcardStyleAdoptionCountsProfileSelections (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus === RUN TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus/invalid_tier handler_admin_flashcard_styles_test.go:81: invalid invalid tier status=201 body={\"id\":\"0ede4d2d-0b52-4752-ac16-1e1c9045eafe\",\"slug\":\"audit-invalid-unexpected…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleRoutesRequireContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleRoutesRequireContentPermissions === RUN TestAdminFlashcardStyleRoutesRequireContentPermissions/GET_/api/admin/flashcards/styles handler_admin_flashcard_styles_test.go:119: status=200 body=[{\"id\":\"ebb52e85-72a7-419b-ad6b-434a4ed48d3d\",\"slug\":\"audit-rbac-ebb52e85\",\"nameK…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleMutationsRejectMissingOrigin",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleMutationsRejectMissingOrigin === RUN TestAdminFlashcardStyleMutationsRejectMissingOrigin/POST_/api/admin/flashcards/styles handler_admin_flashcard_styles_test.go:158: status=201 body={\"id\":\"3be173a2-36f4-41b7-a282-6c48fc7815a3\",\"slug\":\"audit-csrf-b7ebafc6-created\",\"sta…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections": "style adoption count",
+        "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus": "invalid tier status=201",
+        "go:./internal/httpserver:TestAdminFlashcardStyleRoutesRequireContentPermissions": "want 403 for Admin without content permissions",
+        "go:./internal/httpserver:TestAdminFlashcardStyleMutationsRejectMissingOrigin": "want 403 without a trusted Origin or Referer"
+      },
+      "fingerprint": "516b0b555b08b1ed4561aaeea391f526ba0207e216daa715367e71f7521d52f3"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-12T15:33:27.906Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardStyleAdoptionCountsProfileSelections|TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus|TestAdminFlashcardStyleRoutesRequireContentPermissions|TestAdminFlashcardStyleMutationsRejectMissingOrigin)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleRoutesRequireContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleMutationsRejectMissingOrigin",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "516b0b555b08b1ed4561aaeea391f526ba0207e216daa715367e71f7521d52f3"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-12T15:37:05.647Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 826,
+        "executed": 826,
+        "passed": 826,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "826 passed, 0 allowed skip(s)",
+      "fingerprint": "516b0b555b08b1ed4561aaeea391f526ba0207e216daa715367e71f7521d52f3"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-12T15:38:58.478Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardStyleAdoptionCountsProfileSelections|TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus|TestAdminFlashcardStyleRoutesRequireContentPermissions|TestAdminFlashcardStyleMutationsRejectMissingOrigin|TestAdminFlashcardStyleConfigRejectsInvalidOrMissing)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminFlashcardStyleAdoptionCountsProfileSelections handler_admin_flashcard_styles_test.go:16: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminFlashcardStyleAdoptionCountsProfileSelections (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus handler_admin_flashcard_styles_test.go:58: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleRoutesRequireContentPermissions",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminFlashcardStyleRoutesRequireContentPermissions handler_admin_flashcard_styles_test.go:88: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminFlashcardStyleRoutesRequireContentPermissions (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleMutationsRejectMissingOrigin",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminFlashcardStyleMutationsRejectMissingOrigin handler_admin_flashcard_styles_test.go:126: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminFlashcardStyleMutationsRejectMissingOrigin (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleConfigRejectsInvalidOrMissing",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestAdminFlashcardStyleConfigRejectsInvalidOrMissing handler_admin_flashcard_styles_test.go:165: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestAdminFlashcardStyleConfigRejectsInvalidOrMissing (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections": "style adoption count",
+        "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus": "invalid tier status=201",
+        "go:./internal/httpserver:TestAdminFlashcardStyleRoutesRequireContentPermissions": "want 403 for Admin without content permissions",
+        "go:./internal/httpserver:TestAdminFlashcardStyleMutationsRejectMissingOrigin": "want 403 without a trusted Origin or Referer",
+        "go:./internal/httpserver:TestAdminFlashcardStyleConfigRejectsInvalidOrMissing": "want 400"
+      },
+      "fingerprint": "6f4f663ce48365eed77bf0e21a36f5dc01cb0c8303809c0bdf3447e2834fd3f5"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-12T15:39:17.248Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardStyleAdoptionCountsProfileSelections|TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus|TestAdminFlashcardStyleRoutesRequireContentPermissions|TestAdminFlashcardStyleMutationsRejectMissingOrigin|TestAdminFlashcardStyleConfigRejectsInvalidOrMissing)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleAdoptionCountsProfileSelections handler_admin_flashcard_styles_test.go:49: style adoption count=0; want 2 --- FAIL: TestAdminFlashcardStyleAdoptionCountsProfileSelections (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus === RUN TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus/invalid_tier handler_admin_flashcard_styles_test.go:81: invalid invalid tier status=201 body={\"id\":\"8c9e7a8e-d9b3-4495-8790-373895ce6007\",\"slug\":\"audit-invalid-unexpected…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleRoutesRequireContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleRoutesRequireContentPermissions === RUN TestAdminFlashcardStyleRoutesRequireContentPermissions/GET_/api/admin/flashcards/styles handler_admin_flashcard_styles_test.go:119: status=200 body=[{\"id\":\"3251ed43-1456-4653-8074-efbb12c8b4d8\",\"slug\":\"audit-rbac-3251ed43\",\"nameK…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleMutationsRejectMissingOrigin",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleMutationsRejectMissingOrigin === RUN TestAdminFlashcardStyleMutationsRejectMissingOrigin/POST_/api/admin/flashcards/styles handler_admin_flashcard_styles_test.go:158: status=201 body={\"id\":\"7c0a7bbd-3509-4a33-8850-d95e8ea036cd\",\"slug\":\"audit-csrf-dc25b36b-created\",\"sta…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleConfigRejectsInvalidOrMissing",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleConfigRejectsInvalidOrMissing === RUN TestAdminFlashcardStyleConfigRejectsInvalidOrMissing/create/missing handler_admin_flashcard_styles_test.go:193: status=201 body={\"id\":\"92ce3705-1005-4b1b-bc10-3c457fd00334\",\"slug\":\"audit-config-bf236885\",\"status\":\"draft\"} ; want 40…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections": "style adoption count",
+        "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus": "invalid tier status=201",
+        "go:./internal/httpserver:TestAdminFlashcardStyleRoutesRequireContentPermissions": "want 403 for Admin without content permissions",
+        "go:./internal/httpserver:TestAdminFlashcardStyleMutationsRejectMissingOrigin": "want 403 without a trusted Origin or Referer",
+        "go:./internal/httpserver:TestAdminFlashcardStyleConfigRejectsInvalidOrMissing": "want 400"
+      },
+      "fingerprint": "6f4f663ce48365eed77bf0e21a36f5dc01cb0c8303809c0bdf3447e2834fd3f5"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-12T15:40:12.927Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardStyleAdoptionCountsProfileSelections|TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus|TestAdminFlashcardStyleRoutesRequireContentPermissions|TestAdminFlashcardStyleMutationsRejectMissingOrigin|TestAdminFlashcardStyleConfigRejectsInvalidOrMissing)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleRoutesRequireContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleMutationsRejectMissingOrigin",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleConfigRejectsInvalidOrMissing",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c686baa46d4bdbca8d9715b9c43e18ef058e7ec7219817dc921b31b7a945ead5"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-12T15:45:00.799Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 460,
+        "executed": 460,
+        "passed": 460,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 791,
+        "lint_errors": 66,
+        "lint_warnings": 23,
+        "new_debt": 2
+      },
+      "message": "RATCHET_VIOLATION: 2 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "c686baa46d4bdbca8d9715b9c43e18ef058e7ec7219817dc921b31b7a945ead5"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-12T15:45:35.901Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "e08f21307f8a5d6065512c20bbb49f4777146880f6faf5c6fdc2211d9cae1f23"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-12T15:50:58.941Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardStyleAdoptionCountsProfileSelections|TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus|TestAdminFlashcardStyleRoutesRequireContentPermissions|TestAdminFlashcardStyleMutationsRejectMissingOrigin|TestAdminFlashcardStyleConfigRejectsInvalidOrMissing)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleRoutesRequireContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleMutationsRejectMissingOrigin",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleConfigRejectsInvalidOrMissing",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "744d3ada0fd6e17febc36136721245f5125980df054679297b6d2ee09a321049"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-12T15:56:17.616Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 460,
+        "executed": 460,
+        "passed": 460,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 791,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "744d3ada0fd6e17febc36136721245f5125980df054679297b6d2ee09a321049"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-12T16:01:47.254Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 831,
+        "executed": 831,
+        "passed": 831,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "831 passed, 0 allowed skip(s)",
+      "fingerprint": "744d3ada0fd6e17febc36136721245f5125980df054679297b6d2ee09a321049"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-12T16:03:53.153Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardStyleAdoptionCountsProfileSelections|TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus|TestAdminFlashcardStyleRoutesRequireContentPermissions|TestAdminFlashcardStyleMutationsRejectMissingOrigin|TestAdminFlashcardStyleConfigRejectsInvalidOrMissing|TestAdminFlashcardStyleValidMutationsCommitAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleAdoptionCountsProfileSelections handler_admin_flashcard_styles_test.go:49: style adoption count=0; want 2 --- FAIL: TestAdminFlashcardStyleAdoptionCountsProfileSelections (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus === RUN TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus/invalid_tier handler_admin_flashcard_styles_test.go:81: invalid invalid tier status=201 body={\"id\":\"d1ba9aa6-632c-4eb6-987d-0bd421061542\",\"slug\":\"audit-invalid-unexpected…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleRoutesRequireContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleRoutesRequireContentPermissions === RUN TestAdminFlashcardStyleRoutesRequireContentPermissions/GET_/api/admin/flashcards/styles handler_admin_flashcard_styles_test.go:119: status=200 body=[{\"id\":\"a662e6d8-da68-4979-841b-f6869b5deb48\",\"slug\":\"audit-rbac-a662e6d8\",\"nameK…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleMutationsRejectMissingOrigin",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleMutationsRejectMissingOrigin === RUN TestAdminFlashcardStyleMutationsRejectMissingOrigin/POST_/api/admin/flashcards/styles handler_admin_flashcard_styles_test.go:158: status=201 body={\"id\":\"130d0d0d-ec5a-4225-9eaa-a55ddc9adbd0\",\"slug\":\"audit-csrf-ad7474a3-created\",\"sta…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleConfigRejectsInvalidOrMissing",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleConfigRejectsInvalidOrMissing === RUN TestAdminFlashcardStyleConfigRejectsInvalidOrMissing/create/missing handler_admin_flashcard_styles_test.go:193: status=201 body={\"id\":\"98a6ac23-09c8-471a-9c03-bce137fcb6c8\",\"slug\":\"audit-config-328c0512\",\"status\":\"draft\"} ; want 40…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleValidMutationsCommitAudit",
+          "outcome": "PASS",
+          "excerpt": "=== RUN TestAdminFlashcardStyleValidMutationsCommitAudit --- PASS: TestAdminFlashcardStyleValidMutationsCommitAudit (0.03s)",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections": "style adoption count",
+        "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus": "invalid tier status=201",
+        "go:./internal/httpserver:TestAdminFlashcardStyleRoutesRequireContentPermissions": "want 403 for Admin without content permissions",
+        "go:./internal/httpserver:TestAdminFlashcardStyleMutationsRejectMissingOrigin": "want 403 without a trusted Origin or Referer",
+        "go:./internal/httpserver:TestAdminFlashcardStyleConfigRejectsInvalidOrMissing": "want 400",
+        "go:./internal/httpserver:TestAdminFlashcardStyleValidMutationsCommitAudit": "want 201"
+      },
+      "fingerprint": "1a37731fe67d884622e8568229e739e80539a6ec924b318e1ed0e11e9f772db7"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-12T16:06:01.110Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardStyleAdoptionCountsProfileSelections|TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus|TestAdminFlashcardStyleRoutesRequireContentPermissions|TestAdminFlashcardStyleMutationsRejectMissingOrigin|TestAdminFlashcardStyleConfigRejectsInvalidOrMissing|TestAdminFlashcardStyleValidMutationsCommitAudit)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleAdoptionCountsProfileSelections handler_admin_flashcard_styles_test.go:49: style adoption count=0; want 2 --- FAIL: TestAdminFlashcardStyleAdoptionCountsProfileSelections (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus === RUN TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus/invalid_tier handler_admin_flashcard_styles_test.go:81: invalid invalid tier status=201 body={\"id\":\"fa65056e-bb9b-4b7e-941b-c4751a471361\",\"slug\":\"audit-invalid-unexpected…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleRoutesRequireContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleRoutesRequireContentPermissions === RUN TestAdminFlashcardStyleRoutesRequireContentPermissions/GET_/api/admin/flashcards/styles handler_admin_flashcard_styles_test.go:119: status=200 body=[{\"id\":\"38fed653-643c-4619-b954-46576524fa55\",\"slug\":\"audit-rbac-38fed653\",\"nameK…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleMutationsRejectMissingOrigin",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleMutationsRejectMissingOrigin === RUN TestAdminFlashcardStyleMutationsRejectMissingOrigin/POST_/api/admin/flashcards/styles handler_admin_flashcard_styles_test.go:158: status=201 body={\"id\":\"0847cf23-4158-4b56-9f7d-d39b28b4e77d\",\"slug\":\"audit-csrf-755cc3de-created\",\"sta…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleConfigRejectsInvalidOrMissing",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleConfigRejectsInvalidOrMissing === RUN TestAdminFlashcardStyleConfigRejectsInvalidOrMissing/create/missing handler_admin_flashcard_styles_test.go:193: status=201 body={\"id\":\"086f2429-fdc1-4ff5-a50c-2f052990a27f\",\"slug\":\"audit-config-09c8ad52\",\"status\":\"draft\"} ; want 40…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleValidMutationsCommitAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleValidMutationsCommitAudit handler_admin_flashcard_styles_test.go:238: missing config status=201 body={\"id\":\"461b6c87-1d2d-4cca-b187-3ce0ff4572bf\",\"slug\":\"audit-style-valid-4ac4dd5d-missing\",\"status\":\"draft\"} ; want 400 --- FAIL: TestAdminFlashcardStyleValidMutationsCom…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections": "style adoption count",
+        "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus": "invalid tier status=201",
+        "go:./internal/httpserver:TestAdminFlashcardStyleRoutesRequireContentPermissions": "want 403 for Admin without content permissions",
+        "go:./internal/httpserver:TestAdminFlashcardStyleMutationsRejectMissingOrigin": "want 403 without a trusted Origin or Referer",
+        "go:./internal/httpserver:TestAdminFlashcardStyleConfigRejectsInvalidOrMissing": "want 400",
+        "go:./internal/httpserver:TestAdminFlashcardStyleValidMutationsCommitAudit": "missing config status=201"
+      },
+      "fingerprint": "274fc21491ac9ba64b60ecfcab6a6ac271fab57b0893411ca441406c862763fb"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-12T16:06:21.957Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardStyleAdoptionCountsProfileSelections|TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus|TestAdminFlashcardStyleRoutesRequireContentPermissions|TestAdminFlashcardStyleMutationsRejectMissingOrigin|TestAdminFlashcardStyleConfigRejectsInvalidOrMissing|TestAdminFlashcardStyleValidMutationsCommitAudit|TestAdminFlashcardStyleAuditFailureRollsBackCreate)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleAdoptionCountsProfileSelections handler_admin_flashcard_styles_test.go:49: style adoption count=0; want 2 --- FAIL: TestAdminFlashcardStyleAdoptionCountsProfileSelections (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus === RUN TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus/invalid_tier handler_admin_flashcard_styles_test.go:81: invalid invalid tier status=201 body={\"id\":\"25bd1532-3d37-49f2-a509-c4b70d37ecb3\",\"slug\":\"audit-invalid-unexpected…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleRoutesRequireContentPermissions",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleRoutesRequireContentPermissions === RUN TestAdminFlashcardStyleRoutesRequireContentPermissions/GET_/api/admin/flashcards/styles handler_admin_flashcard_styles_test.go:119: status=200 body=[{\"id\":\"1d4e5061-4817-49c9-9c3c-b19d4e88dfa2\",\"slug\":\"audit-rbac-1d4e5061\",\"nameK…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleMutationsRejectMissingOrigin",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleMutationsRejectMissingOrigin === RUN TestAdminFlashcardStyleMutationsRejectMissingOrigin/POST_/api/admin/flashcards/styles handler_admin_flashcard_styles_test.go:158: status=201 body={\"id\":\"4e5daee3-043d-4163-b52e-7d8280eed644\",\"slug\":\"audit-csrf-3b1781d3-created\",\"sta…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleConfigRejectsInvalidOrMissing",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleConfigRejectsInvalidOrMissing === RUN TestAdminFlashcardStyleConfigRejectsInvalidOrMissing/create/missing handler_admin_flashcard_styles_test.go:193: status=201 body={\"id\":\"77a4e295-c808-49e6-8e68-b12663f990ad\",\"slug\":\"audit-config-f7280bdb\",\"status\":\"draft\"} ; want 40…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleValidMutationsCommitAudit",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleValidMutationsCommitAudit handler_admin_flashcard_styles_test.go:238: missing config status=201 body={\"id\":\"f676d5bd-c76c-4642-b71b-af7b83bbf304\",\"slug\":\"audit-style-valid-3ec54c1c-missing\",\"status\":\"draft\"} ; want 400 --- FAIL: TestAdminFlashcardStyleValidMutationsCom…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAuditFailureRollsBackCreate",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminFlashcardStyleAuditFailureRollsBackCreate handler_admin_flashcard_styles_test.go:306: audit failure status=201 body={\"id\":\"e2d9ab0b-b992-423c-a846-d9d7843cb629\",\"slug\":\"audit-style-fail-8e80f1a0\",\"status\":\"draft\"} ; want 500 --- FAIL: TestAdminFlashcardStyleAuditFailureRollsBackCrea…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections": "style adoption count",
+        "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus": "invalid tier status=201",
+        "go:./internal/httpserver:TestAdminFlashcardStyleRoutesRequireContentPermissions": "want 403 for Admin without content permissions",
+        "go:./internal/httpserver:TestAdminFlashcardStyleMutationsRejectMissingOrigin": "want 403 without a trusted Origin or Referer",
+        "go:./internal/httpserver:TestAdminFlashcardStyleConfigRejectsInvalidOrMissing": "want 400",
+        "go:./internal/httpserver:TestAdminFlashcardStyleValidMutationsCommitAudit": "missing config status=201",
+        "go:./internal/httpserver:TestAdminFlashcardStyleAuditFailureRollsBackCreate": "audit failure status=201"
+      },
+      "fingerprint": "274fc21491ac9ba64b60ecfcab6a6ac271fab57b0893411ca441406c862763fb"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-12T16:07:20.245Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminFlashcardStyleAdoptionCountsProfileSelections|TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus|TestAdminFlashcardStyleRoutesRequireContentPermissions|TestAdminFlashcardStyleMutationsRejectMissingOrigin|TestAdminFlashcardStyleConfigRejectsInvalidOrMissing|TestAdminFlashcardStyleValidMutationsCommitAudit|TestAdminFlashcardStyleAuditFailureRollsBackCreate)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAdoptionCountsProfileSelections",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleCreateRejectsInvalidTierAndStatus",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleRoutesRequireContentPermissions",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleMutationsRejectMissingOrigin",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleConfigRejectsInvalidOrMissing",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleValidMutationsCommitAudit",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminFlashcardStyleAuditFailureRollsBackCreate",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c0fe7800af35942937ca266c23cad5bbdd6322abee4daefb8ccbda66bfcf26e3"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-13T00:23:29.310Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 833,
+        "executed": 833,
+        "passed": 833,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 431
+      },
+      "message": "833 passed, 0 allowed skip(s)",
+      "fingerprint": "c0fe7800af35942937ca266c23cad5bbdd6322abee4daefb8ccbda66bfcf26e3"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-13T00:28:47.377Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 460,
+        "executed": 460,
+        "passed": 460,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 791,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "c0fe7800af35942937ca266c23cad5bbdd6322abee4daefb8ccbda66bfcf26e3"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-13T00:29:24.844Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Banach",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "b7a78c415bb72a1fa24f0e214e5973be5baea462ea6e2da3aba57a9e8200b807",
+      "attested": true,
+      "fingerprint": "c0fe7800af35942937ca266c23cad5bbdd6322abee4daefb8ccbda66bfcf26e3"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-13T00:32:16.935Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/audit-126-browser.py",
+      "exit_code": 1,
+      "fingerprint": "c0fe7800af35942937ca266c23cad5bbdd6322abee4daefb8ccbda66bfcf26e3"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-13T00:33:26.203Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/audit-126-browser.py",
+      "exit_code": 1,
+      "fingerprint": "c0fe7800af35942937ca266c23cad5bbdd6322abee4daefb8ccbda66bfcf26e3"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-13T00:34:09.818Z",
+      "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc browser-use < tmp/local-audit/audit-126-browser.py",
+      "exit_code": 0,
+      "fingerprint": "c0fe7800af35942937ca266c23cad5bbdd6322abee4daefb8ccbda66bfcf26e3"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-13T00:35:43.346Z",
+    "head": "24ce9f7573dc4ce2678a7514ec22919506f58aea",
+    "fingerprint": "c0fe7800af35942937ca266c23cad5bbdd6322abee4daefb8ccbda66bfcf26e3",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/admin/app/[locale]/flashcards/styles/flashcard-styles-admin-client.test.tsx": "b75919c441c83bafae7806d42b3501c02bc5d816",
+      "apps/admin/app/[locale]/flashcards/styles/flashcard-styles-admin-client.tsx": "77fff84161f531f0410d2d863f0fcb5e08d637be",
+      "apps/admin/messages/en.json": "e88906592b489488d63a6255fd1d45cce87778fc",
+      "apps/admin/messages/ja.json": "4d497fe81ccf2faa709083557b4a314128463083",
+      "apps/admin/messages/vi.json": "1b400a186d16e7832d05d56abfe1b72e2368163b",
+      "apps/api-go/internal/httpserver/handler_admin_flashcard_styles_test.go": "cbf53dcf17e040190d005ec487b19a1e2f960620",
+      "apps/api-go/internal/httpserver/handler_admin_flashcards.go": "f75fbb0c7cc1b68ad6b9159b6eeb0645b9efecd7",
+      "apps/api-go/internal/httpserver/server.go": "acb9fe750056b6404ce3dc6ff08dcd0e05dea923"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}
