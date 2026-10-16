@@ -23,7 +23,17 @@ Learner: `https://<OCI_PUBLIC_HOST>/vi`; Admin: `https://<OCI_PUBLIC_HOST>/admin
 
 ## Initial imported-database baseline
 
-The pre-release Oracle database was imported without `_prisma_migrations`. Do not run historical migrations blindly on it, and do not reset it. Before enabling the first release:
+### First-deploy reset (operator-authorized, 2026-10-16)
+
+The imported data was incorrect and the operator explicitly authorized destroying it for the first deployment. Instead of the baseline below, the one-time workflow `Reset Oracle database (one time)` (typed confirmation `WIPE-ORACLE-DATABASE`, main only, shares the host deploy lock) takes a validated `pg_dump` into `data/backups/resets/`, drops and recreates `nihongo_bjt`, then `Deploy Oracle production` runs every migration on the empty schema. Delete the workflow after use.
+
+Afterwards create the first operator with the API image's one-off binary (it also grants the `*` permission to the `super_admin` role). Pass the operator's email, display name and password through the `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_DISPLAY_NAME` and `BOOTSTRAP_ADMIN_PASSWORD` environment variables plus the container's `DATABASE_URL`, then run `./bootstrap-admin` inside `oci-api-1` with `docker exec`. This needs a shell on the Oracle host (SSH from an allow-listed IP); until then there are zero admins. Read the password from a private mode-600 file; never put it on a command line that is logged. After importing content, run a full search rebuild so Meilisearch drops documents of the destroyed data.
+
+Content is not seeded by releases: import it through the project's content import path before announcing the site.
+
+## Baseline procedure for an imported database (not used for the first deploy)
+
+The pre-release Oracle database was imported without `_prisma_migrations`. Do not run historical migrations blindly on it, and do not reset it without an operator decision. Before enabling a release on such a database:
 
 1. Take and validate a private PostgreSQL snapshot. Restore it into a disposable PostgreSQL 17 instance.
 2. Generate Prisma's forward diff from the restored database to the committed schema. Inspect every statement; reject destructive changes. Apply the reviewed additive SQL transactionally.

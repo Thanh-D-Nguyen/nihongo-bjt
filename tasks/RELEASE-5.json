@@ -1,0 +1,812 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "RELEASE-5",
+  "title": "One-time Oracle database reset workflow for first production deploy",
+  "start_head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The imported Oracle production database holds incorrect data and has no Prisma history, so the first automated release is refused. The operator confirmed the data may be destroyed. SSH to the host is currently unreachable (OCI ingress allow-list), so the reset must run on the registered runner.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "The reset workflow has only a workflow_dispatch trigger, runs only on refs/heads/main, requires the exact confirmation input, shares the oracle-production concurrency group with releases, and only drops and recreates the nihongo_bjt database."
+      },
+      {
+        "id": "AC2",
+        "text": "The reset workflow is exactly the reviewed manual, main-only, typed-confirmation, validated-backup, one-time (refuses once migration history exists) reset, pinned by test."
+      },
+      {
+        "id": "AC3",
+        "text": "bootstrap-admin grants the wildcard permission to the super_admin role before creating the first actor, so a freshly provisioned operator can use every admin screen."
+      }
+    ],
+    "expected_behavior": "A manually dispatched, main-only workflow requiring an exact typed confirmation drops and recreates the nihongo_bjt database inside oci-postgres-1 on the production runner, nothing else.",
+    "observed_behavior": "Deploy Oracle production exits 3: content schema has tables but no _prisma_migrations.",
+    "rollback_plan": "Delete the reset workflow after use. Each reset keeps a validated pg_dump in data/backups/resets/ (restore with pg_restore into a recreated nihongo_bjt); the workflow refuses to run once migration history exists. Revert bootstrap-admin by redeploying the previous image."
+  },
+  "classification": {
+    "classes": [
+      "INFRASTRUCTURE",
+      "CI_QUALITY_SYSTEM",
+      "AUTH_SECURITY",
+      "DATABASE"
+    ],
+    "change_kind": "add",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "scripts/quality/harness/oracle-reset-workflow.test.ts",
+      "test": "Oracle database reset workflow > is exactly the reviewed manual, main-only, confirmed, backed-up and self-expiring reset",
+      "expect": "reset workflow is missing"
+    },
+    {
+      "runner": "go",
+      "package": "./cmd/bootstrap-admin",
+      "test": "TestBootstrapAdmin_Success",
+      "expect": "super_admin wildcard grant count=0"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-16T01:35:24.622Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-16T01:35:24.997Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-16T01:35:25.363Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-16T01:35:34.966Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-16T01:36:29.118Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-16T01:38:43.862Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a"
+    },
+    {
+      "state": "WAITING_FOR_DECISION",
+      "at": "2026-10-16T01:48:04.272Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-16T01:48:32.335Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-16T01:48:47.664Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-16T01:49:36.415Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-16T01:49:46.745Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-16T01:49:48.242Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a"
+    },
+    {
+      "state": "WAITING_FOR_DECISION",
+      "at": "2026-10-16T02:11:46.334Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-16T02:12:12.734Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-16T02:13:12.098Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-16T02:13:26.489Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-16T02:14:33.316Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-16T02:23:26.099Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a"
+    },
+    {
+      "state": "WAITING_FOR_DECISION",
+      "at": "2026-10-16T02:33:41.597Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-16T02:34:04.618Z",
+      "head": "310f129414b9f39d5e4888de1300e8eea579b41f"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-16T02:34:05.381Z",
+      "head": "310f129414b9f39d5e4888de1300e8eea579b41f"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-16T01:35:34.785Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/oracle-reset-workflow.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/oracle-reset-workflow.test.ts::Oracle database reset workflow > exists with only a manual trigger, main-only, typed confirmation and the release lock",
+          "outcome": "FAIL",
+          "excerpt": "reset workflow is missing: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/oracle-reset-workflow.test.ts::Oracle database reset workflow > exists with only a manual trigger, main-only, typed confirmation and the release lock": "reset workflow is missing"
+      },
+      "fingerprint": "37292ee796209c26d28a07caa4df995e607ce54b05f68dc8223ce232467a2f38"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-16T01:36:09.823Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/oracle-reset-workflow.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/oracle-reset-workflow.test.ts::Oracle database reset workflow > exists with only a manual trigger, main-only, typed confirmation and the release lock",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "6f3ce3d5eeaca3b05c1794054ab5342cbee58379a8335b4b800babd5c2c29c26"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-16T01:36:24.651Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "python3 deploy/oci/deploy-release.test.py",
+      "exit_code": 0,
+      "fingerprint": "6f3ce3d5eeaca3b05c1794054ab5342cbee58379a8335b4b800babd5c2c29c26"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-16T01:38:43.619Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 267,
+        "executed": 267,
+        "passed": 267,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "6f3ce3d5eeaca3b05c1794054ab5342cbee58379a8335b4b800babd5c2c29c26"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-16T01:48:04.020Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 2,
+      "findings": [
+        {
+          "severity": "blocker",
+          "file": "scripts/quality/harness/oracle-reset-workflow.test.ts",
+          "summary": "Typed-confirmation guard is not tested: toContain('WIPE-ORACLE-DATABASE') is already satisfied by the input description (workflow line 11), so deleting or weakening the confirmation step, or adding if…"
+        },
+        {
+          "severity": "blocker",
+          "file": ".github/workflows/oracle-reset-database.yml",
+          "summary": "Irreversible DROP of the only copy of the imported production data with no pg_dump first; oci.md:28 requires a validated snapshot and deploy-release.sh:70-76 already shows how to take one, while the r…"
+        },
+        {
+          "severity": "major",
+          "file": "docs/deployment/oci.md",
+          "summary": "The reviewed operator procedure (line 26) says 'do not reset it' and deploy-release.sh:27-32 points operators to it; the change neither updates the doc nor records the operator's decision (risk_acknow…"
+        },
+        {
+          "severity": "major",
+          "file": ".github/workflows/oracle-reset-database.yml",
+          "summary": "After reset and release, nobody can log into Admin: no migration seeds authz.admin_actor, cmd/bootstrap-admin is not in the API image, SSH is unreachable, and the release never seeds production; the A…"
+        },
+        {
+          "severity": "minor",
+          "file": ".github/workflows/oracle-reset-database.yml",
+          "summary": "DROP without IF EXISTS: drop and create run as separate autocommit commands, so a job that dies between them can't be re-run and leaves the database missing (the release then fails at deploy-release.s…"
+        },
+        {
+          "severity": "minor",
+          "file": ".github/workflows/oracle-reset-database.yml",
+          "summary": "Does not take the host flock on /srv/kotobawork/runtime/deploy.lock that deploy-release.sh:19-20 uses; it is serialized only by the Actions concurrency group"
+        },
+        {
+          "severity": "minor",
+          "file": "tasks/RELEASE-5.json",
+          "summary": "Classification leaves out DATABASE (whose rollback_analysis gate would require attested review of the inaccurate rollback plan) and wrongly includes TEST_ONLY for a change that adds a production workf…"
+        },
+        {
+          "severity": "minor",
+          "file": ".github/workflows/oracle-reset-database.yml",
+          "summary": "'Delete this file after use' is only a comment; no follow-up task or failing test makes sure the destructive workflow is removed"
+        }
+      ],
+      "package_sha256": "89d20cd7c65d4c13214d2b04660f1916e92955f08b42924a3aa7ac0dcbfef9a2",
+      "fingerprint": "6f3ce3d5eeaca3b05c1794054ab5342cbee58379a8335b4b800babd5c2c29c26"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-16T01:49:35.888Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/oracle-reset-workflow.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/oracle-reset-workflow.test.ts::Oracle database reset workflow > exists with only a manual trigger, main-only, typed confirmation and the release lock",
+          "outcome": "NOT_FOUND",
+          "valid": false,
+          "excerpt": "no test named \"Oracle database reset workflow > exists with only a manual trigger, main-only, typed confirmation and the release lock\" in scripts/quality/harness/oracle-reset-workflow.test.ts"
+        }
+      ],
+      "fingerprint": "87ec56a6c3c936a681656a93aa94080ade29f4cecdfd303f60d69cf98fa712f2"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-16T01:49:46.354Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/oracle-reset-workflow.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/oracle-reset-workflow.test.ts::Oracle database reset workflow > exists with only a manual trigger, main-only job, and the release lock group",
+          "outcome": "FAIL",
+          "excerpt": "reset workflow is missing: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/oracle-reset-workflow.test.ts::Oracle database reset workflow > exists with only a manual trigger, main-only job, and the release lock group": "reset workflow is missing"
+      },
+      "fingerprint": "87ec56a6c3c936a681656a93aa94080ade29f4cecdfd303f60d69cf98fa712f2"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-16T01:49:47.756Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/oracle-reset-workflow.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/oracle-reset-workflow.test.ts::Oracle database reset workflow > exists with only a manual trigger, main-only job, and the release lock group",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "87ec56a6c3c936a681656a93aa94080ade29f4cecdfd303f60d69cf98fa712f2"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-16T01:52:10.183Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 267,
+        "executed": 267,
+        "passed": 267,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "87ec56a6c3c936a681656a93aa94080ade29f4cecdfd303f60d69cf98fa712f2"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-16T01:55:31.551Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1444,
+        "executed": 1444,
+        "passed": 1444,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1444 passed, 0 allowed skip(s)",
+      "fingerprint": "87ec56a6c3c936a681656a93aa94080ade29f4cecdfd303f60d69cf98fa712f2"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-16T01:59:13.709Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "python3 scripts/release/oci-image-check.py",
+      "exit_code": 0,
+      "fingerprint": "87ec56a6c3c936a681656a93aa94080ade29f4cecdfd303f60d69cf98fa712f2"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-16T02:11:45.950Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 4,
+      "findings": [
+        {
+          "severity": "blocker",
+          "file": ".github/workflows/oracle-reset-database.yml",
+          "summary": "One-time scope is not enforced: a GitHub re-run replays inputs.confirm for 30 days, so one Re-run click on the completed reset run wipes the released production DB with no retyping; refuse when to_reg…"
+        },
+        {
+          "severity": "major",
+          "file": ".github/workflows/oracle-reset-database.yml",
+          "summary": "A re-run can overwrite the only pre-reset backup: the dump name uses only GITHUB_RUN_ID (unchanged across attempts) and mv clobbers, so a re-run after a post-drop failure replaces it with a dump of th…"
+        },
+        {
+          "severity": "major",
+          "file": "scripts/quality/harness/oracle-reset-workflow.test.ts",
+          "summary": "Guards are matched as substrings/presence, so the confirmation can be neutralized with both tests green: run: test ... || true (indexOf prefix), a step written '- if: false' (the ^ {6,}if: ban misses …"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/cmd/bootstrap-admin/main.go",
+          "summary": "AUTH_SECURITY change (super_admin gets the * wildcard) and new bootstrap-admin binary in the production image are outside AC1 with no acceptance criterion or red target, so the CI red/green replay nev…"
+        },
+        {
+          "severity": "minor",
+          "file": ".github/workflows/oracle-reset-database.yml",
+          "summary": "DROP ... IF EXISTS does not make a re-run recover from a job that died between DROP and CREATE: pg_dump -d nihongo_bjt fails first; dump only when the DB exists in pg_database"
+        },
+        {
+          "severity": "minor",
+          "file": "tasks/RELEASE-5.json",
+          "summary": "rollback_plan still calls the destruction intentionally irreversible although a validated pre-reset dump is kept (document the pg_restore path); TEST_ONLY class contradicts the production edits"
+        },
+        {
+          "severity": "minor",
+          "file": "docs/deployment/oci.md",
+          "summary": "Bootstrap step needs a host shell for docker exec while the spec says SSH is unreachable, leaving zero admins until access is restored; state the prerequisite and add a full search rebuild after conte…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/cmd/bootstrap-admin/main.go",
+          "summary": "The two new writes run non-transactionally after the actor insert; if either fails, re-running exits 'admin already exists' and leaves an actor with no role or credential; seed role and wildcard befor…"
+        }
+      ],
+      "package_sha256": "d0df381343f91cc9ba0cf506f03b86725ff126e85ee4bcaa98fa9dc055b8c20b",
+      "fingerprint": "87ec56a6c3c936a681656a93aa94080ade29f4cecdfd303f60d69cf98fa712f2"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-16T02:13:26.096Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/oracle-reset-workflow.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBootstrapAdmin_Success)$ ./cmd/bootstrap-admin"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/oracle-reset-workflow.test.ts::Oracle database reset workflow > is exactly the reviewed manual, main-only, confirmed, backed-up and self-expiring reset",
+          "outcome": "FAIL",
+          "excerpt": "reset workflow is missing: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./cmd/bootstrap-admin:TestBootstrapAdmin_Success",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBootstrapAdmin_Success admin actor created: a228b81f-88b8-4838-896a-d99d47778c6e (admin-23cfcb0a-3156-463e-bc21-e7040ee18202@test.local) main_test.go:101: super_admin wildcard grant count=0 err=<nil> --- FAIL: TestBootstrapAdmin_Success (0.17s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/oracle-reset-workflow.test.ts::Oracle database reset workflow > is exactly the reviewed manual, main-only, confirmed, backed-up and self-expiring reset": "reset workflow is missing",
+        "go:./cmd/bootstrap-admin:TestBootstrapAdmin_Success": "super_admin wildcard grant count=0"
+      },
+      "fingerprint": "08927f4b7162aa97ac841263b25be9f15536511c4c92a526c41b27a57b0b87b8"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-16T02:14:32.852Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/oracle-reset-workflow.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBootstrapAdmin_Success)$ ./cmd/bootstrap-admin"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/oracle-reset-workflow.test.ts::Oracle database reset workflow > is exactly the reviewed manual, main-only, confirmed, backed-up and self-expiring reset",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./cmd/bootstrap-admin:TestBootstrapAdmin_Success",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f40836809592beec6050cd8ea07ea502d319d594c80daf771940dd61297922bc"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-16T02:16:46.928Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 267,
+        "executed": 267,
+        "passed": 267,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "f40836809592beec6050cd8ea07ea502d319d594c80daf771940dd61297922bc"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-16T02:20:10.237Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1444,
+        "executed": 1444,
+        "passed": 1444,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1444 passed, 0 allowed skip(s)",
+      "fingerprint": "f40836809592beec6050cd8ea07ea502d319d594c80daf771940dd61297922bc"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-16T02:22:22.041Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "python3 scripts/release/oci-image-check.py",
+      "exit_code": 0,
+      "fingerprint": "f40836809592beec6050cd8ea07ea502d319d594c80daf771940dd61297922bc"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-16T02:23:25.710Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env RELEASE_BASE_URL=http://localhost:28081 RELEASE_LEARNER_FILE=tmp/release-evidence/learner.json RELEASE_ADMIN_FILE=tmp/release-evidence/admin.json RELEASE_REQUIRE_SUPER=1 RELEASE_OUT_DIR=tmp/release-evidence node scripts/release/browser-release.mjs",
+      "exit_code": 0,
+      "fingerprint": "f40836809592beec6050cd8ea07ea502d319d594c80daf771940dd61297922bc"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-16T02:33:41.215Z",
+      "head": "bb6f75e068e01e076c5815f76898f7e441532a9a",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [
+        {
+          "severity": "minor",
+          "file": "scripts/quality/harness/oracle-reset-workflow.test.ts",
+          "summary": "The second test's indexOf(a) < indexOf(b) ordering checks pass vacuously (-1) if the confirmation, _prisma_migrations refusal or pg_restore --list guard is removed from EXPECTED; the exact pin in test…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/cmd/bootstrap-admin/main_test.go",
+          "summary": "AC3's 'before creating the first actor' ordering is not pinned: TestBootstrapAdmin_Success asserts only the end state, so moving the role/grant back after the actor insert stays green. Force the role …"
+        },
+        {
+          "severity": "minor",
+          "file": ".github/workflows/oracle-reset-database.yml",
+          "summary": "Backup check is TOC-only: pg_restore --list still lists a truncated piped archive, and unlike deploy-release.sh:16 there is no mountpoint -q \"$base/data\" check. Prefer pg_restore -f /dev/null (reads t…"
+        },
+        {
+          "severity": "minor",
+          "file": "docs/deployment/oci.md",
+          "summary": "Undocumented: a first release that fails after creating content._prisma_migrations permanently disables the reset (recovery needs host access or a new reviewed change). Also undocumented: the self-exp…"
+        }
+      ],
+      "package_sha256": "5925f58eccd246d665323189a04c5d1844758e4e7e82fc2564baa4eb5034e719",
+      "fingerprint": "f40836809592beec6050cd8ea07ea502d319d594c80daf771940dd61297922bc"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-16T02:34:05.362Z",
+    "head": "310f129414b9f39d5e4888de1300e8eea579b41f",
+    "fingerprint": "f40836809592beec6050cd8ea07ea502d319d594c80daf771940dd61297922bc",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "infra_validation": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      ".github/workflows/oracle-reset-database.yml": "4946e2cba30dff9b7512e559b015286e813cf870",
+      "apps/api-go/Dockerfile": "d884d99f1245ea13fa795d8495474c06899e6529",
+      "apps/api-go/cmd/bootstrap-admin/main.go": "3400e8955cb7f46ee0f445aa0a1563bb8d30917b",
+      "apps/api-go/cmd/bootstrap-admin/main_test.go": "134307221c6bdc72189e1cd26f091b088525a68c",
+      "docs/deployment/oci.md": "2617786b9e87d9f223370af141d6938a9cb4fd99",
+      "scripts/quality/harness/oracle-reset-workflow.test.ts": "22af6b7e68d744d22284026df49a5bb9aeabe23e"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": [
+      {
+        "id": "20b9e342-14fb-4170-9ee0-ad20bc7e5ff5",
+        "task": "RELEASE-5",
+        "action": {
+          "kind": "delete_persistent_data",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "1bcd0161f73fdc7b47490f592a24b218d573ef1b1cbdda3d08adad7ccf39896d",
+            "environment": "local"
+          },
+          "impact": "Destroy potentially persistent data",
+          "command": "ls node_modules/yaml node_modules/js-yaml 2>&1 | head -5; grep -n '\"yaml\"\\|\"js-yaml\"' package.json pnpm-lock.yaml 2>/dev/null | head -10; echo \"----DOCS----\"; ls docs/deployment/ 2>/dev/null; grep -n -i \"baseline\\|reset\\|_prisma_migrations\\|wipe\\|drop database\" docs/deployment/oci.md 2>/dev/null | head -40"
+        },
+        "impact": "Destroy potentially persistent data",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "1bcd0161f73fdc7b47490f592a24b218d573ef1b1cbdda3d08adad7ccf39896d",
+          "environment": "local"
+        },
+        "digest": "b893a42e453e82e18f17c687ca50e90d10c58bc8dd2ccb0dfacae1219846f776",
+        "continuation": {
+          "step": "native:toolu_01HtK5yYs1d19F6dztngmsGa",
+          "native_tool_use_id": "toolu_01HtK5yYs1d19F6dztngmsGa"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "cancel",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-16T01:41:20.828Z",
+        "answered_at": "2026-10-16T01:48:32.106Z",
+        "execution": "alternative"
+      },
+      {
+        "id": "bd32c6dd-aba8-4473-9bf0-ba37cbca58ba",
+        "task": "RELEASE-5",
+        "action": {
+          "kind": "delete_persistent_data",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "e42eab792ae9af5fb3ae7c038ac19b22b131e3595d19eb2d67527707f63f14e4",
+            "environment": "local"
+          },
+          "impact": "Destroy potentially persistent data",
+          "command": "node --input-type=module -e '\nimport { readFileSync } from \"node:fs\";\nconst orig = readFileSync(\".github/workflows/oracle-reset-database.yml\",\"utf8\");\nconst code = (src) => src.split(\"\\n\").filter((l)=>!l.trim().startsWith(\"#\") && !l.trim().startsWith(\"description:\")).join(\"\\n\");\nfunction t1(src){ const text=code(src);\n  const triggers = text.match(/^on:\\n((?:[ ]{2,}.*\\n?)+)/mu)?.[1] ?? \"\";\n  const m = triggers.match(/^ {2}[a-z_]+:/gmu);\n  if (JSON.stringify(m)!==JSON.stringify([\"  workflow_dispatch:\"])) return \"FAIL triggers \"+JSON.stringify(m);\n  if(!/^ {4}if: \\$\\{\\{ github\\.ref == '\"'\"'refs\\/heads\\/main'\"'\"' \\}\\}$/mu.test(text)) return \"FAIL main-if\";\n  if(!/^ {2}group: oracle-production$/mu.test(text)) return \"FAIL group\";\n  if(!/runs-on: \\[self-hosted, Linux, ARM64, kotobawork-oci\\]/u.test(text)) return \"FAIL runs-on\";\n  if(/continue-on-error|if: always|if: failure/u.test(text)) return \"FAIL coe\";\n  if(text.match(/^ {6,}if:/gmu)!==null) return \"FAIL step-if\";\n  return \"pass\"; }\nfunction t2(src){ const text=code(src);\n  if(!/^ {6}CONFIRM: \\$\\{\\{ inputs\\.confirm \\}\\}$/mu.test(text)) return \"FAIL confirm-env\";\n  const c=text.indexOf(`run: test \"$CONFIRM\" = \"WIPE-ORACLE-DATABASE\"`), d=text.indexOf(\"pg_dump -U postgres -d nihongo_bjt -Fc\"), v=text.indexOf(\"pg_restore --list\"), x=text.indexOf(\"DROP DATABASE IF EXISTS nihongo_bjt WITH (FORCE)\");\n  if(!(c>-1 && d>c && v>d && x>v)) return \"FAIL order\";\n  if((text.match(/DROP DATABASE/gu)||[]).length!==1) return \"FAIL dropcount\";\n  if(!text.includes(\"flock -n 9\")) return \"FAIL flock\";\n  if(/rm\\s+-rf|docker\\s+volume|system\\s+prune|\\/srv\\/kotobawork\\/data\\/(postgres|media)/u.test(text)) return \"FAIL destructive\";\n  return \"pass\"; }\nconst muts = {\n  \"baseline\": orig,\n  \"M1 confirm || true\": orig.replace(`run: test \"$CONFIRM\" = \"WIPE-ORACLE-DATABASE\"`, `run: test \"$CONFIRM\" = \"WIPE-ORACLE-DATABASE\" || true`),\n  \"M2 step - if: false\": orig.replace(`      - name: Require typed confirmation\\n        run:`, `      - if: false\\n        name: Require typed confirmation\\n        run:`),\n  \"M3 step env override\": orig.replace(`        run: test \"$CONFIRM\"`, `        env: { CONFIRM: WIPE-ORACLE-DATABASE }\\n        run: test \"$CONFIRM\"`),\n  \"M4 push after blank line\": orig.replace(`        type: string\\n`, `        type: string\\n\\n  push:\\n    branches: [main]\\n`),\n  \"M5 flow-style if on step\": orig.replace(`      - name: Back up, drop and recreate the database\\n`, `      - { name: x, if: false, run: \"true\" }\\n      - name: Back up, drop and recreate the database\\n`),\n  \"M6 drop flock (use flock || true)\": orig.replace(\"flock -n 9\", \"flock -n 9 || true\"),\n  \"M7 drop backup validation (|| true)\": orig.replace(\"pg_restore --list < \\\"$dump.partial\\\" > /dev/null\", \"pg_restore --list < \\\"$dump.partial\\\" > /dev/null || true\"),\n  \"M8 job-level env CONFIRM literal\": orig.replace(\"CONFIRM: ${{ inputs.confirm }}\", \"CONFIRM: ${{ inputs.confirm }}\\n      CONFIRM2: x\").replace(`test \"$CONFIRM\"`, `test \"$CONFIRM2\" = x || test \"$CONFIRM\"`),\n  \"M9 extra drop of another db via dropdb\": orig.replace(`-c \"CREATE DATABASE nihongo_bjt;\"`, `-c \"CREATE DATABASE nihongo_bjt;\"\\n          docker exec -u postgres oci-postgres-1 dropdb -U postgres keycloak`),\n};\nfor (const [k,v] of Object.entries(muts)) console.log(k.padEnd(40), \"t1:\", t1(v).padEnd(22), \"t2:\", t2(v), v===orig && k!==\"baseline\" ? \"(MUTATION NOT APPLIED)\" : \"\");\n'"
+        },
+        "impact": "Destroy potentially persistent data",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "e42eab792ae9af5fb3ae7c038ac19b22b131e3595d19eb2d67527707f63f14e4",
+          "environment": "local"
+        },
+        "digest": "209eed3569878975cb80bedb92f60584a33c8e55a65661ffaa8d5ecbdc2b56f6",
+        "continuation": {
+          "step": "native:toolu_01UKUiHfEiRq1U7kLP3gqMom",
+          "native_tool_use_id": "toolu_01UKUiHfEiRq1U7kLP3gqMom"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "cancel",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-16T02:04:56.912Z",
+        "answered_at": "2026-10-16T02:12:12.349Z",
+        "execution": "alternative"
+      },
+      {
+        "id": "a4084584-83ef-4c42-9688-9b9e56fb8a74",
+        "task": "RELEASE-5",
+        "action": {
+          "kind": "delete_persistent_data",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "7f4a1e00bb5aeb9d20d6497c9c98815656186c676efd1266fee5f741c4eb408b",
+            "environment": "local"
+          },
+          "impact": "Destroy potentially persistent data",
+          "command": "rg -n -i \"self-hosted|workflow_dispatch|destructive|DROP DATABASE|production data|irreversible|backup\" docs/engineering/ENGINEERING_POLICY.md | head -40"
+        },
+        "impact": "Destroy potentially persistent data",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "7f4a1e00bb5aeb9d20d6497c9c98815656186c676efd1266fee5f741c4eb408b",
+          "environment": "local"
+        },
+        "digest": "1105b3aa53ea9ad2adf1f4632ab4833954c014708e40a6e0e5bb605b942d1a12",
+        "continuation": {
+          "step": "native:toolu_01Mn9vS5Wr1fTYVSifFgFD6f",
+          "native_tool_use_id": "toolu_01Mn9vS5Wr1fTYVSifFgFD6f"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "cancel",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-16T02:29:29.868Z",
+        "answered_at": "2026-10-16T02:34:04.285Z",
+        "execution": "alternative"
+      }
+    ]
+  }
+}

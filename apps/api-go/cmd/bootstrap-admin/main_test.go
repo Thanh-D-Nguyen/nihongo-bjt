@@ -52,6 +52,7 @@ func cleanAdminTables(t *testing.T, pool *pgxpool.Pool) {
 		`DELETE FROM auth.admin_password_credential`,
 		`DELETE FROM authz.admin_actor_role`,
 		`DELETE FROM authz.admin_actor`,
+		`DELETE FROM authz.admin_role_permission WHERE role_id = '00000000-0000-0000-0000-000000000001'`,
 		`DELETE FROM authz.admin_role WHERE id != '00000000-0000-0000-0000-000000000001'`,
 	}
 	for _, s := range stmts {
@@ -90,6 +91,14 @@ func TestBootstrapAdmin_Success(t *testing.T) {
 	}
 	if actorEmail != email {
 		t.Errorf("email mismatch: got %q, want %q", actorEmail, email)
+	}
+
+	// The super admin role must carry the wildcard permission.
+	var wildcard int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM authz.admin_role_permission rp
+		JOIN authz.admin_permission p ON p.id = rp.permission_id
+		WHERE rp.role_id = '00000000-0000-0000-0000-000000000001' AND p.code = '*'`).Scan(&wildcard); err != nil || wildcard != 1 {
+		t.Fatalf("super_admin wildcard grant count=%d err=%v", wildcard, err)
 	}
 
 	// Verify credential exists.

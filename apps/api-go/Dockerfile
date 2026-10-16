@@ -18,7 +18,9 @@ ARG VERSION=dev
 
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" \
-    -o api-server ./cmd/api
+    -o api-server ./cmd/api && \
+    CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+    go build -trimpath -ldflags="-s -w" -o bootstrap-admin ./cmd/bootstrap-admin
 
 # Runtime stage — minimal Alpine with only CA certs and timezone data.
 FROM alpine:3.21.3
@@ -30,6 +32,8 @@ RUN apk add --no-cache ca-certificates tzdata && \
 WORKDIR /app
 
 COPY --from=builder /build/api-server .
+# One-off first-operator provisioning: docker exec -e BOOTSTRAP_ADMIN_* oci-api-1 ./bootstrap-admin
+COPY --from=builder /build/bootstrap-admin .
 
 USER appuser
 

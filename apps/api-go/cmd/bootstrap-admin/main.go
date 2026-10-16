@@ -64,6 +64,28 @@ func run(ctx context.Context) error {
 		return nil
 	}
 
+	// Ensure default admin role exists.
+	const ensureRole = `INSERT INTO authz.admin_role (id, name, code, status, created_at)
+		VALUES ('00000000-0000-0000-0000-000000000001', 'Super Admin', 'super_admin', 'active', now())
+		ON CONFLICT (id) DO NOTHING`
+	if _, err := pool.Exec(ctx, ensureRole); err != nil {
+		return fmt.Errorf("ensure admin role: %w", err)
+	}
+
+	// The super admin role carries the wildcard permission; without it a freshly
+	// provisioned database has an operator who cannot open any admin screen.
+	const ensureWildcard = `INSERT INTO authz.admin_permission (id, code) VALUES (gen_random_uuid(), '*')
+		ON CONFLICT (code) DO NOTHING`
+	if _, err := pool.Exec(ctx, ensureWildcard); err != nil {
+		return fmt.Errorf("ensure wildcard permission: %w", err)
+	}
+	const grantWildcard = `INSERT INTO authz.admin_role_permission (role_id, permission_id)
+		SELECT '00000000-0000-0000-0000-000000000001', id FROM authz.admin_permission WHERE code = '*'
+		ON CONFLICT DO NOTHING`
+	if _, err := pool.Exec(ctx, grantWildcard); err != nil {
+		return fmt.Errorf("grant wildcard permission: %w", err)
+	}
+
 	// Generate UUID v4 for actor ID.
 	actorID, err := newUUID()
 	if err != nil {
@@ -75,14 +97,6 @@ func run(ctx context.Context) error {
 		VALUES ($1, $2, $3, 'active', now(), now())`
 	if _, err := pool.Exec(ctx, insertActor, actorID, email, displayName); err != nil {
 		return fmt.Errorf("insert admin actor: %w", err)
-	}
-
-	// Ensure default admin role exists.
-	const ensureRole = `INSERT INTO authz.admin_role (id, name, code, status, created_at)
-		VALUES ('00000000-0000-0000-0000-000000000001', 'Super Admin', 'super_admin', 'active', now())
-		ON CONFLICT (id) DO NOTHING`
-	if _, err := pool.Exec(ctx, ensureRole); err != nil {
-		return fmt.Errorf("ensure admin role: %w", err)
 	}
 
 	// Assign role to actor.
