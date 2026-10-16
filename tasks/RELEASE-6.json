@@ -1,0 +1,369 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "RELEASE-6",
+  "title": "Remove the spent one-time Oracle reset workflow",
+  "start_head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "The one-time Oracle database reset workflow has been used for the first deployment (run 38842991971) and must not remain dispatchable.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "The reset workflow and its pinned test are deleted; documentation states the reset was used and removed."
+      }
+    ],
+    "expected_behavior": "The workflow and its pinned test are removed and the runbook records that the reset was used.",
+    "observed_behavior": "A destructive manual workflow is still present on main.",
+    "rollback_plan": "Restore the files from commit 3b87dfda if a reset is ever authorized again."
+  },
+  "classification": {
+    "classes": [
+      "CI_QUALITY_SYSTEM",
+      "INFRASTRUCTURE",
+      "FUNCTION_DELETION"
+    ],
+    "change_kind": "delete",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "scripts/quality/harness/oracle-reset-removed.test.ts",
+      "test": "spent Oracle database reset > is removed from the workflows and recorded in the runbook",
+      "expect": "reset workflow still present"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": {
+    "symbols": [
+      "oracle-reset-database"
+    ],
+    "consumer_audit": "consumers checked: only the pinned workflow test (deleted) and docs/deployment/oci.md referenced it; a new test asserts the file stays absent",
+    "allowed_references": [
+      {
+        "path": "docs/deployment/oci.md",
+        "reason": "runbook records the reset as used"
+      },
+      {
+        "path": "docs/deployment/oci.md",
+        "reason": "runbook records the reset as used and removed"
+      },
+      {
+        "path": "scripts/quality/harness/oracle-reset-removed.test.ts",
+        "reason": "asserts the workflow stays removed"
+      }
+    ]
+  },
+  "risk_acknowledgements": [
+    {
+      "finding": "test_file_deleted:scripts/quality/harness/oracle-reset-workflow.test.ts",
+      "reason": "The test pinned the content of a one-time workflow that is deleted in this same task after its single authorized use; a replacement test asserts the workflow stays absent. No coverage of retained behavior is lost."
+    }
+  ],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-16T03:36:35.320Z",
+      "head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-16T03:36:35.692Z",
+      "head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-16T03:36:54.188Z",
+      "head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-16T03:37:06.478Z",
+      "head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-16T03:37:08.033Z",
+      "head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-16T03:40:20.394Z",
+      "head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2"
+    },
+    {
+      "state": "WAITING_FOR_DECISION",
+      "at": "2026-10-16T03:47:21.134Z",
+      "head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-16T03:47:45.754Z",
+      "head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-16T03:47:46.485Z",
+      "head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-16T03:36:55.106Z",
+      "head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2",
+      "kind": "deletion_scan",
+      "symbols": [
+        "oracle-reset-database"
+      ],
+      "hits": [
+        {
+          "symbol": "oracle-reset-database",
+          "path": "scripts/quality/harness/oracle-reset-workflow.test.ts",
+          "line": 10
+        }
+      ],
+      "result": "FAIL",
+      "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-16T03:37:06.290Z",
+      "head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/oracle-reset-removed.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/oracle-reset-removed.test.ts::spent Oracle database reset > is removed from the workflows and recorded in the runbook",
+          "outcome": "FAIL",
+          "excerpt": "reset workflow still present: expected true to be false // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/oracle-reset-removed.test.ts::spent Oracle database reset > is removed from the workflows and recorded in the runbook": "reset workflow still present"
+      },
+      "fingerprint": "a024e5f3593dfba961f01d4019b81ffc47bbb4b219f53eb1d4e3883e9d6ab966"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-16T03:37:07.592Z",
+      "head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/oracle-reset-removed.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/oracle-reset-removed.test.ts::spent Oracle database reset > is removed from the workflows and recorded in the runbook",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c3c1524f98d5b6aaf07080e3afd57d357f83d05f0249c928f345f314cdfdffe1"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-16T03:37:09.043Z",
+      "head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2",
+      "kind": "deletion_scan",
+      "symbols": [
+        "oracle-reset-database"
+      ],
+      "hits": [
+        {
+          "symbol": "oracle-reset-database",
+          "path": "scripts/quality/harness/oracle-reset-removed.test.ts",
+          "line": 11
+        }
+      ],
+      "result": "FAIL",
+      "fingerprint": "c3c1524f98d5b6aaf07080e3afd57d357f83d05f0249c928f345f314cdfdffe1"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-16T03:37:14.006Z",
+      "head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2",
+      "kind": "deletion_scan",
+      "symbols": [
+        "oracle-reset-database"
+      ],
+      "hits": [
+        {
+          "symbol": "oracle-reset-database",
+          "path": "scripts/quality/harness/oracle-reset-removed.test.ts",
+          "line": 11
+        }
+      ],
+      "result": "FAIL",
+      "fingerprint": "c3c1524f98d5b6aaf07080e3afd57d357f83d05f0249c928f345f314cdfdffe1"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-16T03:37:47.528Z",
+      "head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2",
+      "kind": "deletion_scan",
+      "symbols": [
+        "oracle-reset-database"
+      ],
+      "hits": [],
+      "result": "PASS",
+      "fingerprint": "c3c1524f98d5b6aaf07080e3afd57d357f83d05f0249c928f345f314cdfdffe1"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-16T03:40:02.438Z",
+      "head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 266,
+        "executed": 266,
+        "passed": 266,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "c3c1524f98d5b6aaf07080e3afd57d357f83d05f0249c928f345f314cdfdffe1"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-16T03:40:20.111Z",
+      "head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "python3 deploy/oci/deploy-release.test.py",
+      "exit_code": 0,
+      "fingerprint": "c3c1524f98d5b6aaf07080e3afd57d357f83d05f0249c928f345f314cdfdffe1"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-16T03:47:20.858Z",
+      "head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [
+        {
+          "severity": "minor",
+          "file": "scripts/quality/harness/oracle-reset-removed.test.ts",
+          "summary": "Absence check is keyed on one filename; a destructive reset re-added under another name or inlined into deploy-oci.yml would pass. Consider also asserting no .github/workflows/*.y?ml contains the rese…"
+        },
+        {
+          "severity": "minor",
+          "file": "docs/deployment/oci.md",
+          "summary": "'restore it from commit 3b87dfda' (and the task rollback_plan) is not operable: that workflow exits 3 once content._prisma_migrations exists, which the successful first deploy (run 38843026740) create…"
+        },
+        {
+          "severity": "minor",
+          "file": "tasks/RELEASE-5.json",
+          "summary": "RELEASE-5's GREEN target is the deleted test and RELEASE-5 retains production files, so a replay over a range containing both tasks would fail RELEASE-5 final_green; normal CI is unaffected because RE…"
+        },
+        {
+          "severity": "minor",
+          "file": "tasks/RELEASE-6.json",
+          "summary": "deletion.allowed_references lists docs/deployment/oci.md twice although it never contains the scanned symbol; the symbol set covers only the file stem (an independent scan of the display name, confirm…"
+        }
+      ],
+      "package_sha256": "854913166f22002814dc740f86625ec466755df3480267d05acd9f390713f685",
+      "fingerprint": "c3c1524f98d5b6aaf07080e3afd57d357f83d05f0249c928f345f314cdfdffe1"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-16T03:47:46.464Z",
+    "head": "3b87dfdadce914a1caad5a0de801fb3f89c154c2",
+    "fingerprint": "c3c1524f98d5b6aaf07080e3afd57d357f83d05f0249c928f345f314cdfdffe1",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "deletion_audit": "PASS",
+      "suite_harness": "PASS",
+      "infra_validation": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      ".github/workflows/oracle-reset-database.yml": null,
+      "docs/deployment/oci.md": "ae18a010425679f9facd48d2324dedf0564a332e",
+      "scripts/quality/harness/oracle-reset-removed.test.ts": "913cb959a71c2dfee50dd23783afad50e14920b5",
+      "scripts/quality/harness/oracle-reset-workflow.test.ts": null
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": [
+      {
+        "id": "565d296f-2ba2-48fb-88c2-ff019ecb2c7b",
+        "task": "RELEASE-6",
+        "action": {
+          "kind": "delete_persistent_data",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "894404b15b19ed973c88ad4ac5428d65983b5171b23efa560d08d5ff12cc0461",
+            "environment": "local"
+          },
+          "impact": "Destroy potentially persistent data",
+          "command": "node -e '\nconst fs=require(\"fs\");\nconsole.log(\"workflow exists now:\", fs.existsSync(\".github/workflows/oracle-reset-database.yml\"));\nconsole.log(\"old pinned test exists now:\", fs.existsSync(\"scripts/quality/harness/oracle-reset-workflow.test.ts\"));\nconsole.log(\"runbook phrase present:\", fs.readFileSync(\"docs/deployment/oci.md\",\"utf8\").includes(\"was used for the first deployment and has been removed\"));\n'; git cat-file -e 3b87dfda:.github/workflows/oracle-reset-database.yml && echo \"workflow present at base 3b87dfda: true\"; git show 3b87dfda:docs/deployment/oci.md | grep -c \"was used for the first deployment and has been removed\" ; echo '--- other destructive SQL in remaining workflows ---'; rg -n -i \"drop database|dropdb|WIPE\" .github/workflows/ ; echo \"rg exit=$?\"; echo '--- fixture REPO_ROOT ---'; rg -n \"REPO_ROOT\" scripts/quality/harness/fixture.ts | head -3"
+        },
+        "impact": "Destroy potentially persistent data",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "894404b15b19ed973c88ad4ac5428d65983b5171b23efa560d08d5ff12cc0461",
+          "environment": "local"
+        },
+        "digest": "b6537fbad7f514335e9066ba9669f41ec5e545bbb6ed1eaad81d95af77e52b4d",
+        "continuation": {
+          "step": "native:toolu_01V2YCawo3MGHbwxtLcJEAsV",
+          "native_tool_use_id": "toolu_01V2YCawo3MGHbwxtLcJEAsV"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "cancel",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-16T03:45:44.947Z",
+        "answered_at": "2026-10-16T03:47:45.474Z",
+        "execution": "alternative"
+      }
+    ]
+  }
+}
