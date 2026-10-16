@@ -1,0 +1,91 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "DATA-201",
+  "title": "Import canonical local learning content into OCI and document repeatable recovery",
+  "start_head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Document and execute selective canonical-content import from a frozen local snapshot, preserving production users, auth, progress and billing"
+      },
+      {
+        "id": "AC2",
+        "text": "Validate imported counts and relations, restore complete BJT datasets, rebuild search and demonstrate learner queries"
+      },
+      {
+        "id": "AC3",
+        "text": "Record backup, rollback and repeatable commands in deployment documentation"
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "DOC_ONLY"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-16T05:43:25.787Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-16T05:50:43.721Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-16T05:50:44.128Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-16T06:58:53.274Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-16T06:19:20.227Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a14349-f1c2-7c60-8b4c-ea4f0ed4df69",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "5caafe21ce1855de5560782f7c88c007dbc8793b19f5c350dc25c9eaa701983f",
+      "attested": true,
+      "fingerprint": "483404b8cb6d9d882d083907f3d5ec597a0ffe52e85e1237ca930c6ac02289cb"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-16T06:58:53.256Z",
+    "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+    "fingerprint": "02e62a6ba58b9c5fd1ae034578622b65b1317ff5f9205dd238e0a4b8095439cc",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS"
+    },
+    "files": {
+      "docs/deployment/oci-content-import.md": "b5b9dcf8a0a24aae6886e2f59bad5393291c7bcf",
+      "docs/deployment/oci.md": "98a210400a425320813a5e4b6129d20594c6f155"
+    }
+  }
+}

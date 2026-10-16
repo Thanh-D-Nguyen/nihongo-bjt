@@ -35,7 +35,7 @@ First operator as performed on 2026-10-16 (no secret ever appears in chat, logs 
 2. Pipe a script to `bash -s` over SSH. It refuses unless `authz.admin_actor` is empty, generates a 28-character password with `openssl`, writes `~/kotobawork-admin-credentials.txt` (mode 600), passes the values to `docker exec oci-api-1 /app/bootstrap-admin` via inherited environment variables, then proves a real `POST /api/admin/login` returns 200 and `/api/admin/me` lists `*`.
 3. Copy the file to the operator's workstation outside any repository with `scp` and `chmod 600` (`~/.kotobawork/oracle-admin.txt`). Change the password after first login; password recovery needs SMTP configured in `.env.production`.
 
-Content is not seeded by releases: import it through the project's content import path before announcing the site.
+Content is not seeded by releases. Follow [Importing the local content snapshot](oci-content-import.md) to restore the reviewed dictionary and learning content, verify it, and rebuild search. Ordinary pushes preserve that data.
 
 ## Baseline procedure for an imported database (not used for the first deploy)
 
