@@ -29,6 +29,12 @@ The imported data was incorrect and the operator explicitly authorized destroyin
 
 Afterwards create the first operator with the API image's one-off binary (it also grants the `*` permission to the `super_admin` role). Pass the operator's email, display name and password through the `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_DISPLAY_NAME` and `BOOTSTRAP_ADMIN_PASSWORD` environment variables plus the container's `DATABASE_URL`, then run `./bootstrap-admin` inside `oci-api-1` with `docker exec`. This needs a shell on the Oracle host (SSH from an allow-listed IP); until then there are zero admins. Read the password from a private mode-600 file; never put it on a command line that is logged. After importing content, run a full search rebuild so Meilisearch drops documents of the destroyed data.
 
+First operator as performed on 2026-10-16 (no secret ever appears in chat, logs or a command line):
+
+1. SSH to the host (`ssh kotobawork-prod`, user `ubuntu`). Reaching port 22 needs the operator's current IP allowed in **both** the OCI security list `gitea-temp-public-sl` and the host UFW rules (`/etc/ufw/user.rules`); the home IP is dynamic, so update both when it changes.
+2. Pipe a script to `bash -s` over SSH. It refuses unless `authz.admin_actor` is empty, generates a 28-character password with `openssl`, writes `~/kotobawork-admin-credentials.txt` (mode 600), passes the values to `docker exec oci-api-1 /app/bootstrap-admin` via inherited environment variables, then proves a real `POST /api/admin/login` returns 200 and `/api/admin/me` lists `*`.
+3. Copy the file to the operator's workstation outside any repository with `scp` and `chmod 600` (`~/.kotobawork/oracle-admin.txt`). Change the password after first login; password recovery needs SMTP configured in `.env.production`.
+
 Content is not seeded by releases: import it through the project's content import path before announcing the site.
 
 ## Baseline procedure for an imported database (not used for the first deploy)
