@@ -1,0 +1,263 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "RELEASE-3",
+  "title": "Repair post-push CI: release script lint globals and hermetic PARTIAL acceptance env",
+  "start_head": "9efc6a64fcda4d1709dfb9b6a5665495b1eaee77",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Push CI for 9efc6a64 failed: the frontend lint ratchet rejects 4 no-undef errors in scripts/release/browser-release.mjs, and the lifecycle job's harness self-test fails because job-level QUALITY_ACCEPT_PARTIAL=true leaks into the self-test and makes a PARTIAL task merge when the test expects refusal.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "scripts/release/*.mjs lint with zero errors under the repository ESLint configuration."
+      },
+      {
+        "id": "AC2",
+        "text": "The CI workflow parses and exposes QUALITY_ACCEPT_PARTIAL only on the Lifecycle check step, never at job level, so the harness self-test is hermetic."
+      }
+    ],
+    "expected_behavior": "CI on main is green: release scripts lint clean with declared globals and QUALITY_ACCEPT_PARTIAL is visible only to the lifecycle check step.",
+    "observed_behavior": "checks: RATCHET_VIOLATION new lint no-undef x4; lifecycle: adversarial 'a PARTIAL task needs explicit acceptance to merge' expected 1 got 0.",
+    "rollback_plan": "Revert the single follow-up commit; no data or deployment state is touched because CI failure prevented any deployment."
+  },
+  "classification": {
+    "classes": [
+      "INFRASTRUCTURE",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "scripts/quality/harness/ci-workflow.test.ts",
+      "test": "CI workflow hygiene > exposes QUALITY_ACCEPT_PARTIAL only on the Lifecycle check step",
+      "expect": "job-level env leaks the switch"
+    },
+    {
+      "runner": "vitest",
+      "file": "scripts/quality/harness/ci-workflow.test.ts",
+      "test": "CI workflow hygiene > keeps release scripts free of ESLint errors",
+      "expect": "no-undef"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-15T22:39:40.352Z",
+      "head": "9efc6a64fcda4d1709dfb9b6a5665495b1eaee77"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-15T22:40:00.033Z",
+      "head": "9efc6a64fcda4d1709dfb9b6a5665495b1eaee77"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-15T22:40:00.385Z",
+      "head": "9efc6a64fcda4d1709dfb9b6a5665495b1eaee77"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-15T22:49:20.002Z",
+      "head": "9efc6a64fcda4d1709dfb9b6a5665495b1eaee77"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-16T00:46:48.197Z",
+      "head": "9efc6a64fcda4d1709dfb9b6a5665495b1eaee77"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-16T00:49:38.382Z",
+      "head": "9efc6a64fcda4d1709dfb9b6a5665495b1eaee77"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-16T01:00:46.866Z",
+      "head": "9efc6a64fcda4d1709dfb9b6a5665495b1eaee77"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-16T01:01:14.055Z",
+      "head": "9efc6a64fcda4d1709dfb9b6a5665495b1eaee77"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-15T22:49:19.216Z",
+      "head": "9efc6a64fcda4d1709dfb9b6a5665495b1eaee77",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/ci-workflow.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/ci-workflow.test.ts::CI workflow hygiene > exposes QUALITY_ACCEPT_PARTIAL only on the Lifecycle check step",
+          "outcome": "FAIL",
+          "excerpt": "job-level env leaks the switch into the harness self-test: expected 4 to be greater than 4",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:scripts/quality/harness/ci-workflow.test.ts::CI workflow hygiene > keeps release scripts free of ESLint errors",
+          "outcome": "FAIL",
+          "excerpt": "WARN Unsupported engine: wanted: {\"node\":\"24.16.0\"} (current: {\"node\":\"v24.12.0\",\"pnpm\":\"10.26.2\"}) /Users/thanhnguyen/.codex/worktrees/oracle-release/nihongo-bjt/scripts/release/browser-release.mjs 56:40 error 'document' is not defined no-undef 67:40 error 'document' is not defined no-undef 80:42 e…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/ci-workflow.test.ts::CI workflow hygiene > exposes QUALITY_ACCEPT_PARTIAL only on the Lifecycle check step": "job-level env leaks the switch",
+        "vitest:scripts/quality/harness/ci-workflow.test.ts::CI workflow hygiene > keeps release scripts free of ESLint errors": "no-undef"
+      },
+      "fingerprint": "c7f3a851b3baf814337779f933a345fbe1b2178157651aa1d9bc329cfa285f40"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-16T00:46:38.280Z",
+      "head": "9efc6a64fcda4d1709dfb9b6a5665495b1eaee77",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/ci-workflow.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/ci-workflow.test.ts::CI workflow hygiene > exposes QUALITY_ACCEPT_PARTIAL only on the Lifecycle check step",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:scripts/quality/harness/ci-workflow.test.ts::CI workflow hygiene > keeps release scripts free of ESLint errors",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "WARN Unsupported engine: wanted: {\"node\":\"24.16.0\"} (current: {\"node\":\"v24.12.0\",\"pnpm\":\"10.26.2\"}) /Users/thanhnguyen/.codex/worktrees/oracle-release/nihongo-bjt/scripts/release/browser-release.mjs 1:11 error 'process' is already defined as a built-in global variable no-redeclare 1:20 error 'consol…"
+        }
+      ],
+      "fingerprint": "4a2d242b0702af8633d9ebd22edd5bb11c69bc09fbde898d4428c7feb3429dd7"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-16T00:46:47.866Z",
+      "head": "9efc6a64fcda4d1709dfb9b6a5665495b1eaee77",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/ci-workflow.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/ci-workflow.test.ts::CI workflow hygiene > exposes QUALITY_ACCEPT_PARTIAL only on the Lifecycle check step",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:scripts/quality/harness/ci-workflow.test.ts::CI workflow hygiene > keeps release scripts free of ESLint errors",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3e4274968ed6768cdac01c562154b66c1803a6f45e5990cade30484bd9c8492d"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-16T00:49:19.172Z",
+      "head": "9efc6a64fcda4d1709dfb9b6a5665495b1eaee77",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 265,
+        "executed": 265,
+        "passed": 265,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "3e4274968ed6768cdac01c562154b66c1803a6f45e5990cade30484bd9c8492d"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-16T00:49:38.127Z",
+      "head": "9efc6a64fcda4d1709dfb9b6a5665495b1eaee77",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "python3 deploy/oci/deploy-release.test.py",
+      "exit_code": 0,
+      "fingerprint": "3e4274968ed6768cdac01c562154b66c1803a6f45e5990cade30484bd9c8492d"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-16T01:00:46.597Z",
+      "head": "9efc6a64fcda4d1709dfb9b6a5665495b1eaee77",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "scripts/quality/harness/fixture.ts",
+          "summary": "Non-blocking: self-test hermeticity is achieved only by CI config. fixture sh() spreads process.env and the fixture env blanks GITHUB_ACTIONS/GITHUB_STEP_SUMMARY/TEST_DATABASE_URL but not QUALITY_ACCE…"
+        },
+        {
+          "severity": "minor",
+          "file": "scripts/quality/harness/ci-workflow.test.ts",
+          "summary": "Line-walk guard passes while the switch still leaks (verified on in-memory workflow variants): an unnamed '- run:'/'- uses:' step after Lifecycle check carrying it in env is attributed to the previous…"
+        },
+        {
+          "severity": "minor",
+          "file": "docs/engineering/engineering-policy.json",
+          "summary": "ci-workflow.test.ts is the only harness test file not registered in harness.required_self_test_files (all 12 others are), so the self-test's required-file accounting would not catch it being dropped f…"
+        },
+        {
+          "severity": "minor",
+          "file": "scripts/quality/harness/ci-workflow.test.ts",
+          "summary": "Scope: the quality-system self-test now runs product ESLint over scripts/release with a stricter rule (zero warnings, no baseline) than the frontend debt ratchet that already caught this regression; a…"
+        }
+      ],
+      "package_sha256": "614c5deb93042e2e13f065efbc17dd815ea687e2eb03733b64f9a1d8027a06c2",
+      "fingerprint": "3e4274968ed6768cdac01c562154b66c1803a6f45e5990cade30484bd9c8492d"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-16T01:01:14.036Z",
+    "head": "9efc6a64fcda4d1709dfb9b6a5665495b1eaee77",
+    "fingerprint": "3e4274968ed6768cdac01c562154b66c1803a6f45e5990cade30484bd9c8492d",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_harness": "PASS",
+      "infra_validation": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      ".github/workflows/ci.yml": "9db9222e2f18b7157f12cae60f64ab3aab03ceb2",
+      "scripts/quality/harness/ci-workflow.test.ts": "c7dbce350b4bbc1b6b9636349012eb7fa8fb52de",
+      "scripts/release/browser-release.mjs": "682fd3a522cb19406c9b690d61e642d1727b61a9"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

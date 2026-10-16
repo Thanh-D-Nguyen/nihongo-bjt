@@ -1,3 +1,4 @@
+/* global document, innerWidth */
 // Real-browser release journey against a running stack (Caddy origin serving web, admin and API).
 //
 //   RELEASE_BASE_URL       origin under test, e.g. http://localhost:28081 (required)

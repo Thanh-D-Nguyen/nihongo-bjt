@@ -142,9 +142,6 @@ jobs:
       # Diff base. PRs are checked out as a merge commit whose first parent is
       # exactly the base it was merged onto; pushes diff against the previous tip.
       QUALITY_BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || github.event.before }}
-      # A task closed PARTIAL (BLOCKED gate) merges only with the PR label
-      # quality:accept-partial; on push the PR decision already applied.
-      QUALITY_ACCEPT_PARTIAL: ${{ github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'quality:accept-partial') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -163,6 +160,11 @@ jobs:
           cache-dependency-path: apps/api-go/go.sum
       # Static: quality-system invariants, ownership, classification, gates, evidence identity, risk findings.
       - name: Lifecycle check
+        env:
+          # A task closed PARTIAL (BLOCKED gate) merges only with the PR label
+          # quality:accept-partial; on push the PR decision already applied.
+          # Step-scoped so the harness self-test never inherits the switch.
+          QUALITY_ACCEPT_PARTIAL: ${{ github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'quality:accept-partial') }}
         run: node scripts/quality/harness/cli.mjs check --ci --base "$QUALITY_BASE" --head HEAD
       # Harness self-test incl. the adversarial mutation suite (zero skips allowed).
       - name: Harness self-test
