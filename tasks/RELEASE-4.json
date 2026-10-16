@@ -1,0 +1,95 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "RELEASE-4",
+  "title": "Remove hard-coded date from security audit route test",
+  "start_head": "58fe810e72ef6c54315cffd8abfa1f6ec7198c60",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "TestAdminOperationsSecurityAudit163Routes filters security events with the literal date 2026-10-15, so it fails on every other calendar day (CI go-checks failed on 2026-10-16).",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "The filtered security event list assertion uses the current UTC date rather than a hard-coded day."
+      }
+    ],
+    "expected_behavior": "The test derives the filter date from the clock and passes on any day.",
+    "observed_behavior": "filtered list contract={items:[],total:0} after the date rolled over.",
+    "rollback_plan": "Revert the test-only commit."
+  },
+  "classification": {
+    "classes": [
+      "TEST_ONLY"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-16T01:05:36.838Z",
+      "head": "58fe810e72ef6c54315cffd8abfa1f6ec7198c60"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-16T01:05:37.217Z",
+      "head": "58fe810e72ef6c54315cffd8abfa1f6ec7198c60"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-16T01:05:37.588Z",
+      "head": "58fe810e72ef6c54315cffd8abfa1f6ec7198c60"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-16T01:16:16.903Z",
+      "head": "58fe810e72ef6c54315cffd8abfa1f6ec7198c60"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-16T01:09:49.353Z",
+      "head": "58fe810e72ef6c54315cffd8abfa1f6ec7198c60",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1444,
+        "executed": 1444,
+        "passed": 1444,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1444 passed, 0 allowed skip(s)",
+      "fingerprint": "6aa0ca3841d9280563bc8c347f935768fa6935c5aac946fac9b18e9384c97988"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-16T01:16:16.883Z",
+    "head": "58fe810e72ef6c54315cffd8abfa1f6ec7198c60",
+    "fingerprint": "6aa0ca3841d9280563bc8c347f935768fa6935c5aac946fac9b18e9384c97988",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "suite_go": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_admin_operations_security_audit163_test.go": "64d9fe7ca17a030085b427889864578c473631fb"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

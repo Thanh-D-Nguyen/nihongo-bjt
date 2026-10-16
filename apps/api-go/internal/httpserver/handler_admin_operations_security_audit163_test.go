@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestAdminOperationsSecurityAudit163Routes(t *testing.T) {
@@ -112,7 +113,8 @@ func TestAdminOperationsSecurityAudit163Routes(t *testing.T) {
 		if err := json.Unmarshal(res.Body.Bytes(), &overview); err != nil || overview.Total < 2 || overview.BySeverity["high"] < 1 || overview.ByType["failed_login"] < 1 {
 			t.Fatalf("overview contract=%s err=%v", res.Body.String(), err)
 		}
-		res = call(http.MethodGet, "/api/admin/operations/security/events?type=failed_login&severity=high&actorId="+actorID+"&from=2026-10-15&to=2026-10-15&limit=50&offset=0", "", token, true)
+		today := time.Now().UTC().Format("2006-01-02")
+		res = call(http.MethodGet, "/api/admin/operations/security/events?type=failed_login&severity=high&actorId="+actorID+"&from="+today+"&to="+today+"&limit=50&offset=0", "", token, true)
 		if res.Code != http.StatusOK {
 			t.Fatalf("filtered list status=%d body=%s", res.Code, res.Body.String())
 		}
