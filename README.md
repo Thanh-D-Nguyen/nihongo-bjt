@@ -4,245 +4,72 @@ Production-shaped monorepo for a BJT and daily Japanese learning platform.
 
 Phase 00 data profiling and canonical import is complete and archived in `archive/phase-00-data-import/`. Active product development starts from Phase 01.
 
-## Prerequisites
+## Start the complete local system
 
-- **Node.js** 20+ (LTS recommended)
-- **pnpm** 10+ (`corepack enable` then `corepack prepare pnpm@10.26.2 --activate`, or install via npm)
-- **Docker** with Docker Compose (for local Postgres, Redis, Meilisearch, MinIO)
+Prerequisites: **Node.js 24.16.0**, **pnpm 10.26.2**, **Go 1.23+**, **Docker with Compose v2**, and **Caddy** on your PATH. Versions for Node/pnpm are pinned in `package.json`; Go's minimum version is in `apps/api-go/go.mod`.
 
-## Full stack after `git clone` or `git pull`
-
-Run from the **repo root** unless noted. Use this when you need **learner + Go API + admin** locally. Keycloak is no longer required (auth is Go-native sessions since M13).
-
-### 1. Core infrastructure (Postgres, Redis, Meilisearch, MinIO)
+From the repository root:
 
 ```bash
-docker compose up -d postgres redis meilisearch minio
-docker compose ps
+pnpm local:start
 ```
 
-Wait until **postgres** is healthy. Host DB URL uses **`127.0.0.1:15432`** (see `docker-compose.yml`).
+Or run `bash scripts/local-start.sh` directly. On macOS the script starts Docker Desktop from `/Applications/Docker.app` if its daemon is stopped; elsewhere, the local Docker engine must be running.
 
-### 2. Root `.env` (API + shared)
+The command installs dependencies using the lockfile, creates `.env` from `.env.example` only if missing, checks application ports on IPv4 and IPv6, starts PostgreSQL/Redis/Meilisearch/Mailpit, generates Prisma Client, applies pending Prisma migrations, builds the Go API, and launches the API, learner, admin, and Caddy. It refuses a non-loopback `DATABASE_URL` and preserves existing `.env` files. It does not reset the database or seed content automatically.
+
+Wait for **Ready!**, then open:
+
+| Service            | URL                                   |
+| ------------------ | ------------------------------------- |
+| Learner            | http://localhost:18081/vi             |
+| Admin login        | http://localhost:18081/admin/vi/login |
+| API readiness      | http://localhost:18081/health/ready   |
+| Local email inbox  | http://localhost:8025                 |
+| Meilisearch health | http://localhost:7700/health          |
+
+Caddy keeps the browser and API on the same origin. Auth uses Go-native sessions; Keycloak and the removed NestJS backend are not needed. Local media is stored in `tmp/local-audit/media`.
+
+Keep this terminal open. **Ctrl-C** stops the API, web, admin and Caddy; Docker services keep running and database volumes persist. Logs are in `tmp/local-audit/{api,web,admin,caddy}.log`. The Go binary is rebuilt on each startup; restart after Go code changes. Next.js reloads frontend changes automatically.
+
+In another terminal, check the running system:
 
 ```bash
-cp .env.example .env
+pnpm local:status
+# Optional: verify stability over 60 seconds
+pnpm local:status --stable
 ```
 
-Edit `.env`:
-
-- **`DATABASE_URL`**: for the default Docker Postgres, keep the example pointing at `127.0.0.1:15432` and `?schema=content`.
-- **`OAUTH_STATE_SECRET`**: must **not** be empty — use a dummy string **≥ 32 characters** if you are not using Google OAuth yet.
-- **`MEILI_MASTER_KEY`**: must match compose (`local_dev_meili_master_key`).
-- Keycloak variables in `.env.example` are legacy/dead (auth is Go-native sessions since M13). Leave them empty unless you have a specific rollback need.
-
-### 3. Per-app env (Next.js apps)
-
-```bash
-# Create minimal .env.local files if needed for local overrides
-touch apps/admin/.env.local apps/web/.env.local
-```
-
-Adjust ports if they differ from defaults (`:3000` for web, `:3001` for admin, `:4001` for Go API).
-
-### Login/auth contract
-
-Auth is Go-native sessions (M13a/b/c). Keycloak is no longer required for local development.
-
-- Go API (`apps/api-go`, `:4001`) is the sole backend auth boundary. It issues session tokens for learner, admin, and mobile clients.
-- Learner (`apps/web`, `:3000`) and Admin (`apps/admin`, `:3001`) authenticate through Go API session endpoints.
-- Mobile (`apps/mobile`) uses Bearer token fallback against the same Go API session guards.
-- Admin APIs enforce RBAC from PostgreSQL. Do not rely on frontend-only admin checks.
-- `apps/api` (NestJS) is disabled from runtime since M15 and preserved on disk for rollback reference only.
-
-For local admin access, seed the foundation data: `pnpm seed:foundation`.
-
-### 5. Install, Prisma Client, migrations
-
-```bash
-pnpm install
-pnpm prisma:generate
-pnpm exec prisma migrate deploy --schema packages/database/prisma/schema.prisma
-```
-
-Re-run **`pnpm prisma:generate`** and **`migrate deploy`** after pulls that change Prisma schema or migrations.
-
-### 6. Seed data (recommended for admin RBAC and demos)
+For a fresh database, seed foundation/admin RBAC data separately:
 
 ```bash
 pnpm seed:foundation
 ```
 
-This runs foundation + admin + monetization seeds (see `apps/api/package.json`). Optional extras:
+Additional content seeds are listed in `package.json`; `pnpm seed:all` imports the full seed set and may take a while. Seeded admin actors still need a supported authentication method; this startup command does not enable an authentication bypass.
+
+To stop the Docker services later without deleting their data:
 
 ```bash
-pnpm --filter @nihongo-bjt/api growth:seed
-pnpm --filter @nihongo-bjt/api daily:seed
-pnpm --filter @nihongo-bjt/api quiz:seed
+docker compose stop postgres redis meilisearch mailpit
 ```
 
-### 7. Search index (optional)
+### Troubleshooting
 
-```bash
-pnpm search:index
-```
+- **Missing tool:** install the prerequisite named in the error and retry. For Caddy on macOS, use `brew install caddy`.
+- **Docker unavailable:** the script waits up to 120 seconds for Docker Desktop. Inspect Docker Desktop if it cannot become ready. A remote Docker context is not suitable for this local stack.
+- **Port occupied:** inspect `lsof -nP -iTCP:<port> -sTCP:LISTEN` and stop the owning development server before retrying. The script never kills an existing listener. App ports are 3000, 3001, 4001, and 18081.
+- **Database error:** the default Compose URL uses `127.0.0.1:15432/nihongo_bjt?schema=content`. Check `.env` and the migration error. The script stops on failure without resetting data.
+- **Readiness timeout or app exit:** inspect the matching file in `tmp/local-audit/`. The command exits nonzero and stops the applications it launched.
+- **Next.js cache errors after an interrupted run:** stop the apps, run `pnpm clean:next`, then retry `pnpm local:start`.
 
-### 8. Run dev servers
+### Individual development commands
 
-**Important:** root **`pnpm dev`** starts **learner web (`:3000`) + API (`:4000`) only** — it does **not** start the admin app.
+`pnpm dev` / `pnpm dev:web` starts only the learner on port 3000; `pnpm dev:admin` starts only admin on port 3001 (base path `/admin`). These commands do not start the Go API or infrastructure. Use `pnpm local:start` for the complete system.
 
-```bash
-# Terminal 1 — learner + API
-pnpm dev
+The runtime backend is `apps/api-go` on port 4001. PostgreSQL/Prisma owns persistent data; Redis handles background work, Meilisearch is the search projection, and the Go API serves WebSocket realtime.
 
-# Terminal 2 — admin
-pnpm dev:admin
-```
-
-Then open:
-
-- Learner: `http://localhost:3000/vi`
-- Admin: `http://localhost:3001/vi`
-- API: `http://localhost:4000/api/health/live`
-
-If admin “cannot reach backend”, confirm **`NEXT_PUBLIC_API_URL=http://localhost:4000`** in `apps/admin/.env.local` and that **terminal 1** is running the API.
-
----
-
-## Build and run (reference — same steps in smaller chunks)
-
-### 1. Clone and enter the repo
-
-```bash
-git clone <your-remote> nihongo-bjt
-cd nihongo-bjt
-```
-
-### 2. Start infrastructure services
-
-```bash
-docker compose up -d postgres redis meilisearch minio
-```
-
-Wait until Postgres is healthy (`docker compose ps`). The compose file maps **host `127.0.0.1:15432` → container `5432`** (see `docker-compose.yml`).
-
-### 3. Environment variables
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` if needed:
-
-- **`DATABASE_URL`** must point at your Postgres instance. For the default Docker stack, use the value from `.env.example` (`…127.0.0.1:15432/nihongo_bjt?schema=content`). The `?schema=content` suffix matches the Prisma multi-schema setup.
-- If you use a **native Postgres on port 5432** instead, change `DATABASE_URL` accordingly (and run the same migrations against that database).
-- **`MEILI_MASTER_KEY`** must match Meilisearch (`local_dev_meili_master_key` in compose).
-- **Google OAuth**: `GOOGLE_OAUTH_*` can stay unset for flows that do not use Google. **`OAUTH_STATE_SECRET` must not be an empty string** (see **Troubleshooting** below).
-
-### 4. Install dependencies and generate Prisma Client
-
-```bash
-pnpm install
-pnpm prisma:generate
-```
-
-### 5. Apply database migrations
-
-From the repo root (uses `DATABASE_URL` from `.env` via `prisma.config.ts`):
-
-```bash
-pnpm exec prisma migrate deploy --schema packages/database/prisma/schema.prisma
-```
-
-This creates all application schemas (`content`, `learning`, `profile`, etc.) and tables. Re-run after pulling migrations.
-
-### 6. Optional: seed dev data (API)
-
-With services still up and `.env` loaded:
-
-```bash
-pnpm --filter @nihongo-bjt/api admin:seed
-pnpm --filter @nihongo-bjt/api monetization:seed
-pnpm --filter @nihongo-bjt/api growth:seed
-pnpm --filter @nihongo-bjt/api daily:seed
-pnpm --filter @nihongo-bjt/api quiz:seed
-```
-
-Use only what you need; order is not strict except that **admin seed** is useful before testing the admin UI (`NEXT_PUBLIC_LOCAL_ADMIN_ACTOR_ID` in `.env`).
-
-### 7. Optional: search index (Meilisearch)
-
-Indexes a sample of content into the `content_search` index (dev convenience):
-
-```bash
-pnpm search:index
-```
-
-Search in the learner app works better after this; re-run when you change indexed fields or want fresher data.
-
-### 8. Optional: lexeme pronunciation backfill (javi)
-
-If you maintain `archive/phase-00-data-import/json/javi.json` and want `content.lexeme.pronunciation` populated without a full re-import:
-
-```bash
-pnpm data:backfill-lexeme-pronunciation
-```
-
-Use **`DATABASE_URL`** or **`DATABASE_URLS`** (pipe `|` separated) for multiple databases. Requires the `pronunciation` column migration to be applied first.
-
-### 9. Run apps in development
-
-- **Learner + API:** `pnpm dev` (ports **3000** + **4000**).
-- **Admin (separate terminal):** `pnpm dev:admin` (port **3001**).
-
-### 10. Verify
-
-- API liveness: `http://localhost:4000/api/health/live` (also `ready`, `version`)
-- Learner: `http://localhost:3000/vi`
-- Admin: `http://localhost:3001/vi`
-
-### 11. Production-style build (compile check)
-
-```bash
-pnpm build
-pnpm typecheck
-```
-
-Note: the API package’s `build` script is currently `tsc --noEmit` (typecheck only). Next.js apps emit under `.next/` when their `build` task runs.
-
-### Troubleshooting (quick)
-
-- **API env validation / `OAUTH_STATE_SECRET`**: `.env.example` includes `OAUTH_STATE_SECRET=""`. An empty string is invalid for the server schema. Remove that line or set a **dummy secret at least 32 characters** for local dev if you are not using Google OAuth yet.
-- **`P1010` / DB connection**: Confirm `DATABASE_URL` matches your Postgres host, port, user, password, and database name; run `prisma migrate deploy` against the same URL the API uses.
-- **Prisma Client out of date**: After `git pull`, run `pnpm prisma:generate` again.
-- **Admin `http://localhost:3001/vi` errors / “backend” unreachable**: Start the API (`pnpm dev` or `pnpm dev:api`) and ensure `apps/admin/.env.local` has `NEXT_PUBLIC_API_URL=http://localhost:4000`. If Keycloak env vars are set, start Keycloak (`docker/keycloak`) and wait for `keycloak-configure-http` to finish (see **Full stack** above).
-- **Keycloak “HTTPS required” on `/admin`**: Realm `master` must allow HTTP in dev; the `docker/keycloak` stack runs a one-shot `keycloak-configure-http` — see `docker/keycloak/README.md`.
-
-## Stack
-
-- Next.js App Router + TypeScript for learner and admin web apps.
-- NestJS + TypeScript for the API.
-- PostgreSQL + Prisma as the source of truth.
-- Meilisearch for search projection.
-- Redis + BullMQ for background jobs.
-- Socket.IO for realtime battle flows.
-- MinIO/S3-compatible object storage for media.
-
-## Default service ports (reference)
-
-| Service                   | URL / host                                                         |
-| ------------------------- | ------------------------------------------------------------------ |
-| Learner web               | `http://localhost:3000/vi`                                         |
-| Admin web                 | `http://localhost:3001/vi`                                         |
-| API health                | `http://localhost:4000/api/health/live` (also `ready`, `version`)  |
-| Postgres (Docker publish) | `127.0.0.1:15432` → container `5432`                               |
-| Redis                     | `127.0.0.1:6379`                                                   |
-| Meilisearch               | `http://localhost:7700`                                            |
-| MinIO S3 API              | `http://localhost:9000`                                            |
-| MinIO console             | `http://localhost:9001`                                            |
-| Keycloak (optional stack) | `http://localhost:8080` — see `docker/keycloak/docker-compose.yml` |
-
-Database backup/restore: [docs/ops/backup-restore.md](docs/ops/backup-restore.md). Keycloak local setup: [docker/keycloak/README.md](docker/keycloak/README.md). OIDC env reference: [docs/ops/keycloak-app-integration.md](docs/ops/keycloak-app-integration.md).
+Database backup/restore: [docs/ops/backup-restore.md](docs/ops/backup-restore.md). Production checks: [scripts/quality/README.md](scripts/quality/README.md).
 
 ## Local dev accounts
 
@@ -250,19 +77,19 @@ These accounts are seeded for local development and testing. They do **not** hav
 
 ### Learners
 
-| Display Name | Email | User ID | Notes |
-|---|---|---|---|
-| Learner A | `learner-a@local.dev` | `a1111111-1111-4111-8111-111111111111` | UI locale: `vi` |
-| Learner B | `learner-b@local.dev` | `b2222222-2222-4222-8222-222222222222` | UI locale: `ja` |
-| Test User | `test@test.com` | `7e8ebed2-1af3-424d-94f0-169b24070ebc` | Legacy seed |
-| thanhnv11 | `thanhnv@rakumail.jp` | `12ae2af9-7fa9-435d-af73-df7c906b36fc` | Personal dev |
+| Display Name | Email                 | User ID                                | Notes           |
+| ------------ | --------------------- | -------------------------------------- | --------------- |
+| Learner A    | `learner-a@local.dev` | `a1111111-1111-4111-8111-111111111111` | UI locale: `vi` |
+| Learner B    | `learner-b@local.dev` | `b2222222-2222-4222-8222-222222222222` | UI locale: `ja` |
+| Test User    | `test@test.com`       | `7e8ebed2-1af3-424d-94f0-169b24070ebc` | Legacy seed     |
+| thanhnv11    | `thanhnv@rakumail.jp` | `12ae2af9-7fa9-435d-af73-df7c906b36fc` | Personal dev    |
 
 ### Admin
 
-| Display Name | Email | Actor ID | Role |
-|---|---|---|---|
-| Local Admin | `admin@local.dev` | `c3333333-3333-4333-8333-333333333333` | `admin.super` |
-| Default Seed Admin | *(seed default)* | `00000000-0000-4000-8000-000000000001` | `admin.super` |
+| Display Name       | Email             | Actor ID                               | Role          |
+| ------------------ | ----------------- | -------------------------------------- | ------------- |
+| Local Admin        | `admin@local.dev` | `c3333333-3333-4333-8333-333333333333` | `admin.super` |
+| Default Seed Admin | _(seed default)_  | `00000000-0000-4000-8000-000000000001` | `admin.super` |
 
 To use admin without Keycloak, set both `ADMIN_TEST_BYPASS=1` (API `.env`) and `NEXT_PUBLIC_ADMIN_TEST_BYPASS=1` (Admin `.env.local`), then restart both servers. Set `NEXT_PUBLIC_LOCAL_ADMIN_ACTOR_ID` to the actor ID above.
 

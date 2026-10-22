@@ -8,6 +8,8 @@
     "node": "24.16.0"
   },
   "scripts": {
+    "local:start": "bash scripts/local-start.sh",
+    "local:status": "node scripts/local-audit-status.mjs",
     "dev": "pnpm dev:learner",
     "dev:web": "pnpm --filter @nihongo-bjt/web dev",
     "dev:web:webpack": "pnpm --filter @nihongo-bjt/web dev:webpack",

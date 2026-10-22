@@ -1,0 +1,568 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "DEV-121",
+  "title": "One-command local stack startup",
+  "start_head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+  "preexisting_changes": {
+    ".claude/settings.local.json": "cc85d8531ee4cf5a2051c6c72834fce82b756e7f"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "pnpm local:start prepares local environment, frozen dependencies, Prisma client and migrations then starts Go API, learner, admin and Caddy using the existing runner"
+      },
+      {
+        "id": "AC2",
+        "text": "Startup refuses remote databases, missing tools and occupied application ports without resetting data or killing unrelated processes"
+      },
+      {
+        "id": "AC3",
+        "text": "Startup reports ready only after HTTP checks pass; Ctrl-C stops launched applications while Docker data persists"
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "INFRASTRUCTURE"
+    ],
+    "change_kind": "add",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "scripts/local-start.test.ts",
+      "test": "local startup > checks occupied ports before starting Docker or changing the database",
+      "expect": "occupied ports must stop startup before external commands"
+    },
+    {
+      "runner": "vitest",
+      "file": "scripts/local-start.test.ts",
+      "test": "local startup > refuses database connection overrides that can replace the loopback host",
+      "expect": "database host overrides must be refused"
+    },
+    {
+      "runner": "vitest",
+      "file": "scripts/local-start.test.ts",
+      "test": "local startup > refuses Docker routing overridden by dotenv before Compose can run",
+      "expect": "instead of rejecting"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-21T06:51:44.988Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-21T06:51:45.422Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-21T06:51:45.851Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-21T06:53:27.094Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-21T06:56:53.642Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-21T07:00:44.399Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-21T07:01:25.192Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-21T07:04:11.886Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-21T07:04:41.070Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-21T07:06:18.313Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-21T07:06:57.460Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-21T07:07:27.788Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-21T07:08:01.180Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-21T07:09:18.856Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-21T07:09:41.220Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-21T07:09:42.761Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-21T06:53:26.891Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/local-start.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/local-start.test.ts::local startup > checks occupied ports before starting Docker or changing the database",
+          "outcome": "FAIL",
+          "excerpt": "occupied ports must stop startup before external commands: expected \"vi.fn()\" to not be called at all, but actually been called 2 times Received: 1st vi.fn() call: Array [ \"docker\", Array [ \"compose\", \"up\", \"-d\", \"--wait\", \"postgres\", \"redis\", \"meilisearch\", \"mailpit\", ], Object { \"cwd\": \"/Users/tha…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/local-start.test.ts::local startup > checks occupied ports before starting Docker or changing the database": "occupied ports must stop startup before external commands"
+      },
+      "fingerprint": "309f5aeaf6498217c6308b928204c71dfc9885a7abfc6db7805edd27d9280aac"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-21T06:56:52.897Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/local-start.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/local-start.test.ts::local startup > checks occupied ports before starting Docker or changing the database",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "657f09de2786ef2c7d2868d489e92b3076e8e83444750d60734b5d0bbfe4690c"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-21T06:58:51.346Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/local-start.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/local-start.test.ts::local startup > checks occupied ports before starting Docker or changing the database",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0cffafae16e3e0fa728deec8a568d5943c15e4c12890c0d2d22b659207a5f228"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-21T06:59:33.681Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "pnpm local:status",
+      "exit_code": 0,
+      "fingerprint": "0cffafae16e3e0fa728deec8a568d5943c15e4c12890c0d2d22b659207a5f228"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-21T07:00:43.825Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 483,
+        "executed": 483,
+        "passed": 483,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 817,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "0cffafae16e3e0fa728deec8a568d5943c15e4c12890c0d2d22b659207a5f228"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-21T07:01:24.830Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/local-start.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/local-start.test.ts::local startup > checks occupied ports before starting Docker or changing the database",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "db42e783c702550543c2b303f06e7935592f698d99de062777780906a2f1f593"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-21T07:02:14.263Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 483,
+        "executed": 483,
+        "passed": 483,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 817,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "db42e783c702550543c2b303f06e7935592f698d99de062777780906a2f1f593"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-21T07:04:11.454Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "pnpm exec vitest run scripts/local-start.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/local-start.test.ts::local startup > checks occupied ports before starting Docker or changing the database",
+          "outcome": "FAIL",
+          "excerpt": "occupied ports must stop startup before external commands: expected \"vi.fn()\" to not be called at all, but actually been called 2 times Received: 1st vi.fn() call: Array [ \"docker\", Array [ \"compose\", \"up\", \"-d\", \"--wait\", \"postgres\", \"redis\", \"meilisearch\", \"mailpit\", ], Object { \"cwd\": \"/private/v…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:scripts/local-start.test.ts::local startup > refuses database connection overrides that can replace the loopback host",
+          "outcome": "FAIL",
+          "excerpt": "database host overrides must be refused: expected [Function] to throw error including 'loopback DATABASE_URL' but got 'Local audit port 3000 is occupied; in…'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/local-start.test.ts::local startup > checks occupied ports before starting Docker or changing the database": "occupied ports must stop startup before external commands",
+        "vitest:scripts/local-start.test.ts::local startup > refuses database connection overrides that can replace the loopback host": "database host overrides must be refused"
+      },
+      "fingerprint": "d088a5cf5bec933aba25bf8a3d55b4270a73b044c369e0489b841c976c6130eb"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-21T07:04:40.625Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/local-start.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/local-start.test.ts::local startup > checks occupied ports before starting Docker or changing the database",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:scripts/local-start.test.ts::local startup > refuses database connection overrides that can replace the loopback host",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3d6d50ee42606517f99428bdd6e357a9973e152da3c58718447d4eeeca50fc43"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-21T07:04:53.173Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "pnpm local:status",
+      "exit_code": 0,
+      "fingerprint": "3d6d50ee42606517f99428bdd6e357a9973e152da3c58718447d4eeeca50fc43"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-21T07:06:17.954Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 485,
+        "executed": 485,
+        "passed": 485,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 817,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "3d6d50ee42606517f99428bdd6e357a9973e152da3c58718447d4eeeca50fc43"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-21T07:06:57.027Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "pnpm exec vitest run scripts/local-start.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/local-start.test.ts::local startup > checks occupied ports before starting Docker or changing the database",
+          "outcome": "FAIL",
+          "excerpt": "occupied ports must stop startup before external commands: expected \"vi.fn()\" to not be called at all, but actually been called 2 times Received: 1st vi.fn() call: Array [ \"docker\", Array [ \"compose\", \"up\", \"-d\", \"--wait\", \"postgres\", \"redis\", \"meilisearch\", \"mailpit\", ], Object { \"cwd\": \"/private/v…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:scripts/local-start.test.ts::local startup > refuses database connection overrides that can replace the loopback host",
+          "outcome": "FAIL",
+          "excerpt": "database host overrides must be refused: expected [Function] to throw error including 'loopback DATABASE_URL' but got 'Local audit port 3000 is occupied; in…'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:scripts/local-start.test.ts::local startup > refuses Docker routing overridden by dotenv before Compose can run",
+          "outcome": "FAIL",
+          "excerpt": "promise resolved \"{ [Symbol(Symbol.toStringTag)]: 'Mod…' }\" instead of rejecting",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"dotenv must not redirect local startup to remote Docker\""
+        }
+      ],
+      "expects": {
+        "vitest:scripts/local-start.test.ts::local startup > checks occupied ports before starting Docker or changing the database": "occupied ports must stop startup before external commands",
+        "vitest:scripts/local-start.test.ts::local startup > refuses database connection overrides that can replace the loopback host": "database host overrides must be refused",
+        "vitest:scripts/local-start.test.ts::local startup > refuses Docker routing overridden by dotenv before Compose can run": "dotenv must not redirect local startup to remote Docker"
+      },
+      "fingerprint": "7717bcdd4353bdbdcc5d505164fb6d04e6d2f281e4427bf0b1a3b663c5af8199"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-21T07:07:27.372Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "pnpm exec vitest run scripts/local-start.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/local-start.test.ts::local startup > checks occupied ports before starting Docker or changing the database",
+          "outcome": "FAIL",
+          "excerpt": "occupied ports must stop startup before external commands: expected \"vi.fn()\" to not be called at all, but actually been called 2 times Received: 1st vi.fn() call: Array [ \"docker\", Array [ \"compose\", \"up\", \"-d\", \"--wait\", \"postgres\", \"redis\", \"meilisearch\", \"mailpit\", ], Object { \"cwd\": \"/private/v…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:scripts/local-start.test.ts::local startup > refuses database connection overrides that can replace the loopback host",
+          "outcome": "FAIL",
+          "excerpt": "database host overrides must be refused: expected [Function] to throw error including 'loopback DATABASE_URL' but got 'Local audit port 3000 is occupied; in…'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:scripts/local-start.test.ts::local startup > refuses Docker routing overridden by dotenv before Compose can run",
+          "outcome": "FAIL",
+          "excerpt": "promise resolved \"{ [Symbol(Symbol.toStringTag)]: 'Mod…' }\" instead of rejecting",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/local-start.test.ts::local startup > checks occupied ports before starting Docker or changing the database": "occupied ports must stop startup before external commands",
+        "vitest:scripts/local-start.test.ts::local startup > refuses database connection overrides that can replace the loopback host": "database host overrides must be refused",
+        "vitest:scripts/local-start.test.ts::local startup > refuses Docker routing overridden by dotenv before Compose can run": "instead of rejecting"
+      },
+      "fingerprint": "7717bcdd4353bdbdcc5d505164fb6d04e6d2f281e4427bf0b1a3b663c5af8199"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-21T07:08:00.750Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/local-start.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/local-start.test.ts::local startup > checks occupied ports before starting Docker or changing the database",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:scripts/local-start.test.ts::local startup > refuses database connection overrides that can replace the loopback host",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:scripts/local-start.test.ts::local startup > refuses Docker routing overridden by dotenv before Compose can run",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "34790a1071919f69bcd07ee6dd20306293cb10c72ac21126061ea7ff192da109"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-21T07:08:21.266Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "pnpm local:status",
+      "exit_code": 0,
+      "fingerprint": "34790a1071919f69bcd07ee6dd20306293cb10c72ac21126061ea7ff192da109"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-21T07:09:18.537Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 486,
+        "executed": 486,
+        "passed": 486,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 817,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "34790a1071919f69bcd07ee6dd20306293cb10c72ac21126061ea7ff192da109"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-21T07:09:40.888Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Aquinas (01a15d41-7454-71d1-83ed-f9a54fb09239)",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "8f8dab7fa59e0d1fa45ec2d5e2ce051acb8137f972b5e71f3d419cbc2241a739",
+      "attested": true,
+      "fingerprint": "34790a1071919f69bcd07ee6dd20306293cb10c72ac21126061ea7ff192da109"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-21T07:09:42.743Z",
+    "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+    "fingerprint": "34790a1071919f69bcd07ee6dd20306293cb10c72ac21126061ea7ff192da109",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS",
+      "infra_validation": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "README.md": "2b014aa73198040df5b46aabf18ae6241914b4b5",
+      "package.json": "901b2d6438d45513dabe175bcd6a8a9b2844b88d",
+      "scripts/local-audit-up.mjs": "2f87937a175733a4c6fe34ffee487a6d07534593",
+      "scripts/local-start-shell.test.ts": "542160e6b4249db443871e50235cb1db3da8d0c2",
+      "scripts/local-start.sh": "0c4fd48b0f6774e1dc18e5a62ce00e77c5197999",
+      "scripts/local-start.test.ts": "ea5d6d8995d90f2498f803827aa74ebbed91c462"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}
