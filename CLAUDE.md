@@ -14,6 +14,26 @@ pnpm quality status        # where am I, which gate is missing, what next (resum
 - Use native AskUserQuestion for consequential decisions, preserve WAITING_FOR_DECISION and continuation, then resume immediately. Continue independent safe work; first failure is never BLOCKED.
 - Legacy NestJS is removed and the Go API is authoritative, but parity gaps remain open (`docs/migrations/MIGRATION_CLOSURE.md`)
 
+## Go API contract — persistent reference
+
+Before implementing, modifying, or integrating any Go `/api` endpoint, check:
+
+- `docs/openapi.json` — canonical method/path coverage and documented schemas.
+- `docs/api-route-inventory.json` — source registrations, conditions, and verification evidence.
+- `docs/mobile/IOS_API_CONTRACT_GUIDE.md` — mobile auth, known gaps, and contract validation procedure.
+
+Query the relevant endpoint(s) only; do not load the large JSON documents in
+full at session startup. The 627 operations are a **static source inventory**;
+they are not proof of runtime availability or request/response schema validity.
+`test-evidenced` means a named handler test exists, not complete contract
+verification. Validate unverified endpoints against Go handlers, tests, and
+observed responses before depending on their DTOs or security behavior. Never
+guess a field, authentication rule, or status code from the endpoint name, or
+use superseded legacy `*_API_CONTRACT.md` files as authoritative contracts.
+
+When Go routes change, follow the generator/drift checks in the mobile guide.
+Quality gates remain governed by `docs/engineering/ENGINEERING_POLICY.md`.
+
 ## Remote host filesystem
 
 Paths under `/srv/kotobawork` belong to the Linux staging/production host.

@@ -1,0 +1,140 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "API-177",
+  "title": "Make Go API contract discoverable in every Claude session",
+  "start_head": "6c40e7c2583a34034f6048489b4eeeba6e67ad99",
+  "preexisting_changes": {
+    ".claude/settings.local.json": "cc85d8531ee4cf5a2051c6c72834fce82b756e7f",
+    "README.md": "2b014aa73198040df5b46aabf18ae6241914b4b5",
+    "apps/admin/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/web/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "package.json": "901b2d6438d45513dabe175bcd6a8a9b2844b88d",
+    "packages/database/generated/client/edge.js": "fe8312ddc66a906f9920665459e800c0624e3cad",
+    "packages/database/generated/client/index.js": "8b7fee13246d4f6e04519ed51d288e192c82e98a",
+    "packages/database/generated/client/package.json": "5a217aec94e0e656a5efc0ba2b572282162cf3a7",
+    "packages/database/generated/client/schema.prisma": "9f8d8a486e413211dbada58242d40e223cb1af45",
+    "scripts/local-audit-up.mjs": "2f87937a175733a4c6fe34ffee487a6d07534593",
+    "scripts/local-start-shell.test.ts": "542160e6b4249db443871e50235cb1db3da8d0c2",
+    "scripts/local-start.sh": "0c4fd48b0f6774e1dc18e5a62ce00e77c5197999",
+    "scripts/local-start.test.ts": "ea5d6d8995d90f2498f803827aa74ebbed91c462"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Every new Claude Code session working in this repository is directed to canonical Go API OpenAPI and route inventory before API changes"
+      },
+      {
+        "id": "AC2",
+        "text": "Instructions clearly distinguish source route coverage from unverified request response and runtime behavior"
+      },
+      {
+        "id": "AC3",
+        "text": "API lookup remains targeted and no large JSON contract is imported into every context"
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-22T14:46:49.745Z",
+      "head": "6c40e7c2583a34034f6048489b4eeeba6e67ad99"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-22T14:46:50.166Z",
+      "head": "6c40e7c2583a34034f6048489b4eeeba6e67ad99"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-22T14:46:50.601Z",
+      "head": "6c40e7c2583a34034f6048489b4eeeba6e67ad99"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-22T14:50:29.840Z",
+      "head": "6c40e7c2583a34034f6048489b4eeeba6e67ad99"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-22T14:51:40.059Z",
+      "head": "6c40e7c2583a34034f6048489b4eeeba6e67ad99"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-22T14:51:55.839Z",
+      "head": "6c40e7c2583a34034f6048489b4eeeba6e67ad99"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-22T14:50:29.682Z",
+      "head": "6c40e7c2583a34034f6048489b4eeeba6e67ad99",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 266,
+        "executed": 266,
+        "passed": 266,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "2c8ffb94e7a837d37bb57e91d7e7c7b788962c63cb35a1237939dcc616e00764"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-22T14:51:39.899Z",
+      "head": "6c40e7c2583a34034f6048489b4eeeba6e67ad99",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "gh copilot -- --silent --model auto --context long_context --allow-all-tools --mode plan --disable-builtin-mcps --disable-mcp-server unityMCP --no-custom-instructions",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [],
+      "package_sha256": "1946831ddefef48792449f68f7826ea45b5df58f741878b7f395324a05438024",
+      "fingerprint": "2c8ffb94e7a837d37bb57e91d7e7c7b788962c63cb35a1237939dcc616e00764"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-22T14:51:55.820Z",
+    "head": "6c40e7c2583a34034f6048489b4eeeba6e67ad99",
+    "fingerprint": "2c8ffb94e7a837d37bb57e91d7e7c7b788962c63cb35a1237939dcc616e00764",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "suite_harness": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "CLAUDE.md": "becbfec262ce7b45455f3d6638b59df494b86740"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}
