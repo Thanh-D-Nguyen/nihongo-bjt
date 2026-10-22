@@ -1,4 +1,9 @@
-# Search / Reference Hub — API Contract (Mobile)
+# Search / Reference Hub — Legacy Contract (Superseded)
+
+> Superseded by [the Go OpenAPI contract](../openapi.json) and
+> [iOS API Contract Guide](IOS_API_CONTRACT_GUIDE.md). The dictionary and
+> grammar routes below are not registered by the Go router; do not implement
+> against them.
 
 Verified against `apps/api` controllers + the mobile `ContentRepository` /
 `SavedRepository`. All endpoints are real. The mobile client never fabricates

@@ -1,4 +1,8 @@
-# Deck & Flashcard — Real API Contract (Mobile)
+# Deck & Flashcard — Legacy Contract (Superseded)
+
+> Superseded by [the Go OpenAPI contract](../openapi.json) and
+> [iOS API Contract Guide](IOS_API_CONTRACT_GUIDE.md). This document describes
+> removed NestJS aliases and must not be used for client implementation.
 
 Source of truth for the mobile Deck/Flashcard management slice. Every endpoint
 below is taken from the live backend controllers and shared Zod schemas — no

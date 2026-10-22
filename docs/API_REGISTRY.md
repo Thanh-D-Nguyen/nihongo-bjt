@@ -1,4 +1,9 @@
-# Canonical API Registry
+# API Registry
+
+> **Current canonical machine-readable contract:** [openapi.json](openapi.json),
+> maintained against the Go router. The material below is a historical
+> NestJS-era registry, retained as migration evidence only. It must not be used
+> as a client contract; see [the iOS contract guide](mobile/IOS_API_CONTRACT_GUIDE.md).
 
 ## Shared Snapshot (BJT-101)
 

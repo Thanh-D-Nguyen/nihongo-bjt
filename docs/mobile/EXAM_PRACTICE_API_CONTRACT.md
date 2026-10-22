@@ -1,4 +1,9 @@
-# Exam / Practice — Mobile API Contract
+# Exam / Practice — Legacy Contract (Unverified for Go)
+
+> This NestJS-era document is not part of the canonical contract. It is
+> retained as migration context only; do not implement an iOS client from it.
+> See [the Go OpenAPI contract](../openapi.json) and
+> [iOS API Contract Guide](IOS_API_CONTRACT_GUIDE.md).
 
 > Verified against `apps/api/src/quiz/quiz.controller.ts`,
 > `apps/api/src/quiz/quiz.repository.ts`, and the existing mobile client

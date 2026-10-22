@@ -84,6 +84,30 @@ func TestLearnerGuard_ValidSession_InjectsIdentity(t *testing.T) {
 	}
 }
 
+func TestLearnerGuard_AcceptsBearerSessionToken(t *testing.T) {
+	store := &mockSessionLookup{
+		learnerSess: &session.LearnerSession{ID: "sess-bearer", UserID: "user-bearer"},
+	}
+	var identity LearnerIdentity
+	var authenticated bool
+	handler := LearnerGuard(store, DefaultGuardConfig(testLogger()))(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		identity, authenticated = GetLearnerIdentity(r.Context())
+		w.WriteHeader(http.StatusNoContent)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/auth/me", nil)
+	req.Header.Set("Authorization", "Bearer opaque-session-token")
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	if !authenticated || identity.UserID != "user-bearer" || identity.SessionID != "sess-bearer" {
+		t.Fatal("expected bearer session identity")
+	}
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d", w.Code, http.StatusNoContent)
+	}
+}
+
 func TestLearnerGuard_SessionNotFound_Returns401(t *testing.T) {
 	store := &mockSessionLookup{learnerErr: session.ErrSessionNotFound}
 	cfg := DefaultGuardConfig(testLogger())

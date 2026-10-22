@@ -1,0 +1,581 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "IOS-175",
+  "title": "Verify Go iOS API contract",
+  "start_head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+  "preexisting_changes": {
+    ".claude/settings.local.json": "cc85d8531ee4cf5a2051c6c72834fce82b756e7f",
+    "README.md": "2b014aa73198040df5b46aabf18ae6241914b4b5",
+    "apps/admin/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/web/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "package.json": "901b2d6438d45513dabe175bcd6a8a9b2844b88d",
+    "packages/database/generated/client/edge.js": "fe8312ddc66a906f9920665459e800c0624e3cad",
+    "packages/database/generated/client/index.js": "8b7fee13246d4f6e04519ed51d288e192c82e98a",
+    "packages/database/generated/client/package.json": "5a217aec94e0e656a5efc0ba2b572282162cf3a7",
+    "packages/database/generated/client/schema.prisma": "9f8d8a486e413211dbada58242d40e223cb1af45",
+    "scripts/local-audit-up.mjs": "2f87937a175733a4c6fe34ffee487a6d07534593",
+    "scripts/local-start-shell.test.ts": "542160e6b4249db443871e50235cb1db3da8d0c2",
+    "scripts/local-start.sh": "0c4fd48b0f6774e1dc18e5a62ce00e77c5197999",
+    "scripts/local-start.test.ts": "ea5d6d8995d90f2498f803827aa74ebbed91c462"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "docs/openapi.json describes the verified Go authentication, dictionary search, BJT level, and FlashcardApp endpoints"
+      },
+      {
+        "id": "AC2",
+        "text": "A Go contract test rejects missing or legacy authentication metadata"
+      },
+      {
+        "id": "AC3",
+        "text": "The iOS guide directs agents to verified contract evidence and never to infer schemas from route names"
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY",
+      "TEST_ONLY"
+    ],
+    "change_kind": "add",
+    "rationale": ""
+  },
+  "red_exception": {
+    "category": "new_component",
+    "reason": "The drift guard is a new contract test; current behavior is characterized by existing Go integration tests.",
+    "declared_before_red": true
+  },
+  "red_targets": [],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/api-go/internal/authn/guard.go",
+      "find": "const prefix = \"Bearer \"",
+      "replace": "const prefix = \"Session \""
+    },
+    "targets": [
+      {
+        "runner": "go",
+        "package": "./internal/authn",
+        "test": "TestLearnerGuard_AcceptsBearerSessionToken",
+        "expect": "expected bearer session identity"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-22T09:44:11.758Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-22T09:44:12.168Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-22T09:44:12.585Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-22T09:57:59.586Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-22T10:04:06.839Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-22T10:14:56.581Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-22T10:21:10.877Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-22T10:26:28.027Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-22T10:30:26.876Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-22T10:37:21.601Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-22T10:41:21.084Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "EXCEPTION_APPROVED",
+      "at": "2026-10-22T10:46:07.649Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-22T10:46:09.390Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-22T09:57:57.212Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/authn/guard.go",
+        "find": "const prefix = \"Bearer \"",
+        "replace": "const prefix = \"Session \""
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerGuard_AcceptsBearerSessionToken)$ ./internal/authn"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/authn:TestLearnerGuard_AcceptsBearerSessionToken",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerGuard_AcceptsBearerSessionToken guard_test.go:104: expected bearer *** identity --- FAIL: TestLearnerGuard_AcceptsBearerSessionToken (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/authn:TestLearnerGuard_AcceptsBearerSessionToken": "expected bearer session identity"
+      },
+      "fingerprint": "790a0b66b634c68890ade6e206da36ce706748d16792f079a4fc0ec75ea8b98d"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-22T09:57:59.124Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerGuard_AcceptsBearerSessionToken)$ ./internal/authn"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/authn:TestLearnerGuard_AcceptsBearerSessionToken",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "790a0b66b634c68890ade6e206da36ce706748d16792f079a4fc0ec75ea8b98d"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-22T10:02:22.017Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1446,
+        "executed": 1446,
+        "passed": 1446,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1446 passed, 0 allowed skip(s)",
+      "fingerprint": "790a0b66b634c68890ade6e206da36ce706748d16792f079a4fc0ec75ea8b98d"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-22T10:03:16.643Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "pnpm exec playwright test e2e/smoke.spec.ts --grep anonymous settings access is redirected to login",
+      "exit_code": 1,
+      "fingerprint": "790a0b66b634c68890ade6e206da36ce706748d16792f079a4fc0ec75ea8b98d"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-22T10:03:30.930Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/smoke.spec.ts --grep 'anonymous settings access is redirected to login'",
+      "exit_code": 1,
+      "fingerprint": "790a0b66b634c68890ade6e206da36ce706748d16792f079a4fc0ec75ea8b98d"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-22T10:03:57.483Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc PLAYWRIGHT_SKIP_SERVER=1 PLAYWRIGHT_BASE_URL='http://[::1]:3000' pnpm exec playwright test e2e/smoke.spec.ts --grep 'anonymous settings access is redirected to login'",
+      "exit_code": 1,
+      "fingerprint": "790a0b66b634c68890ade6e206da36ce706748d16792f079a4fc0ec75ea8b98d"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-22T10:04:06.473Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc PLAYWRIGHT_SKIP_SERVER=1 PLAYWRIGHT_BASE_URL='http://[::1]:3000' pnpm exec playwright test e2e/smoke.spec.ts --grep 'home vi renders hero'",
+      "exit_code": 0,
+      "fingerprint": "790a0b66b634c68890ade6e206da36ce706748d16792f079a4fc0ec75ea8b98d"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-22T10:12:45.438Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 3,
+      "findings": [
+        {
+          "severity": "blocker",
+          "file": "docs/openapi.json",
+          "summary": "GET /api/auth/me 200 schema MeResponse is the /api/auth/profile {profile,sub} envelope; Go learnerGetMeHandler returns a flat LearnerFullProfile (handler_profile.go:16, profile/store.go:238) and handl…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/openapi_contract_test.go",
+          "summary": "Drift guard checks only path/method presence, $ref resolution and raw substrings; it never compares schemas to handler output (the /me mismatch passes), does not require security on authenticated oper…"
+        },
+        {
+          "severity": "major",
+          "file": "tasks/IOS-175.json",
+          "summary": "red_exception new_component misapplied (no new production code; both tests compile and the guard test passes at start_head); sensitivity and green cover only TestLearnerGuard_AcceptsBearerSessionToken…"
+        },
+        {
+          "severity": "minor",
+          "file": "docs/mobile/IOS_API_CONTRACT_GUIDE.md",
+          "summary": "Origin is documented as required and an exact match, but csrf.go accepts a trusted Referer fallback and matches case-insensitively; the openapi.json Origin parameter has the same inaccuracy"
+        },
+        {
+          "severity": "minor",
+          "file": "docs/openapi.json",
+          "summary": "learnerSession and learnerCookie are presented as alternatives, but LearnerGuard uses the cookie exclusively when present (guard.go:83-87); a stale cookie yields 401 despite a valid Bearer *** and URL…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/authn/guard_test.go",
+          "summary": "mockSessionLookup ignores rawToken, so the bearer *** would still pass if extractBearerToken stopped stripping the Bearer ***"
+        },
+        {
+          "severity": "minor",
+          "file": "docs/openapi.json",
+          "summary": "/api/search q is marked optional though Go returns 400 below 2 or above 200 bytes; limit cap 100 and levels 503 are undocumented; the J1+ path enum likely 404s when percent-encoded (chi RawPath; not e…"
+        },
+        {
+          "severity": "minor",
+          "file": "docs/mobile/README.md",
+          "summary": "Still names the NestJS and Keycloak backend at :4000 as the mobile source of truth (also 04-networking-api-client.md), contradicting the new guide; flashcard operations lack x-verification and the gui…"
+        }
+      ],
+      "package_sha256": "69f260ffacef06d1f07732e73d2065cf9a6c0daa32fb91dc5bcc9635233aed37",
+      "fingerprint": "790a0b66b634c68890ade6e206da36ce706748d16792f079a4fc0ec75ea8b98d"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-22T10:14:56.212Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerGuard_AcceptsBearerSessionToken)$ ./internal/authn"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/authn:TestLearnerGuard_AcceptsBearerSessionToken",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "2debff3631aecfc710e29858fde7d4d1d158987b093f495add86f39cdeeca43c"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-22T10:15:04.419Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/authn/guard.go",
+        "find": "const prefix = \"Bearer \"",
+        "replace": "const prefix = \"Session \""
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerGuard_AcceptsBearerSessionToken)$ ./internal/authn"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/authn:TestLearnerGuard_AcceptsBearerSessionToken",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerGuard_AcceptsBearerSessionToken guard_test.go:104: expected bearer *** identity --- FAIL: TestLearnerGuard_AcceptsBearerSessionToken (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/authn:TestLearnerGuard_AcceptsBearerSessionToken": "expected bearer session identity"
+      },
+      "fingerprint": "2debff3631aecfc710e29858fde7d4d1d158987b093f495add86f39cdeeca43c"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-22T10:21:01.479Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1446,
+        "executed": 1446,
+        "passed": 1446,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1446 passed, 0 allowed skip(s)",
+      "fingerprint": "2debff3631aecfc710e29858fde7d4d1d158987b093f495add86f39cdeeca43c"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-22T10:21:10.525Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc PLAYWRIGHT_SKIP_SERVER=1 PLAYWRIGHT_BASE_URL='http://[::1]:3000' pnpm exec playwright test e2e/smoke.spec.ts --grep 'home vi renders hero'",
+      "exit_code": 0,
+      "fingerprint": "2debff3631aecfc710e29858fde7d4d1d158987b093f495add86f39cdeeca43c"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-22T10:26:27.671Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerGuard_AcceptsBearerSessionToken)$ ./internal/authn"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/authn:TestLearnerGuard_AcceptsBearerSessionToken",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ce0b4f3d129202df3bd2ee161a3371ada0434192232c68f779d6067d6f90509b"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-22T10:26:34.827Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/authn/guard.go",
+        "find": "const prefix = \"Bearer \"",
+        "replace": "const prefix = \"Session \""
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerGuard_AcceptsBearerSessionToken)$ ./internal/authn"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/authn:TestLearnerGuard_AcceptsBearerSessionToken",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerGuard_AcceptsBearerSessionToken guard_test.go:104: expected bearer *** identity --- FAIL: TestLearnerGuard_AcceptsBearerSessionToken (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/authn:TestLearnerGuard_AcceptsBearerSessionToken": "expected bearer session identity"
+      },
+      "fingerprint": "ce0b4f3d129202df3bd2ee161a3371ada0434192232c68f779d6067d6f90509b"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-22T10:30:16.594Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1446,
+        "executed": 1446,
+        "passed": 1446,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1446 passed, 0 allowed skip(s)",
+      "fingerprint": "ce0b4f3d129202df3bd2ee161a3371ada0434192232c68f779d6067d6f90509b"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-22T10:30:26.529Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc PLAYWRIGHT_SKIP_SERVER=1 PLAYWRIGHT_BASE_URL='http://[::1]:3000' pnpm exec playwright test e2e/smoke.spec.ts --grep 'home vi renders hero'",
+      "exit_code": 0,
+      "fingerprint": "ce0b4f3d129202df3bd2ee161a3371ada0434192232c68f779d6067d6f90509b"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-22T10:37:21.208Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerGuard_AcceptsBearerSessionToken)$ ./internal/authn"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/authn:TestLearnerGuard_AcceptsBearerSessionToken",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0b54c21288977bb5298d95ae445855d9855fe1e6e26b81777a378cad9afc30ba"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-22T10:37:29.551Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/authn/guard.go",
+        "find": "const prefix = \"Bearer \"",
+        "replace": "const prefix = \"Session \""
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerGuard_AcceptsBearerSessionToken)$ ./internal/authn"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/authn:TestLearnerGuard_AcceptsBearerSessionToken",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerGuard_AcceptsBearerSessionToken guard_test.go:104: expected bearer *** identity --- FAIL: TestLearnerGuard_AcceptsBearerSessionToken (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/authn:TestLearnerGuard_AcceptsBearerSessionToken": "expected bearer session identity"
+      },
+      "fingerprint": "0b54c21288977bb5298d95ae445855d9855fe1e6e26b81777a378cad9afc30ba"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-22T10:41:10.924Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1446,
+        "executed": 1446,
+        "passed": 1446,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1446 passed, 0 allowed skip(s)",
+      "fingerprint": "0b54c21288977bb5298d95ae445855d9855fe1e6e26b81777a378cad9afc30ba"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-22T10:41:20.723Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash -lc PLAYWRIGHT_SKIP_SERVER=1 PLAYWRIGHT_BASE_URL='http://[::1]:3000' pnpm exec playwright test e2e/smoke.spec.ts --grep 'home vi renders hero'",
+      "exit_code": 0,
+      "fingerprint": "0b54c21288977bb5298d95ae445855d9855fe1e6e26b81777a378cad9afc30ba"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-22T10:46:07.269Z",
+      "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a16333-a9d3-7f02-b8e0-cf8f71e30bdc",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "0b54c21288977bb5298d95ae445855d9855fe1e6e26b81777a378cad9afc30ba"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-22T10:46:09.371Z",
+    "head": "cb6db8bf8794df1ae0fdcc210807bef08c47fc70",
+    "fingerprint": "0b54c21288977bb5298d95ae445855d9855fe1e6e26b81777a378cad9afc30ba",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "green": "PASS",
+      "sensitivity": "PASS",
+      "suite_go": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/authn/guard_test.go": "4b935b8889354a65ba10d773ef4e3d018001b58d",
+      "apps/api-go/internal/httpserver/openapi_contract_test.go": "5480419c58717dbf5f831b77079f51a8a8857dbe",
+      "docs/API_REGISTRY.md": "d70e0929b38214774027558017582fa95c7ce6ad",
+      "docs/mobile/DECK_FLASHCARD_API_CONTRACT.md": "7564907f7606e43f85a6556877b3b5ad7d62ce52",
+      "docs/mobile/EXAM_PRACTICE_API_CONTRACT.md": "b7ef0463b9dcc5e73e0253e0a194ad5506e6145a",
+      "docs/mobile/IOS_API_CONTRACT_GUIDE.md": "20277329bb4d63816355338d59e947cb12ac7596",
+      "docs/mobile/SEARCH_API_CONTRACT.md": "d45a2c1eef6246cec4371a6d81072250a9956dd3",
+      "docs/openapi.json": "788a116c80626dbaa56b0a9083c256b6656f8231"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}
