@@ -1,14 +1,23 @@
 # iOS API Contract Guide
 
 Use [the canonical OpenAPI document](../openapi.json) as the sole
-machine-readable contract for Go endpoints verified for mobile. It is maintained
-against apps/api-go/internal/httpserver; it is deliberately a verified subset,
-not a promise that every repository route is ready for iOS.
+machine-readable contract for the Go `/api` endpoints. Its direct source-route inventory
+is [api-route-inventory.json](../api-route-inventory.json). The inventory is a
+static view of `NewRouter` `/api` registrations. It excludes `/health/live`,
+`/health/ready`, `/ws/battle`, and `/ws/presence`; it is not a complete router
+inventory. A conditional registration is not proof that an endpoint is available
+in a particular deployment. Schemas and runtime availability remain separately
+unverified for most endpoints.
 
 Never infer a request field, response field, route alias, status code, or
 authentication behavior from an endpoint name. Generate or hand-write client
-types from the OpenAPI schemas, and do not consume a route omitted from that
-file without first verifying its Go handler and adding it to the contract.
+types from the OpenAPI schemas. First locate the path/method and inspect its
+`x-contract-verification.status`: `test-evidenced` means a named handler test
+exercises the operation, but does not establish full request/response schema or
+validation conformance. No operation currently has full schema verification.
+Treat both `test-evidenced` and `unverified` as requiring independent contract
+validation before relying on generated client types. The latter has no listed
+handler test evidence.
 
 ## Authentication
 
@@ -45,16 +54,20 @@ GET /api/auth/me returns a flat `LearnerFullProfile` JSON object, not a
 `profile` envelope. Its exact fields are defined in the canonical OpenAPI
 schema.
 
-## Verified endpoints
+## Endpoints with named handler test evidence (schemas not fully verified)
 
 - Auth/profile: POST /api/auth/login, GET /api/auth/me,
   POST /api/auth/logout.
-- Content search: GET /api/search; canonical lexeme routes are
-  GET /api/content/lexemes and GET /api/content/lexemes/{id}.
+- Content search: GET /api/search. GET /api/content/lexemes and
+  GET /api/content/lexemes/{id} have documented schemas but lack test evidence;
+  both are marked `unverified` until corresponding handler contract tests exist.
 - BJT learning: GET /api/levels, GET /api/levels/{code}, and
   GET /api/levels/{code}/lessons.
-- Flashcards: verified deck list/create/read/update/archive and due/review
-  submission routes listed in the OpenAPI file.
+- Flashcards/decks/reviews, profile updates, card images/media, learning
+  progress, exercises, examinations, bookmarks, grammar, kanji,
+  gamification, notifications, subscriptions, and admin APIs are discovered
+  in the inventory but their schemas remain unverified unless their individual
+  OpenAPI operation says otherwise.
 
 UUIDs are JSON strings in every documented identifier field; preserve them
 exactly and do not coerce them to integers.
@@ -64,9 +77,9 @@ exactly and do not coerce them to integers.
 /api/dictionary/*, /api/grammar/*, /api/decks/*, and the old Keycloak
 Bearer-token descriptions are not registered by the Go router and are not
 part of this contract. The current Go due-review route ignores deckId;
-clients must not treat it as a server-side per-deck filter. Exam/practice,
-bookmarks, kanji, grammar, and every omitted endpoint remain undocumented or
-unverified for iOS consumption.
+clients must not treat it as a server-side per-deck filter. All
+source-discovered `/api` operations now appear in the canonical OpenAPI, but
+an operation marked `unverified` remains unverified for iOS consumption.
 
 The older *_API_CONTRACT.md files are retained only as legacy records and
 are explicitly superseded; they must not be used to implement a client.
@@ -76,6 +89,7 @@ are explicitly superseded; they must not be used to implement a client.
 1. Change the Go handler and its integration test first, when behavior changes.
 2. Update docs/openapi.json with only observed method, path, schemas, status
    codes, security, and headers.
-3. Run jq empty docs/openapi.json and cd apps/api-go && go test
-   ./internal/httpserver -run 'TestIOSOpenAPIContract|TestLearnerLogin|TestAudit159Wave6LearnerAuthSessionLifecycle' -count=1.
+3. Run `cd apps/api-go && go run ./cmd/route-contract -root ../.. -check`,
+   `jq empty docs/openapi.json`, and `go test ./internal/httpserver -run
+   'TestOpenAPIHasEverySourceRegisteredAPIRoute|TestIOSOpenAPIContract' -count=1`.
 4. Run the repository lifecycle gates before committing.

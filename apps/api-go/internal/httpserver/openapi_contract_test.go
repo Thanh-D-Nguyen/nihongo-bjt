@@ -66,7 +66,7 @@ func TestIOSOpenAPIContract(t *testing.T) {
 	} {
 		operations, ok := document.Paths[path]
 		if !ok || operations[method] == nil {
-			t.Fatalf("missing %s %s from verified Go contract", method, path)
+			t.Fatalf("missing %s %s from Go source-route contract (schemas may be unverified)", method, path)
 		}
 	}
 	for _, legacyPath := range []string{"/api/dictionary/search", "/api/dictionary/words/{id}", "/api/decks/{id}"} {
