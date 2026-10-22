@@ -717,7 +717,7 @@ model BattleRound {
 /// only via the admin `battle/bots` surface; every change is audited via `admin.audit_log`.
 model BattleBot {
   id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  botKey           String   @unique @default(dbgenerated("'bot_'::text || replace((gen_random_uuid())::text, '-'::text, ''::text)")) @map("bot_key") @db.VarChar(64)
+  botKey           String   @unique @default(dbgenerated("('bot_'::text || replace((gen_random_uuid())::text, '-'::text, ''::text))")) @map("bot_key") @db.VarChar(64)
   name             String   @db.VarChar(80)
   difficulty       String   @db.VarChar(16)
   persona          String?

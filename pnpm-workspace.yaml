@@ -2,12 +2,12 @@ packages:
   - apps/*
   - packages/*
 
-onlyBuiltDependencies:
-  - '@parcel/watcher'
-  - '@prisma/engines'
-  - '@scarf/scarf'
-  - '@swc/core'
-  - esbuild
-  - msgpackr-extract
-  - prisma
-  - sharp
+allowBuilds:
+  '@parcel/watcher': true
+  '@prisma/engines': true
+  '@scarf/scarf': true
+  '@swc/core': true
+  esbuild: true
+  msgpackr-extract: true
+  prisma: true
+  sharp: true

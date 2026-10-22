@@ -1,0 +1,169 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "DEV-122",
+  "title": "Migrate pnpm build approvals",
+  "start_head": "925a26b679f69ecf57ee4a151f3ae21b74d44526",
+  "preexisting_changes": {
+    ".claude/settings.local.json": "cc85d8531ee4cf5a2051c6c72834fce82b756e7f",
+    "README.md": "5a67bb18ab7d9879d9a67a6ab63d92934c9c8347",
+    "apps/admin/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/web/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "package.json": "ee741093c063af81d38478478be29ee0553c7e29",
+    "packages/database/generated/client/edge.js": "fe8312ddc66a906f9920665459e800c0624e3cad",
+    "packages/database/generated/client/index.js": "8b7fee13246d4f6e04519ed51d288e192c82e98a",
+    "packages/database/generated/client/package.json": "5a217aec94e0e656a5efc0ba2b572282162cf3a7",
+    "packages/database/generated/client/schema.prisma": "9f8d8a486e413211dbada58242d40e223cb1af45",
+    "pnpm-lock.yaml": "b501d5b9964ac71773a4e6d843f7dd342be7a5ec",
+    "pnpm-workspace.yaml": "49b29d7f39a3ed1f4407f2683b937f5e81058449"
+  },
+  "spec": {
+    "problem": "pnpm 12 rejects approved dependency builds because the workspace still uses removed onlyBuiltDependencies settings.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "corepack use pnpm@12.15.0 completes without ERR_PNPM_IGNORED_BUILDS"
+      },
+      {
+        "id": "AC2",
+        "text": "Frozen installs retain the existing approved dependency build set"
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": "Restore pnpm 10.26.2 and the previous workspace build setting if pnpm 12 cannot install dependencies."
+  },
+  "classification": {
+    "classes": [
+      "DEPENDENCY_METADATA",
+      "GENERATED"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": "Package-manager metadata and deterministic generated Prisma output only; no runtime contract changes."
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-22T15:13:08.651Z",
+      "head": "925a26b679f69ecf57ee4a151f3ae21b74d44526"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-22T15:13:08.966Z",
+      "head": "925a26b679f69ecf57ee4a151f3ae21b74d44526"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-22T15:13:09.294Z",
+      "head": "925a26b679f69ecf57ee4a151f3ae21b74d44526"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-22T15:13:18.899Z",
+      "head": "925a26b679f69ecf57ee4a151f3ae21b74d44526"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-22T15:14:44.877Z",
+      "head": "925a26b679f69ecf57ee4a151f3ae21b74d44526"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-22T15:17:07.098Z",
+      "head": "925a26b679f69ecf57ee4a151f3ae21b74d44526"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-22T15:14:44.315Z",
+      "head": "925a26b679f69ecf57ee4a151f3ae21b74d44526",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 486,
+        "executed": 486,
+        "passed": 486,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 817,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "21774047d3623002f8de556d1e77a019db0ccdab87519bcf44e63e26d1c0f5a5"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-22T15:16:53.311Z",
+      "head": "925a26b679f69ecf57ee4a151f3ae21b74d44526",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 486,
+        "executed": 486,
+        "passed": 486,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 817,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "21774047d3623002f8de556d1e77a019db0ccdab87519bcf44e63e26d1c0f5a5"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-22T15:17:07.078Z",
+    "head": "925a26b679f69ecf57ee4a151f3ae21b74d44526",
+    "fingerprint": "21774047d3623002f8de556d1e77a019db0ccdab87519bcf44e63e26d1c0f5a5",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "README.md": "5a67bb18ab7d9879d9a67a6ab63d92934c9c8347",
+      "package.json": "ee741093c063af81d38478478be29ee0553c7e29",
+      "packages/database/generated/client/edge.js": "fe8312ddc66a906f9920665459e800c0624e3cad",
+      "packages/database/generated/client/index.js": "8b7fee13246d4f6e04519ed51d288e192c82e98a",
+      "packages/database/generated/client/package.json": "5a217aec94e0e656a5efc0ba2b572282162cf3a7",
+      "packages/database/generated/client/schema.prisma": "9f8d8a486e413211dbada58242d40e223cb1af45",
+      "pnpm-lock.yaml": "b501d5b9964ac71773a4e6d843f7dd342be7a5ec",
+      "pnpm-workspace.yaml": "49b29d7f39a3ed1f4407f2683b937f5e81058449"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [
+    "README.md",
+    "package.json",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "packages/database/generated/client/edge.js",
+    "packages/database/generated/client/index.js",
+    "packages/database/generated/client/package.json",
+    "packages/database/generated/client/schema.prisma"
+  ]
+}

@@ -6,7 +6,7 @@ Phase 00 data profiling and canonical import is complete and archived in `archiv
 
 ## Start the complete local system
 
-Prerequisites: **Node.js 24.16.0**, **pnpm 10.26.2**, **Go 1.23+**, **Docker with Compose v2**, and **Caddy** on your PATH. Versions for Node/pnpm are pinned in `package.json`; Go's minimum version is in `apps/api-go/go.mod`.
+Prerequisites: **Node.js 24.16.0**, **pnpm 12.15.0**, **Go 1.23+**, **Docker with Compose v2**, and **Caddy** on your PATH. Versions for Node/pnpm are pinned in `package.json`; Go's minimum version is in `apps/api-go/go.mod`.
 
 From the repository root:
 
