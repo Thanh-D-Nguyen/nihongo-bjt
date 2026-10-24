@@ -764,6 +764,431 @@
         ],
         "type": "object"
       },
+      "LifeCard": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "lesson": {
+            "$ref": "#/components/schemas/LifeLesson"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/LifeText"
+          },
+          "provenance": {
+            "enum": [
+              "live",
+              "sample"
+            ],
+            "type": "string"
+          },
+          "scene": {
+            "$ref": "#/components/schemas/LifeScene"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/LifeText"
+          },
+          "topic": {
+            "enum": [
+              "date",
+              "weather",
+              "transit",
+              "shopping",
+              "news",
+              "food",
+              "culture",
+              "money",
+              "lottery"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "topic",
+          "provenance",
+          "summary",
+          "meta",
+          "scene",
+          "lesson"
+        ],
+        "type": "object"
+      },
+      "LifeChip": {
+        "properties": {
+          "symbol": {
+            "type": "string"
+          },
+          "text": {
+            "$ref": "#/components/schemas/LifeText"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "type": "object"
+      },
+      "LifeChoice": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "text"
+        ],
+        "type": "object"
+      },
+      "LifeExercise": {
+        "properties": {
+          "acceptedAnswers": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "choices": {
+            "items": {
+              "$ref": "#/components/schemas/LifeChoice"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "correctChoiceId": {
+            "type": "string"
+          },
+          "explanation": {
+            "$ref": "#/components/schemas/LifeText"
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "recall_text",
+              "choice"
+            ],
+            "type": "string"
+          },
+          "prompt": {
+            "$ref": "#/components/schemas/LifeText"
+          },
+          "promptJapanese": {
+            "type": "string"
+          },
+          "skillType": {
+            "enum": [
+              "recall",
+              "recognition"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "skillType",
+          "promptJapanese",
+          "prompt",
+          "explanation"
+        ],
+        "type": "object"
+      },
+      "LifeFeed": {
+        "properties": {
+          "cards": {
+            "items": {
+              "$ref": "#/components/schemas/LifeCard"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "cityId": {
+            "enum": [
+              "tokyo",
+              "yokohama",
+              "osaka",
+              "nagoya",
+              "kyoto",
+              "sapporo",
+              "sendai",
+              "hiroshima",
+              "fukuoka",
+              "naha"
+            ],
+            "type": "string"
+          },
+          "generatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "enum": [
+              1
+            ],
+            "type": "integer"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "generatedAt",
+          "cityId",
+          "cards"
+        ],
+        "type": "object"
+      },
+      "LifeLesson": {
+        "properties": {
+          "chips": {
+            "items": {
+              "$ref": "#/components/schemas/LifeChip"
+            },
+            "type": "array"
+          },
+          "estimatedMinutes": {
+            "maximum": 30,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "exercises": {
+            "items": {
+              "$ref": "#/components/schemas/LifeExercise"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string"
+          },
+          "sentences": {
+            "items": {
+              "$ref": "#/components/schemas/LifeSentence"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "source": {
+            "$ref": "#/components/schemas/LifeSource"
+          },
+          "title": {
+            "$ref": "#/components/schemas/LifeTitle"
+          },
+          "vocabulary": {
+            "items": {
+              "$ref": "#/components/schemas/LifeVocabulary"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "level",
+          "title",
+          "source",
+          "chips",
+          "sentences",
+          "vocabulary",
+          "exercises",
+          "estimatedMinutes"
+        ],
+        "type": "object"
+      },
+      "LifeScene": {
+        "properties": {
+          "day": {
+            "maximum": 31,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "date",
+              "weather",
+              "place",
+              "transit",
+              "shopping",
+              "news",
+              "food",
+              "culture",
+              "money",
+              "lottery"
+            ],
+            "type": "string"
+          },
+          "temperatureC": {
+            "type": "number"
+          },
+          "weatherCode": {
+            "maximum": 99,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "weekday": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "type": "object"
+      },
+      "LifeSentence": {
+        "properties": {
+          "basis": {
+            "enum": [
+              "fact",
+              "advice"
+            ],
+            "type": "string"
+          },
+          "explanation": {
+            "$ref": "#/components/schemas/LifeText"
+          },
+          "id": {
+            "type": "string"
+          },
+          "japanese": {
+            "type": "string"
+          },
+          "reading": {
+            "type": "string"
+          },
+          "translations": {
+            "$ref": "#/components/schemas/LifeText"
+          }
+        },
+        "required": [
+          "id",
+          "basis",
+          "japanese",
+          "reading",
+          "translations",
+          "explanation"
+        ],
+        "type": "object"
+      },
+      "LifeSource": {
+        "properties": {
+          "attributionText": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "fetchedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "freshness": {
+            "enum": [
+              "live"
+            ],
+            "type": "string"
+          },
+          "licenseStatus": {
+            "enum": [
+              "commercial",
+              "not_applicable"
+            ],
+            "type": "string"
+          },
+          "observedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "providerName": {
+            "type": "string"
+          },
+          "url": {
+            "format": "uri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "providerName",
+          "licenseStatus",
+          "observedAt",
+          "fetchedAt",
+          "expiresAt",
+          "freshness"
+        ],
+        "type": "object"
+      },
+      "LifeText": {
+        "properties": {
+          "en": {
+            "type": "string"
+          },
+          "vi": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "vi",
+          "en"
+        ],
+        "type": "object"
+      },
+      "LifeTitle": {
+        "properties": {
+          "en": {
+            "type": "string"
+          },
+          "japanese": {
+            "type": "string"
+          },
+          "reading": {
+            "type": "string"
+          },
+          "vi": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "japanese",
+          "reading",
+          "vi",
+          "en"
+        ],
+        "type": "object"
+      },
+      "LifeVocabulary": {
+        "properties": {
+          "exampleJapanese": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "japanese": {
+            "type": "string"
+          },
+          "meanings": {
+            "$ref": "#/components/schemas/LifeText"
+          },
+          "reading": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "japanese",
+          "reading",
+          "meanings",
+          "exampleJapanese"
+        ],
+        "type": "object"
+      },
       "LoginRequest": {
         "additionalProperties": false,
         "properties": {
@@ -10485,6 +10910,181 @@
         }
       }
     },
+    "/api/admin/life/lessons": {
+      "get": {
+        "operationId": "getApiAdminLifeLessons",
+        "responses": {
+          "default": {
+            "description": "Response schema is not yet verified; see the route inventory."
+          }
+        },
+        "summary": "Source-discovered route handled by lifeAdminListHandler(deps.DBPool, deps.Logger)",
+        "tags": [
+          "Admin / life"
+        ],
+        "x-contract-verification": {
+          "scope": "route/method/handler coverage only; request and response schemas are unverified",
+          "status": "unverified"
+        },
+        "x-route-source": {
+          "guards": [
+            "adminGuard",
+            "authz.RequirePermission(deps.RBACStore, \"admin.content.read\")"
+          ],
+          "handler": "lifeAdminListHandler(deps.DBPool, deps.Logger)",
+          "runtimeConditions": [
+            "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+          ]
+        }
+      },
+      "post": {
+        "operationId": "postApiAdminLifeLessons",
+        "responses": {
+          "default": {
+            "description": "Response schema is not yet verified; see the route inventory."
+          }
+        },
+        "summary": "Source-discovered route handled by lifeAdminUpsertHandler(deps.DBPool, deps.Logger, false)",
+        "tags": [
+          "Admin / life"
+        ],
+        "x-contract-verification": {
+          "scope": "route/method/handler coverage only; request and response schemas are unverified",
+          "status": "unverified"
+        },
+        "x-route-source": {
+          "guards": [
+            "adminGuard",
+            "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")",
+            "authn.CSRFGuard(csrfCfg)"
+          ],
+          "handler": "lifeAdminUpsertHandler(deps.DBPool, deps.Logger, false)",
+          "runtimeConditions": [
+            "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+          ]
+        }
+      }
+    },
+    "/api/admin/life/lessons/{id}": {
+      "put": {
+        "operationId": "putApiAdminLifeLessonsbyId",
+        "parameters": [
+          {
+            "description": "Path token; application-level format and validation are unverified.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Response schema is not yet verified; see the route inventory."
+          }
+        },
+        "summary": "Source-discovered route handled by lifeAdminUpsertHandler(deps.DBPool, deps.Logger, true)",
+        "tags": [
+          "Admin / life"
+        ],
+        "x-contract-verification": {
+          "scope": "route/method/handler coverage only; request and response schemas are unverified",
+          "status": "unverified"
+        },
+        "x-route-source": {
+          "guards": [
+            "adminGuard",
+            "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")",
+            "authn.CSRFGuard(csrfCfg)"
+          ],
+          "handler": "lifeAdminUpsertHandler(deps.DBPool, deps.Logger, true)",
+          "runtimeConditions": [
+            "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+          ]
+        }
+      }
+    },
+    "/api/admin/life/lessons/{id}/publish": {
+      "post": {
+        "operationId": "postApiAdminLifeLessonsbyIdPublish",
+        "parameters": [
+          {
+            "description": "Path token; application-level format and validation are unverified.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Response schema is not yet verified; see the route inventory."
+          }
+        },
+        "summary": "Source-discovered route handled by lifeAdminPublishHandler(deps.DBPool, deps.Logger)",
+        "tags": [
+          "Admin / life"
+        ],
+        "x-contract-verification": {
+          "scope": "route/method/handler coverage only; request and response schemas are unverified",
+          "status": "unverified"
+        },
+        "x-route-source": {
+          "guards": [
+            "adminGuard",
+            "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")",
+            "authn.CSRFGuard(csrfCfg)"
+          ],
+          "handler": "lifeAdminPublishHandler(deps.DBPool, deps.Logger)",
+          "runtimeConditions": [
+            "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+          ]
+        }
+      }
+    },
+    "/api/admin/life/lessons/{id}/review": {
+      "post": {
+        "operationId": "postApiAdminLifeLessonsbyIdReview",
+        "parameters": [
+          {
+            "description": "Path token; application-level format and validation are unverified.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Response schema is not yet verified; see the route inventory."
+          }
+        },
+        "summary": "Source-discovered route handled by lifeAdminReviewHandler(deps.DBPool, deps.Logger)",
+        "tags": [
+          "Admin / life"
+        ],
+        "x-contract-verification": {
+          "scope": "route/method/handler coverage only; request and response schemas are unverified",
+          "status": "unverified"
+        },
+        "x-route-source": {
+          "guards": [
+            "adminGuard",
+            "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")",
+            "authn.CSRFGuard(csrfCfg)"
+          ],
+          "handler": "lifeAdminReviewHandler(deps.DBPool, deps.Logger)",
+          "runtimeConditions": [
+            "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+          ]
+        }
+      }
+    },
     "/api/admin/login": {
       "post": {
         "operationId": "postApiAdminLogin",
@@ -19667,6 +20267,59 @@
             "deps.DBPool != nil",
             "range: literal"
           ]
+        }
+      }
+    },
+    "/api/life/feed": {
+      "get": {
+        "description": "Returns current JST date plus reviewed, rights-cleared editorial cards. 404 preserves client sample fallback when no licensed editorial card is active. Nearby stays on-device. Weather requires commercial use rights.",
+        "operationId": "getApiLifeFeed",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "city",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/LifeFeed/properties/cityId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LifeFeed"
+                }
+              }
+            },
+            "description": "Available licensed life lessons"
+          },
+          "400": {
+            "description": "Invalid city"
+          },
+          "404": {
+            "description": "No reviewed licensed editorial lessons"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "500": {
+            "description": "Feed unavailable"
+          }
+        },
+        "summary": "Source-discovered route handled by levelReadRateLimit(deps.PublicReadRateLimiter, \"life-feed\", deps.Logger, trustedProxies, lifeFeedHandler(deps.DBPool, deps.Logger, time.Now))",
+        "tags": [
+          "life"
+        ],
+        "x-contract-verification": {
+          "scope": "route/method/handler coverage only; request and response schemas are unverified",
+          "status": "unverified"
+        },
+        "x-route-source": {
+          "guards": null,
+          "handler": "levelReadRateLimit(deps.PublicReadRateLimiter, \"life-feed\", deps.Logger, trustedProxies, lifeFeedHandler(deps.DBPool, deps.Logger, time.Now))",
+          "runtimeConditions": null
         }
       }
     },

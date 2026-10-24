@@ -1,11 +1,11 @@
 {
   "scope": "Static /api inventory of direct NewRouter registrations (excludes /health and /ws). Conditions do not prove runtime availability.",
-  "sourceRegisteredOperations": 627,
-  "openAPIOperations": 627,
+  "sourceRegisteredOperations": 633,
+  "openAPIOperations": 633,
   "verifiedContracts": 0,
   "testEvidencedContracts": 12,
-  "sourceOnlyContracts": 615,
-  "unverifiedContracts": 627,
+  "sourceOnlyContracts": 621,
+  "unverifiedContracts": 633,
   "runtimeVerifiedOperations": 0,
   "families": {
     "Admin / actors": {
@@ -100,6 +100,11 @@
     },
     "Admin / lexemes": {
       "routes": 3,
+      "verifiedContracts": 0,
+      "testEvidencedContracts": 0
+    },
+    "Admin / life": {
+      "routes": 5,
       "verifiedContracts": 0,
       "testEvidencedContracts": 0
     },
@@ -300,6 +305,11 @@
     },
     "learner": {
       "routes": 18,
+      "verifiedContracts": 0,
+      "testEvidencedContracts": 0
+    },
+    "life": {
+      "routes": 1,
       "verifiedContracts": 0,
       "testEvidencedContracts": 0
     },
@@ -15561,6 +15571,289 @@
       }
     },
     {
+      "method": "GET",
+      "path": "/api/admin/life/lessons",
+      "handler": "lifeAdminListHandler(deps.DBPool, deps.Logger)",
+      "family": "Admin / life",
+      "guards": [
+        "adminGuard",
+        "authz.RequirePermission(deps.RBACStore, \"admin.content.read\")"
+      ],
+      "runtimeConditions": [
+        "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+      ],
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [
+          "adminGuard",
+          "authz.RequirePermission(deps.RBACStore, \"admin.content.read\")"
+        ],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [
+          "authz.RequirePermission(deps.RBACStore, \"admin.content.read\")"
+        ],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [],
+        "status": "unverified",
+        "subject": "handler integration tests"
+      },
+      "contract": {
+        "method": "get",
+        "openAPIPath": "/api/admin/life/lessons",
+        "status": "unverified"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [
+          "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+        ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/life/lessons",
+      "handler": "lifeAdminUpsertHandler(deps.DBPool, deps.Logger, false)",
+      "family": "Admin / life",
+      "guards": [
+        "adminGuard",
+        "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")",
+        "authn.CSRFGuard(csrfCfg)"
+      ],
+      "runtimeConditions": [
+        "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+      ],
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [
+          "adminGuard",
+          "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")",
+          "authn.CSRFGuard(csrfCfg)"
+        ],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [
+          "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")"
+        ],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [],
+        "status": "unverified",
+        "subject": "handler integration tests"
+      },
+      "contract": {
+        "method": "post",
+        "openAPIPath": "/api/admin/life/lessons",
+        "status": "unverified"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [
+          "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+        ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/api/admin/life/lessons/{id}",
+      "handler": "lifeAdminUpsertHandler(deps.DBPool, deps.Logger, true)",
+      "family": "Admin / life",
+      "guards": [
+        "adminGuard",
+        "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")",
+        "authn.CSRFGuard(csrfCfg)"
+      ],
+      "runtimeConditions": [
+        "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+      ],
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [
+          "adminGuard",
+          "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")",
+          "authn.CSRFGuard(csrfCfg)"
+        ],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [
+          "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")"
+        ],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [],
+        "status": "unverified",
+        "subject": "handler integration tests"
+      },
+      "contract": {
+        "method": "put",
+        "openAPIPath": "/api/admin/life/lessons/{id}",
+        "status": "unverified"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [
+          "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+        ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/life/lessons/{id}/publish",
+      "handler": "lifeAdminPublishHandler(deps.DBPool, deps.Logger)",
+      "family": "Admin / life",
+      "guards": [
+        "adminGuard",
+        "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")",
+        "authn.CSRFGuard(csrfCfg)"
+      ],
+      "runtimeConditions": [
+        "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+      ],
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [
+          "adminGuard",
+          "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")",
+          "authn.CSRFGuard(csrfCfg)"
+        ],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [
+          "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")"
+        ],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [],
+        "status": "unverified",
+        "subject": "handler integration tests"
+      },
+      "contract": {
+        "method": "post",
+        "openAPIPath": "/api/admin/life/lessons/{id}/publish",
+        "status": "unverified"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [
+          "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+        ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/life/lessons/{id}/review",
+      "handler": "lifeAdminReviewHandler(deps.DBPool, deps.Logger)",
+      "family": "Admin / life",
+      "guards": [
+        "adminGuard",
+        "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")",
+        "authn.CSRFGuard(csrfCfg)"
+      ],
+      "runtimeConditions": [
+        "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+      ],
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [
+          "adminGuard",
+          "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")",
+          "authn.CSRFGuard(csrfCfg)"
+        ],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [
+          "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")"
+        ],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [],
+        "status": "unverified",
+        "subject": "handler integration tests"
+      },
+      "contract": {
+        "method": "post",
+        "openAPIPath": "/api/admin/life/lessons/{id}/review",
+        "status": "unverified"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [
+          "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+        ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
       "method": "POST",
       "path": "/api/admin/login",
       "handler": "adminLoginHandler(\n\tdeps.CredentialStore, deps.RBACStore, deps.SessionStore,\n\tdeps.RateLimiter, deps.Logger, deps.Config.CookieSecure,\n)",
@@ -30453,6 +30746,49 @@
           "deps.DBPool != nil",
           "range: literal"
         ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/life/feed",
+      "handler": "levelReadRateLimit(deps.PublicReadRateLimiter, \"life-feed\", deps.Logger, trustedProxies, lifeFeedHandler(deps.DBPool, deps.Logger, time.Now))",
+      "family": "life",
+      "guards": null,
+      "runtimeConditions": null,
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [],
+        "status": "unverified",
+        "subject": "handler integration tests"
+      },
+      "contract": {
+        "method": "get",
+        "openAPIPath": "/api/life/feed",
+        "status": "unverified"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [],
         "status": "not-runtime-verified"
       }
     },

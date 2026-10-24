@@ -92,6 +92,7 @@
       "enrichment": "Hàng đợi làm giàu",
       "i18n": "Trung tâm i18n",
       "dailyHub": "Bài học hàng ngày",
+      "lifeFeed": "Bài học Life trên mobile",
       "dailyRadar": "Tin Nhật Bản hàng ngày",
       "magazine": "Tạp chí hàng ngày",
       "announcements": "Thông báo",
@@ -1545,6 +1546,11 @@
     "dailyHub": {
       "title": "Trung tâm hàng ngày",
       "subtitle": "Lịch nội dung và widget Daily Hub; dùng API daily hiện có cho widget trạng thái."
+    },
+    "lifeFeed": {
+      "title": "Bài học Life · Today trên mobile", "subtitle": "Tạo bản nháp, kiểm tra cách đọc tiếng Nhật và quyền sử dụng trước khi xuất bản.",
+      "new": "Bản nháp mới", "save": "Lưu bản nháp", "reload": "Tải lại", "edit": "Sửa", "card": "Card JSON (theo hợp đồng mobile)", "city": "Mã thành phố (để trống = tất cả)", "from": "Ngày bắt đầu (JST)", "until": "Ngày kết thúc (JST)",
+      "review": "Ghi nhận kiểm duyệt", "rights": "Quyền sử dụng", "cleared": "Đã xác minh", "blocked": "Bị chặn", "reason": "Bằng chứng bản quyền / kiểm tra cách đọc tiếng Nhật (ít nhất 10 ký tự)", "publish": "Xuất bản", "status": "Trạng thái", "empty": "Chưa có bài Life", "error": "Yêu cầu thất bại", "loading": "Đang tải…", "saving": "Đang lưu…", "choose": "Chọn bài để sửa hoặc tạo bản nháp", "confirmed": "Đã lưu thao tác", "invalidJson": "Nhập JSON card hợp lệ"
     },
     "import": {
       "title": "Import pipeline",

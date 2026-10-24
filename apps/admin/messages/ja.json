@@ -92,6 +92,7 @@
       "enrichment": "エンリッチメントキュー",
       "i18n": "i18nセンター",
       "dailyHub": "デイリーレッスン",
+      "lifeFeed": "モバイル生活レッスン",
       "dailyRadar": "日本デイリーニュース",
       "magazine": "デイリーマガジン",
       "announcements": "お知らせ",
@@ -1384,6 +1385,11 @@
     "dailyHub": {
       "title": "Daily Hub",
       "subtitle": "Daily Hubのコンテンツカレンダーとwidget状態。既存daily APIを利用します。"
+    },
+    "lifeFeed": {
+      "title": "モバイルToday・生活レッスン", "subtitle": "原稿を保存し、日本語の読み・利用権限を確認してから公開します。",
+      "new": "新規下書き", "save": "下書き保存", "reload": "再読込", "edit": "編集", "card": "カードJSON（モバイル仕様）", "city": "都市ID（空欄ですべて）", "from": "開始日（日本時間）", "until": "終了日（日本時間）",
+      "review": "レビュー記録", "rights": "利用権限", "cleared": "確認済み", "blocked": "利用不可", "reason": "権利確認と日本語の読みの根拠（10文字以上）", "publish": "公開", "status": "状態", "empty": "生活レッスンはありません", "error": "リクエストに失敗しました", "loading": "読込中…", "saving": "保存中…", "choose": "編集対象を選択するか、新規作成してください", "confirmed": "操作を保存しました", "invalidJson": "有効なカードJSONを入力してください"
     },
     "import": {
       "title": "Import pipeline",

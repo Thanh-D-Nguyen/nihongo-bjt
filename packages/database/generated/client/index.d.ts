@@ -978,6 +978,11 @@ export type Session = $Result.DefaultSelection<Prisma.$SessionPayload>
  * 
  */
 export type AdminSession = $Result.DefaultSelection<Prisma.$AdminSessionPayload>
+/**
+ * Model LifeLesson
+ * Reviewed, rights-cleared editorial lessons published to iOS Today Life Hub.
+ */
+export type LifeLesson = $Result.DefaultSelection<Prisma.$LifeLessonPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -2959,6 +2964,16 @@ export class PrismaClient<
     * ```
     */
   get adminSession(): Prisma.AdminSessionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.lifeLesson`: Exposes CRUD operations for the **LifeLesson** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more LifeLessons
+    * const lifeLessons = await prisma.lifeLesson.findMany()
+    * ```
+    */
+  get lifeLesson(): Prisma.LifeLessonDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -3578,7 +3593,8 @@ export namespace Prisma {
     PasswordCredential: 'PasswordCredential',
     AdminPasswordCredential: 'AdminPasswordCredential',
     Session: 'Session',
-    AdminSession: 'AdminSession'
+    AdminSession: 'AdminSession',
+    LifeLesson: 'LifeLesson'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -3594,7 +3610,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "contentImportBatch" | "contentRawItem" | "contentImportError" | "contentImportMapping" | "contentImportOperationRequest" | "lexeme" | "lexemeReverseProjection" | "kanji" | "grammarPoint" | "exampleSentence" | "lexemeAudio" | "exampleSentenceAudio" | "contentQaReview" | "entityImportProvenance" | "lexemeSense" | "lexemeSenseExample" | "lexemeReverseCandidate" | "lexemeReverseCandidateExample" | "grammarPointDetail" | "grammarPointDetailExample" | "kanjiExample" | "kanjiComponent" | "mediaAsset" | "deck" | "flashcardVariant" | "deckCard" | "userFlashcard" | "reviewEvent" | "cardMediaLink" | "bookmark" | "battleConfig" | "battleSession" | "battleChatMessage" | "battleRound" | "battleBot" | "battleAbuseReport" | "readingTextAnalysis" | "readingAssistReport" | "bjtMockTest" | "bjtTestSection" | "bjtQuestion" | "bjtQuestionOption" | "quizSession" | "quizAnswer" | "assessmentRemediationRule" | "assessmentRemediationTrigger" | "analyticsEvent" | "analyticsDailyMetric" | "analyticsRollupRun" | "weeklyReport" | "adminActor" | "adminRole" | "adminPermission" | "adminActorRole" | "adminRolePermission" | "adminAuditLog" | "adminAuditEvent" | "userProfile" | "careerRank" | "userCareerState" | "careerSkillStat" | "contextMemo" | "rankProgressionEvent" | "missionArc" | "missionChapter" | "chapterAttempt" | "storyNpc" | "npcRelation" | "userInvitation" | "readingUserPreference" | "dailyWidgetConfig" | "dailyContentItem" | "dailyLearningExtraction" | "dailyUserAction" | "magazineArticle" | "magazineVocabItem" | "magazineQuiz" | "magazineUserRead" | "lotoDraw" | "lotoGenerationRun" | "lotoGeneratedSet" | "dailyRadarModuleConfig" | "dailyRadarCard" | "placementTestSession" | "learnerOnboarding" | "notificationPreference" | "inAppNotification" | "privacyRequest" | "legalPolicy" | "plan" | "entitlementDefinition" | "planEntitlement" | "quotaPolicy" | "planQuota" | "userSubscription" | "quotaUserOverride" | "promotionCoupon" | "subscriptionEvent" | "usageCounter" | "usageEvent" | "monetizationAuditLog" | "adPlacement" | "adProviderConfig" | "adCampaign" | "adSafetyRule" | "adImpression" | "identityProviderAccount" | "loginEvent" | "passwordResetRequest" | "authLinkCode" | "growthCampaign" | "shareTemplate" | "shareItem" | "shareCardAsset" | "referralCode" | "referralEvent" | "referralQuotaCredit" | "locale" | "translationKey" | "translationValue" | "featureFlag" | "featureFlagAudit" | "deadLetterEntry" | "feedbackSubmission" | "billingWebhookEvent" | "learningPath" | "competency" | "contentVersion" | "contentEnrichment" | "announcement" | "announcementDismissal" | "exerciseConfig" | "exercise" | "exerciseSession" | "exerciseAnswer" | "exerciseRemediation" | "userExercisePerformance" | "exerciseReviewState" | "userReviewDeck" | "exerciseReviewQueue" | "streakConfig" | "userStreak" | "achievementDefinition" | "achievementTier" | "userAchievement" | "leaderboardConfig" | "leaderboardEntry" | "dailyStudyGoal" | "dailyStudyPlan" | "dailyStudyTask" | "loginBonusChain" | "loginBonusClaim" | "mysteryBoxReward" | "mysteryBoxClaim" | "companionPet" | "petCostumeInventory" | "seasonalEvent" | "eventChallenge" | "eventParticipant" | "eventChallengeProgress" | "flashcardStyle" | "flashcardGenRule" | "flashcardGenJob" | "bjtLesson" | "bjtLessonItem" | "bjtLessonProgress" | "nhkArticle" | "nhkNewsConfig" | "nhkReadingProgress" | "nhkBookmark" | "companionTip" | "pushSubscription" | "revengeAttempt" | "studySession" | "businessScenario" | "scenarioStep" | "scenarioChoice" | "userScenarioAttempt" | "studyGroup" | "studyGroupMember" | "studyGroupChallenge" | "userSocialConnection" | "passwordCredential" | "adminPasswordCredential" | "session" | "adminSession"
+      modelProps: "contentImportBatch" | "contentRawItem" | "contentImportError" | "contentImportMapping" | "contentImportOperationRequest" | "lexeme" | "lexemeReverseProjection" | "kanji" | "grammarPoint" | "exampleSentence" | "lexemeAudio" | "exampleSentenceAudio" | "contentQaReview" | "entityImportProvenance" | "lexemeSense" | "lexemeSenseExample" | "lexemeReverseCandidate" | "lexemeReverseCandidateExample" | "grammarPointDetail" | "grammarPointDetailExample" | "kanjiExample" | "kanjiComponent" | "mediaAsset" | "deck" | "flashcardVariant" | "deckCard" | "userFlashcard" | "reviewEvent" | "cardMediaLink" | "bookmark" | "battleConfig" | "battleSession" | "battleChatMessage" | "battleRound" | "battleBot" | "battleAbuseReport" | "readingTextAnalysis" | "readingAssistReport" | "bjtMockTest" | "bjtTestSection" | "bjtQuestion" | "bjtQuestionOption" | "quizSession" | "quizAnswer" | "assessmentRemediationRule" | "assessmentRemediationTrigger" | "analyticsEvent" | "analyticsDailyMetric" | "analyticsRollupRun" | "weeklyReport" | "adminActor" | "adminRole" | "adminPermission" | "adminActorRole" | "adminRolePermission" | "adminAuditLog" | "adminAuditEvent" | "userProfile" | "careerRank" | "userCareerState" | "careerSkillStat" | "contextMemo" | "rankProgressionEvent" | "missionArc" | "missionChapter" | "chapterAttempt" | "storyNpc" | "npcRelation" | "userInvitation" | "readingUserPreference" | "dailyWidgetConfig" | "dailyContentItem" | "dailyLearningExtraction" | "dailyUserAction" | "magazineArticle" | "magazineVocabItem" | "magazineQuiz" | "magazineUserRead" | "lotoDraw" | "lotoGenerationRun" | "lotoGeneratedSet" | "dailyRadarModuleConfig" | "dailyRadarCard" | "placementTestSession" | "learnerOnboarding" | "notificationPreference" | "inAppNotification" | "privacyRequest" | "legalPolicy" | "plan" | "entitlementDefinition" | "planEntitlement" | "quotaPolicy" | "planQuota" | "userSubscription" | "quotaUserOverride" | "promotionCoupon" | "subscriptionEvent" | "usageCounter" | "usageEvent" | "monetizationAuditLog" | "adPlacement" | "adProviderConfig" | "adCampaign" | "adSafetyRule" | "adImpression" | "identityProviderAccount" | "loginEvent" | "passwordResetRequest" | "authLinkCode" | "growthCampaign" | "shareTemplate" | "shareItem" | "shareCardAsset" | "referralCode" | "referralEvent" | "referralQuotaCredit" | "locale" | "translationKey" | "translationValue" | "featureFlag" | "featureFlagAudit" | "deadLetterEntry" | "feedbackSubmission" | "billingWebhookEvent" | "learningPath" | "competency" | "contentVersion" | "contentEnrichment" | "announcement" | "announcementDismissal" | "exerciseConfig" | "exercise" | "exerciseSession" | "exerciseAnswer" | "exerciseRemediation" | "userExercisePerformance" | "exerciseReviewState" | "userReviewDeck" | "exerciseReviewQueue" | "streakConfig" | "userStreak" | "achievementDefinition" | "achievementTier" | "userAchievement" | "leaderboardConfig" | "leaderboardEntry" | "dailyStudyGoal" | "dailyStudyPlan" | "dailyStudyTask" | "loginBonusChain" | "loginBonusClaim" | "mysteryBoxReward" | "mysteryBoxClaim" | "companionPet" | "petCostumeInventory" | "seasonalEvent" | "eventChallenge" | "eventParticipant" | "eventChallengeProgress" | "flashcardStyle" | "flashcardGenRule" | "flashcardGenJob" | "bjtLesson" | "bjtLessonItem" | "bjtLessonProgress" | "nhkArticle" | "nhkNewsConfig" | "nhkReadingProgress" | "nhkBookmark" | "companionTip" | "pushSubscription" | "revengeAttempt" | "studySession" | "businessScenario" | "scenarioStep" | "scenarioChoice" | "userScenarioAttempt" | "studyGroup" | "studyGroupMember" | "studyGroupChallenge" | "userSocialConnection" | "passwordCredential" | "adminPasswordCredential" | "session" | "adminSession" | "lifeLesson"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -17362,6 +17378,80 @@ export namespace Prisma {
           }
         }
       }
+      LifeLesson: {
+        payload: Prisma.$LifeLessonPayload<ExtArgs>
+        fields: Prisma.LifeLessonFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.LifeLessonFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LifeLessonPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.LifeLessonFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LifeLessonPayload>
+          }
+          findFirst: {
+            args: Prisma.LifeLessonFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LifeLessonPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.LifeLessonFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LifeLessonPayload>
+          }
+          findMany: {
+            args: Prisma.LifeLessonFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LifeLessonPayload>[]
+          }
+          create: {
+            args: Prisma.LifeLessonCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LifeLessonPayload>
+          }
+          createMany: {
+            args: Prisma.LifeLessonCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.LifeLessonCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LifeLessonPayload>[]
+          }
+          delete: {
+            args: Prisma.LifeLessonDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LifeLessonPayload>
+          }
+          update: {
+            args: Prisma.LifeLessonUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LifeLessonPayload>
+          }
+          deleteMany: {
+            args: Prisma.LifeLessonDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.LifeLessonUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.LifeLessonUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LifeLessonPayload>[]
+          }
+          upsert: {
+            args: Prisma.LifeLessonUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LifeLessonPayload>
+          }
+          aggregate: {
+            args: Prisma.LifeLessonAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateLifeLesson>
+          }
+          groupBy: {
+            args: Prisma.LifeLessonGroupByArgs<ExtArgs>
+            result: $Utils.Optional<LifeLessonGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.LifeLessonCountArgs<ExtArgs>
+            result: $Utils.Optional<LifeLessonCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -17656,6 +17746,7 @@ export namespace Prisma {
     adminPasswordCredential?: AdminPasswordCredentialOmit
     session?: SessionOmit
     adminSession?: AdminSessionOmit
+    lifeLesson?: LifeLessonOmit
   }
 
   /* Types for Logging */
@@ -232984,7 +233075,7 @@ export namespace Prisma {
     readonly userAgent: FieldRef<"AdminSession", 'String'>
     readonly ipAddress: FieldRef<"AdminSession", 'String'>
   }
-    
+
 
   // Custom InputTypes
   /**
@@ -233053,31 +233144,31 @@ export namespace Prisma {
     where?: AdminSessionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
+     *
      * Determine the order of AdminSessions to fetch.
      */
     orderBy?: AdminSessionOrderByWithRelationInput | AdminSessionOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
+     *
      * Sets the position for searching for AdminSessions.
      */
     cursor?: AdminSessionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
+     *
      * Take `±n` AdminSessions from the position of the cursor.
      */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
+     *
      * Skip the first `n` AdminSessions.
      */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
+     *
      * Filter by unique combinations of AdminSessions.
      */
     distinct?: AdminSessionScalarFieldEnum | AdminSessionScalarFieldEnum[]
@@ -233105,31 +233196,31 @@ export namespace Prisma {
     where?: AdminSessionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
+     *
      * Determine the order of AdminSessions to fetch.
      */
     orderBy?: AdminSessionOrderByWithRelationInput | AdminSessionOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
+     *
      * Sets the position for searching for AdminSessions.
      */
     cursor?: AdminSessionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
+     *
      * Take `±n` AdminSessions from the position of the cursor.
      */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
+     *
      * Skip the first `n` AdminSessions.
      */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
+     *
      * Filter by unique combinations of AdminSessions.
      */
     distinct?: AdminSessionScalarFieldEnum | AdminSessionScalarFieldEnum[]
@@ -233157,31 +233248,31 @@ export namespace Prisma {
     where?: AdminSessionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
+     *
      * Determine the order of AdminSessions to fetch.
      */
     orderBy?: AdminSessionOrderByWithRelationInput | AdminSessionOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
+     *
      * Sets the position for listing AdminSessions.
      */
     cursor?: AdminSessionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
+     *
      * Take `±n` AdminSessions from the position of the cursor.
      */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
+     *
      * Skip the first `n` AdminSessions.
      */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
+     *
      * Filter by unique combinations of AdminSessions.
      */
     distinct?: AdminSessionScalarFieldEnum | AdminSessionScalarFieldEnum[]
@@ -233399,6 +233490,1132 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: AdminSessionInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model LifeLesson
+   */
+
+  export type AggregateLifeLesson = {
+    _count: LifeLessonCountAggregateOutputType | null
+    _min: LifeLessonMinAggregateOutputType | null
+    _max: LifeLessonMaxAggregateOutputType | null
+  }
+
+  export type LifeLessonMinAggregateOutputType = {
+    id: string | null
+    cardKey: string | null
+    topic: string | null
+    cityId: string | null
+    validFrom: Date | null
+    validUntil: Date | null
+    status: string | null
+    rightsStatus: string | null
+    reviewerId: string | null
+    sourceUrl: string | null
+    sourceExpiresAt: Date | null
+    publishedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type LifeLessonMaxAggregateOutputType = {
+    id: string | null
+    cardKey: string | null
+    topic: string | null
+    cityId: string | null
+    validFrom: Date | null
+    validUntil: Date | null
+    status: string | null
+    rightsStatus: string | null
+    reviewerId: string | null
+    sourceUrl: string | null
+    sourceExpiresAt: Date | null
+    publishedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type LifeLessonCountAggregateOutputType = {
+    id: number
+    cardKey: number
+    topic: number
+    cityId: number
+    validFrom: number
+    validUntil: number
+    status: number
+    rightsStatus: number
+    reviewerId: number
+    sourceUrl: number
+    card: number
+    sourceExpiresAt: number
+    publishedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type LifeLessonMinAggregateInputType = {
+    id?: true
+    cardKey?: true
+    topic?: true
+    cityId?: true
+    validFrom?: true
+    validUntil?: true
+    status?: true
+    rightsStatus?: true
+    reviewerId?: true
+    sourceUrl?: true
+    sourceExpiresAt?: true
+    publishedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type LifeLessonMaxAggregateInputType = {
+    id?: true
+    cardKey?: true
+    topic?: true
+    cityId?: true
+    validFrom?: true
+    validUntil?: true
+    status?: true
+    rightsStatus?: true
+    reviewerId?: true
+    sourceUrl?: true
+    sourceExpiresAt?: true
+    publishedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type LifeLessonCountAggregateInputType = {
+    id?: true
+    cardKey?: true
+    topic?: true
+    cityId?: true
+    validFrom?: true
+    validUntil?: true
+    status?: true
+    rightsStatus?: true
+    reviewerId?: true
+    sourceUrl?: true
+    card?: true
+    sourceExpiresAt?: true
+    publishedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type LifeLessonAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LifeLesson to aggregate.
+     */
+    where?: LifeLessonWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     *
+     * Determine the order of LifeLessons to fetch.
+     */
+    orderBy?: LifeLessonOrderByWithRelationInput | LifeLessonOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     *
+     * Sets the start position
+     */
+    cursor?: LifeLessonWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Take `±n` LifeLessons from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Skip the first `n` LifeLessons.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Count returned LifeLessons
+    **/
+    _count?: true | LifeLessonCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Select which fields to find the minimum value
+    **/
+    _min?: LifeLessonMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Select which fields to find the maximum value
+    **/
+    _max?: LifeLessonMaxAggregateInputType
+  }
+
+  export type GetLifeLessonAggregateType<T extends LifeLessonAggregateArgs> = {
+        [P in keyof T & keyof AggregateLifeLesson]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateLifeLesson[P]>
+      : GetScalarType<T[P], AggregateLifeLesson[P]>
+  }
+
+
+
+
+  export type LifeLessonGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LifeLessonWhereInput
+    orderBy?: LifeLessonOrderByWithAggregationInput | LifeLessonOrderByWithAggregationInput[]
+    by: LifeLessonScalarFieldEnum[] | LifeLessonScalarFieldEnum
+    having?: LifeLessonScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: LifeLessonCountAggregateInputType | true
+    _min?: LifeLessonMinAggregateInputType
+    _max?: LifeLessonMaxAggregateInputType
+  }
+
+  export type LifeLessonGroupByOutputType = {
+    id: string
+    cardKey: string
+    topic: string
+    cityId: string | null
+    validFrom: Date
+    validUntil: Date
+    status: string
+    rightsStatus: string
+    reviewerId: string | null
+    sourceUrl: string | null
+    card: JsonValue
+    sourceExpiresAt: Date
+    publishedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: LifeLessonCountAggregateOutputType | null
+    _min: LifeLessonMinAggregateOutputType | null
+    _max: LifeLessonMaxAggregateOutputType | null
+  }
+
+  type GetLifeLessonGroupByPayload<T extends LifeLessonGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<LifeLessonGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof LifeLessonGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], LifeLessonGroupByOutputType[P]>
+            : GetScalarType<T[P], LifeLessonGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type LifeLessonSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    cardKey?: boolean
+    topic?: boolean
+    cityId?: boolean
+    validFrom?: boolean
+    validUntil?: boolean
+    status?: boolean
+    rightsStatus?: boolean
+    reviewerId?: boolean
+    sourceUrl?: boolean
+    card?: boolean
+    sourceExpiresAt?: boolean
+    publishedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["lifeLesson"]>
+
+  export type LifeLessonSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    cardKey?: boolean
+    topic?: boolean
+    cityId?: boolean
+    validFrom?: boolean
+    validUntil?: boolean
+    status?: boolean
+    rightsStatus?: boolean
+    reviewerId?: boolean
+    sourceUrl?: boolean
+    card?: boolean
+    sourceExpiresAt?: boolean
+    publishedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["lifeLesson"]>
+
+  export type LifeLessonSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    cardKey?: boolean
+    topic?: boolean
+    cityId?: boolean
+    validFrom?: boolean
+    validUntil?: boolean
+    status?: boolean
+    rightsStatus?: boolean
+    reviewerId?: boolean
+    sourceUrl?: boolean
+    card?: boolean
+    sourceExpiresAt?: boolean
+    publishedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["lifeLesson"]>
+
+  export type LifeLessonSelectScalar = {
+    id?: boolean
+    cardKey?: boolean
+    topic?: boolean
+    cityId?: boolean
+    validFrom?: boolean
+    validUntil?: boolean
+    status?: boolean
+    rightsStatus?: boolean
+    reviewerId?: boolean
+    sourceUrl?: boolean
+    card?: boolean
+    sourceExpiresAt?: boolean
+    publishedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type LifeLessonOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "cardKey" | "topic" | "cityId" | "validFrom" | "validUntil" | "status" | "rightsStatus" | "reviewerId" | "sourceUrl" | "card" | "sourceExpiresAt" | "publishedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["lifeLesson"]>
+
+  export type $LifeLessonPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "LifeLesson"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      cardKey: string
+      topic: string
+      cityId: string | null
+      validFrom: Date
+      validUntil: Date
+      status: string
+      rightsStatus: string
+      reviewerId: string | null
+      sourceUrl: string | null
+      card: Prisma.JsonValue
+      sourceExpiresAt: Date
+      publishedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["lifeLesson"]>
+    composites: {}
+  }
+
+  type LifeLessonGetPayload<S extends boolean | null | undefined | LifeLessonDefaultArgs> = $Result.GetResult<Prisma.$LifeLessonPayload, S>
+
+  type LifeLessonCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<LifeLessonFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: LifeLessonCountAggregateInputType | true
+    }
+
+  export interface LifeLessonDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['LifeLesson'], meta: { name: 'LifeLesson' } }
+    /**
+     * Find zero or one LifeLesson that matches the filter.
+     * @param {LifeLessonFindUniqueArgs} args - Arguments to find a LifeLesson
+     * @example
+     * // Get one LifeLesson
+     * const lifeLesson = await prisma.lifeLesson.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends LifeLessonFindUniqueArgs>(args: SelectSubset<T, LifeLessonFindUniqueArgs<ExtArgs>>): Prisma__LifeLessonClient<$Result.GetResult<Prisma.$LifeLessonPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one LifeLesson that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {LifeLessonFindUniqueOrThrowArgs} args - Arguments to find a LifeLesson
+     * @example
+     * // Get one LifeLesson
+     * const lifeLesson = await prisma.lifeLesson.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends LifeLessonFindUniqueOrThrowArgs>(args: SelectSubset<T, LifeLessonFindUniqueOrThrowArgs<ExtArgs>>): Prisma__LifeLessonClient<$Result.GetResult<Prisma.$LifeLessonPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first LifeLesson that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LifeLessonFindFirstArgs} args - Arguments to find a LifeLesson
+     * @example
+     * // Get one LifeLesson
+     * const lifeLesson = await prisma.lifeLesson.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends LifeLessonFindFirstArgs>(args?: SelectSubset<T, LifeLessonFindFirstArgs<ExtArgs>>): Prisma__LifeLessonClient<$Result.GetResult<Prisma.$LifeLessonPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first LifeLesson that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LifeLessonFindFirstOrThrowArgs} args - Arguments to find a LifeLesson
+     * @example
+     * // Get one LifeLesson
+     * const lifeLesson = await prisma.lifeLesson.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends LifeLessonFindFirstOrThrowArgs>(args?: SelectSubset<T, LifeLessonFindFirstOrThrowArgs<ExtArgs>>): Prisma__LifeLessonClient<$Result.GetResult<Prisma.$LifeLessonPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more LifeLessons that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LifeLessonFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all LifeLessons
+     * const lifeLessons = await prisma.lifeLesson.findMany()
+     *
+     * // Get first 10 LifeLessons
+     * const lifeLessons = await prisma.lifeLesson.findMany({ take: 10 })
+     *
+     * // Only select the `id`
+     * const lifeLessonWithIdOnly = await prisma.lifeLesson.findMany({ select: { id: true } })
+     *
+     */
+    findMany<T extends LifeLessonFindManyArgs>(args?: SelectSubset<T, LifeLessonFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LifeLessonPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a LifeLesson.
+     * @param {LifeLessonCreateArgs} args - Arguments to create a LifeLesson.
+     * @example
+     * // Create one LifeLesson
+     * const LifeLesson = await prisma.lifeLesson.create({
+     *   data: {
+     *     // ... data to create a LifeLesson
+     *   }
+     * })
+     *
+     */
+    create<T extends LifeLessonCreateArgs>(args: SelectSubset<T, LifeLessonCreateArgs<ExtArgs>>): Prisma__LifeLessonClient<$Result.GetResult<Prisma.$LifeLessonPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many LifeLessons.
+     * @param {LifeLessonCreateManyArgs} args - Arguments to create many LifeLessons.
+     * @example
+     * // Create many LifeLessons
+     * const lifeLesson = await prisma.lifeLesson.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *
+     */
+    createMany<T extends LifeLessonCreateManyArgs>(args?: SelectSubset<T, LifeLessonCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many LifeLessons and returns the data saved in the database.
+     * @param {LifeLessonCreateManyAndReturnArgs} args - Arguments to create many LifeLessons.
+     * @example
+     * // Create many LifeLessons
+     * const lifeLesson = await prisma.lifeLesson.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *
+     * // Create many LifeLessons and only return the `id`
+     * const lifeLessonWithIdOnly = await prisma.lifeLesson.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     *
+     */
+    createManyAndReturn<T extends LifeLessonCreateManyAndReturnArgs>(args?: SelectSubset<T, LifeLessonCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LifeLessonPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a LifeLesson.
+     * @param {LifeLessonDeleteArgs} args - Arguments to delete one LifeLesson.
+     * @example
+     * // Delete one LifeLesson
+     * const LifeLesson = await prisma.lifeLesson.delete({
+     *   where: {
+     *     // ... filter to delete one LifeLesson
+     *   }
+     * })
+     *
+     */
+    delete<T extends LifeLessonDeleteArgs>(args: SelectSubset<T, LifeLessonDeleteArgs<ExtArgs>>): Prisma__LifeLessonClient<$Result.GetResult<Prisma.$LifeLessonPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one LifeLesson.
+     * @param {LifeLessonUpdateArgs} args - Arguments to update one LifeLesson.
+     * @example
+     * // Update one LifeLesson
+     * const lifeLesson = await prisma.lifeLesson.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     *
+     */
+    update<T extends LifeLessonUpdateArgs>(args: SelectSubset<T, LifeLessonUpdateArgs<ExtArgs>>): Prisma__LifeLessonClient<$Result.GetResult<Prisma.$LifeLessonPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more LifeLessons.
+     * @param {LifeLessonDeleteManyArgs} args - Arguments to filter LifeLessons to delete.
+     * @example
+     * // Delete a few LifeLessons
+     * const { count } = await prisma.lifeLesson.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     *
+     */
+    deleteMany<T extends LifeLessonDeleteManyArgs>(args?: SelectSubset<T, LifeLessonDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LifeLessons.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LifeLessonUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many LifeLessons
+     * const lifeLesson = await prisma.lifeLesson.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     *
+     */
+    updateMany<T extends LifeLessonUpdateManyArgs>(args: SelectSubset<T, LifeLessonUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LifeLessons and returns the data updated in the database.
+     * @param {LifeLessonUpdateManyAndReturnArgs} args - Arguments to update many LifeLessons.
+     * @example
+     * // Update many LifeLessons
+     * const lifeLesson = await prisma.lifeLesson.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *
+     * // Update zero or more LifeLessons and only return the `id`
+     * const lifeLessonWithIdOnly = await prisma.lifeLesson.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     *
+     */
+    updateManyAndReturn<T extends LifeLessonUpdateManyAndReturnArgs>(args: SelectSubset<T, LifeLessonUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LifeLessonPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one LifeLesson.
+     * @param {LifeLessonUpsertArgs} args - Arguments to update or create a LifeLesson.
+     * @example
+     * // Update or create a LifeLesson
+     * const lifeLesson = await prisma.lifeLesson.upsert({
+     *   create: {
+     *     // ... data to create a LifeLesson
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the LifeLesson we want to update
+     *   }
+     * })
+     */
+    upsert<T extends LifeLessonUpsertArgs>(args: SelectSubset<T, LifeLessonUpsertArgs<ExtArgs>>): Prisma__LifeLessonClient<$Result.GetResult<Prisma.$LifeLessonPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of LifeLessons.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LifeLessonCountArgs} args - Arguments to filter LifeLessons to count.
+     * @example
+     * // Count the number of LifeLessons
+     * const count = await prisma.lifeLesson.count({
+     *   where: {
+     *     // ... the filter for the LifeLessons we want to count
+     *   }
+     * })
+    **/
+    count<T extends LifeLessonCountArgs>(
+      args?: Subset<T, LifeLessonCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], LifeLessonCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a LifeLesson.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LifeLessonAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends LifeLessonAggregateArgs>(args: Subset<T, LifeLessonAggregateArgs>): Prisma.PrismaPromise<GetLifeLessonAggregateType<T>>
+
+    /**
+     * Group by LifeLesson.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LifeLessonGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     *
+    **/
+    groupBy<
+      T extends LifeLessonGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: LifeLessonGroupByArgs['orderBy'] }
+        : { orderBy?: LifeLessonGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, LifeLessonGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetLifeLessonGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the LifeLesson model
+   */
+  readonly fields: LifeLessonFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for LifeLesson.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__LifeLessonClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the LifeLesson model
+   */
+  interface LifeLessonFieldRefs {
+    readonly id: FieldRef<"LifeLesson", 'String'>
+    readonly cardKey: FieldRef<"LifeLesson", 'String'>
+    readonly topic: FieldRef<"LifeLesson", 'String'>
+    readonly cityId: FieldRef<"LifeLesson", 'String'>
+    readonly validFrom: FieldRef<"LifeLesson", 'DateTime'>
+    readonly validUntil: FieldRef<"LifeLesson", 'DateTime'>
+    readonly status: FieldRef<"LifeLesson", 'String'>
+    readonly rightsStatus: FieldRef<"LifeLesson", 'String'>
+    readonly reviewerId: FieldRef<"LifeLesson", 'String'>
+    readonly sourceUrl: FieldRef<"LifeLesson", 'String'>
+    readonly card: FieldRef<"LifeLesson", 'Json'>
+    readonly sourceExpiresAt: FieldRef<"LifeLesson", 'DateTime'>
+    readonly publishedAt: FieldRef<"LifeLesson", 'DateTime'>
+    readonly createdAt: FieldRef<"LifeLesson", 'DateTime'>
+    readonly updatedAt: FieldRef<"LifeLesson", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * LifeLesson findUnique
+   */
+  export type LifeLessonFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LifeLesson
+     */
+    select?: LifeLessonSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LifeLesson
+     */
+    omit?: LifeLessonOmit<ExtArgs> | null
+    /**
+     * Filter, which LifeLesson to fetch.
+     */
+    where: LifeLessonWhereUniqueInput
+  }
+
+  /**
+   * LifeLesson findUniqueOrThrow
+   */
+  export type LifeLessonFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LifeLesson
+     */
+    select?: LifeLessonSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LifeLesson
+     */
+    omit?: LifeLessonOmit<ExtArgs> | null
+    /**
+     * Filter, which LifeLesson to fetch.
+     */
+    where: LifeLessonWhereUniqueInput
+  }
+
+  /**
+   * LifeLesson findFirst
+   */
+  export type LifeLessonFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LifeLesson
+     */
+    select?: LifeLessonSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LifeLesson
+     */
+    omit?: LifeLessonOmit<ExtArgs> | null
+    /**
+     * Filter, which LifeLesson to fetch.
+     */
+    where?: LifeLessonWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LifeLessons to fetch.
+     */
+    orderBy?: LifeLessonOrderByWithRelationInput | LifeLessonOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LifeLessons.
+     */
+    cursor?: LifeLessonWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LifeLessons from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LifeLessons.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LifeLessons.
+     */
+    distinct?: LifeLessonScalarFieldEnum | LifeLessonScalarFieldEnum[]
+  }
+
+  /**
+   * LifeLesson findFirstOrThrow
+   */
+  export type LifeLessonFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LifeLesson
+     */
+    select?: LifeLessonSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LifeLesson
+     */
+    omit?: LifeLessonOmit<ExtArgs> | null
+    /**
+     * Filter, which LifeLesson to fetch.
+     */
+    where?: LifeLessonWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LifeLessons to fetch.
+     */
+    orderBy?: LifeLessonOrderByWithRelationInput | LifeLessonOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LifeLessons.
+     */
+    cursor?: LifeLessonWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LifeLessons from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LifeLessons.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LifeLessons.
+     */
+    distinct?: LifeLessonScalarFieldEnum | LifeLessonScalarFieldEnum[]
+  }
+
+  /**
+   * LifeLesson findMany
+   */
+  export type LifeLessonFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LifeLesson
+     */
+    select?: LifeLessonSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LifeLesson
+     */
+    omit?: LifeLessonOmit<ExtArgs> | null
+    /**
+     * Filter, which LifeLessons to fetch.
+     */
+    where?: LifeLessonWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LifeLessons to fetch.
+     */
+    orderBy?: LifeLessonOrderByWithRelationInput | LifeLessonOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing LifeLessons.
+     */
+    cursor?: LifeLessonWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LifeLessons from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LifeLessons.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LifeLessons.
+     */
+    distinct?: LifeLessonScalarFieldEnum | LifeLessonScalarFieldEnum[]
+  }
+
+  /**
+   * LifeLesson create
+   */
+  export type LifeLessonCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LifeLesson
+     */
+    select?: LifeLessonSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LifeLesson
+     */
+    omit?: LifeLessonOmit<ExtArgs> | null
+    /**
+     * The data needed to create a LifeLesson.
+     */
+    data: XOR<LifeLessonCreateInput, LifeLessonUncheckedCreateInput>
+  }
+
+  /**
+   * LifeLesson createMany
+   */
+  export type LifeLessonCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many LifeLessons.
+     */
+    data: LifeLessonCreateManyInput | LifeLessonCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * LifeLesson createManyAndReturn
+   */
+  export type LifeLessonCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LifeLesson
+     */
+    select?: LifeLessonSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the LifeLesson
+     */
+    omit?: LifeLessonOmit<ExtArgs> | null
+    /**
+     * The data used to create many LifeLessons.
+     */
+    data: LifeLessonCreateManyInput | LifeLessonCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * LifeLesson update
+   */
+  export type LifeLessonUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LifeLesson
+     */
+    select?: LifeLessonSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LifeLesson
+     */
+    omit?: LifeLessonOmit<ExtArgs> | null
+    /**
+     * The data needed to update a LifeLesson.
+     */
+    data: XOR<LifeLessonUpdateInput, LifeLessonUncheckedUpdateInput>
+    /**
+     * Choose, which LifeLesson to update.
+     */
+    where: LifeLessonWhereUniqueInput
+  }
+
+  /**
+   * LifeLesson updateMany
+   */
+  export type LifeLessonUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update LifeLessons.
+     */
+    data: XOR<LifeLessonUpdateManyMutationInput, LifeLessonUncheckedUpdateManyInput>
+    /**
+     * Filter which LifeLessons to update
+     */
+    where?: LifeLessonWhereInput
+    /**
+     * Limit how many LifeLessons to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * LifeLesson updateManyAndReturn
+   */
+  export type LifeLessonUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LifeLesson
+     */
+    select?: LifeLessonSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the LifeLesson
+     */
+    omit?: LifeLessonOmit<ExtArgs> | null
+    /**
+     * The data used to update LifeLessons.
+     */
+    data: XOR<LifeLessonUpdateManyMutationInput, LifeLessonUncheckedUpdateManyInput>
+    /**
+     * Filter which LifeLessons to update
+     */
+    where?: LifeLessonWhereInput
+    /**
+     * Limit how many LifeLessons to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * LifeLesson upsert
+   */
+  export type LifeLessonUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LifeLesson
+     */
+    select?: LifeLessonSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LifeLesson
+     */
+    omit?: LifeLessonOmit<ExtArgs> | null
+    /**
+     * The filter to search for the LifeLesson to update in case it exists.
+     */
+    where: LifeLessonWhereUniqueInput
+    /**
+     * In case the LifeLesson found by the `where` argument doesn't exist, create a new LifeLesson with this data.
+     */
+    create: XOR<LifeLessonCreateInput, LifeLessonUncheckedCreateInput>
+    /**
+     * In case the LifeLesson was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<LifeLessonUpdateInput, LifeLessonUncheckedUpdateInput>
+  }
+
+  /**
+   * LifeLesson delete
+   */
+  export type LifeLessonDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LifeLesson
+     */
+    select?: LifeLessonSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LifeLesson
+     */
+    omit?: LifeLessonOmit<ExtArgs> | null
+    /**
+     * Filter which LifeLesson to delete.
+     */
+    where: LifeLessonWhereUniqueInput
+  }
+
+  /**
+   * LifeLesson deleteMany
+   */
+  export type LifeLessonDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LifeLessons to delete
+     */
+    where?: LifeLessonWhereInput
+    /**
+     * Limit how many LifeLessons to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * LifeLesson without action
+   */
+  export type LifeLessonDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LifeLesson
+     */
+    select?: LifeLessonSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LifeLesson
+     */
+    omit?: LifeLessonOmit<ExtArgs> | null
   }
 
 
@@ -236307,6 +237524,27 @@ export namespace Prisma {
   };
 
   export type AdminSessionScalarFieldEnum = (typeof AdminSessionScalarFieldEnum)[keyof typeof AdminSessionScalarFieldEnum]
+
+
+  export const LifeLessonScalarFieldEnum: {
+    id: 'id',
+    cardKey: 'cardKey',
+    topic: 'topic',
+    cityId: 'cityId',
+    validFrom: 'validFrom',
+    validUntil: 'validUntil',
+    status: 'status',
+    rightsStatus: 'rightsStatus',
+    reviewerId: 'reviewerId',
+    sourceUrl: 'sourceUrl',
+    card: 'card',
+    sourceExpiresAt: 'sourceExpiresAt',
+    publishedAt: 'publishedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type LifeLessonScalarFieldEnum = (typeof LifeLessonScalarFieldEnum)[keyof typeof LifeLessonScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -251425,6 +252663,108 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"AdminSession"> | Date | string
     userAgent?: StringNullableWithAggregatesFilter<"AdminSession"> | string | null
     ipAddress?: StringNullableWithAggregatesFilter<"AdminSession"> | string | null
+  }
+
+  export type LifeLessonWhereInput = {
+    AND?: LifeLessonWhereInput | LifeLessonWhereInput[]
+    OR?: LifeLessonWhereInput[]
+    NOT?: LifeLessonWhereInput | LifeLessonWhereInput[]
+    id?: UuidFilter<"LifeLesson"> | string
+    cardKey?: StringFilter<"LifeLesson"> | string
+    topic?: StringFilter<"LifeLesson"> | string
+    cityId?: StringNullableFilter<"LifeLesson"> | string | null
+    validFrom?: DateTimeFilter<"LifeLesson"> | Date | string
+    validUntil?: DateTimeFilter<"LifeLesson"> | Date | string
+    status?: StringFilter<"LifeLesson"> | string
+    rightsStatus?: StringFilter<"LifeLesson"> | string
+    reviewerId?: UuidNullableFilter<"LifeLesson"> | string | null
+    sourceUrl?: StringNullableFilter<"LifeLesson"> | string | null
+    card?: JsonFilter<"LifeLesson">
+    sourceExpiresAt?: DateTimeFilter<"LifeLesson"> | Date | string
+    publishedAt?: DateTimeNullableFilter<"LifeLesson"> | Date | string | null
+    createdAt?: DateTimeFilter<"LifeLesson"> | Date | string
+    updatedAt?: DateTimeFilter<"LifeLesson"> | Date | string
+  }
+
+  export type LifeLessonOrderByWithRelationInput = {
+    id?: SortOrder
+    cardKey?: SortOrder
+    topic?: SortOrder
+    cityId?: SortOrderInput | SortOrder
+    validFrom?: SortOrder
+    validUntil?: SortOrder
+    status?: SortOrder
+    rightsStatus?: SortOrder
+    reviewerId?: SortOrderInput | SortOrder
+    sourceUrl?: SortOrderInput | SortOrder
+    card?: SortOrder
+    sourceExpiresAt?: SortOrder
+    publishedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type LifeLessonWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    cardKey?: string
+    AND?: LifeLessonWhereInput | LifeLessonWhereInput[]
+    OR?: LifeLessonWhereInput[]
+    NOT?: LifeLessonWhereInput | LifeLessonWhereInput[]
+    topic?: StringFilter<"LifeLesson"> | string
+    cityId?: StringNullableFilter<"LifeLesson"> | string | null
+    validFrom?: DateTimeFilter<"LifeLesson"> | Date | string
+    validUntil?: DateTimeFilter<"LifeLesson"> | Date | string
+    status?: StringFilter<"LifeLesson"> | string
+    rightsStatus?: StringFilter<"LifeLesson"> | string
+    reviewerId?: UuidNullableFilter<"LifeLesson"> | string | null
+    sourceUrl?: StringNullableFilter<"LifeLesson"> | string | null
+    card?: JsonFilter<"LifeLesson">
+    sourceExpiresAt?: DateTimeFilter<"LifeLesson"> | Date | string
+    publishedAt?: DateTimeNullableFilter<"LifeLesson"> | Date | string | null
+    createdAt?: DateTimeFilter<"LifeLesson"> | Date | string
+    updatedAt?: DateTimeFilter<"LifeLesson"> | Date | string
+  }, "id" | "cardKey">
+
+  export type LifeLessonOrderByWithAggregationInput = {
+    id?: SortOrder
+    cardKey?: SortOrder
+    topic?: SortOrder
+    cityId?: SortOrderInput | SortOrder
+    validFrom?: SortOrder
+    validUntil?: SortOrder
+    status?: SortOrder
+    rightsStatus?: SortOrder
+    reviewerId?: SortOrderInput | SortOrder
+    sourceUrl?: SortOrderInput | SortOrder
+    card?: SortOrder
+    sourceExpiresAt?: SortOrder
+    publishedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: LifeLessonCountOrderByAggregateInput
+    _max?: LifeLessonMaxOrderByAggregateInput
+    _min?: LifeLessonMinOrderByAggregateInput
+  }
+
+  export type LifeLessonScalarWhereWithAggregatesInput = {
+    AND?: LifeLessonScalarWhereWithAggregatesInput | LifeLessonScalarWhereWithAggregatesInput[]
+    OR?: LifeLessonScalarWhereWithAggregatesInput[]
+    NOT?: LifeLessonScalarWhereWithAggregatesInput | LifeLessonScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"LifeLesson"> | string
+    cardKey?: StringWithAggregatesFilter<"LifeLesson"> | string
+    topic?: StringWithAggregatesFilter<"LifeLesson"> | string
+    cityId?: StringNullableWithAggregatesFilter<"LifeLesson"> | string | null
+    validFrom?: DateTimeWithAggregatesFilter<"LifeLesson"> | Date | string
+    validUntil?: DateTimeWithAggregatesFilter<"LifeLesson"> | Date | string
+    status?: StringWithAggregatesFilter<"LifeLesson"> | string
+    rightsStatus?: StringWithAggregatesFilter<"LifeLesson"> | string
+    reviewerId?: UuidNullableWithAggregatesFilter<"LifeLesson"> | string | null
+    sourceUrl?: StringNullableWithAggregatesFilter<"LifeLesson"> | string | null
+    card?: JsonWithAggregatesFilter<"LifeLesson">
+    sourceExpiresAt?: DateTimeWithAggregatesFilter<"LifeLesson"> | Date | string
+    publishedAt?: DateTimeNullableWithAggregatesFilter<"LifeLesson"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"LifeLesson"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"LifeLesson"> | Date | string
   }
 
   export type ContentImportBatchCreateInput = {
@@ -268157,6 +269497,132 @@ export namespace Prisma {
     ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
+  export type LifeLessonCreateInput = {
+    id?: string
+    cardKey: string
+    topic: string
+    cityId?: string | null
+    validFrom: Date | string
+    validUntil: Date | string
+    status?: string
+    rightsStatus?: string
+    reviewerId?: string | null
+    sourceUrl?: string | null
+    card: JsonNullValueInput | InputJsonValue
+    sourceExpiresAt: Date | string
+    publishedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type LifeLessonUncheckedCreateInput = {
+    id?: string
+    cardKey: string
+    topic: string
+    cityId?: string | null
+    validFrom: Date | string
+    validUntil: Date | string
+    status?: string
+    rightsStatus?: string
+    reviewerId?: string | null
+    sourceUrl?: string | null
+    card: JsonNullValueInput | InputJsonValue
+    sourceExpiresAt: Date | string
+    publishedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type LifeLessonUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cardKey?: StringFieldUpdateOperationsInput | string
+    topic?: StringFieldUpdateOperationsInput | string
+    cityId?: NullableStringFieldUpdateOperationsInput | string | null
+    validFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    validUntil?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: StringFieldUpdateOperationsInput | string
+    rightsStatus?: StringFieldUpdateOperationsInput | string
+    reviewerId?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    card?: JsonNullValueInput | InputJsonValue
+    sourceExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LifeLessonUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cardKey?: StringFieldUpdateOperationsInput | string
+    topic?: StringFieldUpdateOperationsInput | string
+    cityId?: NullableStringFieldUpdateOperationsInput | string | null
+    validFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    validUntil?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: StringFieldUpdateOperationsInput | string
+    rightsStatus?: StringFieldUpdateOperationsInput | string
+    reviewerId?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    card?: JsonNullValueInput | InputJsonValue
+    sourceExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LifeLessonCreateManyInput = {
+    id?: string
+    cardKey: string
+    topic: string
+    cityId?: string | null
+    validFrom: Date | string
+    validUntil: Date | string
+    status?: string
+    rightsStatus?: string
+    reviewerId?: string | null
+    sourceUrl?: string | null
+    card: JsonNullValueInput | InputJsonValue
+    sourceExpiresAt: Date | string
+    publishedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type LifeLessonUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cardKey?: StringFieldUpdateOperationsInput | string
+    topic?: StringFieldUpdateOperationsInput | string
+    cityId?: NullableStringFieldUpdateOperationsInput | string | null
+    validFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    validUntil?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: StringFieldUpdateOperationsInput | string
+    rightsStatus?: StringFieldUpdateOperationsInput | string
+    reviewerId?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    card?: JsonNullValueInput | InputJsonValue
+    sourceExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LifeLessonUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cardKey?: StringFieldUpdateOperationsInput | string
+    topic?: StringFieldUpdateOperationsInput | string
+    cityId?: NullableStringFieldUpdateOperationsInput | string | null
+    validFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    validUntil?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: StringFieldUpdateOperationsInput | string
+    rightsStatus?: StringFieldUpdateOperationsInput | string
+    reviewerId?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    card?: JsonNullValueInput | InputJsonValue
+    sourceExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type UuidFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -278099,6 +279565,58 @@ export namespace Prisma {
     createdAt?: SortOrder
     userAgent?: SortOrder
     ipAddress?: SortOrder
+  }
+
+  export type LifeLessonCountOrderByAggregateInput = {
+    id?: SortOrder
+    cardKey?: SortOrder
+    topic?: SortOrder
+    cityId?: SortOrder
+    validFrom?: SortOrder
+    validUntil?: SortOrder
+    status?: SortOrder
+    rightsStatus?: SortOrder
+    reviewerId?: SortOrder
+    sourceUrl?: SortOrder
+    card?: SortOrder
+    sourceExpiresAt?: SortOrder
+    publishedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type LifeLessonMaxOrderByAggregateInput = {
+    id?: SortOrder
+    cardKey?: SortOrder
+    topic?: SortOrder
+    cityId?: SortOrder
+    validFrom?: SortOrder
+    validUntil?: SortOrder
+    status?: SortOrder
+    rightsStatus?: SortOrder
+    reviewerId?: SortOrder
+    sourceUrl?: SortOrder
+    sourceExpiresAt?: SortOrder
+    publishedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type LifeLessonMinOrderByAggregateInput = {
+    id?: SortOrder
+    cardKey?: SortOrder
+    topic?: SortOrder
+    cityId?: SortOrder
+    validFrom?: SortOrder
+    validUntil?: SortOrder
+    status?: SortOrder
+    rightsStatus?: SortOrder
+    reviewerId?: SortOrder
+    sourceUrl?: SortOrder
+    sourceExpiresAt?: SortOrder
+    publishedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type ContentRawItemCreateNestedManyWithoutBatchInput = {

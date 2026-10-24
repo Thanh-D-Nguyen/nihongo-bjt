@@ -394,6 +394,8 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Post("/api/nhk-news/{id}/flashcards", nhkFlashcardHandler(deps.DBPool, deps.Logger, true))
 		})
 	}
+	// Public, rate limited Today life content; no precise location or learner session.
+	r.Method(http.MethodGet, "/api/life/feed", levelReadRateLimit(deps.PublicReadRateLimiter, "life-feed", deps.Logger, trustedProxies, lifeFeedHandler(deps.DBPool, deps.Logger, time.Now)))
 	r.Get("/api/daily-radar/home", dailyRadarHomeHandler(deps.DBPool, deps.Logger))
 	dailyHome := http.Handler(dailyHomeHandler(deps.DBPool, deps.Logger))
 	if deps.SessionStore != nil {
@@ -1352,6 +1354,13 @@ func NewRouter(deps Dependencies) http.Handler {
 			ar.With(authn.CSRFGuard(csrfCfg)).Delete("/api/admin/legal/policies/{id}", adminLegalPolicyDeleteHandler(deps.DBPool, deps.Logger))
 			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.legal.read", "admin.legal.write", "legal.admin", "iam.manage"})).Get("/api/admin/legal/cookie-categories", adminLegalCookieCategoriesHandler())
 			ar.With(authz.RequireAnyPermission(deps.RBACStore, []string{"admin.legal.read", "admin.legal.write", "legal.admin", "iam.manage"})).Get("/api/admin/legal/retention", adminLegalRetentionHandler())
+
+			// Today Life editorial review: all writes have RBAC, CSRF and transactional audit.
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).Get("/api/admin/life/lessons", lifeAdminListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).Post("/api/admin/life/lessons", lifeAdminUpsertHandler(deps.DBPool, deps.Logger, false))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).Put("/api/admin/life/lessons/{id}", lifeAdminUpsertHandler(deps.DBPool, deps.Logger, true))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).Post("/api/admin/life/lessons/{id}/review", lifeAdminReviewHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).Post("/api/admin/life/lessons/{id}/publish", lifeAdminPublishHandler(deps.DBPool, deps.Logger))
 
 			// P1-A14: Admin Daily Radar + Exercises — Modules/Cards + Config/CRUD/Analytics (22 routes)
 			ar.Get("/api/admin/daily-radar/summary", adminDailyRadarSummaryHandler(deps.DBPool, deps.Logger))

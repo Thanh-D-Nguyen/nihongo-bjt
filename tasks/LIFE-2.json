@@ -1,0 +1,941 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "LIFE-2",
+  "title": "Publish licensed mobile Today Life feed",
+  "start_head": "c87d7d002292208013fbe21b48af34c5eec209da",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "iOS Today Life Hub needs licensed, reviewed live bilingual lesson cards by city with no leaking of unapproved content",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Anonymous GET /api/life/feed validates city and returns only valid reviewed licensed lessons"
+      },
+      {
+        "id": "AC2",
+        "text": "Unpublished and uncleared lessons never appear and empty feed responds 404"
+      },
+      {
+        "id": "AC3",
+        "text": "Admin editor supports draft/review/publish with RBAC CSRF audit and semantic validation"
+      },
+      {
+        "id": "AC4",
+        "text": "Dates and source timestamps remain JST-valid and weather with non-commercial permission is excluded"
+      }
+    ],
+    "expected_behavior": "Server publishes Japanese calendar and commercially reusable weather with rights-cleared editorial lessons using contract version 1; admin edits are gated and audited",
+    "observed_behavior": "",
+    "rollback_plan": "Roll back Go API and admin deployment; new daily.life_lesson table may be left dormant safely (no destructive migration). Disable MET_NORWAY_USER_AGENT to stop external weather calls; clients fall back to local samples on 404. Retain editorial data and audit history for a forward fix."
+  },
+  "classification": {
+    "classes": [
+      "DOMAIN_LOGIC",
+      "API_CONTRACT",
+      "DATABASE",
+      "AUTH_SECURITY"
+    ],
+    "change_kind": "add",
+    "rationale": ""
+  },
+  "red_exception": {
+    "category": "new_component",
+    "reason": "New life feed datastore and handlers have no matching existing implementation at start_head; sensitivity test validates contract invariants",
+    "declared_before_red": true
+  },
+  "red_targets": [],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/api-go/internal/lifefeed/feed.go",
+      "find": "if !s.ExpiresAt.After(now) {",
+      "replace": "if false {"
+    },
+    "targets": [
+      {
+        "runner": "go",
+        "package": "./internal/lifefeed",
+        "test": "TestPreparePublishedCardPreservesVerifiedSourceExpiry",
+        "expect": "expired source was published"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-24T06:18:29.588Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-24T06:18:29.848Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-24T06:18:30.100Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-24T06:51:25.122Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-24T07:04:45.022Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-24T07:26:25.611Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-24T07:28:09.334Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-24T07:37:16.754Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-24T07:50:42.150Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-24T07:57:15.977Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-24T08:00:38.129Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-24T08:16:29.414Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-24T08:21:40.647Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-24T08:32:02.279Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-24T08:42:20.263Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-24T08:48:38.509Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da"
+    },
+    {
+      "state": "EXCEPTION_APPROVED",
+      "at": "2026-10-24T08:50:47.793Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-24T08:51:13.658Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-24T06:50:23.734Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "sensitivity",
+      "outcome": "INSENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/lifefeed/feed.go",
+        "find": "if !s.ExpiresAt.After(now) {",
+        "replace": "if s.ExpiresAt.After(now) {"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPreparePublishedCardPreservesVerifiedSourceExpiry)$ ./internal/lifefeed"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPreparePublishedCardPreservesVerifiedSourceExpiry feed_test.go:58: source has expired --- FAIL: TestPreparePublishedCardPreservesVerifiedSourceExpiry (0.00s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"expired source was published\""
+        }
+      ],
+      "expects": {
+        "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry": "expired source was published"
+      },
+      "fingerprint": "fad7d5ed18a3f9d07f7e3dbb3171385e5fa68ce90e06e547af2a020a88a6a975"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-24T06:50:53.301Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/lifefeed/feed.go",
+        "find": "if !s.ExpiresAt.After(now) {",
+        "replace": "if false {"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPreparePublishedCardPreservesVerifiedSourceExpiry)$ ./internal/lifefeed"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPreparePublishedCardPreservesVerifiedSourceExpiry feed_test.go:65: expired source was published: <nil> --- FAIL: TestPreparePublishedCardPreservesVerifiedSourceExpiry (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry": "expired source was published"
+      },
+      "fingerprint": "fad7d5ed18a3f9d07f7e3dbb3171385e5fa68ce90e06e547af2a020a88a6a975"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-24T06:51:22.990Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPreparePublishedCardPreservesVerifiedSourceExpiry)$ ./internal/lifefeed"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "fad7d5ed18a3f9d07f7e3dbb3171385e5fa68ce90e06e547af2a020a88a6a975"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-24T06:56:13.825Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1511,
+        "executed": 1511,
+        "passed": 1511,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1511 passed, 0 allowed skip(s)",
+      "fingerprint": "fad7d5ed18a3f9d07f7e3dbb3171385e5fa68ce90e06e547af2a020a88a6a975"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-24T06:57:30.886Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 490,
+        "executed": 490,
+        "passed": 490,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 820,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "fad7d5ed18a3f9d07f7e3dbb3171385e5fa68ce90e06e547af2a020a88a6a975"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-24T07:00:19.462Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "pnpm exec playwright test e2e/smoke.spec.ts",
+      "exit_code": 1,
+      "fingerprint": "fad7d5ed18a3f9d07f7e3dbb3171385e5fa68ce90e06e547af2a020a88a6a975"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-24T07:03:22.483Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "pnpm exec playwright test e2e/smoke.spec.ts",
+      "exit_code": 1,
+      "fingerprint": "fad7d5ed18a3f9d07f7e3dbb3171385e5fa68ce90e06e547af2a020a88a6a975"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-24T07:04:43.003Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node -e const {chromium,expect}=require(\"@playwright/test\");(async()=>{const browser=await chromium.launch({headless:true});try{const page=await browser.newPage();const response=await page.goto(\"http://[::1]:3001/admin/vi/life-feed\",{waitUntil:\"domcontentloaded\"});if(response.status()!==200)throw Error(`Unexpected HTTP ${response.status()}`);await expect(page.getByText(\"Đang xác thực phiên quản tr…",
+      "exit_code": 0,
+      "fingerprint": "fad7d5ed18a3f9d07f7e3dbb3171385e5fa68ce90e06e547af2a020a88a6a975"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-24T07:26:23.575Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 1512,
+        "executed": 1512,
+        "passed": 1511,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "3b2a5eadfc219732bda37296fbb56a142abca699fa73d8df30bf6ff44b193606"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-24T07:27:26.598Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 490,
+        "executed": 490,
+        "passed": 490,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 820,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "3b2a5eadfc219732bda37296fbb56a142abca699fa73d8df30bf6ff44b193606"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-24T07:28:07.487Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPreparePublishedCardPreservesVerifiedSourceExpiry)$ ./internal/lifefeed"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d73220a4b0c5170faa74683a1fccec7b55e3a2fd0db36ccbca46e1fbef1f3d55"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-24T07:28:20.056Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/lifefeed/feed.go",
+        "find": "if !s.ExpiresAt.After(now) {",
+        "replace": "if false {"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPreparePublishedCardPreservesVerifiedSourceExpiry)$ ./internal/lifefeed"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPreparePublishedCardPreservesVerifiedSourceExpiry feed_test.go:65: expired source was published: <nil> --- FAIL: TestPreparePublishedCardPreservesVerifiedSourceExpiry (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry": "expired source was published"
+      },
+      "fingerprint": "d73220a4b0c5170faa74683a1fccec7b55e3a2fd0db36ccbca46e1fbef1f3d55"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-24T07:35:23.138Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1512,
+        "executed": 1512,
+        "passed": 1512,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1512 passed, 0 allowed skip(s)",
+      "fingerprint": "d73220a4b0c5170faa74683a1fccec7b55e3a2fd0db36ccbca46e1fbef1f3d55"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-24T07:36:39.249Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 490,
+        "executed": 490,
+        "passed": 490,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 820,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "d73220a4b0c5170faa74683a1fccec7b55e3a2fd0db36ccbca46e1fbef1f3d55"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-24T07:37:14.910Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node -e const {chromium}=require(\"@playwright/test\");(async()=>{const browser=await chromium.launch({headless:true});try{const page=await browser.newPage();const response=await page.goto(\"http://[::1]:3001/admin/vi/life-feed\",{waitUntil:\"domcontentloaded\"});if(response.status()!==200)throw Error(\"Life feed admin HTTP \"+response.status());await page.getByText(\"Đang xác thực phiên quản trị…\").waitFo…",
+      "exit_code": 0,
+      "fingerprint": "d73220a4b0c5170faa74683a1fccec7b55e3a2fd0db36ccbca46e1fbef1f3d55"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-24T07:50:40.117Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPreparePublishedCardPreservesVerifiedSourceExpiry)$ ./internal/lifefeed"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "6cb9e1badeac7be39d760dcfd7eb9cb8daa248f24e46176523738a803247a071"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-24T07:50:49.419Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/lifefeed/feed.go",
+        "find": "if !s.ExpiresAt.After(now) {",
+        "replace": "if false {"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPreparePublishedCardPreservesVerifiedSourceExpiry)$ ./internal/lifefeed"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPreparePublishedCardPreservesVerifiedSourceExpiry feed_test.go:65: expired source was published: <nil> --- FAIL: TestPreparePublishedCardPreservesVerifiedSourceExpiry (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry": "expired source was published"
+      },
+      "fingerprint": "6cb9e1badeac7be39d760dcfd7eb9cb8daa248f24e46176523738a803247a071"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-24T07:55:48.789Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1512,
+        "executed": 1512,
+        "passed": 1512,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1512 passed, 0 allowed skip(s)",
+      "fingerprint": "6cb9e1badeac7be39d760dcfd7eb9cb8daa248f24e46176523738a803247a071"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-24T07:56:42.546Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 490,
+        "executed": 490,
+        "passed": 490,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 820,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "6cb9e1badeac7be39d760dcfd7eb9cb8daa248f24e46176523738a803247a071"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-24T07:57:14.040Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node -e const {chromium}=require(\"@playwright/test\");(async()=>{const b=await chromium.launch();try{const p=await b.newPage();const r=await p.goto(\"http://[::1]:3001/admin/vi/life-feed\",{waitUntil:\"domcontentloaded\"});if(r.status()!==200)throw Error(\"Admin HTTP \"+r.status());await p.getByText(\"Đang xác thực phiên quản trị…\").waitFor({state:\"visible\",timeout:10000});console.log(\"PASS admin life fee…",
+      "exit_code": 0,
+      "fingerprint": "6cb9e1badeac7be39d760dcfd7eb9cb8daa248f24e46176523738a803247a071"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-24T08:00:35.994Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPreparePublishedCardPreservesVerifiedSourceExpiry)$ ./internal/lifefeed"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "5651a402450d8a5aaa79aff4aaf758e5742e1a1e85547a0cc629b5f966802124"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-24T08:00:46.768Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/lifefeed/feed.go",
+        "find": "if !s.ExpiresAt.After(now) {",
+        "replace": "if false {"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPreparePublishedCardPreservesVerifiedSourceExpiry)$ ./internal/lifefeed"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPreparePublishedCardPreservesVerifiedSourceExpiry feed_test.go:65: expired source was published: <nil> --- FAIL: TestPreparePublishedCardPreservesVerifiedSourceExpiry (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry": "expired source was published"
+      },
+      "fingerprint": "5651a402450d8a5aaa79aff4aaf758e5742e1a1e85547a0cc629b5f966802124"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-24T08:06:16.720Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1512,
+        "executed": 1512,
+        "passed": 1512,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1512 passed, 0 allowed skip(s)",
+      "fingerprint": "5651a402450d8a5aaa79aff4aaf758e5742e1a1e85547a0cc629b5f966802124"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-24T08:07:18.799Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 490,
+        "executed": 490,
+        "passed": 490,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 820,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "5651a402450d8a5aaa79aff4aaf758e5742e1a1e85547a0cc629b5f966802124"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-24T08:16:27.592Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node -e const {chromium}=require(\"@playwright/test\");(async()=>{const b=await chromium.launch();try{const p=await b.newPage();const r=await p.goto(\"http://[::1]:3001/admin/vi/life-feed\",{waitUntil:\"domcontentloaded\"});if(r.status()!==200)throw Error(\"Admin HTTP \"+r.status());await p.getByText(\"Đang xác thực phiên quản trị…\").waitFor({state:\"visible\",timeout:10000});console.log(\"PASS admin life fee…",
+      "exit_code": 0,
+      "fingerprint": "5651a402450d8a5aaa79aff4aaf758e5742e1a1e85547a0cc629b5f966802124"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-24T08:21:36.543Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPreparePublishedCardPreservesVerifiedSourceExpiry)$ ./internal/lifefeed"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "901149d6074f579b580ab935fa8e4e33e94893ef756637c5b242be23385f2e4e"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-24T08:22:02.035Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/lifefeed/feed.go",
+        "find": "if !s.ExpiresAt.After(now) {",
+        "replace": "if false {"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPreparePublishedCardPreservesVerifiedSourceExpiry)$ ./internal/lifefeed"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPreparePublishedCardPreservesVerifiedSourceExpiry feed_test.go:65: expired source was published: <nil> --- FAIL: TestPreparePublishedCardPreservesVerifiedSourceExpiry (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry": "expired source was published"
+      },
+      "fingerprint": "901149d6074f579b580ab935fa8e4e33e94893ef756637c5b242be23385f2e4e"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-24T08:27:07.031Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1513,
+        "executed": 1513,
+        "passed": 1513,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1513 passed, 0 allowed skip(s)",
+      "fingerprint": "901149d6074f579b580ab935fa8e4e33e94893ef756637c5b242be23385f2e4e"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-24T08:28:12.000Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 490,
+        "executed": 490,
+        "passed": 490,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 820,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "901149d6074f579b580ab935fa8e4e33e94893ef756637c5b242be23385f2e4e"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-24T08:32:00.350Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node -e const {chromium}=require(\"@playwright/test\");(async()=>{const b=await chromium.launch();try{const p=await b.newPage();const r=await p.goto(\"http://[::1]:3001/admin/vi/life-feed\",{waitUntil:\"domcontentloaded\"});if(r.status()!==200)throw Error(\"Admin HTTP \"+r.status());await p.getByText(\"Đang xác thực phiên quản trị…\").waitFor({state:\"visible\",timeout:10000});console.log(\"PASS admin life fee…",
+      "exit_code": 0,
+      "fingerprint": "901149d6074f579b580ab935fa8e4e33e94893ef756637c5b242be23385f2e4e"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-24T08:42:18.519Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPreparePublishedCardPreservesVerifiedSourceExpiry)$ ./internal/lifefeed"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d239a0fa2ed0b6608dd4379d15dcc0ed577fb64ce24d56a57bfb4be875e19427"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-24T08:42:28.510Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/lifefeed/feed.go",
+        "find": "if !s.ExpiresAt.After(now) {",
+        "replace": "if false {"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPreparePublishedCardPreservesVerifiedSourceExpiry)$ ./internal/lifefeed"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPreparePublishedCardPreservesVerifiedSourceExpiry feed_test.go:65: expired source was published: <nil> --- FAIL: TestPreparePublishedCardPreservesVerifiedSourceExpiry (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/lifefeed:TestPreparePublishedCardPreservesVerifiedSourceExpiry": "expired source was published"
+      },
+      "fingerprint": "d239a0fa2ed0b6608dd4379d15dcc0ed577fb64ce24d56a57bfb4be875e19427"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-24T08:47:07.583Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1514,
+        "executed": 1514,
+        "passed": 1514,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1514 passed, 0 allowed skip(s)",
+      "fingerprint": "d239a0fa2ed0b6608dd4379d15dcc0ed577fb64ce24d56a57bfb4be875e19427"
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-24T08:47:55.758Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 490,
+        "executed": 490,
+        "passed": 490,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 820,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "d239a0fa2ed0b6608dd4379d15dcc0ed577fb64ce24d56a57bfb4be875e19427"
+    },
+    {
+      "seq": 35,
+      "at": "2026-10-24T08:48:36.749Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node -e const {chromium}=require(\"@playwright/test\");(async()=>{const b=await chromium.launch();try{const p=await b.newPage();const r=await p.goto(\"http://[::1]:3001/admin/vi/life-feed\",{waitUntil:\"domcontentloaded\"});if(r.status()!==200)throw Error(\"Admin HTTP \"+r.status());await p.getByText(\"Đang xác thực phiên quản trị…\").waitFor({state:\"visible\",timeout:10000});console.log(\"PASS admin life fee…",
+      "exit_code": 0,
+      "fingerprint": "d239a0fa2ed0b6608dd4379d15dcc0ed577fb64ce24d56a57bfb4be875e19427"
+    },
+    {
+      "seq": 36,
+      "at": "2026-10-24T08:50:46.215Z",
+      "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a16d15-afc7-7f92-9414-afa673d59ed4",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "d239a0fa2ed0b6608dd4379d15dcc0ed577fb64ce24d56a57bfb4be875e19427"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-24T08:51:13.635Z",
+    "head": "c87d7d002292208013fbe21b48af34c5eec209da",
+    "fingerprint": "d239a0fa2ed0b6608dd4379d15dcc0ed577fb64ce24d56a57bfb4be875e19427",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "green": "PASS",
+      "sensitivity": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/admin/app/[locale]/life-feed/life-feed-admin-client.tsx": "9dcfc364fdd43317e919f3250c1340509a6a5886",
+      "apps/admin/app/[locale]/life-feed/page.tsx": "b42d28dfdd36c9f6d09698a3fd53c4696c6b8a5b",
+      "apps/admin/lib/admin-nav-data.ts": "f7c5e18b20d71d263ec179e6f21b3035b5a0ca5b",
+      "apps/admin/messages/en.json": "37b3ab465a031d21258784ec9b1f7d8a3257dbc7",
+      "apps/admin/messages/ja.json": "86cee063b22f144071de19e19cab3346e65cb89c",
+      "apps/admin/messages/vi.json": "0a8a7b81eefd95de205bba4a5ee6c705dd553d2c",
+      "apps/api-go/internal/httpserver/handler_life_feed.go": "ec1b7968d92b9a1adf22421ab4a78f146378a5b1",
+      "apps/api-go/internal/httpserver/handler_life_feed_test.go": "134383b2ff968533a8ee9ea9a4a030b72f2722c6",
+      "apps/api-go/internal/httpserver/server.go": "b0202f422734d89720af1e0e911a35a83b407659",
+      "apps/api-go/internal/lifefeed/date.go": "4db521364f007660e2e7e2b094c4b711c26608c6",
+      "apps/api-go/internal/lifefeed/feed.go": "140021dc9e58bd441e65f4785576bf3520bccce0",
+      "apps/api-go/internal/lifefeed/feed_test.go": "944c9c9b6a779bf069b8e67c7278918ad1f46246",
+      "apps/api-go/internal/lifefeed/holidays.csv": "a724adf35e0244e8729e3b28e96ecaee146e90c2",
+      "apps/api-go/internal/lifefeed/weather.go": "aa1a4ebaa9420200fb6eddf7531f7917e814f29f",
+      "apps/api-go/internal/lifefeed/weather_test.go": "597f31aa954bd791caba29194dcac3c13eec2e7f",
+      "docs/api-route-inventory.json": "e67afb439e27f1dc09b86de47d39d28371ad5f8e",
+      "docs/openapi.json": "799c635c1fa55eaf4825598778363dfc8f360fc6",
+      "docs/product/life-in-japan-learning-design.md": "8cdf0a2c56ef1173f1351be963c851852d62d460",
+      "packages/database/generated/client/edge.js": "3f4eeab43b64758c5e5521311d2003d4ca1696ef",
+      "packages/database/generated/client/index-browser.js": "068d0b25de31b89512a369849999c120e5e96efd",
+      "packages/database/generated/client/index.d.ts": "bb5ff024c59ff19becaccd6abf5b3c5cdd81ed36",
+      "packages/database/generated/client/index.js": "c9ae65ff772633356d92b60a130e3a4765dba181",
+      "packages/database/generated/client/package.json": "4bbff47cc1542ddf651667ecaf6adfb62cf79caf",
+      "packages/database/generated/client/schema.prisma": "1f4810599027cfcf60f302d2ddf6f4cf8664b29c",
+      "packages/database/prisma/migrations/20261024150000_life_lesson_feed/migration.sql": "186662150979f6fa6a60d935dc94f9e36a858730",
+      "packages/database/prisma/schema.prisma": "900cd4883e258efe8c7e9eb8e93a200931c3113f"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

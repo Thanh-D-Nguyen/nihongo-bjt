@@ -2455,6 +2455,24 @@ exports.Prisma.AdminSessionScalarFieldEnum = {
   ipAddress: 'ipAddress'
 };
 
+exports.Prisma.LifeLessonScalarFieldEnum = {
+  id: 'id',
+  cardKey: 'cardKey',
+  topic: 'topic',
+  cityId: 'cityId',
+  validFrom: 'validFrom',
+  validUntil: 'validUntil',
+  status: 'status',
+  rightsStatus: 'rightsStatus',
+  reviewerId: 'reviewerId',
+  sourceUrl: 'sourceUrl',
+  card: 'card',
+  sourceExpiresAt: 'sourceExpiresAt',
+  publishedAt: 'publishedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -2672,7 +2690,8 @@ exports.Prisma.ModelName = {
   PasswordCredential: 'PasswordCredential',
   AdminPasswordCredential: 'AdminPasswordCredential',
   Session: 'Session',
-  AdminSession: 'AdminSession'
+  AdminSession: 'AdminSession',
+  LifeLesson: 'LifeLesson'
 };
 
 /**

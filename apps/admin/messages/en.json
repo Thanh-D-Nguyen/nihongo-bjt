@@ -92,6 +92,7 @@
       "enrichment": "Enrichment queue",
       "i18n": "i18n center",
       "dailyHub": "Daily Hub",
+      "lifeFeed": "Mobile Life lessons",
       "dailyRadar": "Japan Daily Radar",
       "magazine": "Daily Magazine",
       "announcements": "Announcements",
@@ -1406,6 +1407,11 @@
     "dailyHub": {
       "title": "Daily Hub",
       "subtitle": "Subtitle"
+    },
+    "lifeFeed": {
+      "title": "Mobile Today · Life lessons", "subtitle": "Draft, check Japanese readings and usage rights, then publish to the mobile feed.",
+      "new": "New draft", "save": "Save draft", "reload": "Reload", "edit": "Edit", "card": "Card JSON (mobile contract)", "city": "City ID (blank = all cities)", "from": "Start date (JST)", "until": "End date (JST)",
+      "review": "Record review", "rights": "Rights clearance", "cleared": "Cleared", "blocked": "Blocked", "reason": "Review evidence / Japanese reading check (at least 10 characters)", "publish": "Publish", "status": "Status", "empty": "No Life lessons yet", "error": "Request failed", "loading": "Loading…", "saving": "Saving…", "choose": "Select a draft to edit or start a new one", "confirmed": "Action saved", "invalidJson": "Enter a valid card JSON object"
     },
     "import": {
       "title": "Import pipeline",
