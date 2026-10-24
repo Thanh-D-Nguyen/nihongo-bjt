@@ -226,15 +226,16 @@ func TestSearchReadsCanonicalContentSearchIndex(t *testing.T) {
 			t.Errorf("path=%q, want canonical content_search index", r.URL.Path)
 		}
 		var body struct {
-			Q      string   `json:"q"`
-			Limit  int      `json:"limit"`
-			Offset int      `json:"offset"`
-			Filter []string `json:"filter"`
+			Q                string   `json:"q"`
+			Limit            int      `json:"limit"`
+			Offset           int      `json:"offset"`
+			Filter           []string `json:"filter"`
+			MatchingStrategy string   `json:"matchingStrategy"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			t.Errorf("decode request body: %v", err)
 		}
-		if body.Q != "会議" || body.Limit != 10 || body.Offset != 5 || len(body.Filter) != 1 || body.Filter[0] != `kind = "lexeme"` {
+		if body.Q != "会議" || body.Limit != 10 || body.Offset != 5 || body.MatchingStrategy != "all" || len(body.Filter) != 1 || body.Filter[0] != `kind = "lexeme"` {
 			t.Errorf("unexpected Meilisearch query: %+v", body)
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -248,6 +249,33 @@ func TestSearchReadsCanonicalContentSearchIndex(t *testing.T) {
 	}
 	if resp.Total != 1 || len(resp.Results) != 1 || resp.Results[0].ID != "lex-1" || resp.Results[0].Title != "会議" {
 		t.Fatalf("Search() response = %+v", resp)
+	}
+}
+
+func TestSearchFallsBackWhenNoResultMatchesEveryQueryTerm(t *testing.T) {
+	var strategies []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			MatchingStrategy string `json:"matchingStrategy"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Errorf("decode request body: %v", err)
+		}
+		strategies = append(strategies, body.MatchingStrategy)
+		if body.MatchingStrategy == "all" {
+			_, _ = w.Write([]byte(`{"estimatedTotalHits":0,"hits":[]}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"estimatedTotalHits":1,"hits":[{"id":"lex-1","kind":"lexeme","title":"会議室"}]}`))
+	}))
+	defer server.Close()
+
+	resp, err := NewClient(server.URL, "").Search(context.Background(), "会議", "", 10, 0)
+	if err != nil || len(resp.Results) != 1 || resp.Results[0].Title != "会議室" {
+		t.Fatalf("Search() = %+v, error = %v", resp, err)
+	}
+	if len(strategies) != 2 || strategies[0] != "all" || strategies[1] != "last" {
+		t.Fatalf("matching strategies = %v, want [all last]", strategies)
 	}
 }
 

@@ -279,10 +279,11 @@ export function SearchClient({
       pendingEntryRef.current = null;
       return;
     }
-    if (selectedEntry === `${requested.kind}:${requested.id}`) return;
     pendingEntryRef.current = requested;
-    setSelected(null);
-  }, [entryParam, selectedEntry]);
+    setSelected((current) =>
+      current?.kind === requested.kind && current.id === requested.id ? current : null
+    );
+  }, [entryParam]);
 
   useEffect(() => {
     if (!hasSearched) return;

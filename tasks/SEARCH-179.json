@@ -1,0 +1,579 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "SEARCH-179",
+  "title": "Fix search selection and relevance ordering",
+  "start_head": "74f6e10777fac614ca0479d75483088ecae9fc93",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Deep-linked search entry state overrides a learner's subsequent selection; multilingual results include partial-token matches that bury stronger all-term matches.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Selecting any visible result works even if the URL initially contains another entry."
+      },
+      {
+        "id": "AC2",
+        "text": "Search query ranks results matching every query term ahead of partial matches and falls back when no all-term results exist."
+      }
+    ],
+    "expected_behavior": "A clicked result remains selected despite a stale entry URL; queries return all-term matches first and fall back to partial matches only when strict search has no results.",
+    "observed_behavior": "Entry-sync reruns when selected changes and restores the stale target, which blocks URL sync; Meilisearch uses broad last-token matching by default.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "SEARCH",
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/search",
+      "test": "TestSearchReadsCanonicalContentSearchIndex",
+      "expect": "unexpected Meilisearch query"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx",
+      "test": "SearchClient saved-entry deep links > selectsClickedResultDespiteStaleUrlEntry",
+      "expect": "Number of calls: 0"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-24T03:45:15.366Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-24T03:45:57.594Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-24T03:45:57.858Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-24T03:47:30.662Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-24T03:48:06.532Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-24T03:54:01.036Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-24T03:55:38.508Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-24T04:00:12.985Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-24T04:00:22.158Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-24T03:46:43.558Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"keeps a learner\" in apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner": "clicked selection is retained and updates entry URL"
+      },
+      "fingerprint": "83f74234ca421870a900fac2fb3fd9e55949828d9f2454c7caec8a98ddf4ac39"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-24T03:46:46.936Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSearchReadsCanonicalContentSearchIndex)$ ./internal/search"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"keeps a learner\" in apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "go:./internal/search:TestSearchReadsCanonicalContentSearchIndex",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestSearchReadsCanonicalContentSearchIndex client_test.go:239: unexpected Meilisearch query: {Q:会議 Limit:10 Offset:5 Filter:[kind = \"lexeme\"] MatchingStrategy:} --- FAIL: TestSearchReadsCanonicalContentSearchIndex (0.00s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"Meilisearch request uses all-term matching\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner": "clicked selection is retained and updates entry URL",
+        "go:./internal/search:TestSearchReadsCanonicalContentSearchIndex": "Meilisearch request uses all-term matching"
+      },
+      "fingerprint": "83f74234ca421870a900fac2fb3fd9e55949828d9f2454c7caec8a98ddf4ac39"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-24T03:46:52.912Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSearchReadsCanonicalContentSearchIndex)$ ./internal/search"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"keeps a learner\" in apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "go:./internal/search:TestSearchReadsCanonicalContentSearchIndex",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestSearchReadsCanonicalContentSearchIndex client_test.go:239: unexpected Meilisearch query: {Q:会議 Limit:10 Offset:5 Filter:[kind = \"lexeme\"] MatchingStrategy:} --- FAIL: TestSearchReadsCanonicalContentSearchIndex (0.00s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"Meilisearch request uses all-term matching\""
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner\\x27s clicked result when the URL still has a different entry",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"keeps a learner\\\\x27s clicked result when the URL still has a different entry\" in apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner": "clicked selection is retained and updates entry URL",
+        "go:./internal/search:TestSearchReadsCanonicalContentSearchIndex": "Meilisearch request uses all-term matching",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner\\x27s clicked result when the URL still has a different entry": "Number of calls: 0"
+      },
+      "fingerprint": "83f74234ca421870a900fac2fb3fd9e55949828d9f2454c7caec8a98ddf4ac39"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-24T03:46:55.594Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSearchReadsCanonicalContentSearchIndex)$ ./internal/search"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"keeps a learner\" in apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "go:./internal/search:TestSearchReadsCanonicalContentSearchIndex",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestSearchReadsCanonicalContentSearchIndex client_test.go:239: unexpected Meilisearch query: {Q:会議 Limit:10 Offset:5 Filter:[kind = \"lexeme\"] MatchingStrategy:} --- FAIL: TestSearchReadsCanonicalContentSearchIndex (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner\\x27s clicked result when the URL still has a different entry",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"keeps a learner\\\\x27s clicked result when the URL still has a different entry\" in apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner": "clicked selection is retained and updates entry URL",
+        "go:./internal/search:TestSearchReadsCanonicalContentSearchIndex": "unexpected Meilisearch query",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner\\x27s clicked result when the URL still has a different entry": "Number of calls: 0"
+      },
+      "fingerprint": "83f74234ca421870a900fac2fb3fd9e55949828d9f2454c7caec8a98ddf4ac39"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-24T03:47:04.102Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSearchReadsCanonicalContentSearchIndex)$ ./internal/search"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"keeps a learner\" in apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "go:./internal/search:TestSearchReadsCanonicalContentSearchIndex",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestSearchReadsCanonicalContentSearchIndex client_test.go:239: unexpected Meilisearch query: {Q:会議 Limit:10 Offset:5 Filter:[kind = \"lexeme\"] MatchingStrategy:} --- FAIL: TestSearchReadsCanonicalContentSearchIndex (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner\\x27s clicked result when the URL still has a different entry",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"keeps a learner\\\\x27s clicked result when the URL still has a different entry\" in apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::selectsClickedResultDespiteStaleUrlEntry",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"selectsClickedResultDespiteStaleUrlEntry\" in apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner": "clicked selection is retained and updates entry URL",
+        "go:./internal/search:TestSearchReadsCanonicalContentSearchIndex": "unexpected Meilisearch query",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner\\x27s clicked result when the URL still has a different entry": "Number of calls: 0",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::selectsClickedResultDespiteStaleUrlEntry": "Number of calls: 0"
+      },
+      "fingerprint": "7f563a8f9b00bb8e761ca1c3af341888ed0a0fc572f58585d2aef4f0ffa298a1"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-24T03:47:22.285Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSearchReadsCanonicalContentSearchIndex)$ ./internal/search"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"keeps a learner\" in apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "go:./internal/search:TestSearchReadsCanonicalContentSearchIndex",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestSearchReadsCanonicalContentSearchIndex client_test.go:239: unexpected Meilisearch query: {Q:会議 Limit:10 Offset:5 Filter:[kind = \"lexeme\"] MatchingStrategy:} --- FAIL: TestSearchReadsCanonicalContentSearchIndex (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner\\x27s clicked result when the URL still has a different entry",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"keeps a learner\\\\x27s clicked result when the URL still has a different entry\" in apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::selectsClickedResultDespiteStaleUrlEntry",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"selectsClickedResultDespiteStaleUrlEntry\" in apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > selectsClickedResultDespiteStaleUrlEntry",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ StringContaining{…}, Anything ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner": "clicked selection is retained and updates entry URL",
+        "go:./internal/search:TestSearchReadsCanonicalContentSearchIndex": "unexpected Meilisearch query",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::keeps a learner\\x27s clicked result when the URL still has a different entry": "Number of calls: 0",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::selectsClickedResultDespiteStaleUrlEntry": "Number of calls: 0",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > selectsClickedResultDespiteStaleUrlEntry": "Number of calls: 0"
+      },
+      "fingerprint": "7f563a8f9b00bb8e761ca1c3af341888ed0a0fc572f58585d2aef4f0ffa298a1"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-24T03:47:30.381Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSearchReadsCanonicalContentSearchIndex)$ ./internal/search",
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/search:TestSearchReadsCanonicalContentSearchIndex",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestSearchReadsCanonicalContentSearchIndex client_test.go:239: unexpected Meilisearch query: {Q:会議 Limit:10 Offset:5 Filter:[kind = \"lexeme\"] MatchingStrategy:} --- FAIL: TestSearchReadsCanonicalContentSearchIndex (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > selectsClickedResultDespiteStaleUrlEntry",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ StringContaining{…}, Anything ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/search:TestSearchReadsCanonicalContentSearchIndex": "unexpected Meilisearch query",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > selectsClickedResultDespiteStaleUrlEntry": "Number of calls: 0"
+      },
+      "fingerprint": "7f563a8f9b00bb8e761ca1c3af341888ed0a0fc572f58585d2aef4f0ffa298a1"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-24T03:48:06.129Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSearchReadsCanonicalContentSearchIndex)$ ./internal/search",
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/search:TestSearchReadsCanonicalContentSearchIndex",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > selectsClickedResultDespiteStaleUrlEntry",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "982c8087476e59d09f4bb1cfafd5df4601a9e73b1919b9778034e72ee9ba5278"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-24T03:52:42.625Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1486,
+        "executed": 1486,
+        "passed": 1486,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1486 passed, 0 allowed skip(s)",
+      "fingerprint": "982c8087476e59d09f4bb1cfafd5df4601a9e73b1919b9778034e72ee9ba5278"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-24T03:53:47.179Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 487,
+        "executed": 487,
+        "passed": 487,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 817,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "982c8087476e59d09f4bb1cfafd5df4601a9e73b1919b9778034e72ee9ba5278"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-24T03:54:00.681Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93",
+      "kind": "command",
+      "gate": "search_integration",
+      "command": "python3 scripts/release/search-check.py",
+      "exit_code": 0,
+      "fingerprint": "982c8087476e59d09f4bb1cfafd5df4601a9e73b1919b9778034e72ee9ba5278"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-24T03:55:38.118Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSearchReadsCanonicalContentSearchIndex)$ ./internal/search",
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/search:TestSearchReadsCanonicalContentSearchIndex",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > selectsClickedResultDespiteStaleUrlEntry",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "52d30d88b28a3b0ce1f3acb0e405590a11d5844ee8a347cbe360dbeaf02bbdd2"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-24T03:59:07.000Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1486,
+        "executed": 1486,
+        "passed": 1486,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1486 passed, 0 allowed skip(s)",
+      "fingerprint": "52d30d88b28a3b0ce1f3acb0e405590a11d5844ee8a347cbe360dbeaf02bbdd2"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-24T03:59:59.903Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 487,
+        "executed": 487,
+        "passed": 487,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 817,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "52d30d88b28a3b0ce1f3acb0e405590a11d5844ee8a347cbe360dbeaf02bbdd2"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-24T04:00:12.699Z",
+      "head": "74f6e10777fac614ca0479d75483088ecae9fc93",
+      "kind": "command",
+      "gate": "search_integration",
+      "command": "python3 scripts/release/search-check.py",
+      "exit_code": 0,
+      "fingerprint": "52d30d88b28a3b0ce1f3acb0e405590a11d5844ee8a347cbe360dbeaf02bbdd2"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-24T04:00:22.132Z",
+    "head": "74f6e10777fac614ca0479d75483088ecae9fc93",
+    "fingerprint": "52d30d88b28a3b0ce1f3acb0e405590a11d5844ee8a347cbe360dbeaf02bbdd2",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "search_integration": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/search/client.go": "aff996216e6f231455fa0e82b96c89bf40003a2c",
+      "apps/api-go/internal/search/client_test.go": "a1cb1eb51d1c0c75216ee7001639608e9e8ccc07",
+      "apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx": "15a0f5488f7e2156142c55ca6ab15a8cac754a94",
+      "apps/web/app/[locale]/search/_components/search-client.tsx": "1aae7594770524863a0653f95383a5eb439a07a3"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

@@ -129,6 +129,37 @@ describe("SearchClient saved-entry deep links", () => {
     container.remove();
   });
 
+  it("selectsClickedResultDespiteStaleUrlEntry", async () => {
+    mocks.params = new URLSearchParams({ entry: "lexeme:old-entry", q: "会議" });
+    mocks.fetch.mockImplementation(async (input: RequestInfo | URL) => {
+      if (String(input).includes("/api/search?")) {
+        return { ok: true, json: async () => [
+          { description: "meeting", id: "lexeme-1", kind: "lexeme", reading: "かいぎ", title: "会議" }
+        ] };
+      }
+      return { ok: true, json: async () => ({ id: "lexeme-1", headword: "会議" }) };
+    });
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(<SearchClient adLabels={messages.adSurface} labels={messages.search} locale="vi" />);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const result = Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.includes("会議"));
+    expect(result).toBeDefined();
+    await act(async () => {
+      result?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(mocks.fetch).toHaveBeenCalledWith(expect.stringContaining("/api/content/lexemes/lexeme-1"));
+    expect(mocks.replace).toHaveBeenCalledWith(expect.stringContaining("entry=lexeme%3Alexeme-1"), expect.anything());
+    await act(async () => root.unmount());
+    container.remove();
+  });
+
   it("honors an entry added to an already-mounted query without replacing its identity", async () => {
     mocks.params = new URLSearchParams({ q: "会議" });
     mocks.fetch.mockImplementation(async (input: RequestInfo | URL) => {
