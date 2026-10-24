@@ -54,6 +54,24 @@ media.__BASE_DOMAIN__ {
 - Draft/unpublished content
 - Any asset requiring ownership or RBAC check
 
+### Canonical kanji stroke SVGs
+
+`GET /api/kanji/{id}/stroke` defaults to JSON metadata (`svgSource`, `svgPath`).
+Clients rendering the diagram request `Accept: image/svg+xml` to receive SVG bytes.
+Both representations use `Vary: Accept`; SVG responses have `nosniff`, a sandboxed
+content security policy, and conditional/Range support through `http.ServeContent`.
+
+The API reads only `data/generated/kanji-strokes/*.svg` beneath
+`KANJI_STROKE_REPO_ROOT`, falling back to `NIHONGO_BJT_REPO_ROOT` or the nearest
+repository directory. Traversal, external URLs and symlinks escaping this directory
+return 403. Missing assets return 404; malformed XML or files larger than 1 MiB
+return 422. The bounded SVG is validated through end-of-input before delivery.
+
+The learner first resolves a character from the kanji list, then fetches its detail
+DTO when the list summary lacks stroke metadata. The browser requests the SVG
+representation, sanitizes the SVG, and animates the real paths in stroke order.
+Reduced-motion mode displays the complete static diagrams.
+
 ## Private Media Path
 
 ### Go API handler

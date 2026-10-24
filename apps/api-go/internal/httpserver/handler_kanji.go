@@ -132,15 +132,16 @@ func getKanjiDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 			Tip           *string     `json:"tip,omitempty"`
 			ImagePath     *string     `json:"imagePath,omitempty"`
 			StrokeSvgPath *string     `json:"strokeSvgPath,omitempty"`
+			StrokeSvgHash *string     `json:"strokeSvgHash,omitempty"`
 			Examples      []Example   `json:"examples"`
 			Components    []Component `json:"components"`
 		}
 
-		const q = `SELECT id, character, meaning_vi, onyomi, kunyomi, stroke_count, level, frequency, detail, tip, image_path, stroke_svg_path
+		const q = `SELECT id, character, meaning_vi, onyomi, kunyomi, stroke_count, level, frequency, detail, tip, image_path, stroke_svg_path, stroke_svg_hash
 			FROM content.kanji WHERE id = $1 AND status = 'active'`
 		var kd KanjiDetail
 		if err := db.QueryRow(r.Context(), q, id).Scan(&kd.ID, &kd.Character, &kd.MeaningVi, &kd.Onyomi, &kd.Kunyomi,
-			&kd.StrokeCount, &kd.Level, &kd.Frequency, &kd.Detail, &kd.Tip, &kd.ImagePath, &kd.StrokeSvgPath); err != nil {
+			&kd.StrokeCount, &kd.Level, &kd.Frequency, &kd.Detail, &kd.Tip, &kd.ImagePath, &kd.StrokeSvgPath, &kd.StrokeSvgHash); err != nil {
 			if err == pgx.ErrNoRows {
 				writeJSONError(w, "kanji not found", http.StatusNotFound)
 			} else {
@@ -237,6 +238,11 @@ func getKanjiStrokeHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 		result := map[string]interface{}{
 			"svgSource": svgSource,
 			"svgPath":   svgPath,
+		}
+		w.Header().Add("Vary", "Accept")
+		if acceptsStrokeSVG(r.Header.Get("Accept")) {
+			serveKanjiStrokeSVG(w, r, svgPath, logger)
+			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)

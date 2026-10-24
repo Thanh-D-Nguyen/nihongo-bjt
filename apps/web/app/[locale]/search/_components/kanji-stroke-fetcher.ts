@@ -20,8 +20,8 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function requestKanjiLookup(value: string, attempt = 0): Promise<LookupResult> {
-  const res = await fetch(`${API_BASE}/api/kanji?q=${encodeURIComponent(value)}&limit=1`, {
+async function requestKanji(path: string, attempt = 0): Promise<Response> {
+  const res = await fetch(`${API_BASE}${path}`, {
     cache: "no-store",
     credentials: "omit",
     mode: "cors"
@@ -29,9 +29,13 @@ async function requestKanjiLookup(value: string, attempt = 0): Promise<LookupRes
 
   if (res.status === 429 && attempt < RATE_LIMIT_RETRIES) {
     await sleep(RATE_LIMIT_RETRY_MS * (attempt + 1));
-    return requestKanjiLookup(value, attempt + 1);
+    return requestKanji(path, attempt + 1);
   }
+  return res;
+}
 
+async function requestKanjiLookup(value: string): Promise<LookupResult> {
+  const res = await requestKanji(`/api/kanji?q=${encodeURIComponent(value)}&limit=1`);
   if (!res.ok) {
     return { status: "empty" };
   }
@@ -43,11 +47,18 @@ async function requestKanjiLookup(value: string, attempt = 0): Promise<LookupRes
     return result;
   }
 
-  const dto = normalizeKanjiDetailDto(body[0]);
-  if (!dto.id) {
+  let dto = normalizeKanjiDetailDto(body[0]);
+  if (!dto.id || dto.character !== value) {
     const result = { status: "empty" } satisfies LookupResult;
     resolvedLookups.set(value, result);
     return result;
+  }
+
+  if (!dto.strokeSvgPath) {
+    const detail = await requestKanji(`/api/kanji/${encodeURIComponent(dto.id)}`);
+    if (!detail.ok) return { status: "empty" };
+    dto = normalizeKanjiDetailDto(await detail.json());
+    if (!dto.id || dto.character !== value) return { status: "empty" };
   }
 
   const result = { status: "ok", dto } satisfies LookupResult;

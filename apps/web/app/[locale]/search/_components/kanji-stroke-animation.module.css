@@ -1,3 +1,7 @@
+.host :global(svg g[id*="StrokePaths"]) {
+  stroke: var(--color-ink) !important;
+}
+
 /**
  * Host-scoped only: numerals live inside embedded KanjiVG SVG.
  * KanjiVG sets inline fill/font-size on the StrokeNumbers `<g>` — override for theme contrast.

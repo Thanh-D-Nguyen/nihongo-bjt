@@ -543,7 +543,7 @@ export function KanjiStrokeAnimation({
     }
 
     setLoading(true);
-    void fetch(requestUrl, { credentials: "omit", mode: "cors" })
+    void fetch(requestUrl, { credentials: "omit", mode: "cors", headers: { Accept: "image/svg+xml" } })
       .then((res) => {
         if (cancelled) return;
         if (!res.ok) {

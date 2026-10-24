@@ -12,6 +12,7 @@ loadDotenv({ path: path.join(monorepoRoot, ".env.local"), override: true });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: { agentUpgrade: "security" },
   output: "standalone",
   outputFileTracingRoot: monorepoRoot,
   // basePath required for correct /admin/* routing and locale redirects.

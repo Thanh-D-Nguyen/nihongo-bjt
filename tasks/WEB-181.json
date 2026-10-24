@@ -1,0 +1,501 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-181",
+  "title": "Restore kanji stroke animations and apply Next security upgrade",
+  "start_head": "671b19053661f3e64d6a2aaf085b5a074a557166",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Kanji stroke tiles consume list DTOs without stroke paths, and animation expects raw SVG while Go serves JSON. Next.js 16.4.0 requires the requested security patch upgrade.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "政府会議 renders four kanji SVGs and plays strokes sequentially with replay, including dark mode and reduced motion."
+      },
+      {
+        "id": "AC2",
+        "text": "SVG representation is scoped to canonical local stroke files with traversal/symlink protection; existing JSON metadata remains compatible."
+      },
+      {
+        "id": "AC3",
+        "text": "Apply Next.js security upgrade 16.4.0 to 16.4.3 and verify learner/admin builds and runtime."
+      }
+    ],
+    "expected_behavior": "Detailed kanji data and image/svg+xml negotiation deliver real drawable SVG paths; approved security patch runs across the workspace.",
+    "observed_behavior": "Tiles only show characters; list response omits stroke paths and stroke endpoint is JSON-only.",
+    "rollback_plan": "Revert task commits to restore prior frontend/API and dependency manifests."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "UI_ONLY",
+      "DATABASE",
+      "DEPENDENCY_METADATA",
+      "INFRASTRUCTURE"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/search/_components/kanji-stroke-fetcher.test.ts",
+      "test": "kanji-stroke-fetcher > loads stroke metadata from detail when the list returns a summary",
+      "expect": "expected null"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestKanjiStrokeNegotiatesSVGAndPreservesMetadata",
+      "expect": "SVG representation"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-24T05:30:15.107Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-24T05:33:47.515Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-24T05:33:47.857Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-24T05:37:00.917Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-24T05:42:05.934Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-24T05:56:27.213Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-24T05:57:42.200Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-24T06:08:36.051Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-24T06:09:09.512Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-24T05:35:28.952Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/kanji-stroke-fetcher.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestKanjiStrokeNegotiatesSVGAndPreservesMetadata)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/kanji-stroke-fetcher.test.ts::kanji-stroke-fetcher > loads stroke metadata from detail when the list returns a summary",
+          "outcome": "FAIL",
+          "excerpt": "expected null to be 'data/generated/kanji-strokes/1519-065…' // Object.is equality",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"data/generated/kanji-strokes/1519-0653f.svg\""
+        },
+        {
+          "id": "go:./internal/httpserver:TestKanjiStrokeNegotiatesSVGAndPreservesMetadata",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestKanjiStrokeNegotiatesSVGAndPreservesMetadata handler_kanji_stroke_svg_test.go:38: SVG representation status=200 type=\"application/json\" body={\"svgPath\":\"data/generated/kanji-strokes/sample.svg\",\"svgSource\":\"KanjiVG\"} --- FAIL: TestKanjiStrokeNegotiatesSVGAndPreservesMetadata (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/search/_components/kanji-stroke-fetcher.test.ts::kanji-stroke-fetcher > loads stroke metadata from detail when the list returns a summary": "data/generated/kanji-strokes/1519-0653f.svg",
+        "go:./internal/httpserver:TestKanjiStrokeNegotiatesSVGAndPreservesMetadata": "SVG representation"
+      },
+      "fingerprint": "5d139f58a1587defe6809dfd52b087c19b8ccb5b4899d7c2109dc9fd20bc5cb7"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-24T05:37:00.555Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/kanji-stroke-fetcher.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestKanjiStrokeNegotiatesSVGAndPreservesMetadata)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/kanji-stroke-fetcher.test.ts::kanji-stroke-fetcher > loads stroke metadata from detail when the list returns a summary",
+          "outcome": "FAIL",
+          "excerpt": "expected null to be 'data/generated/kanji-strokes/1519-065…' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestKanjiStrokeNegotiatesSVGAndPreservesMetadata",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestKanjiStrokeNegotiatesSVGAndPreservesMetadata handler_kanji_stroke_svg_test.go:38: SVG representation status=200 type=\"application/json\" body={\"svgPath\":\"data/generated/kanji-strokes/sample.svg\",\"svgSource\":\"KanjiVG\"} --- FAIL: TestKanjiStrokeNegotiatesSVGAndPreservesMetadata (0.13s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/search/_components/kanji-stroke-fetcher.test.ts::kanji-stroke-fetcher > loads stroke metadata from detail when the list returns a summary": "expected null",
+        "go:./internal/httpserver:TestKanjiStrokeNegotiatesSVGAndPreservesMetadata": "SVG representation"
+      },
+      "fingerprint": "5d139f58a1587defe6809dfd52b087c19b8ccb5b4899d7c2109dc9fd20bc5cb7"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-24T05:42:05.055Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/kanji-stroke-fetcher.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestKanjiStrokeNegotiatesSVGAndPreservesMetadata)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/kanji-stroke-fetcher.test.ts::kanji-stroke-fetcher > loads stroke metadata from detail when the list returns a summary",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestKanjiStrokeNegotiatesSVGAndPreservesMetadata",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "b4cd4f69408bf1195f175dcf16c406a17492238239d48cf76e9929021b68f402"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-24T05:46:54.860Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/kanji-stroke-fetcher.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestKanjiStrokeNegotiatesSVGAndPreservesMetadata)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/kanji-stroke-fetcher.test.ts::kanji-stroke-fetcher > loads stroke metadata from detail when the list returns a summary",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestKanjiStrokeNegotiatesSVGAndPreservesMetadata",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "4f070a32fd21e6bb6225c52724bb4e1e13509d8ce7939ca82bc2c6e37205595e"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-24T05:52:30.922Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Pascal:01a16c75-8853-7431-9289-6114299669ab",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "4f070a32fd21e6bb6225c52724bb4e1e13509d8ce7939ca82bc2c6e37205595e"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-24T05:52:33.239Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "node scripts/local-audit-status.mjs",
+      "exit_code": 0,
+      "fingerprint": "4f070a32fd21e6bb6225c52724bb4e1e13509d8ce7939ca82bc2c6e37205595e"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-24T05:54:26.985Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 1504,
+        "executed": 1504,
+        "passed": 1503,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "4f070a32fd21e6bb6225c52724bb4e1e13509d8ce7939ca82bc2c6e37205595e"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-24T05:56:26.321Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 490,
+        "executed": 490,
+        "passed": 490,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 818,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "4f070a32fd21e6bb6225c52724bb4e1e13509d8ce7939ca82bc2c6e37205595e"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-24T05:57:41.382Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/kanji-stroke-fetcher.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestKanjiStrokeNegotiatesSVGAndPreservesMetadata)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/kanji-stroke-fetcher.test.ts::kanji-stroke-fetcher > loads stroke metadata from detail when the list returns a summary",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestKanjiStrokeNegotiatesSVGAndPreservesMetadata",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a1a5c45daebc4f7f14e7a859f80a027f7e0d8c486319895066c8e03b9911fc2e"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-24T05:59:20.362Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 1504,
+        "executed": 1504,
+        "passed": 1503,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "a1a5c45daebc4f7f14e7a859f80a027f7e0d8c486319895066c8e03b9911fc2e"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-24T06:00:27.295Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 490,
+        "executed": 490,
+        "passed": 490,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 818,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "a1a5c45daebc4f7f14e7a859f80a027f7e0d8c486319895066c8e03b9911fc2e"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-24T06:02:03.425Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/kanji-stroke-fetcher.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestKanjiStrokeNegotiatesSVGAndPreservesMetadata)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/kanji-stroke-fetcher.test.ts::kanji-stroke-fetcher > loads stroke metadata from detail when the list returns a summary",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestKanjiStrokeNegotiatesSVGAndPreservesMetadata",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1998005432fbb853bdc72d28138da86776be4cc3de0e1c38ea66d35943d08b98"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-24T06:07:18.363Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1504,
+        "executed": 1504,
+        "passed": 1504,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1504 passed, 0 allowed skip(s)",
+      "fingerprint": "1998005432fbb853bdc72d28138da86776be4cc3de0e1c38ea66d35943d08b98"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-24T06:08:20.447Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 490,
+        "executed": 490,
+        "passed": 490,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 818,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "1998005432fbb853bdc72d28138da86776be4cc3de0e1c38ea66d35943d08b98"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-24T06:08:32.821Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Pascal:01a16c75-8853-7431-9289-6114299669ab",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "1998005432fbb853bdc72d28138da86776be4cc3de0e1c38ea66d35943d08b98"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-24T06:08:35.326Z",
+      "head": "671b19053661f3e64d6a2aaf085b5a074a557166",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "node scripts/local-audit-status.mjs",
+      "exit_code": 0,
+      "fingerprint": "1998005432fbb853bdc72d28138da86776be4cc3de0e1c38ea66d35943d08b98"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-24T06:09:09.487Z",
+    "head": "671b19053661f3e64d6a2aaf085b5a074a557166",
+    "fingerprint": "1998005432fbb853bdc72d28138da86776be4cc3de0e1c38ea66d35943d08b98",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "infra_validation": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/admin/next.config.mjs": "b9abd0f3b559240f8cb8608989d613a1961ac903",
+      "apps/admin/package.json": "22ea45b307363a96b2baae7078b2c220ba64579f",
+      "apps/api-go/internal/httpserver/handler_kanji.go": "8032b444aca88d5b878788d6da08790dcf586b5b",
+      "apps/api-go/internal/httpserver/handler_kanji_stroke_svg.go": "54b2c2faa60ec6264e10cdf44f1f9faadbe48b0f",
+      "apps/api-go/internal/httpserver/handler_kanji_stroke_svg_test.go": "67d4eb829e4a346c8a13c3672f66bd78730add3e",
+      "apps/web/app/[locale]/search/_components/kanji-stroke-animation.module.css": "b671bc2368cb3d363a8245f720bba591aa79e223",
+      "apps/web/app/[locale]/search/_components/kanji-stroke-animation.tsx": "7bf228de047618f8eab86e9b91150d8693b31785",
+      "apps/web/app/[locale]/search/_components/kanji-stroke-fetcher.test.ts": "7f7787d5ed3052213b57f435b327f87808c167fa",
+      "apps/web/app/[locale]/search/_components/kanji-stroke-fetcher.ts": "22628370a6c3f9454d6e676cc90fc4e860762e68",
+      "apps/web/next.config.mjs": "fb6c93b84f6694ae8d4d6d0f8fbd93d454b220ad",
+      "apps/web/package.json": "b7678a811181b6ee0b538c3665436198015803ac",
+      "docs/migrations/go-backend-v2/docs/18_media_delivery_architecture.md": "9e528c4eddc022b2987d8e0ffe44433de8d5437e",
+      "package.json": "e6cc99529d0aad240f56abab6362e6a3bbeae49b",
+      "pnpm-lock.yaml": "bb1538232ac2ec3b8de73f531b27166dc2a7be9d",
+      "pnpm-workspace.yaml": "7b7ae106a01b986c3774fe98fdfcccbbb790351e"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

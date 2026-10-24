@@ -13,6 +13,7 @@ loadDotenv({ path: path.join(monorepoRoot, ".env.local"), override: true });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: { agentUpgrade: "security" },
   outputFileTracingRoot: monorepoRoot,
   turbopack: {
     root: monorepoRoot
