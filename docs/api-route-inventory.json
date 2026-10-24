@@ -3,8 +3,8 @@
   "sourceRegisteredOperations": 627,
   "openAPIOperations": 627,
   "verifiedContracts": 0,
-  "testEvidencedContracts": 7,
-  "sourceOnlyContracts": 620,
+  "testEvidencedContracts": 12,
+  "sourceOnlyContracts": 615,
   "unverifiedContracts": 627,
   "runtimeVerifiedOperations": 0,
   "families": {
@@ -336,7 +336,7 @@
     "scenarios": {
       "routes": 5,
       "verifiedContracts": 0,
-      "testEvidencedContracts": 0
+      "testEvidencedContracts": 5
     },
     "share": {
       "routes": 1,
@@ -33335,14 +33335,16 @@
         "subject": "handler validation"
       },
       "tests": {
-        "evidence": [],
-        "status": "unverified",
+        "evidence": [
+          "apps/api-go/internal/httpserver/handler_scenario_test.go"
+        ],
+        "status": "test-evidenced",
         "subject": "handler integration tests"
       },
       "contract": {
         "method": "get",
         "openAPIPath": "/api/scenarios",
-        "status": "unverified"
+        "status": "test-evidenced"
       },
       "runtimeAvailability": {
         "sourceConditions": [
@@ -33388,14 +33390,16 @@
         "subject": "handler validation"
       },
       "tests": {
-        "evidence": [],
-        "status": "unverified",
+        "evidence": [
+          "apps/api-go/internal/httpserver/handler_scenario_test.go"
+        ],
+        "status": "test-evidenced",
         "subject": "handler integration tests"
       },
       "contract": {
         "method": "post",
         "openAPIPath": "/api/scenarios/steps/{stepId}/answer",
-        "status": "unverified"
+        "status": "test-evidenced"
       },
       "runtimeAvailability": {
         "sourceConditions": [
@@ -33439,14 +33443,16 @@
         "subject": "handler validation"
       },
       "tests": {
-        "evidence": [],
-        "status": "unverified",
+        "evidence": [
+          "apps/api-go/internal/httpserver/handler_scenario_test.go"
+        ],
+        "status": "test-evidenced",
         "subject": "handler integration tests"
       },
       "contract": {
         "method": "get",
         "openAPIPath": "/api/scenarios/{scenarioId}",
-        "status": "unverified"
+        "status": "test-evidenced"
       },
       "runtimeAvailability": {
         "sourceConditions": [
@@ -33490,14 +33496,16 @@
         "subject": "handler validation"
       },
       "tests": {
-        "evidence": [],
-        "status": "unverified",
+        "evidence": [
+          "apps/api-go/internal/httpserver/handler_scenario_test.go"
+        ],
+        "status": "test-evidenced",
         "subject": "handler integration tests"
       },
       "contract": {
         "method": "get",
         "openAPIPath": "/api/scenarios/{scenarioId}/attempts",
-        "status": "unverified"
+        "status": "test-evidenced"
       },
       "runtimeAvailability": {
         "sourceConditions": [
@@ -33543,14 +33551,16 @@
         "subject": "handler validation"
       },
       "tests": {
-        "evidence": [],
-        "status": "unverified",
+        "evidence": [
+          "apps/api-go/internal/httpserver/handler_scenario_test.go"
+        ],
+        "status": "test-evidenced",
         "subject": "handler integration tests"
       },
       "contract": {
         "method": "post",
         "openAPIPath": "/api/scenarios/{scenarioId}/complete",
-        "status": "unverified"
+        "status": "test-evidenced"
       },
       "runtimeAvailability": {
         "sourceConditions": [

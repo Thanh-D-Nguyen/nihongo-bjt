@@ -50,7 +50,16 @@
       "Bash(pnpm seed:gamification)",
       "Bash(node database/scripts/seeds/bjt/seed-bjt-lessons.mjs)",
       "Bash(docker compose *)",
-      "Bash(rtk grep *)"
+      "Bash(rtk grep *)",
+      "Bash(git fetch *)",
+      "Bash(gh run list *)",
+      "Bash(gh run view *)",
+      "Bash(git -C /Users/thanhnguyen/.codex/worktrees/oracle-release/nihongo-bjt status --short)",
+      "Bash(git -C /Users/thanhnguyen/.codex/worktrees/oracle-release/nihongo-bjt log --oneline -2)",
+      "Bash(python3 -c \"import json;t=json.load\\(open\\('tasks/RELEASE-6.json'\\)\\);print\\(t['state']\\)\")",
+      "Bash(rg -n \"active_pointer\" scripts/quality/*.json scripts/quality/harness/*.json docs/engineering)",
+      "Bash(pnpm quality *)",
+      "Bash(cd /Users/thanhnguyen/.codex/worktrees/oci-content-import/nihongo-bjt && cat docs/deployment/oci-content-import.md | cut -c1-400)"
     ]
   },
   "enabledPlugins": {

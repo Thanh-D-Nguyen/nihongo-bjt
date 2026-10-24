@@ -842,6 +842,337 @@
         ],
         "type": "object"
       },
+      "ScenarioAttempt": {
+        "additionalProperties": false,
+        "properties": {
+          "choices": {
+            "description": "KNOWN DEFECT: the Go field is []byte, so the stored JSON array [{\"stepOrder\":1,\"choiceKey\":\"A\"},...] is returned base64-encoded. Clients must base64-decode it, then parse the JSON. A server fix to json.RawMessage would change this to an array.",
+            "format": "byte",
+            "type": "string"
+          },
+          "completedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxPoints": {
+            "type": "integer"
+          },
+          "totalPoints": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "totalPoints",
+          "maxPoints",
+          "choices",
+          "completedAt"
+        ],
+        "type": "object"
+      },
+      "ScenarioAttemptResult": {
+        "additionalProperties": false,
+        "description": "Server-computed score. maxPoints is the sum, over steps, of the highest points among optimal choices.",
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxPoints": {
+            "type": "integer"
+          },
+          "totalPoints": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "totalPoints",
+          "maxPoints"
+        ],
+        "type": "object"
+      },
+      "ScenarioChoice": {
+        "additionalProperties": false,
+        "description": "Never carries the answer key: isOptimal, points and feedback come only from the answer endpoint.",
+        "properties": {
+          "choiceKey": {
+            "description": "Unique within its step; observed A, B, C. Choices are ordered by this key.",
+            "maxLength": 5,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "textJa": {
+            "description": "Omitted when null.",
+            "type": "string"
+          },
+          "textVi": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "choiceKey",
+          "textVi"
+        ],
+        "type": "object"
+      },
+      "ScenarioChoiceRecord": {
+        "additionalProperties": true,
+        "description": "Identify the choice either by stepId + choiceId (both required, UUIDs) or by stepOrder + choiceKey. Any 'points' sent by the client is ignored: the server scores from its own data.",
+        "properties": {
+          "choiceId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "choiceKey": {
+            "type": "string"
+          },
+          "points": {
+            "description": "Ignored by the server.",
+            "type": "integer"
+          },
+          "stepId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "stepOrder": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "ScenarioCompleteRequest": {
+        "additionalProperties": true,
+        "description": "Exactly one record per step of the scenario; a wrong count, a duplicate step or an unknown choice is 400 and stores nothing.",
+        "properties": {
+          "choices": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioChoiceRecord"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "choices"
+        ],
+        "type": "object"
+      },
+      "ScenarioCounts": {
+        "additionalProperties": false,
+        "properties": {
+          "attempts": {
+            "description": "Attempts by ALL learners, not only the caller.",
+            "type": "integer"
+          },
+          "steps": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "steps",
+          "attempts"
+        ],
+        "type": "object"
+      },
+      "ScenarioDetail": {
+        "additionalProperties": false,
+        "description": "Only scenarios that are active, have at least one step and where every step has at least one choice are served; anything else is 404.",
+        "properties": {
+          "category": {
+            "description": "Free text column; observed values: email, phone, meeting.",
+            "type": "string"
+          },
+          "descriptionVi": {
+            "description": "Omitted when null.",
+            "type": "string"
+          },
+          "difficulty": {
+            "description": "Free text column; observed values: beginner, intermediate, advanced.",
+            "type": "string"
+          },
+          "estimatedMin": {
+            "type": "integer"
+          },
+          "iconEmoji": {
+            "description": "An emoji character; do not use it as a navigation icon.",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioStep"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "titleJa": {
+            "description": "Omitted when null.",
+            "type": "string"
+          },
+          "titleVi": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "titleVi",
+          "difficulty",
+          "category",
+          "iconEmoji",
+          "estimatedMin",
+          "steps"
+        ],
+        "type": "object"
+      },
+      "ScenarioStep": {
+        "additionalProperties": false,
+        "properties": {
+          "choices": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioChoice"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "situationJa": {
+            "description": "Omitted when null.",
+            "type": "string"
+          },
+          "situationVi": {
+            "type": "string"
+          },
+          "speakerName": {
+            "description": "Omitted when null. Observed value: a generic narrator label.",
+            "type": "string"
+          },
+          "speakerRole": {
+            "description": "Omitted when null.",
+            "type": "string"
+          },
+          "stepOrder": {
+            "description": "1-based, unique within the scenario, ascending.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "stepOrder",
+          "situationVi",
+          "choices"
+        ],
+        "type": "object"
+      },
+      "ScenarioStepAnswerRequest": {
+        "additionalProperties": true,
+        "description": "Either field selects the choice; choiceKey wins when both are sent. The server matches the value against the step's choice_key OR choice id. An empty object is 400. Unknown fields are ignored (the handler does not reject them).",
+        "properties": {
+          "choiceId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "choiceKey": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ScenarioStepAnswerResult": {
+        "additionalProperties": false,
+        "description": "Feedback for one choice. Stateless: nothing is stored and the call may be repeated.",
+        "properties": {
+          "choiceKey": {
+            "type": "string"
+          },
+          "feedbackVi": {
+            "description": "Vietnamese only. Omitted when null.",
+            "type": "string"
+          },
+          "isOptimal": {
+            "type": "boolean"
+          },
+          "pointsAwarded": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "choiceKey",
+          "isOptimal",
+          "pointsAwarded"
+        ],
+        "type": "object"
+      },
+      "ScenarioSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "_count": {
+            "$ref": "#/components/schemas/ScenarioCounts"
+          },
+          "category": {
+            "description": "Free text column; observed values: email, phone, meeting.",
+            "type": "string"
+          },
+          "descriptionVi": {
+            "description": "Omitted when null.",
+            "type": "string"
+          },
+          "difficulty": {
+            "description": "Free text column; observed values: beginner, intermediate, advanced.",
+            "type": "string"
+          },
+          "estimatedMin": {
+            "type": "integer"
+          },
+          "iconEmoji": {
+            "description": "An emoji character; do not use it as a navigation icon.",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "titleJa": {
+            "description": "Omitted when null.",
+            "type": "string"
+          },
+          "titleVi": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "titleVi",
+          "difficulty",
+          "category",
+          "iconEmoji",
+          "estimatedMin",
+          "_count"
+        ],
+        "type": "object"
+      },
       "SearchResult": {
         "properties": {
           "description": {
@@ -21077,17 +21408,41 @@
       "get": {
         "operationId": "getApiScenarios",
         "responses": {
-          "default": {
-            "description": "Response schema is not yet verified; see the route inventory."
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScenarioSummary"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Active scenarios with at least one step, every step having a choice, ordered by sort_order then newest first. May be empty."
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
           }
         },
-        "summary": "Source-discovered route handled by listScenariosHandler(deps.ScenarioStore, deps.Logger)",
+        "security": [
+          {
+            "learnerSession": []
+          },
+          {
+            "learnerCookie": []
+          }
+        ],
+        "summary": "List playable business scenarios",
         "tags": [
           "scenarios"
         ],
         "x-contract-verification": {
-          "scope": "route/method/handler coverage only; request and response schemas are unverified",
-          "status": "unverified"
+          "scope": "named handler test exists; request/response schemas and validation are not independently verified",
+          "status": "test-evidenced"
         },
         "x-route-source": {
           "guards": [
@@ -21097,7 +21452,15 @@
           "runtimeConditions": [
             "deps.ScenarioStore != nil && deps.SessionStore != nil"
           ]
-        }
+        },
+        "x-runtime-verification": {
+          "date": "2026-10-23",
+          "environment": "local development stack, disposable account",
+          "method": "curl against http://localhost:18081 and httptest through NewRouter"
+        },
+        "x-verification": [
+          "apps/api-go/internal/httpserver/handler_scenario_test.go"
+        ]
       }
     },
     "/api/scenarios/steps/{stepId}/answer": {
@@ -21105,28 +21468,82 @@
         "operationId": "postApiScenariosStepsbyStepIdAnswer",
         "parameters": [
           {
-            "description": "Path token; application-level format and validation are unverified.",
+            "description": "A malformed id is answered with 500 (known defect); use ids returned by GET /api/scenarios/{scenarioId}.",
             "in": "path",
             "name": "stepId",
             "required": true,
             "schema": {
+              "format": "uuid",
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          },
+          {
+            "$ref": "#/components/parameters/Referer"
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioStepAnswerRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
-          "default": {
-            "description": "Response schema is not yet verified; see the route inventory."
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioStepAnswerResult"
+                }
+              }
+            },
+            "description": "Feedback for the chosen option"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
           }
         },
-        "summary": "Source-discovered route handled by submitStepAnswerHandler(deps.ScenarioStore, deps.Logger)",
+        "security": [
+          {
+            "learnerSession": []
+          },
+          {
+            "learnerCookie": []
+          }
+        ],
+        "summary": "Check one choice and return feedback; stores nothing",
         "tags": [
           "scenarios"
         ],
         "x-contract-verification": {
-          "scope": "route/method/handler coverage only; request and response schemas are unverified",
-          "status": "unverified"
+          "scope": "named handler test exists; request/response schemas and validation are not independently verified",
+          "status": "test-evidenced"
         },
+        "x-ios": {
+          "idempotency": "Stateless read of the answer key: safe to retry after a network failure.",
+          "originOrRefererMustBeTrusted": true
+        },
+        "x-known-issues": [
+          "a malformed stepId is answered with 500"
+        ],
         "x-route-source": {
           "guards": [
             "learnerGuard",
@@ -21136,7 +21553,16 @@
           "runtimeConditions": [
             "deps.ScenarioStore != nil && deps.SessionStore != nil"
           ]
-        }
+        },
+        "x-runtime-verification": {
+          "date": "2026-10-23",
+          "environment": "local development stack, disposable account",
+          "method": "curl against http://localhost:18081 and httptest through NewRouter",
+          "note": "Content-Type is not enforced; a body without it is parsed"
+        },
+        "x-verification": [
+          "apps/api-go/internal/httpserver/handler_scenario_test.go"
+        ]
       }
     },
     "/api/scenarios/{scenarioId}": {
@@ -21144,27 +21570,52 @@
         "operationId": "getApiScenariosbyScenarioId",
         "parameters": [
           {
-            "description": "Path token; application-level format and validation are unverified.",
+            "description": "Scenario ID to list attempts for. This route does not validate UUID format; malformed values currently return an empty list.",
             "in": "path",
             "name": "scenarioId",
             "required": true,
             "schema": {
+              "format": "uuid",
               "type": "string"
             }
           }
         ],
         "responses": {
-          "default": {
-            "description": "Response schema is not yet verified; see the route inventory."
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioDetail"
+                }
+              }
+            },
+            "description": "Playable scenario"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
           }
         },
-        "summary": "Source-discovered route handled by getScenarioHandler(deps.ScenarioStore, deps.Logger)",
+        "security": [
+          {
+            "learnerSession": []
+          },
+          {
+            "learnerCookie": []
+          }
+        ],
+        "summary": "Get a scenario with its ordered steps and choices (answer key hidden)",
         "tags": [
           "scenarios"
         ],
         "x-contract-verification": {
-          "scope": "route/method/handler coverage only; request and response schemas are unverified",
-          "status": "unverified"
+          "scope": "named handler test exists; request/response schemas and validation are not independently verified",
+          "status": "test-evidenced"
         },
         "x-route-source": {
           "guards": [
@@ -21174,7 +21625,15 @@
           "runtimeConditions": [
             "deps.ScenarioStore != nil && deps.SessionStore != nil"
           ]
-        }
+        },
+        "x-runtime-verification": {
+          "date": "2026-10-23",
+          "environment": "local development stack, disposable account",
+          "method": "curl against http://localhost:18081 and httptest through NewRouter"
+        },
+        "x-verification": [
+          "apps/api-go/internal/httpserver/handler_scenario_test.go"
+        ]
       }
     },
     "/api/scenarios/{scenarioId}/attempts": {
@@ -21182,28 +21641,57 @@
         "operationId": "getApiScenariosbyScenarioIdAttempts",
         "parameters": [
           {
-            "description": "Path token; application-level format and validation are unverified.",
+            "description": "Scenario ID to list attempts for. This route does not validate UUID format; malformed values currently return an empty list.",
             "in": "path",
             "name": "scenarioId",
             "required": true,
             "schema": {
+              "format": "uuid",
               "type": "string"
             }
           }
         ],
         "responses": {
-          "default": {
-            "description": "Response schema is not yet verified; see the route inventory."
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScenarioAttempt"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The caller's attempts; [] when none exist, another learner owns them, or scenarioId is malformed (the ID is not validated on this route). Errors encountered while iterating database rows may produce partial results because rows.Err() is not checked."
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
           }
         },
-        "summary": "Source-discovered route handled by getScenarioAttemptsHandler(deps.ScenarioStore, deps.Logger)",
+        "security": [
+          {
+            "learnerSession": []
+          },
+          {
+            "learnerCookie": []
+          }
+        ],
+        "summary": "List the caller's completed attempts for a scenario, newest first",
         "tags": [
           "scenarios"
         ],
         "x-contract-verification": {
-          "scope": "route/method/handler coverage only; request and response schemas are unverified",
-          "status": "unverified"
+          "scope": "named handler test exists; request/response schemas and validation are not independently verified",
+          "status": "test-evidenced"
         },
+        "x-known-issues": [
+          "choices is base64-encoded JSON (see ScenarioAttempt.choices)",
+          "row iteration errors are not checked and may return partial results"
+        ],
         "x-route-source": {
           "guards": [
             "learnerGuard"
@@ -21212,7 +21700,15 @@
           "runtimeConditions": [
             "deps.ScenarioStore != nil && deps.SessionStore != nil"
           ]
-        }
+        },
+        "x-runtime-verification": {
+          "date": "2026-10-23",
+          "environment": "local development stack, disposable account",
+          "method": "curl against http://localhost:18081 and httptest through NewRouter"
+        },
+        "x-verification": [
+          "apps/api-go/internal/httpserver/handler_scenario_test.go"
+        ]
       }
     },
     "/api/scenarios/{scenarioId}/complete": {
@@ -21220,27 +21716,78 @@
         "operationId": "postApiScenariosbyScenarioIdComplete",
         "parameters": [
           {
-            "description": "Path token; application-level format and validation are unverified.",
+            "description": "A malformed id is answered with 500 (known defect); use ids returned by GET /api/scenarios.",
             "in": "path",
             "name": "scenarioId",
             "required": true,
             "schema": {
+              "format": "uuid",
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          },
+          {
+            "$ref": "#/components/parameters/Referer"
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioCompleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
-          "default": {
-            "description": "Response schema is not yet verified; see the route inventory."
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioAttemptResult"
+                }
+              }
+            },
+            "description": "Attempt stored"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
           }
         },
-        "summary": "Source-discovered route handled by completeScenarioHandler(deps.ScenarioStore, deps.Logger)",
+        "security": [
+          {
+            "learnerSession": []
+          },
+          {
+            "learnerCookie": []
+          }
+        ],
+        "summary": "Record a finished scenario attempt; the server scores it",
         "tags": [
           "scenarios"
         ],
         "x-contract-verification": {
-          "scope": "route/method/handler coverage only; request and response schemas are unverified",
-          "status": "unverified"
+          "scope": "named handler test exists; request/response schemas and validation are not independently verified",
+          "status": "test-evidenced"
+        },
+        "x-ios": {
+          "idempotency": "NOT idempotent: every successful call inserts a new attempt (no idempotency key, no uniqueness on user + scenario). After an interrupted request, read GET /attempts before retrying.",
+          "originOrRefererMustBeTrusted": true
         },
         "x-route-source": {
           "guards": [
@@ -21251,7 +21798,15 @@
           "runtimeConditions": [
             "deps.ScenarioStore != nil && deps.SessionStore != nil"
           ]
-        }
+        },
+        "x-runtime-verification": {
+          "date": "2026-10-23",
+          "environment": "local development stack, disposable account",
+          "method": "curl against http://localhost:18081 and httptest through NewRouter"
+        },
+        "x-verification": [
+          "apps/api-go/internal/httpserver/handler_scenario_test.go"
+        ]
       }
     },
     "/api/search": {

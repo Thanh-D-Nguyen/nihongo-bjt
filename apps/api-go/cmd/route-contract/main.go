@@ -265,13 +265,18 @@ func buildInventory(routes []routecontract.Operation, paths map[string]any) (inv
 // A named handler test is evidence that a scenario is exercised, not proof
 // that every declared schema field and status code has been validated.
 var verifiedOperations = map[string]struct{ file, test string }{
-	"POST /api/auth/login":           {"handler_login_test.go", "TestLearnerLogin_Success_SetsSecureCookie"},
-	"POST /api/auth/logout":          {"handler_auth_wave6_test.go", "TestAudit159Wave6LearnerAuthSessionLifecycle"},
-	"GET /api/auth/me":               {"handler_profile_test.go", "TestLearnerGetMe_Success"},
-	"GET /api/levels":                {"handler_levels_test.go", "TestLevelListReturnsLocalizedCanonicalLevels"},
-	"GET /api/levels/{code}":         {"handler_levels_test.go", "TestLevelDetailReturnsEstablishedBJTDefinition"},
-	"GET /api/levels/{code}/lessons": {"handler_levels_test.go", "TestLevelLessonsExposePublishedRowsAndLearnerProgress"},
-	"GET /api/search":                {"handler_search_test.go", "TestSearchReturnsClientCompatibleScopedArray"},
+	"POST /api/auth/login":                      {"handler_login_test.go", "TestLearnerLogin_Success_SetsSecureCookie"},
+	"POST /api/auth/logout":                     {"handler_auth_wave6_test.go", "TestAudit159Wave6LearnerAuthSessionLifecycle"},
+	"GET /api/auth/me":                          {"handler_profile_test.go", "TestLearnerGetMe_Success"},
+	"GET /api/levels":                           {"handler_levels_test.go", "TestLevelListReturnsLocalizedCanonicalLevels"},
+	"GET /api/levels/{code}":                    {"handler_levels_test.go", "TestLevelDetailReturnsEstablishedBJTDefinition"},
+	"GET /api/levels/{code}/lessons":            {"handler_levels_test.go", "TestLevelLessonsExposePublishedRowsAndLearnerProgress"},
+	"GET /api/search":                           {"handler_search_test.go", "TestSearchReturnsClientCompatibleScopedArray"},
+	"GET /api/scenarios":                        {"handler_scenario_test.go", "TestScenarioLearnerHTTPContract"},
+	"GET /api/scenarios/{scenarioId}":           {"handler_scenario_test.go", "TestScenarioLearnerHTTPContract"},
+	"GET /api/scenarios/{scenarioId}/attempts":  {"handler_scenario_test.go", "TestScenarioLearnerHTTPContract"},
+	"POST /api/scenarios/steps/{stepId}/answer": {"handler_scenario_test.go", "TestScenarioLearnerHTTPContract"},
+	"POST /api/scenarios/{scenarioId}/complete": {"handler_scenario_test.go", "TestScenarioLearnerHTTPContract"},
 }
 
 func verificationStatus(root, method, path string, evidence any) string {

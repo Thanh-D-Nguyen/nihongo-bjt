@@ -1,0 +1,643 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "DATA-178",
+  "title": "Import missing local seeds and commit pending work",
+  "start_head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+  "preexisting_changes": {
+    ".claude/settings.local.json": "cc85d8531ee4cf5a2051c6c72834fce82b756e7f",
+    "apps/admin/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/admin/tsconfig.tsbuildinfo": "90ec5ebca0f17b8274578260824aafafa844b622",
+    "apps/api-go/cmd/route-contract/main.go": "23b8f394ef51325662bb0d5f94ab43ab4c3d2ec5",
+    "apps/api-go/internal/httpserver/handler_scenario_test.go": "6a5217feafac2b51f88e24f28e02161c590bcac3",
+    "apps/web/next-env.d.ts": "a419cbe4e3a5e8d4b481b851dbf4ac767de069e6",
+    "apps/web/tsconfig.tsbuildinfo": "1e4782e25b12bec67c277d6980951831e2050c39",
+    "docs/api-route-inventory.json": "696dfb5b68f1680f4ae55507ff043cffd33eabe1",
+    "docs/openapi.json": "fb16bea1ec19564e389a2d91090e85eec796b257"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Run all missing non-destructive seed datasets against the loopback local database and verify the expected seed families are present."
+      },
+      {
+        "id": "AC2",
+        "text": "Commit all intended tracked/untracked work, omit generated build caches, and leave the working tree clean."
+      }
+    ],
+    "expected_behavior": "The test confirms existing route contracts, and regenerated API docs cite the test as verification.",
+    "observed_behavior": "The new scenario HTTP integration test exercises five existing routes; generated route inventory/OpenAPI files gain evidence from that test.",
+    "rollback_plan": "Revert the resulting commit to remove the characterization test and regenerate the previous route-contract snapshot; locally seeded content is re-runnable canonical dev data."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "TEST_ONLY",
+      "GENERATED",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "characterization",
+    "rationale": "Existing behavior characterization and regenerated API contract evidence; all currently modified files are intentionally included per user request."
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/api-go/internal/httpserver/handler_scenario.go",
+      "find": "_ = json.NewEncoder(w).Encode(sd)",
+      "replace": "_ = json.NewEncoder(w).Encode(sd.Steps)"
+    },
+    "targets": [
+      {
+        "runner": "go",
+        "package": "./internal/httpserver",
+        "test": "TestScenarioLearnerHTTPContract",
+        "expect": "response is not the expected JSON"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-24T02:18:08.880Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-24T02:18:09.177Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-24T02:18:09.462Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-24T02:21:35.227Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-24T02:22:06.501Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-24T02:22:16.227Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-24T02:24:51.119Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-24T02:30:57.989Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-24T02:34:24.364Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-24T02:35:32.065Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-24T02:41:38.341Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-24T02:42:47.290Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-24T02:42:50.208Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-24T02:48:42.134Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-24T02:50:01.217Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-24T02:50:04.497Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-24T02:55:57.191Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-24T02:56:34.759Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-24T02:56:35.390Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-24T02:23:37.506Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "sensitivity",
+      "outcome": "INSENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_scenario.go",
+        "find": "_ = json.NewEncoder(w).Encode(sd)",
+        "replace": "_ = json.NewEncoder(w).Encode(nil)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioLearnerHTTPContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestScenarioLearnerHTTPContract",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_scenario.go:39:3: declared and not used: sd FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [build failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestScenarioLearnerHTTPContract": "steps are not ordered with their choices"
+      },
+      "fingerprint": "1e196774d1542ea479da78ebba1c17ef0257bf85f6107df3224642080c14b4db"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-24T02:24:34.818Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_scenario.go",
+        "find": "_ = json.NewEncoder(w).Encode(sd)",
+        "replace": "_ = json.NewEncoder(w).Encode(sd.Steps)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioLearnerHTTPContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestScenarioLearnerHTTPContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestScenarioLearnerHTTPContract === RUN TestScenarioLearnerHTTPContract/every_route_needs_a_learner_session 2026/10/24 11:24:33 INFO request method=GET path=/api/scenarios status=401 duration=222.583µs bytes=25 2026/10/24 11:24:33 INFO request method=GET path=/api/scenarios/73ebcd14-6a93-429…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestScenarioLearnerHTTPContract": "response is not the expected JSON"
+      },
+      "fingerprint": "1e196774d1542ea479da78ebba1c17ef0257bf85f6107df3224642080c14b4db"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-24T02:24:50.657Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioLearnerHTTPContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestScenarioLearnerHTTPContract",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1e196774d1542ea479da78ebba1c17ef0257bf85f6107df3224642080c14b4db"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-24T02:27:12.099Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 266,
+        "executed": 266,
+        "passed": 266,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "1e196774d1542ea479da78ebba1c17ef0257bf85f6107df3224642080c14b4db"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-24T02:30:57.629Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1485,
+        "executed": 1485,
+        "passed": 1485,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1485 passed, 0 allowed skip(s)",
+      "fingerprint": "1e196774d1542ea479da78ebba1c17ef0257bf85f6107df3224642080c14b4db"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-24T02:34:23.900Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_scenario.go",
+        "find": "_ = json.NewEncoder(w).Encode(sd)",
+        "replace": "_ = json.NewEncoder(w).Encode(sd.Steps)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioLearnerHTTPContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestScenarioLearnerHTTPContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestScenarioLearnerHTTPContract === RUN TestScenarioLearnerHTTPContract/every_route_needs_a_learner_session 2026/10/24 11:34:22 INFO request method=GET path=/api/scenarios status=401 duration=231.667µs bytes=25 2026/10/24 11:34:22 INFO request method=GET path=/api/scenarios/8f9771bb-5573-4e1…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestScenarioLearnerHTTPContract": "response is not the expected JSON"
+      },
+      "fingerprint": "c2d9a56149284a69f7c32f6785b06eeb3b4e04498ba7efd69163b3fc1405156a"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-24T02:34:31.965Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioLearnerHTTPContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestScenarioLearnerHTTPContract",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestScenarioLearnerHTTPContract === RUN TestScenarioLearnerHTTPContract/every_route_needs_a_learner_session 2026/10/24 11:34:31 INFO request method=GET path=/api/scenarios status=401 duration=258.292µs bytes=25 2026/10/24 11:34:31 INFO request method=GET path=/api/scenarios/fd36341b-5503-459…"
+        }
+      ],
+      "fingerprint": "c2d9a56149284a69f7c32f6785b06eeb3b4e04498ba7efd69163b3fc1405156a"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-24T02:35:23.796Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_scenario.go",
+        "find": "_ = json.NewEncoder(w).Encode(sd)",
+        "replace": "_ = json.NewEncoder(w).Encode(sd.Steps)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioLearnerHTTPContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestScenarioLearnerHTTPContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestScenarioLearnerHTTPContract === RUN TestScenarioLearnerHTTPContract/every_route_needs_a_learner_session 2026/10/24 11:35:22 INFO request method=GET path=/api/scenarios status=401 duration=266.75µs bytes=25 2026/10/24 11:35:22 INFO request method=GET path=/api/scenarios/d85e4258-5f69-4ca7…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestScenarioLearnerHTTPContract": "response is not the expected JSON"
+      },
+      "fingerprint": "f16ffabb030d567907a33a40e4c0eced68fd2d9ee7094e36c2108b3d3abb38c2"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-24T02:35:31.639Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioLearnerHTTPContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestScenarioLearnerHTTPContract",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f16ffabb030d567907a33a40e4c0eced68fd2d9ee7094e36c2108b3d3abb38c2"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-24T02:37:51.254Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 266,
+        "executed": 266,
+        "passed": 266,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "f16ffabb030d567907a33a40e4c0eced68fd2d9ee7094e36c2108b3d3abb38c2"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-24T02:41:37.995Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1485,
+        "executed": 1485,
+        "passed": 1485,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1485 passed, 0 allowed skip(s)",
+      "fingerprint": "f16ffabb030d567907a33a40e4c0eced68fd2d9ee7094e36c2108b3d3abb38c2"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-24T02:42:46.880Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_scenario.go",
+        "find": "_ = json.NewEncoder(w).Encode(sd)",
+        "replace": "_ = json.NewEncoder(w).Encode(sd.Steps)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioLearnerHTTPContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestScenarioLearnerHTTPContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestScenarioLearnerHTTPContract === RUN TestScenarioLearnerHTTPContract/every_route_needs_a_learner_session 2026/10/24 11:42:45 INFO request method=GET path=/api/scenarios status=401 duration=218.167µs bytes=25 2026/10/24 11:42:45 INFO request method=GET path=/api/scenarios/c7b2857c-eb61-449…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestScenarioLearnerHTTPContract": "response is not the expected JSON"
+      },
+      "fingerprint": "9df1f374c081aed3ff82ec03b6e105190e3f2799101087751f416990a2c97437"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-24T02:42:49.796Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioLearnerHTTPContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestScenarioLearnerHTTPContract",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9df1f374c081aed3ff82ec03b6e105190e3f2799101087751f416990a2c97437"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-24T02:45:10.606Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 266,
+        "executed": 266,
+        "passed": 266,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "9df1f374c081aed3ff82ec03b6e105190e3f2799101087751f416990a2c97437"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-24T02:48:41.627Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1485,
+        "executed": 1485,
+        "passed": 1485,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1485 passed, 0 allowed skip(s)",
+      "fingerprint": "9df1f374c081aed3ff82ec03b6e105190e3f2799101087751f416990a2c97437"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-24T02:50:00.792Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_scenario.go",
+        "find": "_ = json.NewEncoder(w).Encode(sd)",
+        "replace": "_ = json.NewEncoder(w).Encode(sd.Steps)"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioLearnerHTTPContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestScenarioLearnerHTTPContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestScenarioLearnerHTTPContract === RUN TestScenarioLearnerHTTPContract/every_route_needs_a_learner_session 2026/10/24 11:49:59 INFO request method=GET path=/api/scenarios status=401 duration=216.708µs bytes=25 2026/10/24 11:49:59 INFO request method=GET path=/api/scenarios/aed48b31-c307-4d9…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestScenarioLearnerHTTPContract": "response is not the expected JSON"
+      },
+      "fingerprint": "28411f1a86ddd17a23926533c5445aa2729196cda9ceee5b64ea3a6eeeac1491"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-24T02:50:04.086Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestScenarioLearnerHTTPContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestScenarioLearnerHTTPContract",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "28411f1a86ddd17a23926533c5445aa2729196cda9ceee5b64ea3a6eeeac1491"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-24T02:52:23.261Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 266,
+        "executed": 266,
+        "passed": 266,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "28411f1a86ddd17a23926533c5445aa2729196cda9ceee5b64ea3a6eeeac1491"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-24T02:55:56.832Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1485,
+        "executed": 1485,
+        "passed": 1485,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1485 passed, 0 allowed skip(s)",
+      "fingerprint": "28411f1a86ddd17a23926533c5445aa2729196cda9ceee5b64ea3a6eeeac1491"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-24T02:56:34.408Z",
+      "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Chandrasekhar",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "ca6557398094788f57d129548699354d449c211b7056308e71487490ce2a0bf8",
+      "attested": true,
+      "fingerprint": "28411f1a86ddd17a23926533c5445aa2729196cda9ceee5b64ea3a6eeeac1491"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-24T02:56:35.370Z",
+    "head": "cfaebefe13ff9a0acc78b7f2b787ee7fc71e3120",
+    "fingerprint": "28411f1a86ddd17a23926533c5445aa2729196cda9ceee5b64ea3a6eeeac1491",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "green": "PASS",
+      "sensitivity": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      ".claude/settings.local.json": "c25f7be991422aeaf3399afb8f560ec07d05dae9",
+      "apps/api-go/cmd/route-contract/main.go": "23b8f394ef51325662bb0d5f94ab43ab4c3d2ec5",
+      "apps/api-go/internal/httpserver/handler_scenario_test.go": "a968b8028779792717ad78587836b968a31915a2",
+      "docs/api-route-inventory.json": "696dfb5b68f1680f4ae55507ff043cffd33eabe1",
+      "docs/openapi.json": "28718a9a2fa89778197c2eec8c4b9665d0860deb"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [
+    "apps/api-go/cmd/route-contract/main.go",
+    "docs/api-route-inventory.json",
+    "docs/openapi.json",
+    "apps/api-go/internal/httpserver/handler_scenario_test.go",
+    "apps/admin/next-env.d.ts",
+    "apps/web/next-env.d.ts",
+    ".claude/settings.local.json",
+    "apps/admin/tsconfig.tsbuildinfo",
+    "apps/web/tsconfig.tsbuildinfo"
+  ]
+}
