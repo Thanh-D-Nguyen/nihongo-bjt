@@ -174,6 +174,22 @@ func TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection(t *testi
 				_, _ = w.Write([]byte(`{"uid":40,"status":"succeeded"}`))
 				return
 			}
+			if r.Method == http.MethodPatch && r.URL.Path == "/indexes/content_search/settings" {
+				var settings struct {
+					Searchable []string `json:"searchableAttributes"`
+					Filterable []string `json:"filterableAttributes"`
+				}
+				if err := json.NewDecoder(r.Body).Decode(&settings); err != nil || len(settings.Searchable) != 3 || settings.Searchable[0] != "title" || len(settings.Filterable) != 1 || settings.Filterable[0] != "kind" {
+					t.Errorf("invalid searchable/filterable attributes: %+v error=%v", settings, err)
+				}
+				w.WriteHeader(http.StatusAccepted)
+				_, _ = w.Write([]byte(`{"taskUid":42}`))
+				return
+			}
+			if r.Method == http.MethodGet && r.URL.Path == "/tasks/42" {
+				_, _ = w.Write([]byte(`{"status":"succeeded"}`))
+				return
+			}
 			if r.Method != http.MethodPost || r.URL.Path != "/indexes/content_search/documents" || r.URL.Query().Get("primaryKey") != "id" {
 				t.Errorf("request=%s %s", r.Method, r.URL.RequestURI())
 			}
@@ -182,10 +198,10 @@ func TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection(t *testi
 		}))
 		defer server.Close()
 		got, err := NewClient(server.URL, "").ReindexDocuments(context.Background(), []Document{{ID: "new", Kind: "lexeme"}}, "")
-		if err != nil || got.Status != "rebuild_enqueued" || len(got.TaskUIDs) != 2 || got.TaskUIDs[0] != 40 || got.TaskUIDs[1] != 41 {
+		if err != nil || got.Status != "rebuild_enqueued" || len(got.TaskUIDs) != 3 || got.TaskUIDs[0] != 40 || got.TaskUIDs[1] != 42 || got.TaskUIDs[2] != 41 {
 			t.Fatalf("first ReindexDocuments() = %+v, err=%v", got, err)
 		}
-		if len(methods) != 4 || methods[0] != "GET /indexes/content_search/documents?fields=id,kind&limit=1000&offset=0" || methods[1] != "POST /indexes" || methods[2] != "GET /tasks/40" || methods[3] != "POST /indexes/content_search/documents?primaryKey=id" {
+		if len(methods) != 6 || methods[0] != "GET /indexes/content_search/documents?fields=id,kind&limit=1000&offset=0" || methods[1] != "POST /indexes" || methods[2] != "GET /tasks/40" || methods[3] != "PATCH /indexes/content_search/settings" || methods[4] != "GET /tasks/42" || methods[5] != "POST /indexes/content_search/documents?primaryKey=id" {
 			t.Fatalf("first-index request sequence=%v", methods)
 		}
 	})
@@ -235,7 +251,7 @@ func TestSearchReadsCanonicalContentSearchIndex(t *testing.T) {
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			t.Errorf("decode request body: %v", err)
 		}
-		if body.Q != "会議" || body.Limit != 10 || body.Offset != 5 || body.MatchingStrategy != "all" || len(body.Filter) != 1 || body.Filter[0] != `kind = "lexeme"` {
+		if body.Q != "会議" || body.Limit != 10 || body.Offset != 5 || body.MatchingStrategy != "last" || len(body.Filter) != 1 || body.Filter[0] != `kind = "lexeme"` {
 			t.Errorf("unexpected Meilisearch query: %+v", body)
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -252,7 +268,7 @@ func TestSearchReadsCanonicalContentSearchIndex(t *testing.T) {
 	}
 }
 
-func TestSearchFallsBackWhenNoResultMatchesEveryQueryTerm(t *testing.T) {
+func TestSearchUsesOneStableMatchingStrategy(t *testing.T) {
 	var strategies []string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
@@ -262,10 +278,6 @@ func TestSearchFallsBackWhenNoResultMatchesEveryQueryTerm(t *testing.T) {
 			t.Errorf("decode request body: %v", err)
 		}
 		strategies = append(strategies, body.MatchingStrategy)
-		if body.MatchingStrategy == "all" {
-			_, _ = w.Write([]byte(`{"estimatedTotalHits":0,"hits":[]}`))
-			return
-		}
 		_, _ = w.Write([]byte(`{"estimatedTotalHits":1,"hits":[{"id":"lex-1","kind":"lexeme","title":"会議室"}]}`))
 	}))
 	defer server.Close()
@@ -274,8 +286,8 @@ func TestSearchFallsBackWhenNoResultMatchesEveryQueryTerm(t *testing.T) {
 	if err != nil || len(resp.Results) != 1 || resp.Results[0].Title != "会議室" {
 		t.Fatalf("Search() = %+v, error = %v", resp, err)
 	}
-	if len(strategies) != 2 || strategies[0] != "all" || strategies[1] != "last" {
-		t.Fatalf("matching strategies = %v, want [all last]", strategies)
+	if len(strategies) != 1 || strategies[0] != "last" {
+		t.Fatalf("matching strategies = %v, want one stable last strategy", strategies)
 	}
 }
 

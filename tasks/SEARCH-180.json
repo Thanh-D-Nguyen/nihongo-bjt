@@ -1,0 +1,492 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "SEARCH-180",
+  "title": "Restore complete canonical search projection and Japanese relevance",
+  "start_head": "797ea60bde559e0019381576d902b35121e2642e",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Canonical DB contains 会議 but local Meilisearch indexes only 17149 of over 556000 documents; restrictive all/last retry masks the incomplete index and changes pagination.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Complete the canonical search projection and verify processed tasks plus indexed document count."
+      },
+      {
+        "id": "AC2",
+        "text": "Kanji 会議 ranks the exact vocabulary first; kana includes 会議 among exact-reading homophones ahead of prefixes; compounds and result details work."
+      }
+    ],
+    "expected_behavior": "A repeatable local reindex command rebuilds every canonical document and verifies completion; search uses one stable matching strategy.",
+    "observed_behavior": "Exact 会議 exists in PostgreSQL but not Meilisearch; two reversed-character matches appear.",
+    "rollback_plan": "Revert code changes; search index can be regenerated from canonical PostgreSQL."
+  },
+  "classification": {
+    "classes": [
+      "SEARCH",
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/search",
+      "test": "TestSearchUsesOneStableMatchingStrategy",
+      "expect": "want one stable last strategy"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/search",
+      "test": "TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection",
+      "expect": "first ReindexDocuments()"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx",
+      "test": "SearchClient saved-entry deep links > keepsAutomaticallySelectedEntryAfterBootstrapDebounce",
+      "expect": "bootstrap query must retain selected detail"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-24T05:05:39.103Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-24T05:07:44.864Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-24T05:07:45.159Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-24T05:08:00.394Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-24T05:11:05.026Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-24T05:11:45.981Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-24T05:12:27.612Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-24T05:17:27.418Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-24T05:18:33.864Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-24T05:19:54.499Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-24T05:20:05.842Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-24T05:20:09.850Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-24T05:26:31.055Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-24T05:27:01.774Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-24T05:08:00.153Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSearchUsesOneStableMatchingStrategy)$ ./internal/search"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/search:TestSearchUsesOneStableMatchingStrategy",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestSearchUsesOneStableMatchingStrategy client_test.go:274: matching strategies = [all], want one stable last strategy --- FAIL: TestSearchUsesOneStableMatchingStrategy (0.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/search:TestSearchUsesOneStableMatchingStrategy": "want one stable last strategy"
+      },
+      "fingerprint": "7b6f7c3e69fa75156ff117d3aeaadc038d5d7085c6e148707b69e1ec7444c396"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-24T05:11:04.121Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSearchUsesOneStableMatchingStrategy|TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection)$ ./internal/search"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/search:TestSearchUsesOneStableMatchingStrategy",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/search [github.com/kotobawork/nihongo-bjt/api-go/internal/search.test] internal/search/rebuild_test.go:37:44: NewClient(server.URL, \"fixture\").VerifyReindex undefined (type *Client has no field or method VerifyReindex) FAIL github.com/kotobawork/ni…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/search:TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/search [github.com/kotobawork/nihongo-bjt/api-go/internal/search.test] internal/search/rebuild_test.go:37:44: NewClient(server.URL, \"fixture\").VerifyReindex undefined (type *Client has no field or method VerifyReindex) FAIL github.com/kotobawork/ni…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/search:TestSearchUsesOneStableMatchingStrategy": "want one stable last strategy",
+        "go:./internal/search:TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection": "first ReindexDocuments()"
+      },
+      "fingerprint": "dfdad7f8e752065cda93105ca569e81359920b5ed3c03d2a938cee23428e85b5"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-24T05:11:45.182Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSearchUsesOneStableMatchingStrategy|TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection)$ ./internal/search"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/search:TestSearchUsesOneStableMatchingStrategy",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestSearchUsesOneStableMatchingStrategy client_test.go:290: matching strategies = [all], want one stable last strategy --- FAIL: TestSearchUsesOneStableMatchingStrategy (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/search:TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection === RUN TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection/first_index_creation client_test.go:202: first ReindexDocuments() = {Status:rebuild_enqueued DocumentCount:1 TaskUIDs:[40 41]}, err=<nil> --- FAIL: Te…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/search:TestSearchUsesOneStableMatchingStrategy": "want one stable last strategy",
+        "go:./internal/search:TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection": "first ReindexDocuments()"
+      },
+      "fingerprint": "a8d20ed1f1f9bcd557ec19e4d7c5429ad1748642f6c2ffbcac7c504127d2df90"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-24T05:12:26.754Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSearchUsesOneStableMatchingStrategy|TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection)$ ./internal/search"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/search:TestSearchUsesOneStableMatchingStrategy",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/search:TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a76f92604b23466ac5c463b077c3aeec309dedc4fe1a01bb4155e421dba01bea"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-24T05:12:35.653Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e",
+      "kind": "command",
+      "gate": "search_integration",
+      "command": "python3 scripts/release/search-check.py",
+      "exit_code": 0,
+      "fingerprint": "a76f92604b23466ac5c463b077c3aeec309dedc4fe1a01bb4155e421dba01bea"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-24T05:17:26.661Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 1491,
+        "executed": 1491,
+        "passed": 1491,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "a76f92604b23466ac5c463b077c3aeec309dedc4fe1a01bb4155e421dba01bea"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-24T05:18:20.057Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 488,
+        "executed": 488,
+        "passed": 487,
+        "failed": 1,
+        "failed_new": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 817,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 1
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "a2c42f0c0b303cded85f3011a8007ae7f9574588b9a7d15af336ecfb31dacd68"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-24T05:18:32.862Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSearchUsesOneStableMatchingStrategy|TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection)$ ./internal/search"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/search:TestSearchUsesOneStableMatchingStrategy",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/search:TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "52bca7a6dce5a5cd3e6d16825d8b66dabe9544916db5568efb4142d89b2ba6da"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-24T05:20:04.975Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 9,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSearchUsesOneStableMatchingStrategy|TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection)$ ./internal/search",
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/search:TestSearchUsesOneStableMatchingStrategy",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestSearchUsesOneStableMatchingStrategy client_test.go:290: matching strategies = [all], want one stable last strategy --- FAIL: TestSearchUsesOneStableMatchingStrategy (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/search:TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection === RUN TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection/first_index_creation client_test.go:202: first ReindexDocuments() = {Status:rebuild_enqueued DocumentCount:1 TaskUIDs:[40 41]}, err=<nil> --- FAIL: Te…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > keepsAutomaticallySelectedEntryAfterBootstrapDebounce",
+          "outcome": "FAIL",
+          "excerpt": "bootstrap query must retain selected detail: expected '' to contain 'lexeme-1'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/search:TestSearchUsesOneStableMatchingStrategy": "want one stable last strategy",
+        "go:./internal/search:TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection": "first ReindexDocuments()",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > keepsAutomaticallySelectedEntryAfterBootstrapDebounce": "bootstrap query must retain selected detail"
+      },
+      "fingerprint": "52bca7a6dce5a5cd3e6d16825d8b66dabe9544916db5568efb4142d89b2ba6da"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-24T05:20:08.910Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestSearchUsesOneStableMatchingStrategy|TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection)$ ./internal/search",
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/search:TestSearchUsesOneStableMatchingStrategy",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/search:TestReindexCreatesMissingIndexAndClearsStaleDocsForEmptyProjection",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx::SearchClient saved-entry deep links > keepsAutomaticallySelectedEntryAfterBootstrapDebounce",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "52bca7a6dce5a5cd3e6d16825d8b66dabe9544916db5568efb4142d89b2ba6da"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-24T05:24:57.431Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1492,
+        "executed": 1492,
+        "passed": 1492,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1492 passed, 0 allowed skip(s)",
+      "fingerprint": "52bca7a6dce5a5cd3e6d16825d8b66dabe9544916db5568efb4142d89b2ba6da"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-24T05:26:03.218Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 488,
+        "executed": 488,
+        "passed": 488,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 817,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "52bca7a6dce5a5cd3e6d16825d8b66dabe9544916db5568efb4142d89b2ba6da"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-24T05:26:29.900Z",
+      "head": "797ea60bde559e0019381576d902b35121e2642e",
+      "kind": "command",
+      "gate": "search_integration",
+      "command": "python3 scripts/release/search-check.py",
+      "exit_code": 0,
+      "fingerprint": "52bca7a6dce5a5cd3e6d16825d8b66dabe9544916db5568efb4142d89b2ba6da"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-24T05:27:01.752Z",
+    "head": "797ea60bde559e0019381576d902b35121e2642e",
+    "fingerprint": "52bca7a6dce5a5cd3e6d16825d8b66dabe9544916db5568efb4142d89b2ba6da",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "search_integration": "PASS"
+    },
+    "files": {
+      "README.md": "e235329f5024de98c94427ffbc2a591b52cc7a00",
+      "apps/api-go/cmd/search-reindex/main.go": "3fcebca37f1001b09223812be6a5d61844e948bf",
+      "apps/api-go/cmd/search-reindex/main_test.go": "19a2287703da3fc5da9fec70f39f4c37241da61b",
+      "apps/api-go/internal/httpserver/handler_admin_operations_search_rebuild.go": "0c8bf93730bdbb317635f9947a109178ced9afc0",
+      "apps/api-go/internal/httpserver/handler_search.go": "190cc1309a2a7ca5301b9820186169e7354e3651",
+      "apps/api-go/internal/search/client.go": "b5fa0e92f7c4bf5c31b90bad8b918eeb5420298d",
+      "apps/api-go/internal/search/client_test.go": "569e6cab1418cd28277b262be8706c28a53ba375",
+      "apps/api-go/internal/search/livecheck/main.go": "cc9e9c57e987a6530a8d138926458390049fa35a",
+      "apps/api-go/internal/search/projection.go": "48de0580b2e2b659d8029110b464897691b5d38f",
+      "apps/api-go/internal/search/rebuild.go": "5b34af2e1b6939e7a6fd5754a631710c325cb381",
+      "apps/web/app/[locale]/search/_components/search-client.deep-link.test.tsx": "84651c085086049e98663366219af017e60e7669",
+      "apps/web/app/[locale]/search/_components/search-client.tsx": "2f8c33bfa69a9f4fa07b89c23fca10ab159b3056",
+      "package.json": "eeaebd99b2d1c51f8fc06fae47798a36037bf08e",
+      "scripts/search-reindex.mjs": "fdd8a4be92147991313c1389ce55ba5e5934881d"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

@@ -320,7 +320,7 @@ export function SearchClient({
   /** Debounced instant search: triggers 300ms after user stops typing */
   useEffect(() => {
     const q = query.trim();
-    if (!q) return;
+    if (!q || q === (searchParamsRef.current.get("q") ?? "").trim()) return;
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       pendingEntryRef.current = null;

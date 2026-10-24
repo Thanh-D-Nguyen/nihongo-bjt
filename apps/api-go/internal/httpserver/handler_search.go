@@ -198,7 +198,7 @@ func reindexHandler(
 		}
 
 		ctx := r.Context()
-		documents, err := loadSearchDocuments(ctx, db, "")
+		documents, err := search.LoadDocuments(ctx, db, "")
 		if err != nil {
 			logger.Error("reindex: load canonical search projection", "error", err)
 			writeJSONError(w, "search projection unavailable", http.StatusInternalServerError)
@@ -215,31 +215,4 @@ func reindexHandler(
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(result)
 	}
-}
-
-func loadSearchDocuments(ctx context.Context, db *pgxpool.Pool, kind string) ([]search.Document, error) {
-	if db == nil {
-		return nil, fmt.Errorf("database unavailable")
-	}
-	rows, err := db.Query(ctx, `
-		SELECT id::text, kind, title, reading, description
-		FROM reporting.v_content_search_documents
-		WHERE ($1 = '' OR kind = $1)
-		ORDER BY kind, id`, kind)
-	if err != nil {
-		return nil, fmt.Errorf("query canonical search projection: %w", err)
-	}
-	defer rows.Close()
-	documents := make([]search.Document, 0)
-	for rows.Next() {
-		var document search.Document
-		if err := rows.Scan(&document.ID, &document.Kind, &document.Title, &document.Reading, &document.Description); err != nil {
-			return nil, fmt.Errorf("scan canonical search projection: %w", err)
-		}
-		documents = append(documents, document)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate canonical search projection: %w", err)
-	}
-	return documents, nil
 }

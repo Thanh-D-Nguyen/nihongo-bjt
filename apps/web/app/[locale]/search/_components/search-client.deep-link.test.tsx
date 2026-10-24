@@ -28,7 +28,7 @@ vi.mock("../../../_components/nav-icons", () => ({ IconSearch: () => null }));
 vi.mock("../../../_components/search-dropdown", () => ({ SearchDropdown: () => null }));
 vi.mock("../../_components/ads/ad-slot", () => ({ AdSlot: () => null }));
 vi.mock("./search-detail-panel", () => ({
-  SearchDetailPanel: () => null,
+  SearchDetailPanel: ({ result }: { result: { id: string } | null }) => <div data-search-selected>{result?.id}</div>,
   normalizeKanjiDetailDto: () => ({ character: "" })
 }));
 vi.mock("./search-highlight", () => ({ HighlightMatch: ({ text }: { text: string }) => <span>{text}</span> }));
@@ -156,6 +156,23 @@ describe("SearchClient saved-entry deep links", () => {
 
     expect(mocks.fetch).toHaveBeenCalledWith(expect.stringContaining("/api/content/lexemes/lexeme-1"));
     expect(mocks.replace).toHaveBeenCalledWith(expect.stringContaining("entry=lexeme%3Alexeme-1"), expect.anything());
+    await act(async () => root.unmount());
+    container.remove();
+  });
+
+  it("keepsAutomaticallySelectedEntryAfterBootstrapDebounce", async () => {
+    mocks.params = new URLSearchParams({ q: "会議" });
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(<SearchClient adLabels={messages.adSurface} labels={messages.search} locale="vi" />);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    });
+    expect(container.querySelector("[data-search-selected]")?.textContent, "bootstrap query must retain selected detail").toContain("lexeme-1");
     await act(async () => root.unmount());
     container.remove();
   });

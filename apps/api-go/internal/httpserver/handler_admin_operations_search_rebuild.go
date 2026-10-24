@@ -43,7 +43,7 @@ func adminOpsSearchRebuildHandler(db *pgxpool.Pool, searchClient *search.Client,
 		}
 
 		ctx := r.Context()
-		documents, err := loadSearchDocuments(ctx, db, "")
+		documents, err := search.LoadDocuments(ctx, db, "")
 		if err != nil {
 			logger.Error("load search projection", "error", err)
 			writeJSONError(w, "search projection unavailable", http.StatusInternalServerError)
@@ -97,7 +97,7 @@ func adminOpsSearchRebuildPartialHandler(db *pgxpool.Pool, searchClient *search.
 		}
 
 		ctx := r.Context()
-		documents, err := loadSearchDocuments(ctx, db, req.ContentType)
+		documents, err := search.LoadDocuments(ctx, db, req.ContentType)
 		if err != nil {
 			logger.Error("load partial search projection", "error", err, "contentType", req.ContentType)
 			writeJSONError(w, "search projection unavailable", http.StatusInternalServerError)

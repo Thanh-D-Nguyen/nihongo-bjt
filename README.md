@@ -56,6 +56,11 @@ docker compose stop postgres redis meilisearch mailpit
 
 ### Troubleshooting
 
+After importing canonical content, run `pnpm search:reindex` to rebuild the local
+Meilisearch projection from PostgreSQL. It processes every document, removes stale
+entries, waits for indexing tasks and checks the indexed count against the source.
+A healthy Meilisearch process alone does not mean its content is complete.
+
 - **Missing tool:** install the prerequisite named in the error and retry. For Caddy on macOS, use `brew install caddy`.
 - **Docker unavailable:** the script waits up to 120 seconds for Docker Desktop. Inspect Docker Desktop if it cannot become ready. A remote Docker context is not suitable for this local stack.
 - **Port occupied:** inspect `lsof -nP -iTCP:<port> -sTCP:LISTEN` and stop the owning development server before retrying. The script never kills an existing listener. App ports are 3000, 3001, 4001, and 18081.

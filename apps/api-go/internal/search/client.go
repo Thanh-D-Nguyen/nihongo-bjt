@@ -113,50 +113,43 @@ func (c *Client) Search(ctx context.Context, query, scope string, limit, offset 
 		Filter           []string `json:"filter,omitempty"`
 		MatchingStrategy string   `json:"matchingStrategy"`
 	}
-	body := meiliRequest{Q: query, Limit: limit, Offset: offset, MatchingStrategy: "all"}
+	body := meiliRequest{Q: query, Limit: limit, Offset: offset, MatchingStrategy: "last"}
 	if scope != "" {
 		body.Filter = []string{fmt.Sprintf("kind = %q", scope)}
 	}
-	for _, strategy := range []string{"all", "last"} {
-		body.MatchingStrategy = strategy
-		bodyBytes, err := json.Marshal(body)
-		if err != nil {
-			return nil, fmt.Errorf("encode search request: %w", err)
-		}
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/indexes/"+IndexContent+"/search", bytes.NewReader(bodyBytes))
-		if err != nil {
-			return nil, fmt.Errorf("create search request: %w", err)
-		}
-		req.Header.Set("Content-Type", "application/json")
-		if c.apiKey != "" {
-			req.Header.Set("Authorization", "Bearer "+c.apiKey)
-		}
-
-		resp, err := c.httpClient.Do(req)
-		if err != nil {
-			return nil, fmt.Errorf("search request failed: %w", err)
-		}
-		if resp.StatusCode != http.StatusOK {
-			resp.Body.Close()
-			return nil, fmt.Errorf("search request: status %d", resp.StatusCode)
-		}
-		var result struct {
-			EstimatedTotalHits int64          `json:"estimatedTotalHits"`
-			Hits               []SearchResult `json:"hits"`
-		}
-		decodeErr := json.NewDecoder(resp.Body).Decode(&result)
-		resp.Body.Close()
-		if decodeErr != nil {
-			return nil, fmt.Errorf("decode search response: %w", decodeErr)
-		}
-		if result.Hits == nil {
-			result.Hits = []SearchResult{}
-		}
-		if len(result.Hits) > 0 || strategy == "last" {
-			return &SearchResponse{Query: query, Type: scope, Total: result.EstimatedTotalHits, Limit: limit, Offset: offset, Results: result.Hits}, nil
-		}
+	bodyBytes, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf("encode search request: %w", err)
 	}
-	return nil, fmt.Errorf("search request returned no matching strategy")
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/indexes/"+IndexContent+"/search", bytes.NewReader(bodyBytes))
+	if err != nil {
+		return nil, fmt.Errorf("create search request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if c.apiKey != "" {
+		req.Header.Set("Authorization", "Bearer "+c.apiKey)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("search request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("search request: status %d", resp.StatusCode)
+	}
+	var result struct {
+		EstimatedTotalHits int64          `json:"estimatedTotalHits"`
+		Hits               []SearchResult `json:"hits"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("decode search response: %w", err)
+	}
+	if result.Hits == nil {
+		result.Hits = []SearchResult{}
+	}
+	return &SearchResponse{Query: query, Type: scope, Total: result.EstimatedTotalHits, Limit: limit, Offset: offset, Results: result.Hits}, nil
 }
 
 // ReindexDocuments replaces the requested content projection. An empty kind reconciles the full index.
@@ -188,8 +181,16 @@ func (c *Client) ReindexDocuments(ctx context.Context, documents []Document, kin
 			return result, fmt.Errorf("create content search index: %w", err)
 		}
 		result.TaskUIDs = append(result.TaskUIDs, uid)
-		if err := c.waitForTask(ctx, uid); err != nil {
+		if err := c.waitForTask(ctx, uid, defaultTimeout); err != nil {
 			return result, fmt.Errorf("create content search index task %d: %w", uid, err)
+		}
+		uid, err = c.ConfigureIndex(ctx)
+		if err != nil {
+			return result, fmt.Errorf("configure content search index: %w", err)
+		}
+		result.TaskUIDs = append(result.TaskUIDs, uid)
+		if err := c.waitForTask(ctx, uid, defaultTimeout); err != nil {
+			return result, fmt.Errorf("configure content search index task %d: %w", uid, err)
 		}
 	}
 	for start := 0; start < len(documents); start += 1000 {
@@ -313,8 +314,8 @@ func (c *Client) enqueueTask(ctx context.Context, method, path string, body []by
 	return *task.TaskUID, nil
 }
 
-func (c *Client) waitForTask(ctx context.Context, taskUID int64) error {
-	deadline := time.NewTimer(defaultTimeout)
+func (c *Client) waitForTask(ctx context.Context, taskUID int64, timeout time.Duration) error {
+	deadline := time.NewTimer(timeout)
 	defer deadline.Stop()
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
