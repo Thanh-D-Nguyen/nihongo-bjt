@@ -1,0 +1,122 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "CI-244",
+  "title": "Fix pnpm setup duplicate-version rejection in CI",
+  "start_head": "4035d1faef8466f881dc4ac3015c47680b897c83",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "All CI jobs obtain pnpm from packageManager without duplicate workflow version declaration and install dependencies successfully"
+      }
+    ],
+    "expected_behavior": "pnpm/action-setup v4 reads packageManager from package.json in all three jobs",
+    "observed_behavior": "CI pnpm/action-setup v4 fails all jobs due to duplicate explicit version and packageManager integrity-hashed version",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": {
+    "category": "config_only",
+    "reason": "GitHub pnpm/action-setup v4 self-installer fails with a duplicate version check before tests can run; the failing remote workflow log is the reproduction and the change is configuration only",
+    "declared_before_red": true
+  },
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-25T11:05:34.096Z",
+      "head": "4035d1faef8466f881dc4ac3015c47680b897c83"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-25T11:05:34.323Z",
+      "head": "4035d1faef8466f881dc4ac3015c47680b897c83"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-25T11:05:34.542Z",
+      "head": "4035d1faef8466f881dc4ac3015c47680b897c83"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-25T11:08:13.461Z",
+      "head": "4035d1faef8466f881dc4ac3015c47680b897c83"
+    },
+    {
+      "state": "EXCEPTION_APPROVED",
+      "at": "2026-10-25T11:09:31.631Z",
+      "head": "4035d1faef8466f881dc4ac3015c47680b897c83"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-25T11:10:35.335Z",
+      "head": "4035d1faef8466f881dc4ac3015c47680b897c83"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-25T11:08:13.268Z",
+      "head": "4035d1faef8466f881dc4ac3015c47680b897c83",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 266,
+        "executed": 266,
+        "passed": 266,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "2c76fbc7f98a7830f236fcd974e8a93e080ac867b5cbc63ae72f9aad508b40a8"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-25T11:09:31.467Z",
+      "head": "4035d1faef8466f881dc4ac3015c47680b897c83",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model sonnet --effort medium --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [],
+      "package_sha256": "5f930c881836e74b6c53aa206c90ea8e96fc1644e5e32a52b3ebf01a02e09c6f",
+      "fingerprint": "2c76fbc7f98a7830f236fcd974e8a93e080ac867b5cbc63ae72f9aad508b40a8"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-25T11:10:35.316Z",
+    "head": "4035d1faef8466f881dc4ac3015c47680b897c83",
+    "fingerprint": "2c76fbc7f98a7830f236fcd974e8a93e080ac867b5cbc63ae72f9aad508b40a8",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "suite_harness": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      ".github/workflows/ci.yml": "acc9008b00af2e75005a92b0c75737777cd4b003"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}
