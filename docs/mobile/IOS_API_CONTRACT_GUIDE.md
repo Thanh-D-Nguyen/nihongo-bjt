@@ -30,11 +30,32 @@ is not a JWT and there is no refresh-token endpoint. Sessions expire after
 session returns 401 { "error": "unauthorized" }.
 
 The Go CSRF middleware currently requires an allowlisted HTTP(S) Origin or
-Referer on every unsafe request, including login and logout. A native client
+Referer on unsafe routes with CSRFGuard, including password login and logout. A native client
 that sends neither header configured in CORSOrigins receives 403; the
 repository's current Flutter auth client sends neither. This is a
 backend/mobile integration blocker, not a cue to bypass CSRF or invent a
 native exception.
+
+POST /api/auth/google is a separate native-compatible JSON sign-in endpoint.
+It accepts `{ "idToken": "<Google ID token>" }`, requires
+`Content-Type: application/json`, and verifies the Google signature,
+audience, issuer, expiration, and verified email. The mobile Google SDK must
+request an ID token using the **Web OAuth client ID** configured on the Go
+server as `GOOGLE_OAUTH_CLIENT_ID` (and on web as
+`NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID`). The native app can send the request
+without an Origin header. Success returns the same `{ "ok": true,
+"token": "<opaque session token>" }` and `bjt_web_session` cookie as
+password login, with the same 24-hour session lifetime. Responses include
+400 (malformed request), 401 (invalid Google credential), 409 (email belongs
+to another existing account; no automatic link), 429 (rate limited),
+500 (server error), and 503 (Google login is not configured).
+
+The iOS/Android app must store only the returned opaque application session
+token in its secure credential store and use `Authorization: Bearer <token>`
+for API requests. Do not treat the Google ID token as an app session. The
+existing logout CSRF limitation above still applies to native clients;
+clear the locally stored token on logout and report rejected server-side
+revocation rather than claiming it succeeded.
 
 POST /api/auth/logout revokes only the current server-side session, clears
 the browser cookie, and returns { "ok": true }. Clear the locally stored
@@ -56,7 +77,7 @@ schema.
 
 ## Endpoints with named handler test evidence (schemas not fully verified)
 
-- Auth/profile: POST /api/auth/login, GET /api/auth/me,
+- Auth/profile: POST /api/auth/login, POST /api/auth/google, GET /api/auth/me,
   POST /api/auth/logout.
 - Content search: GET /api/search. GET /api/content/lexemes and
   GET /api/content/lexemes/{id} have documented schemas but lack test evidence;

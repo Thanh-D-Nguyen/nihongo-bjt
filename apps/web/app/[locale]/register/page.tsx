@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useCallback, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -8,6 +8,7 @@ import { useGoAuth } from "../../../lib/go-auth-provider";
 import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
+import { GoogleLoginButton } from "../login/google-login-button";
 
 export default function RegisterPage() {
   const params = useParams<{ locale: string }>();
@@ -23,6 +24,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const googleError = useCallback((status: number) => setError(status === 409 ? t.userExists : t.registrationFailed), [t.userExists, t.registrationFailed]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -169,6 +171,8 @@ export default function RegisterPage() {
             {submitting ? t.submitting : t.primaryCta}
           </button>
         </form>
+
+        <GoogleLoginButton locale={locale} destination={`/${locale}`} label={messages.auth.login.continueGoogle} onError={googleError} />
 
         <div className="text-center text-sm">
           <span className="text-muted">{t.loginLead} </span>

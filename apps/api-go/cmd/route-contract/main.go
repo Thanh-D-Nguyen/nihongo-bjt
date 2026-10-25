@@ -265,6 +265,7 @@ func buildInventory(routes []routecontract.Operation, paths map[string]any) (inv
 // A named handler test is evidence that a scenario is exercised, not proof
 // that every declared schema field and status code has been validated.
 var verifiedOperations = map[string]struct{ file, test string }{
+	"POST /api/auth/google":                     {"handler_google_login_test.go", "TestGoogleLoginCreatesIdentityAndReusesIt"},
 	"POST /api/auth/login":                      {"handler_login_test.go", "TestLearnerLogin_Success_SetsSecureCookie"},
 	"POST /api/auth/logout":                     {"handler_auth_wave6_test.go", "TestAudit159Wave6LearnerAuthSessionLifecycle"},
 	"GET /api/auth/me":                          {"handler_profile_test.go", "TestLearnerGetMe_Success"},

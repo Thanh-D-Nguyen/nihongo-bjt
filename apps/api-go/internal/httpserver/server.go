@@ -41,6 +41,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/search"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/studyplan"
+	"google.golang.org/api/idtoken"
 )
 
 // Dependencies holds external dependencies required by the HTTP server.
@@ -167,6 +168,14 @@ func NewRouter(deps Dependencies) http.Handler {
 				deps.RateLimiter, deps.Logger, deps.Config.CookieSecure,
 			))
 		})
+	}
+	// Native Google sign-in has no browser Origin header; accept JSON only,
+	// require a Google-signed token, and rely on the configured CORS policy.
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		r.Post("/api/auth/google", googleLoginHandler(
+			deps.DBPool, deps.SessionStore, deps.RateLimiter, deps.Logger,
+			deps.Config.CookieSecure, deps.Config.GoogleOAuthClientID, idtoken.Validate,
+		))
 	}
 	if deps.CredentialStore != nil && deps.RBACStore != nil && deps.SessionStore != nil {
 		r.Group(func(ar chi.Router) {

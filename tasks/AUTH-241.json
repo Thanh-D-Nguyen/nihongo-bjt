@@ -1,0 +1,851 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUTH-241",
+  "title": "Google learner login for web and mobile contract",
+  "start_head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Google web sign-in uses verified Google ID tokens and creates/reuses one learner identity"
+      },
+      {
+        "id": "AC2",
+        "text": "Google email collisions never automatically link password accounts"
+      },
+      {
+        "id": "AC3",
+        "text": "Native mobile can post Google ID token to Go API and receive the existing learner session contract"
+      },
+      {
+        "id": "AC4",
+        "text": "Web login/register display Google login and preserve safe return URL"
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "AUTH_SECURITY",
+      "API_CONTRACT",
+      "UI_ONLY"
+    ],
+    "change_kind": "add",
+    "rationale": ""
+  },
+  "red_exception": {
+    "category": "new_component",
+    "reason": "New Google token verification handler and test verifier interface do not exist in baseline; RED cannot compile",
+    "declared_before_red": true
+  },
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestGoogleLoginRejectsMalformedAndUnverifiedTokens",
+      "expect": "undefined: googleLoginHandler"
+    }
+  ],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/api-go/internal/httpserver/handler_google_login.go",
+      "find": "!verified || parseErr != nil",
+      "replace": "verified || parseErr != nil"
+    },
+    "targets": [
+      {
+        "runner": "go",
+        "package": "./internal/httpserver",
+        "test": "TestGoogleLoginRejectsMalformedAndUnverifiedTokens",
+        "expect": "got 503 expected 401"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-25T05:23:19.691Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-25T05:25:09.673Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-25T05:25:09.989Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-25T05:25:57.520Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-25T05:31:22.003Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-25T05:36:48.327Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-25T05:37:01.048Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-25T05:41:01.328Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-25T05:43:44.160Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-25T05:48:51.429Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-25T06:11:14.941Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-25T06:13:36.514Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-25T06:13:54.950Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-25T06:18:43.933Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-25T06:23:06.802Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-25T06:23:28.489Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-25T06:28:40.607Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8"
+    },
+    {
+      "state": "EXCEPTION_APPROVED",
+      "at": "2026-10-25T06:30:36.452Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-25T06:30:47.509Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-25T05:25:19.393Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "red",
+      "outcome": "TOOL_FAILURE",
+      "mode": "in_place",
+      "production_at_base": true,
+      "message": "go test produced no JSON events for ./internal/httpserver: go: updates to go.mod needed; to update it: go mod tidy",
+      "expects": {
+        "go:./internal/httpserver:TestGoogleLoginRejectsMalformedAndUnverifiedTokens": "undefined: googleLoginHandler"
+      },
+      "fingerprint": "0b4c7f5f8f03ad51615876f6ad1a2ed8b88cdf59fdaa39bacc664f277d6e7df3"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-25T05:25:48.889Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGoogleLoginRejectsMalformedAndUnverifiedTokens)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGoogleLoginRejectsMalformedAndUnverifiedTokens",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_google_login_test.go:19:59: undefined: googleTokenVerifier internal/httpserver/handler_google_login_test.go:46:14: undefined: googleLoginHand…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGoogleLoginRejectsMalformedAndUnverifiedTokens": "undefined: googleLoginHandler"
+      },
+      "fingerprint": "498b3a5f7a76b8a051e113ab2281d8d8e0815e99357c83002a1ef886a8741ea6"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-25T05:31:21.239Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGoogleLoginRejectsMalformedAndUnverifiedTokens)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGoogleLoginRejectsMalformedAndUnverifiedTokens",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f1bad397fa6ada0b4823352bbab3abde2e000e2605ad81c6abdb64cff23d2f7b"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-25T05:36:47.523Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_google_login.go",
+        "find": "!verified || parseErr != nil",
+        "replace": "verified || parseErr != nil"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGoogleLoginRejectsMalformedAndUnverifiedTokens)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGoogleLoginRejectsMalformedAndUnverifiedTokens",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGoogleLoginRejectsMalformedAndUnverifiedTokens handler_google_login_test.go:56: body={\"idToken\":\"signed-google-token\"} email=\"valid@example.com\" verified=false: got 503 expected 401 ({\"error\":\"service unavailable\"} ) --- FAIL: TestGoogleLoginRejectsMalformedAndUnverifiedTokens (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGoogleLoginRejectsMalformedAndUnverifiedTokens": "got 503 expected 401"
+      },
+      "fingerprint": "851b638e862ae35e7d2387e16e94dbd35119cff4f42529004acdf18bbc09d98d"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-25T05:37:00.337Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGoogleLoginRejectsMalformedAndUnverifiedTokens)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGoogleLoginRejectsMalformedAndUnverifiedTokens",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "851b638e862ae35e7d2387e16e94dbd35119cff4f42529004acdf18bbc09d98d"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-25T05:38:02.205Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 1517,
+        "executed": 1517,
+        "passed": 1515,
+        "failed": 2,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "go test failed (exit 1; 2 failing test(s), 2 failing package(s))",
+      "fingerprint": "851b638e862ae35e7d2387e16e94dbd35119cff4f42529004acdf18bbc09d98d"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-25T05:38:59.199Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 493,
+        "executed": 493,
+        "passed": 493,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 824,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "851b638e862ae35e7d2387e16e94dbd35119cff4f42529004acdf18bbc09d98d"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-25T05:41:00.451Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID=test-web-client.apps.googleusercontent.com pnpm exec playwright test e2e/google-login.spec.ts",
+      "exit_code": 1,
+      "fingerprint": "85fdaade26b2247957bf953452301f10a6fa6ae16bb245c7c0ca53a2b361c272"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-25T05:42:45.287Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_SKIP_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 pnpm exec playwright test e2e/google-login.spec.ts",
+      "exit_code": 0,
+      "fingerprint": "85fdaade26b2247957bf953452301f10a6fa6ae16bb245c7c0ca53a2b361c272"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-25T05:43:40.012Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_google_login.go",
+        "find": "!verified || parseErr != nil",
+        "replace": "verified || parseErr != nil"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGoogleLoginRejectsMalformedAndUnverifiedTokens)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGoogleLoginRejectsMalformedAndUnverifiedTokens",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGoogleLoginRejectsMalformedAndUnverifiedTokens handler_google_login_test.go:56: body={\"idToken\":\"signed-google-token\"} email=\"valid@example.com\" verified=false: got 503 expected 401 ({\"error\":\"service unavailable\"} ) --- FAIL: TestGoogleLoginRejectsMalformedAndUnverifiedTokens (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGoogleLoginRejectsMalformedAndUnverifiedTokens": "got 503 expected 401"
+      },
+      "fingerprint": "85fdaade26b2247957bf953452301f10a6fa6ae16bb245c7c0ca53a2b361c272"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-25T05:43:43.363Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGoogleLoginRejectsMalformedAndUnverifiedTokens)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGoogleLoginRejectsMalformedAndUnverifiedTokens",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "85fdaade26b2247957bf953452301f10a6fa6ae16bb245c7c0ca53a2b361c272"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-25T05:48:06.918Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1517,
+        "executed": 1517,
+        "passed": 1517,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1517 passed, 0 allowed skip(s)",
+      "fingerprint": "85fdaade26b2247957bf953452301f10a6fa6ae16bb245c7c0ca53a2b361c272"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-25T05:48:50.457Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 493,
+        "executed": 493,
+        "passed": 493,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 824,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "85fdaade26b2247957bf953452301f10a6fa6ae16bb245c7c0ca53a2b361c272"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-25T06:03:59.406Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model sonnet --effort high --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "blocker",
+          "file": "e2e/google-login.spec.ts",
+          "summary": "AC4 (preserve safe return URL) not pinned: test uses returnTo=/vi which equals the default fallback, so it passes even if returnTo is ignored; no unsafe-returnTo or register-page coverage"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_google_login_test.go",
+          "summary": "No router-level test (503 without client ID, Origin-less native path outside CSRF) and no tests for wrong audience/issuer/expired, inactive status, non-JSON content type, or 429"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_google_login.go",
+          "summary": "Concurrent first login for the same subject/email returns 409 'account already exists' to the legitimate user; retry subject lookup after conflict"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/app/api/auth/google/route.ts",
+          "summary": "Origin compared to req.nextUrl.origin may 403 all logins behind a reverse proxy that does not preserve Host; client IP not forwarded so rate-limit bucket may be shared"
+        },
+        {
+          "severity": "minor",
+          "file": "tasks/AUTH-241.json",
+          "summary": "Evidence #6 suite_go VIOLATION (2 failures) before the PASS is unexplained; rule out flakiness in the new DB-backed tests"
+        },
+        {
+          "severity": "minor",
+          "file": ".env.example",
+          "summary": "Web Client ID explanatory comment placed above GOOGLE_OAUTH_CLIENT_SECRET instead of GOOGLE_OAUTH_CLIENT_ID"
+        }
+      ],
+      "package_sha256": "f5aecc7b93695a198af0c9266b458c686df3d56709b24803b610cf654ff58d2a",
+      "fingerprint": "85fdaade26b2247957bf953452301f10a6fa6ae16bb245c7c0ca53a2b361c272"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-25T06:11:14.100Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGoogleLoginRejectsMalformedAndUnverifiedTokens)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGoogleLoginRejectsMalformedAndUnverifiedTokens",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d1c195a402eeee7ac4584c942d01517884ff25586e22f4f3cbd37af496a0a4e4"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-25T06:11:30.504Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_google_login.go",
+        "find": "!verified || parseErr != nil",
+        "replace": "verified || parseErr != nil"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGoogleLoginRejectsMalformedAndUnverifiedTokens)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGoogleLoginRejectsMalformedAndUnverifiedTokens",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGoogleLoginRejectsMalformedAndUnverifiedTokens handler_google_login_test.go:56: body={\"idToken\":\"signed-google-token\"} email=\"valid@example.com\" verified=false: got 503 expected 401 ({\"error\":\"service unavailable\"} ) --- FAIL: TestGoogleLoginRejectsMalformedAndUnverifiedTokens (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGoogleLoginRejectsMalformedAndUnverifiedTokens": "got 503 expected 401"
+      },
+      "fingerprint": "d1c195a402eeee7ac4584c942d01517884ff25586e22f4f3cbd37af496a0a4e4"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-25T06:11:49.515Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_SKIP_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 pnpm exec playwright test e2e/google-login.spec.ts",
+      "exit_code": 1,
+      "fingerprint": "d1c195a402eeee7ac4584c942d01517884ff25586e22f4f3cbd37af496a0a4e4"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-25T06:13:35.695Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_SKIP_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 pnpm exec playwright test e2e/google-login.spec.ts --repeat-each=2",
+      "exit_code": 0,
+      "fingerprint": "37bb2ababd869f116f50191545aa9b96d26f628da2a5fb7447d321f9d7f4b9fb"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-25T06:13:54.106Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGoogleLoginRejectsMalformedAndUnverifiedTokens)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGoogleLoginRejectsMalformedAndUnverifiedTokens",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "37bb2ababd869f116f50191545aa9b96d26f628da2a5fb7447d321f9d7f4b9fb"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-25T06:14:09.082Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_google_login.go",
+        "find": "!verified || parseErr != nil",
+        "replace": "verified || parseErr != nil"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGoogleLoginRejectsMalformedAndUnverifiedTokens)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGoogleLoginRejectsMalformedAndUnverifiedTokens",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGoogleLoginRejectsMalformedAndUnverifiedTokens handler_google_login_test.go:56: body={\"idToken\":\"signed-google-token\"} email=\"valid@example.com\" verified=false: got 503 expected 401 ({\"error\":\"service unavailable\"} ) --- FAIL: TestGoogleLoginRejectsMalformedAndUnverifiedTokens (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGoogleLoginRejectsMalformedAndUnverifiedTokens": "got 503 expected 401"
+      },
+      "fingerprint": "37bb2ababd869f116f50191545aa9b96d26f628da2a5fb7447d321f9d7f4b9fb"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-25T06:17:52.454Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1517,
+        "executed": 1517,
+        "passed": 1517,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1517 passed, 0 allowed skip(s)",
+      "fingerprint": "37bb2ababd869f116f50191545aa9b96d26f628da2a5fb7447d321f9d7f4b9fb"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-25T06:18:43.067Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 493,
+        "executed": 493,
+        "passed": 493,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 824,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "37bb2ababd869f116f50191545aa9b96d26f628da2a5fb7447d321f9d7f4b9fb"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-25T06:20:35.505Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model sonnet --effort high --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/web/app/api/auth/google/route.ts",
+          "summary": "BFF does not forward X-Forwarded-For (unlike auth-post-proxy.ts), so Go keys its only limiter bucket 'ip:google:<proxy IP>' for all web users: 10 req/min site-wide, trivially exhausted by one client t…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_google_login_test.go",
+          "summary": "Handler-owned checks (issuer, expiry, empty subject, verifier error, 503 unconfigured, content-type, 429) are untested, and no router-level test proves /api/auth/google is mounted outside CSRFGuard an…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_google_login.go",
+          "summary": "Concurrent first logins for the same new user make the loser return 409 via ON CONFLICT (email); the errors.Is(err, pgx.ErrNoRows) branch is unreachable dead code."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_google_login_test.go",
+          "summary": "DB-test cleanup only runs on the success path and leaves profile rows behind if an assertion fails."
+        }
+      ],
+      "package_sha256": "cdc057d45fe1d8661a97bc1bacac8d39c0b5fa5f629767fd99fbe135649c33f1",
+      "fingerprint": "37bb2ababd869f116f50191545aa9b96d26f628da2a5fb7447d321f9d7f4b9fb"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-25T06:23:05.924Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "env PLAYWRIGHT_SKIP_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 pnpm exec playwright test e2e/google-login.spec.ts --repeat-each=2",
+      "exit_code": 0,
+      "fingerprint": "ff342f1f42d68bf1c5ddb00082f504dff51fb9bf1fc886fbaff3db0381c429d0"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-25T06:23:27.666Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGoogleLoginRejectsMalformedAndUnverifiedTokens)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGoogleLoginRejectsMalformedAndUnverifiedTokens",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ff342f1f42d68bf1c5ddb00082f504dff51fb9bf1fc886fbaff3db0381c429d0"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-25T06:23:44.588Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_google_login.go",
+        "find": "!verified || parseErr != nil",
+        "replace": "verified || parseErr != nil"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGoogleLoginRejectsMalformedAndUnverifiedTokens)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGoogleLoginRejectsMalformedAndUnverifiedTokens",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGoogleLoginRejectsMalformedAndUnverifiedTokens handler_google_login_test.go:56: body={\"idToken\":\"signed-google-token\"} email=\"valid@example.com\" verified=false: got 503 expected 401 ({\"error\":\"service unavailable\"} ) --- FAIL: TestGoogleLoginRejectsMalformedAndUnverifiedTokens (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGoogleLoginRejectsMalformedAndUnverifiedTokens": "got 503 expected 401"
+      },
+      "fingerprint": "ff342f1f42d68bf1c5ddb00082f504dff51fb9bf1fc886fbaff3db0381c429d0"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-25T06:27:44.561Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1517,
+        "executed": 1517,
+        "passed": 1517,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1517 passed, 0 allowed skip(s)",
+      "fingerprint": "ff342f1f42d68bf1c5ddb00082f504dff51fb9bf1fc886fbaff3db0381c429d0"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-25T06:28:39.734Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 493,
+        "executed": 493,
+        "passed": 493,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 824,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "ff342f1f42d68bf1c5ddb00082f504dff51fb9bf1fc886fbaff3db0381c429d0"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-25T06:30:35.613Z",
+      "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model sonnet --effort high --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_google_login.go",
+          "summary": "Concurrent first-time logins for the same new subject can return a spurious 409 because the email conflict is not re-resolved by subject"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/app/api/auth/google/route.ts",
+          "summary": "Origin compared to req.nextUrl.origin may 403 behind a proxy that alters Host; no other auth route does this, so verify in staging"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_google_login_test.go",
+          "summary": "Tests call the handler directly; AC3 (no-Origin native POST through NewRouter) and non-active, wrong-issuer, expired and wrong-audience paths are not pinned"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_google_login_test.go",
+          "summary": "Created-profile cleanup is not registered via t.Cleanup, leaving rows behind on failure"
+        }
+      ],
+      "package_sha256": "590edf10788a3b7e46605e4ffdb43c51bcfb8c531d48fc854cf47bd284e09295",
+      "fingerprint": "ff342f1f42d68bf1c5ddb00082f504dff51fb9bf1fc886fbaff3db0381c429d0"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-25T06:30:47.490Z",
+    "head": "7c039cbc75b92554662989a116fc4a930f3244a8",
+    "fingerprint": "ff342f1f42d68bf1c5ddb00082f504dff51fb9bf1fc886fbaff3db0381c429d0",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "green": "PASS",
+      "sensitivity": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      ".env.example": "3482204920aada3ddafb92ce98e0c36df7b4d5b2",
+      "apps/api-go/cmd/route-contract/main.go": "bc6094b17070d9cf662ebd5370ae0d8f8bb02374",
+      "apps/api-go/go.mod": "6061ca5aff7be1be9f3eb1c2a47aaa9111e71cc5",
+      "apps/api-go/go.sum": "23819e4af6cf6ac3ab12372e27d7e010db0cb064",
+      "apps/api-go/internal/config/config.go": "f3502ee59b1a98f33518dd29d6eedb59c9579100",
+      "apps/api-go/internal/httpserver/handler_google_login.go": "2426eca4d560e99ab251368e952bcfa26e0963ce",
+      "apps/api-go/internal/httpserver/handler_google_login_test.go": "df28d03f157a7fdaae1792eeaa71c37574caf715",
+      "apps/api-go/internal/httpserver/server.go": "c79406f53c63a36b2494f837de19b06457d83ef3",
+      "apps/web/.env.example": "4c148af13bcdd4e95d9672cb94661a2feb1bbc68",
+      "apps/web/app/[locale]/login/google-login-button.tsx": "4e9ff15abbc079cac71b061fc91b385ff3c6b30c",
+      "apps/web/app/[locale]/login/page.tsx": "62ef9f91d81798e637a1e085ab8a27fd658eddd2",
+      "apps/web/app/[locale]/register/page.tsx": "0eedf34e55683bd6ec540ad249da043fd54acd3d",
+      "apps/web/app/api/auth/google/route.test.ts": "4372d62c199a9d39e2b372b81e0bb828e8adea6f",
+      "apps/web/app/api/auth/google/route.ts": "5152656fc60573619db1d80ddd2fe629fc72f1f2",
+      "docs/api-route-inventory.json": "2df70760717a4503ef89bb43063d0613c35d25ef",
+      "docs/mobile/IOS_API_CONTRACT_GUIDE.md": "401a01b39d8ebccfaab1b279cd04792181d3461d",
+      "docs/openapi.json": "d28edac23cb5a0f54b30988ec80f659627568aa6",
+      "e2e/google-login.spec.ts": "5e3e145d86bdb42ec79d0e0f354e874be8f2a4e7"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

@@ -15737,6 +15737,101 @@
         }
       }
     },
+    "/api/auth/google": {
+      "post": {
+        "description": "Public JSON endpoint for browser and native clients. Google ID token must have GOOGLE_OAUTH_CLIENT_ID as its audience. Requires a verified email; never automatically links existing password accounts that have the same email. Configuration must provide GOOGLE_OAUTH_CLIENT_ID. Native callers need no Origin header.",
+        "operationId": "googleLearnerLogin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "idToken": {
+                    "description": "Google-issued ID token obtained through the official sign-in SDK; audience is the server Web OAuth client ID.",
+                    "maxLength": 4000,
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "idToken"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            },
+            "description": "Existing or newly-created Google identity logged in. Native app receives an opaque session token in JSON; web uses HttpOnly cookie.",
+            "headers": {
+              "Set-Cookie": {
+                "description": "bjt_web_session; HttpOnly; SameSite=Lax; Secure according to deployment config.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Email is already used by another account; automatic account linking is prohibited."
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "summary": "Sign in or sign up using a verified Google ID token",
+        "tags": [
+          "Authentication"
+        ],
+        "x-contract-verification": {
+          "scope": "named handler test exists; request/response schemas and validation are not independently verified",
+          "status": "test-evidenced"
+        },
+        "x-ios": {
+          "originOrRefererRequired": false,
+          "tokenTransport": "Store response token securely, then attach Authorization: Bearer <token> for protected Go routes. This is an opaque 24-hour session token, not a Google access token."
+        },
+        "x-route-source": {
+          "guards": null,
+          "handler": "googleLoginHandler(\n\tdeps.DBPool, deps.SessionStore, deps.RateLimiter, deps.Logger,\n\tdeps.Config.CookieSecure, deps.Config.GoogleOAuthClientID, idtoken.Validate,\n)",
+          "runtimeConditions": [
+            "deps.DBPool != nil && deps.SessionStore != nil"
+          ]
+        },
+        "x-verification": [
+          "apps/api-go/internal/httpserver/handler_google_login_test.go"
+        ]
+      }
+    },
     "/api/auth/identities": {
       "get": {
         "operationId": "getApiAuthIdentities",

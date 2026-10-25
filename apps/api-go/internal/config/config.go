@@ -60,6 +60,7 @@ type Config struct {
 	SMTPPassword        string
 	SMTPRequireStartTLS bool
 	WebPublicURL        string
+	GoogleOAuthClientID string
 }
 
 // Load reads configuration from environment variables and validates required fields.
@@ -167,6 +168,7 @@ func Load() (*Config, error) {
 		SMTPPassword:         os.Getenv("SMTP_PASSWORD"),
 		SMTPRequireStartTLS:  smtpRequireStartTLS,
 		WebPublicURL:         webPublicURL,
+		GoogleOAuthClientID:  strings.TrimSpace(os.Getenv("GOOGLE_OAUTH_CLIENT_ID")),
 	}
 	return cfg, nil
 }

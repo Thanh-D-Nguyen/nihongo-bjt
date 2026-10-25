@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useCallback, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -8,6 +8,7 @@ import { useGoAuth } from "../../../lib/go-auth-provider";
 import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
+import { GoogleLoginButton } from "./google-login-button";
 
 export function getSafeLoginReturnTo(value: string | null, locale: string, origin: string): string {
  const safeLocale = locale === "vi" || locale === "ja" || locale === "en" ? locale : "en";
@@ -36,6 +37,7 @@ export default function LoginPage() {
  const [password, setPassword] = useState("");
  const [error, setError] = useState<string | null>(null);
  const [submitting, setSubmitting] = useState(false);
+ const googleError = useCallback((status: number) => setError(status === 409 ? messages.auth.register.userExists : t.errorLoginFailed), [messages.auth.register.userExists, t.errorLoginFailed]);
 
  async function handleSubmit(e: FormEvent) {
  e.preventDefault();
@@ -121,6 +123,8 @@ export default function LoginPage() {
  {submitting ? t.submitting : t.primaryCta}
  </button>
  </form>
+
+ <GoogleLoginButton locale={locale} destination={getSafeLoginReturnTo(requestedReturnTo, locale, typeof window === "undefined" ? "http://localhost" : window.location.origin)} label={t.continueGoogle} onError={googleError} />
 
  <div className="flex items-center justify-between text-sm">
  <Link

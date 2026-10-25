@@ -1,11 +1,11 @@
 {
   "scope": "Static /api inventory of direct NewRouter registrations (excludes /health and /ws). Conditions do not prove runtime availability.",
-  "sourceRegisteredOperations": 633,
-  "openAPIOperations": 633,
+  "sourceRegisteredOperations": 634,
+  "openAPIOperations": 634,
   "verifiedContracts": 0,
-  "testEvidencedContracts": 12,
+  "testEvidencedContracts": 13,
   "sourceOnlyContracts": 621,
-  "unverifiedContracts": 633,
+  "unverifiedContracts": 634,
   "runtimeVerifiedOperations": 0,
   "families": {
     "Admin / actors": {
@@ -199,9 +199,9 @@
       "testEvidencedContracts": 0
     },
     "Authentication": {
-      "routes": 16,
+      "routes": 17,
       "verifiedContracts": 0,
-      "testEvidencedContracts": 3
+      "testEvidencedContracts": 4
     },
     "Bookmarks": {
       "routes": 5,
@@ -23811,6 +23811,55 @@
       "runtimeAvailability": {
         "sourceConditions": [
           "deps.CredentialStore != nil && deps.ProfileStore != nil && deps.SessionStore != nil"
+        ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/google",
+      "handler": "googleLoginHandler(\n\tdeps.DBPool, deps.SessionStore, deps.RateLimiter, deps.Logger,\n\tdeps.Config.CookieSecure, deps.Config.GoogleOAuthClientID, idtoken.Validate,\n)",
+      "family": "Authentication",
+      "guards": null,
+      "runtimeConditions": [
+        "deps.DBPool != nil && deps.SessionStore != nil"
+      ],
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [
+          "apps/api-go/internal/httpserver/handler_google_login_test.go"
+        ],
+        "status": "test-evidenced",
+        "subject": "handler integration tests"
+      },
+      "contract": {
+        "method": "post",
+        "openAPIPath": "/api/auth/google",
+        "status": "test-evidenced"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [
+          "deps.DBPool != nil && deps.SessionStore != nil"
         ],
         "status": "not-runtime-verified"
       }
