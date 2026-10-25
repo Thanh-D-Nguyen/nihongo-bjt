@@ -1,0 +1,658 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-182",
+  "title": "Redirect site root to browser locale",
+  "start_head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95",
+  "preexisting_changes": {
+    "apps/web/lib/locale-negotiation.test.ts": "ea883644a02ba87d1f4f4d605160cceb378c69aa",
+    "apps/web/lib/locale-negotiation.ts": "8b49f38fc5256011397504dabf631c0d3faeca65",
+    "apps/web/proxy.ts": "be0de5c34446c39a9c373ba4c4806619fc0a8bec"
+  },
+  "spec": {
+    "problem": "kiokoto.com root (/) returns Next.js 404 because apps/web has no root page or proxy; users typing the bare domain land on a not-found page.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "GET / with a supported Accept-Language (ja, en, vi) redirects with 307 to the matching /<locale>."
+      },
+      {
+        "id": "AC2",
+        "text": "GET / without a supported language (none, or only unsupported such as fr) redirects to /vi."
+      },
+      {
+        "id": "AC3",
+        "text": "Quality values rank languages; q=0 and malformed q are ignored; query string is preserved; response carries Vary: Accept-Language."
+      }
+    ],
+    "expected_behavior": "GET / redirects (307) to /vi, /ja or /en chosen from the browser Accept-Language header, default vi; query string preserved; Vary: Accept-Language set.",
+    "observed_behavior": "",
+    "rollback_plan": "Delete apps/web/proxy.ts; the site returns to the previous 404 on /."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DOMAIN_LOGIC"
+    ],
+    "change_kind": "add",
+    "rationale": "Root HTTP redirect behaviour plus a pure locale negotiation helper; no auth, data or infrastructure change."
+  },
+  "red_exception": {
+    "category": "new_component",
+    "reason": "New module apps/web/lib/locale-negotiation.ts; its test cannot import it at the base commit.",
+    "declared_before_red": true
+  },
+  "red_targets": [],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/web/lib/locale-negotiation.ts",
+      "find": "return ranked[0]?.locale ?? defaultLocale;",
+      "replace": "return defaultLocale;"
+    },
+    "targets": [
+      {
+        "runner": "vitest",
+        "file": "apps/web/lib/locale-negotiation.test.ts",
+        "test": "negotiateLocale > picks a supported language from the browser preference order",
+        "expect": "expected 'vi' to be 'ja'"
+      },
+      {
+        "runner": "vitest",
+        "file": "apps/web/lib/locale-negotiation.test.ts",
+        "test": "negotiateLocale > honours quality values over list order",
+        "expect": "expected 'vi' to be 'ja'"
+      },
+      {
+        "runner": "vitest",
+        "file": "apps/web/proxy.test.ts",
+        "test": "proxy > redirects with 307 to the browser locale and keeps the query string",
+        "expect": "expected 'https://kiokoto.com/vi?ref=abc' to be 'https://kiokoto.com/ja?ref=abc'"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-25T12:38:31.628Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-25T12:38:53.636Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-25T12:38:54.023Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-25T12:39:14.642Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-25T12:40:23.248Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-25T12:56:18.218Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-25T12:56:20.119Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-25T12:57:08.414Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-25T13:09:15.208Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-25T13:09:17.746Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-25T13:10:33.794Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-25T13:25:00.871Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-25T13:25:03.553Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-25T13:25:55.368Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95"
+    },
+    {
+      "state": "EXCEPTION_APPROVED",
+      "at": "2026-10-25T22:28:16.390Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-25T22:28:28.194Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-25T12:39:08.842Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/web/lib/locale-negotiation.ts",
+        "find": "if (!isSupportedLocale(language) || quality <= 0) {",
+        "replace": "if (quality <= 0) {"
+      },
+      "commands": [
+        "pnpm exec vitest run apps/web/lib/locale-negotiation.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/lib/locale-negotiation.test.ts::negotiateLocale > skips unsupported languages and uses the next supported one",
+          "outcome": "FAIL",
+          "excerpt": "expected 'fr' to be 'en' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/lib/locale-negotiation.test.ts::negotiateLocale > skips unsupported languages and uses the next supported one": "expected 'fr' to be 'en'"
+      },
+      "fingerprint": "15fb5ababb5ca4702e0ce96bba1ae8e80f89c9dd33a52272aa157e794b223a7f"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-25T12:39:14.303Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/lib/locale-negotiation.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/lib/locale-negotiation.test.ts::negotiateLocale > skips unsupported languages and uses the next supported one",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "15fb5ababb5ca4702e0ce96bba1ae8e80f89c9dd33a52272aa157e794b223a7f"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-25T12:40:22.954Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 502,
+        "executed": 502,
+        "passed": 502,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 827,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "15fb5ababb5ca4702e0ce96bba1ae8e80f89c9dd33a52272aa157e794b223a7f"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-25T12:54:23.973Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "blocker",
+          "file": "apps/web/proxy.ts",
+          "summary": "No test exercises proxy(): AC1's 307 + /<locale> path and AC3's query preservation and Vary: Accept-Language are UNTESTED (policy §3 requires component/HTTP contract tests for API_CONTRACT; §8 'change…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/tsconfig.json",
+          "summary": "include (line 20) omits root-level *.ts, so pnpm typecheck never checks apps/web/proxy.ts (confirmed via tsc --listFilesOnly); it is type-clean in-memory today, but the suite_frontend typecheck does n…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/lib/locale-negotiation.ts",
+          "summary": "parseQuality (lines 29-34) accepts non-RFC qvalues via Number() (q=1.5 outranks q=1; 1e0 and 0x1 accepted) and matches 'q=' case-sensitively (ja;Q=0.1 treated as q=1), contrary to AC3 'malformed q are…"
+        },
+        {
+          "severity": "minor",
+          "file": "tasks/WEB-182.json",
+          "summary": "preexisting_changes shows all three files existed in final form (mtimes 21:30 JST) before quality begin (21:38 JST); spec, classification and red_exception were recorded after the code, so the write-g…"
+        }
+      ],
+      "package_sha256": "63e01be6db31dcd1b534dba2f7b9afbbe061812eaf5b797cd2ac9e0e72b866f8",
+      "fingerprint": "15fb5ababb5ca4702e0ce96bba1ae8e80f89c9dd33a52272aa157e794b223a7f"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-25T12:56:17.913Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/web/proxy.ts",
+        "find": "NextResponse.redirect(url, 307)",
+        "replace": "NextResponse.redirect(url, 308)"
+      },
+      "commands": [
+        "pnpm exec vitest run apps/web/proxy.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/proxy.test.ts::proxy > redirects with 307 to the browser locale and keeps the query string",
+          "outcome": "FAIL",
+          "excerpt": "expected 308 to be 307 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/proxy.test.ts::proxy > redirects with 307 to the browser locale and keeps the query string": "expected 308 to be 307"
+      },
+      "fingerprint": "54fe9a297b6bc3373599b4cbc2e9b67c6e91dcb8bc0be6b015c2119ecbe6c70a"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-25T12:56:19.792Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/proxy.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/proxy.test.ts::proxy > redirects with 307 to the browser locale and keeps the query string",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "54fe9a297b6bc3373599b4cbc2e9b67c6e91dcb8bc0be6b015c2119ecbe6c70a"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-25T12:57:08.104Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 507,
+        "executed": 507,
+        "passed": 507,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 828,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "54fe9a297b6bc3373599b4cbc2e9b67c6e91dcb8bc0be6b015c2119ecbe6c70a"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-25T13:07:14.032Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "blocker",
+          "file": "tasks/WEB-182.json",
+          "summary": "Sensitivity evidence, the CI-replayed RED substitute for the declared new_component exception (which names lib/locale-negotiation.ts), only mutates proxy.ts 307→308 against a single proxy-test target.…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/lib/locale-negotiation.ts",
+          "summary": "parseQuality only recognises /^q=/i, so a malformed 'q = 0.1' or a bare 'q' falls back to q=1 and is promoted (verified: 'en;q=0.9, ja;q = 0.1' → ja; 'en;q=0.9,ja;q' → ja), while 'q=abc' and 'q=' are …"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/lib/locale-negotiation.test.ts",
+          "summary": "'vi-VN,vi;q=0.9,en;q=0.8' → vi cannot be told apart from the default fallback, so AC1's vi match is unpinned; add e.g. 'en;q=0.5,vi;q=0.9' → vi."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/proxy.test.ts",
+          "summary": "proxy() redirects unconditionally and only config.matcher '/' prevents a site-wide /vi→/vi redirect loop, yet no test pins the matcher; add unstable_doesMiddlewareMatch assertions (/ and /?ref=abc mat…"
+        }
+      ],
+      "package_sha256": "720d5837ea7b5a412952c19358f0d557ad23096075164d948dd0633bb62a5574",
+      "fingerprint": "54fe9a297b6bc3373599b4cbc2e9b67c6e91dcb8bc0be6b015c2119ecbe6c70a"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-25T13:09:14.894Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/web/lib/locale-negotiation.ts",
+        "find": "return ranked[0]?.locale ?? defaultLocale;",
+        "replace": "return defaultLocale;"
+      },
+      "commands": [
+        "pnpm exec vitest run apps/web/lib/locale-negotiation.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/proxy.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/lib/locale-negotiation.test.ts::negotiateLocale > picks a supported language from the browser preference order",
+          "outcome": "FAIL",
+          "excerpt": "expected 'vi' to be 'ja' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/lib/locale-negotiation.test.ts::negotiateLocale > honours quality values over list order",
+          "outcome": "FAIL",
+          "excerpt": "expected 'vi' to be 'ja' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/proxy.test.ts::proxy > redirects with 307 to the browser locale and keeps the query string",
+          "outcome": "FAIL",
+          "excerpt": "expected 'https://kiokoto.com/vi?ref=abc' to be 'https://kiokoto.com/ja?ref=abc' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/lib/locale-negotiation.test.ts::negotiateLocale > picks a supported language from the browser preference order": "expected 'vi' to be 'ja'",
+        "vitest:apps/web/lib/locale-negotiation.test.ts::negotiateLocale > honours quality values over list order": "expected 'vi' to be 'ja'",
+        "vitest:apps/web/proxy.test.ts::proxy > redirects with 307 to the browser locale and keeps the query string": "expected 'https://kiokoto.com/vi?ref=abc' to be 'https://kiokoto.com/ja?ref=abc'"
+      },
+      "fingerprint": "40d75a5246c544c8bc63ed98fb0206e8236f29facb1d72a4ee629e27c491ce52"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-25T13:09:17.422Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/lib/locale-negotiation.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/proxy.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/lib/locale-negotiation.test.ts::negotiateLocale > picks a supported language from the browser preference order",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/lib/locale-negotiation.test.ts::negotiateLocale > honours quality values over list order",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/proxy.test.ts::proxy > redirects with 307 to the browser locale and keeps the query string",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "40d75a5246c544c8bc63ed98fb0206e8236f29facb1d72a4ee629e27c491ce52"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-25T13:10:33.455Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 510,
+        "executed": 510,
+        "passed": 510,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 828,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "40d75a5246c544c8bc63ed98fb0206e8236f29facb1d72a4ee629e27c491ce52"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-25T13:24:19.493Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "blocker",
+          "file": "apps/web/lib/locale-negotiation.test.ts",
+          "summary": "AC3 'q=0 and malformed q are ignored' is not pinned: every q=0/malformed case pairs the bad entry with a valid higher-weighted en, so exclusion is indistinguishable from ranking last. In-memory mutant…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/lib/locale-negotiation.test.ts",
+          "summary": "The same input pattern leaves two documented behaviours unpinned: Q= recognition (a case-sensitive exec mutant survives; 'ja;Q=0.9,en;q=0.5' -> en instead of ja) and the equal-quality position tie-bre…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/proxy.test.ts",
+          "summary": "The matcher test asserts the literal config.matcher === '/', not Next matching semantics, so it does not test its loop-prevention claim. Semantics verified correct (build functions-config-manifest reg…"
+        },
+        {
+          "severity": "minor",
+          "file": "tasks/WEB-182.json",
+          "summary": "Chronology (policy 16.6 assigns test-first ordering to review): proxy.ts (blob be0de5c3, unchanged since) and the first negotiation module and test predate quality begin (preexisting_changes, later cl…"
+        }
+      ],
+      "package_sha256": "79c7830ed48c41c0c420b497f19d0614dbc4cec421c5d9bd458ab8fe0c2aab55",
+      "fingerprint": "40d75a5246c544c8bc63ed98fb0206e8236f29facb1d72a4ee629e27c491ce52"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-25T13:25:00.541Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/web/lib/locale-negotiation.ts",
+        "find": "return ranked[0]?.locale ?? defaultLocale;",
+        "replace": "return defaultLocale;"
+      },
+      "commands": [
+        "pnpm exec vitest run apps/web/lib/locale-negotiation.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/proxy.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/lib/locale-negotiation.test.ts::negotiateLocale > picks a supported language from the browser preference order",
+          "outcome": "FAIL",
+          "excerpt": "expected 'vi' to be 'ja' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/lib/locale-negotiation.test.ts::negotiateLocale > honours quality values over list order",
+          "outcome": "FAIL",
+          "excerpt": "expected 'vi' to be 'ja' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/proxy.test.ts::proxy > redirects with 307 to the browser locale and keeps the query string",
+          "outcome": "FAIL",
+          "excerpt": "expected 'https://kiokoto.com/vi?ref=abc' to be 'https://kiokoto.com/ja?ref=abc' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/lib/locale-negotiation.test.ts::negotiateLocale > picks a supported language from the browser preference order": "expected 'vi' to be 'ja'",
+        "vitest:apps/web/lib/locale-negotiation.test.ts::negotiateLocale > honours quality values over list order": "expected 'vi' to be 'ja'",
+        "vitest:apps/web/proxy.test.ts::proxy > redirects with 307 to the browser locale and keeps the query string": "expected 'https://kiokoto.com/vi?ref=abc' to be 'https://kiokoto.com/ja?ref=abc'"
+      },
+      "fingerprint": "be87052006b7c37e1743db02a1f7139e9c4d0286e3e8eed1946d26b420c91ec8"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-25T13:25:03.190Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/lib/locale-negotiation.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/proxy.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/lib/locale-negotiation.test.ts::negotiateLocale > picks a supported language from the browser preference order",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/lib/locale-negotiation.test.ts::negotiateLocale > honours quality values over list order",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/proxy.test.ts::proxy > redirects with 307 to the browser locale and keeps the query string",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "be87052006b7c37e1743db02a1f7139e9c4d0286e3e8eed1946d26b420c91ec8"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-25T13:25:55.026Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 512,
+        "executed": 512,
+        "passed": 512,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 828,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "be87052006b7c37e1743db02a1f7139e9c4d0286e3e8eed1946d26b420c91ec8"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-25T22:28:16.082Z",
+      "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [
+        {
+          "severity": "minor",
+          "file": "apps/web/proxy.test.ts",
+          "summary": "The matcher test only checks that config.matcher is the string '/', not how Next matches it, so it doesn't prove there's no redirect loop. I confirmed the behavior from the build manifest (originalSou…"
+        },
+        {
+          "severity": "minor",
+          "file": "tasks/WEB-182.json",
+          "summary": "Process/audit: proxy.ts (blob be0de5c3, unchanged since) and the first versions of the negotiation module and its test existed before quality begin (preexisting_changes), so test-first ordering (§16.6…"
+        }
+      ],
+      "package_sha256": "7a4d955dfed36892a2e5cbbad76e5718eeca040a4750a97888b69d438dc95d88",
+      "fingerprint": "be87052006b7c37e1743db02a1f7139e9c4d0286e3e8eed1946d26b420c91ec8"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-25T22:28:28.177Z",
+    "head": "c8d4f1913ab8d9cb2ac88c278c66504f8d09af95",
+    "fingerprint": "be87052006b7c37e1743db02a1f7139e9c4d0286e3e8eed1946d26b420c91ec8",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "green": "PASS",
+      "sensitivity": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/web/lib/locale-negotiation.test.ts": "5ca469a8da2ad6926ff58f25f7e9cf29965751cd",
+      "apps/web/lib/locale-negotiation.ts": "f8b589c7acd928d8b129bb1a5c8f82c06248968d",
+      "apps/web/proxy.test.ts": "a543596936ed68fd1516c0111bfcbd3d36161698",
+      "apps/web/proxy.ts": "be0de5c34446c39a9c373ba4c4806619fc0a8bec",
+      "apps/web/tsconfig.json": "9725f95e04e273251c1e15dafc28cfbc250f0c8b"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [
+    "apps/web/proxy.ts",
+    "apps/web/lib/locale-negotiation.ts",
+    "apps/web/lib/locale-negotiation.test.ts"
+  ]
+}
