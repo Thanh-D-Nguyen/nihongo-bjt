@@ -113,6 +113,12 @@
   "loginNoAccountPrompt": "アカウントをお持ちでないですか？",
   "loginRegisterAction": "登録",
   "loginRegisteredSuccess": "アカウントを作成しました。ログインして始めましょう。",
+  "loginInvalidRequestError": "ログイン要求が正しくありません。アプリを更新してから、もう一度お試しください。",
+  "loginGoogleCredentialError": "Googleの認証情報が無効か期限切れです。もう一度お試しください。",
+  "loginGoogleAccountConflictError": "このGoogleアカウントのメールアドレスは既存のKotobaWorksアカウントに紐づいているため、Googleでログインできません。そのアカウントの元のログイン方法をご利用ください。",
+  "loginRateLimitedError": "ログインの試行回数が多すぎます。しばらく待ってからもう一度お試しください。",
+  "loginServerError": "サーバーでエラーが発生しました。しばらくしてからもう一度お試しください。",
+  "loginServiceUnavailableError": "Googleログインはサーバーで有効になっていません。しばらくしてからもう一度お試しください。",
 
   "registerTitle": "アカウント作成",
   "registerSubtitle": "KotobaWorks のアカウントを作成して、学習の進捗を保存し、すべての端末で同期しましょう。",

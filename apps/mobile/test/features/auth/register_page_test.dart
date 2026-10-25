@@ -8,7 +8,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nihongo_bjt/core/auth/auth_token_store.dart';
+import 'package:nihongo_bjt/core/config/app_environment.dart';
 import 'package:nihongo_bjt/core/theme/app_theme.dart';
+import 'package:nihongo_bjt/features/auth/domain/auth_tokens.dart';
+import 'package:nihongo_bjt/features/auth/presentation/auth_controller.dart';
 import 'package:nihongo_bjt/features/auth/domain/register_repository.dart';
 import 'package:nihongo_bjt/features/auth/presentation/register_controller.dart';
 import 'package:nihongo_bjt/features/auth/presentation/register_page.dart';
@@ -32,6 +36,23 @@ class _ThrowingRegisterRepository implements RegisterRepository {
   }
 }
 
+class _UnauthenticatedTokenStore implements AuthTokenStore {
+  @override
+  Future<void> clear() async {}
+
+  @override
+  Future<AuthTokens?> read() async => null;
+
+  @override
+  Future<void> write(AuthTokens tokens) async {}
+}
+
+const _environment = AppEnvironment(
+  apiBaseUrl: 'https://api.test',
+  flashcardDataSource: 'mock',
+  googleServerClientId: 'web-client.apps.googleusercontent.com',
+);
+
 Future<void> _pumpRegister(
   WidgetTester tester, {
   required double logicalWidth,
@@ -40,14 +61,21 @@ Future<void> _pumpRegister(
   List<Override> overrides = const [],
 }) async {
   const devicePixelRatio = 3.0;
-  tester.view.physicalSize = Size(logicalWidth * devicePixelRatio, 844 * devicePixelRatio);
+  tester.view.physicalSize = Size(
+    logicalWidth * devicePixelRatio,
+    844 * devicePixelRatio,
+  );
   tester.view.devicePixelRatio = devicePixelRatio;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
 
   await tester.pumpWidget(
     ProviderScope(
-      overrides: overrides,
+      overrides: [
+        authTokenStoreProvider.overrideWithValue(_UnauthenticatedTokenStore()),
+        appEnvironmentProvider.overrideWithValue(_environment),
+        ...overrides,
+      ],
       child: MaterialApp(
         locale: locale,
         theme: AppTheme.light,

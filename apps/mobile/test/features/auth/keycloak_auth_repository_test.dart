@@ -1,151 +1,82 @@
 import 'dart:convert';
 
-import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:nihongo_bjt/core/config/app_environment.dart';
-import 'package:nihongo_bjt/features/auth/data/keycloak_auth_repository.dart';
+import 'package:nihongo_bjt/features/auth/data/go_native_auth_repository.dart';
 import 'package:nihongo_bjt/features/auth/domain/auth_repository.dart';
 
-const _localEnvironment = AppEnvironment(
-  apiBaseUrl: 'http://localhost:4000',
-  keycloakIssuer: 'http://localhost:8080/realms/nihongo-bjt',
-  oauthClientId: 'nihongo-mobile',
-  oauthRedirectUri: 'com.nihongobjt.app://oauth2redirect',
-  flashcardDataSource: 'mock',
-);
-
-const _remoteEnvironment = AppEnvironment(
+const _environment = AppEnvironment(
   apiBaseUrl: 'https://api.example.test',
-  keycloakIssuer: 'https://auth.example.test/realms/nihongo-bjt',
-  oauthClientId: 'nihongo-mobile',
-  oauthRedirectUri: 'com.nihongobjt.app://oauth2redirect',
   flashcardDataSource: 'mock',
+  googleServerClientId: 'web-client.apps.googleusercontent.com',
 );
 
-String _tokenBody() => jsonEncode({
-  'access_token': 'access-token',
-  'refresh_token': 'refresh-token',
-  'id_token': 'id-token',
-  'expires_in': 3600,
-});
-
-KeycloakAuthRepository _repository({
-  required AppEnvironment environment,
-  required MockClient client,
-}) {
-  return KeycloakAuthRepository(
-    appAuth: const FlutterAppAuth(),
-    environment: environment,
-    httpClient: client,
-    now: () => DateTime.utc(2026),
-  );
-}
+GoNativeAuthRepository _repository(MockClient client) => GoNativeAuthRepository(
+  environment: _environment,
+  httpClient: client,
+  now: () => DateTime.utc(2026),
+);
 
 void main() {
-  group('KeycloakAuthRepository.signInWithPassword', () {
-    test(
-      'retries local issuer through the Android emulator host alias',
-      () async {
-        final requests = <Uri>[];
-        final client = MockClient((request) async {
-          requests.add(request.url);
-          if (request.url.host == 'localhost') {
-            throw http.ClientException('connection refused', request.url);
-          }
-
-          expect(request.url.host, '10.0.2.2');
-          expect(request.bodyFields['grant_type'], 'password');
-          expect(request.bodyFields['client_id'], 'nihongo-mobile');
-          expect(request.bodyFields['username'], 'learner');
-          expect(request.bodyFields['password'], 'password');
-
-          return http.Response(
-            _tokenBody(),
-            200,
-            headers: const {'content-type': 'application/json'},
-          );
-        });
-        final repository = _repository(
-          environment: _localEnvironment,
-          client: client,
-        );
-
-        final tokens = await repository.signInWithPassword(
-          username: 'learner',
-          password: 'password',
-        );
-
-        expect(tokens.accessToken, 'access-token');
-        expect(requests.map((uri) => uri.host), ['localhost', '10.0.2.2']);
-      },
-    );
-
-    test('does not retry remote issuers after a network failure', () async {
-      final requests = <Uri>[];
+  test(
+    'Google exchange posts only the ID token and returns the app session',
+    () async {
       final client = MockClient((request) async {
-        requests.add(request.url);
-        throw http.ClientException('connection refused', request.url);
+        expect(request.url.path, '/api/auth/google');
+        expect(request.headers['authorization'], isNull);
+        expect(jsonDecode(request.body), {'idToken': 'google-id-token'});
+        return http.Response('{"token":"app-session"}', 200);
       });
-      final repository = _repository(
-        environment: _remoteEnvironment,
-        client: client,
+
+      final tokens = await _repository(client).signInWithGoogle(
+        idToken: 'google-id-token',
       );
 
-      await expectLater(
-        repository.signInWithPassword(
-          username: 'learner',
-          password: 'password',
-        ),
-        throwsA(
-          isA<AuthException>().having(
-            (error) => error.code,
-            'code',
-            AuthFailureCode.network,
-          ),
-        ),
+      expect(tokens.sessionToken, 'app-session');
+      expect(
+        tokens.expiresAt,
+        DateTime.utc(2026).add(const Duration(hours: 24)),
       );
+    },
+  );
 
-      expect(requests.single.host, 'auth.example.test');
-    });
-
+  for (final entry in <int, AuthFailureCode>{
+    400: AuthFailureCode.invalidRequest,
+    401: AuthFailureCode.invalidGoogleCredential,
+    409: AuthFailureCode.googleAccountConflict,
+    429: AuthFailureCode.rateLimited,
+    500: AuthFailureCode.serverError,
+    503: AuthFailureCode.serviceUnavailable,
+  }.entries) {
     test(
-      'does not hide Keycloak credential errors behind emulator retry',
+      'Google exchange maps HTTP ${entry.key} to a safe failure code',
       () async {
-        final requests = <Uri>[];
-        final client = MockClient((request) async {
-          requests.add(request.url);
-          return http.Response(
-            jsonEncode({
-              'error': 'invalid_grant',
-              'error_description': 'Invalid user credentials',
-            }),
-            400,
-            headers: const {'content-type': 'application/json'},
-          );
-        });
-        final repository = _repository(
-          environment: _localEnvironment,
-          client: client,
+        final client = MockClient(
+          (_) async => http.Response('sensitive body', entry.key),
         );
 
         await expectLater(
-          repository.signInWithPassword(
-            username: 'learner',
-            password: 'wrong-password',
-          ),
+          _repository(client).signInWithGoogle(idToken: 'google-id-token'),
           throwsA(
             isA<AuthException>().having(
               (error) => error.code,
               'code',
-              AuthFailureCode.invalidCredentials,
+              entry.value,
             ),
           ),
         );
-
-        expect(requests.single.host, 'localhost');
       },
     );
+  }
+
+  test('logout returns false for a CSRF rejection', () async {
+    final client = MockClient((request) async {
+      expect(request.headers['authorization'], 'Bearer app-session');
+      return http.Response('', 403);
+    });
+
+    expect(await _repository(client).signOut('app-session'), isFalse);
   });
 }

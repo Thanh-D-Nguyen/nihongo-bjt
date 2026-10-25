@@ -5,6 +5,8 @@ import 'package:nihongo_bjt/app/router.dart';
 import 'package:nihongo_bjt/core/theme/app_palette.dart';
 import 'package:nihongo_bjt/core/theme/app_spacing.dart';
 import 'package:nihongo_bjt/features/auth/domain/register_repository.dart';
+import 'package:nihongo_bjt/features/auth/presentation/auth_controller.dart';
+import 'package:nihongo_bjt/features/auth/presentation/auth_error_messages.dart';
 import 'package:nihongo_bjt/features/auth/presentation/register_controller.dart';
 import 'package:nihongo_bjt/features/auth/presentation/widgets/auth_widgets.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
@@ -33,6 +35,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   final _confirmController = TextEditingController();
   bool _showPassword = false;
   bool _navigated = false;
+  bool _googleAttempted = false;
 
   @override
   void dispose() {
@@ -62,8 +65,17 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       }
     });
 
+    // Display Google errors only after an attempt on this screen: password
+    // login errors from the previous route must not leak into registration.
+    final environment = ref.watch(appEnvironmentProvider);
+    final google = ref.watch(authControllerProvider);
+    final isGoogleLoading = _googleAttempted && google.isLoading;
+    final googleError = _googleAttempted && google.hasError
+        ? authErrorMessage(l10n, google.error!)
+        : null;
+
     return AuthScreenShell(
-      busy: isLoading,
+      busy: isLoading || isGoogleLoading,
       children: [
         AuthHeadline(
           title: l10n.registerTitle,
@@ -72,6 +84,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         if (error != null) ...[
           const SizedBox(height: AppSpacing.m),
           AuthBanner.error(context, error),
+        ],
+        if (googleError != null) ...[
+          const SizedBox(height: AppSpacing.m),
+          AuthBanner.error(context, googleError),
         ],
         const SizedBox(height: AppSpacing.l),
         Form(
@@ -189,6 +205,17 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           loading: isLoading,
           onPressed: _submit,
         ),
+        if (environment.googleSignInEnabled) ...[
+          const SizedBox(height: AppSpacing.l),
+          AuthOrDivider(label: l10n.loginDivider),
+          const SizedBox(height: AppSpacing.l),
+          GoogleSignInButton(
+            label: l10n.loginContinueWithGoogle,
+            onPressed: isLoading || isGoogleLoading
+                ? null
+                : _submitGoogleSignIn,
+          ),
+        ],
         const SizedBox(height: AppSpacing.s),
         AuthFooterPrompt(
           prompt: l10n.registerHaveAccountPrompt,
@@ -216,6 +243,12 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
+  }
+
+  Future<void> _submitGoogleSignIn() async {
+    FocusScope.of(context).unfocus();
+    setState(() => _googleAttempted = true);
+    await ref.read(authControllerProvider.notifier).signInWithGoogle();
   }
 
   bool _isValidEmail(String value) {

@@ -18,6 +18,9 @@ class GoNativeAuthRepository implements AuthRepository {
     this.now,
   });
 
+  /// Upper bound for one auth request so the sign-in spinner cannot hang.
+  static const Duration _requestTimeout = Duration(seconds: 15);
+
   final AppEnvironment environment;
   final http.Client? httpClient;
   final DateTime Function()? now;
@@ -51,22 +54,38 @@ class GoNativeAuthRepository implements AuthRepository {
       throw _exceptionForLoginError(body, response.statusCode);
     }
 
-    final token = body['token'];
-    if (token is! String || token.isEmpty) {
-      throw const AuthException(
-        'login response missing session token',
-        code: AuthFailureCode.missingToken,
+    return _sessionTokensFrom(body);
+  }
+
+  @override
+  Future<AuthTokens> signInWithGoogle({required String idToken}) async {
+    final uri = Uri.parse('${environment.apiBaseUrl}/api/auth/google');
+    final http.Response response;
+    try {
+      // Native requests carry no Origin header; this route is intentionally
+      // outside the CSRF guard (see server.go) and relies on the Google-signed
+      // ID token instead. The ID token is only sent in the body, never a header
+      // or log line.
+      response = await (httpClient?.post ?? http.post)(
+        uri,
+        headers: const {
+          'accept': 'application/json',
+          'content-type': 'application/json',
+        },
+        body: jsonEncode({'idToken': idToken}),
+      ).timeout(_requestTimeout);
+    } on Exception catch (error) {
+      throw AuthException(
+        'google login network failure',
+        code: AuthFailureCode.network,
+        cause: error,
       );
     }
 
-    // Default session TTL matches the Go API (24h). The server may return a
-    // custom TTL in the future; for now we use a fixed 24h window with a 30s
-    // early-expiry buffer built into AuthTokens.isExpired.
-    final issuedAt = (now ?? DateTime.now)().toUtc();
-    return AuthTokens(
-      sessionToken: token,
-      expiresAt: issuedAt.add(const Duration(hours: 24)),
-    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw _exceptionForGoogleError(response.statusCode);
+    }
+    return _sessionTokensFrom(_decodeBody(response));
   }
 
   @override
@@ -88,19 +107,44 @@ class GoNativeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> signOut(String sessionToken) async {
+  Future<bool> signOut(String sessionToken) async {
     final uri = Uri.parse('${environment.apiBaseUrl}/api/auth/logout');
     try {
-      await (httpClient?.post ?? http.post)(
+      final response = await (httpClient?.post ?? http.post)(
         uri,
         headers: {
           'accept': 'application/json',
           'authorization': 'Bearer $sessionToken',
         },
-      );
+      ).timeout(_requestTimeout);
+      // The logout route sits behind the CSRF guard, so a native client without
+      // an allowlisted Origin receives 403 and the session stays live server-side
+      // until it expires. The caller reports that; local credentials are cleared
+      // regardless.
+      return response.statusCode >= 200 && response.statusCode < 300;
     } on Exception {
-      // Best-effort remote logout; the caller always clears local storage.
+      return false;
     }
+  }
+
+  /// Parses `{"token": "..."}` from a successful login or Google response.
+  AuthTokens _sessionTokensFrom(Map<String, Object?> body) {
+    final token = body['token'];
+    if (token is! String || token.isEmpty) {
+      throw const AuthException(
+        'login response missing session token',
+        code: AuthFailureCode.missingToken,
+      );
+    }
+
+    // Default session TTL matches the Go API (24h). The server may return a
+    // custom TTL in the future; for now we use a fixed 24h window with a 30s
+    // early-expiry buffer built into AuthTokens.isExpired.
+    final issuedAt = (now ?? DateTime.now)().toUtc();
+    return AuthTokens(
+      sessionToken: token,
+      expiresAt: issuedAt.add(const Duration(hours: 24)),
+    );
   }
 
   Map<String, Object?> _decodeBody(http.Response response) {
@@ -111,6 +155,40 @@ class GoNativeAuthRepository implements AuthRepository {
       // Status code still drives the failure category.
     }
     return const {};
+  }
+
+  /// Maps the documented POST /api/auth/google failure statuses to stable
+  /// categories. The response body is never copied into the exception.
+  AuthException _exceptionForGoogleError(int statusCode) {
+    return switch (statusCode) {
+      400 => const AuthException(
+          'google login request rejected',
+          code: AuthFailureCode.invalidRequest,
+        ),
+      401 => const AuthException(
+          'google credential rejected',
+          code: AuthFailureCode.invalidGoogleCredential,
+        ),
+      409 => const AuthException(
+          'google email belongs to another learner account',
+          code: AuthFailureCode.googleAccountConflict,
+        ),
+      429 => const AuthException(
+          'google login rate limited',
+          code: AuthFailureCode.rateLimited,
+        ),
+      503 => const AuthException(
+          'google login not configured on the server',
+          code: AuthFailureCode.serviceUnavailable,
+        ),
+      >= 500 => const AuthException(
+          'google login server error',
+          code: AuthFailureCode.serverError,
+        ),
+      _ => AuthException(
+          'google login failed with HTTP $statusCode',
+        ),
+    };
   }
 
   AuthException _exceptionForLoginError(

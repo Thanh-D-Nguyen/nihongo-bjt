@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nihongo_bjt/core/config/app_environment.dart';
 
@@ -14,13 +15,38 @@ void main() {
     expect(env.apiBaseUrl.endsWith('/'), isFalse);
   });
 
-  test('fromDartDefine provides local OIDC defaults', () {
+  test('Google sign-in stays disabled without a Web client ID', () {
     final env = AppEnvironment.fromDartDefine();
 
-    expect(env.keycloakIssuer, 'http://localhost:8080/realms/nihongo-bjt');
-    expect(env.oauthClientId, 'nihongo-mobile');
-    expect(env.oauthRedirectUri, 'com.nihongobjt.app://oauth2redirect');
-    expect(env.allowInsecureAuthConnections, isTrue);
-    expect(AppEnvironment.oauthScopes, contains('offline_access'));
+    expect(env.googleServerClientId, isEmpty);
+    expect(env.googleSignInEnabled, isFalse);
+  });
+
+  test('a Web client ID enables Google sign-in', () {
+    const env = AppEnvironment(
+      apiBaseUrl: 'https://api.test',
+      flashcardDataSource: 'api',
+      googleServerClientId: 'web-client.apps.googleusercontent.com',
+    );
+
+    expect(env.googleSignInEnabled, isTrue);
+  });
+
+  test('iOS only shows Google sign-in when its own client is configured', () {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    const webOnly = AppEnvironment(
+      apiBaseUrl: 'https://api.test',
+      flashcardDataSource: 'api',
+      googleServerClientId: 'web.apps.googleusercontent.com',
+    );
+    expect(webOnly.googleSignInEnabled, isFalse);
+    const both = AppEnvironment(
+      apiBaseUrl: 'https://api.test',
+      flashcardDataSource: 'api',
+      googleServerClientId: 'web.apps.googleusercontent.com',
+      googleIosClientId: 'ios.apps.googleusercontent.com',
+    );
+    expect(both.googleSignInEnabled, isTrue);
   });
 }

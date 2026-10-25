@@ -337,6 +337,29 @@ class AppLocalizationsVi extends AppLocalizations {
       'Tạo tài khoản thành công. Hãy đăng nhập để bắt đầu.';
 
   @override
+  String get loginInvalidRequestError =>
+      'Yêu cầu đăng nhập không hợp lệ. Vui lòng cập nhật ứng dụng và thử lại.';
+
+  @override
+  String get loginGoogleCredentialError =>
+      'Xác thực Google không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.';
+
+  @override
+  String get loginGoogleAccountConflictError =>
+      'Email Google này đã thuộc một tài khoản KotobaWorks khác nên không thể đăng nhập bằng Google. Hãy dùng cách đăng nhập ban đầu của tài khoản đó.';
+
+  @override
+  String get loginRateLimitedError =>
+      'Bạn thử đăng nhập quá nhiều lần. Vui lòng đợi một lát rồi thử lại.';
+
+  @override
+  String get loginServerError => 'Máy chủ đang gặp lỗi. Vui lòng thử lại sau.';
+
+  @override
+  String get loginServiceUnavailableError =>
+      'Đăng nhập Google chưa được bật trên máy chủ. Vui lòng thử lại sau.';
+
+  @override
   String get registerTitle => 'Tạo tài khoản';
 
   @override

@@ -323,6 +323,27 @@ class AppLocalizationsJa extends AppLocalizations {
   String get loginRegisteredSuccess => 'アカウントを作成しました。ログインして始めましょう。';
 
   @override
+  String get loginInvalidRequestError =>
+      'ログイン要求が正しくありません。アプリを更新してから、もう一度お試しください。';
+
+  @override
+  String get loginGoogleCredentialError => 'Googleの認証情報が無効か期限切れです。もう一度お試しください。';
+
+  @override
+  String get loginGoogleAccountConflictError =>
+      'このGoogleアカウントのメールアドレスは既存のKotobaWorksアカウントに紐づいているため、Googleでログインできません。そのアカウントの元のログイン方法をご利用ください。';
+
+  @override
+  String get loginRateLimitedError => 'ログインの試行回数が多すぎます。しばらく待ってからもう一度お試しください。';
+
+  @override
+  String get loginServerError => 'サーバーでエラーが発生しました。しばらくしてからもう一度お試しください。';
+
+  @override
+  String get loginServiceUnavailableError =>
+      'Googleログインはサーバーで有効になっていません。しばらくしてからもう一度お試しください。';
+
+  @override
   String get registerTitle => 'アカウント作成';
 
   @override

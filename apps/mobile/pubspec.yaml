@@ -51,6 +51,7 @@ dependencies:
   # Declarative routing.
   go_router: ^17.2.3
   # HTTP transport for the core API client (core/api/api_client.dart).
+  google_sign_in: ^7.2.0
   http: ^1.2.0
   # Message formatting / placeholders for the generated gen-l10n localizations
   # (lib/l10n). Required by flutter_localizations gen-l10n output.

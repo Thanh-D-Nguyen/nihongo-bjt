@@ -9,6 +9,18 @@ enum AuthFailureCode {
   clientMisconfigured,
   network,
   missingToken,
+  /// HTTP 400 from POST /api/auth/google (malformed request).
+  invalidRequest,
+  /// HTTP 401 from POST /api/auth/google (Google token rejected).
+  invalidGoogleCredential,
+  /// HTTP 409: the Google email belongs to an existing non-Google account.
+  googleAccountConflict,
+  /// HTTP 429: too many sign-in attempts from this client.
+  rateLimited,
+  /// HTTP 500 from the API.
+  serverError,
+  /// HTTP 503: Google login is not configured on the server.
+  serviceUnavailable,
   unknown,
 }
 
@@ -49,10 +61,19 @@ abstract interface class AuthRepository {
     required String password,
   });
 
+  /// Exchanges a Google ID token for an app session via POST /api/auth/google.
+  ///
+  /// [idToken] must be a Google-signed ID token whose audience is the server's
+  /// Google Web client ID. The returned tokens hold only the app session token.
+  Future<AuthTokens> signInWithGoogle({required String idToken});
+
   /// Validates the current session via GET /api/auth/me.
   /// Returns `true` if the session is still valid.
   Future<bool> validateSession(String sessionToken);
 
   /// Ends the session via POST /api/auth/logout.
-  Future<void> signOut(String sessionToken);
+  ///
+  /// Returns `true` only when the server confirmed revocation. Callers must
+  /// clear local credentials regardless of the result.
+  Future<bool> signOut(String sessionToken);
 }

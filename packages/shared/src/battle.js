@@ -118,5 +118,5 @@ export function decideBotOption(input) {
     return { optionKey: wrong[Math.floor(random() * wrong.length)] };
 }
 export function randomBetween(rng, min, max) {
-    return Math.floor(rng() * (max - min + 1)) + min;
+    return Math.min(Math.floor(rng() * (max - min + 1)) + min, max);
 }

@@ -217,9 +217,9 @@ class AuthPrimaryButton extends StatelessWidget {
 
 /// "Continue with Google" button using the official multi-colour Google glyph.
 ///
-/// Retained as a UI building block for future social-login integration.
-/// Currently unused by the login screen since authentication is handled by
-/// the Go-native session token API.
+/// Presentation only: the Login and Register screens pass `onPressed: null`
+/// while a request is in flight and show this button only when Google sign-in
+/// is configured for the build.
 class GoogleSignInButton extends StatelessWidget {
   const GoogleSignInButton({
     required this.label,

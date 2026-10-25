@@ -674,6 +674,42 @@ abstract class AppLocalizations {
   /// **'Tạo tài khoản thành công. Hãy đăng nhập để bắt đầu.'**
   String get loginRegisteredSuccess;
 
+  /// No description provided for @loginInvalidRequestError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Yêu cầu đăng nhập không hợp lệ. Vui lòng cập nhật ứng dụng và thử lại.'**
+  String get loginInvalidRequestError;
+
+  /// No description provided for @loginGoogleCredentialError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xác thực Google không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.'**
+  String get loginGoogleCredentialError;
+
+  /// No description provided for @loginGoogleAccountConflictError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Email Google này đã thuộc một tài khoản KotobaWorks khác nên không thể đăng nhập bằng Google. Hãy dùng cách đăng nhập ban đầu của tài khoản đó.'**
+  String get loginGoogleAccountConflictError;
+
+  /// No description provided for @loginRateLimitedError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bạn thử đăng nhập quá nhiều lần. Vui lòng đợi một lát rồi thử lại.'**
+  String get loginRateLimitedError;
+
+  /// No description provided for @loginServerError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Máy chủ đang gặp lỗi. Vui lòng thử lại sau.'**
+  String get loginServerError;
+
+  /// No description provided for @loginServiceUnavailableError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đăng nhập Google chưa được bật trên máy chủ. Vui lòng thử lại sau.'**
+  String get loginServiceUnavailableError;
+
   /// Title on the register screen.
   ///
   /// In vi, this message translates to:

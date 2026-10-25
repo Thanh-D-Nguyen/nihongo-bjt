@@ -4,17 +4,18 @@ import 'package:go_router/go_router.dart';
 import 'package:nihongo_bjt/app/router.dart';
 import 'package:nihongo_bjt/core/theme/app_palette.dart';
 import 'package:nihongo_bjt/core/theme/app_spacing.dart';
-import 'package:nihongo_bjt/features/auth/domain/auth_repository.dart';
 import 'package:nihongo_bjt/features/auth/presentation/auth_controller.dart';
+import 'package:nihongo_bjt/features/auth/presentation/auth_error_messages.dart';
 import 'package:nihongo_bjt/features/auth/presentation/widgets/auth_widgets.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
 
 /// First-party login surface.
 ///
-/// Account login (email/username + password) is the sole authentication path.
-/// The hosted browser entry point, forgot-password, and social providers were
-/// removed so the screen stays focused and never surfaces a fake action. All
-/// colors come from [AppPalette] so light and dark render correctly.
+/// Supports account login (email/username + password) and, when a Google web
+/// client ID is configured at build time, "Continue with Google". The Google
+/// button is hidden otherwise so the screen never offers an action that cannot
+/// complete. All colors come from [AppPalette] so light and dark render
+/// correctly.
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({this.justRegistered = false, super.key});
 
@@ -43,8 +44,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final l10n = AppLocalizations.of(context);
     final palette = context.palette;
     final session = ref.watch(authControllerProvider);
+    final environment = ref.watch(appEnvironmentProvider);
     final isLoading = session.isLoading;
-    final error = session.hasError ? _messageFor(l10n, session.error!) : null;
+    final error = session.hasError
+        ? authErrorMessage(l10n, session.error!)
+        : null;
 
     return AuthScreenShell(
       busy: isLoading,
@@ -133,6 +137,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           loading: isLoading,
           onPressed: _submitPasswordLogin,
         ),
+        if (environment.googleSignInEnabled) ...[
+          const SizedBox(height: AppSpacing.l),
+          AuthOrDivider(label: l10n.loginDivider),
+          const SizedBox(height: AppSpacing.l),
+          GoogleSignInButton(
+            label: l10n.loginContinueWithGoogle,
+            onPressed: isLoading ? null : _submitGoogleSignIn,
+          ),
+        ],
         const SizedBox(height: AppSpacing.s),
         AuthFooterPrompt(
           prompt: l10n.loginNoAccountPrompt,
@@ -161,20 +174,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         );
   }
 
-  void _goToRegister() => context.goNamed(Routes.register);
-
-  /// Maps a thrown error to a safe, user-facing message (never token data).
-  String _messageFor(AppLocalizations l10n, Object error) {
-    if (error is! AuthException) return l10n.loginGenericError;
-    return switch (error.code) {
-      AuthFailureCode.cancelled => l10n.loginCancelledError,
-      AuthFailureCode.invalidCredentials => l10n.loginWrongCredentialsError,
-      AuthFailureCode.methodNotAllowed => l10n.loginMethodNotAllowedError,
-      AuthFailureCode.invalidScope => l10n.loginInvalidScopeError,
-      AuthFailureCode.clientMisconfigured => l10n.loginClientMisconfiguredError,
-      AuthFailureCode.network => l10n.loginNetworkError,
-      AuthFailureCode.missingToken => l10n.loginMissingTokenError,
-      AuthFailureCode.unknown => l10n.loginGenericError,
-    };
+  Future<void> _submitGoogleSignIn() async {
+    FocusScope.of(context).unfocus();
+    await ref.read(authControllerProvider.notifier).signInWithGoogle();
   }
+
+  void _goToRegister() => context.goNamed(Routes.register);
 }

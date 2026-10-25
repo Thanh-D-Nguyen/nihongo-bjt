@@ -3,6 +3,7 @@ import 'package:nihongo_bjt/core/auth/auth_token_store.dart';
 import 'package:nihongo_bjt/core/auth/secure_auth_token_store.dart';
 import 'package:nihongo_bjt/core/config/app_environment.dart';
 import 'package:nihongo_bjt/features/auth/data/go_native_auth_repository.dart';
+import 'package:nihongo_bjt/features/auth/data/google_id_token_source.dart';
 import 'package:nihongo_bjt/features/auth/domain/auth_repository.dart';
 import 'package:nihongo_bjt/features/auth/domain/auth_session.dart';
 import 'package:nihongo_bjt/features/auth/domain/auth_tokens.dart';
@@ -24,6 +25,11 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   );
 });
 
+/// Google SDK adapter that yields the ID token exchanged by [AuthRepository].
+final googleIdTokenSourceProvider = Provider<GoogleIdTokenSource>((ref) {
+  return GoogleSignInIdTokenSource(ref.watch(appEnvironmentProvider));
+});
+
 /// Upper bound for session restore and secure token IO.
 ///
 /// If secure storage or network stalls, protected API screens should fall back
@@ -41,6 +47,8 @@ final authControllerProvider =
 class AuthController extends AsyncNotifier<AuthSession> {
   AuthTokenStore get _store => ref.read(authTokenStoreProvider);
   AuthRepository get _repository => ref.read(authRepositoryProvider);
+  GoogleIdTokenSource get _googleIdTokens =>
+      ref.read(googleIdTokenSourceProvider);
   Duration get _timeout => ref.read(authRefreshTimeoutProvider);
 
   @override
@@ -98,6 +106,28 @@ class AuthController extends AsyncNotifier<AuthSession> {
     });
   }
 
+  /// Signs in with a Google account: the SDK yields an ID token, which is
+  /// exchanged at POST /api/auth/google, and the returned session token is
+  /// persisted to secure storage.
+  ///
+  /// A user cancellation restores the previous state without an error. Every
+  /// other failure becomes an [AsyncError] holding an [AuthException]. An
+  /// existing password account is never linked automatically.
+  Future<void> signInWithGoogle() async {
+    final previous = state.value ?? const AuthSession.unauthenticated();
+    state = const AsyncLoading<AuthSession>();
+    final result = await AsyncValue.guard(() async {
+      final idToken = await _googleIdTokens.fetchIdToken();
+      final tokens = await _repository.signInWithGoogle(idToken: idToken);
+      await _store.write(tokens).timeout(_timeout);
+      return AuthSession.authenticated(tokens);
+    });
+    state = switch (result.error) {
+      AuthException(code: AuthFailureCode.cancelled) => AsyncData(previous),
+      _ => result,
+    };
+  }
+
   /// Returns the current session token for API calls, or `null` when no valid
   /// session exists. Unlike OIDC there is no refresh — expired sessions require
   /// re-authentication.
@@ -112,21 +142,27 @@ class AuthController extends AsyncNotifier<AuthSession> {
     return current.sessionToken;
   }
 
-  /// Ends the session locally (and remotely when possible) and clears storage.
-  Future<void> signOut() async {
+  /// Ends the session. The in-memory token is cleared synchronously so API
+  /// calls cannot reuse it while remote revocation or secure storage stalls.
+  ///
+  /// Returns `true` only when the server confirmed revocation.
+  Future<bool> signOut() async {
     final current = state.value?.tokens;
-    state = const AsyncLoading<AuthSession>();
-    state = await AsyncValue.guard(() async {
-      if (current != null) {
-        try {
-          await _repository.signOut(current.sessionToken);
-        } on Object {
-          // Best-effort remote logout; always clear the local session.
-        }
-      }
-      await _clearStoreBestEffort();
-      return const AuthSession.unauthenticated();
-    });
+    state = const AsyncData(AuthSession.unauthenticated());
+    await _clearStoreBestEffort();
+    final revoked =
+        current != null &&
+        await _revokeRemotelyBestEffort(current.sessionToken);
+    return revoked;
+  }
+
+  Future<bool> _revokeRemotelyBestEffort(String sessionToken) async {
+    try {
+      return await _repository.signOut(sessionToken);
+    } on Object {
+      // Local credentials are already cleared; the caller reports the outcome.
+      return false;
+    }
   }
 
   Future<void> _clearStoreBestEffort() async {

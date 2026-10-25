@@ -38,11 +38,13 @@ class _UnauthenticatedTokenStore implements AuthTokenStore {
 /// federated button is gated on configuration.
 const _envWithoutGoogle = AppEnvironment(
   apiBaseUrl: 'https://api.test',
-  keycloakIssuer: 'https://auth.test/realms/nihongo-bjt',
-  oauthClientId: 'nihongo-mobile',
-  oauthRedirectUri: 'com.nihongobjt.app://oauth2redirect',
   flashcardDataSource: 'mock',
-  googleSignInEnabled: false,
+);
+
+const _envWithGoogle = AppEnvironment(
+  apiBaseUrl: 'https://api.test',
+  flashcardDataSource: 'mock',
+  googleServerClientId: 'web-client.apps.googleusercontent.com',
 );
 
 Future<void> _pumpLogin(
@@ -51,10 +53,14 @@ Future<void> _pumpLogin(
   required ThemeMode themeMode,
   Locale locale = const Locale('vi'),
   List<Override> overrides = const [],
+  AppEnvironment environment = _envWithGoogle,
   bool justRegistered = false,
 }) async {
   const devicePixelRatio = 3.0;
-  tester.view.physicalSize = Size(logicalWidth * devicePixelRatio, 844 * devicePixelRatio);
+  tester.view.physicalSize = Size(
+    logicalWidth * devicePixelRatio,
+    844 * devicePixelRatio,
+  );
   tester.view.devicePixelRatio = devicePixelRatio;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
@@ -63,6 +69,7 @@ Future<void> _pumpLogin(
     ProviderScope(
       overrides: [
         authTokenStoreProvider.overrideWithValue(_UnauthenticatedTokenStore()),
+        appEnvironmentProvider.overrideWithValue(environment),
         ...overrides,
       ],
       child: MaterialApp(
@@ -208,9 +215,7 @@ void main() {
         tester,
         logicalWidth: 390,
         themeMode: ThemeMode.light,
-        overrides: [
-          appEnvironmentProvider.overrideWithValue(_envWithoutGoogle),
-        ],
+        environment: _envWithoutGoogle,
       );
 
       expect(find.byType(GoogleSignInButton), findsNothing);

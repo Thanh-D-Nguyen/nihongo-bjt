@@ -20,6 +20,31 @@ export const companionReasonCodeSchema = z.enum([
     "FLASHCARD_QUOTA_EXHAUSTED_FALLBACK",
     "FALLBACK_BALANCE"
 ]);
+/* ── Companion event system ── */
+export const companionEventKindSchema = z.enum([
+    "streak_milestone",
+    "review_completed",
+    "quiz_completed",
+    "battle_won",
+    "battle_lost",
+    "first_login",
+    "comeback",
+    "achievement_unlocked",
+    "daily_goal_met",
+    "level_up",
+    "page_visit"
+]);
+/* ── Companion message types ── */
+export const companionMessageTypeSchema = z.enum([
+    "greeting",
+    "hint",
+    "celebration",
+    "tip",
+    "nudge",
+    "onboarding",
+    "reaction",
+    "context_aware"
+]);
 export const companionHintQuerySchema = z.object({
     days: z.coerce.number().int().min(1).max(90).default(7),
     userId: z.uuid().optional()

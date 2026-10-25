@@ -3,108 +3,82 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nihongo_bjt/core/auth/auth_token_store.dart';
+import 'package:nihongo_bjt/features/auth/data/google_id_token_source.dart';
 import 'package:nihongo_bjt/features/auth/domain/auth_repository.dart';
 import 'package:nihongo_bjt/features/auth/domain/auth_status.dart';
 import 'package:nihongo_bjt/features/auth/domain/auth_tokens.dart';
 import 'package:nihongo_bjt/features/auth/presentation/auth_controller.dart';
 
-/// In-memory [AuthTokenStore] for tests.
-class _FakeTokenStore implements AuthTokenStore {
-  _FakeTokenStore([this._tokens]);
+class _Store implements AuthTokenStore {
+  _Store([this.value]);
 
-  AuthTokens? _tokens;
-
-  @override
-  Future<AuthTokens?> read() async => _tokens;
+  AuthTokens? value;
 
   @override
-  Future<void> write(AuthTokens tokens) async => _tokens = tokens;
+  Future<void> clear() async => value = null;
 
   @override
-  Future<void> clear() async => _tokens = null;
+  Future<AuthTokens?> read() async => value;
+
+  @override
+  Future<void> write(AuthTokens tokens) async => value = tokens;
 }
 
-class _HangingReadTokenStore implements AuthTokenStore {
-  int clearCalls = 0;
+class _Repository implements AuthRepository {
+  _Repository({this.google, this.valid = true, this.revoked = true, this.logout});
+
+  final Future<AuthTokens> Function(String idToken)? google;
+  final bool valid;
+  final bool revoked;
+  final Future<bool> Function(String token)? logout;
+  String? receivedGoogleToken;
 
   @override
-  Future<AuthTokens?> read() => Completer<AuthTokens?>().future;
-
-  @override
-  Future<void> write(AuthTokens tokens) async {}
-
-  @override
-  Future<void> clear() async {
-    clearCalls += 1;
-  }
-}
-
-/// Scriptable [AuthRepository] for tests.
-class _FakeAuthRepository implements AuthRepository {
-  _FakeAuthRepository({this.onSignIn, this.onPasswordSignIn, this.onRefresh});
-
-  final Future<AuthTokens> Function()? onSignIn;
-  final Future<AuthTokens> Function()? onPasswordSignIn;
-  final Future<AuthTokens> Function()? onRefresh;
-  int refreshCalls = 0;
-  AuthBrowserFlow? lastBrowserFlow;
-  bool signOutCalled = false;
-
-  @override
-  Future<AuthTokens> signIn({
-    String? idpHint,
-    AuthBrowserFlow flow = AuthBrowserFlow.signIn,
-  }) async {
-    lastBrowserFlow = flow;
-    final handler = onSignIn;
-    if (handler == null) throw const AuthException('no sign-in');
-    return handler();
+  Future<AuthTokens> signInWithGoogle({required String idToken}) async {
+    receivedGoogleToken = idToken;
+    final handler = google;
+    if (handler == null) throw const AuthException('not configured');
+    return handler(idToken);
   }
 
   @override
   Future<AuthTokens> signInWithPassword({
     required String username,
     required String password,
-  }) async {
-    final handler = onPasswordSignIn;
-    if (handler == null) throw const AuthException('no password sign-in');
-    return handler();
-  }
+  }) async => throw const AuthException('not configured');
 
   @override
-  Future<AuthTokens> refresh(String refreshToken) async {
-    refreshCalls += 1;
-    final handler = onRefresh;
-    if (handler == null) throw const AuthException('no refresh');
-    return handler();
-  }
+  Future<bool> signOut(String sessionToken) async =>
+      logout == null ? revoked : logout!(sessionToken);
 
   @override
-  Future<void> signOut({String? idToken}) async => signOutCalled = true;
+  Future<bool> validateSession(String sessionToken) async => valid;
 }
 
-AuthTokens _tokens({required bool expired}) {
-  final now = DateTime.now().toUtc();
-  return AuthTokens(
-    accessToken: 'access',
-    refreshToken: 'refresh',
-    idToken: 'id',
-    accessTokenExpiresAt: expired
-        ? now.subtract(const Duration(minutes: 1))
-        : now.add(const Duration(hours: 1)),
-  );
+class _GoogleTokens implements GoogleIdTokenSource {
+  _GoogleTokens(this.result);
+
+  final Future<String> Function() result;
+
+  @override
+  Future<String> fetchIdToken() => result();
 }
+
+AuthTokens _tokens() => AuthTokens(
+  sessionToken: 'session-token',
+  expiresAt: DateTime.now().toUtc().add(const Duration(hours: 1)),
+);
 
 ProviderContainer _container({
-  required AuthTokenStore store,
-  required AuthRepository repository,
-  Duration refreshTimeout = const Duration(seconds: 12),
+  required _Store store,
+  required _Repository repository,
+  required GoogleIdTokenSource googleTokens,
 }) {
   final container = ProviderContainer(
     overrides: [
       authTokenStoreProvider.overrideWithValue(store),
       authRepositoryProvider.overrideWithValue(repository),
-      authRefreshTimeoutProvider.overrideWithValue(refreshTimeout),
+      googleIdTokenSourceProvider.overrideWithValue(googleTokens),
     ],
   );
   addTearDown(container.dispose);
@@ -112,269 +86,131 @@ ProviderContainer _container({
 }
 
 void main() {
-  group('AuthController.restore', () {
-    test('no stored tokens -> unauthenticated', () async {
-      final container = _container(
-        store: _FakeTokenStore(),
-        repository: _FakeAuthRepository(),
-      );
+  test('restores a valid secure session', () async {
+    final tokens = _tokens();
+    final container = _container(
+      store: _Store(tokens),
+      repository: _Repository(),
+      googleTokens: _GoogleTokens(() async => 'unused'),
+    );
 
-      final session = await container.read(authControllerProvider.future);
-      expect(session.status, AuthStatus.unauthenticated);
-      expect(session.tokens, isNull);
-    });
+    final session = await container.read(authControllerProvider.future);
 
-    test('valid stored tokens -> authenticated without refresh', () async {
-      final tokens = _tokens(expired: false);
-      final container = _container(
-        store: _FakeTokenStore(tokens),
-        repository: _FakeAuthRepository(
-          onRefresh: () async => fail('refresh must not be called'),
-        ),
-      );
-
-      final session = await container.read(authControllerProvider.future);
-      expect(session.status, AuthStatus.authenticated);
-      expect(session.tokens, tokens);
-    });
-
-    test('expired tokens -> refreshes and persists new session', () async {
-      final fresh = _tokens(expired: false);
-      final store = _FakeTokenStore(_tokens(expired: true));
-      final container = _container(
-        store: store,
-        repository: _FakeAuthRepository(onRefresh: () async => fresh),
-      );
-
-      final session = await container.read(authControllerProvider.future);
-      expect(session.status, AuthStatus.authenticated);
-      expect(await store.read(), fresh);
-    });
-
-    test('expired tokens with failing refresh -> clears session', () async {
-      final store = _FakeTokenStore(_tokens(expired: true));
-      final container = _container(
-        store: store,
-        repository: _FakeAuthRepository(
-          onRefresh: () async => throw const AuthException('expired'),
-        ),
-      );
-
-      final session = await container.read(authControllerProvider.future);
-      expect(session.status, AuthStatus.unauthenticated);
-      expect(await store.read(), isNull);
-    });
-
-    test('expired tokens with stuck refresh -> clears session', () async {
-      final store = _FakeTokenStore(_tokens(expired: true));
-      final container = _container(
-        store: store,
-        repository: _FakeAuthRepository(
-          onRefresh: () => Completer<AuthTokens>().future,
-        ),
-        refreshTimeout: const Duration(milliseconds: 1),
-      );
-
-      final session = await container.read(authControllerProvider.future);
-
-      expect(session.status, AuthStatus.unauthenticated);
-      expect(await store.read(), isNull);
-    });
-
-    test('stuck token-store read -> unauthenticated', () async {
-      final store = _HangingReadTokenStore();
-      final container = _container(
-        store: store,
-        repository: _FakeAuthRepository(),
-        refreshTimeout: const Duration(milliseconds: 1),
-      );
-
-      final session = await container.read(authControllerProvider.future);
-
-      expect(session.status, AuthStatus.unauthenticated);
-      expect(store.clearCalls, 1);
-    });
+    expect(session.status, AuthStatus.authenticated);
+    expect(session.tokens, tokens);
   });
 
-  group('AuthController.signIn', () {
-    test('persists tokens and becomes authenticated', () async {
-      final tokens = _tokens(expired: false);
-      final store = _FakeTokenStore();
+  test(
+    'Google sign-in exchanges and securely persists only the app session',
+    () async {
+      final tokens = _tokens();
+      final store = _Store();
+      final repository = _Repository(google: (_) async => tokens);
       final container = _container(
         store: store,
-        repository: _FakeAuthRepository(onSignIn: () async => tokens),
+        repository: repository,
+        googleTokens: _GoogleTokens(() async => 'google-id-token'),
       );
 
       await container.read(authControllerProvider.future);
-      await container.read(authControllerProvider.notifier).signIn();
+      await container.read(authControllerProvider.notifier).signInWithGoogle();
 
-      final session = container.read(authControllerProvider).value!;
-      expect(session.status, AuthStatus.authenticated);
+      expect(repository.receivedGoogleToken, 'google-id-token');
       expect(await store.read(), tokens);
-    });
+      expect(
+        container.read(authControllerProvider).value!.status,
+        AuthStatus.authenticated,
+      );
+    },
+  );
 
-    test('failure leaves the session unauthenticated as an error', () async {
-      final store = _FakeTokenStore();
+  test(
+    'Google cancellation restores the unauthenticated state without error',
+    () async {
+      final store = _Store();
       final container = _container(
         store: store,
-        repository: _FakeAuthRepository(
-          onSignIn: () async => throw const AuthException('cancelled'),
+        repository: _Repository(),
+        googleTokens: _GoogleTokens(
+          () async => throw const AuthException(
+            'cancelled',
+            code: AuthFailureCode.cancelled,
+          ),
         ),
       );
 
       await container.read(authControllerProvider.future);
-      await container.read(authControllerProvider.notifier).signIn();
+      await container.read(authControllerProvider.notifier).signInWithGoogle();
+
+      expect(container.read(authControllerProvider).hasError, isFalse);
+      expect(
+        container.read(authControllerProvider).value!.status,
+        AuthStatus.unauthenticated,
+      );
+      expect(await store.read(), isNull);
+    },
+  );
+
+  test(
+    'Google exchange failures remain an error and never persist credentials',
+    () async {
+      final store = _Store();
+      final container = _container(
+        store: store,
+        repository: _Repository(
+          google: (_) async => throw const AuthException(
+            'conflict',
+            code: AuthFailureCode.googleAccountConflict,
+          ),
+        ),
+        googleTokens: _GoogleTokens(() async => 'google-id-token'),
+      );
+
+      await container.read(authControllerProvider.future);
+      await container.read(authControllerProvider.notifier).signInWithGoogle();
 
       expect(container.read(authControllerProvider).hasError, isTrue);
       expect(await store.read(), isNull);
-    });
+    },
+  );
 
-    test('passes through the requested browser flow', () async {
-      final tokens = _tokens(expired: false);
-      final repository = _FakeAuthRepository(onSignIn: () async => tokens);
-      final container = _container(
-        store: _FakeTokenStore(),
-        repository: repository,
-      );
-
-      await container.read(authControllerProvider.future);
-      await container
-          .read(authControllerProvider.notifier)
-          .signIn(
-            flow: AuthBrowserFlow.register,
-          );
-
-      expect(repository.lastBrowserFlow, AuthBrowserFlow.register);
-    });
-  });
-
-  group('AuthController.signInWithPassword', () {
-    test('persists tokens and becomes authenticated', () async {
-      final tokens = _tokens(expired: false);
-      final store = _FakeTokenStore();
+  test(
+    'logout clears secure storage even when remote revocation fails',
+    () async {
+      final store = _Store(_tokens());
       final container = _container(
         store: store,
-        repository: _FakeAuthRepository(onPasswordSignIn: () async => tokens),
+        repository: _Repository(revoked: false),
+        googleTokens: _GoogleTokens(() async => 'unused'),
       );
 
       await container.read(authControllerProvider.future);
-      await container
+      final revoked = await container
           .read(authControllerProvider.notifier)
-          .signInWithPassword(
-            username: 'testuser',
-            password: '123456',
-          );
+          .signOut();
 
-      final session = container.read(authControllerProvider).value!;
-      expect(session.status, AuthStatus.authenticated);
-      expect(await store.read(), tokens);
-    });
-  });
-
-  group('AuthController.currentAccessToken', () {
-    test('returns valid access token without refresh', () async {
-      final tokens = _tokens(expired: false);
-      final repository = _FakeAuthRepository(
-        onRefresh: () async => fail('refresh must not be called'),
-      );
-      final container = _container(
-        store: _FakeTokenStore(tokens),
-        repository: repository,
-      );
-
-      await container.read(authControllerProvider.future);
-      final accessToken = await container
-          .read(authControllerProvider.notifier)
-          .currentAccessToken();
-
-      expect(accessToken, tokens.accessToken);
-      expect(repository.refreshCalls, 0);
-    });
-
-    test('refreshes expired access token and persists session', () async {
-      final fresh = _tokens(expired: false);
-      final store = _FakeTokenStore(_tokens(expired: true));
-      final repository = _FakeAuthRepository(onRefresh: () async => fresh);
-      final container = _container(store: store, repository: repository);
-
-      await container.read(authControllerProvider.future);
-      final accessToken = await container
-          .read(authControllerProvider.notifier)
-          .currentAccessToken();
-
-      expect(accessToken, fresh.accessToken);
-      expect(await store.read(), fresh);
-      expect(repository.refreshCalls, 1);
-    });
-
-    test('clears session when refresh fails', () async {
-      final store = _FakeTokenStore(_tokens(expired: true));
-      final container = _container(
-        store: store,
-        repository: _FakeAuthRepository(
-          onRefresh: () async => throw const AuthException('expired'),
-        ),
-      );
-
-      await container.read(authControllerProvider.future);
-      final accessToken = await container
-          .read(authControllerProvider.notifier)
-          .currentAccessToken();
-
-      expect(accessToken, isNull);
+      expect(revoked, isFalse);
       expect(await store.read(), isNull);
       expect(
-        container.read(authControllerProvider).value!.isAuthenticated,
-        false,
+        container.read(authControllerProvider).value!.status,
+        AuthStatus.unauthenticated,
       );
-    });
+    },
+  );
 
-    test('clears session when refresh hangs after token expiry', () async {
-      final expired = _tokens(expired: true);
-      final store = _FakeTokenStore();
-      final container = _container(
-        store: store,
-        repository: _FakeAuthRepository(
-          onPasswordSignIn: () async => expired,
-          onRefresh: () => Completer<AuthTokens>().future,
-        ),
-        refreshTimeout: const Duration(milliseconds: 1),
-      );
-
-      await container.read(authControllerProvider.future);
-      await container
-          .read(authControllerProvider.notifier)
-          .signInWithPassword(
-            username: 'testuser',
-            password: '123456',
-          );
-      final accessToken = await container
-          .read(authControllerProvider.notifier)
-          .currentAccessToken();
-
-      expect(accessToken, isNull);
-      expect(await store.read(), isNull);
-      expect(
-        container.read(authControllerProvider).value!.isAuthenticated,
-        false,
-      );
-    });
-  });
-
-  group('AuthController.signOut', () {
-    test('clears storage and becomes unauthenticated', () async {
-      final tokens = _tokens(expired: false);
-      final store = _FakeTokenStore(tokens);
-      final repository = _FakeAuthRepository();
-      final container = _container(store: store, repository: repository);
-
-      await container.read(authControllerProvider.future);
-      await container.read(authControllerProvider.notifier).signOut();
-
-      final session = container.read(authControllerProvider).value!;
-      expect(session.status, AuthStatus.unauthenticated);
-      expect(await store.read(), isNull);
-      expect(repository.signOutCalled, isTrue);
-    });
+  test('logout hides the previous token while remote revocation is pending', () async {
+    final pending = Completer<bool>();
+    final container = _container(
+      store: _Store(_tokens()),
+      repository: _Repository(logout: (_) => pending.future),
+      googleTokens: _GoogleTokens(() async => 'unused'),
+    );
+    await container.read(authControllerProvider.future);
+    final logout = container.read(authControllerProvider.notifier).signOut();
+    expect(await container.read(authControllerProvider.notifier).currentAccessToken(), isNull);
+    expect(container.read(authControllerProvider).value?.status, AuthStatus.unauthenticated);
+    pending.complete(true);
+    expect(await logout, isTrue);
   });
 }
+
