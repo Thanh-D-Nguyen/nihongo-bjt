@@ -64,6 +64,42 @@ func TestCSRFGuard_UnsafeMethod_MissingOrigin_Returns403(t *testing.T) {
 	}
 }
 
+func TestCSRFGuardBearerOnlyLogout(t *testing.T) {
+	guard := CSRFGuardBearerOnlyLogout(validCSRFConfig(), "bjt_web_session")
+	handler := guard(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	for _, tc := range []struct {
+		name, origin, bearer, cookie string
+		want                         int
+	}{
+		{"native bearer", "", "Bearer native-token", "", http.StatusNoContent},
+		{"cookie without origin", "", "", "cookie-token", http.StatusForbidden},
+		{"mixed cookie and bearer", "", "Bearer native-token", "cookie-token", http.StatusForbidden},
+		{"cross-site bearer", "https://evil.example.com", "Bearer native-token", "", http.StatusForbidden},
+		{"malformed bearer", "", "Basic native-token", "", http.StatusForbidden},
+		{"trusted browser", "https://app.example.com", "", "cookie-token", http.StatusNoContent},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/api/auth/logout", nil)
+			if tc.origin != "" {
+				req.Header.Set("Origin", tc.origin)
+			}
+			if tc.bearer != "" {
+				req.Header.Set("Authorization", tc.bearer)
+			}
+			if tc.cookie != "" {
+				req.AddCookie(&http.Cookie{Name: "bjt_web_session", Value: tc.cookie})
+			}
+			w := httptest.NewRecorder()
+			handler.ServeHTTP(w, req)
+			if w.Code != tc.want {
+				t.Fatalf("status=%d want=%d", w.Code, tc.want)
+			}
+		})
+	}
+}
+
 func TestCSRFGuard_TrustedOrigin_PassesThrough(t *testing.T) {
 	cfg := validCSRFConfig()
 	called := false

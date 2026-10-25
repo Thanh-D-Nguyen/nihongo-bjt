@@ -64,6 +64,7 @@ services:
       MEILISEARCH_API_KEY: ${MEILI_MASTER_KEY:?required}
       CORS_ORIGINS: https://${OCI_PUBLIC_HOST:?required}
       WEB_PUBLIC_URL: https://${OCI_PUBLIC_HOST:?required}
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:?required}
       COOKIE_SECURE: "true"
       # Caddy and the web BFF reach the API from the Docker bridge network. Only
       # these private ranges may supply X-Forwarded-For; the API port is bound to
@@ -107,6 +108,7 @@ services:
       args:
         APP_NAME: web
         NEXT_PUBLIC_API_URL: https://${OCI_PUBLIC_HOST:?required}
+        NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:?required}
     restart: unless-stopped
     mem_limit: 1g
     ports: ["127.0.0.1:13000:3000"]

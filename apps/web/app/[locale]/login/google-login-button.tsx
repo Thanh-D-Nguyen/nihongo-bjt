@@ -12,6 +12,7 @@ type GoogleAccounts = {
 };
 
 const clientId = process.env.NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID;
+export const googleLoginEnabled = Boolean(clientId);
 
 export function GoogleLoginButton({ locale, destination, label, onError }: {
   locale: string;
@@ -26,7 +27,7 @@ export function GoogleLoginButton({ locale, destination, label, onError }: {
   const { reload } = useGoAuth();
 
   useEffect(() => {
-    if (!clientId) return;
+    if (!googleLoginEnabled || !clientId) return;
     const getGoogle = () => (window as Window & { google?: GoogleAccounts }).google;
     let active = true;
     const loadButton = () => {
@@ -77,7 +78,7 @@ export function GoogleLoginButton({ locale, destination, label, onError }: {
     return () => { active = false; script?.removeEventListener("load", loadButton); };
   }, [locale, destination, onError, reload, router]);
 
-  if (!clientId) return null;
+  if (!googleLoginEnabled) return null;
   return (
     <div className="flex min-h-[48px] flex-col items-center justify-center gap-2" aria-busy={busy}>
       <div ref={target} role="group" aria-label={label} />

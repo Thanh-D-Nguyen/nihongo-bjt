@@ -34,6 +34,7 @@ ENV = {
     "OCI_SOURCE_DIR": str(ROOT),
     "OCI_RELEASE_SHA": TAG,
     "OCI_PUBLIC_HOST": "release-check.invalid",
+    "GOOGLE_OAUTH_CLIENT_ID": "fixture.apps.googleusercontent.com",
 }
 
 
@@ -62,7 +63,7 @@ def fixture_env_file():
     handle.write(
         "POSTGRES_PASSWORD=fixture\nREDIS_PASSWORD=fixture\n"
         "MEILI_MASTER_KEY=fixture-only-long-key\nSESSION_SECRET=fixture-only-long-secret\n"
-        "OAUTH_STATE_SECRET=fixture-only-long-secret\n"
+        "OAUTH_STATE_SECRET=fixture-only-long-secret\nGOOGLE_OAUTH_CLIENT_ID=fixture.apps.googleusercontent.com\n"
     )
     handle.close()
     return handle.name
@@ -77,7 +78,7 @@ def check_release_controls():
 def check_runtime(app, port_env, path):
     name = f"{PROJECT}-{app}"
     run(["docker", "rm", "-f", name], check=False, capture_output=True)
-    run(["docker", "run", "-d", "--rm", "--name", name, "-p", "127.0.0.1::3000" if app == "web" else "127.0.0.1::3001",
+    run(["docker", "run", "-d", "--name", name, "-p", "127.0.0.1::3000" if app == "web" else "127.0.0.1::3001",
          "-e", "NODE_ENV=production", "-e", f"PORT={port_env}", "-e", "API_URL=http://127.0.0.1:1",
          "-e", f"NEXT_PUBLIC_API_URL=https://{ENV['OCI_PUBLIC_HOST']}",
          f"kotobawork-oci-{app}:{TAG}"], capture_output=True)
@@ -94,7 +95,9 @@ def check_runtime(app, port_env, path):
                 break
             except OSError:
                 time.sleep(1)
-        assert html is not None, f"{app} did not serve {path}"
+        if html is None:
+            logs = run(["docker", "logs", name], check=False, capture_output=True, text=True)
+            raise AssertionError(f"{app} did not serve {path}\n{logs.stdout}{logs.stderr}")
         scripts = set(re.findall(r'<script[^>]+src="([^"]+)"', html))
         assert scripts, f"{app} HTML references no scripts"
         for asset in scripts:

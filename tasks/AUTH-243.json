@@ -1,0 +1,558 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "AUTH-243",
+  "title": "Google web sign-in release to Oracle Cloud",
+  "start_head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Web login displays a Google button and translated divider when OAuth is configured"
+      },
+      {
+        "id": "AC2",
+        "text": "Google ID token reaches Go API with session cookie; native Bearer logout does not break browser CSRF protection"
+      },
+      {
+        "id": "AC3",
+        "text": "Production OCI build passes web Google client ID to build, and Go service receives the same ID"
+      },
+      {
+        "id": "AC4",
+        "text": "Existing email login and admin routes remain reachable; production health verified"
+      }
+    ],
+    "expected_behavior": "Show the Google login option with an accessible divider; inject matching OAuth client ID into the OCI API and web build; allow Bearer-only native logout while protecting cookie requests",
+    "observed_behavior": "The existing Google login button has no distinct divider and OCI builds lack the public OAuth client ID and API audience configuration; native Bearer-only logout is blocked by CSRF",
+    "rollback_plan": "Revert the release commit; OCI deploy-release.sh can restore pinned prior app images and Caddy configuration"
+  },
+  "classification": {
+    "classes": [
+      "AUTH_SECURITY",
+      "UI_ONLY",
+      "INFRASTRUCTURE",
+      "CROSS_CUTTING",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/login/auth-pages.regression.test.tsx",
+      "test": "learner auth pages regression > shows Google sign-in separately from password",
+      "expect": "not to be null"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-25T10:17:39.267Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-25T10:17:39.543Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-25T10:17:39.783Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-25T10:19:27.671Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-25T10:20:13.579Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-25T10:50:07.009Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91"
+    },
+    {
+      "state": "WAITING_FOR_DECISION",
+      "at": "2026-10-25T10:59:07.105Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-25T11:00:15.743Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-25T11:00:17.507Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-25T10:19:27.504Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/login/auth-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > shows Google sign-in separately from password",
+          "outcome": "FAIL",
+          "excerpt": "expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > shows Google sign-in separately from password": "not to be null"
+      },
+      "fingerprint": "e0e0592b9dc98eae6500206f664158973a090e63a489c23cc1de6e09b719037e"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-25T10:20:13.010Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/login/auth-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > shows Google sign-in separately from password",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "99405d0a047087e07e935f207611ce76894f13b9d4f31567fbca5d6b6e55041a"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-25T10:23:43.613Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 266,
+        "executed": 266,
+        "passed": 266,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "99405d0a047087e07e935f207611ce76894f13b9d4f31567fbca5d6b6e55041a"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-25T10:24:49.172Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 1524,
+        "executed": 1524,
+        "passed": 1523,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "99405d0a047087e07e935f207611ce76894f13b9d4f31567fbca5d6b6e55041a"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-25T10:25:44.141Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 494,
+        "executed": 494,
+        "passed": 494,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 824,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "99405d0a047087e07e935f207611ce76894f13b9d4f31567fbca5d6b6e55041a"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-25T10:36:33.201Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/login/auth-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > shows Google sign-in separately from password",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9fcb43133c05fbeab4618e76c9525e4878876b769c62fd188182d4ab90b52d96"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-25T10:39:18.523Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 266,
+        "executed": 266,
+        "passed": 266,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "9fcb43133c05fbeab4618e76c9525e4878876b769c62fd188182d4ab90b52d96"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-25T10:43:23.901Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1524,
+        "executed": 1524,
+        "passed": 1524,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1524 passed, 0 allowed skip(s)",
+      "fingerprint": "9fcb43133c05fbeab4618e76c9525e4878876b769c62fd188182d4ab90b52d96"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-25T10:44:05.504Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 494,
+        "executed": 494,
+        "passed": 494,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 824,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "9fcb43133c05fbeab4618e76c9525e4878876b769c62fd188182d4ab90b52d96"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-25T10:49:19.388Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "python3 scripts/release/oci-image-check.py",
+      "exit_code": 0,
+      "fingerprint": "9fcb43133c05fbeab4618e76c9525e4878876b769c62fd188182d4ab90b52d96"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-25T10:50:06.323Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "pnpm exec playwright test e2e/google-login.spec.ts --project=chromium",
+      "exit_code": 0,
+      "fingerprint": "9fcb43133c05fbeab4618e76c9525e4878876b769c62fd188182d4ab90b52d96"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-25T10:59:06.440Z",
+      "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model sonnet --effort medium --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [
+        {
+          "severity": "minor",
+          "file": "deploy/oci/deploy-release.test.py",
+          "summary": "OAuth client ID injection is pinned only by string greps; the image check does not assert the ID is embedded in the built web bundle"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/app/[locale]/login/auth-pages.regression.test.tsx",
+          "summary": "Only the googleLoginEnabled=true path is tested; the disabled path (no divider/button) is unpinned"
+        },
+        {
+          "severity": "minor",
+          "file": "deploy/oci/Dockerfile.frontend",
+          "summary": "Unrelated changes (the pnpm 12.15.0 bump and the next start CMD rewrite) go beyond the stated acceptance criteria and carry no stated rationale"
+        },
+        {
+          "severity": "minor",
+          "file": "deploy/oci/deploy-release.sh",
+          "summary": "AC4 (production health verified) has no recorded production evidence; it relies on the post-deploy curls"
+        }
+      ],
+      "package_sha256": "50c261bf0e061c7f4fdb07f37693b2105c74b874e3ed2c00b09a92f4c7387381",
+      "fingerprint": "9fcb43133c05fbeab4618e76c9525e4878876b769c62fd188182d4ab90b52d96"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-25T11:00:17.488Z",
+    "head": "cddb7117ce09d49e0527fb33ffee2c91e4399f91",
+    "fingerprint": "9fcb43133c05fbeab4618e76c9525e4878876b769c62fd188182d4ab90b52d96",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "infra_validation": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      ".github/workflows/ci.yml": "87720750a388050dd3051976b7f66294e00fbff8",
+      ".github/workflows/deploy-oci.yml": "b81bef6711aa8a80e03bcb5114e97c56340f1ac7",
+      "apps/api-go/internal/authn/csrf.go": "411f37aeb4fcb9f96e8aee0836f0785f8b39658b",
+      "apps/api-go/internal/authn/csrf_test.go": "7d278d1e1bf8209e4cea5d0e39f993359656856c",
+      "apps/api-go/internal/httpserver/server.go": "885c32b5eb5fad33774670d649a0cdd8f8770793",
+      "apps/web/app/[locale]/login/auth-pages.regression.test.tsx": "7ccff5d0877744b87564f85df3f6500aeb933ed3",
+      "apps/web/app/[locale]/login/google-login-button.tsx": "48b0819a115ad088e1ade9c2c28fd4e3e5a45220",
+      "apps/web/app/[locale]/login/page.tsx": "c94baec0e502b0f4a8af66a35769d58a236c40db",
+      "deploy/oci/Dockerfile.frontend": "de5d48b4d0297b78cfc671b3723c27c4bd5193a1",
+      "deploy/oci/deploy-release.test.py": "063e44656b7a66f6cdb211a7d2ce4379fe8c1acc",
+      "deploy/oci/docker-compose.oci.yml": "99f46036bccd27ec44ac92fd6b70d96ab50a5597",
+      "docs/api-route-inventory.json": "da33271ab99ecca36dd622ecf3d81c366951b6ef",
+      "docs/openapi.json": "d19a8e359f9d60e915022a7941c23d8d619db69b",
+      "scripts/release/oci-image-check.py": "1aed57a20be52a5fd90f3b01c2498c4147b3fde8"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": [
+      {
+        "id": "dd491baf-79e7-4066-ab1b-252940f5c40d",
+        "task": "AUTH-243",
+        "action": {
+          "kind": "external_mutation",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "14c9f8f051170c3e5353663d9355882e620fd5c424d0ee555b4d22a151b48e12",
+            "environment": "local"
+          },
+          "impact": "Publish or mutate an external service/account",
+          "command": "echo \"=== packageManager history ===\"; git log --oneline -S 'pnpm@12.15.0' -- package.json | head; echo \"=== pnpm pins in all workflows (working tree) ===\"; rg -n \"version: 1[0-9]\\.|pnpm@1[0-9]\" .github/ deploy/ scripts/ apps/*/Dockerfile* Dockerfile* 2>/dev/null; echo \"=== origin/main ci.yml pnpm pins ===\"; git show origin/main:.github/workflows/ci.yml 2>/dev/null | rg -n \"version: \" ; echo \"=== merge-base / branch relation ===\"; git log --oneline -3 origin/main; git merge-base HEAD origin/main"
+        },
+        "impact": "Publish or mutate an external service/account",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "14c9f8f051170c3e5353663d9355882e620fd5c424d0ee555b4d22a151b48e12",
+          "environment": "local"
+        },
+        "digest": "3c633bb2232a5952e2957826420300b1fc9f51b80a6d5791506477d47cb04d7b",
+        "continuation": {
+          "step": "native:toolu_01R3AGWXKvh2dcxttfEpd3j6",
+          "native_tool_use_id": "toolu_01R3AGWXKvh2dcxttfEpd3j6"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "cancel",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-25T10:53:31.001Z",
+        "answered_at": "2026-10-25T11:00:13.463Z",
+        "execution": "alternative"
+      },
+      {
+        "id": "98b07781-7965-4014-a7c6-1768efd25b3d",
+        "task": "AUTH-243",
+        "action": {
+          "kind": "external_mutation",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "c217c14971c830b51c6a9e43f937f8dbcb4c7cfbdd425d0f05de8bdabea6fdb6",
+            "environment": "local"
+          },
+          "impact": "Publish or mutate an external service/account",
+          "command": "rg -n \"pnpm/action-setup|version: 1[0-9]\\.[0-9]+\\.[0-9]+|pnpm@1[0-9]\\.\" .github/workflows/ apps/api-go/Dockerfile deploy/ 2>/dev/null"
+        },
+        "impact": "Publish or mutate an external service/account",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "c217c14971c830b51c6a9e43f937f8dbcb4c7cfbdd425d0f05de8bdabea6fdb6",
+          "environment": "local"
+        },
+        "digest": "188e1da594e1bf120793d71e81fa6be84d14265db8f5891167bdc6a2c5a2a267",
+        "continuation": {
+          "step": "native:toolu_01Ndm4cGYxN9mmXxtwCkYHTv",
+          "native_tool_use_id": "toolu_01Ndm4cGYxN9mmXxtwCkYHTv"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "cancel",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-25T10:53:43.033Z",
+        "answered_at": "2026-10-25T11:00:14.270Z",
+        "execution": "alternative"
+      },
+      {
+        "id": "c41f29a5-7f7e-4ae3-86c8-ed68530fe4bb",
+        "task": "AUTH-243",
+        "action": {
+          "kind": "external_mutation",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "5ea61b8dfc7fab82d329337de218fbbbdf612df43f595a5db2228002459816ab",
+            "environment": "local"
+          },
+          "impact": "External account/service action; verify scope and identity",
+          "command": "grep -n \"ssh\\|scp\\|GH_TOKEN\\|OCI_\" .github/workflows/deploy-oci.yml | head -30; grep -n \"GOOGLE\" deploy/oci/deploy-release.sh; grep -rn \"GoogleOAuthClientID\" apps/api-go --include='*.go' | grep -v _test | head"
+        },
+        "impact": "External account/service action; verify scope and identity",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "5ea61b8dfc7fab82d329337de218fbbbdf612df43f595a5db2228002459816ab",
+          "environment": "local"
+        },
+        "digest": "622758c040a6a3a231bf440c3325373a00d4c5d397fdd7132fd4bc03ca57cd5c",
+        "continuation": {
+          "step": "native:toolu_01TK7qxH1XVsQnf5ButdosAe",
+          "native_tool_use_id": "toolu_01TK7qxH1XVsQnf5ButdosAe"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "cancel",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-25T10:58:46.990Z",
+        "answered_at": "2026-10-25T11:00:15.076Z",
+        "execution": "alternative"
+      }
+    ]
+  }
+}

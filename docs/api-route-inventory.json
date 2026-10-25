@@ -24079,7 +24079,7 @@
       "family": "Authentication",
       "guards": [
         "learnerGuard",
-        "authn.CSRFGuard(csrfCfg)"
+        "authn.CSRFGuardBearerOnlyLogout(csrfCfg, guardCfg.LearnerCookieName)"
       ],
       "runtimeConditions": [
         "deps.SessionStore != nil && deps.ProfileStore != nil"
@@ -24088,7 +24088,7 @@
       "authentication": {
         "guards": [
           "learnerGuard",
-          "authn.CSRFGuard(csrfCfg)"
+          "authn.CSRFGuardBearerOnlyLogout(csrfCfg, guardCfg.LearnerCookieName)"
         ],
         "status": "source-inferred"
       },

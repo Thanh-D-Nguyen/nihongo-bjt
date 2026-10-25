@@ -183,9 +183,14 @@ def check_sources():
     workflow = (HERE.parents[1] / ".github/workflows/deploy-oci.yml").read_text()
     assert "cancel-in-progress: false" in workflow, "deploy cancellation must not interrupt rollback"
     assert workflow.count("github.event.workflow_run.head_sha || github.sha") >= 2, "checkout and deploy must pin the validated SHA"
+    assert "GOOGLE_OAUTH_CLIENT_ID: ${{ vars.GOOGLE_OAUTH_CLIENT_ID }}" in workflow, "production deploy must supply the Google OAuth client ID"
     dockerfile = (HERE / "Dockerfile.frontend").read_text()
     assert 'chown -R node:node "apps/$APP_NAME/.next"' in dockerfile, "Next cache must be writable by runtime user"
     assert "USER node" in dockerfile, "frontend must run unprivileged"
+    assert "NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID" in dockerfile, "web OAuth client ID must be available during the Next.js build"
+    compose = (HERE / "docker-compose.oci.yml").read_text()
+    assert "NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:?required}" in compose, "Oracle web build must receive the configured Google OAuth client ID"
+    assert "GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:?required}" in compose, "Oracle API must validate tokens against the configured Google OAuth client ID"
     print("PASS workflow SHA pinning and frontend cache ownership (source checks)")
 
 

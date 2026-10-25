@@ -138,7 +138,7 @@ func NewRouter(deps Dependencies) http.Handler {
 
 		r.Group(func(lr chi.Router) {
 			lr.Use(learnerGuard)
-			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Use(authn.CSRFGuardBearerOnlyLogout(csrfCfg, guardCfg.LearnerCookieName))
 			lr.Post("/api/auth/logout", learnerLogoutHandler(deps.SessionStore, deps.Logger, guardCfg.LearnerCookieName))
 		})
 

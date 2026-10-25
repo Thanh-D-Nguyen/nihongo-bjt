@@ -16,6 +16,10 @@ vi.mock("next/navigation", () => ({
 vi.mock("../../../lib/go-auth-provider", () => ({
   useGoAuth: () => ({ reload: mocks.reload })
 }));
+vi.mock("./google-login-button", () => ({
+  googleLoginEnabled: true,
+  GoogleLoginButton: () => <div data-testid="google-login-button" />
+}));
 
 import LoginPage, { getSafeLoginReturnTo } from "./page";
 import RegisterPage from "../register/page";
@@ -95,6 +99,8 @@ describe("learner auth pages regression", () => {
       expect(container.querySelector('label[for="email"]')?.textContent?.trim()).toBe(messages.auth.register.emailLabel);
       expect(container.querySelector('input[type="email"]')).not.toBeNull();
       expect(container.querySelector("button")?.textContent?.trim()).toBe(messages.auth.login.primaryCta);
+      expect(container.querySelector('[role="separator"]')?.getAttribute("aria-label")).toBe(messages.auth.login.divider);
+      expect(container.querySelector('[data-testid="google-login-button"]')).not.toBeNull();
       await render(RegisterPage);
       expect(container.querySelector("h1")?.textContent).toBe(messages.auth.register.title);
       expect(container.querySelector('label[for="displayName"]')?.textContent?.trim()).toBe(messages.accountInfo.displayName);
@@ -102,6 +108,13 @@ describe("learner auth pages regression", () => {
       expect(container.querySelector("#confirmPassword")?.getAttribute("autocomplete")).toBe("new-password");
     }
   );
+
+  it("shows Google sign-in separately from password", async () => {
+    await render(LoginPage);
+
+    expect(container.querySelector('[role="separator"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="google-login-button"]')).not.toBeNull();
+  });
 
   it("rejects mismatched confirmation locally with Vietnamese copy", async () => {
     await render(RegisterPage);

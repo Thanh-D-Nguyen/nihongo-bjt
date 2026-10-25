@@ -16076,7 +16076,7 @@
         "x-route-source": {
           "guards": [
             "learnerGuard",
-            "authn.CSRFGuard(csrfCfg)"
+            "authn.CSRFGuardBearerOnlyLogout(csrfCfg, guardCfg.LearnerCookieName)"
           ],
           "handler": "learnerLogoutHandler(deps.SessionStore, deps.Logger, guardCfg.LearnerCookieName)",
           "runtimeConditions": [

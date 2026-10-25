@@ -109,6 +109,26 @@ func CSRFGuard(cfg CSRFConfig) func(http.Handler) http.Handler {
 	}
 }
 
+// CSRFGuardBearerOnlyLogout permits a native session bearer token to revoke
+// itself without a browser Origin. Cookie requests and requests declaring an
+// Origin/Referer always use the regular CSRF guard.
+func CSRFGuardBearerOnlyLogout(cfg CSRFConfig, cookieName string) func(http.Handler) http.Handler {
+	regular := CSRFGuard(cfg)
+	return func(next http.Handler) http.Handler {
+		protected := regular(next)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, cookieErr := r.Cookie(cookieName)
+			if r.Method == http.MethodPost && cookieErr == http.ErrNoCookie &&
+				r.Header.Get("Origin") == "" && r.Header.Get("Referer") == "" &&
+				extractBearerToken(r) != "" {
+				next.ServeHTTP(w, r)
+				return
+			}
+			protected.ServeHTTP(w, r)
+		})
+	}
+}
+
 // extractOrigin extracts and normalizes the request origin from Origin or
 // Referer headers. Returns lowercase scheme://host or empty string.
 // Rejects malformed URLs, userinfo, opaque origins ("null"), and file:// schemes.

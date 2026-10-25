@@ -8,7 +8,7 @@ import { useGoAuth } from "../../../lib/go-auth-provider";
 import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
-import { GoogleLoginButton } from "./google-login-button";
+import { GoogleLoginButton, googleLoginEnabled } from "./google-login-button";
 
 export function getSafeLoginReturnTo(value: string | null, locale: string, origin: string): string {
  const safeLocale = locale === "vi" || locale === "ja" || locale === "en" ? locale : "en";
@@ -124,7 +124,16 @@ export default function LoginPage() {
  </button>
  </form>
 
+ <div className="space-y-5">
+ {googleLoginEnabled && (
+ <div role="separator" aria-label={t.divider} className="flex items-center gap-3 text-xs font-medium uppercase tracking-[0.16em] text-muted">
+ <span className="h-px flex-1 bg-border" />
+ <span>{t.divider}</span>
+ <span className="h-px flex-1 bg-border" />
+ </div>
+ )}
  <GoogleLoginButton locale={locale} destination={getSafeLoginReturnTo(requestedReturnTo, locale, typeof window === "undefined" ? "http://localhost" : window.location.origin)} label={t.continueGoogle} onError={googleError} />
+ </div>
 
  <div className="flex items-center justify-between text-sm">
  <Link

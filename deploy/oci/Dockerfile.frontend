@@ -1,7 +1,7 @@
 FROM node:24.16.0-bookworm-slim AS workspace
 WORKDIR /workspace
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates openssl && rm -rf /var/lib/apt/lists/*
-RUN corepack enable && corepack prepare pnpm@10.26.2 --activate
+RUN corepack enable && corepack prepare pnpm@12.15.0 --activate
 
 # The release script supplies a git archive, excluding host secrets/build artifacts.
 COPY . .
@@ -11,14 +11,16 @@ RUN pnpm install --frozen-lockfile && pnpm prisma:generate
 FROM workspace AS frontend
 ARG APP_NAME=web
 ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID
 ENV APP_NAME=${APP_NAME} \
     NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
+    NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID} \
     API_URL=http://api:4001 \
     NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1
-RUN case "$APP_NAME" in web|admin) ;; *) exit 1 ;; esac && \
+RUN case "$APP_NAME" in web) test -n "$NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID" ;; admin) ;; *) exit 1 ;; esac && \
     test -n "$NEXT_PUBLIC_API_URL" && \
     pnpm --dir "apps/$APP_NAME" build && \
     chown -R node:node "apps/$APP_NAME/.next"
 USER node
-CMD ["sh", "-c", "exec pnpm --dir apps/$APP_NAME exec next start --hostname 0.0.0.0 --port ${PORT:-3000}"]
+CMD ["sh", "-c", "cd /workspace/apps/$APP_NAME && exec node /workspace/node_modules/next/dist/bin/next start --hostname 0.0.0.0 --port ${PORT:-3000}"]
