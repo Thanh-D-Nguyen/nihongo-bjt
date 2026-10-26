@@ -1,0 +1,350 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "BJT-248",
+  "title": "Fix BJT operations dashboard nullable levels and honest 30-day metrics",
+  "start_head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c",
+  "preexisting_changes": {
+    ".github/workflows/recover-ssh.yml": "336ab60d89f3ba6b697594661a6b5018e5e14104",
+    "scripts/ops/recover_ssh.py": "182ff5261426c2d473e9a206fc1cdc1ead9c769f",
+    "scripts/ops/ssh-recovery.test.ts": "410e659d201d76b4611ce07c5bdc1d33745a4acf",
+    "scripts/ops/ssh_prod.py": "ea6194d74993a23f44fcdbbb5d301138822661dd",
+    "scripts/ops/test_ssh_recovery.py": "8a7f9d1e273c8f57905e79252c9b006bdcb12424"
+  },
+  "spec": {
+    "problem": "Production dashboard 500 on nullable official mock levels plus misleading legacy publication and pass-rate metrics",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Real PostgreSQL route test: NULL/empty levels aggregate once as unknown; published mocks active; JSON keys preserved"
+      },
+      {
+        "id": "AC2",
+        "text": "Attempts count only starts in [now minus 30 days, now]; old/future sessions excluded; no recent starts add zero attempts and no fabricated pass rate. Unique fixtures preserve existing data."
+      },
+      {
+        "id": "AC3",
+        "text": "bjtPassRate30d stays null with partial_schema_pending bjt_pass_rate_30d: no canonical pass threshold/result exists"
+      }
+    ],
+    "expected_behavior": "Stable dashboard JSON; NULL and empty levels share unknown bucket; published mocks counted; starts bounded to last 30 days through now; pass rate null until canonical pass semantics exist. Tests preserve existing data using unique fixtures and baseline deltas.",
+    "observed_behavior": "NULL mock level fails string scan with HTTP 500; active status is obsolete; all-time submitted count masquerades as pass rate",
+    "rollback_plan": "Revert handler and its focused regression test; no schema or stored data changes"
+  },
+  "classification": {
+    "classes": [
+      "DOMAIN_LOGIC",
+      "API_CONTRACT",
+      "DATABASE"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminOpsBJTDashboard",
+      "expect": "dashboard"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-26T06:35:15.292Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-26T06:35:31.553Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-26T06:35:31.848Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T06:36:56.434Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-26T06:43:22.172Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T06:44:43.695Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T06:45:05.294Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-26T06:49:00.195Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-26T06:49:15.253Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-26T06:49:16.293Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-26T06:36:56.139Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOpsBJTDashboard)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOpsBJTDashboard",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminOpsBJTDashboard === RUN TestAdminOpsBJTDashboard/null_and_empty_levels 2026/10/26 15:36:55 ERROR scan BJT dashboard level error=\"can't scan into dest[0] (col: level): cannot scan NULL into *string\" 2026/10/26 15:36:55 INFO request method=GET path=/api/admin/operations/bjt/dashboard …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminOpsBJTDashboard": "dashboard"
+      },
+      "fingerprint": "e6848edb7e3c474694d2e6ca52323b022a2c2d6c65591bc3667e6bf674976eea"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-26T06:37:49.758Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOpsBJTDashboard)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOpsBJTDashboard",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminOpsBJTDashboard === RUN TestAdminOpsBJTDashboard/null_and_empty_levels 2026/10/26 15:37:49 ERROR scan BJT dashboard level error=\"can't scan into dest[0] (col: level): cannot scan NULL into *string\" 2026/10/26 15:37:49 INFO request method=GET path=/api/admin/operations/bjt/dashboard …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminOpsBJTDashboard": "dashboard"
+      },
+      "fingerprint": "158cb8b4e278e61073cda5d58e918803bfe10e111f8071830f3d4d414371124a"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-26T06:38:21.036Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOpsBJTDashboard)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOpsBJTDashboard",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "=== RUN TestAdminOpsBJTDashboard === RUN TestAdminOpsBJTDashboard/null_and_empty_levels 2026/10/26 15:38:20 INFO request method=GET path=/api/admin/operations/bjt/dashboard status=200 duration=6.314542ms bytes=271 handler_admin_operations_bjt_dashboard_test.go:115: dashboard bjtAttempts30d=2, want 3…"
+        }
+      ],
+      "fingerprint": "6956e0b5a32334f963cc1ed384c4a6a4b3db6eff396c8704eb6088a0349eb0ed"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-26T06:39:28.276Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 1530,
+        "executed": 1530,
+        "passed": 1527,
+        "failed": 3,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "6956e0b5a32334f963cc1ed384c4a6a4b3db6eff396c8704eb6088a0349eb0ed"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-26T06:43:44.937Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 5,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOpsBJTDashboard)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOpsBJTDashboard",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminOpsBJTDashboard 2026/10/26 15:43:43 INFO request method=GET path=/api/admin/operations/bjt/dashboard status=200 duration=5.530375ms bytes=222 === RUN TestAdminOpsBJTDashboard/null_and_empty_levels 2026/10/26 15:43:43 ERROR scan BJT dashboard level error=\"can't scan into dest[0] (col…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestAdminOpsBJTDashboard": "dashboard"
+      },
+      "fingerprint": "b2452fed2e12ffb5025f3032f08cbd7cde3c467b1a791f663df2823cf46e5ac5"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-26T06:43:53.160Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOpsBJTDashboard)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOpsBJTDashboard",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "b2452fed2e12ffb5025f3032f08cbd7cde3c467b1a791f663df2823cf46e5ac5"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-26T06:45:05.048Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestAdminOpsBJTDashboard)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestAdminOpsBJTDashboard",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "debc5016730939d81e76a2993e3d2ae4ad9fd24b175c5f0d4a6f27aac83afce2"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-26T06:48:59.937Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1530,
+        "executed": 1530,
+        "passed": 1530,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1530 passed, 0 allowed skip(s)",
+      "fingerprint": "debc5016730939d81e76a2993e3d2ae4ad9fd24b175c5f0d4a6f27aac83afce2"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-26T06:49:15.032Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a176ee-88e0-7220-a020-3f5e383ce38e",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "2f0abd078b2244b65a2ba455911b0f114053fb450b79edb816a139fcd3cd82b9",
+      "attested": true,
+      "fingerprint": "debc5016730939d81e76a2993e3d2ae4ad9fd24b175c5f0d4a6f27aac83afce2"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-26T06:49:16.272Z",
+    "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c",
+    "fingerprint": "debc5016730939d81e76a2993e3d2ae4ad9fd24b175c5f0d4a6f27aac83afce2",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_admin_operations_bjt.go": "daf8e145c3afda5161b92238c9f1c765d37fbe81",
+      "apps/api-go/internal/httpserver/handler_admin_operations_bjt_dashboard_test.go": "468455c6d0353958327844b99a5721897dec4bd3"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [],
+  "disowned": [
+    {
+      "path": ".github/workflows/recover-ssh.yml",
+      "reason": "Main owns SSH work; outside dashboard scope",
+      "at": "2026-10-26T06:44:43.234Z"
+    },
+    {
+      "path": "scripts/ops/recover_ssh.py",
+      "reason": "Main owns SSH work; outside dashboard scope",
+      "at": "2026-10-26T06:44:43.922Z"
+    },
+    {
+      "path": "scripts/ops/ssh-recovery.test.ts",
+      "reason": "Main owns SSH work; outside dashboard scope",
+      "at": "2026-10-26T06:44:44.539Z"
+    },
+    {
+      "path": "scripts/ops/ssh_prod.py",
+      "reason": "Main owns SSH work; outside dashboard scope",
+      "at": "2026-10-26T06:44:45.311Z"
+    },
+    {
+      "path": "scripts/ops/test_ssh_recovery.py",
+      "reason": "Main owns SSH work; outside dashboard scope",
+      "at": "2026-10-26T06:44:45.948Z"
+    }
+  ]
+}

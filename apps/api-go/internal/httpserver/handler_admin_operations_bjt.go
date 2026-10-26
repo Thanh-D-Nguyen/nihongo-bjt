@@ -21,28 +21,25 @@ func adminOpsBJTDashboardHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 		}
 		ctx := r.Context()
 
-		var testsTotal, testsActive, sessionsTotal, attempts30d, completedAttempts int
+		var testsTotal, testsActive, sessionsTotal, attempts30d int
 
 		if err := db.QueryRow(ctx, `
 		SELECT (SELECT COUNT(*) FROM assessment.bjt_mock_test),
-		       (SELECT COUNT(*) FROM assessment.bjt_mock_test WHERE status = 'active'),
+		       (SELECT COUNT(*) FROM assessment.bjt_mock_test WHERE status = 'published'),
 		       (SELECT COUNT(*) FROM assessment.quiz_session),
-		       (SELECT COUNT(*) FROM assessment.quiz_session WHERE started_at >= NOW() - INTERVAL '30 days'),
-		       (SELECT COUNT(*) FROM assessment.quiz_session WHERE status = 'submitted')
-	`).Scan(&testsTotal, &testsActive, &sessionsTotal, &attempts30d, &completedAttempts); err != nil {
+		       (SELECT COUNT(*) FROM assessment.quiz_session WHERE started_at >= NOW() - INTERVAL '30 days' AND started_at <= NOW())
+	`).Scan(&testsTotal, &testsActive, &sessionsTotal, &attempts30d); err != nil {
 			logger.Error("query BJT dashboard totals", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 
+		// Completion and estimated score do not define a canonical BJT pass result.
 		var passRate *float64
-		if attempts30d > 0 {
-			rate := float64(completedAttempts) / float64(attempts30d)
-			passRate = &rate
-		}
 
 		// byLevel aggregation
-		rows, err := db.Query(ctx, `SELECT level, COUNT(*) FROM assessment.bjt_mock_test GROUP BY level ORDER BY level ASC`)
+		rows, err := db.Query(ctx, `SELECT COALESCE(NULLIF(level, ''), 'unknown') AS level, COUNT(*)
+			FROM assessment.bjt_mock_test GROUP BY COALESCE(NULLIF(level, ''), 'unknown') ORDER BY level ASC`)
 		type LevelCount struct {
 			Level string `json:"level"`
 			Count int    `json:"count"`
@@ -61,9 +58,6 @@ func adminOpsBJTDashboardHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 				writeJSONError(w, "internal error", http.StatusInternalServerError)
 				return
 			}
-			if lc.Level == "" {
-				lc.Level = "unknown"
-			}
 			byLevel = append(byLevel, lc)
 		}
 		if err := rows.Err(); err != nil {
@@ -77,7 +71,7 @@ func adminOpsBJTDashboardHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 
 		writeJSON(w, http.StatusOK, map[string]any{
 			"generatedAt":            time.Now().UTC().Format(time.RFC3339),
-			"partial_schema_pending": []string{"per_skill_pass_rate", "upcoming_exam_dates"},
+			"partial_schema_pending": []string{"per_skill_pass_rate", "upcoming_exam_dates", "bjt_pass_rate_30d"},
 			"bjtTestsTotal":          testsTotal,
 			"bjtTestsActive":         testsActive,
 			"bjtSessionsTotal":       sessionsTotal,
