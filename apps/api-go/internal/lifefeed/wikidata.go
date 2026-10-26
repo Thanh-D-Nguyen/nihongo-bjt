@@ -48,7 +48,9 @@ func (p *GeographyProvider) Fetch(ctx context.Context) (map[string]Card, error) 
 	for _, place := range geographyPlaces {
 		ids = append(ids, place.entity)
 	}
-	args := url.Values{"action": {"wbgetentities"}, "ids": {strings.Join(ids, "|")}, "props": {"info|labels|claims"}, "languages": {"ja"}, "format": {"json"}, "maxlag": {"5"}}
+	// No maxlag: it is meant for batch writers, and Wikidata counts unrelated query-service (WDQS) lag toward it,
+	// which blocked this single read-only request for hours. One identified request per run keeps the load minimal.
+	args := url.Values{"action": {"wbgetentities"}, "ids": {strings.Join(ids, "|")}, "props": {"info|labels|claims"}, "languages": {"ja"}, "format": {"json"}}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, p.endpoint+"?"+args.Encode(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("prepare Wikidata request: %w", err)
@@ -66,6 +68,13 @@ func (p *GeographyProvider) Fetch(ctx context.Context) (map[string]Card, error) 
 	raw, err := io.ReadAll(io.LimitReader(response.Body, (4<<20)+1))
 	if err != nil || len(raw) > 4<<20 {
 		return nil, fmt.Errorf("invalid or oversized Wikidata response")
+	}
+	// MediaWiki reports API failures (maxlag, readonly, ratelimited) as HTTP 200 with an error object.
+	var failure struct {
+		Error *struct{ Code, Info string } `json:"error"`
+	}
+	if json.Unmarshal(raw, &failure) == nil && failure.Error != nil {
+		return nil, fmt.Errorf("Wikidata API error %q: %s; stop this refresh (Retry-After: %q)", failure.Error.Code, failure.Error.Info, response.Header.Get("Retry-After"))
 	}
 	var snapshot struct {
 		Entities map[string]struct {

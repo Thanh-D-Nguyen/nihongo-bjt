@@ -36,8 +36,8 @@ func TestWikidataLessonsRequireVerifiedJapanClaims(t *testing.T) {
 	var requests int
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requests++
-		if r.Header.Get("User-Agent") != "KotobaWorksLifeBot/1.0 https://example.test/contact" || r.URL.Query().Get("maxlag") != "5" {
-			t.Error("missing identifying agent or MediaWiki maxlag")
+		if r.Header.Get("User-Agent") != "KotobaWorksLifeBot/1.0 https://example.test/contact" || r.URL.Query().Has("maxlag") {
+			t.Error("missing identifying agent, or sent maxlag for a read-only request")
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(body)
@@ -116,5 +116,38 @@ func TestWikidataFailureDoesNotProduceFallbackFacts(t *testing.T) {
 	}
 	if _, err := NewGeographyProvider("").Fetch(context.Background()); err == nil {
 		t.Fatal("anonymous upstream requests must be disabled")
+	}
+}
+
+// Production incident 2026-10-26: Wikidata counted query-service (WDQS) lag toward maxlag and answered HTTP 200
+// with an error object, which surfaced as the misleading "unverified Wikidata identity/revision".
+func TestWikidataFetchIgnoresQueryServiceLagAndReportsAPIErrors(t *testing.T) {
+	now := time.Date(2026, 10, 26, 23, 0, 0, 0, JST)
+	var lagged bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Query().Has("maxlag") {
+			lagged = true
+			_, _ = w.Write([]byte(`{"error":{"code":"maxlag","info":"Waiting for wdqs1013: 7.5 seconds lagged.","type":"wikibase-queryservice"}}`))
+			return
+		}
+		_ = json.NewEncoder(w).Encode(geographyResponse(now))
+	}))
+	defer server.Close()
+	p := NewGeographyProvider("KotobaWorksLifeBot/1.0 https://example.test/contact")
+	p.endpoint, p.now = server.URL, func() time.Time { return now }
+	if cards, err := p.Fetch(context.Background()); lagged || err != nil || len(cards) != 10 {
+		t.Fatalf("read-only fetch must not send maxlag and must verify 10 cities; lagged=%v cards=%d err=%v", lagged, len(cards), err)
+	}
+
+	apiError := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"error":{"code":"readonly","info":"The wiki is currently in read-only mode."}}`))
+	}))
+	defer apiError.Close()
+	p.endpoint = apiError.URL
+	_, err := p.Fetch(context.Background())
+	if err == nil || !strings.Contains(err.Error(), `Wikidata API error "readonly"`) || !strings.Contains(err.Error(), "read-only mode") {
+		t.Fatalf("an API error body must be reported explicitly with its code and info; got %v", err)
 	}
 }

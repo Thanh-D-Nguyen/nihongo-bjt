@@ -1,0 +1,230 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "LIFE-251",
+  "title": "Wikidata geography fetch: do not gate on query-service lag; surface API error bodies",
+  "start_head": "64649e335237337f43721c2ca12b23dd7dac0ac4",
+  "preexisting_changes": {
+    ".github/workflows/recover-ssh.yml": "336ab60d89f3ba6b697594661a6b5018e5e14104",
+    "TASK_HANDOFF.md": "448f2deffe0803384a75ebfb8950cfc0e1c57a77",
+    "docs/ops/dynamic-ssh.md": "3d520dd3061109d1d03836c8c89a42a494055738",
+    "scripts/ops/recover_ssh.py": "182ff5261426c2d473e9a206fc1cdc1ead9c769f",
+    "scripts/ops/ssh-recovery.test.ts": "7dba4cdb2a45120378e06b93b55f37479db669f4",
+    "scripts/ops/ssh_prod.py": "ea6194d74993a23f44fcdbbb5d301138822661dd",
+    "scripts/ops/test_ssh_recovery.py": "2bc5d3736cc6d4373b0975e110afd2f850c96d8b"
+  },
+  "spec": {
+    "problem": "Production refresh-life-feed failed closed with the misleading 'unverified Wikidata identity/revision for tokyo' while Wikidata was healthy for reads",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Wikidata geography request no longer sends maxlag: a read-only 10-entity wbgetentities call must not be throttled by unrelated query-service (WDQS) replication lag; identifying User-Agent and one-request-per-run are preserved"
+      },
+      {
+        "id": "AC2",
+        "text": "An HTTP 200 body carrying a MediaWiki API error object (e.g. code maxlag) fails closed with an explicit 'Wikidata API error' naming the code and info, not the misleading 'unverified Wikidata identity/revision' message"
+      },
+      {
+        "id": "AC3",
+        "text": "Verification (identity, revision, modified time, ja label, P17=Q17), 48h TTL and publish-nothing-on-error behavior are unchanged; all existing lifefeed tests still pass"
+      }
+    ],
+    "expected_behavior": "A read-only wbgetentities call is not throttled by unrelated query-service lag; any MediaWiki API error body fails the run explicitly with its code and info and publishes nothing",
+    "observed_behavior": "Request carried maxlag=5; Wikidata counted WDQS query-service lag (5.6-7.5s, persisted >1h) and answered HTTP 200 with an {error:{code:maxlag}} body, which decoded to zero entities",
+    "rollback_plan": "Revert the commit; the previous behavior fails closed and leaves the last valid snapshot intact"
+  },
+  "classification": {
+    "classes": [
+      "DOMAIN_LOGIC"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/lifefeed",
+      "test": "TestWikidataFetchIgnoresQueryServiceLagAndReportsAPIErrors",
+      "expect": "read-only fetch must not send maxlag"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-26T09:27:51.132Z",
+      "head": "64649e335237337f43721c2ca12b23dd7dac0ac4"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-26T09:27:51.399Z",
+      "head": "64649e335237337f43721c2ca12b23dd7dac0ac4"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-26T09:27:52.041Z",
+      "head": "64649e335237337f43721c2ca12b23dd7dac0ac4"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T09:28:12.927Z",
+      "head": "64649e335237337f43721c2ca12b23dd7dac0ac4"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T09:28:21.962Z",
+      "head": "64649e335237337f43721c2ca12b23dd7dac0ac4"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T09:32:33.381Z",
+      "head": "64649e335237337f43721c2ca12b23dd7dac0ac4"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-26T09:32:56.200Z",
+      "head": "64649e335237337f43721c2ca12b23dd7dac0ac4"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-26T09:33:03.538Z",
+      "head": "64649e335237337f43721c2ca12b23dd7dac0ac4"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-26T09:28:05.194Z",
+      "head": "64649e335237337f43721c2ca12b23dd7dac0ac4",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWikidataFetchIgnoresQueryServiceLagAndReportsAPIErrors)$ ./internal/lifefeed"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/lifefeed:TestWikidataFetchIgnoresQueryServiceLagAndReportsAPIErrors",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestWikidataFetchIgnoresQueryServiceLagAndReportsAPIErrors wikidata_test.go:140: read-only fetch must not send maxlag and must verify 10 cities; lagged=true cards=0 err=unverified Wikidata identity/revision for tokyo --- FAIL: TestWikidataFetchIgnoresQueryServiceLagAndReportsAPIErrors (0.00s…",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"an API error body must be reported explicitly\""
+        }
+      ],
+      "expects": {
+        "go:./internal/lifefeed:TestWikidataFetchIgnoresQueryServiceLagAndReportsAPIErrors": "an API error body must be reported explicitly"
+      },
+      "fingerprint": "af5f8f7b845897ef32ced96c19816178361d1e5e60256612326c0e1b588786ac"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-26T09:28:12.760Z",
+      "head": "64649e335237337f43721c2ca12b23dd7dac0ac4",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWikidataFetchIgnoresQueryServiceLagAndReportsAPIErrors)$ ./internal/lifefeed"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/lifefeed:TestWikidataFetchIgnoresQueryServiceLagAndReportsAPIErrors",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestWikidataFetchIgnoresQueryServiceLagAndReportsAPIErrors wikidata_test.go:140: read-only fetch must not send maxlag and must verify 10 cities; lagged=true cards=0 err=unverified Wikidata identity/revision for tokyo --- FAIL: TestWikidataFetchIgnoresQueryServiceLagAndReportsAPIErrors (0.00s…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/lifefeed:TestWikidataFetchIgnoresQueryServiceLagAndReportsAPIErrors": "read-only fetch must not send maxlag"
+      },
+      "fingerprint": "af5f8f7b845897ef32ced96c19816178361d1e5e60256612326c0e1b588786ac"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-26T09:28:21.751Z",
+      "head": "64649e335237337f43721c2ca12b23dd7dac0ac4",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWikidataFetchIgnoresQueryServiceLagAndReportsAPIErrors)$ ./internal/lifefeed"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/lifefeed:TestWikidataFetchIgnoresQueryServiceLagAndReportsAPIErrors",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3617e13e3b2a8e77a3095153f32163b13a9d59a852922e97f7b6d5b941f61dde"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-26T09:32:33.144Z",
+      "head": "64649e335237337f43721c2ca12b23dd7dac0ac4",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1542,
+        "executed": 1542,
+        "passed": 1542,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1542 passed, 0 allowed skip(s)",
+      "fingerprint": "3b77122e0c83c725ddfa23c5b8e67cc0765e151147404bd418203bfb9fe27c85"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-26T09:32:55.969Z",
+      "head": "64649e335237337f43721c2ca12b23dd7dac0ac4",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWikidataFetchIgnoresQueryServiceLagAndReportsAPIErrors)$ ./internal/lifefeed"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/lifefeed:TestWikidataFetchIgnoresQueryServiceLagAndReportsAPIErrors",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3b77122e0c83c725ddfa23c5b8e67cc0765e151147404bd418203bfb9fe27c85"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-26T09:33:03.513Z",
+    "head": "64649e335237337f43721c2ca12b23dd7dac0ac4",
+    "fingerprint": "3b77122e0c83c725ddfa23c5b8e67cc0765e151147404bd418203bfb9fe27c85",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/lifefeed/wikidata.go": "5f611a1d7978285b322c180d3425dae66a82b53d",
+      "apps/api-go/internal/lifefeed/wikidata_test.go": "4437e6c0e26eeb71aba88292229f0e2f734e0868",
+      "docs/ops/life-feed-approved-sources.md": "74bc440be78b4f6badd63e19abb51fc2f8395df6"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}
