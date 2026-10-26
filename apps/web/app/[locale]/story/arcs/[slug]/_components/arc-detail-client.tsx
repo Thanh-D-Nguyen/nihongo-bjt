@@ -117,8 +117,9 @@ export function ArcDetailClient({ labels, locale, slug }: Props) {
         </h2>
         <ol className="space-y-3">
           {chapters.map((ch, idx) => {
-            const isCompleted = idx < arc.completedChapters;
-            const isLocked = idx > arc.completedChapters;
+            const tracked = arc.progressTracked !== false;
+            const isCompleted = tracked && idx < arc.completedChapters;
+            const isLocked = tracked && idx > arc.completedChapters;
             return (
               <li key={ch.id}>
                 <ChapterRow

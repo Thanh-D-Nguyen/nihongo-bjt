@@ -1,0 +1,351 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-255",
+  "title": "Story arc detail: adapt Go arc/chapter contract and stop locking chapters when progress is not tracked",
+  "start_head": "1186e1c609d1ff8ccdef08304becd47f96af2fd2",
+  "preexisting_changes": {
+    ".github/workflows/recover-ssh.yml": "336ab60d89f3ba6b697594661a6b5018e5e14104",
+    "TASK_HANDOFF.md": "448f2deffe0803384a75ebfb8950cfc0e1c57a77",
+    "apps/web/next-env.d.ts": "ce4e94a6b10f160ee021fe18939af160d2927dcf",
+    "apps/web/tsconfig.tsbuildinfo": "b565692bac4f05dcbdbee23e87740519df07f898",
+    "docs/ops/dynamic-ssh.md": "3d520dd3061109d1d03836c8c89a42a494055738",
+    "scripts/ops/recover_ssh.py": "182ff5261426c2d473e9a206fc1cdc1ead9c769f",
+    "scripts/ops/ssh-recovery.test.ts": "7dba4cdb2a45120378e06b93b55f37479db669f4",
+    "scripts/ops/ssh_prod.py": "ea6194d74993a23f44fcdbbb5d301138822661dd",
+    "scripts/ops/test_ssh_recovery.py": "2bc5d3736cc6d4373b0975e110afd2f850c96d8b"
+  },
+  "spec": {
+    "problem": "Clicking an arc on prod shows 'Arc not found': the Go /api/story/arcs/{slug} returns a flat arc with storyPayload and minimal chapters, but the page expects {arc,chapters,npcRelations,npcs} and also locks every chapter after the first because completedChapters is always 0",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "storyArcDetail() adapts the flat Go detail (storyPayload synopsisVi/npcSlugs/artAccent, chapters with displayOrder/isBoss/estimatedMinutes) into {arc,chapters,npcRelations:[],npcs:[]} with arc.status active, totalChapters = number of chapters, bossChapterId = the boss chapter id, progressTracked false, and each chapter keeping id, slug, titles, displayOrder, isBoss, estimatedMinutes with empty briefing and scenarios"
+      },
+      {
+        "id": "AC2",
+        "text": "storyArcs() uses synopsisVi, npcSlugs and artAccent when the list provides them and keeps neutral defaults otherwise"
+      },
+      {
+        "id": "AC3",
+        "text": "ArcDetailClient shows every chapter as an enabled link to /{locale}/story/chapters/{id} when arc.progressTracked is false, and keeps the existing locked/done behaviour when progress is tracked or the flag is absent"
+      }
+    ],
+    "expected_behavior": "The arc page renders the arc header, synopsis and all chapters from the Go API; chapters link to the chapter player; chapters are locked or marked done only when server-side progress is actually tracked",
+    "observed_behavior": "storyArcDetail() returns the flat Go object; detail.arc is undefined so the page renders Arc not found; even adapted, completedChapters 0 would lock chapters 2-4",
+    "rollback_plan": "Revert the commit; arc cards link to a page that says Arc not found, no data is affected"
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY",
+      "API_CONTRACT"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/src/features/career-rpg/api.contract.test.ts",
+      "test": "storyArcDetail API adapter > adapts the flat Go arc detail into the page model and marks progress as not tracked",
+      "expect": "to match object"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/src/features/career-rpg/api.contract.test.ts",
+      "test": "storyArcDetail API adapter > tolerates a missing storyPayload and chapters without optional fields",
+      "expect": "to match object"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/src/features/career-rpg/api.contract.test.ts",
+      "test": "storyArcs catalogue fields > uses synopsisVi, npcSlugs and artAccent from the list when the backend provides them",
+      "expect": "to match object"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/story/arcs/[slug]/_components/arc-detail-client.test.tsx",
+      "test": "ArcDetailClient > links every chapter when the server does not track progress",
+      "expect": "to deeply equal"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-26T11:50:39.118Z",
+      "head": "1186e1c609d1ff8ccdef08304becd47f96af2fd2"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-26T11:50:39.370Z",
+      "head": "1186e1c609d1ff8ccdef08304becd47f96af2fd2"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-26T11:50:39.640Z",
+      "head": "1186e1c609d1ff8ccdef08304becd47f96af2fd2"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T11:51:21.493Z",
+      "head": "1186e1c609d1ff8ccdef08304becd47f96af2fd2"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T11:51:40.420Z",
+      "head": "1186e1c609d1ff8ccdef08304becd47f96af2fd2"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-26T11:52:38.241Z",
+      "head": "1186e1c609d1ff8ccdef08304becd47f96af2fd2"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-26T11:53:02.086Z",
+      "head": "1186e1c609d1ff8ccdef08304becd47f96af2fd2"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-26T11:51:21.273Z",
+      "head": "1186e1c609d1ff8ccdef08304becd47f96af2fd2",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcDetail API adapter > adapts the flat Go arc detail into the page model and marks progress as not tracked",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to match object { …(10) }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcDetail API adapter > adapts the flat Go arc detail into the page model and marks progress as not tracked": "to match object"
+      },
+      "fingerprint": "cbd0f9d7c17b6065a71a9caf731ae3978adefdadf44045f6c3fd661610319bc5"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-26T11:51:22.360Z",
+      "head": "1186e1c609d1ff8ccdef08304becd47f96af2fd2",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcDetail API adapter > adapts the flat Go arc detail into the page model and marks progress as not tracked",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to match object { …(10) }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcDetail API adapter > tolerates a missing storyPayload and chapters without optional fields",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to match object { synopsisVi: '', npcSlugs: [], …(2) }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcDetail API adapter > adapts the flat Go arc detail into the page model and marks progress as not tracked": "to match object",
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcDetail API adapter > tolerates a missing storyPayload and chapters without optional fields": "to match object"
+      },
+      "fingerprint": "cbd0f9d7c17b6065a71a9caf731ae3978adefdadf44045f6c3fd661610319bc5"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-26T11:51:23.404Z",
+      "head": "1186e1c609d1ff8ccdef08304becd47f96af2fd2",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcDetail API adapter > adapts the flat Go arc detail into the page model and marks progress as not tracked",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to match object { …(10) }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcDetail API adapter > tolerates a missing storyPayload and chapters without optional fields",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to match object { synopsisVi: '', npcSlugs: [], …(2) }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs catalogue fields > uses synopsisVi, npcSlugs and artAccent from the list when the backend provides them",
+          "outcome": "FAIL",
+          "excerpt": "expected { slug: 'a', titleJa: 'a', …(11) } to match object { synopsisVi: 'Tóm tắt', …(2) } (10 matching properties omitted from actual)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcDetail API adapter > adapts the flat Go arc detail into the page model and marks progress as not tracked": "to match object",
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcDetail API adapter > tolerates a missing storyPayload and chapters without optional fields": "to match object",
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs catalogue fields > uses synopsisVi, npcSlugs and artAccent from the list when the backend provides them": "to match object"
+      },
+      "fingerprint": "cbd0f9d7c17b6065a71a9caf731ae3978adefdadf44045f6c3fd661610319bc5"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-26T11:51:25.640Z",
+      "head": "1186e1c609d1ff8ccdef08304becd47f96af2fd2",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/story/arcs/[slug]/_components/arc-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcDetail API adapter > adapts the flat Go arc detail into the page model and marks progress as not tracked",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to match object { …(10) }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcDetail API adapter > tolerates a missing storyPayload and chapters without optional fields",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to match object { synopsisVi: '', npcSlugs: [], …(2) }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs catalogue fields > uses synopsisVi, npcSlugs and artAccent from the list when the backend provides them",
+          "outcome": "FAIL",
+          "excerpt": "expected { slug: 'a', titleJa: 'a', …(11) } to match object { synopsisVi: 'Tóm tắt', …(2) } (10 matching properties omitted from actual)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/story/arcs/[slug]/_components/arc-detail-client.test.tsx::ArcDetailClient > links every chapter when the server does not track progress",
+          "outcome": "FAIL",
+          "excerpt": "expected [ '/vi/story/arcs', …(1) ] to deeply equal ArrayContaining{…}",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcDetail API adapter > adapts the flat Go arc detail into the page model and marks progress as not tracked": "to match object",
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcDetail API adapter > tolerates a missing storyPayload and chapters without optional fields": "to match object",
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs catalogue fields > uses synopsisVi, npcSlugs and artAccent from the list when the backend provides them": "to match object",
+        "vitest:apps/web/app/[locale]/story/arcs/[slug]/_components/arc-detail-client.test.tsx::ArcDetailClient > links every chapter when the server does not track progress": "to deeply equal"
+      },
+      "fingerprint": "cbd0f9d7c17b6065a71a9caf731ae3978adefdadf44045f6c3fd661610319bc5"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-26T11:51:40.072Z",
+      "head": "1186e1c609d1ff8ccdef08304becd47f96af2fd2",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/story/arcs/[slug]/_components/arc-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcDetail API adapter > adapts the flat Go arc detail into the page model and marks progress as not tracked",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcDetail API adapter > tolerates a missing storyPayload and chapters without optional fields",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs catalogue fields > uses synopsisVi, npcSlugs and artAccent from the list when the backend provides them",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/story/arcs/[slug]/_components/arc-detail-client.test.tsx::ArcDetailClient > links every chapter when the server does not track progress",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c95ed52e4e92cec14012605c1a2bc14e7ab14a5481966c2c64e392eebadb0647"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-26T11:52:37.892Z",
+      "head": "1186e1c609d1ff8ccdef08304becd47f96af2fd2",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 520,
+        "executed": 520,
+        "passed": 520,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 829,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "c95ed52e4e92cec14012605c1a2bc14e7ab14a5481966c2c64e392eebadb0647"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-26T11:53:02.067Z",
+    "head": "1186e1c609d1ff8ccdef08304becd47f96af2fd2",
+    "fingerprint": "c95ed52e4e92cec14012605c1a2bc14e7ab14a5481966c2c64e392eebadb0647",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/story/arcs/[slug]/_components/arc-detail-client.test.tsx": "7befebdbbddb01391119d807181688a9ce24f2f2",
+      "apps/web/app/[locale]/story/arcs/[slug]/_components/arc-detail-client.tsx": "fb23381b963c10d0187251937287114e3cf07e6e",
+      "apps/web/src/features/career-rpg/api.contract.test.ts": "71ecb1596b580dc9f0542c4a7d4f3bc3ff437281",
+      "apps/web/src/features/career-rpg/api.ts": "e2aaf571d369a326240f36d3d52ab597092da5c4",
+      "apps/web/src/features/career-rpg/types.ts": "c3276810cdb3b1301f668b0b9a4382370c0f71e6"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

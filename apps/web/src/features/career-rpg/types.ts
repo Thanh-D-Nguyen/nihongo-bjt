@@ -170,6 +170,8 @@ export interface MissionArc {
   bossChapterId: string | null;
   displayOrder: number;
   artAccent: string;
+  /** False when the backend does not record per-learner progress: chapters must not be gated on completedChapters. Absent means tracked. */
+  progressTracked?: boolean;
 }
 
 export interface ContextMemo {

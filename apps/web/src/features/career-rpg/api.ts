@@ -93,8 +93,9 @@ export async function storyArcs(): Promise<MissionArc[]> {
   return records.map(toMissionArc);
 }
 
-export function storyArcDetail(slug: string) {
-  return apiJson<ArcDetailResponse>(`/api/story/arcs/${encodeURIComponent(slug)}`);
+export async function storyArcDetail(slug: string): Promise<ArcDetailResponse> {
+  const record = await apiJson<StoryArcDetailRecord>(`/api/story/arcs/${encodeURIComponent(slug)}`);
+  return toArcDetailResponse(record);
 }
 
 export function storyChapter(id: string) {
@@ -134,6 +135,22 @@ interface StoryArcRecord {
   status: string;
   titleJa: string;
   titleVi: string;
+  synopsisVi?: string;
+  npcSlugs?: string[];
+  artAccent?: string;
+}
+
+interface StoryArcDetailRecord extends Omit<StoryArcRecord, "displayOrder"> {
+  chapters: Array<{
+    displayOrder?: number;
+    estimatedMinutes?: number;
+    id: string;
+    isBoss?: boolean;
+    slug: string;
+    titleJa: string;
+    titleVi: string;
+  }>;
+  storyPayload?: { synopsisVi?: string; npcSlugs?: string[]; artAccent?: string } | null;
 }
 
 const NEUTRAL_ARC_ACCENT = "#94A3B8";
@@ -148,13 +165,44 @@ function toMissionArc(record: StoryArcRecord): MissionArc {
     displayOrder: record.displayOrder,
     // "published" is the catalogue state of a readable arc; an unrecognized state is locked rather than guessed.
     status: record.status === "published" ? "active" : UI_ARC_STATUSES.has(record.status) ? (record.status as MissionArc["status"]) : "locked",
-    synopsisVi: "",
-    npcSlugs: [],
+    synopsisVi: record.synopsisVi ?? "",
+    npcSlugs: record.npcSlugs ?? [],
     chapterIds: [],
     totalChapters: 0,
     completedChapters: 0,
     bossChapterId: null,
-    artAccent: NEUTRAL_ARC_ACCENT
+    artAccent: record.artAccent || NEUTRAL_ARC_ACCENT,
+    progressTracked: false
+  };
+}
+
+function toArcDetailResponse(record: StoryArcDetailRecord): ArcDetailResponse {
+  const payload = record.storyPayload ?? {};
+  const chapters: MissionChapter[] = record.chapters.map((chapter, index) => ({
+    id: chapter.id,
+    arcSlug: record.slug,
+    slug: chapter.slug,
+    displayOrder: chapter.displayOrder ?? index + 1,
+    titleJa: chapter.titleJa,
+    titleVi: chapter.titleVi,
+    briefingJa: "",
+    briefingVi: "",
+    yourRoleVi: "",
+    isBoss: chapter.isBoss ?? false,
+    scenarios: [],
+    estimatedMinutes: chapter.estimatedMinutes ?? 0
+  }));
+  return {
+    arc: {
+      ...toMissionArc({ ...record, ...payload, displayOrder: 0 }),
+      chapterIds: chapters.map((chapter) => chapter.id),
+      totalChapters: chapters.length,
+      bossChapterId: chapters.find((chapter) => chapter.isBoss)?.id ?? null
+    },
+    chapters,
+    // The Go API has no per-learner NPC relations or public NPC bios on the arc endpoint yet.
+    npcRelations: [],
+    npcs: []
   };
 }
 

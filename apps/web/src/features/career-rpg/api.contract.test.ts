@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { learnerApiFetch } = vi.hoisted(() => ({ learnerApiFetch: vi.fn() }));
 vi.mock("../../../lib/learner-api", () => ({ learnerApiFetch }));
 
-import { careerMe, careerRanks, storyArcs, updateCareerProfile } from "./api";
+import { careerMe, careerRanks, storyArcDetail, storyArcs, updateCareerProfile } from "./api";
 
 describe("careerMe API adapter", () => {
   beforeEach(() => vi.resetAllMocks());
@@ -111,5 +111,75 @@ describe("storyArcs API adapter", () => {
     const arcs = await storyArcs();
 
     expect(arcs.map((a) => [a.slug, a.status])).toEqual([["done", "completed"], ["weird", "locked"]]);
+  });
+});
+
+describe("storyArcDetail API adapter", () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  const goDetail = {
+    id: "c583a4cf-de2c-4e3b-beee-3c18333476dc",
+    slug: "arc.business-manner-basics",
+    titleJa: "ビジネスマナー入門",
+    titleVi: "Nhập môn phép tắc công sở Nhật",
+    rankCodeEntry: "R1",
+    status: "published",
+    storyPayload: { synopsisVi: "Học chào hỏi.", npcSlugs: ["tanaka_senpai"], artAccent: "#059669" },
+    chapters: [
+      { id: "ch-1", slug: "greeting-basics", titleJa: "挨拶", titleVi: "Chào hỏi", displayOrder: 1, isBoss: false, estimatedMinutes: 4 },
+      { id: "ch-4", slug: "boss", titleJa: "確認", titleVi: "Boss", displayOrder: 4, isBoss: true, estimatedMinutes: 6 }
+    ]
+  };
+
+  it("adapts the flat Go arc detail into the page model and marks progress as not tracked", async () => {
+    learnerApiFetch.mockResolvedValue(new Response(JSON.stringify(goDetail), { status: 200 }));
+
+    const detail = await storyArcDetail("arc.business-manner-basics");
+
+    expect(learnerApiFetch).toHaveBeenCalledWith("/api/story/arcs/arc.business-manner-basics", undefined);
+    expect(detail.arc).toMatchObject({
+      slug: "arc.business-manner-basics",
+      status: "active",
+      synopsisVi: "Học chào hỏi.",
+      npcSlugs: ["tanaka_senpai"],
+      artAccent: "#059669",
+      chapterIds: ["ch-1", "ch-4"],
+      totalChapters: 2,
+      completedChapters: 0,
+      bossChapterId: "ch-4",
+      progressTracked: false
+    });
+    expect(detail.chapters).toHaveLength(2);
+    expect(detail.chapters[1]).toMatchObject({
+      id: "ch-4", arcSlug: "arc.business-manner-basics", slug: "boss", displayOrder: 4, isBoss: true, estimatedMinutes: 6, scenarios: []
+    });
+    expect(detail.npcRelations).toEqual([]);
+    expect(detail.npcs).toEqual([]);
+  });
+
+  it("tolerates a missing storyPayload and chapters without optional fields", async () => {
+    learnerApiFetch.mockResolvedValue(new Response(JSON.stringify({
+      ...goDetail, storyPayload: null, chapters: [{ id: "ch-1", slug: "a", titleJa: "a", titleVi: "a" }]
+    }), { status: 200 }));
+
+    const detail = await storyArcDetail("arc.business-manner-basics");
+
+    expect(detail.arc).toMatchObject({ synopsisVi: "", npcSlugs: [], totalChapters: 1, bossChapterId: null });
+    expect(detail.chapters[0]).toMatchObject({ displayOrder: 1, isBoss: false, estimatedMinutes: 0 });
+  });
+});
+
+describe("storyArcs catalogue fields", () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  it("uses synopsisVi, npcSlugs and artAccent from the list when the backend provides them", async () => {
+    learnerApiFetch.mockResolvedValue(new Response(JSON.stringify([{
+      slug: "a", titleJa: "a", titleVi: "a", rankCodeEntry: "R1", status: "published", displayOrder: 2,
+      synopsisVi: "Tóm tắt", npcSlugs: ["x"], artAccent: "#059669"
+    }]), { status: 200 }));
+
+    const [arc] = await storyArcs();
+
+    expect(arc).toMatchObject({ synopsisVi: "Tóm tắt", npcSlugs: ["x"], artAccent: "#059669" });
   });
 });
