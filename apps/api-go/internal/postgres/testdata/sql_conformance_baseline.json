@@ -3,7 +3,6 @@
   "min_statements_checked": 1215,
   "known_drift": {
     "internal/httpserver/handler_admin_assessment_remediation_rules.go :: 42P01 relation \"assessment.remediation_trigger\" does not exist": 2,
-    "internal/httpserver/handler_career_content_gamification_misc.go :: 42703 column \"gloss_vi\" does not exist": 1,
     "internal/httpserver/handler_final_batch.go :: 42703 column \"accuracy_pct\" does not exist": 1,
     "internal/httpserver/handler_final_batch.go :: 42703 column \"current_streak_days\" does not exist": 1,
     "internal/httpserver/handler_final_batch.go :: 42P01 relation \"ads.click\" does not exist": 1,

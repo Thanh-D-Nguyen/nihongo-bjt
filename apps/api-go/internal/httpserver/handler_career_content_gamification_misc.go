@@ -217,10 +217,21 @@ func getLexemeDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerF
 			return
 		}
 
+		type ExampleSentence struct {
+			ID            string  `json:"id"`
+			JapaneseText  string  `json:"japaneseText"`
+			Reading       *string `json:"reading"`
+			TranslationVi *string `json:"translationVi"`
+		}
+		type ExampleLink struct {
+			ExampleSentence *ExampleSentence `json:"exampleSentence"`
+		}
 		type Sense struct {
-			GlossVi string  `json:"glossVi"`
-			PosTag  *string `json:"posTag,omitempty"`
-			Note    *string `json:"note,omitempty"`
+			ID           string        `json:"id"`
+			Position     int           `json:"position"`
+			MeaningVi    string        `json:"meaningVi"`
+			PartOfSpeech *string       `json:"partOfSpeech"`
+			ExampleLinks []ExampleLink `json:"exampleLinks"`
 		}
 		type LexemeDetail struct {
 			ID             string          `json:"id"`
@@ -242,17 +253,62 @@ func getLexemeDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerF
 			return
 		}
 
-		const senseQ = `SELECT gloss_vi, pos_tag, note FROM content.lexeme_sense
+		const senseQ = `SELECT id::text, position, meaning_vi, part_of_speech FROM content.lexeme_sense
 			WHERE lexeme_id = $1 ORDER BY position ASC LIMIT 20`
 		sRows, err := db.Query(r.Context(), senseQ, id)
-		if err == nil {
-			for sRows.Next() {
-				var s Sense
-				if err := sRows.Scan(&s.GlossVi, &s.PosTag, &s.Note); err == nil {
-					ld.Senses = append(ld.Senses, s)
-				}
+		if err != nil {
+			logger.Error("list lexeme senses", "lexeme_id", id, "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer sRows.Close()
+		for sRows.Next() {
+			var s Sense
+			if err := sRows.Scan(&s.ID, &s.Position, &s.MeaningVi, &s.PartOfSpeech); err != nil {
+				logger.Error("scan lexeme sense", "lexeme_id", id, "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
 			}
-			sRows.Close()
+			ld.Senses = append(ld.Senses, s)
+		}
+		if err := sRows.Err(); err != nil {
+			logger.Error("iterate lexeme senses", "lexeme_id", id, "error", err)
+			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		sRows.Close()
+		for i := range ld.Senses {
+			s := &ld.Senses[i]
+			const exampleQ = `SELECT es.id::text, es.japanese_text, es.reading, es.translation_vi
+				FROM content.lexeme_sense_example lse
+				JOIN content.example_sentence es ON es.id = lse.example_sentence_id AND es.status = 'active'
+				WHERE lse.sense_id = $1 ORDER BY lse.created_at ASC LIMIT 20`
+			eRows, err := db.Query(r.Context(), exampleQ, s.ID)
+			if err != nil {
+				logger.Error("list lexeme sense examples", "sense_id", s.ID, "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			for eRows.Next() {
+				var example ExampleSentence
+				if err := eRows.Scan(&example.ID, &example.JapaneseText, &example.Reading, &example.TranslationVi); err != nil {
+					eRows.Close()
+					logger.Error("scan lexeme sense example", "sense_id", s.ID, "error", err)
+					writeJSONError(w, "internal error", http.StatusInternalServerError)
+					return
+				}
+				s.ExampleLinks = append(s.ExampleLinks, ExampleLink{ExampleSentence: &example})
+			}
+			if err := eRows.Err(); err != nil {
+				eRows.Close()
+				logger.Error("iterate lexeme sense examples", "sense_id", s.ID, "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			eRows.Close()
+			if s.ExampleLinks == nil {
+				s.ExampleLinks = []ExampleLink{}
+			}
 		}
 		if ld.Senses == nil {
 			ld.Senses = []Sense{}

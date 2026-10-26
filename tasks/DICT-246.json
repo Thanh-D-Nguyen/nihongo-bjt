@@ -1,0 +1,326 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "DICT-246",
+  "title": "Return canonical lexeme senses and examples",
+  "start_head": "f715c47424e3013f3a63a5da14b0e8023236d06e",
+  "preexisting_changes": {
+    "apps/api-go/internal/httpserver/handler_lexeme_detail_test.go": "b728c5f0a2768dba8b6d57105fb06c569f6b9bb7"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "A canonical lexeme sense is returned with id, position, meaningVi and partOfSpeech."
+      },
+      {
+        "id": "AC2",
+        "text": "Each returned sense includes its linked example sentence fields when present."
+      },
+      {
+        "id": "AC3",
+        "text": "A lexeme-sense query failure is not silently converted to an empty successful response."
+      },
+      {
+        "id": "AC4",
+        "text": "Canonical senses and linked examples return HTTP 200 with a single-connection pool within a bounded request deadline."
+      }
+    ],
+    "expected_behavior": "Public lexeme detail returns canonical senses with their linked example sentences, and database failures return a visible server error.",
+    "observed_behavior": "Public lexeme detail silently returned empty senses from obsolete columns. The prior fix reproduced HTTP 500 in 2.04s with MaxConns=1 and a two-second request deadline: list lexeme sense examples failed with context deadline exceeded while sense rows held the only connection.",
+    "rollback_plan": "Revert the lexeme-detail handler and its regression test; no schema or production data is changed."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "DATABASE",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestGetLexemeDetailReturnsCanonicalSensesAndExamples",
+      "expect": "senses=0; want 1"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-26T00:47:45.544Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-26T00:47:46.181Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-26T00:47:46.507Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T00:47:57.775Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T00:49:02.622Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T00:57:44.579Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T00:58:22.147Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T01:00:52.395Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T01:05:22.563Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-26T01:07:49.752Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-26T01:07:59.866Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-26T01:08:00.971Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-26T00:47:57.578Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetLexemeDetailReturnsCanonicalSensesAndExamples)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetLexemeDetailReturnsCanonicalSensesAndExamples",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGetLexemeDetailReturnsCanonicalSensesAndExamples handler_lexeme_detail_test.go:63: senses=0; want 1 (body={\"id\":\"dd918825-90dd-4f7f-ab74-98a69584f0be\",\"headword\":\"詳細テスト\",\"senses\":[]} ) --- FAIL: TestGetLexemeDetailReturnsCanonicalSensesAndExamples (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestGetLexemeDetailReturnsCanonicalSensesAndExamples": "senses=0; want 1"
+      },
+      "fingerprint": "5d9f114257c18d99a18a9d0045762a5902f767eaa0f6b983606fc6ed47ca849c"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-26T00:49:02.374Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetLexemeDetailReturnsCanonicalSensesAndExamples)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetLexemeDetailReturnsCanonicalSensesAndExamples",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "84385d3ecf6a78d2e1cb5f2c107b2efdff577dd8d31a78add9fba8f8f7977429"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-26T00:56:09.606Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 1525,
+        "executed": 1525,
+        "passed": 1524,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "84385d3ecf6a78d2e1cb5f2c107b2efdff577dd8d31a78add9fba8f8f7977429"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-26T00:58:21.864Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetLexemeDetailReturnsCanonicalSensesAndExamples)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetLexemeDetailReturnsCanonicalSensesAndExamples",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "24e57b2a2d40029990444a882ef098aaaca12829423a9eadb9cacd72c734bbc4"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-26T01:00:52.102Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 266,
+        "executed": 266,
+        "passed": 266,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "24e57b2a2d40029990444a882ef098aaaca12829423a9eadb9cacd72c734bbc4"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-26T01:04:48.566Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1525,
+        "executed": 1525,
+        "passed": 1525,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1525 passed, 0 allowed skip(s)",
+      "fingerprint": "c25cb3732c11466ad458b3d87156830f7d0495b587dd72a1aa9b699d2a30ba6b"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-26T01:05:21.523Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetLexemeDetailReturnsCanonicalSensesAndExamples)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestGetLexemeDetailReturnsCanonicalSensesAndExamples",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c25cb3732c11466ad458b3d87156830f7d0495b587dd72a1aa9b699d2a30ba6b"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-26T01:07:49.441Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 266,
+        "executed": 266,
+        "passed": 266,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "c25cb3732c11466ad458b3d87156830f7d0495b587dd72a1aa9b699d2a30ba6b"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-26T01:07:59.595Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a175b7-7c91-7fb3-ba59-60479232a138",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "Fresh independent review approved the final handler, bounded MaxConns=1 regression, and exact resolved baseline removal; zero findings.",
+      "output_sha256": "4d38a5504fe7998e1e6997e0d6f5bdda89e3b11090e21944419d6071e78cb50e",
+      "attested": true,
+      "fingerprint": "c25cb3732c11466ad458b3d87156830f7d0495b587dd72a1aa9b699d2a30ba6b"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-26T01:08:00.941Z",
+    "head": "f715c47424e3013f3a63a5da14b0e8023236d06e",
+    "fingerprint": "c25cb3732c11466ad458b3d87156830f7d0495b587dd72a1aa9b699d2a30ba6b",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_career_content_gamification_misc.go": "d9c75d78df7019459df5befef9cbd3ab25d5179a",
+      "apps/api-go/internal/httpserver/handler_lexeme_detail_test.go": "a3736f51d7746343689b0a48430bf146d8ed4f76",
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "f828cce56ddc05d3635db6ce368ec3e53dccc8fc"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [
+    "apps/api-go/internal/httpserver/handler_lexeme_detail_test.go"
+  ]
+}
