@@ -253,11 +253,11 @@ export function LessonDetailClient({
   if (loading) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
-        <div className="h-6 w-48 animate-pulse rounded bg-[#F3F4F6]" />
-        <div className="mt-4 h-32 animate-pulse rounded-2xl bg-[#F3F4F6]" />
+        <div className="h-6 w-48 animate-pulse rounded bg-border" />
+        <div className="mt-4 h-32 animate-pulse rounded-2xl bg-border" />
         <div className="mt-6 space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div className="h-16 animate-pulse rounded-xl bg-[#F3F4F6]" key={i} />
+            <div className="h-16 animate-pulse rounded-xl bg-border" key={i} />
           ))}
         </div>
       </div>
@@ -267,7 +267,7 @@ export function LessonDetailClient({
   if (error || !lesson) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8 text-center">
-        <p className="text-sm text-[#6B7280]">{labels.notFound}</p>
+        <p className="text-sm text-muted">{labels.notFound}</p>
         <Link
           className="mt-2 inline-block text-sm font-medium text-[#3B82F6]"
           href={`/${locale}/levels/${levelCode}`}
@@ -281,7 +281,9 @@ export function LessonDetailClient({
   const vocabs = lesson.contents.filter((c) => c.contentType === "vocabulary");
   const kanjis = lesson.contents.filter((c) => c.contentType === "kanji");
   const grammars = lesson.contents.filter((c) => c.contentType === "grammar");
-  const totalItems = lesson.contents.length;
+  const vocabCount = vocabs.length + (lesson.lessonContent?.vocabulary?.length ?? 0);
+  const grammarCount = grammars.length + (lesson.lessonContent?.grammar?.length ?? 0);
+  const totalItems = vocabCount + kanjis.length + grammarCount;
   const richActivityCount = lesson.lessonContent?.activities?.length ?? 0;
   const unitTypeLabel =
     lesson.unitType === "review"
@@ -330,7 +332,7 @@ export function LessonDetailClient({
     <>
       <div className="mx-auto max-w-5xl px-4 pb-24 pt-6 sm:px-6">
         {/* ── Breadcrumb ── */}
-        <nav className="flex items-center gap-1.5 text-xs text-[#9CA3AF]">
+        <nav className="flex items-center gap-1.5 text-xs text-muted">
           <Link className="hover:text-[#3B82F6]" href={`/${locale}/levels`}>
             {labels.breadcrumbLevels}
           </Link>
@@ -339,51 +341,51 @@ export function LessonDetailClient({
             {levelCode}
           </Link>
           <ChevronRight />
-          <span className="font-medium text-[#4B5563]">
+          <span className="font-medium text-muted">
             {labels.pageTitle} {lesson.sortOrder}
           </span>
         </nav>
 
         {/* ── Lesson header ── */}
-        <div className="mt-4 overflow-hidden rounded-[1.5rem] border border-[#D7DFEA] bg-white shadow-sm">
-          <div className="h-2 bg-[#2563EB]" />
+        <div className="mt-4 overflow-hidden rounded-[1.5rem] border border-border bg-surface shadow-sm">
+          <div className="h-2 bg-action" />
           <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="flex items-start gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#2563EB] text-base font-black text-white">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-action text-base font-black text-white">
                 {lesson.sortOrder}
               </span>
               <div className="min-w-0 flex-1">
-                <h1 className="text-2xl font-black tracking-tight text-[#111827]">
+                <h1 className="text-2xl font-black tracking-tight text-ink">
                   {lesson.titleVi}
                 </h1>
-                <p className="mt-0.5 text-sm text-[#6B7280]" lang="ja">
+                <p className="mt-0.5 text-sm text-muted" lang="ja">
                   {lesson.titleJa}
                 </p>
                 {lesson.descriptionVi ? (
-                  <p className="mt-3 text-sm leading-6 text-[#334155]">{lesson.descriptionVi}</p>
+                  <p className="mt-3 text-sm leading-6 text-ink">{lesson.descriptionVi}</p>
                 ) : null}
-                <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold text-[#475569]">
-                  <span className="rounded-full bg-[#EFF6FF] px-2.5 py-1">
+                <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold text-muted">
+                  <span className="rounded-full bg-accent-soft px-2.5 py-1">
                     {labels.weekLabel} {lesson.weekNumber}
                   </span>
-                  <span className="rounded-full bg-[#F1F5F9] px-2.5 py-1">{unitTypeLabel}</span>
-                  <span className="rounded-full bg-[#F1F5F9] px-2.5 py-1">
+                  <span className="rounded-full bg-paper px-2.5 py-1">{unitTypeLabel}</span>
+                  <span className="rounded-full bg-paper px-2.5 py-1">
                     {lesson.estimatedDurationMin} {labels.minutesLabel}
                   </span>
                 </div>
               </div>
             </div>
-            <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
+            <div className="rounded-2xl border border-border bg-paper p-3">
               <div className="grid grid-cols-3 gap-2">
-                <LessonMetric label={labels.vocabSection} value={vocabs.length} />
+                <LessonMetric label={labels.vocabSection} value={vocabCount} />
                 <LessonMetric label={labels.kanjiSection} value={kanjis.length} />
-                <LessonMetric label={labels.grammarSection} value={grammars.length} />
+                <LessonMetric label={labels.grammarSection} value={grammarCount} />
               </div>
               {canSaveProgress ? <button
                 className={`mt-3 flex min-h-12 w-full items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition-all disabled:cursor-wait disabled:opacity-60 ${
                   isCompleted
-                    ? "bg-[#D1FAE5] text-[#065F46]"
-                    : "border border-[#CBD5E1] bg-white text-[#475569] hover:border-[#10B981] hover:text-[#065F46]"
+                    ? "bg-success-soft text-success"
+                    : "border border-border bg-surface text-muted hover:border-success hover:text-success"
                 }`}
                 onClick={handleToggleComplete}
                 disabled={savingProgress}
@@ -410,17 +412,17 @@ export function LessonDetailClient({
                 )}
                 {savingProgress ? labels.savingProgress : isCompleted ? labels.completed : labels.markComplete}
               </button> : <Link
-                className="mt-3 flex min-h-12 w-full items-center justify-center rounded-lg border border-[#CBD5E1] bg-white px-3 py-2 text-center text-xs font-bold text-[#475569] hover:border-[#10B981] hover:text-[#065F46]"
+                className="mt-3 flex min-h-12 w-full items-center justify-center rounded-lg border border-border bg-surface px-3 py-2 text-center text-xs font-bold text-muted hover:border-success hover:text-success"
                 href={`/${locale}/login?returnTo=${encodeURIComponent(`/${locale}/levels/${levelCode}/lessons/${slug}`)}`}
               >
                 {labels.loginToSave}
               </Link>}
               {progressError ? <p className="mt-2 text-xs text-rose-700" role="alert">{labels.progressError}</p> : null}
-              <div className="mt-3 flex items-center justify-between text-xs text-[#64748B]">
+              <div className="mt-3 flex items-center justify-between text-xs text-muted">
                 <span>
                   {totalItems + richActivityCount} {labels.itemsInLesson}
                 </span>
-                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-[#475569] ring-1 ring-[#E2E8F0]">
+                <span className="rounded-full bg-surface px-2 py-0.5 text-[10px] font-bold text-muted ring-1 ring-border">
                   {levelCode}
                 </span>
               </div>
@@ -436,7 +438,7 @@ export function LessonDetailClient({
         {sections.map((section) => (
           <section className="mt-6" key={section.key}>
             <button
-              className="mb-3 flex w-full items-center gap-2 text-left text-sm font-semibold text-[#111827]"
+              className="mb-3 flex w-full items-center gap-2 text-left text-sm font-semibold text-ink"
               onClick={() => toggleSection(section.key)}
               type="button"
             >
@@ -446,12 +448,12 @@ export function LessonDetailClient({
                 {section.icon}
               </span>
               {section.label}
-              <span className="text-xs font-normal text-[#9CA3AF]">{section.count}</span>
-              <span className="ml-auto text-[10px] font-normal text-[#9CA3AF]">
+              <span className="text-xs font-normal text-muted">{section.count}</span>
+              <span className="ml-auto text-[10px] font-normal text-muted">
                 {collapsedSections.has(section.key) ? labels.expandSection : labels.collapseSection}
               </span>
               <svg
-                className={`h-4 w-4 text-[#9CA3AF] transition-transform ${collapsedSections.has(section.key) ? "" : "rotate-180"}`}
+                className={`h-4 w-4 text-muted transition-transform ${collapsedSections.has(section.key) ? "" : "rotate-180"}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -472,17 +474,17 @@ export function LessonDetailClient({
                     const k = item.content as KanjiItem;
                     return (
                       <button
-                        className="flex flex-col items-center rounded-xl border border-[#E5E7EB] bg-white p-4 transition-all hover:border-[#F59E0B]/30 hover:shadow-sm"
+                        className="flex flex-col items-center rounded-xl border border-border bg-surface p-4 transition-all hover:border-warning/30 hover:shadow-sm"
                         key={k.id}
                         onClick={() => setSelectedItem({ type: "kanji", content: k })}
                         type="button"
                       >
-                        <span className="text-3xl font-bold text-[#111827]" lang="ja">
+                        <span className="text-3xl font-bold text-ink" lang="ja">
                           {k.character}
                         </span>
-                        <span className="mt-1 text-xs text-[#4B5563]">{k.meaningVi}</span>
+                        <span className="mt-1 text-xs text-muted">{k.meaningVi}</span>
                         {k.onyomi ? (
-                          <span className="mt-0.5 text-[10px] text-[#9CA3AF]" lang="ja">
+                          <span className="mt-0.5 text-[10px] text-muted" lang="ja">
                             {k.onyomi}
                           </span>
                         ) : null}
@@ -498,25 +500,25 @@ export function LessonDetailClient({
                       return (
                         <li key={v.id}>
                           <button
-                            className="block w-full rounded-xl border border-[#E5E7EB] bg-white p-4 text-left transition-all hover:border-[#3B82F6]/30 hover:shadow-sm"
+                            className="block w-full rounded-xl border border-border bg-surface p-4 text-left transition-all hover:border-[#3B82F6]/30 hover:shadow-sm"
                             onClick={() => setSelectedItem({ type: "vocabulary", content: v })}
                             type="button"
                           >
                             <div className="flex items-baseline gap-2">
-                              <span className="text-lg font-bold text-[#111827]" lang="ja">
+                              <span className="text-lg font-bold text-ink" lang="ja">
                                 {v.headword}
                               </span>
                               {v.reading ? (
-                                <span className="text-sm text-[#9CA3AF]" lang="ja">
+                                <span className="text-sm text-muted" lang="ja">
                                   {v.reading}
                                 </span>
                               ) : null}
                             </div>
-                            <p className="mt-1 text-sm text-[#4B5563]">
+                            <p className="mt-1 text-sm text-muted">
                               {v.senses?.[0]?.meaningVi ?? v.shortMeaningVi ?? ""}
                             </p>
                             {v.senses?.[0]?.pos ? (
-                              <span className="mt-1 inline-block rounded bg-[#F3F4F6] px-1.5 py-0.5 text-[10px] text-[#6B7280]">
+                              <span className="mt-1 inline-block rounded bg-paper px-1.5 py-0.5 text-[10px] text-muted">
                                 {v.senses[0].pos}
                               </span>
                             ) : null}
@@ -528,16 +530,16 @@ export function LessonDetailClient({
                     return (
                       <li key={g.id}>
                         <button
-                          className="block w-full rounded-xl border border-[#E5E7EB] bg-white p-4 text-left transition-all hover:border-[#8B5CF6]/30 hover:shadow-sm"
+                          className="block w-full rounded-xl border border-border bg-surface p-4 text-left transition-all hover:border-[#8B5CF6]/30 hover:shadow-sm"
                           onClick={() => setSelectedItem({ type: "grammar", content: g })}
                           type="button"
                         >
-                          <span className="text-base font-semibold text-[#111827]" lang="ja">
+                          <span className="text-base font-semibold text-ink" lang="ja">
                             {g.pattern}
                           </span>
-                          <p className="mt-1 text-sm text-[#4B5563]">{g.meaningVi}</p>
+                          <p className="mt-1 text-sm text-muted">{g.meaningVi}</p>
                           {g.details?.[0]?.explanationVi ? (
-                            <p className="mt-1 text-xs text-[#9CA3AF] line-clamp-2">
+                            <p className="mt-1 text-xs text-muted line-clamp-2">
                               {grammarTextPreview(g.details[0].explanationVi)}
                             </p>
                           ) : null}
@@ -552,14 +554,14 @@ export function LessonDetailClient({
         ))}
 
         {/* ── Prev / Next lesson nav ── */}
-        <div className="mt-8 grid grid-cols-2 gap-3 border-t border-[#E5E7EB] pt-6">
+        <div className="mt-8 grid grid-cols-2 gap-3 border-t border-border pt-6">
           {lesson.prevLesson ? (
             <Link
-              className="group flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white p-3 transition-all hover:border-[#3B82F6]/30 hover:shadow-sm"
+              className="group flex items-center gap-2 rounded-xl border border-border bg-surface p-3 transition-all hover:border-[#3B82F6]/30 hover:shadow-sm"
               href={`/${locale}/levels/${levelCode}/lessons/${lesson.prevLesson.slug}`}
             >
               <svg
-                className="h-4 w-4 shrink-0 text-[#9CA3AF] group-hover:text-[#3B82F6]"
+                className="h-4 w-4 shrink-0 text-muted group-hover:text-[#3B82F6]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -572,8 +574,8 @@ export function LessonDetailClient({
                 />
               </svg>
               <div className="min-w-0">
-                <p className="text-[10px] text-[#9CA3AF]">{labels.prevLesson}</p>
-                <p className="truncate text-xs font-medium text-[#111827]">
+                <p className="text-[10px] text-muted">{labels.prevLesson}</p>
+                <p className="truncate text-xs font-medium text-ink">
                   {lesson.prevLesson.titleVi}
                 </p>
               </div>
@@ -583,17 +585,17 @@ export function LessonDetailClient({
           )}
           {lesson.nextLesson ? (
             <Link
-              className="group flex items-center justify-end gap-2 rounded-xl border border-[#E5E7EB] bg-white p-3 text-right transition-all hover:border-[#3B82F6]/30 hover:shadow-sm"
+              className="group flex items-center justify-end gap-2 rounded-xl border border-border bg-surface p-3 text-right transition-all hover:border-[#3B82F6]/30 hover:shadow-sm"
               href={`/${locale}/levels/${levelCode}/lessons/${lesson.nextLesson.slug}`}
             >
               <div className="min-w-0">
-                <p className="text-[10px] text-[#9CA3AF]">{labels.nextLesson}</p>
-                <p className="truncate text-xs font-medium text-[#111827]">
+                <p className="text-[10px] text-muted">{labels.nextLesson}</p>
+                <p className="truncate text-xs font-medium text-ink">
                   {lesson.nextLesson.titleVi}
                 </p>
               </div>
               <svg
-                className="h-4 w-4 shrink-0 text-[#9CA3AF] group-hover:text-[#3B82F6]"
+                className="h-4 w-4 shrink-0 text-muted group-hover:text-[#3B82F6]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -613,10 +615,10 @@ export function LessonDetailClient({
       </div>
 
       {/* ── Sticky bottom bar ── */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[#E5E7EB] bg-white/95 backdrop-blur-sm">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-2 text-xs text-[#6B7280]">
-            <span className="font-medium text-[#111827]">
+          <div className="flex items-center gap-2 text-xs text-muted">
+            <span className="font-medium text-ink">
               {labels.pageTitle} {lesson.sortOrder}
             </span>
             <span>·</span>
@@ -624,7 +626,7 @@ export function LessonDetailClient({
               {totalItems + richActivityCount} {labels.itemsInLesson}
             </span>
             {isCompleted ? (
-              <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-[#D1FAE5] px-2 py-0.5 text-[10px] font-medium text-[#065F46]">
+              <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-[10px] font-medium text-success">
                 <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     fillRule="evenodd"
@@ -639,7 +641,7 @@ export function LessonDetailClient({
           <div className="flex items-center gap-2">
             {lesson.nextLesson ? (
               <Link
-                className="inline-flex items-center gap-1 rounded-lg bg-[#3B82F6] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#2563EB]"
+                className="inline-flex items-center gap-1 rounded-lg bg-[#3B82F6] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-action"
                 href={`/${locale}/levels/${levelCode}/lessons/${lesson.nextLesson.slug}`}
               >
                 {labels.nextLesson}
@@ -686,12 +688,12 @@ function RichLessonSections({
 }) {
   return (
     <div className="mt-6 space-y-5">
-      <section className="rounded-2xl border border-[#D7DFEA] bg-white p-5">
-        <h2 className="text-base font-bold text-[#111827]">{labels.objectivesSection}</h2>
-        <ul className="mt-3 space-y-2 text-sm leading-6 text-[#334155]">
+      <section className="rounded-2xl border border-border bg-surface p-5">
+        <h2 className="text-base font-bold text-ink">{labels.objectivesSection}</h2>
+        <ul className="mt-3 space-y-2 text-sm leading-6 text-ink">
           {content.learningObjectives.map((objective) => (
             <li className="flex gap-2" key={objective}>
-              <span className="text-[#2563EB]">✓</span>
+              <span className="text-accent">✓</span>
               <span>{objective}</span>
             </li>
           ))}
@@ -699,34 +701,34 @@ function RichLessonSections({
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-[#D7DFEA] bg-[#F8FAFC] p-5">
-          <h2 className="text-base font-bold text-[#111827]">{labels.scenarioSection}</h2>
-          <p className="mt-3 text-base leading-8 text-[#111827]" lang="ja">
+        <div className="rounded-2xl border border-border bg-paper p-5">
+          <h2 className="text-base font-bold text-ink">{labels.scenarioSection}</h2>
+          <p className="mt-3 text-base leading-8 text-ink" lang="ja">
             {content.workplaceScenario.contextJa}
           </p>
-          <p className="mt-2 text-sm leading-6 text-[#475569]">
+          <p className="mt-2 text-sm leading-6 text-muted">
             {content.workplaceScenario.contextVi}
           </p>
-          <p className="mt-3 text-xs leading-5 text-[#64748B]">
+          <p className="mt-3 text-xs leading-5 text-muted">
             {content.workplaceScenario.problemVi} {content.workplaceScenario.desiredOutcomeVi}
           </p>
         </div>
-        <div className="rounded-2xl border border-[#D7DFEA] bg-white p-5">
-          <h2 className="text-base font-bold text-[#111827]">{labels.knowledgeSection}</h2>
-          <ul className="mt-3 space-y-2 text-sm leading-6 text-[#334155]">
+        <div className="rounded-2xl border border-border bg-surface p-5">
+          <h2 className="text-base font-bold text-ink">{labels.knowledgeSection}</h2>
+          <ul className="mt-3 space-y-2 text-sm leading-6 text-ink">
             {content.knowledgePoints.map((point) => (
-              <li className="rounded-xl bg-[#F8FAFC] px-3 py-2" key={point}>
+              <li className="rounded-xl bg-paper px-3 py-2" key={point}>
                 {point}
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-sm leading-6 text-[#475569]">{content.businessUsageVi}</p>
+          <p className="mt-3 text-sm leading-6 text-muted">{content.businessUsageVi}</p>
         </div>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-[#D7DFEA] bg-white p-5">
-          <h2 className="text-base font-bold text-[#111827]">{labels.vocabularyFocusSection}</h2>
+        <div className="rounded-2xl border border-border bg-surface p-5">
+          <h2 className="text-base font-bold text-ink">{labels.vocabularyFocusSection}</h2>
           <dl className="mt-3 divide-y divide-[#E2E8F0]">
             {content.vocabulary.map((item) => (
               <div
@@ -734,57 +736,57 @@ function RichLessonSections({
                 key={`${item.japanese}-${item.reading}`}
               >
                 <div>
-                  <dt className="font-semibold text-[#111827]" lang="ja">
+                  <dt className="font-semibold text-ink" lang="ja">
                     {item.japanese}
                   </dt>
-                  <dd className="text-xs text-[#64748B]" lang="ja">
+                  <dd className="text-xs text-muted" lang="ja">
                     {item.reading}
                   </dd>
                 </div>
-                <dd className="text-right text-sm text-[#475569]">{item.meaningVi}</dd>
+                <dd className="text-right text-sm text-muted">{item.meaningVi}</dd>
               </div>
             ))}
           </dl>
         </div>
-        <div className="rounded-2xl border border-[#D7DFEA] bg-white p-5">
-          <h2 className="text-base font-bold text-[#111827]">{labels.grammarFocusSection}</h2>
+        <div className="rounded-2xl border border-border bg-surface p-5">
+          <h2 className="text-base font-bold text-ink">{labels.grammarFocusSection}</h2>
           <div className="mt-3 space-y-3">
             {content.grammar.map((item) => (
-              <div className="rounded-xl bg-[#F8FAFC] p-3" key={item.pattern}>
-                <p className="font-semibold text-[#111827]" lang="ja">
+              <div className="rounded-xl bg-paper p-3" key={item.pattern}>
+                <p className="font-semibold text-ink" lang="ja">
                   {item.pattern}
                 </p>
-                <p className="mt-1 text-sm leading-6 text-[#475569]">{item.explanationVi}</p>
+                <p className="mt-1 text-sm leading-6 text-muted">{item.explanationVi}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="rounded-2xl border border-[#D7DFEA] bg-white p-5">
-        <h2 className="text-base font-bold text-[#111827]">{labels.examplesSection}</h2>
+      <section className="rounded-2xl border border-border bg-surface p-5">
+        <h2 className="text-base font-bold text-ink">{labels.examplesSection}</h2>
         <div className="mt-3 space-y-3">
           {content.examples.map((example) => (
-            <article className="rounded-xl border border-[#E2E8F0] p-4" key={example.japanese}>
-              <p className="whitespace-pre-line text-base leading-8 text-[#111827]" lang="ja">
+            <article className="rounded-xl border border-border p-4" key={example.japanese}>
+              <p className="whitespace-pre-line text-base leading-8 text-ink" lang="ja">
                 {example.japanese}
               </p>
-              <p className="mt-1 text-sm text-[#475569]">{example.vietnamese}</p>
-              <p className="mt-2 text-xs leading-5 text-[#64748B]">{example.noteVi}</p>
+              <p className="mt-1 text-sm text-muted">{example.vietnamese}</p>
+              <p className="mt-2 text-xs leading-5 text-muted">{example.noteVi}</p>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="rounded-2xl border border-[#D7DFEA] bg-[#F8FAFC] p-5">
-        <h2 className="text-base font-bold text-[#111827]">{labels.nuanceSection}</h2>
-        <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-[#475569]">
+      <section className="rounded-2xl border border-border bg-paper p-5">
+        <h2 className="text-base font-bold text-ink">{labels.nuanceSection}</h2>
+        <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-muted">
           {content.nuanceNotesVi.map((note) => (
             <li key={note}>{note}</li>
           ))}
         </ul>
-        <h3 className="mt-5 text-sm font-bold text-[#111827]">{labels.commonMistakesSection}</h3>
-        <ul className="mt-2 list-disc space-y-2 pl-5 text-sm leading-6 text-[#475569]">
+        <h3 className="mt-5 text-sm font-bold text-ink">{labels.commonMistakesSection}</h3>
+        <ul className="mt-2 list-disc space-y-2 pl-5 text-sm leading-6 text-muted">
           {content.vietnameseLearnerPitfalls.map((pitfall) => (
             <li key={pitfall}>{pitfall}</li>
           ))}
@@ -792,7 +794,7 @@ function RichLessonSections({
       </section>
 
       <section>
-        <h2 className="text-lg font-bold text-[#111827]">{labels.practiceSection}</h2>
+        <h2 className="text-lg font-bold text-ink">{labels.practiceSection}</h2>
         <div className="mt-3 space-y-4">
           {content.activities.map((activity, index) => (
             <ActivityCard activity={activity} index={index} key={activity.id} labels={labels} />
@@ -800,9 +802,9 @@ function RichLessonSections({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-[#BBF7D0] bg-[#F0FDF4] p-5">
-        <h2 className="text-base font-bold text-[#14532D]">{labels.summarySection}</h2>
-        <ul className="mt-3 space-y-2 text-sm leading-6 text-[#166534]">
+      <section className="rounded-2xl border border-[#BBF7D0] bg-success-soft p-5">
+        <h2 className="text-base font-bold text-success">{labels.summarySection}</h2>
+        <ul className="mt-3 space-y-2 text-sm leading-6 text-success">
           {content.summaryVi.map((item) => (
             <li className="flex gap-2" key={item}>
               <span>✓</span>
@@ -828,16 +830,16 @@ function ActivityCard({
   const [checked, setChecked] = useState(false);
   const isCorrect = checked && selected === activity.answer;
   return (
-    <article className="rounded-2xl border border-[#D7DFEA] bg-white p-5">
-      <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[#64748B]">
+    <article className="rounded-2xl border border-border bg-surface p-5">
+      <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-muted">
         <span>#{index + 1}</span>
         <span>{activity.questionType.replaceAll("_", " ")}</span>
         <span>·</span>
         <span>{activity.stimulusType}</span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-[#475569]">{activity.scenarioVi}</p>
+      <p className="mt-3 text-sm leading-6 text-muted">{activity.scenarioVi}</p>
       <p
-        className="mt-2 whitespace-pre-line rounded-xl bg-[#F8FAFC] p-3 text-base leading-8 text-[#111827]"
+        className="mt-2 whitespace-pre-line rounded-xl bg-paper p-3 text-base leading-8 text-ink"
         lang="ja"
       >
         {activity.stimulusText}
@@ -845,26 +847,26 @@ function ActivityCard({
       {activity.audioScript ? (
         <ActivityAudioPlayer activity={activity} labels={labels} />
       ) : activity.audioAssetStatus === "unavailable" ? (
-        <p className="mt-2 text-xs text-[#64748B]">{labels.audioUnavailable}</p>
+        <p className="mt-2 text-xs text-muted">{labels.audioUnavailable}</p>
       ) : null}
-      <p className="mt-4 text-base font-semibold leading-7 text-[#111827]" lang="ja">
+      <p className="mt-4 text-base font-semibold leading-7 text-ink" lang="ja">
         {activity.prompt}
       </p>
-      <p className="mt-1 text-sm leading-6 text-[#475569]">{activity.promptVi}</p>
+      <p className="mt-1 text-sm leading-6 text-muted">{activity.promptVi}</p>
       <div className="mt-3 grid gap-2">
         {activity.options.map((option) => {
           const selectedOption = selected === option.key;
           const stateClass =
             checked && option.isCorrect
-              ? "border-[#10B981] bg-[#ECFDF5]"
+              ? "border-success bg-success-soft"
               : checked && selectedOption
-                ? "border-[#F59E0B] bg-[#FFFBEB]"
+                ? "border-warning bg-warning-soft"
                 : selectedOption
-                  ? "border-[#2563EB] bg-[#EFF6FF]"
-                  : "border-[#E2E8F0] bg-white hover:border-[#94A3B8]";
+                  ? "border-accent bg-accent-soft"
+                  : "border-border bg-surface hover:border-[#94A3B8]";
           return (
             <button
-              className={`min-h-12 rounded-xl border px-4 py-3 text-left text-sm leading-6 text-[#1E293B] ${stateClass}`}
+              className={`min-h-12 rounded-xl border px-4 py-3 text-left text-sm leading-6 text-ink ${stateClass}`}
               disabled={checked}
               key={option.key}
               onClick={() => setSelected(option.key)}
@@ -873,14 +875,14 @@ function ActivityCard({
               <span className="mr-2 font-bold">{option.key}.</span>
               <span lang="ja">{option.text}</span>
               {checked && (selectedOption || option.isCorrect) ? (
-                <span className="mt-1 block text-xs text-[#64748B]">{option.rationaleVi}</span>
+                <span className="mt-1 block text-xs text-muted">{option.rationaleVi}</span>
               ) : null}
             </button>
           );
         })}
       </div>
       <button
-        className="mt-4 min-h-12 rounded-xl bg-[#2563EB] px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-[#CBD5E1]"
+        className="mt-4 min-h-12 rounded-xl bg-action px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-border disabled:text-muted"
         disabled={!selected || checked}
         onClick={() => setChecked(true)}
         type="button"
@@ -889,7 +891,7 @@ function ActivityCard({
       </button>
       {checked ? (
         <div
-          className={`mt-4 rounded-xl p-4 ${isCorrect ? "bg-[#ECFDF5] text-[#065F46]" : "bg-[#FFF7ED] text-[#9A3412]"}`}
+          className={`mt-4 rounded-xl p-4 ${isCorrect ? "bg-success-soft text-success" : "bg-warning-soft text-warning"}`}
         >
           <p className="font-bold">{isCorrect ? labels.correctAnswer : labels.incorrectAnswer}</p>
           <p className="mt-2 text-sm leading-6" lang="ja">
@@ -955,7 +957,7 @@ function ActivityAudioPlayer({ activity, labels }: { activity: LessonActivity; l
 
   const generated = activity.audioAssetStatus === "generated" && Boolean(activity.audioUrl);
   return (
-    <div className="mt-3 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] p-3">
+    <div className="mt-3 rounded-xl border border-[#BFDBFE] bg-accent-soft p-3">
       <div className="flex flex-wrap items-center gap-3">
         <button
           aria-label={isPlaying ? labels.stopAudio : labels.playAudio}
@@ -992,9 +994,9 @@ function ChevronRight() {
 
 function LessonMetric({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl bg-white px-3 py-2 text-center ring-1 ring-[#E2E8F0]">
-      <p className="text-lg font-black text-[#111827]">{value}</p>
-      <p className="mt-0.5 truncate text-[10px] font-semibold text-[#64748B]">{label}</p>
+    <div className="rounded-xl bg-surface px-3 py-2 text-center ring-1 ring-border">
+      <p className="text-lg font-black text-ink">{value}</p>
+      <p className="mt-0.5 truncate text-[10px] font-semibold text-muted">{label}</p>
     </div>
   );
 }

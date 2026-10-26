@@ -48,6 +48,7 @@ export function HomepageClient({
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingJustCompleted, setOnboardingJustCompleted] = useState(false);
   const loadData = useCallback(() => {
+    if (auth.isLoading) return;
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Tokyo";
     setHubReady(false);
     setNhkReady(false);
@@ -71,19 +72,13 @@ export function HomepageClient({
       })
       .finally(() => setHubReady(true));
 
-    void learnerApiFetchOptional(`/api/nhk-news?type=easy&limit=8&locale=${locale}`)
-      .then(async (easyRes) => {
-        const easy = easyRes?.ok ? await easyRes.json().catch(() => []) : [];
-        setNhkArticlesByType((prev) => ({
-          ...prev,
-          easy: Array.isArray(easy) ? easy : []
-        }));
-        setNhkError(!easyRes?.ok);
-      })
-      .catch(() => {
-        setNhkArticlesByType((prev) => ({ ...prev, easy: [] }));
-        setNhkError(true);
-      })
+    void Promise.allSettled((["easy", "normal"] as const).map(async (type) => {
+      const response = await learnerApiFetchOptional(`/api/nhk-news?type=${type}&limit=8&locale=${locale}`);
+      if (!response?.ok) throw new Error("News request failed");
+      const articles = await response.json();
+      setNhkArticlesByType((prev) => ({ ...prev, [type]: Array.isArray(articles) ? articles : [] }));
+    }))
+      .then((results) => setNhkError(results.every((result) => result.status === "rejected")))
       .finally(() => setNhkReady(true));
 
     if (userId) {
@@ -111,7 +106,7 @@ export function HomepageClient({
       setAnalyticsError(false);
       setAnalyticsReady(true);
     }
-  }, [locale, userId]);
+  }, [auth.isLoading, locale, userId]);
 
   // Check onboarding status for logged-in users
   useEffect(() => {
@@ -160,6 +155,13 @@ export function HomepageClient({
     },
     [locale, nhkArticlesByType]
   );
+
+  if (auth.isLoading) {
+    return <main aria-busy="true" className="space-y-6 py-6">
+      <div className="h-72 animate-pulse rounded-2xl bg-border" />
+      <p className="sr-only">{labels.sectionLoadingHint}</p>
+    </main>;
+  }
 
   return (
     <main className="min-w-0 space-y-8 overflow-x-clip pb-12 pt-2 sm:space-y-10 sm:pt-6">

@@ -1,6 +1,8 @@
 {
   "a11y": {
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "scrollLeft": "Scroll left",
+    "scrollRight": "Scroll right"
   },
   "auth": {
     "errors": {
@@ -193,7 +195,79 @@
       "onboardingStep3Body": "Tap anytime to chat. You can drag me around too!",
       "onboardingNext": "Next",
       "onboardingSkip": "Skip",
-      "onboardingFinish": "Let's start!"
+      "onboardingFinish": "Let's start!",
+      "english": {
+        "greetings": {
+          "first": "Hi! I’m Shiba 🐕 Let’s learn Japanese together!",
+          "return": "Welcome back! Let’s keep learning!",
+          "streak": "{days} days in a row! Keep going!",
+          "morning": "Good morning! Let’s learn together today!",
+          "afternoon": "Good afternoon! Ready for some Japanese?",
+          "evening": "Good evening! Time for a little study.",
+          "night": "It’s getting late. Take it easy."
+        },
+        "pages": {
+          "flashcards": "Small, regular reviews make a difference.",
+          "quiz": "BJT practice! Take your time and focus.",
+          "battle": "Ready to put your skills to the test?",
+          "analytics": "Check how your learning is progressing.",
+          "search": "What would you like to look up?",
+          "dictionary": "What would you like to look up?",
+          "settings": "Make yourself comfortable."
+        },
+        "quickReplies": [
+          "Teach me keigo",
+          "BJT tips",
+          "Grammar",
+          "Business culture",
+          "What should I review?",
+          "Encourage me"
+        ],
+        "replies": [
+          "Keigo basics: desu/masu is polite language, irassharu is respectful, and mairu is humble. Choose the form that suits the situation.",
+          "Practise listening to workplace conversations regularly to prepare for the BJT.",
+          "Useful business grammar includes ~sasete itadaku, ~itashimasu, and ~zonjimasu.",
+          "Japanese business etiquette: exchange business cards with both hands and start emails with Osewa ni natte orimasu.",
+          "Spaced repetition helps you remember. Try a short card review.",
+          "One step at a time! A little practice every day adds up. I’m here to cheer you on.",
+          "Hello! Ask me about keigo, BJT practice, grammar, or business etiquette.",
+          "Try a battle to practise with other learners."
+        ],
+        "fallback": "Try asking about keigo, BJT, grammar, or business etiquette, or choose a question below.",
+        "actionReview": "Review cards",
+        "actionBattle": "Start a battle",
+        "quotes": [
+          "Keep going!",
+          "One step at a time!",
+          "Let’s learn together today!",
+          "Don’t give up!",
+          "A little practice every day matters.",
+          "Great work! Keep going!",
+          "Japanese is fun!",
+          "What will you learn today?",
+          "Let’s do our best together!",
+          "A little at a time is enough.",
+          "Review helps you remember!",
+          "You can do it!"
+        ],
+        "due": "{count} cards are waiting for review. Even five minutes helps!",
+        "morningNudge": "Try five minutes of study this morning.",
+        "celebration": "Nice work! Keep building your Japanese skills.",
+        "tips": [
+          "Use Otsukaresama desu with colleagues. Gokurosama desu is used by a senior to a junior.",
+          "Start a business email with Osewa ni natte orimasu.",
+          "~te itadakemasu ka is more polite than ~te kudasai.",
+          "Shouchi shimashita is a formal alternative to Wakarimashita.",
+          "Exchange business cards with both hands, facing the other person.",
+          "Kentou sasete itadakimasu can be a polite way to decline.",
+          "Keigo includes respectful, humble, and polite forms.",
+          "Moushiwake gozaimasen is a formal apology.",
+          "Listening practice is an important part of preparing for the BJT.",
+          "Yoroshiku onegai itashimasu is a common business closing.",
+          "Use sasete itadaku only when it suits the situation.",
+          "Repeatedly saying naruhodo in a meeting may sound impolite."
+        ]
+      }
     },
     "localeSwitcher": "Language",
     "localeSwitcherAria": "Change display language",
@@ -409,6 +483,32 @@
       "progressSub": "Track your learning journey",
       "rewardsSub": "Boxes, bonuses & redemption",
       "focusSub": "Pomodoro & ambient mode"
+    },
+    "newsContentUnavailable": "Only the headline is available here. Open the original NHK article to read the full story.",
+    "newsCardsUnavailable": "No extracted vocabulary is available for this article yet.",
+    "newsLatestPublished": "Latest available article: {time}.",
+    "newsStale": "Recent news is unavailable. Showing saved articles.",
+    "forYou": {
+      "title": "For you",
+      "signIn": "Sign in to get learning recommendations based on your activity.",
+      "empty": "Start reviewing cards or practising to get personal recommendations.",
+      "infoTitle": "How recommendations work",
+      "infoBody": "Recommendations use your review schedule, recent practice and learning goals.",
+      "listLabel": "Personal learning recommendations",
+      "priority": "High priority",
+      "refresh": "Refresh ↻",
+      "reasonDue": "Due for review",
+      "reasonWeak": "Practise a skill that needs attention",
+      "reasonFollowing": "From topics you follow",
+      "reasonLesson": "A new lesson for your level",
+      "reasonNew": "New cards to explore",
+      "reasonHard": "A challenging card to revisit",
+      "reasonNews": "Reading practice for your level",
+      "reasonTrending": "Popular with other readers",
+      "reasonSrs": "Based on your review schedule",
+      "reasonExercise": "Matches your learning goals",
+      "reasonDefault": "Based on your recent activity",
+      "summary": "{count} recommendations"
     }
   },
   "nhkDetail": {
@@ -448,14 +548,16 @@
     "readFullArticle": "Read the full story on NHK",
     "furiganaToggle": "Furigana display",
     "furiganaOn": "Furigana",
-    "furiganaOff": "Hide"
+    "furiganaOff": "Hide",
+    "cardsUnavailable": "No extracted vocabulary is available for this article yet.",
+    "titleNormal": "NHK news"
   },
   "dashboard": {
     "commandCenterDescription": "The screen makes your next step clear, allows you to see your progress, and doesn't feel overwhelming.",
     "commandCenterEyebrow": "today",
     "commandCenterTitle": "learning command center",
     "compactBrand": "KotobaWorks",
-    "compactHeaderTitle": "learning home",
+    "compactHeaderTitle": "Learning home",
     "demoStatsCaption": "This is a display example. When you log in, you will see the actual data.",
     "demoStatReviews": "12",
     "demoStatAccuracy": "71%",
@@ -883,7 +985,8 @@
       "neon-tokyo": "High contrast with a modern accent.",
       "ocean-calm": "An airy, calm blue reading surface.",
       "gold-calligraphy": "An elegant ink-and-gold combination."
-    }
+    },
+    "easy": "Easy"
   },
   "decks": {
     "title": "deck",
@@ -1077,7 +1180,8 @@
     "deleteOwnedDeckConfirm": "remove",
     "deleteOwnedDeckCancel": "Cancel",
     "deleteOwnedDeckDeleting": "Processing...",
-    "deleteOwnedDeckError": "I couldn't remove the deck. Please try again later."
+    "deleteOwnedDeckError": "I couldn't remove the deck. Please try again later.",
+    "deckStudyRateEasy": "Easy"
   },
   "battle": {
     "eyebrow": "BJT",
@@ -2476,7 +2580,8 @@
     "saved": "Saved.",
     "saveError": "Could not sync your settings. This device will keep using them.",
     "preview": "Preview",
-    "previewText": "In Japanese business settings, knowing when to use humble and respectful language matters."
+    "previewText": "In Japanese business settings, knowing when to use humble and respectful language matters.",
+    "saving": "Saving…"
   },
   "subscription": {
     "title": "Subscription",
@@ -2615,8 +2720,8 @@
     },
     "stats": {
       "streak": "Streak",
-      "reviews": "Reviews",
-      "accuracy": "Accuracy",
+      "reviews": "SRS reviews",
+      "accuracy": "BJT accuracy",
       "level": "Level",
       "dueCards": "Due cards",
       "days": "days"
@@ -2750,7 +2855,11 @@
     "list": {
       "title": "Business scenarios",
       "description": "Practice communicating in Japanese workplaces.",
-      "difficulty": { "beginner": "Beginner", "intermediate": "Intermediate", "advanced": "Advanced" },
+      "difficulty": {
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced"
+      },
       "duration": "⏱️ ~{count} min",
       "steps": "📋 {count} steps",
       "attempts": "🎮 {count} plays",
@@ -2776,5 +2885,15 @@
       "continue": "Continue →",
       "retry": "Try again"
     }
+  },
+  "systemPages": {
+    "errorTitle": "Something went wrong",
+    "errorDescription": "We could not load this page. Please try again.",
+    "errorReference": "Support reference: {reference}",
+    "retry": "Try again",
+    "home": "Return to home",
+    "notFoundTitle": "Page not found",
+    "notFoundDescription": "This page is unavailable. Choose a link below to keep learning.",
+    "notFoundMetaTitle": "Page not found — KotobaWorks"
   }
 }

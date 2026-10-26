@@ -1,6 +1,8 @@
 {
   "a11y": {
-    "skipToContent": "Bỏ qua đến nội dung chính"
+    "skipToContent": "Bỏ qua đến nội dung chính",
+    "scrollLeft": "Cuộn sang trái",
+    "scrollRight": "Cuộn sang phải"
   },
   "auth": {
     "errors": {
@@ -409,6 +411,32 @@
       "progressSub": "Theo dõi đường tiến của bạn",
       "rewardsSub": "Quà, mystery box & cơ hội phục thù",
       "focusSub": "Pomodoro & chế độ thư giãn"
+    },
+    "newsContentUnavailable": "Hiện chỉ có tiêu đề. Mở bài gốc trên NHK để đọc nội dung đầy đủ.",
+    "newsCardsUnavailable": "Bài này chưa có từ vựng được trích xuất để tạo thẻ.",
+    "newsLatestPublished": "Bài mới nhất hiện có: {time}.",
+    "newsStale": "Chưa có tin mới. Đang hiển thị các bài đã lưu.",
+    "forYou": {
+      "title": "Dành cho bạn",
+      "signIn": "Đăng nhập để nhận gợi ý học tập cá nhân hóa dựa trên hoạt động của bạn.",
+      "empty": "Hãy bắt đầu ôn thẻ hoặc làm bài tập để nhận gợi ý phù hợp.",
+      "infoTitle": "Cách gợi ý hoạt động",
+      "infoBody": "Gợi ý dựa trên lịch ôn tập, bài luyện gần đây và mục tiêu học của bạn.",
+      "listLabel": "Gợi ý học tập cá nhân",
+      "priority": "Ưu tiên cao",
+      "refresh": "Làm mới ↻",
+      "reasonDue": "Đến hạn ôn tập",
+      "reasonWeak": "Luyện thêm kỹ năng cần cải thiện",
+      "reasonFollowing": "Từ chủ đề bạn đang theo dõi",
+      "reasonLesson": "Bài học mới phù hợp trình độ",
+      "reasonNew": "Thẻ mới chờ bạn khám phá",
+      "reasonHard": "Thẻ khó cần ôn lại",
+      "reasonNews": "Phù hợp trình độ đọc hiểu",
+      "reasonTrending": "Đang được nhiều người đọc",
+      "reasonSrs": "Dựa trên lịch ôn tập SRS",
+      "reasonExercise": "Phù hợp mục tiêu học của bạn",
+      "reasonDefault": "Dựa trên hoạt động gần đây",
+      "summary": "{count} gợi ý"
     }
   },
   "nhkDetail": {
@@ -448,7 +476,9 @@
     "readFullArticle": "Đọc bài viết đầy đủ trên NHK",
     "furiganaToggle": "Hiển thị furigana",
     "furiganaOn": "Furigana",
-    "furiganaOff": "Ẩn"
+    "furiganaOff": "Ẩn",
+    "cardsUnavailable": "Bài này chưa có từ vựng được trích xuất để tạo thẻ.",
+    "titleNormal": "Tin tức NHK"
   },
   "dashboard": {
     "commandCenterDescription": "Một hành động chính rõ ràng, tiến độ nhìn thấy được, không bị quá tải.",
@@ -883,7 +913,8 @@
       "neon-tokyo": "Tương phản cao, điểm nhấn hiện đại.",
       "ocean-calm": "Xanh dịu, thoáng và dễ đọc.",
       "gold-calligraphy": "Tông mực đen và vàng trang nhã."
-    }
+    },
+    "easy": "Dễ"
   },
   "decks": {
     "title": "Bộ thẻ",
@@ -1077,7 +1108,8 @@
     "deleteOwnedDeckConfirm": "Gỡ bộ",
     "deleteOwnedDeckCancel": "Hủy",
     "deleteOwnedDeckDeleting": "Đang gỡ…",
-    "deleteOwnedDeckError": "Không gỡ được bộ. Thử lại sau."
+    "deleteOwnedDeckError": "Không gỡ được bộ. Thử lại sau.",
+    "deckStudyRateEasy": "Dễ"
   },
   "battle": {
     "eyebrow": "BJT",
@@ -2476,7 +2508,8 @@
     "saved": "Đã lưu.",
     "saveError": "Không thể đồng bộ cài đặt. Thiết bị này vẫn đang áp dụng lựa chọn của bạn.",
     "preview": "Xem trước",
-    "previewText": "Trong môi trường kinh doanh Nhật Bản, việc sử dụng kính ngữ và khiêm nhường ngữ đúng cách là rất quan trọng."
+    "previewText": "Trong môi trường kinh doanh Nhật Bản, việc sử dụng kính ngữ và khiêm nhường ngữ đúng cách là rất quan trọng.",
+    "saving": "Đang lưu…"
   },
   "announcements": {
     "close": "Đóng",
@@ -2615,8 +2648,8 @@
     },
     "stats": {
       "streak": "Chuỗi ngày",
-      "reviews": "Lượt ôn",
-      "accuracy": "Chính xác",
+      "reviews": "Lượt ôn SRS",
+      "accuracy": "Chính xác BJT",
       "level": "Trình độ",
       "dueCards": "Thẻ đến hạn",
       "days": "ngày"
@@ -2750,7 +2783,11 @@
     "list": {
       "title": "Tình huống kinh doanh",
       "description": "Luyện tập ứng xử trong môi trường làm việc Nhật Bản",
-      "difficulty": { "beginner": "Cơ bản", "intermediate": "Trung cấp", "advanced": "Nâng cao" },
+      "difficulty": {
+        "beginner": "Cơ bản",
+        "intermediate": "Trung cấp",
+        "advanced": "Nâng cao"
+      },
       "duration": "⏱️ ~{count} phút",
       "steps": "📋 {count} bước",
       "attempts": "🎮 {count} lượt chơi",
@@ -2776,5 +2813,15 @@
       "continue": "Tiếp tục →",
       "retry": "Thử lại"
     }
+  },
+  "systemPages": {
+    "errorTitle": "Đã xảy ra lỗi",
+    "errorDescription": "Không tải được trang này. Vui lòng thử lại.",
+    "errorReference": "Mã hỗ trợ: {reference}",
+    "retry": "Thử lại",
+    "home": "Về trang chủ",
+    "notFoundTitle": "Không tìm thấy trang",
+    "notFoundDescription": "Trang này không tồn tại. Chọn liên kết bên dưới để tiếp tục học.",
+    "notFoundMetaTitle": "Không tìm thấy trang — KotobaWorks"
   }
 }

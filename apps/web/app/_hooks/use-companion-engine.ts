@@ -8,12 +8,15 @@ import type {
   CompanionMessageType,
 } from "@nihongo-bjt/shared";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import enMessages from "../../messages/en.json";
 import { usePathname } from "next/navigation";
 
 import type { CompanionMood } from "../_components/companion-speech-bubble";
 import { useCompanionMemory } from "./use-companion-memory";
 
 /* ── Constants ── */
+
+const english = enMessages.nav.companion.english;
 
 const PROACTIVE_INTERVAL = 300_000; // 5 min between proactive messages
 const CELEBRATION_COOLDOWN = 60_000; // 1 min between celebrations
@@ -169,7 +172,7 @@ function createMessage(
 
 /* ── Quick reply chips ── */
 
-type QuickReply = { id: string; labelJa: string; labelVi: string; icon: string };
+type QuickReply = { id: string; labelJa: string; labelVi: string; labelEn?: string; icon: string };
 
 const QUICK_REPLIES: QuickReply[] = [
   { id: "keigo", labelJa: "敬語を教えて", labelVi: "Dạy keigo", icon: "🎓" },
@@ -182,7 +185,7 @@ const QUICK_REPLIES: QuickReply[] = [
 
 /* ── Rule-based reply engine ── */
 
-type ReplyRule = { keywords: string[]; reply: { ja: string; vi: string; emoji?: string; action?: CompanionMessage["action"] } };
+type ReplyRule = { keywords: string[]; reply: { ja: string; vi: string; en?: string; emoji?: string; action?: CompanionMessage["action"] } };
 
 function getRuleBasedReply(text: string, base: string): ReplyRule["reply"] | null {
   const lower = text.toLowerCase();
@@ -222,9 +225,9 @@ function getRuleBasedReply(text: string, base: string): ReplyRule["reply"] | nul
     },
   ];
 
-  for (const rule of rules) {
+  for (const [index, rule] of rules.entries()) {
     if (rule.keywords.some((kw) => lower.includes(kw))) {
-      return rule.reply;
+      return { ...rule.reply, en: english.replies[index] };
     }
   }
 
@@ -242,7 +245,7 @@ const FALLBACK_REPLIES = [
 export type CompanionEngineState = {
   mood: CompanionMood;
   messages: CompanionMessage[];
-  bubbleText: { ja: string; vi: string } | null;
+  bubbleText: { ja: string; vi: string; en?: string } | null;
   bubbleMood: CompanionMood;
   showCelebration: boolean;
   celebrationEmoji: string;
@@ -268,7 +271,7 @@ export function useCompanionEngine({
 
   const [messages, setMessages] = useState<CompanionMessage[]>([]);
   const [overrideMood, setOverrideMood] = useState<CompanionMood | null>(null);
-  const [bubbleText, setBubbleText] = useState<{ ja: string; vi: string } | null>(null);
+  const [bubbleText, setBubbleText] = useState<{ ja: string; vi: string; en?: string } | null>(null);
   const [bubbleMood, setBubbleMood] = useState<CompanionMood>("idle");
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationEmoji, setCelebrationEmoji] = useState("");
@@ -306,9 +309,10 @@ export function useCompanionEngine({
     if (greeted.current) return;
     greeted.current = true;
     const g = getContextGreeting(context);
-    setBubbleText({ ja: g.ja, vi: g.vi });
+    const en = context.isFirstVisit ? english.greetings.first : context.daysSinceLastVisit && context.daysSinceLastVisit >= 3 ? english.greetings.return : (context.streakDays ?? 0) >= 7 ? english.greetings.streak.replace("{days}", String(context.streakDays)) : english.greetings[context.timeOfDay];
+    setBubbleText({ ja: g.ja, vi: g.vi, en });
     setBubbleMood(g.mood);
-    pushMessage(createMessage("greeting", g.ja, g.vi, { emoji: "👋" }));
+    pushMessage(createMessage("greeting", g.ja, g.vi, { emoji: "👋", en }));
   }, [context, pushMessage]);
 
   // Page-change reactions
@@ -319,9 +323,10 @@ export function useCompanionEngine({
 
     const pageMsg = getPageMessage(page);
     if (pageMsg) {
-      setBubbleText(pageMsg);
+      const en = english.pages[page as keyof typeof english.pages];
+      setBubbleText({ ...pageMsg, en });
       setBubbleMood("talk");
-      pushMessage(createMessage("context_aware", pageMsg.ja, pageMsg.vi));
+      pushMessage(createMessage("context_aware", pageMsg.ja, pageMsg.vi, { en }));
       // Reset mood after 4s
       const t = setTimeout(() => setBubbleMood("idle"), 4000);
       return () => clearTimeout(t);
@@ -338,16 +343,18 @@ export function useCompanionEngine({
       // 60% chance: Japanese tip, 40% chance: study nudge
       if (Math.random() < 0.6) {
         const tip = JAPANESE_TIPS[tipIndex.current % JAPANESE_TIPS.length];
+        const en = english.tips[tipIndex.current % JAPANESE_TIPS.length];
         tipIndex.current++;
-        setBubbleText({ ja: tip.ja, vi: tip.vi });
+        setBubbleText({ ja: tip.ja, vi: tip.vi, en });
         setBubbleMood("talk");
-        pushMessage(createMessage("tip", tip.ja, tip.vi, { emoji: "📚" }));
+        pushMessage(createMessage("tip", tip.ja, tip.vi, { emoji: "📚", en }));
       } else {
         const nudge = getStudyNudge(context);
         if (nudge) {
-          setBubbleText(nudge);
+          const en = context.dueCount ? english.due.replace("{count}", String(context.dueCount)) : english.morningNudge;
+          setBubbleText({ ...nudge, en });
           setBubbleMood("think");
-          pushMessage(createMessage("nudge", nudge.ja, nudge.vi, { emoji: "💡" }));
+          pushMessage(createMessage("nudge", nudge.ja, nudge.vi, { emoji: "💡", en }));
         }
       }
     }, CONTEXT_TIPS_INTERVAL);
@@ -388,9 +395,9 @@ export function useCompanionEngine({
     setCelebrationEmoji(celebration.emoji);
     setShowCelebration(true);
     setOverrideMood("cheer");
-    setBubbleText({ ja: celebration.ja, vi: celebration.vi });
+    setBubbleText({ ja: celebration.ja, vi: celebration.vi, en: english.celebration });
     setBubbleMood("cheer");
-    pushMessage(createMessage("celebration", celebration.ja, celebration.vi, { emoji: celebration.emoji }));
+    pushMessage(createMessage("celebration", celebration.ja, celebration.vi, { emoji: celebration.emoji, en: english.celebration }));
 
     // Reset after 4s
     setTimeout(() => {
@@ -432,21 +439,21 @@ export function useCompanionEngine({
     if (!trimmed) return;
 
     // Push user message
-    pushMessage(createMessage("context_aware", trimmed, trimmed, { sender: "user" }));
+    pushMessage(createMessage("context_aware", trimmed, trimmed, { sender: "user", en: trimmed }));
 
     // Brief "thinking" delay
     setOverrideMood("think");
     setTimeout(() => {
       const reply = getRuleBasedReply(trimmed, base);
       if (reply) {
-        pushMessage(createMessage("hint", reply.ja, reply.vi, { emoji: reply.emoji, action: reply.action }));
+        pushMessage(createMessage("hint", reply.ja, reply.vi, { emoji: reply.emoji, en: reply.en, action: reply.action ? { ...reply.action, label: locale === "en" ? (reply.action.href.endsWith("/battle") ? english.actionBattle : english.actionReview) : reply.action.label } : undefined }));
       } else {
         const fb = FALLBACK_REPLIES[Math.floor(Math.random() * FALLBACK_REPLIES.length)];
-        pushMessage(createMessage("hint", fb.ja, fb.vi, { emoji: "🤔" }));
+        pushMessage(createMessage("hint", fb.ja, fb.vi, { emoji: "🤔", en: english.fallback }));
       }
       setOverrideMood(null);
     }, 600 + Math.random() * 400);
-  }, [wakeUp, pushMessage, base]);
+  }, [wakeUp, pushMessage, base, locale]);
 
   // Handle quick reply chip
   const handleQuickReply = useCallback((chipId: string) => {
@@ -475,6 +482,6 @@ export function useCompanionEngine({
     createMessage,
     handleUserMessage,
     handleQuickReply,
-    quickReplies: QUICK_REPLIES,
+    quickReplies: QUICK_REPLIES.map((chip, index) => ({ ...chip, labelEn: english.quickReplies[index] })),
   };
 }

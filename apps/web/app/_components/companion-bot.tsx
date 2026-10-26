@@ -1,7 +1,7 @@
 "use client";
 
-import type { BattleBotAnimationState, CompanionEventKind, CompanionHintResponse, CompanionReasonCode } from "@nihongo-bjt/shared";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { companionHintResponseSchema, type BattleBotAnimationState, type CompanionEventKind, type CompanionHintResponse, type CompanionReasonCode } from "@nihongo-bjt/shared";
+import { Component, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useGoAuth } from "../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../lib/learner-api";
@@ -81,6 +81,19 @@ const HOME_BOTTOM = 80;
 const HOME_RIGHT = 16;
 const MASCOT_SIZE = 80;
 
+class CompanionBoundary extends Component<{ children: ReactNode; onClose: () => void; labels: CompanionBotLabels }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error: Error) { console.error("Companion panel failed", error); }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return <div role="alert" className="pointer-events-auto absolute bottom-full right-0 mb-3 w-72 rounded-2xl border border-border bg-surface p-4 text-ink shadow-lg">
+      <p>{this.props.labels.hintError}</p>
+      <button type="button" className="mt-3 min-h-11 rounded-lg border border-border px-3" onClick={this.props.onClose}>{this.props.labels.close}</button>
+    </div>;
+  }
+}
+
 /* ── Main component ── */
 
 export function CompanionBot({ base, labels, locale }: { base: string; labels: CompanionBotLabels; locale: string }) {
@@ -143,7 +156,9 @@ export function CompanionBot({ base, labels, locale }: { base: string; labels: C
     try {
       const res = await learnerApiFetch("/api/companion/hint?days=7");
       if (!res.ok) { setHintError(true); setHint(null); return; }
-      setHint((await res.json()) as CompanionHintResponse);
+      const parsed = companionHintResponseSchema.safeParse(await res.json());
+      setHint(parsed.success ? parsed.data : null);
+      setHintError(!parsed.success);
     } catch {
       setHintError(true); setHint(null);
     } finally {
@@ -227,6 +242,7 @@ export function CompanionBot({ base, labels, locale }: { base: string; labels: C
       >
         {/* Chat panel */}
         {open && !engine.isOnboarding ? (
+          <CompanionBoundary labels={labels} onClose={() => setOpen(false)}>
           <CompanionChatPanel
             base={base}
             hint={hint}
@@ -244,6 +260,7 @@ export function CompanionBot({ base, labels, locale }: { base: string; labels: C
             quickReplies={engine.quickReplies}
             streakDays={engine.memory.memory.localStreakDays}
           />
+          </CompanionBoundary>
         ) : null}
 
         {/* Onboarding overlay */}

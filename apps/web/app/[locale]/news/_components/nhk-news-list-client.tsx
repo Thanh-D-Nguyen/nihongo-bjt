@@ -15,6 +15,7 @@ interface NhkArticle {
   difficulty: string | null;
   url: string;
   sourceType?: "easy" | "normal";
+  hasBody: boolean;
 }
 
 interface Labels {
@@ -35,6 +36,9 @@ interface HomepageLabels {
   newsDaysAgo: string;
   newsLoadMore?: string;
   newsRead?: string;
+  newsContentUnavailable?: string;
+  newsLatestPublished?: string;
+  newsStale?: string;
 }
 
 function timeAgo(dateStr: string, labels: HomepageLabels): string {
@@ -69,6 +73,7 @@ export function NhkNewsListClient({
   const [error, setError] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [readArticleIds, setReadArticleIds] = useState<Set<string>>(new Set());
+  const latestPublished = articles.reduce((latest, article) => Math.max(latest, Date.parse(article.publishedAt) || 0), 0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -138,6 +143,10 @@ export function NhkNewsListClient({
           {homepageLabels.newsNormal}
         </TabButton>
       </TabsList>
+      {!loading && !error && latestPublished > 0 && <p className="mt-4 text-sm text-muted" role="status">
+        {homepageLabels.newsLatestPublished?.replace("{time}", new Date(latestPublished).toLocaleDateString(locale))}
+        {Date.now() - latestPublished > 7 * 86400000 && <> {homepageLabels.newsStale}</>}
+      </p>}
 
       {loading && (
         <div aria-busy className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -193,6 +202,7 @@ export function NhkNewsListClient({
                 <h2 className="line-clamp-2 text-sm font-semibold text-ink" lang="ja">
                   {article.title}
                 </h2>
+                {!article.hasBody && <p className="mt-2 text-xs text-muted">{homepageLabels.newsContentUnavailable}</p>}
                 <p className="mt-auto pt-2 text-xs text-muted">
                   {timeAgo(article.publishedAt, homepageLabels)}
                 </p>

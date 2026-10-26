@@ -4,6 +4,9 @@ import { cn } from "@nihongo-bjt/ui";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useGoAuth } from "../../../../lib/go-auth-provider";
+import en from "../../../../messages/en.json";
+import ja from "../../../../messages/ja.json";
+import vi from "../../../../messages/vi.json";
 import { learnerApiFetchOptional } from "../../../../lib/learner-api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -58,29 +61,29 @@ function buildItemHref(item: FeedItem, fallbackHref: string): string {
 }
 
 /** Map recommendation source to user-friendly reason */
-function getReasonText(source: string, type: string): string {
+function getReasonText(source: string, type: string, copy: typeof vi.homepage.forYou): string {
   switch (source) {
     case "DueFlashcards":
     case "OverdueCards":
-      return "Cần ôn lại — quên nếu không luyện hôm nay";
+      return copy.reasonDue;
     case "WeakAreaDiscovery":
-      return "Bạn đang yếu kỹ năng này — luyện thêm sẽ tiến bộ";
+      return copy.reasonWeak;
     case "EnrolledExercises":
-      return "Từ chủ đề bạn đang theo dõi";
+      return copy.reasonFollowing;
     case "UndiscoveredLessons":
-      return "Bài học mới phù hợp trình độ của bạn";
+      return copy.reasonLesson;
     case "NewCards":
-      return "Thẻ mới chờ bạn khám phá";
+      return copy.reasonNew;
     case "LeechedCards":
-      return "Thẻ khó — cần chú ý đặc biệt";
+      return copy.reasonHard;
     case "NhkNews":
-      return "Phù hợp trình độ đọc hiểu của bạn";
+      return copy.reasonNews;
     case "TrendingNews":
-      return "Đang được nhiều người đọc";
+      return copy.reasonTrending;
     default:
-      if (type === "flashcard_review") return "Dựa trên lịch ôn tập SRS";
-      if (type === "exercise") return "Phù hợp mục tiêu học của bạn";
-      return "Gợi ý dựa trên hoạt động gần đây";
+      if (type === "flashcard_review") return copy.reasonSrs;
+      if (type === "exercise") return copy.reasonExercise;
+      return copy.reasonDefault;
   }
 }
 
@@ -91,7 +94,8 @@ export function ForYouFeedWidget({ locale, refreshKey = 0 }: { locale: string; r
   const prefersReducedMotion =
     typeof window !== "undefined" &&
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  const { userId } = useGoAuth();
+  const { userId, isLoading } = useGoAuth();
+  const copy = (locale === "ja" ? ja : locale === "en" ? en : vi).homepage.forYou;
   const [feed, setFeed] = useState<FeedResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [showInfo, setShowInfo] = useState(false);
@@ -119,24 +123,24 @@ export function ForYouFeedWidget({ locale, refreshKey = 0 }: { locale: string; r
   }, [loadFeed, refreshKey]);
 
   // ─── Not logged in ────────────────────────────────────────────────────────
-  if (!userId) {
+  if (!userId && !isLoading) {
     return (
       <div className="rounded-2xl border border-ink/8 bg-surface p-5 shadow-sm">
         <div className="flex items-center gap-2">
           <span className="text-lg">✨</span>
-          <h3 className="text-sm font-bold text-ink">For You</h3>
+          <h3 className="text-sm font-bold text-ink">{copy.title}</h3>
         </div>
         <p className="mt-2 text-xs text-muted">
-          Đăng nhập để nhận gợi ý học tập cá nhân hoá dựa trên hoạt động của bạn.
+          {copy.signIn}
         </p>
       </div>
     );
   }
 
   // ─── Loading (shimmer skeleton per UI/UX trends) ─────────────────────────
-  if (loading) {
+  if (isLoading || loading) {
     return (
-      <div className="rounded-2xl border border-ink/8 bg-surface p-5 shadow-sm">
+      <div aria-busy="true" className="rounded-2xl border border-ink/8 bg-surface p-5 shadow-sm">
         <div className="flex items-center gap-2">
           <span className="text-lg">✨</span>
           <div className="h-4 w-20 rounded foryou-skeleton" />
@@ -162,10 +166,10 @@ export function ForYouFeedWidget({ locale, refreshKey = 0 }: { locale: string; r
       <div className="rounded-2xl border border-ink/8 bg-surface p-5 shadow-sm">
         <div className="flex items-center gap-2">
           <span className="text-lg">✨</span>
-          <h3 className="text-sm font-bold text-ink">For You</h3>
+          <h3 className="text-sm font-bold text-ink">{copy.title}</h3>
         </div>
         <p className="mt-2 text-xs text-muted">
-          Chưa đủ dữ liệu để gợi ý. Hãy bắt đầu ôn thẻ hoặc làm bài tập để hệ thống hiểu bạn hơn!
+          {copy.empty}
         </p>
       </div>
     );
@@ -178,7 +182,7 @@ export function ForYouFeedWidget({ locale, refreshKey = 0 }: { locale: string; r
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-lg">✨</span>
-          <h3 className="text-sm font-bold text-ink">For You</h3>
+          <h3 className="text-sm font-bold text-ink">{copy.title}</h3>
           <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent">
             AI
           </span>
@@ -186,8 +190,8 @@ export function ForYouFeedWidget({ locale, refreshKey = 0 }: { locale: string; r
         <button
           onClick={() => setShowInfo(!showInfo)}
           className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-muted transition hover:bg-ink/5 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
-          aria-label="Thông tin thuật toán"
-          title="Cách hoạt động"
+          aria-label={copy.infoTitle}
+          title={copy.infoTitle}
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -198,23 +202,13 @@ export function ForYouFeedWidget({ locale, refreshKey = 0 }: { locale: string; r
       {/* Info tooltip / explanation */}
       {showInfo && (
         <div className="mt-3 rounded-xl bg-accent/5 p-3 text-xs text-muted leading-relaxed">
-          <p className="font-medium text-ink mb-1">🧠 Cách gợi ý hoạt động:</p>
-          <ul className="list-inside list-disc space-y-0.5">
-            <li>Phân tích lịch sử ôn tập, quiz, bài tập của bạn</li>
-            <li>Tìm điểm yếu cần cải thiện (accuracy &lt; 60%)</li>
-            <li>Ưu tiên thẻ sắp quên theo thuật toán SRS</li>
-            <li>Đa dạng hoá chủ đề — không lặp lại quá nhiều</li>
-            <li>Phù hợp trình độ ước lượng từ điểm quiz gần nhất</li>
-          </ul>
-          <p className="mt-2 text-[10px] opacity-70">
-            Thuật toán lấy cảm hứng từ hệ thống recommendation của X (Twitter).
-            Không cần cấu hình — càng học nhiều, gợi ý càng chính xác.
-          </p>
+          <p className="font-medium text-ink mb-1">{copy.infoTitle}</p>
+          <p>{copy.infoBody}</p>
         </div>
       )}
 
       {/* Feed items */}
-      <ul className="mt-4 space-y-2" role="list" aria-label="Gợi ý học tập cá nhân">
+      <ul className="mt-4 space-y-2" role="list" aria-label={copy.listLabel}>
         {feed.items.map((item, idx) => {
           const meta = TYPE_META[item.type] ?? TYPE_META["exercise"];
           const itemHref = buildItemHref(item, meta.href);
@@ -242,14 +236,14 @@ export function ForYouFeedWidget({ locale, refreshKey = 0 }: { locale: string; r
                     {item.title}
                   </p>
                   <p className="mt-0.5 text-[11px] text-muted leading-tight">
-                    {getReasonText(item.source, item.type)}
+                    {getReasonText(item.source, item.type, copy)}
                   </p>
                 </div>
 
                 {/* Priority indicator */}
                 {idx < 3 && (
                   <div className="mt-1 shrink-0">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent/60" title="Ưu tiên cao" />
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent/60" title={copy.priority} />
                   </div>
                 )}
               </Link>
@@ -261,13 +255,13 @@ export function ForYouFeedWidget({ locale, refreshKey = 0 }: { locale: string; r
       {/* Footer */}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-ink/5 pt-3">
         <p className="min-w-0 text-[10px] text-muted">
-          {feed.meta.totalSourced} ứng viên → {feed.meta.totalReturned} gợi ý ({feed.meta.executionMs}ms)
+          {copy.summary.replace("{count}", String(feed.items.length))}
         </p>
         <button
           onClick={() => void loadFeed()}
           className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 text-[11px] font-medium text-accent hover:bg-accent/5 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
         >
-          Làm mới ↻
+          {copy.refresh}
         </button>
       </div>
     </div>

@@ -68,6 +68,7 @@ describe("MePageClient mobile tabs", () => {
 
     const tablist = container.querySelector<HTMLElement>('[role="tablist"]');
     const row = tablist?.firstElementChild as HTMLElement | null;
+    expect(tablist?.className).toContain("bg-surface/90");
     expect(row?.className).toContain("grid-cols-4");
     expect(container.querySelectorAll('[role="tab"]')).toHaveLength(4);
     expect(container.querySelector('[role="tab"]')?.className).toContain("min-h-12");

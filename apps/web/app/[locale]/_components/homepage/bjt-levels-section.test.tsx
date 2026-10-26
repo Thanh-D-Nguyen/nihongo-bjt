@@ -17,7 +17,7 @@ import { BjtLevelsSection } from "./bjt-levels-section";
 const labels = { sectionTitle: "BJT", viewAll: "See all", vocab: "Words", kanji: "Kanji", grammar: "Grammar", error: "Roadmap unavailable" };
 const levels = [{
   code: "J5", nameVi: "J5 tiếng Việt", nameJa: "J5 日本語", nameEn: "J5 English", color: "#22C55E",
-  vocabCount: 2, kanjiCount: 3, grammarCount: 4
+  vocabCount: 2, kanjiCount: 3, grammarCount: 4, publishedLessonCount: 0
 }];
 
 let root: Root;
@@ -39,6 +39,18 @@ afterEach(async () => {
 });
 
 describe("BjtLevelsSection", () => {
+  it("keeps lesson-only levels visible while hiding empty levels", async () => {
+    const empty = { ...levels[0], code: "J1+", vocabCount: 0, kanjiCount: 0, grammarCount: 0, publishedLessonCount: 0 };
+    apiFetch.mockResolvedValue(new Response(JSON.stringify([{ ...empty, publishedLessonCount: 1 }, { ...empty, code: "J0" }])));
+    await act(async () => root.render(<BjtLevelsSection labels={labels} locale="en" />));
+    expect({ lessonOnly: !!host.querySelector('a[href="/en/levels/J1+"]'), empty: !!host.querySelector('a[href="/en/levels/J0"]') }, "level availability follows public lessons and reference data").toEqual({ lessonOnly: true, empty: false });
+  });
+  it("hides levels without published content", async () => {
+    apiFetch.mockResolvedValue(new Response(JSON.stringify([...levels, { ...levels[0], code: "J1+", vocabCount: 0, kanjiCount: 0, grammarCount: 0 }])));
+    await act(async () => root.render(<BjtLevelsSection labels={labels} locale="en" />));
+    expect(host.querySelector('a[href="/en/levels/J1+"]')).toBeNull();
+    expect(host.querySelector('a[href="/en/levels/J5"]')).not.toBeNull();
+  });
   it("loads the shared collection and uses the selected locale", async () => {
     await act(async () => root.render(<BjtLevelsSection labels={labels} locale="en" />));
     await act(async () => { await Promise.resolve(); });

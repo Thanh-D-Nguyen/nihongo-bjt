@@ -1,0 +1,2471 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "BUG-263",
+  "title": "Fix companion crash and home/search content consistency",
+  "start_head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+  "preexisting_changes": {
+    ".github/workflows/recover-ssh.yml": "336ab60d89f3ba6b697594661a6b5018e5e14104",
+    "TASK_HANDOFF.md": "448f2deffe0803384a75ebfb8950cfc0e1c57a77",
+    "apps/web/next-env.d.ts": "ce4e94a6b10f160ee021fe18939af160d2927dcf",
+    "apps/web/tsconfig.tsbuildinfo": "c6fccc72c139c00bfdd1b05b2311ed41a1e164b2",
+    "docs/ops/dynamic-ssh.md": "3d520dd3061109d1d03836c8c89a42a494055738",
+    "scripts/ops/recover_ssh.py": "182ff5261426c2d473e9a206fc1cdc1ead9c769f",
+    "scripts/ops/ssh-recovery.test.ts": "7dba4cdb2a45120378e06b93b55f37479db669f4",
+    "scripts/ops/ssh_prod.py": "ea6194d74993a23f44fcdbbb5d301138822661dd",
+    "scripts/ops/test_ssh_recovery.py": "2bc5d3736cc6d4373b0975e110afd2f850c96d8b"
+  },
+  "spec": {
+    "problem": "Repair actionable bugs in the 2026-10-26 Kiokoto report without changing unrelated work.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Authenticated companion opens safely with Go hint response; malformed hints stay inside bot error state"
+      },
+      {
+        "id": "AC2",
+        "text": "Home greetings follow Japan time, auth loading avoids guest flashes, home labels follow locale and CTA stays readable"
+      },
+      {
+        "id": "AC3",
+        "text": "NHK stored content, availability, source labels and freshness agree; refresh retains content and reports partial upstream failure"
+      },
+      {
+        "id": "AC4",
+        "text": "Exercise completion persists atomic retry-safe progress; home counts completed exercises while BJT/SRS labels remain explicit"
+      },
+      {
+        "id": "AC5",
+        "text": "Lesson and profile dark controls are readable; empty levels are hidden only when no public lessons exist; saving and system pages are localized"
+      },
+      {
+        "id": "AC6",
+        "text": "Dictionary excludes contaminated glosses without truncating pagination; search and daily radar suppress duplicate content"
+      },
+      {
+        "id": "AC7",
+        "text": "Companion opens/chats without crashing home; session loading and existing-session login navigation behave correctly"
+      }
+    ],
+    "expected_behavior": "Canonical hint response and validated client input; time-zone greeting; localized home states",
+    "observed_behavior": "Go companion returns hints but client dereferences primary; home greeting is hardcoded; localized UI leaks Vietnamese",
+    "rollback_plan": "No schema changes or production backfills. Revert runtime/UI changes to roll back; all existing rows retained. SQL conformance baseline only shrinks resolved drift. Greeting reading is nullable for kana-only greetings per shared DailyGreeting contract."
+  },
+  "classification": {
+    "classes": [
+      "DOMAIN_LOGIC",
+      "UI_ONLY",
+      "API_CONTRACT",
+      "DATABASE",
+      "SEARCH",
+      "CROSS_CUTTING",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestBug263DailyGreetingTimeZone",
+      "expect": "time-zone greeting"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestBug263CompanionHintContract",
+      "expect": "missing companion action contract"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/companion-bot.test.tsx",
+      "test": "CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state",
+      "expect": "expected"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx",
+      "test": "ForYouFeedWidget > keeps a loading skeleton while the session is unresolved",
+      "expect": "expected"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx",
+      "test": "ForYouFeedWidget > localizes the signed-out message",
+      "expect": "expected"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/companion-bot.test.tsx",
+      "test": "CompanionBot API boundary > uses English messages and bubbles on the English route",
+      "expect": "expected"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/admin/app/[locale]/daily/daily-client.test.tsx",
+      "test": "reports a partially failed NHK refresh instead of complete success",
+      "expect": "expected"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestNHKBug260FeedFormats",
+      "expect": "dated Easy feed must parse"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/news/nhk-news-regression.test.tsx",
+      "test": "NHK regression > renders the stored plain summary and normal source breadcrumb",
+      "expect": "本文の要約"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestNHKBug260AvailabilityContract",
+      "expect": "availability contract missing"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestAdminNHKNewsAUDIT161Routes",
+      "expect": "refresh must retain existing body"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestExerciseCompletionFeedsCanonicalProgress",
+      "expect": "exercise completion missing from canonical progress"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx",
+      "test": "Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+      "expect": "Business greetings"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/flashcards/_components/deck-study-session.theme.test.tsx",
+      "test": "DeckStudySession semantic theme rendering > keeps four preview ratings local and explains that SRS progress is not saved",
+      "expect": "deckStudyModeNote"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestExerciseGlossUsesCompleteSense",
+      "expect": "exercise gloss must use complete primary senses"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestExerciseComplete_Success",
+      "expect": "completion retry must return persisted result"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx",
+      "test": "Exercises shared recommendations > refreshes recommendations after persisted completion",
+      "expect": "expected 1 to be 2"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/flashcards/_components/flashcard-interactive-card.test.tsx",
+      "test": "Flashcard review ratings > passes easy unchanged to the SRS review callback",
+      "expect": "SRS review must expose easy rating"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx",
+      "test": "LessonDetailClient > counts embedded lesson content in the header",
+      "expect": "expected"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx",
+      "test": "LessonDetailClient > uses theme colors for every quiz answer state",
+      "expect": "text-ink"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/levels/_components/levels-client.test.tsx",
+      "test": "LevelsClient > hides levels with no available content",
+      "expect": "expected"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/login/auth-pages.regression.test.tsx",
+      "test": "learner auth pages regression > redirects an existing valid session to its safe return path",
+      "expect": "expected"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/analytics/analytics-client-api-contract.test.tsx",
+      "test": "LearnerAnalyticsClient API contract > shows the empty period message only once",
+      "expect": "expected"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx",
+      "test": "MePageClient mobile tabs > lays out all four tabs within the available mobile row",
+      "expect": "bg-surface/90"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLevelLessonsCountEmbeddedContent",
+      "expect": "embedded lesson counts"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "dark theme contrast > keeps small secondary text readable on the surface",
+      "expect": "expected"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/system-pages.regression.test.tsx",
+      "test": "system pages > shows a safe error reference with theme-aware recovery",
+      "expect": "support-123"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/system-pages.regression.test.tsx",
+      "test": "system pages > provides navigation around the not-found state",
+      "expect": "<header"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/login/google-login-button.regression.test.tsx",
+      "test": "shows the Google control loading until the provider renders it",
+      "expect": "expected"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx",
+      "test": "AppearanceSettingsClient > localizes the saving status while the update is pending",
+      "expect": "Đang lưu"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestBUG264DictionaryRejectsInvalidGlosses",
+      "expect": "invalid dictionary"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestBUG264SearchDeduplicatesContentIdentity",
+      "expect": "search content duplicates"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestBUG264DailyRadarDeduplicatesContentIdentity",
+      "expect": "daily radar content duplicates"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx",
+      "test": "BjtLevelsSection > hides levels without published content",
+      "expect": "expected"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLevelListIncludesPublicLessonAvailability",
+      "expect": "public lesson availability"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/levels/_components/levels-client.test.tsx",
+      "test": "LevelsClient > keeps lesson-only levels visible while hiding empty levels",
+      "expect": "level availability"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx",
+      "test": "BjtLevelsSection > keeps lesson-only levels visible while hiding empty levels",
+      "expect": "level availability"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestBUG264DictionaryPaginatesUsableEntries",
+      "expect": "usable dictionary pagination"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestBUG264DictionaryPaginationValidation",
+      "expect": "dictionary pagination validation"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "dark theme contrast > keeps white primary-control labels above the small-text contrast threshold",
+      "expect": "expected"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx",
+      "test": "TodayPlanHub > counts exercise sessions in the completed sessions total without treating them as BJT exams",
+      "expect": "expected"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-26T14:47:39.055Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-26T14:48:03.284Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-26T14:48:03.555Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T14:50:29.880Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-26T14:52:10.248Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T14:53:13.417Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T14:56:32.485Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-26T14:58:15.378Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T15:00:23.270Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T22:29:21.574Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T22:31:58.646Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T22:43:51.822Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-26T22:51:13.894Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-26T22:53:06.680Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-26T14:50:29.685Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBug263DailyGreetingTimeZone|TestBug263CompanionHintContract)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestBug263DailyGreetingTimeZone",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBug263DailyGreetingTimeZone === RUN TestBug263DailyGreetingTimeZone/Asia/Tokyo handler_bug263_test.go:39: time-zone greeting: got {Today:2026-10-26 Greeting:{Japanese:こんにちは Reading:0xbdc7dc0cc00}} want こんばんは on 2026-10-26 --- FAIL: TestBug263DailyGreetingTimeZone/Asia/Tokyo (0.00s) === R…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBug263CompanionHintContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBug263CompanionHintContract handler_bug263_test.go:66: missing companion action contract: status=200 body={\"hints\":[{\"text\":\"Keep up your daily streak! You're doing great.\",\"category\":\"motivation\"}]} --- FAIL: TestBug263CompanionHintContract (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestBug263DailyGreetingTimeZone": "time-zone greeting",
+        "go:./internal/httpserver:TestBug263CompanionHintContract": "missing companion action contract"
+      },
+      "fingerprint": "b5e9efdd4d97d37970227d69b826a84877442e03ede67db223becfb9e9022538"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-26T14:52:09.316Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBug263DailyGreetingTimeZone|TestBug263CompanionHintContract)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/_components/companion-bot.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestBug263DailyGreetingTimeZone",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBug263DailyGreetingTimeZone === RUN TestBug263DailyGreetingTimeZone/Asia/Tokyo handler_bug263_test.go:39: time-zone greeting: got {Today:2026-10-26 Greeting:{Japanese:こんにちは Reading:0x3e1411a8ec00}} want こんばんは on 2026-10-26 --- FAIL: TestBug263DailyGreetingTimeZone/Asia/Tokyo (0.00s) === …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBug263CompanionHintContract",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestBug263CompanionHintContract handler_bug263_test.go:49: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestBug263CompanionHintContract (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state",
+          "outcome": "FAIL",
+          "excerpt": "hint.alternatives is not iterable",
+          "valid": false,
+          "reason": "runtime crash or non-assertion exception is not a valid RED/sensitivity failure"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestBug263DailyGreetingTimeZone": "time-zone greeting",
+        "go:./internal/httpserver:TestBug263CompanionHintContract": "missing companion action contract",
+        "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state": "expected"
+      },
+      "fingerprint": "9010f2277baf52444e0b9158dd9fcc1a3264bf2eb78f6bd5186b949238069170"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-26T14:53:10.555Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 9,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBug263DailyGreetingTimeZone|TestBug263CompanionHintContract)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/_components/companion-bot.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestBug263DailyGreetingTimeZone",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBug263DailyGreetingTimeZone === RUN TestBug263DailyGreetingTimeZone/Asia/Tokyo handler_bug263_test.go:39: time-zone greeting: got {Today:2026-10-26 Greeting:{Japanese:こんにちは Reading:0xca00808ec00}} want こんばんは on 2026-10-26 --- FAIL: TestBug263DailyGreetingTimeZone/Asia/Tokyo (0.00s) === R…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBug263CompanionHintContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBug263CompanionHintContract handler_bug263_test.go:66: missing companion action contract: status=200 body={\"hints\":[{\"text\":\"Keep up your daily streak! You're doing great.\",\"category\":\"motivation\"}]} --- FAIL: TestBug263CompanionHintContract (0.07s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state",
+          "outcome": "FAIL",
+          "excerpt": "expected 'page crashed' to contain 'Couldn\\'t load suggestions. Pick an a…'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestBug263DailyGreetingTimeZone": "time-zone greeting",
+        "go:./internal/httpserver:TestBug263CompanionHintContract": "missing companion action contract",
+        "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state": "expected"
+      },
+      "fingerprint": "a905b520f4b3071e52116800ad6dc3a286088f605ce88ba1d72ee4e0f894d856"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-26T14:54:12.412Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 18,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBug263DailyGreetingTimeZone|TestBug263CompanionHintContract)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/_components/companion-bot.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestBug263DailyGreetingTimeZone",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBug263DailyGreetingTimeZone === RUN TestBug263DailyGreetingTimeZone/Asia/Tokyo handler_bug263_test.go:39: time-zone greeting: got {Today:2026-10-26 Greeting:{Japanese:こんにちは Reading:0x75c0f500cc00}} want こんばんは on 2026-10-26 --- FAIL: TestBug263DailyGreetingTimeZone/Asia/Tokyo (0.00s) === …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBug263CompanionHintContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBug263CompanionHintContract handler_bug263_test.go:66: missing companion action contract: status=200 body={\"hints\":[{\"text\":\"Keep up your daily streak! You're doing great.\",\"category\":\"motivation\"}]} --- FAIL: TestBug263CompanionHintContract (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state",
+          "outcome": "FAIL",
+          "excerpt": "expected 'page crashed' to contain 'Couldn\\'t load suggestions. Pick an a…'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > keeps a loading skeleton while the session is unresolved",
+          "outcome": "FAIL",
+          "excerpt": "expected '<div class=\"rounded-2xl border border…' to contain 'aria-busy=\"true\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > localizes the signed-out message",
+          "outcome": "FAIL",
+          "excerpt": "expected '<div class=\"rounded-2xl border border…' to contain 'ログイン'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestBug263DailyGreetingTimeZone": "time-zone greeting",
+        "go:./internal/httpserver:TestBug263CompanionHintContract": "missing companion action contract",
+        "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state": "expected",
+        "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > keeps a loading skeleton while the session is unresolved": "expected",
+        "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > localizes the signed-out message": "expected"
+      },
+      "fingerprint": "f2b701d40adf8aa2d59155d93c14fde3c9cf9b1abd97c26b1311bcc58fd90af1"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-26T14:56:29.285Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBug263DailyGreetingTimeZone|TestBug263CompanionHintContract)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/_components/companion-bot.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestBug263DailyGreetingTimeZone",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestBug263CompanionHintContract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > keeps a loading skeleton while the session is unresolved",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > localizes the signed-out message",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e4da8f025d0be7565c3c7dd90bc3603e636949003bdf669640178b828c9d4bdb"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-26T14:58:12.309Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 41,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBug263DailyGreetingTimeZone|TestBug263CompanionHintContract)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/_components/companion-bot.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestBug263DailyGreetingTimeZone",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_dictionary_quality_test.go:96:8: undefined: dictionaryGlossUsable FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [build fa…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBug263CompanionHintContract",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver.test] internal/httpserver/handler_dictionary_quality_test.go:96:8: undefined: dictionaryGlossUsable FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver [build fa…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state",
+          "outcome": "FAIL",
+          "excerpt": "expected 'page crashed' to contain 'Couldn\\'t load suggestions. Pick an a…'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > keeps a loading skeleton while the session is unresolved",
+          "outcome": "FAIL",
+          "excerpt": "expected '<div class=\"rounded-2xl border border…' to contain 'aria-busy=\"true\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > localizes the signed-out message",
+          "outcome": "FAIL",
+          "excerpt": "expected '<div class=\"rounded-2xl border border…' to contain 'ログイン'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > uses English messages and bubbles on the English route",
+          "outcome": "FAIL",
+          "excerpt": "Target cannot be null or undefined.",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"expected\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestBug263DailyGreetingTimeZone": "time-zone greeting",
+        "go:./internal/httpserver:TestBug263CompanionHintContract": "missing companion action contract",
+        "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state": "expected",
+        "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > keeps a loading skeleton while the session is unresolved": "expected",
+        "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > localizes the signed-out message": "expected",
+        "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > uses English messages and bubbles on the English route": "expected"
+      },
+      "fingerprint": "0d3d4308ac2ed5874492096133156153de7e65f0b1d47986ccd78fc73e38e5e5"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-26T15:00:18.855Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 47,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBug263DailyGreetingTimeZone|TestBug263CompanionHintContract)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/_components/companion-bot.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/admin/app/[locale]/daily/daily-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestBug263DailyGreetingTimeZone",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBug263DailyGreetingTimeZone === RUN TestBug263DailyGreetingTimeZone/Asia/Tokyo handler_bug263_test.go:39: time-zone greeting: got {Today:2026-10-27 Greeting:{Japanese:こんにちは Reading:0x2520b03e2c40}} want こんばんは on 2026-10-27 --- FAIL: TestBug263DailyGreetingTimeZone/Asia/Tokyo (0.00s) === …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBug263CompanionHintContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBug263CompanionHintContract handler_bug263_test.go:66: missing companion action contract: status=200 body={\"hints\":[{\"text\":\"Keep up your daily streak! You're doing great.\",\"category\":\"motivation\"}]} --- FAIL: TestBug263CompanionHintContract (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state",
+          "outcome": "FAIL",
+          "excerpt": "expected 'page crashed' to contain 'Couldn\\'t load suggestions. Pick an a…'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > keeps a loading skeleton while the session is unresolved",
+          "outcome": "FAIL",
+          "excerpt": "expected '<div class=\"rounded-2xl border border…' to contain 'aria-busy=\"true\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > localizes the signed-out message",
+          "outcome": "FAIL",
+          "excerpt": "expected '<div class=\"rounded-2xl border border…' to contain 'ログイン'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > uses English messages and bubbles on the English route",
+          "outcome": "FAIL",
+          "excerpt": "expected [] to have a length of 2 but got +0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/daily/daily-client.test.tsx::reports a partially failed NHK refresh instead of complete success",
+          "outcome": "FAIL",
+          "excerpt": "expected 'TitleSubtitleNHK News SourceNHK Easy …' to contain 'Error'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestBug263DailyGreetingTimeZone": "time-zone greeting",
+        "go:./internal/httpserver:TestBug263CompanionHintContract": "missing companion action contract",
+        "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state": "expected",
+        "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > keeps a loading skeleton while the session is unresolved": "expected",
+        "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > localizes the signed-out message": "expected",
+        "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > uses English messages and bubbles on the English route": "expected",
+        "vitest:apps/admin/app/[locale]/daily/daily-client.test.tsx::reports a partially failed NHK refresh instead of complete success": "expected"
+      },
+      "fingerprint": "36c8686c428e7063d664c577dcfa01a06d03195d000bae15d3aa7bcebd66fcf6"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-26T15:05:23.511Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 50,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBug263DailyGreetingTimeZone|TestBug263CompanionHintContract|TestNHKBug260FeedFormats|TestNHKBug260AvailabilityContract|TestAdminNHKNewsAUDIT161Routes|TestExerciseCompletionFeedsCanonicalProgress|TestExerciseGlossUsesCompleteSense|TestExerciseComplete_Success|TestLevelLessonsCountEmbeddedContent|TestBUG264DictionaryRejectsInvalidGlosses|TestBUG264SearchDeduplicatesContentIdentity|TestBUG264DailyRadarDeduplicatesContentIdentity)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/_components/companion-bot.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/admin/app/[locale]/daily/daily-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/deck-study-session.theme.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/flashcard-interactive-card.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/login/auth-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/analytics/analytics-client-api-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/system-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/login/google-login-button.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestBug263DailyGreetingTimeZone",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBug263DailyGreetingTimeZone === RUN TestBug263DailyGreetingTimeZone/Asia/Tokyo handler_bug263_test.go:39: time-zone greeting: got {Today:2026-10-27 Greeting:{Japanese:こんにちは Reading:0x29476f549b40}} want こんばんは on 2026-10-27 --- FAIL: TestBug263DailyGreetingTimeZone/Asia/Tokyo (0.00s) === …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBug263CompanionHintContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBug263CompanionHintContract handler_bug263_test.go:66: missing companion action contract: status=200 body={\"hints\":[{\"text\":\"Keep up your daily streak! You're doing great.\",\"category\":\"motivation\"}]} --- FAIL: TestBug263CompanionHintContract (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state",
+          "outcome": "FAIL",
+          "excerpt": "expected 'page crashed' to contain 'Couldn\\'t load suggestions. Pick an a…'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > keeps a loading skeleton while the session is unresolved",
+          "outcome": "FAIL",
+          "excerpt": "expected '<div class=\"rounded-2xl border border…' to contain 'aria-busy=\"true\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > localizes the signed-out message",
+          "outcome": "FAIL",
+          "excerpt": "expected '<div class=\"rounded-2xl border border…' to contain 'ログイン'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > uses English messages and bubbles on the English route",
+          "outcome": "FAIL",
+          "excerpt": "expected [] to have a length of 2 but got +0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/daily/daily-client.test.tsx::reports a partially failed NHK refresh instead of complete success",
+          "outcome": "FAIL",
+          "excerpt": "expected 'TitleSubtitleNHK News SourceNHK Easy …' to contain 'Error'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestNHKBug260FeedFormats",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestNHKBug260FeedFormats === RUN TestNHKBug260FeedFormats/dated_Easy_feed handler_nhk_bug260_test.go:24: dated Easy feed must parse: articles=[] err=easy feed item lacks news_id or title --- FAIL: TestNHKBug260FeedFormats/dated_Easy_feed (0.00s) === RUN TestNHKBug260FeedFormats/normal_summar…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "FAIL",
+          "excerpt": "expected '' to contain '本文の要約'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestNHKBug260AvailabilityContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestNHKBug260AvailabilityContract === RUN TestNHKBug260AvailabilityContract/list handler_nhk_bug260_test.go:55: availability contract missing: status=200 body=[{\"id\":\"bug260-d2ddf842-659a-465e-a1aa-df5f328f0ddd\",\"sourceType\":\"normal\",\"title\":\"要約\",\"titleWithRuby\":null,\"publishedAt\":\"2026-10-2…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminNHKNewsAUDIT161Routes",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminNHKNewsAUDIT161Routes === RUN TestAdminNHKNewsAUDIT161Routes/session_and_permission_boundaries 2026/10/27 00:05:01 INFO request method=GET path=/api/admin/nhk-news/config status=401 duration=162.542µs bytes=25 2026/10/27 00:05:01 INFO request method=PATCH path=/api/admin/nhk-news/co…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseCompletionFeedsCanonicalProgress",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExerciseCompletionFeedsCanonicalProgress handler_exercise_completion_integration_test.go:76: exercise completion missing from canonical progress: {DailyStats:[] Totals:{CompletedSessions:0 CompletedExerciseSessions:0 ExerciseAnswerCount:0 StreakDays:0 ExerciseAccuracyPct:0 CompletedBjtSe…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "FAIL",
+          "excerpt": "expected 'eyebrowtitlesubtitlerecommendedrecomm…' to contain 'Business greetings'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/deck-study-session.theme.test.tsx::DeckStudySession semantic theme rendering > keeps four preview ratings local and explains that SRS progress is not saved",
+          "outcome": "FAIL",
+          "excerpt": "expected 'deckStudyEyebrow↻deckStudyModeFlip⇄de…' to contain 'deckStudyModeNote'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseGlossUsesCompleteSense",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExerciseGlossUsesCompleteSense handler_exercise_completion_integration_test.go:115: exercise gloss must use complete primary senses: \"người nhận làm có\" --- FAIL: TestExerciseGlossUsesCompleteSense (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseComplete_Success",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExerciseComplete_Success handler_exercise_test.go:378: completion retry must return persisted result: 400 {\"error\":\"session is not active\"} --- FAIL: TestExerciseComplete_Success (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > refreshes recommendations after persisted completion",
+          "outcome": "FAIL",
+          "excerpt": "expected 1 to be 2 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcard-interactive-card.test.tsx::Flashcard review ratings > passes easy unchanged to the SRS review callback",
+          "outcome": "FAIL",
+          "excerpt": "SRS review must expose easy rating: expected undefined to be defined",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > counts embedded lesson content in the header",
+          "outcome": "FAIL",
+          "excerpt": "expected [ '0', '0' ] to deeply equal [ '1', '1' ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > uses theme colors for every quiz answer state",
+          "outcome": "FAIL",
+          "excerpt": "expected 'min-h-12 rounded-xl border px-4 py-3 …' to contain 'text-ink'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > hides levels with no available content",
+          "outcome": "FAIL",
+          "excerpt": "expected <a href=\"/vi/levels/J1+\" …(1)>…(3)</a> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > redirects an existing valid session to its safe return path",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ '/vi/learn' ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/analytics/analytics-client-api-contract.test.tsx::LearnerAnalyticsClient API contract > shows the empty period message only once",
+          "outcome": "FAIL",
+          "excerpt": "expected [ …(3) ] to have a length of 2 but got 3",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx::MePageClient mobile tabs > lays out all four tabs within the available mobile row",
+          "outcome": "FAIL",
+          "excerpt": "expected 'sticky top-0 z-20 -mx-4 mt-5 border-b…' to contain 'bg-surface/90'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsCountEmbeddedContent",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelLessonsCountEmbeddedContent handler_levels_embedded_test.go:45: embedded lesson counts must match displayed content: {ID:bc261416-053d-4c79-ab6d-97147c56d2f6 VocabCount:0 GrammarCount:0 KanjiCount:0 ActivityCount:1} --- FAIL: TestLevelLessonsCountEmbeddedContent (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps small secondary text readable on the surface",
+          "outcome": "FAIL",
+          "excerpt": "expected 3.074007428159246 to be greater than or equal to 4.5",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/system-pages.regression.test.tsx::system pages > shows a safe error reference with theme-aware recovery",
+          "outcome": "FAIL",
+          "excerpt": "expected '<main class=\"flex min-h-[60vh] flex-c…' to contain 'support-123'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/system-pages.regression.test.tsx::system pages > provides navigation around the not-found state",
+          "outcome": "FAIL",
+          "excerpt": "expected '<main class=\"flex min-h-[60vh] flex-c…' to contain '<header'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/login/google-login-button.regression.test.tsx::shows the Google control loading until the provider renders it",
+          "outcome": "FAIL",
+          "excerpt": "expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > localizes the saving status while the update is pending",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Giao diệnChỉnh chế độ sáng/tối, cỡ ch…' to contain 'Đang lưu…'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBUG264DictionaryRejectsInvalidGlosses",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBUG264DictionaryRejectsInvalidGlosses === RUN TestBUG264DictionaryRejectsInvalidGlosses/english handler_dictionary_quality_test.go:39: invalid dictionary entry remains visible: [{\"id\":\"d0d73f67-3808-4256-bae3-f13b09d67d5c\",\"headword\":\"bug264-770882cc-2ffb-48f4-96ec-5402ca77e492english\",\"…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBUG264SearchDeduplicatesContentIdentity",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBUG264SearchDeduplicatesContentIdentity handler_search_dailyradar_duplicates_test.go:35: search content duplicates or invalid gloss remain: [{Description:<nil> ID:69d6c31a-6728-42b8-bcc9-b90938d4f43f JLPTLevel:<nil> Kind:lexeme Reading:0x29476f246c30 Title:ありがとう大統領閣下} {Description:<nil> …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBUG264DailyRadarDeduplicatesContentIdentity",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBUG264DailyRadarDeduplicatesContentIdentity === RUN TestBUG264DailyRadarDeduplicatesContentIdentity/home?locale=vi handler_search_dailyradar_duplicates_test.go:98: lost highest-ranked representative: {ID:4bb54ef9-034a-4274-8c42-5f99fefbe94a Title:催促メールが来た — 7c4e6e2b-f75f-4696-8d72-f34f53…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestBug263DailyGreetingTimeZone": "time-zone greeting",
+        "go:./internal/httpserver:TestBug263CompanionHintContract": "missing companion action contract",
+        "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state": "expected",
+        "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > keeps a loading skeleton while the session is unresolved": "expected",
+        "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > localizes the signed-out message": "expected",
+        "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > uses English messages and bubbles on the English route": "expected",
+        "vitest:apps/admin/app/[locale]/daily/daily-client.test.tsx::reports a partially failed NHK refresh instead of complete success": "expected",
+        "go:./internal/httpserver:TestNHKBug260FeedFormats": "dated Easy feed must parse",
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb": "本文の要約",
+        "go:./internal/httpserver:TestNHKBug260AvailabilityContract": "availability contract missing",
+        "go:./internal/httpserver:TestAdminNHKNewsAUDIT161Routes": "refresh must retain existing body",
+        "go:./internal/httpserver:TestExerciseCompletionFeedsCanonicalProgress": "exercise completion missing from canonical progress",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links": "Business greetings",
+        "vitest:apps/web/app/[locale]/flashcards/_components/deck-study-session.theme.test.tsx::DeckStudySession semantic theme rendering > keeps four preview ratings local and explains that SRS progress is not saved": "deckStudyModeNote",
+        "go:./internal/httpserver:TestExerciseGlossUsesCompleteSense": "exercise gloss must use complete primary senses",
+        "go:./internal/httpserver:TestExerciseComplete_Success": "completion retry must return persisted result",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > refreshes recommendations after persisted completion": "expected 1 to be 2",
+        "vitest:apps/web/app/[locale]/flashcards/_components/flashcard-interactive-card.test.tsx::Flashcard review ratings > passes easy unchanged to the SRS review callback": "SRS review must expose easy rating",
+        "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > counts embedded lesson content in the header": "expected",
+        "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > uses theme colors for every quiz answer state": "text-ink",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > hides levels with no available content": "expected",
+        "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > redirects an existing valid session to its safe return path": "expected",
+        "vitest:apps/web/app/[locale]/analytics/analytics-client-api-contract.test.tsx::LearnerAnalyticsClient API contract > shows the empty period message only once": "expected",
+        "vitest:apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx::MePageClient mobile tabs > lays out all four tabs within the available mobile row": "bg-surface/90",
+        "go:./internal/httpserver:TestLevelLessonsCountEmbeddedContent": "embedded lesson counts",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps small secondary text readable on the surface": "expected",
+        "vitest:apps/web/app/system-pages.regression.test.tsx::system pages > shows a safe error reference with theme-aware recovery": "support-123",
+        "vitest:apps/web/app/system-pages.regression.test.tsx::system pages > provides navigation around the not-found state": "<header",
+        "vitest:apps/web/app/[locale]/login/google-login-button.regression.test.tsx::shows the Google control loading until the provider renders it": "expected",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > localizes the saving status while the update is pending": "Đang lưu",
+        "go:./internal/httpserver:TestBUG264DictionaryRejectsInvalidGlosses": "invalid dictionary",
+        "go:./internal/httpserver:TestBUG264SearchDeduplicatesContentIdentity": "search content duplicates",
+        "go:./internal/httpserver:TestBUG264DailyRadarDeduplicatesContentIdentity": "daily radar content duplicates"
+      },
+      "fingerprint": "dd62e192304c14f86fddf649a087db52e27b0cd9c6f19b18e43377ca737a5953"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-26T15:06:43.685Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 51,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBug263DailyGreetingTimeZone|TestBug263CompanionHintContract|TestNHKBug260FeedFormats|TestNHKBug260AvailabilityContract|TestAdminNHKNewsAUDIT161Routes|TestExerciseCompletionFeedsCanonicalProgress|TestExerciseGlossUsesCompleteSense|TestExerciseComplete_Success|TestLevelLessonsCountEmbeddedContent|TestBUG264DictionaryRejectsInvalidGlosses|TestBUG264SearchDeduplicatesContentIdentity|TestBUG264DailyRadarDeduplicatesContentIdentity)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/_components/companion-bot.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/admin/app/[locale]/daily/daily-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/deck-study-session.theme.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/flashcard-interactive-card.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/login/auth-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/analytics/analytics-client-api-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/system-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/login/google-login-button.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestBug263DailyGreetingTimeZone",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBug263DailyGreetingTimeZone === RUN TestBug263DailyGreetingTimeZone/Asia/Tokyo handler_bug263_test.go:39: time-zone greeting: got {Today:2026-10-27 Greeting:{Japanese:こんにちは Reading:0x5cbcfb0898b0}} want こんばんは on 2026-10-27 --- FAIL: TestBug263DailyGreetingTimeZone/Asia/Tokyo (0.00s) === …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBug263CompanionHintContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBug263CompanionHintContract handler_bug263_test.go:66: missing companion action contract: status=200 body={\"hints\":[{\"text\":\"Keep up your daily streak! You're doing great.\",\"category\":\"motivation\"}]} --- FAIL: TestBug263CompanionHintContract (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state",
+          "outcome": "FAIL",
+          "excerpt": "expected 'page crashed' to contain 'Couldn\\'t load suggestions. Pick an a…'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > keeps a loading skeleton while the session is unresolved",
+          "outcome": "FAIL",
+          "excerpt": "expected '<div class=\"rounded-2xl border border…' to contain 'aria-busy=\"true\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > localizes the signed-out message",
+          "outcome": "FAIL",
+          "excerpt": "expected '<div class=\"rounded-2xl border border…' to contain 'ログイン'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > uses English messages and bubbles on the English route",
+          "outcome": "FAIL",
+          "excerpt": "expected [] to have a length of 2 but got +0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/daily/daily-client.test.tsx::reports a partially failed NHK refresh instead of complete success",
+          "outcome": "FAIL",
+          "excerpt": "expected 'TitleSubtitleNHK News SourceNHK Easy …' to contain 'Error'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestNHKBug260FeedFormats",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestNHKBug260FeedFormats === RUN TestNHKBug260FeedFormats/dated_Easy_feed handler_nhk_bug260_test.go:24: dated Easy feed must parse: articles=[] err=easy feed item lacks news_id or title --- FAIL: TestNHKBug260FeedFormats/dated_Easy_feed (0.00s) === RUN TestNHKBug260FeedFormats/normal_summar…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "FAIL",
+          "excerpt": "expected '' to contain '本文の要約'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestNHKBug260AvailabilityContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestNHKBug260AvailabilityContract === RUN TestNHKBug260AvailabilityContract/list handler_nhk_bug260_test.go:55: availability contract missing: status=200 body=[{\"id\":\"bug260-c166dff2-5d41-4faa-9456-29762795152e\",\"sourceType\":\"normal\",\"title\":\"要約\",\"titleWithRuby\":null,\"publishedAt\":\"2026-10-2…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminNHKNewsAUDIT161Routes",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminNHKNewsAUDIT161Routes === RUN TestAdminNHKNewsAUDIT161Routes/session_and_permission_boundaries 2026/10/27 00:06:12 INFO request method=GET path=/api/admin/nhk-news/config status=401 duration=145.458µs bytes=25 2026/10/27 00:06:12 INFO request method=PATCH path=/api/admin/nhk-news/co…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseCompletionFeedsCanonicalProgress",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExerciseCompletionFeedsCanonicalProgress handler_exercise_completion_integration_test.go:76: exercise completion missing from canonical progress: {DailyStats:[] Totals:{CompletedSessions:0 CompletedExerciseSessions:0 ExerciseAnswerCount:0 StreakDays:0 ExerciseAccuracyPct:0 CompletedBjtSe…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "FAIL",
+          "excerpt": "expected 'eyebrowtitlesubtitlerecommendedrecomm…' to contain 'Business greetings'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/deck-study-session.theme.test.tsx::DeckStudySession semantic theme rendering > keeps four preview ratings local and explains that SRS progress is not saved",
+          "outcome": "FAIL",
+          "excerpt": "expected 'deckStudyEyebrow↻deckStudyModeFlip⇄de…' to contain 'deckStudyModeNote'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseGlossUsesCompleteSense",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExerciseGlossUsesCompleteSense handler_exercise_completion_integration_test.go:115: exercise gloss must use complete primary senses: \"người nhận làm có\" --- FAIL: TestExerciseGlossUsesCompleteSense (0.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseComplete_Success",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExerciseComplete_Success handler_exercise_test.go:378: completion retry must return persisted result: 400 {\"error\":\"session is not active\"} --- FAIL: TestExerciseComplete_Success (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > refreshes recommendations after persisted completion",
+          "outcome": "FAIL",
+          "excerpt": "expected 1 to be 2 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcard-interactive-card.test.tsx::Flashcard review ratings > passes easy unchanged to the SRS review callback",
+          "outcome": "FAIL",
+          "excerpt": "SRS review must expose easy rating: expected undefined to be defined",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > counts embedded lesson content in the header",
+          "outcome": "FAIL",
+          "excerpt": "expected [ '0', '0' ] to deeply equal [ '1', '1' ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > uses theme colors for every quiz answer state",
+          "outcome": "FAIL",
+          "excerpt": "expected 'min-h-12 rounded-xl border px-4 py-3 …' to contain 'text-ink'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > hides levels with no available content",
+          "outcome": "FAIL",
+          "excerpt": "expected <a href=\"/vi/levels/J1+\" …(1)>…(3)</a> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > redirects an existing valid session to its safe return path",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ '/vi/learn' ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/analytics/analytics-client-api-contract.test.tsx::LearnerAnalyticsClient API contract > shows the empty period message only once",
+          "outcome": "FAIL",
+          "excerpt": "expected [ …(3) ] to have a length of 2 but got 3",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx::MePageClient mobile tabs > lays out all four tabs within the available mobile row",
+          "outcome": "FAIL",
+          "excerpt": "expected 'sticky top-0 z-20 -mx-4 mt-5 border-b…' to contain 'bg-surface/90'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsCountEmbeddedContent",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelLessonsCountEmbeddedContent handler_levels_embedded_test.go:45: embedded lesson counts must match displayed content: {ID:65c3f60a-a55e-4a6f-8cf1-e29f61242bcf VocabCount:0 GrammarCount:0 KanjiCount:0 ActivityCount:1} --- FAIL: TestLevelLessonsCountEmbeddedContent (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps small secondary text readable on the surface",
+          "outcome": "FAIL",
+          "excerpt": "expected 3.074007428159246 to be greater than or equal to 4.5",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/system-pages.regression.test.tsx::system pages > shows a safe error reference with theme-aware recovery",
+          "outcome": "FAIL",
+          "excerpt": "expected '<main class=\"flex min-h-[60vh] flex-c…' to contain 'support-123'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/system-pages.regression.test.tsx::system pages > provides navigation around the not-found state",
+          "outcome": "FAIL",
+          "excerpt": "expected '<main class=\"flex min-h-[60vh] flex-c…' to contain '<header'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/login/google-login-button.regression.test.tsx::shows the Google control loading until the provider renders it",
+          "outcome": "FAIL",
+          "excerpt": "expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > localizes the saving status while the update is pending",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Giao diệnChỉnh chế độ sáng/tối, cỡ ch…' to contain 'Đang lưu…'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBUG264DictionaryRejectsInvalidGlosses",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBUG264DictionaryRejectsInvalidGlosses === RUN TestBUG264DictionaryRejectsInvalidGlosses/english handler_dictionary_quality_test.go:39: invalid dictionary entry remains visible: [{\"id\":\"0c4676b8-aabc-4c76-895f-e1d1050c0e6e\",\"headword\":\"bug264-286e488c-279e-4217-a4c4-3283475f2107english\",\"…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBUG264SearchDeduplicatesContentIdentity",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBUG264SearchDeduplicatesContentIdentity handler_search_dailyradar_duplicates_test.go:35: search content duplicates or invalid gloss remain: [{Description:<nil> ID:c1c492b1-f4f6-47ca-934c-edf03491d8c5 JLPTLevel:<nil> Kind:lexeme Reading:0x5cbcfae5cd90 Title:ありがとう大統領閣下} {Description:<nil> …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBUG264DailyRadarDeduplicatesContentIdentity",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBUG264DailyRadarDeduplicatesContentIdentity === RUN TestBUG264DailyRadarDeduplicatesContentIdentity/home?locale=vi handler_search_dailyradar_duplicates_test.go:98: lost highest-ranked representative: {ID:7f735ad6-0496-488b-8174-b0cd1b87a716 Title:催促メールが来た — 1eaa7d90-7a67-4f77-9acf-6de008…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > hides levels without published content",
+          "outcome": "FAIL",
+          "excerpt": "expected <a href=\"/en/levels/J1+\" …(1)>…(2)</a> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestBug263DailyGreetingTimeZone": "time-zone greeting",
+        "go:./internal/httpserver:TestBug263CompanionHintContract": "missing companion action contract",
+        "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state": "expected",
+        "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > keeps a loading skeleton while the session is unresolved": "expected",
+        "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > localizes the signed-out message": "expected",
+        "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > uses English messages and bubbles on the English route": "expected",
+        "vitest:apps/admin/app/[locale]/daily/daily-client.test.tsx::reports a partially failed NHK refresh instead of complete success": "expected",
+        "go:./internal/httpserver:TestNHKBug260FeedFormats": "dated Easy feed must parse",
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb": "本文の要約",
+        "go:./internal/httpserver:TestNHKBug260AvailabilityContract": "availability contract missing",
+        "go:./internal/httpserver:TestAdminNHKNewsAUDIT161Routes": "refresh must retain existing body",
+        "go:./internal/httpserver:TestExerciseCompletionFeedsCanonicalProgress": "exercise completion missing from canonical progress",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links": "Business greetings",
+        "vitest:apps/web/app/[locale]/flashcards/_components/deck-study-session.theme.test.tsx::DeckStudySession semantic theme rendering > keeps four preview ratings local and explains that SRS progress is not saved": "deckStudyModeNote",
+        "go:./internal/httpserver:TestExerciseGlossUsesCompleteSense": "exercise gloss must use complete primary senses",
+        "go:./internal/httpserver:TestExerciseComplete_Success": "completion retry must return persisted result",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > refreshes recommendations after persisted completion": "expected 1 to be 2",
+        "vitest:apps/web/app/[locale]/flashcards/_components/flashcard-interactive-card.test.tsx::Flashcard review ratings > passes easy unchanged to the SRS review callback": "SRS review must expose easy rating",
+        "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > counts embedded lesson content in the header": "expected",
+        "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > uses theme colors for every quiz answer state": "text-ink",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > hides levels with no available content": "expected",
+        "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > redirects an existing valid session to its safe return path": "expected",
+        "vitest:apps/web/app/[locale]/analytics/analytics-client-api-contract.test.tsx::LearnerAnalyticsClient API contract > shows the empty period message only once": "expected",
+        "vitest:apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx::MePageClient mobile tabs > lays out all four tabs within the available mobile row": "bg-surface/90",
+        "go:./internal/httpserver:TestLevelLessonsCountEmbeddedContent": "embedded lesson counts",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps small secondary text readable on the surface": "expected",
+        "vitest:apps/web/app/system-pages.regression.test.tsx::system pages > shows a safe error reference with theme-aware recovery": "support-123",
+        "vitest:apps/web/app/system-pages.regression.test.tsx::system pages > provides navigation around the not-found state": "<header",
+        "vitest:apps/web/app/[locale]/login/google-login-button.regression.test.tsx::shows the Google control loading until the provider renders it": "expected",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > localizes the saving status while the update is pending": "Đang lưu",
+        "go:./internal/httpserver:TestBUG264DictionaryRejectsInvalidGlosses": "invalid dictionary",
+        "go:./internal/httpserver:TestBUG264SearchDeduplicatesContentIdentity": "search content duplicates",
+        "go:./internal/httpserver:TestBUG264DailyRadarDeduplicatesContentIdentity": "daily radar content duplicates",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > hides levels without published content": "expected"
+      },
+      "fingerprint": "3e3d44970f39a567adcda6cace82d0ceb5f3a402edde3a8e89b8c8881ac01c44"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-26T15:09:39.544Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 266,
+        "executed": 266,
+        "passed": 266,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "24a176275a50de33b37c8583048b59a9f97cdd5a915040067d608a06d828bdb1"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-26T22:29:18.069Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBug263DailyGreetingTimeZone|TestBug263CompanionHintContract|TestNHKBug260FeedFormats|TestNHKBug260AvailabilityContract|TestAdminNHKNewsAUDIT161Routes|TestExerciseCompletionFeedsCanonicalProgress|TestExerciseGlossUsesCompleteSense|TestExerciseComplete_Success|TestLevelLessonsCountEmbeddedContent|TestBUG264DictionaryRejectsInvalidGlosses|TestBUG264SearchDeduplicatesContentIdentity|TestBUG264DailyRadarDeduplicatesContentIdentity)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/_components/companion-bot.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/admin/app/[locale]/daily/daily-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/deck-study-session.theme.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/flashcard-interactive-card.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/login/auth-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/analytics/analytics-client-api-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/system-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/login/google-login-button.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestBug263DailyGreetingTimeZone",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestBug263CompanionHintContract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > keeps a loading skeleton while the session is unresolved",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > localizes the signed-out message",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > uses English messages and bubbles on the English route",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/daily/daily-client.test.tsx::reports a partially failed NHK refresh instead of complete success",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestNHKBug260FeedFormats",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestNHKBug260AvailabilityContract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminNHKNewsAUDIT161Routes",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseCompletionFeedsCanonicalProgress",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/deck-study-session.theme.test.tsx::DeckStudySession semantic theme rendering > keeps four preview ratings local and explains that SRS progress is not saved",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseGlossUsesCompleteSense",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseComplete_Success",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > refreshes recommendations after persisted completion",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcard-interactive-card.test.tsx::Flashcard review ratings > passes easy unchanged to the SRS review callback",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > counts embedded lesson content in the header",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > uses theme colors for every quiz answer state",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > hides levels with no available content",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > redirects an existing valid session to its safe return path",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/analytics/analytics-client-api-contract.test.tsx::LearnerAnalyticsClient API contract > shows the empty period message only once",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx::MePageClient mobile tabs > lays out all four tabs within the available mobile row",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsCountEmbeddedContent",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps small secondary text readable on the surface",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/system-pages.regression.test.tsx::system pages > shows a safe error reference with theme-aware recovery",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/system-pages.regression.test.tsx::system pages > provides navigation around the not-found state",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/login/google-login-button.regression.test.tsx::shows the Google control loading until the provider renders it",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > localizes the saving status while the update is pending",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestBUG264DictionaryRejectsInvalidGlosses",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestBUG264SearchDeduplicatesContentIdentity",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestBUG264DailyRadarDeduplicatesContentIdentity",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > hides levels without published content",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "350df2cb02a27fb33d971890f12cdfb2cb2ee34e88feced913f1753d659e7c32"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-26T22:31:55.028Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 266,
+        "executed": 266,
+        "passed": 266,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "350df2cb02a27fb33d971890f12cdfb2cb2ee34e88feced913f1753d659e7c32"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-26T22:36:02.773Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 1580,
+        "executed": 1580,
+        "passed": 1580,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "d252f16b3c5effc72b76843363cced343c66b0f2939d626ea9874cc26a05a649"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-26T22:37:08.017Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 565,
+        "executed": 565,
+        "passed": 565,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 843,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "dc2de53346165d3f334f625d86d96902804dd78e130f11dd36ace35dcaf7dbc9"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-26T22:43:00.234Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 54,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBug263DailyGreetingTimeZone|TestBug263CompanionHintContract|TestNHKBug260FeedFormats|TestNHKBug260AvailabilityContract|TestAdminNHKNewsAUDIT161Routes|TestExerciseCompletionFeedsCanonicalProgress|TestExerciseGlossUsesCompleteSense|TestExerciseComplete_Success|TestLevelLessonsCountEmbeddedContent|TestBUG264DictionaryRejectsInvalidGlosses|TestBUG264SearchDeduplicatesContentIdentity|TestBUG264DailyRadarDeduplicatesContentIdentity|TestLevelListIncludesPublicLessonAvailability|TestBUG264DictionaryPaginatesUsableEntries|TestBUG264DictionaryPaginationValidation)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/_components/companion-bot.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/admin/app/[locale]/daily/daily-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/deck-study-session.theme.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/flashcard-interactive-card.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/login/auth-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/analytics/analytics-client-api-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/system-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/login/google-login-button.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestBug263DailyGreetingTimeZone",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBug263DailyGreetingTimeZone === RUN TestBug263DailyGreetingTimeZone/Asia/Tokyo handler_bug263_test.go:39: time-zone greeting: got {Today:2026-10-27 Greeting:{Japanese:こんにちは Reading:0x1d58cb10180}} want おはようございます on 2026-10-27 --- FAIL: TestBug263DailyGreetingTimeZone/Asia/Tokyo (0.00s) =…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBug263CompanionHintContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBug263CompanionHintContract handler_bug263_test.go:66: missing companion action contract: status=200 body={\"hints\":[{\"text\":\"Keep up your daily streak! You're doing great.\",\"category\":\"motivation\"}]} --- FAIL: TestBug263CompanionHintContract (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state",
+          "outcome": "FAIL",
+          "excerpt": "expected 'page crashed' to contain 'Couldn\\'t load suggestions. Pick an a…'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > keeps a loading skeleton while the session is unresolved",
+          "outcome": "FAIL",
+          "excerpt": "expected '<div class=\"rounded-2xl border border…' to contain 'aria-busy=\"true\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > localizes the signed-out message",
+          "outcome": "FAIL",
+          "excerpt": "expected '<div class=\"rounded-2xl border border…' to contain 'ログイン'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > uses English messages and bubbles on the English route",
+          "outcome": "FAIL",
+          "excerpt": "expected [] to have a length of 2 but got +0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/daily/daily-client.test.tsx::reports a partially failed NHK refresh instead of complete success",
+          "outcome": "FAIL",
+          "excerpt": "expected 'TitleSubtitleNHK News SourceNHK Easy …' to contain 'Error'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestNHKBug260FeedFormats",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestNHKBug260FeedFormats === RUN TestNHKBug260FeedFormats/dated_Easy_feed handler_nhk_bug260_test.go:24: dated Easy feed must parse: articles=[] err=easy feed item lacks news_id or title --- FAIL: TestNHKBug260FeedFormats/dated_Easy_feed (0.00s) === RUN TestNHKBug260FeedFormats/normal_summar…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "FAIL",
+          "excerpt": "expected '' to contain '本文の要約'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestNHKBug260AvailabilityContract",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestNHKBug260AvailabilityContract === RUN TestNHKBug260AvailabilityContract/list handler_nhk_bug260_test.go:55: availability contract missing: status=200 body=[{\"id\":\"bug260-6b8d94a5-60a9-4415-b08e-27b5ebe358dc\",\"sourceType\":\"normal\",\"title\":\"要約\",\"titleWithRuby\":null,\"publishedAt\":\"2026-10-2…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminNHKNewsAUDIT161Routes",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestAdminNHKNewsAUDIT161Routes === RUN TestAdminNHKNewsAUDIT161Routes/session_and_permission_boundaries 2026/10/27 07:42:36 INFO request method=GET path=/api/admin/nhk-news/config status=401 duration=452.292µs bytes=25 2026/10/27 07:42:36 INFO request method=PATCH path=/api/admin/nhk-news/co…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseCompletionFeedsCanonicalProgress",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExerciseCompletionFeedsCanonicalProgress handler_exercise_completion_integration_test.go:76: exercise completion missing from canonical progress: {DailyStats:[] Totals:{CompletedSessions:0 CompletedExerciseSessions:0 ExerciseAnswerCount:0 StreakDays:0 ExerciseAccuracyPct:0 CompletedBjtSe…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "FAIL",
+          "excerpt": "expected 'eyebrowtitlesubtitlerecommendedrecomm…' to contain 'Business greetings'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/deck-study-session.theme.test.tsx::DeckStudySession semantic theme rendering > keeps four preview ratings local and explains that SRS progress is not saved",
+          "outcome": "FAIL",
+          "excerpt": "expected 'deckStudyEyebrow↻deckStudyModeFlip⇄de…' to contain 'deckStudyModeNote'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseGlossUsesCompleteSense",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExerciseGlossUsesCompleteSense handler_exercise_completion_integration_test.go:115: exercise gloss must use complete primary senses: \"người nhận làm có\" --- FAIL: TestExerciseGlossUsesCompleteSense (0.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseComplete_Success",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestExerciseComplete_Success handler_exercise_test.go:378: completion retry must return persisted result: 400 {\"error\":\"session is not active\"} --- FAIL: TestExerciseComplete_Success (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > refreshes recommendations after persisted completion",
+          "outcome": "FAIL",
+          "excerpt": "expected 1 to be 2 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcard-interactive-card.test.tsx::Flashcard review ratings > passes easy unchanged to the SRS review callback",
+          "outcome": "FAIL",
+          "excerpt": "SRS review must expose easy rating: expected undefined to be defined",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > counts embedded lesson content in the header",
+          "outcome": "FAIL",
+          "excerpt": "expected [ '0', '0' ] to deeply equal [ '1', '1' ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > uses theme colors for every quiz answer state",
+          "outcome": "FAIL",
+          "excerpt": "expected 'min-h-12 rounded-xl border px-4 py-3 …' to contain 'text-ink'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > hides levels with no available content",
+          "outcome": "FAIL",
+          "excerpt": "expected <a href=\"/vi/levels/J1+\" …(1)>…(3)</a> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > redirects an existing valid session to its safe return path",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ '/vi/learn' ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/analytics/analytics-client-api-contract.test.tsx::LearnerAnalyticsClient API contract > shows the empty period message only once",
+          "outcome": "FAIL",
+          "excerpt": "expected [ …(3) ] to have a length of 2 but got 3",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx::MePageClient mobile tabs > lays out all four tabs within the available mobile row",
+          "outcome": "FAIL",
+          "excerpt": "expected 'sticky top-0 z-20 -mx-4 mt-5 border-b…' to contain 'bg-surface/90'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsCountEmbeddedContent",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelLessonsCountEmbeddedContent handler_levels_embedded_test.go:45: embedded lesson counts must match displayed content: {ID:1a6df343-08ac-466d-8fe3-87fb9923f0e4 VocabCount:0 GrammarCount:0 KanjiCount:0 ActivityCount:1} --- FAIL: TestLevelLessonsCountEmbeddedContent (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps small secondary text readable on the surface",
+          "outcome": "FAIL",
+          "excerpt": "expected 3.074007428159246 to be greater than or equal to 4.5",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/system-pages.regression.test.tsx::system pages > shows a safe error reference with theme-aware recovery",
+          "outcome": "FAIL",
+          "excerpt": "expected '<main class=\"flex min-h-[60vh] flex-c…' to contain 'support-123'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/system-pages.regression.test.tsx::system pages > provides navigation around the not-found state",
+          "outcome": "FAIL",
+          "excerpt": "expected '<main class=\"flex min-h-[60vh] flex-c…' to contain '<header'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/login/google-login-button.regression.test.tsx::shows the Google control loading until the provider renders it",
+          "outcome": "FAIL",
+          "excerpt": "expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > localizes the saving status while the update is pending",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Giao diệnChỉnh chế độ sáng/tối, cỡ ch…' to contain 'Đang lưu…'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBUG264DictionaryRejectsInvalidGlosses",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBUG264DictionaryRejectsInvalidGlosses === RUN TestBUG264DictionaryRejectsInvalidGlosses/english handler_dictionary_quality_test.go:40: invalid dictionary entry remains visible: [{\"id\":\"725716a1-9844-477d-8c90-dcfa5e44930b\",\"headword\":\"bug264-d0f016e1-5081-44b0-b390-0beda221b35fenglish\",\"…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBUG264SearchDeduplicatesContentIdentity",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBUG264SearchDeduplicatesContentIdentity handler_search_dailyradar_duplicates_test.go:35: search content duplicates or invalid gloss remain: [{Description:<nil> ID:26db4de2-b43a-414a-8cc8-9d27a5bb17b2 JLPTLevel:<nil> Kind:lexeme Reading:0x1d58cca67b0 Title:ありがとう大統領閣下} {Description:<nil> I…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBUG264DailyRadarDeduplicatesContentIdentity",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBUG264DailyRadarDeduplicatesContentIdentity === RUN TestBUG264DailyRadarDeduplicatesContentIdentity/home?locale=vi handler_search_dailyradar_duplicates_test.go:98: lost highest-ranked representative: {ID:4b340c90-e2a6-46c9-ad1b-6abd773454dc Title:催促メールが来た — a2c2c3ee-99cb-4cf6-ac71-2b9bc9…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > hides levels without published content",
+          "outcome": "FAIL",
+          "excerpt": "expected <a href=\"/en/levels/J1+\" …(1)>…(2)</a> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelListIncludesPublicLessonAvailability",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLevelListIncludesPublicLessonAvailability handler_levels_embedded_test.go:91: public lesson availability must include active/published lessons but exclude draft/future lessons: {Code:J1+ VocabCount:0 KanjiCount:0 GrammarCount:0 PublishedLessonCount:<nil>} --- FAIL: TestLevelListIncludesP…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > keeps lesson-only levels visible while hiding empty levels",
+          "outcome": "FAIL",
+          "excerpt": "level availability follows public lessons and reference data: expected { lessonOnly: true, empty: true } to deeply equal { lessonOnly: true, empty: false }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > keeps lesson-only levels visible while hiding empty levels",
+          "outcome": "FAIL",
+          "excerpt": "level availability follows public lessons and reference data: expected { lessonOnly: true, empty: true } to deeply equal { lessonOnly: true, empty: false }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBUG264DictionaryPaginatesUsableEntries",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBUG264DictionaryPaginatesUsableEntries === RUN TestBUG264DictionaryPaginatesUsableEntries/rejected-1 === RUN TestBUG264DictionaryPaginatesUsableEntries/rejected-1/limit-50-offset-0 handler_dictionary_quality_test.go:175: usable dictionary pagination: headword=\"bug264-page-021a0a9f-06d3-4…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestBUG264DictionaryPaginationValidation",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBUG264DictionaryPaginationValidation === RUN TestBUG264DictionaryPaginationValidation/limit=0 handler_dictionary_quality_test.go:191: dictionary pagination validation: status=200 want 400 for limit=0 --- FAIL: TestBUG264DictionaryPaginationValidation/limit=0 (0.01s) === RUN TestBUG264Dic…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps white primary-control labels above the small-text contrast threshold",
+          "outcome": "FAIL",
+          "excerpt": "[locale]/_components/homepage/push-prompt-banner.tsx: white on accent: expected 2.5424226806252426 to be greater than or equal to 4.5",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > counts exercise sessions in the completed sessions total without treating them as BJT exams",
+          "outcome": "FAIL",
+          "excerpt": "expected '<section class=\"mx-auto w-full max-w-…' to contain '>42</p>'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestBug263DailyGreetingTimeZone": "time-zone greeting",
+        "go:./internal/httpserver:TestBug263CompanionHintContract": "missing companion action contract",
+        "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state": "expected",
+        "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > keeps a loading skeleton while the session is unresolved": "expected",
+        "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > localizes the signed-out message": "expected",
+        "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > uses English messages and bubbles on the English route": "expected",
+        "vitest:apps/admin/app/[locale]/daily/daily-client.test.tsx::reports a partially failed NHK refresh instead of complete success": "expected",
+        "go:./internal/httpserver:TestNHKBug260FeedFormats": "dated Easy feed must parse",
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb": "本文の要約",
+        "go:./internal/httpserver:TestNHKBug260AvailabilityContract": "availability contract missing",
+        "go:./internal/httpserver:TestAdminNHKNewsAUDIT161Routes": "refresh must retain existing body",
+        "go:./internal/httpserver:TestExerciseCompletionFeedsCanonicalProgress": "exercise completion missing from canonical progress",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links": "Business greetings",
+        "vitest:apps/web/app/[locale]/flashcards/_components/deck-study-session.theme.test.tsx::DeckStudySession semantic theme rendering > keeps four preview ratings local and explains that SRS progress is not saved": "deckStudyModeNote",
+        "go:./internal/httpserver:TestExerciseGlossUsesCompleteSense": "exercise gloss must use complete primary senses",
+        "go:./internal/httpserver:TestExerciseComplete_Success": "completion retry must return persisted result",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > refreshes recommendations after persisted completion": "expected 1 to be 2",
+        "vitest:apps/web/app/[locale]/flashcards/_components/flashcard-interactive-card.test.tsx::Flashcard review ratings > passes easy unchanged to the SRS review callback": "SRS review must expose easy rating",
+        "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > counts embedded lesson content in the header": "expected",
+        "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > uses theme colors for every quiz answer state": "text-ink",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > hides levels with no available content": "expected",
+        "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > redirects an existing valid session to its safe return path": "expected",
+        "vitest:apps/web/app/[locale]/analytics/analytics-client-api-contract.test.tsx::LearnerAnalyticsClient API contract > shows the empty period message only once": "expected",
+        "vitest:apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx::MePageClient mobile tabs > lays out all four tabs within the available mobile row": "bg-surface/90",
+        "go:./internal/httpserver:TestLevelLessonsCountEmbeddedContent": "embedded lesson counts",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps small secondary text readable on the surface": "expected",
+        "vitest:apps/web/app/system-pages.regression.test.tsx::system pages > shows a safe error reference with theme-aware recovery": "support-123",
+        "vitest:apps/web/app/system-pages.regression.test.tsx::system pages > provides navigation around the not-found state": "<header",
+        "vitest:apps/web/app/[locale]/login/google-login-button.regression.test.tsx::shows the Google control loading until the provider renders it": "expected",
+        "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > localizes the saving status while the update is pending": "Đang lưu",
+        "go:./internal/httpserver:TestBUG264DictionaryRejectsInvalidGlosses": "invalid dictionary",
+        "go:./internal/httpserver:TestBUG264SearchDeduplicatesContentIdentity": "search content duplicates",
+        "go:./internal/httpserver:TestBUG264DailyRadarDeduplicatesContentIdentity": "daily radar content duplicates",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > hides levels without published content": "expected",
+        "go:./internal/httpserver:TestLevelListIncludesPublicLessonAvailability": "public lesson availability",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > keeps lesson-only levels visible while hiding empty levels": "level availability",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > keeps lesson-only levels visible while hiding empty levels": "level availability",
+        "go:./internal/httpserver:TestBUG264DictionaryPaginatesUsableEntries": "usable dictionary pagination",
+        "go:./internal/httpserver:TestBUG264DictionaryPaginationValidation": "dictionary pagination validation",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps white primary-control labels above the small-text contrast threshold": "expected",
+        "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > counts exercise sessions in the completed sessions total without treating them as BJT exams": "expected"
+      },
+      "fingerprint": "dc2de53346165d3f334f625d86d96902804dd78e130f11dd36ace35dcaf7dbc9"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-26T22:43:48.291Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBug263DailyGreetingTimeZone|TestBug263CompanionHintContract|TestNHKBug260FeedFormats|TestNHKBug260AvailabilityContract|TestAdminNHKNewsAUDIT161Routes|TestExerciseCompletionFeedsCanonicalProgress|TestExerciseGlossUsesCompleteSense|TestExerciseComplete_Success|TestLevelLessonsCountEmbeddedContent|TestBUG264DictionaryRejectsInvalidGlosses|TestBUG264SearchDeduplicatesContentIdentity|TestBUG264DailyRadarDeduplicatesContentIdentity|TestLevelListIncludesPublicLessonAvailability|TestBUG264DictionaryPaginatesUsableEntries|TestBUG264DictionaryPaginationValidation)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/_components/companion-bot.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/admin/app/[locale]/daily/daily-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/deck-study-session.theme.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/flashcard-interactive-card.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/login/auth-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/analytics/analytics-client-api-contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/system-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/login/google-login-button.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestBug263DailyGreetingTimeZone",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestBug263CompanionHintContract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > keeps malformed authenticated hints inside the bot error state",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > keeps a loading skeleton while the session is unresolved",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx::ForYouFeedWidget > localizes the signed-out message",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > uses English messages and bubbles on the English route",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/admin/app/[locale]/daily/daily-client.test.tsx::reports a partially failed NHK refresh instead of complete success",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestNHKBug260FeedFormats",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestNHKBug260AvailabilityContract",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestAdminNHKNewsAUDIT161Routes",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseCompletionFeedsCanonicalProgress",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/deck-study-session.theme.test.tsx::DeckStudySession semantic theme rendering > keeps four preview ratings local and explains that SRS progress is not saved",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseGlossUsesCompleteSense",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestExerciseComplete_Success",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > refreshes recommendations after persisted completion",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcard-interactive-card.test.tsx::Flashcard review ratings > passes easy unchanged to the SRS review callback",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > counts embedded lesson content in the header",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > uses theme colors for every quiz answer state",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > hides levels with no available content",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > redirects an existing valid session to its safe return path",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/analytics/analytics-client-api-contract.test.tsx::LearnerAnalyticsClient API contract > shows the empty period message only once",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx::MePageClient mobile tabs > lays out all four tabs within the available mobile row",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelLessonsCountEmbeddedContent",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps small secondary text readable on the surface",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/system-pages.regression.test.tsx::system pages > shows a safe error reference with theme-aware recovery",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/system-pages.regression.test.tsx::system pages > provides navigation around the not-found state",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/login/google-login-button.regression.test.tsx::shows the Google control loading until the provider renders it",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx::AppearanceSettingsClient > localizes the saving status while the update is pending",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestBUG264DictionaryRejectsInvalidGlosses",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestBUG264SearchDeduplicatesContentIdentity",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestBUG264DailyRadarDeduplicatesContentIdentity",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > hides levels without published content",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLevelListIncludesPublicLessonAvailability",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > keeps lesson-only levels visible while hiding empty levels",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > keeps lesson-only levels visible while hiding empty levels",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestBUG264DictionaryPaginatesUsableEntries",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestBUG264DictionaryPaginationValidation",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps white primary-control labels above the small-text contrast threshold",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > counts exercise sessions in the completed sessions total without treating them as BJT exams",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "dc2de53346165d3f334f625d86d96902804dd78e130f11dd36ace35dcaf7dbc9"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-26T22:44:30.260Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node /tmp/bug263-browser.mjs",
+      "exit_code": 0,
+      "fingerprint": "dc2de53346165d3f334f625d86d96902804dd78e130f11dd36ace35dcaf7dbc9"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-26T22:44:39.180Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "command",
+      "gate": "search_integration",
+      "command": "python3 scripts/release/search-check.py",
+      "exit_code": 0,
+      "fingerprint": "dc2de53346165d3f334f625d86d96902804dd78e130f11dd36ace35dcaf7dbc9"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-26T22:44:46.542Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "agent-Mill",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "cbfc42beda0ca36306f7cae2faabccaf15efa8311a47c66ead8750d92ee938b1",
+      "attested": true,
+      "fingerprint": "dc2de53346165d3f334f625d86d96902804dd78e130f11dd36ace35dcaf7dbc9"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-26T22:47:12.451Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 266,
+        "executed": 266,
+        "passed": 266,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "dc2de53346165d3f334f625d86d96902804dd78e130f11dd36ace35dcaf7dbc9"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-26T22:51:10.355Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1608,
+        "executed": 1608,
+        "passed": 1608,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1608 passed, 0 allowed skip(s)",
+      "fingerprint": "dc2de53346165d3f334f625d86d96902804dd78e130f11dd36ace35dcaf7dbc9"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-26T22:52:08.187Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 565,
+        "executed": 565,
+        "passed": 565,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 843,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "dc2de53346165d3f334f625d86d96902804dd78e130f11dd36ace35dcaf7dbc9"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-26T22:52:59.221Z",
+      "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "node /tmp/bug263-browser.mjs",
+      "exit_code": 0,
+      "fingerprint": "dc2de53346165d3f334f625d86d96902804dd78e130f11dd36ace35dcaf7dbc9"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-26T22:53:06.660Z",
+    "head": "2dc2c6a483e596ec4336944445b124eb5a47a4c9",
+    "fingerprint": "dc2de53346165d3f334f625d86d96902804dd78e130f11dd36ace35dcaf7dbc9",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "search_integration": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/admin/app/[locale]/daily/daily-client.test.tsx": "585a6dd73a7f6e7a2c78b530dbe82d3b4659305d",
+      "apps/admin/app/[locale]/daily/daily-client.tsx": "9fd3fd1b81dd4d0d3fb0c714c43adcc5c2161813",
+      "apps/api-go/internal/httpserver/handler_admin_nhknews.go": "fde322a309c246e86ddb83d3a11a158310d44d34",
+      "apps/api-go/internal/httpserver/handler_admin_nhknews_audit161_test.go": "c9b030a8cee01e76f63920bd7748ed41d10b7d66",
+      "apps/api-go/internal/httpserver/handler_audit159_wave7_test.go": "864e1d16b99584a89d2d38eae44594dfb6888be2",
+      "apps/api-go/internal/httpserver/handler_bug263_test.go": "38177363e352bf42a0c0b81742b98b40cfa1554c",
+      "apps/api-go/internal/httpserver/handler_career_content_gamification_misc.go": "3afc6b85ee94845317437dd847ee234aeda853ba",
+      "apps/api-go/internal/httpserver/handler_daily_radar_card_public_test.go": "8bc1457f7c0aa9091cc554cae7dacc7fb69d886e",
+      "apps/api-go/internal/httpserver/handler_dailyradar_announcement.go": "eba07c1d456bec631d6ad5544f80337aed9aba7e",
+      "apps/api-go/internal/httpserver/handler_dictionary_quality.go": "983ad4f3a7450c07e0591f763781d36db196ab83",
+      "apps/api-go/internal/httpserver/handler_dictionary_quality_test.go": "d6a799019e932053166f267a052a55c9eee23beb",
+      "apps/api-go/internal/httpserver/handler_exercise.go": "6e1610e6d8b2bf07a4fdacbca8024efd4e0cb6b4",
+      "apps/api-go/internal/httpserver/handler_exercise_completion_integration_test.go": "78da976a255f7567f5a4db8cd5154cd6dd8d449d",
+      "apps/api-go/internal/httpserver/handler_exercise_generate.go": "e9de23eb38b22cd3e320b29135af3c0249c4e00c",
+      "apps/api-go/internal/httpserver/handler_exercise_test.go": "8b3d4f3fdc7eb2789777783c48fbe2f70d3b1926",
+      "apps/api-go/internal/httpserver/handler_final_batch.go": "d93ce1b6af21382a4df00f4a747383e3b2dcb9e4",
+      "apps/api-go/internal/httpserver/handler_levels.go": "f51b74e5e44559af3d01a9ccd7c8938132fa94e2",
+      "apps/api-go/internal/httpserver/handler_levels_embedded_test.go": "70392c088de6f4e7663792f8f3f2cc29300114d9",
+      "apps/api-go/internal/httpserver/handler_nhk_bug260_test.go": "b0aaf7f326254e078b30b180e34fd8fc46e76080",
+      "apps/api-go/internal/httpserver/handler_nhk_news.go": "6533fe9d65a4627abfac5f9228bff81398197574",
+      "apps/api-go/internal/httpserver/handler_public_content.go": "468c2d38e1dab319c3113c28ebe0a154676cab40",
+      "apps/api-go/internal/httpserver/handler_search.go": "c1f3d7f0e5bfec21ad3b9e8e304e698a5c0d943a",
+      "apps/api-go/internal/httpserver/handler_search_dailyradar_duplicates_test.go": "6625fedd6959bf108a578c892fe013f7cc1e7c34",
+      "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "bba45e62b452c303c419b24c2d258ae5c299788d",
+      "apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx": "a6eadcdd0db4c2e98d3c84b80b58d44132855c31",
+      "apps/web/app/[locale]/_components/homepage/bjt-levels-section.tsx": "df169314f4d638dc8615bf3790ed1585571802ed",
+      "apps/web/app/[locale]/_components/homepage/featured-news-section.tsx": "89a3cd5acdc76901a9806d60b78e597c00d91ba9",
+      "apps/web/app/[locale]/_components/homepage/for-you-feed-widget.test.tsx": "85c59313d4ad36b3ffa42f5dd3562e3682abc053",
+      "apps/web/app/[locale]/_components/homepage/for-you-feed-widget.tsx": "c62afd6216b959372dceb0f89bdfc9a9b031e08c",
+      "apps/web/app/[locale]/_components/homepage/homepage-client.tsx": "3ac963d9515d746ab5bfe950c0720a780a14b10c",
+      "apps/web/app/[locale]/_components/homepage/progress-section.tsx": "f3ce5065db0f563a461565ae1fb7617c8d248102",
+      "apps/web/app/[locale]/_components/homepage/push-prompt-banner.tsx": "1694920776e0cf7ee1154fd1bd88f069519d9a12",
+      "apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx": "55e95d941faf4bbcb54d340b9231c342121bc8f7",
+      "apps/web/app/[locale]/_components/homepage/today-plan-hub.tsx": "e8959fe21efd62d2957053a2ea4ca94c07b511b9",
+      "apps/web/app/[locale]/_components/homepage/types.ts": "8bf8ed1468bfe6b92e34b5b4895110db18d37628",
+      "apps/web/app/[locale]/analytics/analytics-client-api-contract.test.tsx": "6c366b7f01eb628bbf0053b1ac461167172811c0",
+      "apps/web/app/[locale]/analytics/analytics-client.tsx": "a509096ed1a8b2202d3ede4261f06af008f907f6",
+      "apps/web/app/[locale]/error.tsx": "9eeb68bb69daaf68036df83fb006759fcb578306",
+      "apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx": "50947a1391a904578988a9b792ba6f8fc1140ea8",
+      "apps/web/app/[locale]/exercises/_components/exercises-page-client.tsx": "f72aa2f43dc140b0deb32adf6da83b52cc66c965",
+      "apps/web/app/[locale]/flashcards/_components/deck-browser.tsx": "7fb51c95649935d48afbe76e5fb359084813da0e",
+      "apps/web/app/[locale]/flashcards/_components/deck-detail-client.tsx": "e8803231e36a16020cae8dfda79821695ecadfe7",
+      "apps/web/app/[locale]/flashcards/_components/deck-study-session.theme.test.tsx": "2f53c4ccac094e57f93d8863db98ad840e1d037e",
+      "apps/web/app/[locale]/flashcards/_components/deck-study-session.tsx": "94bd3eb05b9443135b356e50c814e0623e2739cd",
+      "apps/web/app/[locale]/flashcards/_components/flashcard-interactive-card.test.tsx": "fe6c3d780041f26831a417c539a1185f71630260",
+      "apps/web/app/[locale]/flashcards/_components/flashcard-interactive-card.tsx": "240b9ea9096a8e40abcbde0fb45dc95d4e18a1ce",
+      "apps/web/app/[locale]/flashcards/_components/flashcards-client.tsx": "62376963f16e478d64c7d01f06817c944ccbd3c6",
+      "apps/web/app/[locale]/levels/[level]/_components/level-detail-client.tsx": "c3eec14a4d8b4adb4b16b394be3f783512f09ad4",
+      "apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx": "21a5964298bbdaa7a7f53619575eec78b858d8ef",
+      "apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.tsx": "de7a522094f01bb1ddbd27589b917c2f6e4312b1",
+      "apps/web/app/[locale]/levels/_components/levels-client.test.tsx": "38d45423d8b960a9c7ca98b9c494b0b9ec97a6e3",
+      "apps/web/app/[locale]/levels/_components/levels-client.tsx": "58fadb0d87d77c3cb0fff7b4c691d95529481697",
+      "apps/web/app/[locale]/login/auth-pages.regression.test.tsx": "3b7b2b2754878f18c1bf1f9fd9b8783b1f72e456",
+      "apps/web/app/[locale]/login/google-login-button.regression.test.tsx": "6462533ec9e6c59a91665e45a2af1184a52146d2",
+      "apps/web/app/[locale]/login/google-login-button.tsx": "4d16fbd68081a2b3084e5672783075b46afa6f3b",
+      "apps/web/app/[locale]/login/page.tsx": "2f5cb493ca99945d3dff1f181e9bc94791a2476a",
+      "apps/web/app/[locale]/me/_components/me-page-client.mobile.test.tsx": "b97c93495fa28581844209723e6195d24e0c3265",
+      "apps/web/app/[locale]/me/_components/me-page-client.tsx": "525eb9f00b2252e113a6c3ccee08b2135fdaa1d2",
+      "apps/web/app/[locale]/news/[id]/_components/nhk-article-detail-client.tsx": "4bdd0b8c87a310e6a474cd7b30a803638fb96a1f",
+      "apps/web/app/[locale]/news/[id]/page.tsx": "35976887546e71d74c1055c7d642c8f8bae55994",
+      "apps/web/app/[locale]/news/_components/nhk-news-list-client.tsx": "05978050dfb40a2fc935269b03a8ea488bba098a",
+      "apps/web/app/[locale]/news/nhk-news-regression.test.tsx": "2a787e43ae042ab86068bcdda87aa43cd5ed711b",
+      "apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.test.tsx": "2fbd9c4f98f3463b588a082457d0f13eb617c2d8",
+      "apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.tsx": "1a2941501b2293a3af319e89283e369da9496627",
+      "apps/web/app/_components/companion-bot.test.tsx": "b0eaab678665f646ec5afa833332cb9b1c490718",
+      "apps/web/app/_components/companion-bot.tsx": "f346e04286c785d8a5a91acbf023018b25f65480",
+      "apps/web/app/_components/companion-chat-panel.tsx": "986c928c4103d9ac4cc728420cc2cb710241b317",
+      "apps/web/app/_components/companion-message.tsx": "0890cdd60b8518120e5ae24c7bb1ced516fd80c8",
+      "apps/web/app/_components/companion-speech-bubble.tsx": "658e632161086f040c1667ae91ca3040e4870786",
+      "apps/web/app/_components/not-found-client.tsx": "8ad6983cc45fc806e7fa950ce13ab78d1d5b24f5",
+      "apps/web/app/_components/scroll-strip.tsx": "de8e188753e20afc3b9dd5babf596e3f8fa22b5f",
+      "apps/web/app/_hooks/use-companion-engine.ts": "2b165973c5869d3cb7f458bd8bc1faff1019b201",
+      "apps/web/app/global-error.tsx": "4ed1a635cd53ff41938343584964569e2ae2bc4f",
+      "apps/web/app/globals.css": "ca4510becd7fac99575bf41ad25d43e29298e150",
+      "apps/web/app/not-found.tsx": "cbbff32ab89a8bed8c59305b45a08fe43c2d0e5f",
+      "apps/web/app/system-pages.regression.test.tsx": "5e17cd021f117b28b4c11693c992bbf26344c7f6",
+      "apps/web/app/theme-contrast.regression.test.ts": "61165654c5bdf4e7ab6bdf664820ed2f883d99e8",
+      "apps/web/messages/en.json": "60067f773bd6444a9bcbec91befe940e1d6ae1fc",
+      "apps/web/messages/ja.json": "88ab8e0ec70b4dd5cdcde6e1920db7988522633a",
+      "apps/web/messages/vi.json": "700068e5b2b388bc34ccf75a6acf8bc677c9370d",
+      "apps/web/src/features/daily-radar/daily-radar-section.tsx": "338381e13e2d32fc9f5af9c5598c834fc92c05a6",
+      "scripts/quality/frontend-debt-baseline.json": "8442ed27644efbdaa9df4716ceb8b5621ab4b2b6"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

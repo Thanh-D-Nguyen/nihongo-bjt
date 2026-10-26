@@ -1,26 +1,33 @@
 "use client";
 
-export default function GlobalError({
-  reset,
-}: {
+import { useEffect, useState } from "react";
+import { applyTheme, loadCachedAppearance } from "../lib/appearance";
+import en from "../messages/en.json";
+import ja from "../messages/ja.json";
+import vi from "../messages/vi.json";
+import "./globals.css";
+
+export default function GlobalError({ error, reset }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const [locale, setLocale] = useState<"vi" | "ja" | "en">("vi");
+  useEffect(() => {
+    const segment = window.location.pathname.split("/")[1];
+    setLocale(segment === "ja" || segment === "en" ? segment : "vi");
+    applyTheme(loadCachedAppearance().theme);
+  }, []);
+  const t = { vi, ja, en }[locale].systemPages;
+
   return (
-    <html lang="vi">
-      <body>
-        <main style={{ display: "flex", minHeight: "100vh", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "1rem", textAlign: "center" }}>
-          <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>Đã xảy ra lỗi</h1>
-          <p style={{ marginTop: "0.5rem", fontSize: "0.875rem", color: "#64748b" }}>
-            Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.
-          </p>
-          <button
-            onClick={() => reset()}
-            style={{ marginTop: "1.5rem", padding: "0.625rem 1.25rem", borderRadius: "0.75rem", backgroundColor: "#0f172a", color: "#fff", fontSize: "0.875rem", fontWeight: "500", border: "none", cursor: "pointer" }}
-            type="button"
-          >
-            Thử lại
-          </button>
+    <html lang={locale} suppressHydrationWarning>
+      <body className="bg-paper text-ink">
+        <main className="flex min-h-screen flex-col items-center justify-center px-4 text-center">
+          <h1 className="text-2xl font-bold">{t.errorTitle}</h1>
+          <p className="mt-2 text-sm text-muted">{t.errorDescription}</p>
+          {error.digest && <p className="mt-3 text-xs text-muted">{t.errorReference.replace("{reference}", error.digest)}</p>}
+          <button className="mt-6 min-h-12 rounded-xl bg-action px-5 py-2.5 text-sm font-medium text-white hover:bg-action-hover" onClick={reset} type="button">{t.retry}</button>
+          <a className="mt-3 inline-flex min-h-12 items-center text-sm text-accent" href={`/${locale}`}>{t.home}</a>
         </main>
       </body>
     </html>

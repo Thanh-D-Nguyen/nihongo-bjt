@@ -140,8 +140,8 @@ func TestAudit159Wave7DailyHomeAnonymousContract(t *testing.T) {
 		Today      string `json:"today"`
 		DueReviews int    `json:"dueReviews"`
 		Greeting   struct {
-			Japanese string `json:"japanese"`
-			Reading  string `json:"reading"`
+			Japanese string  `json:"japanese"`
+			Reading  *string `json:"reading"`
 		} `json:"greeting"`
 		Widgets []json.RawMessage `json:"widgets"`
 		Items   []json.RawMessage `json:"items"`
@@ -149,7 +149,7 @@ func TestAudit159Wave7DailyHomeAnonymousContract(t *testing.T) {
 	if err := json.Unmarshal(response.Body.Bytes(), &payload); err != nil {
 		t.Fatalf("decode daily home: %v", err)
 	}
-	if _, err := time.Parse("2006-01-02", payload.Today); err != nil || payload.Greeting.Japanese == "" || payload.Greeting.Reading == "" || payload.Widgets == nil || payload.Items == nil {
+	if _, err := time.Parse("2006-01-02", payload.Today); err != nil || payload.Greeting.Japanese == "" || (payload.Greeting.Reading != nil && *payload.Greeting.Reading == "") || payload.Widgets == nil || payload.Items == nil {
 		t.Fatalf("daily home contract mismatch: %+v", payload)
 	}
 	authenticated := audit159Wave7Request(t, router, token, http.MethodGet, "/api/daily/home?locale=vi&timeZone=Asia%2FTokyo", "", false)

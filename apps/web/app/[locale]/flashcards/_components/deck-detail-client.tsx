@@ -447,6 +447,7 @@ export function DeckDetailClient({
                 deckStudyRateAgain: labels.deckStudyRateAgain,
                 deckStudyRateHard: labels.deckStudyRateHard,
                 deckStudyRateGood: labels.deckStudyRateGood,
+                deckStudyRateEasy: labels.deckStudyRateEasy,
                 deckStudyRateHint: labels.deckStudyRateHint,
                 mentorName: labels.mentorName,
                 mentorGoodEmoji: labels.mentorGoodEmoji,
@@ -528,7 +529,7 @@ export function DeckDetailClient({
                 {labels.deleteOwnedDeckCancel}
               </button>
               <button
-                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--color-sakura)] px-4 text-sm font-bold text-white outline-none ring-offset-2 hover:opacity-95 focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
+                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-action px-4 text-sm font-bold text-white outline-none ring-offset-2 hover:opacity-95 focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
                 disabled={deleteSubmitting}
                 onClick={() => void confirmArchive()}
                 type="button"
@@ -725,7 +726,7 @@ function CardListCollapsible({
                           className={cn(
                             "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-semibold tabular-nums",
                             i === activeIndex
-                              ? "bg-accent text-white shadow-sm"
+                              ? "bg-action text-white shadow-sm"
                               : "bg-paper text-muted"
                           )}
                         >

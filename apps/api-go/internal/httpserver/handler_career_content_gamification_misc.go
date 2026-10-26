@@ -157,6 +157,22 @@ func listLexemesHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc 
 	return func(w http.ResponseWriter, r *http.Request) {
 		limit := 50
 		offset := 0
+		if raw := r.URL.Query().Get("limit"); raw != "" {
+			parsed, err := strconv.Atoi(raw)
+			if err != nil || parsed < 1 || parsed > 100 {
+				writeJSONError(w, "limit must be an integer between 1 and 100", http.StatusBadRequest)
+				return
+			}
+			limit = parsed
+		}
+		if raw := r.URL.Query().Get("offset"); raw != "" {
+			parsed, err := strconv.Atoi(raw)
+			if err != nil || parsed < 0 {
+				writeJSONError(w, "offset must be a nonnegative integer", http.StatusBadRequest)
+				return
+			}
+			offset = parsed
+		}
 		q := r.URL.Query().Get("q")
 		jlpt := r.URL.Query().Get("jlptLevel")
 
@@ -169,48 +185,73 @@ func listLexemesHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc 
 			ShortMeaningVi *string `json:"shortMeaningVi,omitempty"`
 		}
 
-		var query string
-		var args []interface{}
-		if q != "" && jlpt != "" {
-			query = `SELECT id, headword, reading, kanji_meaning_vi, jlpt_level, short_meaning_vi
-				FROM content.lexeme WHERE status = 'active' AND (headword ILIKE $1 OR reading ILIKE $1) AND jlpt_level = $2
-				ORDER BY headword ASC LIMIT $3 OFFSET $4`
-			args = []interface{}{"%" + q + "%", jlpt, limit, offset}
-		} else if q != "" {
-			query = `SELECT id, headword, reading, kanji_meaning_vi, jlpt_level, short_meaning_vi
-				FROM content.lexeme WHERE status = 'active' AND (headword ILIKE $1 OR reading ILIKE $1)
-				ORDER BY headword ASC LIMIT $2 OFFSET $3`
-			args = []interface{}{"%" + q + "%", limit, offset}
-		} else if jlpt != "" {
-			query = `SELECT id, headword, reading, kanji_meaning_vi, jlpt_level, short_meaning_vi
-				FROM content.lexeme WHERE status = 'active' AND jlpt_level = $1
-				ORDER BY headword ASC LIMIT $2 OFFSET $3`
-			args = []interface{}{jlpt, limit, offset}
-		} else {
-			query = `SELECT id, headword, reading, kanji_meaning_vi, jlpt_level, short_meaning_vi
-				FROM content.lexeme WHERE status = 'active'
-				ORDER BY headword ASC LIMIT $1 OFFSET $2`
-			args = []interface{}{limit, offset}
-		}
-
-		rows, err := db.Query(r.Context(), query, args...)
-		if err != nil {
-			logger.Error("list lexemes", "error", err)
-			writeJSONError(w, "internal error", http.StatusInternalServerError)
-			return
-		}
-		defer rows.Close()
-
-		var lexemes []Lexeme
-		for rows.Next() {
-			var l Lexeme
-			if err := rows.Scan(&l.ID, &l.Headword, &l.Reading, &l.KanjiMeaningVi, &l.JLPTLevel, &l.ShortMeaningVi); err != nil {
-				continue
+		lexemes := make([]Lexeme, 0, limit)
+		batchSize := max(50, limit)
+		rawOffset := 0
+		// Offset counts usable entries; raw batches keep reads bounded across rejected imports.
+		for {
+			var query string
+			var args []interface{}
+			if q != "" && jlpt != "" {
+				query = `SELECT id, headword, reading, kanji_meaning_vi, jlpt_level, short_meaning_vi
+					FROM content.lexeme WHERE status = 'active' AND (headword ILIKE $1 OR reading ILIKE $1) AND jlpt_level = $2
+					ORDER BY headword ASC, id ASC LIMIT $3 OFFSET $4`
+				args = []interface{}{"%" + q + "%", jlpt, batchSize, rawOffset}
+			} else if q != "" {
+				query = `SELECT id, headword, reading, kanji_meaning_vi, jlpt_level, short_meaning_vi
+					FROM content.lexeme WHERE status = 'active' AND (headword ILIKE $1 OR reading ILIKE $1)
+					ORDER BY headword ASC, id ASC LIMIT $2 OFFSET $3`
+				args = []interface{}{"%" + q + "%", batchSize, rawOffset}
+			} else if jlpt != "" {
+				query = `SELECT id, headword, reading, kanji_meaning_vi, jlpt_level, short_meaning_vi
+					FROM content.lexeme WHERE status = 'active' AND jlpt_level = $1
+					ORDER BY headword ASC, id ASC LIMIT $2 OFFSET $3`
+				args = []interface{}{jlpt, batchSize, rawOffset}
+			} else {
+				query = `SELECT id, headword, reading, kanji_meaning_vi, jlpt_level, short_meaning_vi
+					FROM content.lexeme WHERE status = 'active'
+					ORDER BY headword ASC, id ASC LIMIT $1 OFFSET $2`
+				args = []interface{}{batchSize, rawOffset}
 			}
-			lexemes = append(lexemes, l)
-		}
-		if lexemes == nil {
-			lexemes = []Lexeme{}
+
+			rows, err := db.Query(r.Context(), query, args...)
+			if err != nil {
+				logger.Error("list lexemes", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			scanned := 0
+			for rows.Next() {
+				scanned++
+				var l Lexeme
+				if err := rows.Scan(&l.ID, &l.Headword, &l.Reading, &l.KanjiMeaningVi, &l.JLPTLevel, &l.ShortMeaningVi); err != nil {
+					rows.Close()
+					logger.Error("scan lexeme", "error", err)
+					writeJSONError(w, "internal error", http.StatusInternalServerError)
+					return
+				}
+				if !dictionaryGlossUsable(l.Headword, l.ShortMeaningVi) || !dictionaryGlossUsable(l.Headword, l.KanjiMeaningVi) {
+					continue
+				}
+				if offset > 0 {
+					offset--
+					continue
+				}
+				lexemes = append(lexemes, l)
+				if len(lexemes) == limit {
+					break
+				}
+			}
+			rows.Close()
+			if err := rows.Err(); err != nil {
+				logger.Error("iterate lexemes", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			if len(lexemes) == limit || scanned < batchSize {
+				break
+			}
+			rawOffset += scanned
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -263,6 +304,13 @@ func getLexemeDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerF
 			return
 		}
 
+		if !dictionaryGlossUsable(ld.Headword, ld.ShortMeaningVi) {
+			ld.ShortMeaningVi = nil
+		}
+		if !dictionaryGlossUsable(ld.Headword, ld.KanjiMeaningVi) {
+			ld.KanjiMeaningVi = nil
+		}
+
 		const senseQ = `SELECT id::text, position, meaning_vi, part_of_speech FROM content.lexeme_sense
 			WHERE lexeme_id = $1 ORDER BY position ASC LIMIT 20`
 		sRows, err := db.Query(r.Context(), senseQ, id)
@@ -279,7 +327,9 @@ func getLexemeDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerF
 				writeJSONError(w, "internal error", http.StatusInternalServerError)
 				return
 			}
-			ld.Senses = append(ld.Senses, s)
+			if dictionaryGlossUsable(ld.Headword, &s.MeaningVi) {
+				ld.Senses = append(ld.Senses, s)
+			}
 		}
 		if err := sRows.Err(); err != nil {
 			logger.Error("iterate lexeme senses", "lexeme_id", id, "error", err)

@@ -30,7 +30,7 @@ function needsDisclaimer(card: DailyRadarCard) {
 
 /* ─── Widget card (daily Japanese content) ─── */
 
-function WidgetCard({ card, locale }: { card: DailyRadarCard; locale: string }) {
+function WidgetCard({ card, locale, labels }: { card: DailyRadarCard; locale: string; labels: DailyRadarLabels }) {
   const theme = themeFor(card.visualTheme, card.category);
   const gradientMap: Record<string, string> = {
     work: "from-amber-400 to-orange-500",
@@ -67,7 +67,7 @@ function WidgetCard({ card, locale }: { card: DailyRadarCard; locale: string }) 
           <p className="mt-3 text-xs leading-relaxed text-slate-500 line-clamp-2">{card.descriptionVi}</p>
         )}
         <div className="mt-auto flex items-center gap-1 pt-4 text-xs font-semibold text-blue-500 opacity-0 transition-opacity group-hover:opacity-100">
-          <span>Learn more</span>
+          <span>{labels.ctaFallback}</span>
           <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
         </div>
       </div>
@@ -253,7 +253,7 @@ function CategoryRail({
       <div ref={railRef} className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 scrollbar-none sm:mx-0 sm:px-0">
         {visible.map((card) =>
           card.moduleType === "daily_widget"
-            ? <WidgetCard card={card} key={card.id} locale={locale} />
+            ? <WidgetCard card={card} key={card.id} locale={locale} labels={labels} />
             : <RadarCard card={card} key={card.id} labels={labels} locale={locale} />
         )}
       </div>
@@ -376,7 +376,6 @@ export function DailyRadarSection({ labels, locale }: { labels: DailyRadarLabels
   return (
     <section aria-labelledby="daily-radar-heading" className="space-y-6">
       <div>
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">Japan Daily Radar</p>
         <h2 id="daily-radar-heading" className="mt-1 text-2xl font-semibold text-slate-950 sm:text-3xl">{labels.heading}</h2>
         <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600">{labels.subheading}</p>
       </div>

@@ -14,7 +14,6 @@ import {
   loadCachedAppearance,
   saveAppearance
 } from "../../../../../lib/appearance";
-import { learnerApiFetch } from "../../../../../lib/learner-api";
 
 /* ── Types ── */
 
@@ -33,6 +32,7 @@ type AppearanceLabels = {
   densityLabel: string;
   densityCompact: string;
   densityComfortable: string;
+  saving: string;
   saved: string;
   saveError: string;
   preview: string;
@@ -281,7 +281,7 @@ export function AppearanceSettingsClient({
         {saving && (
           <span className="flex items-center gap-1.5 text-xs text-muted">
             <span className="size-1.5 animate-pulse rounded-full bg-accent" />
-            Saving…
+            {labels.saving}
           </span>
         )}
         {saved && !saving && (
@@ -368,7 +368,7 @@ function ThemeCard({
       <span className={`text-xs font-semibold ${active ? "text-accent" : "text-ink"}`}>{label}</span>
       {/* Active indicator */}
       {active && (
-        <div className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-accent text-white shadow-sm">
+        <div className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-action text-white shadow-sm">
           <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
@@ -406,7 +406,7 @@ function FontSizeCard({
       <span className={`font-bold text-ink leading-none ${sizeClass}`} lang="ja">{sample}</span>
       <span className={`text-[10px] font-semibold ${active ? "text-accent" : "text-muted"}`}>{label}</span>
       {active && (
-        <div className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-accent text-white">
+        <div className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-action text-white">
           <svg className="size-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
@@ -450,7 +450,7 @@ function DensityCard({
       </div>
       <span className={`text-xs font-semibold ${active ? "text-accent" : "text-ink"}`}>{label}</span>
       {active && (
-        <div className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-accent text-white">
+        <div className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-action text-white">
           <svg className="size-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>

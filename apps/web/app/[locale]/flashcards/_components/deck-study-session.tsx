@@ -5,12 +5,11 @@ import { cn } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { BattleBotAvatar } from "../../../_components/battle-bot-avatar";
-import { recordStudyProgress } from "../../../_hooks/use-study-progress";
 import { cancelJapaneseSpeech, speakJapanese } from "../../../../lib/japanese-speech";
 import { flashcardThemeCss } from "./flashcard-theme-css";
 
 type StudyMode = "flip" | "shuffle" | "quiz";
-type Rating = "again" | "hard" | "good";
+type Rating = "again" | "hard" | "good" | "easy";
 
 /** Detect if text contains Japanese characters (Hiragana, Katakana, CJK) */
 function hasJapanese(text: string): boolean {
@@ -64,6 +63,7 @@ export type DeckStudySessionLabels = {
   deckStudyRateAgain: string;
   deckStudyRateHard: string;
   deckStudyRateGood: string;
+  deckStudyRateEasy: string;
   deckStudyRateHint: string;
   mentorName: string;
   mentorGoodEmoji: string;
@@ -332,7 +332,6 @@ export function DeckStudySession({
   const goNext = useCallback(() => {
     if (index >= total - 1) {
       setCompleted(true);
-      recordStudyProgress("srs_review");
       return;
     }
     setCardAnim("exit");
@@ -875,7 +874,7 @@ export function DeckStudySession({
             ) : null}
 
             {flipped ? (
-              <div className="fc-btn-stagger mt-4 grid grid-cols-3 gap-2 sm:gap-3">
+              <div className="fc-btn-stagger mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
                 <button
                   className="fc-btn-press inline-flex min-h-[3.25rem] min-w-0 items-center justify-center gap-1.5 rounded-xl border-2 border-sakura/25 bg-sakura/10 px-2 text-xs font-bold text-sakura outline-none ring-offset-2 transition-colors hover:border-sakura/40 hover:bg-sakura/15 focus-visible:ring-2 focus-visible:ring-sakura/50 sm:text-sm"
                   onClick={() => handleRate("again")}
@@ -897,8 +896,16 @@ export function DeckStudySession({
                 >
                   <span className="text-base">🎉</span> {labels.deckStudyRateGood}
                 </button>
+                <button
+                  className="fc-btn-press inline-flex min-h-[3.25rem] min-w-0 items-center justify-center gap-1.5 rounded-xl border-2 border-ink/15 bg-surface px-2 text-xs font-bold text-ink outline-none transition-colors hover:bg-paper focus-visible:ring-2 focus-visible:ring-accent sm:text-sm"
+                  onClick={() => handleRate("easy")}
+                  type="button"
+                >
+                  <span aria-hidden>✨</span> {labels.deckStudyRateEasy}
+                </button>
               </div>
             ) : null}
+            <p className="mt-3 text-center text-sm text-muted">{labels.deckStudyModeNote}</p>
             {flipped ? (
               <p className="mt-2 text-center text-[10px] font-semibold text-muted/70">
                 {labels.deckStudyRateHint}
@@ -1372,6 +1379,7 @@ const companionRive = {
 };
 
 const ratingToRiveState: Record<Rating, BattleBotAnimationState> = {
+  easy: "correct",
   good: "correct",
   hard: "thinking",
   again: "wrong"
@@ -1391,7 +1399,7 @@ function ShibaCompanion({
   rating: Rating;
 }) {
   const text =
-    rating === "good"
+    rating === "good" || rating === "easy"
       ? labels.mentorGoodText
       : rating === "hard"
         ? labels.mentorHardText
@@ -1407,7 +1415,7 @@ function ShibaCompanion({
           : null;
 
   const bubbleBg =
-    rating === "good"
+    rating === "good" || rating === "easy"
       ? "bg-gradient-to-br from-white to-emerald-50 ring-leaf/20"
       : rating === "hard"
         ? "bg-gradient-to-br from-white to-amber-50 ring-sun/20"

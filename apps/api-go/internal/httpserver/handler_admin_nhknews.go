@@ -18,6 +18,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/net/html"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
 )
@@ -209,7 +210,7 @@ func validNHKArticleURL(raw string) bool {
 }
 
 func isNHKHost(host string) bool {
-	return host == "nhk.or.jp" || strings.HasSuffix(host, ".nhk.or.jp")
+	return host == "nhk.or.jp" || strings.HasSuffix(host, ".nhk.or.jp") || host == "news.web.nhk"
 }
 
 type nhkFeedArticle struct {
@@ -219,6 +220,7 @@ type nhkFeedArticle struct {
 	URL         string
 	PublishedAt time.Time
 	BodyPlain   string
+	ImageURL    string
 }
 
 type nhkEasyFeedItem struct {
@@ -227,6 +229,7 @@ type nhkEasyFeedItem struct {
 	NewsPrearrangedTime string `json:"news_prearranged_time"`
 	URL                 string `json:"url"`
 	NewsWebURL          string `json:"news_web_url"`
+	ImageURL            string `json:"news_web_image_uri"`
 }
 
 type nhkRSS struct {
@@ -244,11 +247,21 @@ type nhkRSSItem struct {
 	GUID        string `xml:"guid"`
 	PubDate     string `xml:"pubDate"`
 	Description string `xml:"description"`
+	Enclosures  []struct {
+		URL  string `xml:"url,attr"`
+		Type string `xml:"type,attr"`
+	} `xml:"enclosure"`
+	Thumbnails []struct {
+		URL string `xml:"url,attr"`
+	} `xml:"http://search.yahoo.com/mrss/ thumbnail"`
 }
 
 func adminNhkNewsRefreshHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	client := &http.Client{Timeout: 15 * time.Second, CheckRedirect: func(req *http.Request, via []*http.Request) error {
-		return http.ErrUseLastResponse
+		if len(via) >= 3 || !validNHKFeedURL(req.URL.String()) {
+			return fmt.Errorf("unsafe NHK redirect")
+		}
+		return nil
 	}}
 	return func(w http.ResponseWriter, r *http.Request) {
 		identity, ok := authn.GetAdminIdentity(r.Context())
@@ -268,14 +281,22 @@ func adminNhkNewsRefreshHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 			return
 		}
 		var easy, normal []nhkFeedArticle
+		feedErrors := map[string]string{}
 		if cfg.EasyEnabled {
 			easy, err = fetchNHKEasy(r.Context(), client, cfg.EasyFeedURL)
+			if err != nil {
+				logger.Warn("fetch NHK Easy feed", "error", err)
+				feedErrors["easy"] = "NHK feed unavailable"
+			}
 		}
-		if err == nil && cfg.NormalEnabled {
+		if cfg.NormalEnabled {
 			normal, err = fetchNHKNormal(r.Context(), client, cfg.NormalFeedURL)
+			if err != nil {
+				logger.Warn("fetch NHK normal feed", "error", err)
+				feedErrors["normal"] = "NHK feed unavailable"
+			}
 		}
-		if err != nil {
-			logger.Error("fetch nhk news feeds", "locale", locale, "error", err)
+		if len(feedErrors) > 0 && len(easy)+len(normal) == 0 {
 			writeJSONError(w, "NHK feed refresh failed", http.StatusBadGateway)
 			return
 		}
@@ -290,18 +311,19 @@ func adminNhkNewsRefreshHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 		defer tx.Rollback(r.Context())
 		for _, article := range articles {
 			if _, err := tx.Exec(r.Context(), `INSERT INTO content.nhk_article
-				(id, source_type, title, url, body_plain, published_at, fetched_at, updated_at)
-				VALUES ($1,$2,$3,$4,$5,$6,NOW(),NOW())
+				(id, source_type, title, url, body_plain, published_at, image_url, fetched_at, updated_at)
+				VALUES ($1,$2,$3,$4,NULLIF($5,''),$6,NULLIF($7,''),NOW(),NOW())
 				ON CONFLICT (id) DO UPDATE SET source_type=EXCLUDED.source_type, title=EXCLUDED.title,
-				url=EXCLUDED.url, body_plain=EXCLUDED.body_plain, published_at=EXCLUDED.published_at,
+				url=EXCLUDED.url, body_plain=COALESCE(EXCLUDED.body_plain,content.nhk_article.body_plain),
+				image_url=COALESCE(EXCLUDED.image_url,content.nhk_article.image_url), published_at=EXCLUDED.published_at,
 				fetched_at=NOW(), updated_at=NOW()`, article.ID, article.SourceType, article.Title,
-				article.URL, article.BodyPlain, article.PublishedAt); err != nil {
+				article.URL, article.BodyPlain, article.PublishedAt, article.ImageURL); err != nil {
 				logger.Error("persist nhk feed article", "id", article.ID, "error", err)
 				writeJSONError(w, "internal error", http.StatusInternalServerError)
 				return
 			}
 		}
-		after, _ := json.Marshal(map[string]any{"locale": locale, "feeds": counts})
+		after, _ := json.Marshal(map[string]any{"locale": locale, "feeds": counts, "errors": feedErrors})
 		if _, err := tx.Exec(r.Context(), `INSERT INTO ops.admin_audit_log
 			(action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('nhk_news.feed.refreshed',$1,$2,'nhk_news_config','feed refresh',$3,NOW())`, identity.ActorID, locale, after); err != nil {
@@ -312,6 +334,10 @@ func adminNhkNewsRefreshHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 		if err := tx.Commit(r.Context()); err != nil {
 			logger.Error("commit nhk feed refresh", "locale", locale, "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if len(feedErrors) > 0 {
+			writeJSON(w, http.StatusMultiStatus, map[string]any{"easy": counts["easy"], "normal": counts["normal"], "errors": feedErrors})
 			return
 		}
 		writeJSON(w, http.StatusOK, counts)
@@ -369,6 +395,19 @@ func fetchNHKEasy(ctx context.Context, client *http.Client, feedURL string) ([]n
 	if items == nil {
 		return nil, fmt.Errorf("decode easy feed: expected a JSON array")
 	}
+	// NHK also serves a list of date-keyed maps rather than a flat list.
+	if len(items) > 0 && items[0].NewsID == "" {
+		var dated []map[string][]nhkEasyFeedItem
+		if err := json.Unmarshal(body, &dated); err != nil {
+			return nil, fmt.Errorf("decode dated easy feed: %w", err)
+		}
+		items = nil
+		for _, group := range dated {
+			for _, daily := range group {
+				items = append(items, daily...)
+			}
+		}
+	}
 	articles := make([]nhkFeedArticle, 0, len(items))
 	for _, item := range items {
 		id := strings.TrimSpace(item.NewsID)
@@ -380,6 +419,9 @@ func fetchNHKEasy(ctx context.Context, client *http.Client, feedURL string) ([]n
 			return nil, fmt.Errorf("easy feed item id is too long")
 		}
 		published, err := time.ParseInLocation("20060102150405", item.NewsPrearrangedTime, time.FixedZone("JST", 9*60*60))
+		if err != nil {
+			published, err = time.ParseInLocation("2006-01-02 15:04:05", item.NewsPrearrangedTime, time.FixedZone("JST", 9*60*60))
+		}
 		if err != nil {
 			return nil, fmt.Errorf("parse easy feed date for %s: %w", id, err)
 		}
@@ -393,7 +435,11 @@ func fetchNHKEasy(ctx context.Context, client *http.Client, feedURL string) ([]n
 		if !validNHKArticleURL(articleURL) {
 			return nil, fmt.Errorf("easy feed item %s has invalid URL", id)
 		}
-		articles = append(articles, nhkFeedArticle{ID: "easy:" + id, SourceType: "easy", Title: title, URL: articleURL, PublishedAt: published})
+		imageURL := strings.TrimSpace(item.ImageURL)
+		if imageURL != "" && !validNHKArticleURL(imageURL) {
+			imageURL = ""
+		}
+		articles = append(articles, nhkFeedArticle{ID: "easy:" + id, SourceType: "easy", Title: title, URL: articleURL, PublishedAt: published, ImageURL: imageURL})
 	}
 	return articles, nil
 }
@@ -429,12 +475,48 @@ func fetchNHKNormal(ctx context.Context, client *http.Client, feedURL string) ([
 			idSource = articleURL
 		}
 		hash := sha256.Sum256([]byte(idSource))
+		imageURL := ""
+		for _, image := range item.Thumbnails {
+			if validNHKArticleURL(image.URL) {
+				imageURL = image.URL
+				break
+			}
+		}
+		for _, enclosure := range item.Enclosures {
+			if imageURL == "" && strings.HasPrefix(enclosure.Type, "image/") && validNHKArticleURL(enclosure.URL) {
+				imageURL = enclosure.URL
+			}
+		}
 		articles = append(articles, nhkFeedArticle{
 			ID: "normal:" + hex.EncodeToString(hash[:])[:56], SourceType: "normal", Title: title, URL: articleURL,
-			PublishedAt: published, BodyPlain: strings.TrimSpace(item.Description),
+			PublishedAt: published, BodyPlain: nhkSummaryText(item.Description), ImageURL: imageURL,
 		})
 	}
 	return articles, nil
+}
+
+func nhkSummaryText(value string) string {
+	tokenizer := html.NewTokenizer(strings.NewReader(value))
+	var text strings.Builder
+	ignored := false
+	for {
+		switch tokenizer.Next() {
+		case html.ErrorToken:
+			return strings.Join(strings.Fields(text.String()), " ")
+		case html.StartTagToken, html.EndTagToken:
+			token := tokenizer.Token()
+			if token.Data == "script" || token.Data == "style" {
+				ignored = token.Type == html.StartTagToken
+			}
+			if token.Data == "p" || token.Data == "br" {
+				text.WriteByte(' ')
+			}
+		case html.TextToken:
+			if !ignored {
+				text.Write(tokenizer.Text())
+			}
+		}
+	}
 }
 
 func parseNHKDate(value string) (time.Time, error) {

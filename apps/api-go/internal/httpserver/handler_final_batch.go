@@ -170,25 +170,26 @@ func getAnalyticsLearnerHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 		var reviewCount int
 		var streakDays int
 
-		// completedBjtSessions: count of completed quiz sessions
-		_ = db.QueryRow(r.Context(),
-			`SELECT COUNT(*) FROM assessment.quiz_session WHERE user_id = $1 AND status = 'completed'`,
-			userID).Scan(&completedBjtSessions)
-
-		// bjtAccuracyPct: average accuracy across completed sessions
-		_ = db.QueryRow(r.Context(),
-			`SELECT COALESCE(AVG(accuracy_pct), 0) FROM assessment.quiz_session WHERE user_id = $1 AND status = 'completed'`,
-			userID).Scan(&bjtAccuracyPct)
-
-		// reviewCount: total SRS reviews completed
-		_ = db.QueryRow(r.Context(),
-			`SELECT COUNT(*) FROM learning.review_event WHERE user_id = $1`,
-			userID).Scan(&reviewCount)
-
-		// streakDays: current streak from learner profile
-		_ = db.QueryRow(r.Context(),
-			`SELECT COALESCE(current_streak_days, 0) FROM profile.learner_onboarding WHERE user_id = $1`,
-			userID).Scan(&streakDays)
+		var completedExercises, exerciseAnswers int
+		var exerciseAccuracy float64
+		err = db.QueryRow(r.Context(), `SELECT
+			(SELECT COUNT(*) FROM assessment.quiz_session WHERE user_id = $1 AND status = 'completed'),
+			(SELECT COALESCE(AVG(100.0 * correct_count / NULLIF(total_questions, 0)), 0) FROM assessment.quiz_session WHERE user_id = $1 AND status = 'completed'),
+			(SELECT COUNT(*) FROM learning.review_event WHERE user_id = $1),
+			(SELECT COALESCE(MAX(us.current_streak), 0) FROM gamification.user_streak us
+			 JOIN gamification.streak_config sc ON sc.id = us.streak_config_id AND sc.enabled
+			 JOIN profile.user_profile p ON p.id = us.user_id
+			 LEFT JOIN pg_timezone_names tz ON tz.name = p.timezone
+			 WHERE us.user_id = $1 AND us.last_activity_date >= (NOW() AT TIME ZONE COALESCE(tz.name, 'UTC'))::date - 1),
+			COUNT(*), COALESCE(SUM(total_questions), 0),
+			COALESCE(100.0 * SUM(correct_count) / NULLIF(SUM(total_questions), 0), 0)
+			FROM exercise.exercise_session WHERE user_id = $1 AND status = 'completed'`, userID).
+			Scan(&completedBjtSessions, &bjtAccuracyPct, &reviewCount, &streakDays, &completedExercises, &exerciseAnswers, &exerciseAccuracy)
+		if err != nil {
+			logger.Error("get learner progress totals", "error", err)
+			writeJSONError(w, "unable to load learner analytics", http.StatusInternalServerError)
+			return
+		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -197,10 +198,14 @@ func getAnalyticsLearnerHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 			"userId":     userID,
 			"insight":    "",
 			"totals": map[string]interface{}{
-				"bjtAccuracyPct":       bjtAccuracyPct,
-				"completedBjtSessions": completedBjtSessions,
-				"reviewCount":          reviewCount,
-				"streakDays":           streakDays,
+				"bjtAccuracyPct":            bjtAccuracyPct,
+				"completedBjtSessions":      completedBjtSessions,
+				"completedSessions":         completedBjtSessions + completedExercises,
+				"completedExerciseSessions": completedExercises,
+				"exerciseAnswerCount":       exerciseAnswers,
+				"exerciseAccuracyPct":       exerciseAccuracy,
+				"reviewCount":               reviewCount,
+				"streakDays":                streakDays,
 			},
 		})
 	}
@@ -730,9 +735,16 @@ func getCompanionHintHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 		if sessionCount > 0 {
 			hints = append(hints, Hint{Text: "You've been consistent lately. Try a harder level!", Category: "progression"})
 		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]interface{}{"hints": hints})
+		primary := map[string]any{"action": "daily_hub", "hrefSuffix": "/daily", "score": 1,
+			"reasons": []any{map[string]any{"code": "DAILY_HUB", "params": map[string]any{}}}}
+		if sessionCount > 0 {
+			primary = map[string]any{"action": "bjt_quiz", "hrefSuffix": "/quiz", "score": 1,
+				"reasons": []any{map[string]any{"code": "QUIZ_GENERAL", "params": map[string]any{}}}}
+		}
+		writeJSON(w, http.StatusOK, map[string]any{
+			"hints": hints, "algorithmVersion": "2026-02-02a", "computedAt": time.Now().UTC().Format(time.RFC3339),
+			"primary": primary, "alternatives": []any{},
+		})
 	}
 }
 

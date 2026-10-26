@@ -61,6 +61,10 @@ export interface HomepageLabels {
   quickBjtSub: string;
   quickBattleSub: string;
   quickSearchSub: string;
+  newsContentUnavailable?: string;
+  newsCardsUnavailable?: string;
+  newsLatestPublished?: string;
+  newsStale?: string;
   newsTitle: string;
   newsSubtitle: string;
   newsReadMore: string;
@@ -156,6 +160,8 @@ export interface NhkArticle {
   url: string;
   sourceType?: "easy" | "normal";
   sourceLabel?: string;
+  canGenerateCards?: boolean;
+  hasBody?: boolean;
 }
 
 export interface LearnerAnalytics {
@@ -163,6 +169,7 @@ export interface LearnerAnalytics {
   totals: {
     bjtAccuracyPct: number;
     completedBjtSessions: number;
+    completedSessions?: number;
     reviewCount: number;
     streakDays: number;
   };

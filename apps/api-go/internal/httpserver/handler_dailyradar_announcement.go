@@ -47,6 +47,15 @@ type publicDailyRadarCard struct {
 	ModuleKey              string                 `json:"moduleKey,omitempty"`
 }
 
+// dailyRadarContentKey ignores import IDs/slugs but preserves different destinations.
+func dailyRadarContentKey(moduleKey, title string, targetRoute *string) [3]string {
+	key := [3]string{moduleKey, strings.Join(strings.Fields(title), " "), ""}
+	if targetRoute != nil {
+		key[2] = strings.TrimSpace(*targetRoute)
+	}
+	return key
+}
+
 // listDailyRadarModulesHandler implements GET /api/daily-radar/modules.
 // Public route — no authentication required.
 func listDailyRadarModulesHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
@@ -152,6 +161,7 @@ ORDER BY c.priority DESC, c.updated_at DESC LIMIT $2`
 		defer rows.Close()
 
 		var cards []publicDailyRadarCard
+		seenCards := make(map[[3]string]struct{})
 		for rows.Next() {
 			var c publicDailyRadarCard
 			if err := rows.Scan(&c.ID, &c.Slug, &c.TitleVi, &c.TitleJa, &c.DescriptionVi, &c.Body, &c.Category,
@@ -162,6 +172,11 @@ ORDER BY c.priority DESC, c.updated_at DESC LIMIT $2`
 				writeJSONError(w, "internal error", http.StatusInternalServerError)
 				return
 			}
+			key := dailyRadarContentKey(c.Module.ModuleKey, c.TitleVi, c.TargetRoute)
+			if _, exists := seenCards[key]; exists {
+				continue
+			}
+			seenCards[key] = struct{}{}
 			c.Title = c.TitleVi
 			c.Summary = &c.DescriptionVi
 			c.ModuleKey = c.Module.ModuleKey

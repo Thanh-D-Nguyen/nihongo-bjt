@@ -115,6 +115,7 @@ func dailyRadarHomeHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 		}
 		categories := make([]string, 0)
 		seenCategories := make(map[string]struct{})
+		seenCards := make(map[[3]string]struct{})
 		for rows.Next() {
 			var item card
 			if err := rows.Scan(&item.ID, &item.BadgeTextVi, &item.Category, &item.CTALabelJa, &item.CTALabelVi,
@@ -129,6 +130,11 @@ func dailyRadarHomeHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 				writeJSONError(w, "daily radar is unavailable", http.StatusInternalServerError)
 				return
 			}
+			key := dailyRadarContentKey(item.Module.ModuleKey, item.TitleVi, item.TargetRoute)
+			if _, exists := seenCards[key]; exists {
+				continue
+			}
+			seenCards[key] = struct{}{}
 			cards = append(cards, item)
 			if _, exists := seenCategories[item.Category]; !exists {
 				seenCategories[item.Category] = struct{}{}
@@ -182,11 +188,30 @@ func dailyHomeHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 				return
 			}
 		}
-		today := time.Now().Format("2006-01-02")
+		zone := r.URL.Query().Get("timeZone")
+		if zone == "" {
+			zone = "Asia/Tokyo"
+		}
+		location, err := time.LoadLocation(zone)
+		if err != nil {
+			writeJSONError(w, "invalid time zone", http.StatusBadRequest)
+			return
+		}
+		now := time.Now().In(location)
+		japanese := "こんばんは"
+		var reading *string
+		if now.Hour() >= 5 && now.Hour() < 11 {
+			japanese = "おはようございます"
+		} else if now.Hour() >= 11 && now.Hour() < 18 {
+			japanese = "お疲れさまです"
+			kana := "おつかれさまです"
+			reading = &kana
+		}
+		today := now.Format("2006-01-02")
 		resp := map[string]any{
 			"today":       today,
 			"dueReviews":  dueReviews,
-			"greeting":    map[string]any{"japanese": "こんにちは", "reading": "konnichiwa"},
+			"greeting":    map[string]any{"japanese": japanese, "reading": reading},
 			"widgets":     []struct{}{},
 			"items":       []struct{}{},
 			"weeklyStats": nil,

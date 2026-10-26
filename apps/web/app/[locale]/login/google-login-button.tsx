@@ -22,6 +22,7 @@ export function GoogleLoginButton({ locale, destination, label, onError }: {
 }) {
   const target = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
+  const [ready, setReady] = useState(false);
   const busyRef = useRef(false);
   const router = useRouter();
   const { reload } = useGoAuth();
@@ -60,6 +61,7 @@ export function GoogleLoginButton({ locale, destination, label, onError }: {
         }
       });
       google.accounts.id.renderButton(target.current, { theme: "outline", size: "large", width: 320, locale });
+      setReady(true);
     };
 
     const scriptId = "google-identity-services";
@@ -80,7 +82,8 @@ export function GoogleLoginButton({ locale, destination, label, onError }: {
 
   if (!googleLoginEnabled) return null;
   return (
-    <div className="flex min-h-[48px] flex-col items-center justify-center gap-2" aria-busy={busy}>
+    <div className="flex min-h-[48px] flex-col items-center justify-center gap-2" aria-busy={busy || !ready}>
+      {!ready && <button type="button" disabled className="min-h-12 w-80 animate-pulse rounded-xl border border-border bg-surface px-4 text-sm text-muted">{label}</button>}
       <div ref={target} role="group" aria-label={label} />
     </div>
   );

@@ -35,6 +35,24 @@ afterEach(() => {
 });
 
 describe("AppearanceSettingsClient", () => {
+ it("localizes the saving status while the update is pending", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ themeMode: "system" }))).mockImplementationOnce(() => new Promise(() => {})));
+  const host = document.createElement("div");
+  document.body.appendChild(host);
+  const root = createRoot(host);
+  try {
+   await act(async () => root.render(<AppearanceSettingsClient labels={{ ...labels, saving: "Đang lưu…" }} locale="vi" />));
+   await act(async () => {
+    [...host.querySelectorAll("button")].find(b => b.textContent?.includes(labels.themeDark))?.click();
+    await new Promise(resolve => setTimeout(resolve, 650));
+   });
+   expect(host.textContent).toContain("Đang lưu…");
+   expect(host.textContent).not.toContain("Saving…");
+  } finally {
+   await act(async () => root.unmount());
+   host.remove();
+  }
+ });
   it("does not show saved after the profile endpoint rejects the update", async () => {
     const fetchMock = vi
       .fn()

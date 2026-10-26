@@ -7,14 +7,14 @@ import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import vietnamese from "../../../messages/vi.json";
 
-const mocks = vi.hoisted(() => ({ locale: "vi", replace: vi.fn(), reload: vi.fn() }));
+const mocks = vi.hoisted(() => ({ locale: "vi", replace: vi.fn(), reload: vi.fn(), isAuthenticated: false, isLoading: false }));
 vi.mock("next/navigation", () => ({
   useParams: () => ({ locale: mocks.locale }),
   useRouter: () => ({ replace: mocks.replace }),
   useSearchParams: () => new URLSearchParams("returnTo=/vi/learn")
 }));
 vi.mock("../../../lib/go-auth-provider", () => ({
-  useGoAuth: () => ({ reload: mocks.reload })
+  useGoAuth: () => ({ reload: mocks.reload, isAuthenticated: mocks.isAuthenticated, isLoading: mocks.isLoading })
 }));
 vi.mock("./google-login-button", () => ({
   googleLoginEnabled: true,
@@ -69,6 +69,8 @@ beforeEach(() => {
   mocks.replace.mockReset();
   mocks.reload.mockReset().mockResolvedValue(undefined);
   mocks.locale = "vi";
+  mocks.isAuthenticated = false;
+  mocks.isLoading = false;
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
@@ -81,6 +83,17 @@ afterEach(async () => {
 });
 
 describe("learner auth pages regression", () => {
+ it("redirects an existing valid session to its safe return path", async () => {
+  mocks.isAuthenticated = true;
+  await render(LoginPage);
+  expect(mocks.replace).toHaveBeenCalledWith("/vi/learn");
+  expect(container.querySelector("form")).toBeNull();
+ });
+ it("provides a localized home link and page title", async () => {
+  await render(LoginPage);
+  expect(container.querySelector('a[href="/vi"]')?.textContent).toContain(vietnamese.nav.home);
+  expect(document.title).toBe(`${vietnamese.auth.login.title} — KotobaWorks`);
+ });
   it.each([
     ["/vi/learn?tab=due#list", "/vi/learn?tab=due#list"],
     ["https://attacker.example/", "/vi"],

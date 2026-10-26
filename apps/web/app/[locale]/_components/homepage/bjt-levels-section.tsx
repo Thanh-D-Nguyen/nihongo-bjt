@@ -14,6 +14,7 @@ interface LevelItem {
   vocabCount: number;
   kanjiCount: number;
   grammarCount: number;
+  publishedLessonCount: number;
 }
 
 interface Labels {
@@ -33,7 +34,7 @@ export function BjtLevelsSection({ labels, locale }: { labels: Labels; locale: s
   useEffect(() => {
     void learnerApiFetchOptional("/api/levels")
       .then(async (res) => {
-        if (res.ok) setLevels(await res.json());
+        if (res.ok) setLevels(((await res.json()) as LevelItem[]).filter((level) => level.vocabCount + level.kanjiCount + level.grammarCount > 0 || level.publishedLessonCount > 0));
         else setFailed(true);
       })
       .catch(() => setFailed(true))

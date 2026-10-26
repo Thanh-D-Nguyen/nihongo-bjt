@@ -264,7 +264,7 @@ export function TodayPlanHub({
         <div className="rounded-xl bg-surface px-4 py-4 text-center shadow-xs ring-1 ring-border sm:px-6 sm:py-5">
           {analyticsReady ? (
             <p className="text-2xl font-bold tabular-nums text-navy sm:text-3xl">
-              {analyticsError ? "—" : analytics?.totals.completedBjtSessions ?? 0}
+              {analyticsError ? "—" : analytics?.totals.completedSessions ?? analytics?.totals.completedBjtSessions ?? 0}
             </p>
           ) : (
             <SkeletonLine className="mx-auto h-8 w-12" />
@@ -301,7 +301,7 @@ export function TodayPlanHub({
                   {copy.primarySub}
                 </p>
                 <Link
-                  className="group mt-7 inline-flex min-h-12 items-center gap-3 rounded-full bg-white py-1.5 pl-5 pr-1.5 text-sm font-bold text-[#1B2A4A] shadow-[0_8px_24px_rgba(4,11,27,0.18)] transition-[transform,box-shadow] duration-300 ease-[var(--ease-spring)] hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(4,11,27,0.24)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1B2A4A] active:translate-y-0"
+                  className="group mt-7 inline-flex min-h-12 items-center gap-3 rounded-full bg-white py-1.5 pl-5 pr-1.5 text-sm font-bold text-[#1B2A4A] shadow-[0_8px_24px_rgba(4,11,27,0.18)] transition-[transform,box-shadow] duration-300 ease-[var(--ease-spring)] hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(4,11,27,0.24)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1B2A4A] active:translate-y-0 dark:bg-white dark:text-[#1B2A4A]"
                   href={`/${locale}/levels`}
                 >
                   {copy.primaryCta}

@@ -318,6 +318,10 @@ func persistExerciseDrafts(ctx context.Context, db *pgxpool.Pool, exerciseType s
 			return nil, err
 		}
 		generationKey := exerciseType + ":" + draft.sourceType + ":" + draft.sourceID
+		if draft.sourceType == "lexeme" {
+			// Keep assigned questions immutable while replacing cached, abbreviated gloss choices.
+			generationKey += ":primary-senses-v2"
+		}
 		var id string
 		var storedPrompt, storedChoices []byte
 		var storedLevel *string
@@ -356,10 +360,13 @@ func persistExerciseDrafts(ctx context.Context, db *pgxpool.Pool, exerciseType s
 
 func selectExerciseLexemes(ctx context.Context, db *pgxpool.Pool, level string, limit int) ([]exerciseLexeme, error) {
 	rows, err := db.Query(ctx, `SELECT id::text, headword, COALESCE(reading, ''),
-		COALESCE(NULLIF(short_meaning_vi, ''), kanji_meaning_vi), jlpt_level
-		FROM content.lexeme
+		COALESCE((SELECT NULLIF(trim(s.meaning_vi), '') FROM content.lexeme_sense s
+			WHERE s.lexeme_id = l.id AND trim(s.meaning_vi) <> '' ORDER BY s.position LIMIT 1),
+			NULLIF(kanji_meaning_vi, ''), short_meaning_vi), jlpt_level
+		FROM content.lexeme l
 		WHERE status = 'active'
-			AND COALESCE(NULLIF(short_meaning_vi, ''), NULLIF(kanji_meaning_vi, '')) IS NOT NULL
+			AND (EXISTS (SELECT 1 FROM content.lexeme_sense s WHERE s.lexeme_id = l.id AND trim(s.meaning_vi) <> '')
+				OR COALESCE(NULLIF(kanji_meaning_vi, ''), NULLIF(short_meaning_vi, '')) IS NOT NULL)
 			AND ($1 = '' OR jlpt_level ~ ('(^|,)' || $1 || '(,|$)'))
 		ORDER BY random() LIMIT $2`, level, limit)
 	if err != nil {
@@ -372,6 +379,11 @@ func selectExerciseLexemes(ctx context.Context, db *pgxpool.Pool, level string, 
 		if err := rows.Scan(&item.ID, &item.Headword, &item.Reading, &item.Meaning, &item.Level); err != nil {
 			return nil, err
 		}
+		senses := strings.FieldsFunc(item.Meaning, func(r rune) bool { return r == ';' || r == '；' })
+		for i := range senses {
+			senses[i] = strings.TrimSpace(senses[i])
+		}
+		item.Meaning = strings.Join(senses[:min(2, len(senses))], "; ")
 		lexemes = append(lexemes, item)
 	}
 	return lexemes, rows.Err()

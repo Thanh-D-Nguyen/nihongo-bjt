@@ -18,7 +18,7 @@ const level = {
   code: "J5", nameVi: "J5 tiếng Việt", nameJa: "J5 日本語", nameEn: "J5 English",
   descriptionVi: "Mô tả tiếng Việt", descriptionJa: "日本語の説明", descriptionEn: "English description",
   scoreMin: 0, scoreMax: 199, jlptEquiv: "N5", color: "#22C55E",
-  vocabCount: 2, kanjiCount: 3, grammarCount: 4
+  vocabCount: 2, kanjiCount: 3, grammarCount: 4, publishedLessonCount: 0
 };
 
 const labels = {
@@ -66,6 +66,17 @@ afterEach(async () => {
 });
 
 describe("LevelsClient", () => {
+ it("keeps lesson-only levels visible while hiding empty levels", async () => {
+  const empty = { ...level, code: "J1+", vocabCount: 0, kanjiCount: 0, grammarCount: 0, publishedLessonCount: 0 };
+  apiFetch.mockImplementation((path: string) => Promise.resolve(new Response(JSON.stringify(path === "/api/levels" ? [{ ...empty, publishedLessonCount: 1 }, { ...empty, code: "J0" }] : { totals: {} }))));
+  await act(async () => root.render(<LevelsClient labels={labels.vi} locale="vi" />));
+  expect({ lessonOnly: !!host.querySelector('a[href="/vi/levels/J1+"]'), empty: !!host.querySelector('a[href="/vi/levels/J0"]') }, "level availability follows public lessons and reference data").toEqual({ lessonOnly: true, empty: false });
+ });
+ it("hides levels with no available content", async () => {
+  apiFetch.mockImplementation((path: string) => Promise.resolve(new Response(JSON.stringify(path === "/api/levels" ? [level, { ...level, code: "J1+", vocabCount: 0, kanjiCount: 0, grammarCount: 0 }] : { totals: {} }))));
+  await act(async () => root.render(<LevelsClient labels={labels.vi} locale="vi" />));
+  expect(host.querySelector('a[href="/vi/levels/J1+"]')).toBeNull();
+ });
 	const renderLocale = async (locale: "vi" | "en" | "ja") => {
 		await act(async () => root.render(<LevelsClient labels={labels[locale]} locale={locale} />));
 		await act(async () => { await Promise.resolve(); });

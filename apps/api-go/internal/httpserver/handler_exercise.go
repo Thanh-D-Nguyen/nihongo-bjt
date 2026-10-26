@@ -344,30 +344,37 @@ func completeExerciseSessionHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-		if status != "in_progress" {
+		if status != "in_progress" && status != "completed" {
 			writeJSONError(w, "session is not active", http.StatusBadRequest)
 			return
 		}
-		var answeredCount int
-		if err := tx.QueryRow(ctx, `SELECT count(*) FROM exercise.exercise_answer WHERE session_id = $1 AND exercise_id = ANY($2::uuid[])`, sessionID, exerciseIDs).Scan(&answeredCount); err != nil {
-			logger.Error("complete exercise session: answer count failed", "error", err)
-			writeJSONError(w, "internal error", http.StatusInternalServerError)
-			return
-		}
-		if len(exerciseIDs) == 0 || answeredCount != len(exerciseIDs) {
-			writeJSONError(w, "all assigned exercises must be answered before completion", http.StatusConflict)
-			return
-		}
+		if status == "in_progress" {
+			var answeredCount int
+			if err := tx.QueryRow(ctx, `SELECT count(*) FROM exercise.exercise_answer WHERE session_id = $1 AND exercise_id = ANY($2::uuid[])`, sessionID, exerciseIDs).Scan(&answeredCount); err != nil {
+				logger.Error("complete exercise session: answer count failed", "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			if len(exerciseIDs) == 0 || answeredCount != len(exerciseIDs) {
+				writeJSONError(w, "all assigned exercises must be answered before completion", http.StatusConflict)
+				return
+			}
 
-		_, err = tx.Exec(ctx, `UPDATE exercise.exercise_session SET status = 'completed', completed_at = now(),
+			_, err = tx.Exec(ctx, `UPDATE exercise.exercise_session SET status = 'completed', completed_at = now(),
 			total_questions = $2,
 			correct_count = (SELECT count(*) FROM exercise.exercise_answer WHERE session_id = $1 AND exercise_id = ANY($3::uuid[]) AND is_correct),
 			score = (SELECT count(*) * 10 FROM exercise.exercise_answer WHERE session_id = $1 AND exercise_id = ANY($3::uuid[]) AND is_correct)
 			WHERE id = $1 AND status = 'in_progress'`, sessionID, len(exerciseIDs), exerciseIDs)
-		if err != nil {
-			logger.Error("complete exercise session: update failed", "error", err, "session_id", sessionID)
-			writeJSONError(w, "internal error", http.StatusInternalServerError)
-			return
+			if err != nil {
+				logger.Error("complete exercise session: update failed", "error", err, "session_id", sessionID)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			if err := recordExerciseCompletion(ctx, tx, sessionID, identity.UserID); err != nil {
+				logger.Error("complete exercise session: record progress failed", "error", err, "session_id", sessionID)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		var totalQuestions, correctCount, score int
@@ -392,6 +399,40 @@ func completeExerciseSessionHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 
 func validExercisePlacement(value string) bool {
 	return value == "" || value == "practice_tab" || value == "post_review" || value == "daily_hub"
+}
+
+func recordExerciseCompletion(ctx context.Context, tx pgx.Tx, sessionID, userID string) error {
+	// The session lock and shared ID make completion and its activity one atomic, retry-safe write.
+	if _, err := tx.Exec(ctx, `INSERT INTO learning.study_session
+		(id, user_id, mode, duration_minutes, started_at, ended_at, quizzes_done, completed)
+		SELECT s.id, s.user_id, 'exercise', COALESCE((SELECT SUM(a.time_spent_ms) / 60000 FROM exercise.exercise_answer a WHERE a.session_id = s.id), 0)::int,
+			s.completed_at, s.completed_at, s.total_questions, true
+		FROM exercise.exercise_session s WHERE s.id = $1 AND s.user_id = $2
+		ON CONFLICT (id) DO NOTHING`, sessionID, userID); err != nil {
+		return err
+	}
+	var timezone string
+	if err := tx.QueryRow(ctx, `SELECT timezone FROM profile.user_profile WHERE id = $1`, userID).Scan(&timezone); err != nil {
+		return err
+	}
+	location, err := time.LoadLocation(timezone)
+	if err != nil {
+		location = time.UTC
+	}
+	today := time.Now().In(location).Format("2006-01-02")
+	_, err = tx.Exec(ctx, `INSERT INTO gamification.user_streak
+		(streak_config_id, user_id, current_streak, longest_streak, last_activity_date, updated_at)
+		SELECT id, $1, 1, 1, $2::date, NOW() FROM gamification.streak_config
+		WHERE enabled = true AND activity_type IN ('exercise', 'any')
+		ON CONFLICT (streak_config_id, user_id) DO UPDATE SET
+		current_streak = CASE
+			WHEN user_streak.last_activity_date >= $2::date THEN user_streak.current_streak
+			WHEN user_streak.last_activity_date = $2::date - 1 THEN user_streak.current_streak + 1 ELSE 1 END,
+		longest_streak = GREATEST(user_streak.longest_streak, CASE
+			WHEN user_streak.last_activity_date >= $2::date THEN user_streak.current_streak
+			WHEN user_streak.last_activity_date = $2::date - 1 THEN user_streak.current_streak + 1 ELSE 1 END),
+		last_activity_date = GREATEST(user_streak.last_activity_date, $2::date), updated_at = NOW()`, userID, today)
+	return err
 }
 
 // DB helper functions for exercise sessions.

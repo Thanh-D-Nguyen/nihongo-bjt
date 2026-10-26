@@ -1,34 +1,26 @@
 "use client";
 
+import Link from "next/link";
 import { useParams } from "next/navigation";
+import en from "../../messages/en.json";
+import ja from "../../messages/ja.json";
+import vi from "../../messages/vi.json";
 
-const copy = {
-  vi: { title: "Đã xảy ra lỗi", desc: "Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.", retry: "Thử lại" },
-  ja: { title: "エラーが発生しました", desc: "申し訳ございません。もう一度お試しください。", retry: "再試行" },
-  en: { title: "Something went wrong", desc: "Sorry, an error occurred. Please try again.", retry: "Retry" },
-};
-
-export default function LocaleError({
-  reset,
-}: {
+export default function LocaleError({ error, reset }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
   const params = useParams();
-  const locale = (params?.locale as string) ?? "vi";
-  const t = copy[locale as keyof typeof copy] ?? copy.vi;
+  const locale = params?.locale === "ja" ? "ja" : params?.locale === "en" ? "en" : "vi";
+  const t = { vi, ja, en }[locale].systemPages;
 
   return (
-    <main className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
-      <h1 className="text-2xl font-bold text-ink">{t.title}</h1>
-      <p className="mt-2 text-sm text-muted">{t.desc}</p>
-      <button
-        className="mt-6 rounded-xl bg-ink px-5 py-2.5 text-sm font-medium text-surface hover:bg-ink/90"
-        onClick={() => reset()}
-        type="button"
-      >
-        {t.retry}
-      </button>
+    <main className="flex min-h-[60vh] flex-col items-center justify-center bg-paper px-4 text-center text-ink">
+      <h1 className="text-2xl font-bold">{t.errorTitle}</h1>
+      <p className="mt-2 text-sm text-muted">{t.errorDescription}</p>
+      {error.digest && <p className="mt-3 text-xs text-muted">{t.errorReference.replace("{reference}", error.digest)}</p>}
+      <button className="mt-6 min-h-12 rounded-xl bg-action px-5 py-2.5 text-sm font-medium text-white hover:bg-action-hover" onClick={reset} type="button">{t.retry}</button>
+      <Link className="mt-3 inline-flex min-h-12 items-center text-sm text-accent" href={`/${locale}`}>{t.home}</Link>
     </main>
   );
 }

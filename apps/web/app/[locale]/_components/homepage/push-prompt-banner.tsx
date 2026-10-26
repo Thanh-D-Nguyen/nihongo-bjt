@@ -55,7 +55,7 @@ export function PushPromptBanner({ labels }: { labels: PushBannerLabels }) {
       <div className="flex items-center gap-2">
         <button
           onClick={() => void handleSubscribe()}
-          className="inline-flex min-h-8 items-center rounded-lg bg-accent px-3 text-xs font-bold text-white transition hover:opacity-90 active:scale-[0.95]"
+          className="inline-flex min-h-8 items-center rounded-lg bg-action px-3 text-xs font-bold text-white transition hover:opacity-90 active:scale-[0.95]"
         >
           {labels.enable}
         </button>

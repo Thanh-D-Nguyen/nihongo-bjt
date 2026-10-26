@@ -2,7 +2,7 @@
 
 import { Badge, Button, ErrorState, SectionHeader, TabButton, TabsList } from "@nihongo-bjt/ui";
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 
 import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
@@ -100,6 +100,8 @@ function FeaturedNewsCard({
           <h3 className="mt-3 text-lg font-bold leading-snug text-slate-800 line-clamp-3 md:text-xl">
             {article.title}
           </h3>
+          {!article.hasBody && <p className="mt-2 text-sm text-muted">{labels.newsContentUnavailable}</p>}
+          {!article.canGenerateCards && <p className="mt-2 text-sm text-muted">{labels.newsCardsUnavailable}</p>}
 
           <div className="mt-6 flex flex-wrap gap-2">
             <Link
@@ -112,6 +114,8 @@ function FeaturedNewsCard({
             <button
               className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-4 text-sm font-bold text-blue-700 transition-all duration-200 hover:bg-blue-100 hover:shadow-sm"
               onClick={() => onCreateFlashcardDeck(article.id)}
+              disabled={!article.canGenerateCards}
+              title={!article.canGenerateCards ? labels.newsCardsUnavailable : undefined}
               type="button"
             >
               <IconBookmark aria-hidden size={16} />
@@ -171,6 +175,8 @@ function CompactNewsCard({
         <h3 className="mt-1.5 text-sm font-bold leading-snug text-slate-800 line-clamp-2">
           {article.title}
         </h3>
+        {!article.hasBody && <p className="mt-2 text-xs text-muted">{labels.newsContentUnavailable}</p>}
+        {!article.canGenerateCards && <p className="mt-2 text-xs text-muted">{labels.newsCardsUnavailable}</p>}
 
         <div className="mt-3 flex gap-2">
           <Link
@@ -182,7 +188,9 @@ function CompactNewsCard({
           <button
             className="inline-flex min-h-9 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-3 text-blue-600 transition-all hover:bg-blue-100"
             onClick={() => onCreateFlashcardDeck(article.id)}
-            title={labels.newsCreateFlashcard}
+            disabled={!article.canGenerateCards}
+            aria-label={labels.newsCreateFlashcard}
+            title={!article.canGenerateCards ? labels.newsCardsUnavailable : labels.newsCreateFlashcard}
             type="button"
           >
             <IconBookmark aria-hidden size={14} />
@@ -195,7 +203,7 @@ function CompactNewsCard({
 
 /* ─── Skeleton ─── */
 
-function NewsSkeleton() {
+function NewsSkeleton({ label }: { label: string }) {
   return (
     <div aria-busy className="space-y-4">
       {/* Featured skeleton */}
@@ -206,7 +214,7 @@ function NewsSkeleton() {
           <div className="h-[260px] animate-pulse rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50" key={i} />
         ))}
       </div>
-      <p className="sr-only">Loading...</p>
+      <p className="sr-only">{label}</p>
     </div>
   );
 }
@@ -254,13 +262,8 @@ export function FeaturedNewsSection({
   const [pendingArticleId, setPendingArticleId] = useState<string | null>(null);
   const articles = articlesByType[activeType] ?? [];
 
-  const counts = useMemo(
-    () => ({
-      easy: articlesByType.easy.length,
-      normal: articlesByType.normal.length
-    }),
-    [articlesByType.easy.length, articlesByType.normal.length]
-  );
+  const latestPublished = articles.reduce((latest, article) => Math.max(latest, Date.parse(article.publishedAt) || 0), 0);
+  const stale = latestPublished > 0 && Date.now() - latestPublished > 7 * 86400000;
 
   const handleOpenCreateDeck = useCallback(
     (articleId: string) => {
@@ -286,7 +289,10 @@ export function FeaturedNewsSection({
           headers: { "Content-Type": "application/json" },
           method: "POST"
         });
-        if (!createRes.ok) throw new Error("Failed");
+        if (!createRes.ok) {
+          setCreateError(createRes.status === 422 ? labels.newsCardsUnavailable ?? labels.newsFlashcardError : labels.newsFlashcardError);
+          return;
+        }
         setPendingArticleId(null);
         setFlashcardMsg(labels.newsFlashcardCreated);
         setTimeout(() => setFlashcardMsg(null), 2000);
@@ -296,7 +302,7 @@ export function FeaturedNewsSection({
         setCreatingDeck(false);
       }
     },
-    [labels.newsFlashcardCreated, labels.newsFlashcardError, pendingArticleId]
+    [labels.newsFlashcardCreated, labels.newsFlashcardError, labels.newsCardsUnavailable, pendingArticleId]
   );
 
   const [featured, ...rest] = articles;
@@ -318,12 +324,13 @@ export function FeaturedNewsSection({
         {(["easy", "normal"] as const).map((type) => (
           <TabButton active={activeType === type} key={type} onClick={() => { setActiveType(type); onTabChange?.(type); }}>
             {sourceLabel(type, labels)}
-            <span className="ml-1.5 tabular-nums text-current/60">
-              {type === "easy" ? counts.easy : counts.normal}
-            </span>
           </TabButton>
         ))}
       </TabsList>
+      {!loading && latestPublished > 0 && <p className="mb-4 text-sm text-muted" role="status">
+        {labels.newsLatestPublished?.replace("{time}", new Date(latestPublished).toLocaleDateString(locale)) ?? new Date(latestPublished).toLocaleDateString(locale)}
+        {stale && <> {labels.newsStale}</>}
+      </p>}
 
       {/* Flashcard toast */}
       {flashcardMsg && (
@@ -334,7 +341,7 @@ export function FeaturedNewsSection({
 
       {/* Content area */}
       {loading ? (
-        <NewsSkeleton />
+        <NewsSkeleton label={labels.sectionLoadingHint} />
       ) : error ? (
         <ErrorState
           action={

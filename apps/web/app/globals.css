@@ -15,6 +15,8 @@
   --color-surface: #ffffff;
   --color-accent: #3b82f6;
   --color-accent-mid: #2563eb;
+  --color-action: #1d4ed8;
+  --color-action-hover: #1e40af;
   --color-accent-hover: #2563eb;
   --color-accent-soft: #dbeafe;
   --color-leaf: #059669;
@@ -112,7 +114,7 @@
   /* Core surfaces */
   --color-ink: #f1f5f9;
   --color-muted: #94a3b8;
-  --color-subtle: #64748b;
+  --color-subtle: #94a3b8;
   --color-paper: #0f172a;
   --color-surface: #1e293b;
 
@@ -201,7 +203,7 @@
     color-scheme: dark;
     --color-ink: #f1f5f9;
     --color-muted: #94a3b8;
-    --color-subtle: #64748b;
+    --color-subtle: #94a3b8;
     --color-paper: #0f172a;
     --color-surface: #1e293b;
     --color-border: #334155;

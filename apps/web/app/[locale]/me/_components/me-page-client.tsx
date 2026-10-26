@@ -254,7 +254,7 @@ export function MePageClient({
             <input ref={coverInputRef} accept="image/*" className="hidden" type="file"
               onChange={(e) => void handleFile("coverAssetId", e)} />
             <button
-              className="rounded-lg bg-white/80 px-3 py-1.5 text-xs font-medium text-ink/80 backdrop-blur-sm transition hover:bg-white"
+              className="rounded-lg bg-surface/90 px-3 py-1.5 text-xs font-medium text-ink backdrop-blur-sm transition hover:bg-white"
               disabled={uploading}
               onClick={() => coverInputRef.current?.click()}
             >
@@ -262,7 +262,7 @@ export function MePageClient({
             </button>
             {profile?.coverAssetId && (
               <button
-                className="rounded-lg bg-white/60 px-3 py-1.5 text-xs font-medium text-ink/60 backdrop-blur-sm transition hover:bg-white/80"
+                className="rounded-lg bg-surface/90 px-3 py-1.5 text-xs font-medium text-muted backdrop-blur-sm transition hover:bg-surface/90"
                 disabled={uploading}
                 onClick={() => void updateProfileImage("coverAssetId", null)}
               >
@@ -275,7 +275,7 @@ export function MePageClient({
         {/* Avatar + Info */}
         <div className="-mt-10 flex flex-col gap-3 px-4 pb-4 sm:flex-row sm:items-end sm:gap-4 sm:px-6 sm:pb-5">
           <div className="relative">
-            <div className="grid h-20 w-20 place-items-center overflow-hidden rounded-2xl border-[3px] border-white bg-brand-navy text-xl font-bold text-white shadow-lg sm:h-24 sm:w-24 sm:text-2xl">
+            <div className="grid h-20 w-20 place-items-center overflow-hidden rounded-2xl border-[3px] border-surface bg-brand-panel text-xl font-bold text-white shadow-lg sm:h-24 sm:w-24 sm:text-2xl">
               {avatarUrl ? <img alt="" className="h-full w-full object-cover" src={avatarUrl} /> : initialsFor(displayName)}
             </div>
             <input ref={avatarInputRef} accept="image/*" className="hidden" type="file"
@@ -320,7 +320,7 @@ export function MePageClient({
       </section>
 
       {/* ═══ TAB BAR (Sticky) ═══ */}
-      <nav className="sticky top-0 z-20 -mx-4 mt-5 border-b border-ink/8 bg-white/90 px-4 backdrop-blur-md" role="tablist">
+      <nav className="sticky top-0 z-20 -mx-4 mt-5 border-b border-ink/8 bg-surface/90 px-4 backdrop-blur-md" role="tablist">
         <div className="grid grid-cols-4 gap-0 sm:flex sm:gap-1">
           {(["overview", "progress", "achievements", "settings"] as Tab[]).map((t) => (
             <button

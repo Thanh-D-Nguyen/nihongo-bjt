@@ -31,6 +31,8 @@ interface NhkArticleDetail {
   bodyHtml: string | null;
   bodyPlain: string | null;
   vocabulary: VocabItem[];
+  hasBody: boolean;
+  canGenerateCards: boolean;
 }
 
 interface VocabItem {
@@ -50,6 +52,8 @@ interface Labels {
   originalArticle: string;
   readingTitle: string;
   title: string;
+  titleNormal?: string;
+  cardsUnavailable?: string;
   vocabTitle: string;
   vocabWord: string;
   vocabReading: string;
@@ -146,7 +150,7 @@ export function NhkArticleDetailClient({
 
   // Track reading time on unmount / page leave
   useEffect(() => {
-    if (!auth.userId || !article) return;
+    if (!auth.userId || !article?.hasBody) return;
     readStartRef.current = Date.now();
     const trackOnLeave = () => {
       const sec = Math.round((Date.now() - readStartRef.current) / 1000);
@@ -217,7 +221,7 @@ export function NhkArticleDetailClient({
           setDeckDialogOpen(false);
           setDeckStatus(labels.deckCreated);
         } else {
-          setDeckError(labels.addFlashcardError);
+          setDeckError(res.status === 422 ? labels.cardsUnavailable ?? labels.addFlashcardError : labels.addFlashcardError);
         }
       } catch {
         setDeckError(labels.addFlashcardError);
@@ -225,7 +229,7 @@ export function NhkArticleDetailClient({
         setCreatingDeck(false);
       }
     },
-    [auth.userId, articleId, labels.addFlashcardError, labels.deckCreated]
+    [auth.userId, articleId, labels.addFlashcardError, labels.cardsUnavailable, labels.deckCreated]
   );
 
   if (loading) {
@@ -269,7 +273,7 @@ export function NhkArticleDetailClient({
         </Link>
         <span>/</span>
         <Link href={`/${locale}/news`} className="hover:text-ink transition-colors">
-          {labels.title}
+          {article.sourceType === "normal" ? labels.titleNormal ?? labels.title : labels.title}
         </Link>
       </nav>
 
@@ -331,7 +335,8 @@ export function NhkArticleDetailClient({
             <>
               <button
                 className="inline-flex min-h-11 items-center justify-center rounded-xl bg-ink px-4 text-sm font-semibold text-surface transition hover:bg-ink/90 disabled:opacity-50"
-                disabled={creatingDeck || article.vocabulary.length === 0}
+                disabled={creatingDeck || !article.canGenerateCards}
+                title={!article.canGenerateCards ? labels.cardsUnavailable : undefined}
                 onClick={() => {
                   setDeckError(null);
                   setDeckDialogOpen(true);
@@ -362,6 +367,7 @@ export function NhkArticleDetailClient({
           )}
           {deckStatus ? <span className="text-sm font-semibold text-emerald-700">{deckStatus}</span> : null}
         </div>
+        {!article.canGenerateCards && <p className="mt-2 text-sm text-muted">{labels.cardsUnavailable}</p>}
 
         {/* Ruby title */}
         {article.titleWithRuby && showFurigana && (
@@ -401,18 +407,18 @@ export function NhkArticleDetailClient({
           <svg className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
           </svg>
-          <span>{article.sourceType === "normal" ? labels.summaryNote : labels.contentUnavailable}</span>
+          <span>{article.bodyHtml?.trim() || article.bodyPlain?.trim() ? labels.summaryNote : labels.contentUnavailable}</span>
         </div>
       )}
 
       {/* Body */}
-      <article
+      {safeBodyHtml ? <article
         className={`nhk-body mt-6 space-y-4 text-base leading-relaxed text-ink/90 ${
           showFurigana ? "" : "nhk-hide-furigana"
         }`}
         lang="ja"
         dangerouslySetInnerHTML={{ __html: safeBodyHtml }}
-      />
+      /> : <article className="nhk-body mt-6 whitespace-pre-line text-base leading-relaxed text-ink/90" lang="ja">{article.bodyPlain}</article>}
       <style jsx global>{`
         .nhk-hide-furigana rt,
         .nhk-hide-furigana rp {
@@ -426,7 +432,7 @@ export function NhkArticleDetailClient({
           href={article.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-accent/90"
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-action px-6 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-action-hover"
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />

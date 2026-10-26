@@ -47,6 +47,12 @@ async function renderAnalytics() {
 }
 
 describe("LearnerAnalyticsClient API contract", () => {
+ it("shows the empty period message only once", async () => {
+  learnerApiFetchMock.mockResolvedValue(response({ dailyStats: [], totals: {} }));
+  const container = await renderAnalytics();
+  const message = viMessages.analytics.emptyTitleDynamic.replace("{n}", "7");
+  expect(container.textContent?.split(message)).toHaveLength(2);
+ });
   it("renders Go dailyStats and a complete selected-period calendar", async () => {
     learnerApiFetchMock.mockResolvedValue(response({
       dailyStats: [{ date: new Date().toISOString().slice(0, 10), minutes: 37, xpEarned: 12, lessonsCount: 2 }],

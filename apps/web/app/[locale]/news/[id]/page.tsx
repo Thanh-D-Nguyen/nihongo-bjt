@@ -9,11 +9,11 @@ const messages = { ja, vi, en };
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ locale: string }>;
+  params: Promise<{ locale: string; id: string }>;
 }): Promise<Metadata> {
-  const { locale } = await params;
+  const { locale, id } = await params;
   const t = (messages as Record<string, typeof vi>)[locale] ?? messages.vi;
-  return { title: `${t.nhkDetail.title} — KotobaWorks` };
+  return { title: `${id.startsWith("normal") ? t.homepage.newsNormal : t.nhkDetail.title} — KotobaWorks` };
 }
 
 export default async function NhkArticlePage({

@@ -19,7 +19,7 @@ export interface MentorLabels {
   streakLabel: string;
 }
 
-type Rating = "again" | "hard" | "good";
+type Rating = "again" | "hard" | "good" | "easy";
 
 interface FlashcardInteractiveCardProps {
   /** Main content — rendered inside the card body */
@@ -41,7 +41,7 @@ interface FlashcardInteractiveCardProps {
   /** Phase eyebrow labels */
   phaseLabel: string;
   /** Rating button labels */
-  ratingLabels: { again: string; hard: string; good: string };
+  ratingLabels: { again: string; hard: string; good: string; easy: string };
   /** Reveal button label */
   revealLabel: string;
   /** Mentor i18n labels */
@@ -107,14 +107,14 @@ function MentorBubble({
   rating: Rating;
 }) {
   const emoji =
-    rating === "good"
+    rating === "good" || rating === "easy"
       ? labels.mentorGoodEmoji
       : rating === "hard"
         ? labels.mentorHardEmoji
         : labels.mentorAgainEmoji;
 
   const text =
-    rating === "good"
+    rating === "good" || rating === "easy"
       ? labels.mentorGoodText
       : rating === "hard"
         ? labels.mentorHardText
@@ -130,7 +130,7 @@ function MentorBubble({
           : null;
 
   const borderColor =
-    rating === "good"
+    rating === "good" || rating === "easy"
       ? "border-leaf/30 bg-leaf-soft/50"
       : rating === "hard"
         ? "border-sun/30 bg-sun/10"
@@ -426,6 +426,13 @@ export function FlashcardInteractiveCard({
                   type="button"
                 >
                   {ratingLabels.good}
+                </button>
+                <button
+                  className={`${btnSecondary} min-h-11`}
+                  onClick={() => handleRate("easy")}
+                  type="button"
+                >
+                  {ratingLabels.easy}
                 </button>
               </>
             ) : null}

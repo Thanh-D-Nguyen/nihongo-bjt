@@ -18,18 +18,20 @@ import (
 )
 
 type nhkArticleResponse struct {
-	ID            string          `json:"id"`
-	SourceType    string          `json:"sourceType"`
-	Title         string          `json:"title"`
-	TitleWithRuby *string         `json:"titleWithRuby"`
-	PublishedAt   time.Time       `json:"publishedAt"`
-	ImageURL      *string         `json:"imageUrl"`
-	AudioURL      *string         `json:"audioUrl"`
-	Difficulty    *string         `json:"difficulty"`
-	URL           string          `json:"url"`
-	BodyHTML      *string         `json:"bodyHtml"`
-	BodyPlain     *string         `json:"bodyPlain"`
-	Vocabulary    json.RawMessage `json:"vocabulary,omitempty"`
+	ID               string          `json:"id"`
+	SourceType       string          `json:"sourceType"`
+	Title            string          `json:"title"`
+	TitleWithRuby    *string         `json:"titleWithRuby"`
+	PublishedAt      time.Time       `json:"publishedAt"`
+	ImageURL         *string         `json:"imageUrl"`
+	AudioURL         *string         `json:"audioUrl"`
+	Difficulty       *string         `json:"difficulty"`
+	URL              string          `json:"url"`
+	BodyHTML         *string         `json:"bodyHtml"`
+	BodyPlain        *string         `json:"bodyPlain"`
+	Vocabulary       json.RawMessage `json:"vocabulary,omitempty"`
+	HasBody          bool            `json:"hasBody"`
+	CanGenerateCards bool            `json:"canGenerateCards"`
 }
 
 func nhkNewsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
@@ -44,7 +46,9 @@ func nhkNewsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc 
 		}
 		limit := nhkPageValue(r, "limit", 12, 1, 48)
 		offset := nhkPageValue(r, "offset", 0, 0, 1_000_000)
-		rows, err := db.Query(r.Context(), `SELECT id,source_type,title,title_with_ruby,published_at,image_url,difficulty,url
+		rows, err := db.Query(r.Context(), `SELECT id,source_type,title,title_with_ruby,published_at,image_url,difficulty,url,
+			COALESCE(NULLIF(btrim(body_plain),''),NULLIF(btrim(body_html),'')) IS NOT NULL,
+			COALESCE(jsonb_typeof(vocabulary)='array' AND vocabulary != '[]'::jsonb,false)
 			FROM content.nhk_article WHERE source_type=$1 ORDER BY published_at DESC,id LIMIT $2 OFFSET $3`, kind, limit, offset)
 		if err != nil {
 			logger.Error("list NHK articles", "error", err)
@@ -55,7 +59,7 @@ func nhkNewsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc 
 		articles := make([]nhkArticleResponse, 0)
 		for rows.Next() {
 			var article nhkArticleResponse
-			if err := rows.Scan(&article.ID, &article.SourceType, &article.Title, &article.TitleWithRuby, &article.PublishedAt, &article.ImageURL, &article.Difficulty, &article.URL); err != nil {
+			if err := rows.Scan(&article.ID, &article.SourceType, &article.Title, &article.TitleWithRuby, &article.PublishedAt, &article.ImageURL, &article.Difficulty, &article.URL, &article.HasBody, &article.CanGenerateCards); err != nil {
 				logger.Error("scan NHK article", "error", err)
 				writeJSONError(w, "internal error", http.StatusInternalServerError)
 				return
@@ -75,11 +79,13 @@ func nhkArticleDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 	return func(w http.ResponseWriter, r *http.Request) {
 		var article nhkArticleResponse
 		var vocabulary []byte
-		err := db.QueryRow(r.Context(), `SELECT id,source_type,title,title_with_ruby,published_at,image_url,audio_url,difficulty,url,body_html,body_plain,vocabulary
+		err := db.QueryRow(r.Context(), `SELECT id,source_type,title,title_with_ruby,published_at,image_url,audio_url,difficulty,url,body_html,body_plain,vocabulary,
+			COALESCE(NULLIF(btrim(body_plain),''),NULLIF(btrim(body_html),'')) IS NOT NULL,
+			COALESCE(jsonb_typeof(vocabulary)='array' AND vocabulary != '[]'::jsonb,false)
 			FROM content.nhk_article WHERE id=$1`, chi.URLParam(r, "id")).Scan(
 			&article.ID, &article.SourceType, &article.Title, &article.TitleWithRuby, &article.PublishedAt,
 			&article.ImageURL, &article.AudioURL, &article.Difficulty, &article.URL, &article.BodyHTML,
-			&article.BodyPlain, &vocabulary)
+			&article.BodyPlain, &vocabulary, &article.HasBody, &article.CanGenerateCards)
 		if errors.Is(err, pgx.ErrNoRows) {
 			writeJSONError(w, "article not found", http.StatusNotFound)
 			return
@@ -89,7 +95,7 @@ func nhkArticleDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-		if len(vocabulary) == 0 {
+		if len(vocabulary) == 0 || string(vocabulary) == "null" {
 			vocabulary = []byte("[]")
 		}
 		article.Vocabulary = vocabulary
@@ -250,6 +256,9 @@ func nhkFlashcardHandler(db *pgxpool.Pool, logger *slog.Logger, wholeArticle boo
 			Reading *string `json:"reading"`
 			Meaning *string `json:"meaning"`
 		}
+		if len(vocabJSON) == 0 {
+			vocabJSON = []byte("[]")
+		}
 		if err := json.Unmarshal(vocabJSON, &words); err != nil {
 			logger.Error("decode NHK vocabulary", "error", err)
 			writeJSONError(w, "article vocabulary is invalid", http.StatusInternalServerError)
@@ -279,7 +288,7 @@ func nhkFlashcardHandler(db *pgxpool.Pool, logger *slog.Logger, wholeArticle boo
 			}
 		}
 		if len(words) == 0 {
-			writeJSONError(w, "article has no vocabulary to save", http.StatusBadRequest)
+			writeJSONError(w, "article vocabulary is unavailable", http.StatusUnprocessableEntity)
 			return
 		}
 		deckTitle := "NHK: " + title

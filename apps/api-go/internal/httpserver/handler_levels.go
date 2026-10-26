@@ -118,11 +118,19 @@ func levelListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 				writeJSONError(w, "internal error", http.StatusInternalServerError)
 				return
 			}
+			var publishedLessonCount int
+			if err := db.QueryRow(r.Context(), `SELECT count(*) FROM curriculum.bjt_lesson
+				WHERE level_code=$1 AND status IN ('active','published')
+				AND (published_at IS NULL OR published_at<=now())`, level.Code).Scan(&publishedLessonCount); err != nil {
+				logger.Error("count public BJT lessons", "code", level.Code, "error", err)
+				writeJSONError(w, "internal error", http.StatusInternalServerError)
+				return
+			}
 			levels = append(levels, map[string]any{
 				"code": level.Code, "nameJa": level.NameJa, "nameVi": level.NameVi, "nameEn": level.NameEn,
 				"scoreMin": level.ScoreMin, "scoreMax": level.ScoreMax, "jlptEquiv": level.JLPTEquiv,
 				"descriptionVi": level.DescriptionVi, "descriptionJa": level.DescriptionJa, "descriptionEn": level.DescriptionEn, "color": level.Color,
-				"vocabCount": vocabulary, "kanjiCount": kanji, "grammarCount": grammar,
+				"vocabCount": vocabulary, "kanjiCount": kanji, "grammarCount": grammar, "publishedLessonCount": publishedLessonCount,
 			})
 		}
 		writeJSON(w, http.StatusOK, levels)
@@ -143,8 +151,11 @@ func levelLessonsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc
 		rows, err := db.Query(r.Context(), `SELECT l.id::text,l.slug,l.sort_order,l.title_vi,l.title_ja,l.description_vi,l.description_ja,
 			l.week_number,l.unit_type,l.unit_order,l.estimated_duration_min,
 			jsonb_array_length(CASE WHEN jsonb_typeof(l.lesson_content->'activities')='array' THEN l.lesson_content->'activities' ELSE '[]'::jsonb END),
-			count(lx.id) FILTER (WHERE i.content_type='vocabulary'),count(kx.id) FILTER (WHERE i.content_type='kanji'),
-			count(gx.id) FILTER (WHERE i.content_type='grammar'),
+			count(lx.id) FILTER (WHERE i.content_type='vocabulary') +
+            jsonb_array_length(CASE WHEN jsonb_typeof(l.lesson_content->'vocabulary')='array' THEN l.lesson_content->'vocabulary' ELSE '[]'::jsonb END),
+            count(kx.id) FILTER (WHERE i.content_type='kanji'),
+			count(gx.id) FILTER (WHERE i.content_type='grammar') +
+            jsonb_array_length(CASE WHEN jsonb_typeof(l.lesson_content->'grammar')='array' THEN l.lesson_content->'grammar' ELSE '[]'::jsonb END),
 			COALESCE($2::uuid IS NOT NULL AND bool_or(p.lesson_id IS NOT NULL),false)
 			FROM curriculum.bjt_lesson l LEFT JOIN curriculum.bjt_lesson_item i ON i.lesson_id=l.id
 			LEFT JOIN content.lexeme lx ON i.content_type='vocabulary' AND lx.id=i.content_id AND lx.status='active'

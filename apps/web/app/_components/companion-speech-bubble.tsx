@@ -1,5 +1,6 @@
 "use client";
 
+import enMessages from "../../messages/en.json";
 import { useEffect, useState } from "react";
 
 export type CompanionMood =
@@ -40,7 +41,7 @@ export function CompanionSpeechBubble({
   mood,
   visible,
 }: {
-  customText?: { ja: string; vi: string } | null;
+  customText?: { ja: string; vi: string; en?: string } | null;
   locale: string;
   mood: CompanionMood;
   visible: boolean;
@@ -74,11 +75,11 @@ export function CompanionSpeechBubble({
 
   const quote = pickQuote(quoteIndex);
   const displayText = customText
-    ? (locale === "ja" ? customText.ja : customText.vi)
+    ? locale === "ja" ? customText.ja : locale === "en" ? (customText.en ?? customText.ja) : customText.vi
     : quote.ja;
-  const subText = customText
-    ? (locale === "ja" ? customText.vi : (locale === "ja" ? null : quote.vi))
-    : (locale === "ja" ? null : quote.vi);
+  const subText = locale === "en"
+    ? customText ? customText.ja : enMessages.nav.companion.english.quotes[quoteIndex % MOTIVATIONAL_QUOTES.length]
+    : locale === "ja" ? null : quote.vi;
 
   // Mood-specific emoji prefix
   const moodEmoji: Record<CompanionMood, string> = {

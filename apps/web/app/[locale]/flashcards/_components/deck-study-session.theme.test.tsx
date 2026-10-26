@@ -2,11 +2,15 @@
 
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { FLASHCARD_THEME_DEFINITIONS } from "@nihongo-bjt/shared";
 
 import { DeckStudySession, type DeckStudySessionLabels } from "./deck-study-session";
+
+const { recordProgress } = vi.hoisted(() => ({ recordProgress: vi.fn() }));
+vi.mock("../../../_hooks/use-study-progress", () => ({ recordStudyProgress: recordProgress }));
+vi.mock("../../../_components/battle-bot-avatar", () => ({ BattleBotAvatar: () => null }));
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;
@@ -29,6 +33,21 @@ afterEach(() => {
 });
 
 describe("DeckStudySession semantic theme rendering", () => {
+  it("keeps four preview ratings local and explains that SRS progress is not saved", () => {
+    host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    act(() => root.render(<DeckStudySession cards={[{ id: "preview", frontText: "仕事", backText: "work", reading: null }]} deckId="preview" labels={labels} />));
+    expect(host.textContent).toContain("deckStudyModeNote");
+    act(() => host?.querySelector<HTMLButtonElement>(".fc-card-shell > button[aria-pressed]")?.click());
+    const easy = [...host.querySelectorAll("button")].find(button => button.textContent?.includes("deckStudyRateEasy"));
+    expect(easy, "preview must expose easy rating").toBeDefined();
+    act(() => easy?.click());
+    expect(host.textContent).toContain("deckStudyComplete");
+    expect(recordProgress).not.toHaveBeenCalled();
+    act(() => root.unmount());
+  });
+
   it("uses theme foreground on both faces, keeps long ja/vi content, and preserves flip focus", () => {
     host = document.createElement("div");
     document.body.append(host);

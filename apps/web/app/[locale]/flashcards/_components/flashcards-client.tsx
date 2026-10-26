@@ -31,7 +31,7 @@ interface DueCard {
 }
 
 interface ReviewFeedback {
-  rating: "again" | "hard" | "good";
+  rating: "again" | "hard" | "good" | "easy";
   remediation?: {
     sourceId: string;
     sourceIdKind: string;
@@ -64,6 +64,7 @@ export interface FlashcardLabels {
   error: string;
   eyebrow: string;
   good: string;
+  easy: string;
   hard: string;
   imageAlt: string;
   imageCompleting: string;
@@ -395,7 +396,7 @@ export function FlashcardsClient({
     [labels.error, labels.quotaLine, scopeDeckId, userId]
   );
 
-  async function review(card: DueCard, rating: "again" | "hard" | "good") {
+  async function review(card: DueCard, rating: "again" | "hard" | "good" | "easy") {
     const uid = userId;
     if (!uid) {
       return;
@@ -844,7 +845,7 @@ export function FlashcardsClient({
           onRate={(rating) => void review(currentCard, rating)}
           onReveal={() => setRevealed(true)}
           phaseLabel={!revealed ? labels.reviewPhaseQuestion : labels.reviewPhaseAnswer}
-          ratingLabels={{ again: labels.again, good: labels.good, hard: labels.hard }}
+          ratingLabels={{ again: labels.again, good: labels.good, hard: labels.hard, easy: labels.easy }}
           reading={currentCard.card.reading}
           revealed={revealed}
           revealLabel={labels.reveal}

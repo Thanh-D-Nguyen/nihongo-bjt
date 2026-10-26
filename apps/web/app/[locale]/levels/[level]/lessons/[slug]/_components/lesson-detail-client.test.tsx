@@ -67,6 +67,14 @@ const lesson = {
 	canSaveProgress: true
 };
 
+
+const richContent = {
+ schemaVersion: "1", learningObjectives: [], workplaceScenario: { contextJa: "", contextVi: "", problemVi: "", desiredOutcomeVi: "", relationship: "" },
+ knowledgePoints: ["Focus"], vocabulary: [{ japanese: "こんにちは", reading: "konnichiwa", meaningVi: "Xin chào" }],
+ grammar: [{ pattern: "です", explanationVi: "Lịch sự" }], businessUsageVi: "", examples: [], nuanceNotesVi: [], politenessHierarchyVi: "", vietnameseLearnerPitfalls: [], summaryVi: [],
+ activities: [{ id: "activity", questionType: "best_expression", stimulusType: "text", scenarioJa: "", scenarioVi: "", stimulusText: "挨拶", audioAssetStatus: "not_required", prompt: "選んで", promptVi: "Chọn", answer: "A", explanationJa: "正解", explanationVi: "Giải thích", options: [{ key: "A", text: "こんにちは", isCorrect: true, rationaleVi: "Đúng" }, { key: "B", text: "さようなら", isCorrect: false, rationaleVi: "Sai" }] }]
+};
+
 function response(data: unknown, ok = true): Response {
 	return new Response(JSON.stringify(data), { status: ok ? 200 : 500 });
 }
@@ -99,6 +107,28 @@ describe("LessonDetailClient", () => {
 	beforeEach(() => {
 		apiFetch.mockReset();
 	});
+
+ it("counts embedded lesson content in the header", async () => {
+  apiFetch.mockResolvedValueOnce(response({ ...lesson, lessonContent: richContent }));
+  await renderLesson();
+  const metrics = [...host.querySelectorAll("p")].filter(p => ["vocabSection", "grammarSection"].includes(p.textContent ?? ""));
+  expect(metrics.map(p => p.previousElementSibling?.textContent)).toEqual(["1", "1"]);
+ });
+
+ it("uses theme colors for every quiz answer state", async () => {
+  apiFetch.mockResolvedValueOnce(response({ ...lesson, lessonContent: richContent }));
+  await renderLesson();
+  const answer = [...host.querySelectorAll("button")].find(b => b.textContent?.includes("B.さようなら"))!;
+  expect(answer.className).toContain("text-ink");
+  await act(async () => answer.click());
+  expect(answer.className).toContain("bg-accent-soft");
+  const check = [...host.querySelectorAll("button")].find(b => b.textContent === "checkAnswer")!;
+  await act(async () => check.click());
+  expect(answer.disabled).toBe(true);
+  expect(answer.className).toContain("bg-warning-soft");
+  expect([...host.querySelectorAll("button")].find(b => b.textContent?.includes("A.こんにちは"))?.className).toContain("bg-success-soft");
+  expect(host.textContent).toContain("incorrectAnswer");
+ });
 
 	it("persists completion through the authenticated API and restores server state", async () => {
 		apiFetch.mockResolvedValueOnce(response(lesson)).mockResolvedValueOnce(response({ isCompleted: true }));

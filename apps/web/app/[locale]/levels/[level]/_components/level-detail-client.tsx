@@ -381,7 +381,7 @@ function LessonsList({
 
       <ol className="space-y-3">
         {lessons.map((lesson) => {
-          const totalItems = lesson.vocabCount + lesson.kanjiCount + lesson.grammarCount;
+          const totalItems = lesson.vocabCount + lesson.kanjiCount + lesson.grammarCount + lesson.activityCount;
           const isDone = lesson.isCompleted;
           const unitTypeLabel =
             lesson.unitType === "review"

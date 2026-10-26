@@ -125,7 +125,7 @@ func TestPublicDailyRadarCardListHonorsLimit(t *testing.T) {
 	}
 	if _, err := db.Exec(context.Background(), `INSERT INTO daily.daily_radar_card
 		(module_config_id,slug,title_vi,description_vi,category,module_type,cta_label_vi,status,created_at,updated_at)
-		SELECT $1,'limit-' || $2 || '-' || n,'Radar card','Fixture',$3,'reading','Open','published',NOW(),NOW()
+		SELECT $1,'limit-' || $2 || '-' || n,'Radar card ' || n,'Fixture',$3,'reading','Open','published',NOW(),NOW()
 		FROM generate_series(1,3) AS n`, moduleID, fixtureKey, category); err != nil {
 		t.Fatalf("insert radar cards: %v", err)
 	}

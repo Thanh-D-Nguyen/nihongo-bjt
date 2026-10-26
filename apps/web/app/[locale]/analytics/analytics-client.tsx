@@ -3,7 +3,6 @@
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
   EmptyState,
@@ -361,7 +360,7 @@ export function LearnerAnalyticsClient({
                   key={d}
                   className={`rounded-full px-3 py-1.5 text-xs font-bold outline-none ring-offset-2 transition-all focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-45 ${
                     days === d
-                      ? "bg-accent text-white shadow-sm shadow-accent/25"
+                      ? "bg-action text-white shadow-sm shadow-accent/25"
                       : "text-muted hover:bg-ink/5 dark:hover:bg-ink/10"
                   }`}
                   disabled={loading || !userId}
@@ -422,7 +421,7 @@ export function LearnerAnalyticsClient({
           <p className="mt-1 text-sm text-muted leading-relaxed">{primaryHint}</p>
           <div className="mt-4">
             <Link
-              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-accent px-6 text-sm font-bold text-white shadow-sm shadow-accent/20 outline-none ring-offset-2 transition-all hover:bg-accent-hover hover:shadow-md hover:shadow-accent/25 focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.98]"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-action px-6 text-sm font-bold text-white shadow-sm shadow-accent/20 outline-none ring-offset-2 transition-all hover:bg-action-hover hover:shadow-md hover:shadow-accent/25 focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.98]"
               href={
                 primaryKind === "flashcards"
                   ? `/${locale}/flashcards?tab=review`
@@ -452,7 +451,6 @@ export function LearnerAnalyticsClient({
             <CardTitle className="text-base font-semibold text-ink">
               {labels.summaryTitleDynamic.replace("{n}", String(days))}
             </CardTitle>
-            {!hasData && <CardDescription>{labels.emptyTitleDynamic.replace("{n}", String(days))}</CardDescription>}
           </CardHeader>
           <CardContent className="space-y-8 pt-2">
             {!hasData ? (

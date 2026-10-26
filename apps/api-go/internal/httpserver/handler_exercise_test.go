@@ -197,7 +197,7 @@ func TestPersistExerciseDraftsReusesCachedQuestion(t *testing.T) {
 		t.Fatalf("generation retry returned inconsistent cached question: first=%+v second=%+v", first, second)
 	}
 	t.Cleanup(func() {
-		_, _ = db.Exec(context.Background(), `DELETE FROM exercise.exercise WHERE generation_key = $1`, "meaning_match:lexeme:"+userID)
+		_, _ = db.Exec(context.Background(), `DELETE FROM exercise.exercise WHERE source_id = $1`, userID)
 	})
 }
 
@@ -367,6 +367,24 @@ func TestExerciseComplete_Success(t *testing.T) {
 	if compResp["totalQuestions"] != float64(1) || compResp["correctCount"] != float64(1) || compResp["score"] != float64(10) {
 		t.Errorf("expected persisted totals 1/1/10, got %v/%v/%v", compResp["totalQuestions"], compResp["correctCount"], compResp["score"])
 	}
+	for attempt := 0; attempt < 2; attempt++ {
+		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/exercises/sessions/%s/complete", sessionID), nil)
+		req.Header.Set("Origin", "http://localhost:3000")
+		req.Header.Set("X-CSRF-Token", "test-csrf")
+		req.AddCookie(&http.Cookie{Name: "bjt_web_session", Value: rawToken})
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, req)
+		if response.Code != http.StatusOK || response.Body.String() != compRR.Body.String() {
+			t.Fatalf("completion retry must return persisted result: %d %s", response.Code, response.Body.String())
+		}
+	}
+	var activities, questions int
+	if err := db.QueryRow(context.Background(), `SELECT count(*), COALESCE(sum(quizzes_done), 0) FROM learning.study_session WHERE user_id = $1`, userID).Scan(&activities, &questions); err != nil {
+		t.Fatal(err)
+	}
+	if activities != 1 || questions != 1 {
+		t.Fatalf("exercise completion must record one study activity, got %d activities / %d questions", activities, questions)
+	}
 
 	t.Cleanup(func() {
 		cctx, ccancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -374,6 +392,7 @@ func TestExerciseComplete_Success(t *testing.T) {
 		_, _ = db.Exec(cctx, `DELETE FROM exercise.exercise_answer WHERE session_id IN (SELECT id FROM exercise.exercise_session WHERE user_id = $1)`, userID)
 		_, _ = db.Exec(cctx, `DELETE FROM exercise.exercise_session WHERE user_id = $1`, userID)
 		_, _ = db.Exec(cctx, `DELETE FROM exercise.exercise WHERE id = $1`, exerciseID)
+		_, _ = db.Exec(cctx, `DELETE FROM learning.study_session WHERE user_id = $1`, userID)
 	})
 }
 

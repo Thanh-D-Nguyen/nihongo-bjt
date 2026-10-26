@@ -6,6 +6,7 @@ import {
   PageHeader,
 } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 
 import {
   cancelJapaneseSpeech,
@@ -150,12 +151,11 @@ const FILTER_TO_TYPES: Record<string, readonly string[]> = {
 
 export function ExercisesPageClient({
   labels,
-  locale: _locale
+  locale
 }: {
   labels: ExercisesLabels;
   locale: string;
 }) {
-  void _locale;
 
   const [phase, setPhase] = useState<Phase>("setup");
   const [selectedType, setSelectedType] = useState<string>("meaning_match");
@@ -177,6 +177,20 @@ export function ExercisesPageClient({
   const [studyFeedLoading, setStudyFeedLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<string>("all");
 
+  const refreshStudyFeed = useCallback(async () => {
+    setStudyFeedLoading(true);
+    try {
+      const response = await learnerApiFetch("/api/recommendation/study-feed?limit=6");
+      if (!response.ok) throw new Error("Failed to load recommendations");
+      const data = await response.json();
+      setStudyFeed(Array.isArray(data.items) ? data.items : []);
+    } catch {
+      setError(labels.error);
+    } finally {
+      setStudyFeedLoading(false);
+    }
+  }, [labels.error]);
+
   /* ── Fetch daily progress + due reviews + study feed on mount ────────── */
 
   useEffect(() => {
@@ -191,17 +205,8 @@ export function ExercisesPageClient({
       .catch(() => {});
 
     // Fetch personalized recommendations
-    setStudyFeedLoading(true);
-    learnerApiFetch("/api/recommendation/study-feed?limit=6")
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => {
-        if (data && Array.isArray(data.items)) {
-          setStudyFeed(data.items.filter((i: StudyFeedItem) => i.type === "exercise"));
-        }
-      })
-      .catch(() => {})
-      .finally(() => setStudyFeedLoading(false));
-  }, []);
+    void refreshStudyFeed();
+  }, [refreshStudyFeed]);
 
   /* ── Start review mode ───────────────────────────────────────────────── */
 
@@ -258,14 +263,14 @@ export function ExercisesPageClient({
 
   /* ── Generate exercises ──────────────────────────────────────────────── */
 
-  const handleGenerate = useCallback(async () => {
+  const handleGenerate = useCallback(async (exerciseType = selectedType) => {
     setLoading(true);
     setError(null);
     try {
       const res = await learnerApiFetch("/api/exercises/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: selectedType, count: 10, level: selectedLevel !== "all" ? selectedLevel : "" })
+        body: JSON.stringify({ type: exerciseType, count: 10, level: selectedLevel !== "all" ? selectedLevel : "" })
       });
       if (res.status === 404) {
         setError(labels.noExercises);
@@ -285,7 +290,7 @@ export function ExercisesPageClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionType: "practice_tab",
-          exerciseType: selectedType,
+          exerciseType,
           exerciseIds: data.map((exercise: Exercise) => exercise.id),
           level: selectedLevel !== "all" ? selectedLevel : undefined
         })
@@ -348,6 +353,7 @@ export function ExercisesPageClient({
         const data = await res.json();
         setSession(data);
         setPhase("completed");
+        void refreshStudyFeed();
         // Refresh daily progress
         learnerApiFetch("/api/exercises/daily-progress")
           .then((r) => r.ok ? r.json() : null)
@@ -363,7 +369,7 @@ export function ExercisesPageClient({
     setSelectedAnswer(null);
     setAnswerResult(null);
     setStartTime(Date.now());
-  }, [currentIndex, exercises.length, session, labels.error]);
+  }, [currentIndex, exercises.length, session, labels.error, refreshStudyFeed]);
 
   /* ── Render ──────────────────────────────────────────────────────────── */
 
@@ -429,17 +435,22 @@ export function ExercisesPageClient({
                   const metaType = item.metadata?.exerciseType as string | undefined;
                   const allowedTypes = FILTER_TO_TYPES[activeFilter];
                   return metaType && allowedTypes ? allowedTypes.includes(metaType) : false;
-                }).map((item) => (
-                  <button
+                }).map((item) => {
+                  const isLesson = item.type === "lesson";
+                  const Recommendation = isLesson ? Link : "button";
+                  return (
+                  <Recommendation
                     key={item.id}
+                    href={`/${locale}/levels/${encodeURIComponent(item.metadata?.levelCode ?? "")}/lessons/${encodeURIComponent(item.metadata?.slug ?? "")}`}
                     type="button"
                     onClick={() => {
+                      if (isLesson) return;
                       // Start practice with recommended exercise type if available
                       const metaType = item.metadata?.exerciseType as string | undefined;
                       if (metaType && EXERCISE_TYPES.includes(metaType as typeof EXERCISE_TYPES[number])) {
                         setSelectedType(metaType as typeof EXERCISE_TYPES[number]);
                       }
-                      handleGenerate();
+                      void handleGenerate(metaType && EXERCISE_TYPES.includes(metaType as typeof EXERCISE_TYPES[number]) ? metaType : selectedType);
                     }}
                     className="group relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-left shadow-xs transition-all hover:border-[var(--color-border-hover)] hover:shadow-sm hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-navy)]"
                   >
@@ -461,8 +472,8 @@ export function ExercisesPageClient({
                         {labels.card?.difficulty?.replace("{difficulty}", item.metadata.difficulty) ?? item.metadata.difficulty}
                       </p>
                     )}
-                  </button>
-                ))}
+                  </Recommendation>
+                ); })}
               </div>
             ) : (
               <p className="mt-3 text-body-sm text-muted">
@@ -605,8 +616,8 @@ export function ExercisesPageClient({
 
           {/* Start CTA */}
           <button
-            className="flex min-h-12 items-center gap-2.5 rounded-xl bg-gradient-to-r from-accent to-blue-600 px-6 text-sm font-black text-white shadow-md shadow-accent/20 transition hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98]"
-            onClick={handleGenerate}
+            className="flex min-h-12 items-center gap-2.5 rounded-xl bg-gradient-to-r from-action to-action-hover px-6 text-sm font-black text-white shadow-md shadow-accent/20 transition hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98]"
+            onClick={() => void handleGenerate()}
             type="button"
           >
             <span aria-hidden>📝</span>
@@ -811,7 +822,7 @@ export function ExercisesPageClient({
 
             <div className="relative mt-6">
               <button
-                className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-gradient-to-r from-accent to-blue-600 px-6 text-sm font-black text-white shadow-md shadow-accent/20 transition hover:shadow-lg active:scale-[0.98]"
+                className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-gradient-to-r from-action to-action-hover px-6 text-sm font-black text-white shadow-md shadow-accent/20 transition hover:shadow-lg active:scale-[0.98]"
                 onClick={() => {
                   setPhase("setup");
                   setExercises([]);
@@ -998,7 +1009,7 @@ function ExerciseCard({
         <div className="mt-6 flex justify-end gap-3">
           {!answerResult && (
             <button
-              className="flex min-h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-accent to-blue-600 px-5 text-sm font-black text-white shadow-md shadow-accent/15 transition hover:shadow-lg active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none"
+              className="flex min-h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-action to-action-hover px-5 text-sm font-black text-white shadow-md shadow-accent/15 transition hover:shadow-lg active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none"
               onClick={onSubmit}
               disabled={!selectedAnswer}
               type="button"

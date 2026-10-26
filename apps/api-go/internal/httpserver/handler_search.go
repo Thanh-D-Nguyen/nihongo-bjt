@@ -162,16 +162,30 @@ func enrichSearchResultLevels(ctx context.Context, db *pgxpool.Pool, results *[]
 	if err := rows.Err(); err != nil {
 		return fmt.Errorf("iterate canonical search levels: %w", err)
 	}
-	active := (*results)[:0]
-	for i := range *results {
-		result := &(*results)[i]
+	active := make([]search.SearchResult, 0, len(*results))
+	type lexemeKey struct{ title, reading string }
+	seenLexemes := make(map[lexemeKey]struct{})
+	for _, result := range *results {
 		if result.Kind == "grammar" {
 			// The existing Meilisearch projection puts grammar JLPT level in its reading slot.
 			result.Reading = nil
 		}
 		if level, ok := levels[contentKey{id: result.ID, kind: result.Kind}]; ok {
+			if result.Kind == "lexeme" {
+				if !dictionaryGlossUsable(result.Title, result.Description) {
+					continue
+				}
+				key := lexemeKey{title: strings.TrimSpace(result.Title)}
+				if result.Reading != nil {
+					key.reading = strings.TrimSpace(*result.Reading)
+				}
+				if _, exists := seenLexemes[key]; exists {
+					continue
+				}
+				seenLexemes[key] = struct{}{}
+			}
 			result.JLPTLevel = level
-			active = append(active, *result)
+			active = append(active, result)
 		}
 	}
 	*results = active

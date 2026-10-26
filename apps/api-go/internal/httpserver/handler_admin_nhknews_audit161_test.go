@@ -115,11 +115,11 @@ func TestAdminNHKNewsAUDIT161Routes(t *testing.T) {
 			case "/easy.json":
 				easyRequests++
 				w.Header().Set("Content-Type", "application/json")
-				_, _ = w.Write([]byte(`[{"news_id":"audit161-1","title":"やさしい記事","news_prearranged_time":"20261015130000"}]`))
+				_, _ = w.Write([]byte(`[{"news_id":"audit161-1","title":"やさしい記事","news_prearranged_time":"20261015130000","news_web_image_uri":"https://www3.nhk.or.jp/news/easy-image.jpg"}]`))
 			case "/normal.xml":
 				normalRequests++
 				w.Header().Set("Content-Type", "application/xml")
-				_, _ = w.Write([]byte(`<rss><channel><item><title>通常ニュース</title><link>https://www3.nhk.or.jp/news/audit161</link><guid>audit161-normal-1</guid><pubDate>Thu, 15 Oct 2026 13:00:00 +0900</pubDate><description>速報</description></item></channel></rss>`))
+				_, _ = w.Write([]byte(`<rss><channel><item><title>通常ニュース</title><link>https://www3.nhk.or.jp/news/audit161</link><guid>audit161-normal-1</guid><pubDate>Thu, 15 Oct 2026 13:00:00 +0900</pubDate><description>速報</description><enclosure type="image/jpeg" url="https://www3.nhk.or.jp/news/image.jpg" /></item></channel></rss>`))
 			default:
 				http.NotFound(w, r)
 			}
@@ -129,6 +129,11 @@ func TestAdminNHKNewsAUDIT161Routes(t *testing.T) {
 			t.Fatalf("set disposable fixture feed URLs: %v", err)
 		}
 		for i := 0; i < 2; i++ {
+			if i == 1 {
+				if _, err := db.Exec(ctx, `UPDATE content.nhk_article SET body_plain='保存した本文' WHERE id='easy:audit161-1'`); err != nil {
+					t.Fatal(err)
+				}
+			}
 			res := call(http.MethodPost, refreshPath, "", token, true)
 			if res.Code != http.StatusOK {
 				t.Fatalf("refresh status=%d body=%s", res.Code, res.Body.String())
@@ -141,6 +146,16 @@ func TestAdminNHKNewsAUDIT161Routes(t *testing.T) {
 		if easyRequests != 2 || normalRequests != 2 {
 			t.Fatalf("feed requests easy=%d normal=%d; want 2 each", easyRequests, normalRequests)
 		}
+		var retainedBody, image string
+		if err := db.QueryRow(ctx, `SELECT body_plain FROM content.nhk_article WHERE id='easy:audit161-1'`).Scan(&retainedBody); err != nil || retainedBody != "保存した本文" {
+			t.Fatalf("refresh must retain existing body: %q err=%v", retainedBody, err)
+		}
+		if err := db.QueryRow(ctx, `SELECT image_url FROM content.nhk_article WHERE url='https://www3.nhk.or.jp/news/audit161'`).Scan(&image); err != nil || image != "https://www3.nhk.or.jp/news/image.jpg" {
+			t.Fatalf("normal feed image must persist: %q err=%v", image, err)
+		}
+		if err := db.QueryRow(ctx, `SELECT image_url FROM content.nhk_article WHERE id='easy:audit161-1'`).Scan(&image); err != nil || image != "https://www3.nhk.or.jp/news/easy-image.jpg" {
+			t.Fatalf("Easy feed image must persist: %q err=%v", image, err)
+		}
 		var articles int
 		if err := db.QueryRow(ctx, `SELECT count(*) FROM content.nhk_article WHERE id IN ('easy:audit161-1') OR id LIKE 'normal:%' AND url='https://www3.nhk.or.jp/news/audit161'`).Scan(&articles); err != nil || articles != 2 {
 			t.Fatalf("persisted articles=%d err=%v; want 2", articles, err)
@@ -148,6 +163,28 @@ func TestAdminNHKNewsAUDIT161Routes(t *testing.T) {
 		var refreshAuditCount int
 		if err := db.QueryRow(ctx, `SELECT count(*) FROM ops.admin_audit_log WHERE actor_id=$1 AND action='nhk_news.feed.refreshed' AND target_id='vi'`, actorID).Scan(&refreshAuditCount); err != nil || refreshAuditCount != 2 {
 			t.Fatalf("refresh audit entries=%d err=%v; want 2", refreshAuditCount, err)
+		}
+	})
+
+	t.Run("one failed feed does not prevent the other refreshing", func(t *testing.T) {
+		feeds := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/easy" {
+				http.Error(w, "unavailable", http.StatusServiceUnavailable)
+				return
+			}
+			_, _ = w.Write([]byte(`<rss><channel><item><title>通常ニュース</title><link>https://www3.nhk.or.jp/news/audit161</link><pubDate>Thu, 15 Oct 2026 13:00:00 +0900</pubDate><description>更新した要約</description><guid>audit161-normal-1</guid></item></channel></rss>`))
+		}))
+		defer feeds.Close()
+		if _, err := db.Exec(ctx, `UPDATE content.nhk_news_config SET easy_feed_url=$1,normal_feed_url=$2 WHERE locale='vi'`, feeds.URL+"/easy", feeds.URL+"/normal"); err != nil {
+			t.Fatal(err)
+		}
+		res := call(http.MethodPost, refreshPath, "", token, true)
+		if res.Code != http.StatusMultiStatus || !strings.Contains(res.Body.String(), `"errors"`) {
+			t.Fatalf("partial refresh must report failed feed: status=%d body=%s", res.Code, res.Body.String())
+		}
+		var summary string
+		if err := db.QueryRow(ctx, `SELECT body_plain FROM content.nhk_article WHERE url='https://www3.nhk.or.jp/news/audit161'`).Scan(&summary); err != nil || summary != "更新した要約" {
+			t.Fatalf("healthy normal feed must refresh: %q err=%v", summary, err)
 		}
 	})
 

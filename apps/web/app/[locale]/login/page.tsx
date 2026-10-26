@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, type FormEvent } from "react";
+import { useState, useCallback, useEffect, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -30,7 +30,7 @@ export default function LoginPage() {
  const locale = params.locale ?? "en";
  const messages = locale === "vi" ? vi : locale === "ja" ? ja : en;
  const t = messages.auth.login;
- const { reload } = useGoAuth();
+ const { reload, isAuthenticated, isLoading } = useGoAuth();
  const requestedReturnTo = searchParams.get("returnTo");
 
  const [email, setEmail] = useState("");
@@ -38,6 +38,16 @@ export default function LoginPage() {
  const [error, setError] = useState<string | null>(null);
  const [submitting, setSubmitting] = useState(false);
  const googleError = useCallback((status: number) => setError(status === 409 ? messages.auth.register.userExists : t.errorLoginFailed), [messages.auth.register.userExists, t.errorLoginFailed]);
+
+ useEffect(() => {
+  document.title = `${t.title} — KotobaWorks`;
+ }, [t.title]);
+
+ useEffect(() => {
+  if (!isLoading && isAuthenticated) {
+   router.replace(getSafeLoginReturnTo(requestedReturnTo, locale, window.location.origin));
+  }
+ }, [isLoading, isAuthenticated, requestedReturnTo, locale, router]);
 
  async function handleSubmit(e: FormEvent) {
  e.preventDefault();
@@ -66,9 +76,12 @@ export default function LoginPage() {
  }
  }
 
+ if (isLoading || isAuthenticated) return <div role="status" className="px-4 py-12 text-center text-muted">{messages.nav.sessionChecking}</div>;
+
  return (
  <div className="min-h-screen flex items-center justify-center px-4">
  <div className="w-full max-w-md space-y-8">
+ <Link className="inline-flex min-h-12 items-center text-sm font-medium text-accent" href={`/${locale}`}>← {messages.nav.home}</Link>
  <div className="text-center">
  <h1 className="text-3xl font-bold text-ink">{t.title}</h1>
  <p className="mt-2 text-sm text-muted">
@@ -118,7 +131,7 @@ export default function LoginPage() {
  <button
  type="submit"
  disabled={submitting}
- className="w-full rounded-xl bg-gradient-to-r from-sakura to-sakura/80 px-4 py-3 text-sm font-semibold text-white shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed min-h-[48px]"
+ className="w-full rounded-xl bg-gradient-to-r from-action to-action-hover px-4 py-3 text-sm font-semibold text-white shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed min-h-[48px]"
  >
  {submitting ? t.submitting : t.primaryCta}
  </button>

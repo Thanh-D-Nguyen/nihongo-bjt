@@ -1,5 +1,9 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+import en from "../../messages/en.json";
+import ja from "../../messages/ja.json";
+import vi from "../../messages/vi.json";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 /**
@@ -7,6 +11,8 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
  * Replaces the pattern: <div className="scroll-fade"><div className="flex ... overflow-x-auto scrollbar-none ...">
  */
 export function ScrollStrip({ children, className }: { children: ReactNode; className?: string }) {
+  const locale = usePathname()?.split("/")[1];
+  const copy = (locale === "ja" ? ja : locale === "en" ? en : vi).a11y;
   const ref = useRef<HTMLDivElement>(null);
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
@@ -40,7 +46,7 @@ export function ScrollStrip({ children, className }: { children: ReactNode; clas
       {/* Left arrow */}
       {canLeft && (
         <button
-          aria-label="Scroll left"
+          aria-label={copy.scrollLeft}
           className="absolute -left-1 top-1/2 z-10 hidden -translate-y-1/2 rounded-full bg-white/90 p-1.5 shadow-md ring-1 ring-ink/8 backdrop-blur transition-opacity hover:bg-white sm:block"
           onClick={() => scroll(-1)}
           type="button"
@@ -62,7 +68,7 @@ export function ScrollStrip({ children, className }: { children: ReactNode; clas
       {/* Right arrow */}
       {canRight && (
         <button
-          aria-label="Scroll right"
+          aria-label={copy.scrollRight}
           className="absolute -right-1 top-1/2 z-10 hidden -translate-y-1/2 rounded-full bg-white/90 p-1.5 shadow-md ring-1 ring-ink/8 backdrop-blur transition-opacity hover:bg-white sm:block"
           onClick={() => scroll(1)}
           type="button"

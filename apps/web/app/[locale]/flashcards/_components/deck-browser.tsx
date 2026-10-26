@@ -76,6 +76,7 @@ export type DeckLabels = DeckComposerLabels & {
   deckStudyExampleToggleShow: string;
   deckStudyRateAgain: string;
   deckStudyRateGood: string;
+  deckStudyRateEasy: string;
   deckStudyRateHard: string;
   deckStudyRateHint: string;
   mentorAgainEmoji: string;

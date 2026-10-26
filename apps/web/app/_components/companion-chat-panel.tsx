@@ -53,7 +53,7 @@ const ACTION_ICONS: Record<CompanionActionKind, string> = {
   analytics_reflect: "📊",
 };
 
-type QuickReply = { id: string; labelJa: string; labelVi: string; icon: string };
+type QuickReply = { id: string; labelJa: string; labelVi: string; labelEn?: string; icon: string };
 
 export function CompanionChatPanel({
   base,
@@ -239,7 +239,7 @@ export function CompanionChatPanel({
                 type="button"
               >
                 <span>{chip.icon}</span>
-                <span>{locale === "ja" ? chip.labelJa : chip.labelVi}</span>
+                <span>{locale === "ja" ? chip.labelJa : locale === "en" ? (chip.labelEn ?? chip.labelJa) : chip.labelVi}</span>
               </button>
             ))}
           </div>

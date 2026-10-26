@@ -1,6 +1,8 @@
 {
   "a11y": {
-    "skipToContent": "メインコンテンツへスキップ"
+    "skipToContent": "メインコンテンツへスキップ",
+    "scrollLeft": "左へスクロール",
+    "scrollRight": "右へスクロール"
   },
   "auth": {
     "errors": {
@@ -409,6 +411,32 @@
       "progressSub": "学習の歩みをチェック",
       "rewardsSub": "ミステリーボックスとリベンジ",
       "focusSub": "ポモドーロ・アンビエント"
+    },
+    "newsContentUnavailable": "現在は見出しのみ表示できます。全文はNHKの元記事でお読みください。",
+    "newsCardsUnavailable": "この記事にはカードにできる抽出語彙がまだありません。",
+    "newsLatestPublished": "現在取得できる最新記事：{time}。",
+    "newsStale": "新しいニュースを取得できていません。保存済みの記事を表示しています。",
+    "forYou": {
+      "title": "あなたへのおすすめ",
+      "signIn": "学習履歴に基づくおすすめを見るにはログインしてください。",
+      "empty": "カードの復習や練習を始めると、おすすめが表示されます。",
+      "infoTitle": "おすすめの仕組み",
+      "infoBody": "復習予定、最近の練習、学習目標に基づいておすすめします。",
+      "listLabel": "学習のおすすめ",
+      "priority": "優先度が高い",
+      "refresh": "更新 ↻",
+      "reasonDue": "復習の時間です",
+      "reasonWeak": "苦手なスキルを練習しましょう",
+      "reasonFollowing": "学習中のテーマから",
+      "reasonLesson": "レベルに合った新しいレッスン",
+      "reasonNew": "新しいカード",
+      "reasonHard": "難しいカードをもう一度",
+      "reasonNews": "レベルに合った読解練習",
+      "reasonTrending": "よく読まれている記事",
+      "reasonSrs": "復習予定に基づくおすすめ",
+      "reasonExercise": "学習目標に合った練習",
+      "reasonDefault": "最近の学習に基づくおすすめ",
+      "summary": "おすすめ {count} 件"
     }
   },
   "nhkDetail": {
@@ -448,7 +476,9 @@
     "readFullArticle": "NHKで全文を読む",
     "furiganaToggle": "ふりがな表示",
     "furiganaOn": "ふりがな",
-    "furiganaOff": "非表示"
+    "furiganaOff": "非表示",
+    "cardsUnavailable": "この記事にはカードにできる抽出語彙がまだありません。",
+    "titleNormal": "NHKニュース"
   },
   "dashboard": {
     "commandCenterDescription": "次の一歩がはっきりし、進捗が見えて、圧迫感のない画面にします。",
@@ -883,7 +913,8 @@
       "neon-tokyo": "高いコントラストと都会的なアクセント。",
       "ocean-calm": "落ち着いた青で、ゆったり読めます。",
       "gold-calligraphy": "墨色と金色の上品な組み合わせ。"
-    }
+    },
+    "easy": "簡単"
   },
   "decks": {
     "title": "デッキ",
@@ -1077,7 +1108,8 @@
     "deleteOwnedDeckConfirm": "外す",
     "deleteOwnedDeckCancel": "キャンセル",
     "deleteOwnedDeckDeleting": "処理中…",
-    "deleteOwnedDeckError": "デッキを外せませんでした。時間をおいて再試行してください。"
+    "deleteOwnedDeckError": "デッキを外せませんでした。時間をおいて再試行してください。",
+    "deckStudyRateEasy": "簡単"
   },
   "battle": {
     "eyebrow": "BJT",
@@ -2476,7 +2508,8 @@
     "saved": "保存しました。",
     "saveError": "設定を同期できませんでした。この端末では引き続き設定が適用されます。",
     "preview": "プレビュー",
-    "previewText": "日本のビジネス现場では、敷語と謙譲語の使い分けが大切です。"
+    "previewText": "日本のビジネス现場では、敷語と謙譲語の使い分けが大切です。",
+    "saving": "保存中…"
   },
   "announcements": {
     "close": "閉じる",
@@ -2615,8 +2648,8 @@
     },
     "stats": {
       "streak": "連続日数",
-      "reviews": "復習回数",
-      "accuracy": "正解率",
+      "reviews": "SRS復習回数",
+      "accuracy": "BJT正答率",
       "level": "レベル",
       "dueCards": "復習予定",
       "days": "日"
@@ -2750,7 +2783,11 @@
     "list": {
       "title": "ビジネスシナリオ",
       "description": "日本の職場でのコミュニケーションを練習しましょう。",
-      "difficulty": { "beginner": "初級", "intermediate": "中級", "advanced": "上級" },
+      "difficulty": {
+        "beginner": "初級",
+        "intermediate": "中級",
+        "advanced": "上級"
+      },
       "duration": "⏱️ 約{count}分",
       "steps": "📋 {count}ステップ",
       "attempts": "🎮 {count}回プレイ",
@@ -2776,5 +2813,15 @@
       "continue": "続ける →",
       "retry": "再試行"
     }
+  },
+  "systemPages": {
+    "errorTitle": "エラーが発生しました",
+    "errorDescription": "ページを読み込めませんでした。もう一度お試しください。",
+    "errorReference": "お問い合わせ番号：{reference}",
+    "retry": "再試行",
+    "home": "ホームへ戻る",
+    "notFoundTitle": "ページが見つかりません",
+    "notFoundDescription": "このページは利用できません。下のリンクから学習を続けられます。",
+    "notFoundMetaTitle": "ページが見つかりません — KotobaWorks"
   }
 }

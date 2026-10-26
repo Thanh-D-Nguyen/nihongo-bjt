@@ -170,7 +170,7 @@ export function ProgressSection({
   const animStreak = useCountUp(totals?.streakDays ?? 0);
   const animReviews = useCountUp(totals?.reviewCount ?? 0);
   const animAccuracy = useCountUp(totals?.bjtAccuracyPct ?? 0);
-  const animSessions = useCountUp(totals?.completedBjtSessions ?? 0);
+  const animSessions = useCountUp(totals?.completedSessions ?? totals?.completedBjtSessions ?? 0);
 
   if (!isLoggedIn) {
     return (

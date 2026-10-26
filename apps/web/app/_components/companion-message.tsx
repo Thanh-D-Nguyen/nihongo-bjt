@@ -13,8 +13,13 @@ const TYPE_STYLES: Record<string, { bg: string; icon: string }> = {
   context_aware: { bg: "bg-slate-50", icon: "💬" },
 };
 
-function timeAgo(ts: number): string {
+function timeAgo(ts: number, locale: string): string {
   const diff = Math.floor((Date.now() - ts) / 1000);
+  if (locale === "ja" || locale === "en") {
+    const unit = diff < 60 ? "second" : diff < 3600 ? "minute" : diff < 86400 ? "hour" : "day";
+    const count = Math.floor(diff / (unit === "second" ? 1 : unit === "minute" ? 60 : unit === "hour" ? 3600 : 86400));
+    return new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(-count, unit);
+  }
   if (diff < 60) return "vừa xong";
   if (diff < 3600) return `${Math.floor(diff / 60)}p trước`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h trước`;
@@ -32,7 +37,7 @@ export function CompanionMessageItem({
   const style = TYPE_STYLES[message.type] ?? TYPE_STYLES.context_aware;
   const text = isUser
     ? message.textJa // user messages store the raw text in textJa
-    : locale === "ja" ? message.textJa : message.textVi;
+    : locale === "ja" ? message.textJa : locale === "en" ? (message.textEn ?? message.textJa) : message.textVi;
   const icon = message.emoji ?? style.icon;
 
   if (isUser) {
@@ -42,7 +47,7 @@ export function CompanionMessageItem({
           <div className="rounded-2xl rounded-tr-sm bg-gradient-to-r from-[#1B2A4A] to-[#2563EB] px-3 py-2 text-xs leading-relaxed text-white">
             {text}
           </div>
-          <p className="text-right text-[9px] text-muted">{timeAgo(message.timestamp)}</p>
+          <p className="text-right text-[9px] text-muted">{timeAgo(message.timestamp, locale)}</p>
         </div>
       </div>
     );
@@ -79,7 +84,7 @@ export function CompanionMessageItem({
             {message.action.label}
           </a>
         ) : null}
-        <p className="text-[9px] text-muted">{timeAgo(message.timestamp)}</p>
+        <p className="text-[9px] text-muted">{timeAgo(message.timestamp, locale)}</p>
       </div>
     </div>
   );

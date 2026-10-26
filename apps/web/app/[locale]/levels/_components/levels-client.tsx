@@ -20,6 +20,7 @@ interface LevelItem {
   vocabCount: number;
   kanjiCount: number;
   grammarCount: number;
+  publishedLessonCount: number;
 }
 
 interface LearnerAnalytics {
@@ -144,8 +145,8 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
         />
 
         <div className="space-y-0">
-          {levels.map((lv, index) => {
-            const isLast = index === levels.length - 1;
+          {levels.filter(lv => lv.vocabCount + lv.kanjiCount + lv.grammarCount > 0 || lv.publishedLessonCount > 0).map((lv, index, availableLevels) => {
+            const isLast = index === availableLevels.length - 1;
             const name = locale === "ja" ? lv.nameJa : locale === "en" ? lv.nameEn : lv.nameVi;
             const description = locale === "ja" ? lv.descriptionJa : locale === "en" ? lv.descriptionEn : lv.descriptionVi;
 

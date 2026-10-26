@@ -140,9 +140,9 @@ export function DailyAdminClient({
         method: "POST"
       });
       if (!response.ok) throw new Error("refresh_failed");
-      const data = (await response.json()) as { easy: { count: number }; normal: { count: number } };
+      const data = (await response.json()) as { easy: { count: number }; normal: { count: number }; errors?: Record<string, string> };
       setNhkStatus(`Easy: ${data.easy.count} · Normal: ${data.normal.count}`);
-      setError(false);
+      setError(response.status === 207 || Object.keys(data.errors ?? {}).length > 0);
     } catch {
       setError(true);
     }
