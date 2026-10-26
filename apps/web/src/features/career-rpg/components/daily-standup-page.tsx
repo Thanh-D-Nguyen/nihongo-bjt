@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { careerMe, clockIn, storyArcs, storyChapter } from "../api";
 import { timeOfDayBucket } from "../helpers";
 import type { CareerRpgLabels } from "../i18n";
+import { applyStoryProgress, loadStoryProgress } from "../story-progress";
 import type { MissionArc, MissionChapter, UserCareerState } from "../types";
 
 import { CareerNameOnboarding, needsNameOnboarding } from "./career-name-onboarding";
@@ -40,9 +41,10 @@ export function DailyStandupPage({ labels, locale }: Props) {
     setNextChapter(null);
     setLoading(true);
     setLoadError(false);
-    void Promise.all([careerMe(), storyArcs()])
-      .then(async ([careerResponse, arcsResponse]) => {
+    void Promise.all([careerMe(), storyArcs(), loadStoryProgress()])
+      .then(async ([careerResponse, plainArcs, progress]) => {
         if (!alive) return;
+        const arcsResponse = applyStoryProgress(plainArcs, progress);
         setCareer(careerResponse.state);
         setArcs(arcsResponse);
         if (needsNameOnboarding(careerResponse.state)) {

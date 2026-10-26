@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { storyArcs } from "../../../../../src/features/career-rpg/api";
 import { MissionArcCard } from "../../../../../src/features/career-rpg/components/mission-arc-card";
+import { applyStoryProgress, loadStoryProgress } from "../../../../../src/features/career-rpg/story-progress";
 import type { CareerRpgLabels } from "../../../../../src/features/career-rpg/i18n";
 import type { MissionArc } from "../../../../../src/features/career-rpg/types";
 
@@ -20,10 +21,10 @@ export function ArcsPageClient({ labels, locale }: Props) {
 
   useEffect(() => {
     let alive = true;
-    void storyArcs()
-      .then((items) => {
+    void Promise.all([storyArcs(), loadStoryProgress()])
+      .then(([items, progress]) => {
         if (alive) {
-          setArcs(items);
+          setArcs(applyStoryProgress(items, progress));
           setLoading(false);
         }
       })

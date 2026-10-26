@@ -3,7 +3,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { learnerApiFetch } = vi.hoisted(() => ({ learnerApiFetch: vi.fn() }));
 vi.mock("../../../lib/learner-api", () => ({ learnerApiFetch }));
 
-import { careerMe, careerRanks, storyArcDetail, storyArcs, updateCareerProfile } from "./api";
+import {
+  careerMe,
+  careerRanks,
+  completeCurrentChapterAttempt,
+  storyArcDetail,
+  storyArcs,
+  storyProgress,
+  updateCareerProfile
+} from "./api";
 
 describe("careerMe API adapter", () => {
   beforeEach(() => vi.resetAllMocks());
@@ -181,5 +189,87 @@ describe("storyArcs catalogue fields", () => {
     const [arc] = await storyArcs();
 
     expect(arc).toMatchObject({ synopsisVi: "Tóm tắt", npcSlugs: ["x"], artAccent: "#059669" });
+  });
+});
+
+describe("story flow API adapters", () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  const goCareer = {
+    userId: "learner-1", currentRankCode: "R2", rankXp: 64, rankXpToNext: 120, jpWorkName: "", companyTheme: "",
+    hireDate: "2026-10-26", streakDays: 0, skills: [{ axisCode: "keigo", value: 4 }]
+  };
+
+  it("keeps rankXpToNext from the Go career state and defaults to 0 when absent", async () => {
+    learnerApiFetch.mockResolvedValueOnce(new Response(JSON.stringify(goCareer), { status: 200 }));
+    expect((await careerMe()).state.rankXpToNext).toBe(120);
+
+    const { rankXpToNext: _omitted, ...legacy } = goCareer;
+    learnerApiFetch.mockResolvedValueOnce(new Response(JSON.stringify(legacy), { status: 200 }));
+    expect((await careerMe()).state.rankXpToNext).toBe(0);
+  });
+
+  it("keeps the ordered chapter ids of the arcs list and counts them as the arc total", async () => {
+    learnerApiFetch.mockResolvedValue(new Response(JSON.stringify([{
+      slug: "a", titleJa: "a", titleVi: "a", rankCodeEntry: "R1", status: "published", displayOrder: 1, chapterIds: ["c1", "c2", "c3"]
+    }]), { status: 200 }));
+
+    const [arc] = await storyArcs();
+
+    expect(arc).toMatchObject({ chapterIds: ["c1", "c2", "c3"], totalChapters: 3, completedChapters: 0, progressTracked: false });
+  });
+
+  it("loads the learner's story progress and treats 401 as 'not signed in'", async () => {
+    const attempt = async () => {
+      try {
+        return { value: await storyProgress(), error: undefined as unknown };
+      } catch (error) {
+        return { value: undefined, error };
+      }
+    };
+    const progress = { currentRankCode: "R1", completedChapterIds: ["c1"], arcs: { a: 1 } };
+
+    learnerApiFetch.mockResolvedValueOnce(new Response(JSON.stringify(progress), { status: 200 }));
+    const signedIn = await attempt();
+    expect(signedIn.error).toBeUndefined();
+    expect(signedIn.value).toEqual(progress);
+    expect(learnerApiFetch).toHaveBeenCalledWith("/api/story/progress", undefined);
+
+    learnerApiFetch.mockResolvedValueOnce(new Response("{}", { status: 401 }));
+    const signedOut = await attempt();
+    expect(signedOut.error).toBeUndefined();
+    expect(signedOut.value).toBeNull();
+
+    learnerApiFetch.mockResolvedValueOnce(new Response("{}", { status: 500 }));
+    const failed = await attempt();
+    expect(String(failed.error)).toContain("500");
+  });
+
+  it("sends the chosen option and adapts the completion response to the dashboard model", async () => {
+    learnerApiFetch.mockResolvedValue(new Response(JSON.stringify({
+      career: goCareer,
+      result: { chapterId: "c1", rankXpDelta: 12, skillDeltas: { keigo: 4 }, npcTrustDeltas: [], contextMemoIds: ["m1"], npcReactionMontage: [], completedAt: "2026-10-26T12:00:00Z" },
+      rankUp: { fromRankCode: "R1", toRankCode: "R2" }
+    }), { status: 200 }));
+
+    const done = await completeCurrentChapterAttempt("c1", "B");
+
+    expect(learnerApiFetch).toHaveBeenCalledWith("/api/story/chapters/c1/attempts/current/complete", {
+      body: JSON.stringify({ optionKey: "B" }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST"
+    });
+    expect(done.rankUp).toEqual({ fromRankCode: "R1", toRankCode: "R2" });
+    expect(done.result).toMatchObject({ chapterId: "c1", rankXpDelta: 12, contextMemoIds: ["m1"] });
+    expect(done.career.state).toMatchObject({ currentRankCode: "R2", rankXp: 64, rankXpToNext: 120 });
+    expect(done.career.npcRelations).toEqual([]);
+  });
+
+  it("completes without an option key when none was chosen", async () => {
+    learnerApiFetch.mockResolvedValue(new Response(JSON.stringify({ career: goCareer, result: { chapterId: "c1" }, rankUp: null }), { status: 200 }));
+
+    await completeCurrentChapterAttempt("c1");
+
+    expect(learnerApiFetch).toHaveBeenCalledWith("/api/story/chapters/c1/attempts/current/complete", expect.objectContaining({ body: "{}" }));
   });
 });

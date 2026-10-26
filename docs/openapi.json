@@ -22816,6 +22816,111 @@
         }
       }
     },
+    "/api/story/chapters/{id}/attempts": {
+      "post": {
+        "operationId": "postApiStoryChaptersbyIdAttempts",
+        "parameters": [
+          {
+            "description": "Path token; application-level format and validation are unverified.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Response schema is not yet verified; see the route inventory."
+          }
+        },
+        "summary": "Source-discovered route handled by startStoryAttemptHandler(deps.CareerStore, deps.Logger)",
+        "tags": [
+          "story"
+        ],
+        "x-contract-verification": {
+          "scope": "route/method/handler coverage only; request and response schemas are unverified",
+          "status": "unverified"
+        },
+        "x-route-source": {
+          "guards": [
+            "learnerGuard",
+            "authn.CSRFGuard(csrfCfg)"
+          ],
+          "handler": "startStoryAttemptHandler(deps.CareerStore, deps.Logger)",
+          "runtimeConditions": [
+            "deps.CareerStore != nil && deps.SessionStore != nil"
+          ]
+        }
+      }
+    },
+    "/api/story/chapters/{id}/attempts/current/complete": {
+      "post": {
+        "operationId": "postApiStoryChaptersbyIdAttemptsCurrentComplete",
+        "parameters": [
+          {
+            "description": "Path token; application-level format and validation are unverified.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Response schema is not yet verified; see the route inventory."
+          }
+        },
+        "summary": "Source-discovered route handled by completeStoryAttemptHandler(deps.CareerStore, deps.Logger)",
+        "tags": [
+          "story"
+        ],
+        "x-contract-verification": {
+          "scope": "route/method/handler coverage only; request and response schemas are unverified",
+          "status": "unverified"
+        },
+        "x-route-source": {
+          "guards": [
+            "learnerGuard",
+            "authn.CSRFGuard(csrfCfg)"
+          ],
+          "handler": "completeStoryAttemptHandler(deps.CareerStore, deps.Logger)",
+          "runtimeConditions": [
+            "deps.CareerStore != nil && deps.SessionStore != nil"
+          ]
+        }
+      }
+    },
+    "/api/story/progress": {
+      "get": {
+        "operationId": "getApiStoryProgress",
+        "responses": {
+          "default": {
+            "description": "Response schema is not yet verified; see the route inventory."
+          }
+        },
+        "summary": "Source-discovered route handled by getStoryProgressHandler(deps.CareerStore, deps.Logger)",
+        "tags": [
+          "story"
+        ],
+        "x-contract-verification": {
+          "scope": "route/method/handler coverage only; request and response schemas are unverified",
+          "status": "unverified"
+        },
+        "x-route-source": {
+          "guards": [
+            "learnerGuard"
+          ],
+          "handler": "getStoryProgressHandler(deps.CareerStore, deps.Logger)",
+          "runtimeConditions": [
+            "deps.CareerStore != nil && deps.SessionStore != nil"
+          ]
+        }
+      }
+    },
     "/api/users/{userId}/profile": {
       "get": {
         "operationId": "getApiUsersbyUserIdProfile",

@@ -23,7 +23,8 @@ import (
 // listStoryArcsHandler implements GET /api/story/arcs.
 func listStoryArcsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const q = `SELECT id, slug, title_ja, title_vi, rank_code_entry, status, display_order, story_payload
+		const q = `SELECT id, slug, title_ja, title_vi, rank_code_entry, status, display_order, story_payload,
+				COALESCE((SELECT array_agg(c.id::text ORDER BY c.display_order, c.slug) FROM career.mission_chapter c WHERE c.arc_id = career.mission_arc.id), '{}')
 			FROM career.mission_arc WHERE status = 'published'
 			ORDER BY display_order ASC, created_at ASC`
 		rows, err := db.Query(r.Context(), q)
@@ -35,20 +36,21 @@ func listStoryArcsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFun
 		defer rows.Close()
 
 		type Arc struct {
-			ID            string `json:"id"`
-			Slug          string `json:"slug"`
-			TitleJa       string `json:"titleJa"`
-			TitleVi       string `json:"titleVi"`
-			RankCodeEntry string `json:"rankCodeEntry"`
-			Status        string `json:"status"`
-			DisplayOrder  int    `json:"displayOrder"`
+			ID            string   `json:"id"`
+			Slug          string   `json:"slug"`
+			TitleJa       string   `json:"titleJa"`
+			TitleVi       string   `json:"titleVi"`
+			RankCodeEntry string   `json:"rankCodeEntry"`
+			Status        string   `json:"status"`
+			DisplayOrder  int      `json:"displayOrder"`
+			ChapterIDs    []string `json:"chapterIds"`
 			storyCatalogue
 		}
 		var arcs []Arc
 		for rows.Next() {
 			var a Arc
 			var payload json.RawMessage
-			if err := rows.Scan(&a.ID, &a.Slug, &a.TitleJa, &a.TitleVi, &a.RankCodeEntry, &a.Status, &a.DisplayOrder, &payload); err != nil {
+			if err := rows.Scan(&a.ID, &a.Slug, &a.TitleJa, &a.TitleVi, &a.RankCodeEntry, &a.Status, &a.DisplayOrder, &payload, &a.ChapterIDs); err != nil {
 				logger.Error("scan story arc", "error", err)
 				writeJSONError(w, "internal error", http.StatusInternalServerError)
 				return

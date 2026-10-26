@@ -1,11 +1,11 @@
 {
   "scope": "Static /api inventory of direct NewRouter registrations (excludes /health and /ws). Conditions do not prove runtime availability.",
-  "sourceRegisteredOperations": 635,
-  "openAPIOperations": 635,
+  "sourceRegisteredOperations": 638,
+  "openAPIOperations": 638,
   "verifiedContracts": 0,
   "testEvidencedContracts": 13,
-  "sourceOnlyContracts": 622,
-  "unverifiedContracts": 635,
+  "sourceOnlyContracts": 625,
+  "unverifiedContracts": 638,
   "runtimeVerifiedOperations": 0,
   "families": {
     "Admin / actors": {
@@ -354,7 +354,7 @@
       "testEvidencedContracts": 0
     },
     "story": {
-      "routes": 3,
+      "routes": 6,
       "verifiedContracts": 0,
       "testEvidencedContracts": 0
     },
@@ -34293,6 +34293,163 @@
         "sourceConditions": [
           "deps.CareerStore != nil && deps.SessionStore != nil",
           "deps.DBPool != nil"
+        ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/story/chapters/{id}/attempts",
+      "handler": "startStoryAttemptHandler(deps.CareerStore, deps.Logger)",
+      "family": "story",
+      "guards": [
+        "learnerGuard",
+        "authn.CSRFGuard(csrfCfg)"
+      ],
+      "runtimeConditions": [
+        "deps.CareerStore != nil && deps.SessionStore != nil"
+      ],
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [
+          "learnerGuard",
+          "authn.CSRFGuard(csrfCfg)"
+        ],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [],
+        "status": "unverified",
+        "subject": "handler integration tests"
+      },
+      "contract": {
+        "method": "post",
+        "openAPIPath": "/api/story/chapters/{id}/attempts",
+        "status": "unverified"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [
+          "deps.CareerStore != nil && deps.SessionStore != nil"
+        ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/story/chapters/{id}/attempts/current/complete",
+      "handler": "completeStoryAttemptHandler(deps.CareerStore, deps.Logger)",
+      "family": "story",
+      "guards": [
+        "learnerGuard",
+        "authn.CSRFGuard(csrfCfg)"
+      ],
+      "runtimeConditions": [
+        "deps.CareerStore != nil && deps.SessionStore != nil"
+      ],
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [
+          "learnerGuard",
+          "authn.CSRFGuard(csrfCfg)"
+        ],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [],
+        "status": "unverified",
+        "subject": "handler integration tests"
+      },
+      "contract": {
+        "method": "post",
+        "openAPIPath": "/api/story/chapters/{id}/attempts/current/complete",
+        "status": "unverified"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [
+          "deps.CareerStore != nil && deps.SessionStore != nil"
+        ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/story/progress",
+      "handler": "getStoryProgressHandler(deps.CareerStore, deps.Logger)",
+      "family": "story",
+      "guards": [
+        "learnerGuard"
+      ],
+      "runtimeConditions": [
+        "deps.CareerStore != nil && deps.SessionStore != nil"
+      ],
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [
+          "learnerGuard"
+        ],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [],
+        "status": "unverified",
+        "subject": "handler integration tests"
+      },
+      "contract": {
+        "method": "get",
+        "openAPIPath": "/api/story/progress",
+        "status": "unverified"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [
+          "deps.CareerStore != nil && deps.SessionStore != nil"
         ],
         "status": "not-runtime-verified"
       }

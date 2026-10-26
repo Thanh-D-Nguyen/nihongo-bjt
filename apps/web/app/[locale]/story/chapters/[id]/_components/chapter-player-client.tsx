@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import {
@@ -26,8 +27,12 @@ interface Props {
 
 type Phase = "briefing" | "scenario" | "reacted" | "rankup" | "complete";
 
+const isUnauthorized = (error: unknown) => error instanceof Error && error.message.includes("401");
+
 export function ChapterPlayerClient({ chapterId, labels, locale }: Props) {
+  const router = useRouter();
   const [phase, setPhase] = useState<Phase>("briefing");
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<RiskOutcomePreview | null>(null);
   const [chapter, setChapter] = useState<MissionChapter | null>(null);
   const [loadingChapter, setLoadingChapter] = useState(true);
@@ -38,6 +43,8 @@ export function ChapterPlayerClient({ chapterId, labels, locale }: Props) {
     newRank: CareerRank;
   } | null>(null);
 
+  const loginUrl = `/${locale}/login?returnTo=${encodeURIComponent(`/${locale}/story/chapters/${chapterId}`)}`;
+
   useEffect(() => {
     let alive = true;
     void storyChapter(chapterId)
@@ -46,21 +53,26 @@ export function ChapterPlayerClient({ chapterId, labels, locale }: Props) {
         setLoadingChapter(false);
         if (alive) setChapter(detail.chapter);
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (!alive) return;
+        if (isUnauthorized(error)) {
+          router.replace(loginUrl);
+          return;
+        }
         setLoadingChapter(false);
         setChapter(null);
       });
     return () => {
       alive = false;
     };
-  }, [chapterId]);
+  }, [chapterId, loginUrl, router]);
 
   const handleAnswer = useCallback((optionKey: string) => {
     if (!chapter) return;
     const scenario = chapter.scenarios[0];
     const opt = scenario?.question.options.find((o) => o.optionKey === optionKey);
     if (!opt) return;
+    setSelectedOption(optionKey);
     setOutcome(opt.outcome);
     setPhase("reacted");
   }, [chapter]);
@@ -68,7 +80,7 @@ export function ChapterPlayerClient({ chapterId, labels, locale }: Props) {
   const handleContinue = useCallback(async () => {
     try {
       await startChapterAttempt(chapterId);
-      const completed = await completeCurrentChapterAttempt(chapterId);
+      const completed = await completeCurrentChapterAttempt(chapterId, selectedOption ?? undefined);
       setResult(completed.result);
       if (completed.rankUp) {
         const oldRank = findRank(completed.rankUp.fromRankCode);
@@ -80,11 +92,15 @@ export function ChapterPlayerClient({ chapterId, labels, locale }: Props) {
         }
       }
     } catch (err) {
+      if (isUnauthorized(err)) {
+        router.replace(loginUrl);
+        return;
+      }
       setSubmitError(err instanceof Error ? err.message : "Failed to complete chapter");
       setPhase("complete");
     }
     setPhase("complete");
-  }, [chapterId]);
+  }, [chapterId, loginUrl, router, selectedOption]);
 
   if (loadingChapter) {
     return (

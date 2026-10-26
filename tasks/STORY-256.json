@@ -1,0 +1,889 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "STORY-256",
+  "title": "Story chapter attempts: start/complete with rewards, rank-up, progress and unlock rules",
+  "start_head": "43237c9b1675b154052fca0a2eb382100d4b10f0",
+  "preexisting_changes": {
+    ".github/workflows/recover-ssh.yml": "336ab60d89f3ba6b697594661a6b5018e5e14104",
+    "TASK_HANDOFF.md": "448f2deffe0803384a75ebfb8950cfc0e1c57a77",
+    "apps/web/next-env.d.ts": "ce4e94a6b10f160ee021fe18939af160d2927dcf",
+    "apps/web/tsconfig.tsbuildinfo": "0b0ff31ed0f4432c00315e548502bbb2fedc5a7f",
+    "docs/ops/dynamic-ssh.md": "3d520dd3061109d1d03836c8c89a42a494055738",
+    "scripts/ops/recover_ssh.py": "182ff5261426c2d473e9a206fc1cdc1ead9c769f",
+    "scripts/ops/ssh-recovery.test.ts": "7dba4cdb2a45120378e06b93b55f37479db669f4",
+    "scripts/ops/ssh_prod.py": "ea6194d74993a23f44fcdbbb5d301138822661dd",
+    "scripts/ops/test_ssh_recovery.py": "2bc5d3736cc6d4373b0975e110afd2f850c96d8b"
+  },
+  "spec": {
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "POST /api/story/chapters/{id}/attempts (learner session + CSRF) returns the learner's in-progress attempt (201 when created, 200 when reused) and refuses with 403 'chapter locked' when the arc's entry rank is above the learner's rank or an earlier chapter of the arc is not completed; unknown, unpublished or non-canonical ids return 404 'chapter not found'"
+      },
+      {
+        "id": "AC2",
+        "text": "POST /api/story/chapters/{id}/attempts/current/complete (optional body {optionKey}) completes the in-progress attempt in one transaction and returns {career,result,rankUp}: a correct or absent option earns the chapter rewards, a wrong option 25% (floored); a replay only pays what earlier completions have not yet awarded; XP, skills (known axes, clamped 0-100) and NPC trust (existing active NPCs, clamped 0-100) are persisted, rank advances at most one step per completion when rank_xp reaches xp_to_next, with a rank_progression_event, and one context memo is created on first completion"
+      },
+      {
+        "id": "AC3",
+        "text": "Completion is idempotent and concurrency-safe: with no in-progress attempt it returns the last completed snapshot without re-awarding or 404 when none exists; two concurrent completes award once; an unknown optionKey is 400"
+      },
+      {
+        "id": "AC4",
+        "text": "GET /api/story/progress returns the learner's currentRankCode, completedChapterIds and completed chapter counts per arc slug; GET /api/story/arcs adds chapterIds in chapter order; GET /api/career/me adds rankXpToNext from the current rank"
+      },
+      {
+        "id": "AC5",
+        "text": "All new routes are covered by the learner guard; unauthenticated calls return 401 and POSTs without a trusted Origin return 403"
+      }
+    ],
+    "rollback_plan": "Revert the commit: the new POST attempts/complete and GET progress routes disappear and the web falls back to the previous read-only behaviour. Rows written by completions (chapter_attempt, career_skill_stat, npc_relation, context_memo, rank_progression_event, user_career_state) are ordinary learner data and are left in place; no schema or data migration is involved."
+  },
+  "classification": {
+    "classes": [
+      "DOMAIN_LOGIC",
+      "API_CONTRACT",
+      "DATABASE"
+    ],
+    "change_kind": "add",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestStoryAttemptFlowGuardsAndLocks",
+      "expect": "want 401"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestStoryAttemptFullFlowRewardsRankUpAndProgress",
+      "expect": "want 201"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestStoryAttemptCompleteIsConcurrencySafe",
+      "expect": "start status=404"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestStoryAttemptRejectsUnpublishedAndGuardsComplete",
+      "expect": "want 404 chapter not found"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestStoryAttemptAdvancesOneRankAndClampsTrust",
+      "expect": "start status=404"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestStoryAttemptCompletionNeverReturnsNullLists",
+      "expect": "status=404"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-26T12:11:29.053Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-26T12:11:29.317Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-26T12:11:29.585Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T12:12:41.584Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T12:15:36.257Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-26T12:19:24.838Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T12:33:12.731Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T12:33:50.893Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-26T12:37:33.739Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T13:12:16.069Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-26T13:16:22.596Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-26T13:16:46.767Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-26T13:17:03.351Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T13:43:45.081Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T13:44:02.109Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-26T13:48:36.222Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-26T13:58:47.821Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-26T13:58:49.321Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-26T12:12:41.390Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoryAttemptFlowGuardsAndLocks)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptFlowGuardsAndLocks",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptFlowGuardsAndLocks handler_story_attempts_test.go:162: anonymous start status=404; want 401 --- FAIL: TestStoryAttemptFlowGuardsAndLocks (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestStoryAttemptFlowGuardsAndLocks": "want 401"
+      },
+      "fingerprint": "0b875bf3ca19570879bd22c9c8ac3de6f28fbf3edc208a3293f7b845d7be2071"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-26T12:12:48.992Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoryAttemptFlowGuardsAndLocks|TestStoryAttemptFullFlowRewardsRankUpAndProgress)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptFlowGuardsAndLocks",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptFlowGuardsAndLocks handler_story_attempts_test.go:162: anonymous start status=404; want 401 --- FAIL: TestStoryAttemptFlowGuardsAndLocks (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptFullFlowRewardsRankUpAndProgress",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptFullFlowRewardsRankUpAndProgress handler_story_attempts_test.go:198: first start status=404 body=404 page not found ; want 201 --- FAIL: TestStoryAttemptFullFlowRewardsRankUpAndProgress (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestStoryAttemptFlowGuardsAndLocks": "want 401",
+        "go:./internal/httpserver:TestStoryAttemptFullFlowRewardsRankUpAndProgress": "want 201"
+      },
+      "fingerprint": "0b875bf3ca19570879bd22c9c8ac3de6f28fbf3edc208a3293f7b845d7be2071"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-26T12:12:56.783Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoryAttemptFlowGuardsAndLocks|TestStoryAttemptFullFlowRewardsRankUpAndProgress|TestStoryAttemptCompleteIsConcurrencySafe)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptFlowGuardsAndLocks",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptFlowGuardsAndLocks handler_story_attempts_test.go:162: anonymous start status=404; want 401 --- FAIL: TestStoryAttemptFlowGuardsAndLocks (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptFullFlowRewardsRankUpAndProgress",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptFullFlowRewardsRankUpAndProgress handler_story_attempts_test.go:198: first start status=404 body=404 page not found ; want 201 --- FAIL: TestStoryAttemptFullFlowRewardsRankUpAndProgress (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptCompleteIsConcurrencySafe",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptCompleteIsConcurrencySafe handler_story_attempts_test.go:314: start status=404 --- FAIL: TestStoryAttemptCompleteIsConcurrencySafe (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestStoryAttemptFlowGuardsAndLocks": "want 401",
+        "go:./internal/httpserver:TestStoryAttemptFullFlowRewardsRankUpAndProgress": "want 201",
+        "go:./internal/httpserver:TestStoryAttemptCompleteIsConcurrencySafe": "start status=404"
+      },
+      "fingerprint": "0b875bf3ca19570879bd22c9c8ac3de6f28fbf3edc208a3293f7b845d7be2071"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-26T12:15:35.763Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoryAttemptFlowGuardsAndLocks|TestStoryAttemptFullFlowRewardsRankUpAndProgress|TestStoryAttemptCompleteIsConcurrencySafe)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptFlowGuardsAndLocks",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptFullFlowRewardsRankUpAndProgress",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptCompleteIsConcurrencySafe",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "4a6f537df4cab1ba9d29ddb7b68588f127ced865fc2aefce20393e60ded299bc"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-26T12:19:24.259Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1547,
+        "executed": 1547,
+        "passed": 1547,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1547 passed, 0 allowed skip(s)",
+      "fingerprint": "4a6f537df4cab1ba9d29ddb7b68588f127ced865fc2aefce20393e60ded299bc"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-26T12:30:30.447Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 2,
+      "findings": [
+        {
+          "severity": "blocker",
+          "file": "apps/api-go/internal/career/story.go",
+          "summary": "Replay branch (no in-progress attempt) calls s.GetMe — 3 separate pool acquisitions — while the tx still holds a pooled conn and the (user,chapter) advisory lock. With more concurrent completes than M…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/handler_story_attempts_test.go",
+          "summary": "AC1 'unpublished → 404' is unpinned: all fixture arcs are published; removing a.status='published' from loadPublishedChapter keeps every test green. Add a draft-arc chapter case for start and complete…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_story_attempts_test.go",
+          "summary": "Missing: 401/403 on the complete route (AC5); an inactive-but-existing NPC, the trust clamp at 100 and a multi-step rank-up (AC2). The bogus/ghost count assertions ignore Scan errors and can pass vacu…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/career/story.go",
+          "summary": "Rank-up loop combined with ClockIn's +10 XP/day (which never ranks up) lets banked XP cascade several ranks in one completion, skipping rank-gated arcs; min_skill_floor/required_arc_count are ignored …"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/career/story.go",
+          "summary": "Malformed rewards/scenario JSON is silently ignored (awards 0, no log); undecodable prior snapshots are skipped, under-counting prior awards so they can be re-paid."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/career/story.go",
+          "summary": "Memo ToneVi built from Go map iteration is nondeterministic and includes unknown axes (e.g. 'bogus')."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/career/story.go",
+          "summary": "Completion 'career' is the flat Go CareerMe: mobile reads career.rank.titleJa so the rank-up message never shows, and the web type expects the legacy {state,...} wrapper; neither current client sends …"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_story_attempts.go",
+          "summary": "writeStoryJSON duplicates the package's existing writeJSON; ensureCareerState copies createDefaultCareerState's INSERT verbatim."
+        }
+      ],
+      "package_sha256": "c20d28fb8c7fcc6509d662b7362f083eb709cb9b28e0ffdda7b642e870099bfc",
+      "fingerprint": "4a6f537df4cab1ba9d29ddb7b68588f127ced865fc2aefce20393e60ded299bc"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-26T12:33:12.202Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoryAttemptFlowGuardsAndLocks|TestStoryAttemptFullFlowRewardsRankUpAndProgress|TestStoryAttemptCompleteIsConcurrencySafe|TestStoryAttemptRejectsUnpublishedAndGuardsComplete)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptFlowGuardsAndLocks",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptFlowGuardsAndLocks handler_story_attempts_test.go:185: anonymous start status=404; want 401 --- FAIL: TestStoryAttemptFlowGuardsAndLocks (0.06s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptFullFlowRewardsRankUpAndProgress",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptFullFlowRewardsRankUpAndProgress handler_story_attempts_test.go:221: first start status=404 body=404 page not found ; want 201 --- FAIL: TestStoryAttemptFullFlowRewardsRankUpAndProgress (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptCompleteIsConcurrencySafe",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptCompleteIsConcurrencySafe handler_story_attempts_test.go:365: start status=404 --- FAIL: TestStoryAttemptCompleteIsConcurrencySafe (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptRejectsUnpublishedAndGuardsComplete",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptRejectsUnpublishedAndGuardsComplete handler_story_attempts_test.go:403: start unpublished arc: status=404 body=404 page not found ; want 404 chapter not found --- FAIL: TestStoryAttemptRejectsUnpublishedAndGuardsComplete (0.02s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestStoryAttemptFlowGuardsAndLocks": "want 401",
+        "go:./internal/httpserver:TestStoryAttemptFullFlowRewardsRankUpAndProgress": "want 201",
+        "go:./internal/httpserver:TestStoryAttemptCompleteIsConcurrencySafe": "start status=404",
+        "go:./internal/httpserver:TestStoryAttemptRejectsUnpublishedAndGuardsComplete": "want 404 chapter not found"
+      },
+      "fingerprint": "fa720f45885e92df2e09827db21c5675f2b4bd9aff1b3648f82ceb970869a305"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-26T12:33:35.460Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoryAttemptFlowGuardsAndLocks|TestStoryAttemptFullFlowRewardsRankUpAndProgress|TestStoryAttemptCompleteIsConcurrencySafe|TestStoryAttemptRejectsUnpublishedAndGuardsComplete|TestStoryAttemptAdvancesOneRankAndClampsTrust)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptFlowGuardsAndLocks",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptFlowGuardsAndLocks handler_story_attempts_test.go:185: anonymous start status=404; want 401 --- FAIL: TestStoryAttemptFlowGuardsAndLocks (0.07s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptFullFlowRewardsRankUpAndProgress",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptFullFlowRewardsRankUpAndProgress handler_story_attempts_test.go:221: first start status=404 body=404 page not found ; want 201 --- FAIL: TestStoryAttemptFullFlowRewardsRankUpAndProgress (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptCompleteIsConcurrencySafe",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptCompleteIsConcurrencySafe handler_story_attempts_test.go:365: start status=404 --- FAIL: TestStoryAttemptCompleteIsConcurrencySafe (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptRejectsUnpublishedAndGuardsComplete",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptRejectsUnpublishedAndGuardsComplete handler_story_attempts_test.go:403: start unpublished arc: status=404 body=404 page not found ; want 404 chapter not found --- FAIL: TestStoryAttemptRejectsUnpublishedAndGuardsComplete (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptAdvancesOneRankAndClampsTrust",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptAdvancesOneRankAndClampsTrust handler_story_attempts_test.go:429: start status=404 body=404 page not found --- FAIL: TestStoryAttemptAdvancesOneRankAndClampsTrust (0.05s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestStoryAttemptFlowGuardsAndLocks": "want 401",
+        "go:./internal/httpserver:TestStoryAttemptFullFlowRewardsRankUpAndProgress": "want 201",
+        "go:./internal/httpserver:TestStoryAttemptCompleteIsConcurrencySafe": "start status=404",
+        "go:./internal/httpserver:TestStoryAttemptRejectsUnpublishedAndGuardsComplete": "want 404 chapter not found",
+        "go:./internal/httpserver:TestStoryAttemptAdvancesOneRankAndClampsTrust": "start status=404"
+      },
+      "fingerprint": "fa720f45885e92df2e09827db21c5675f2b4bd9aff1b3648f82ceb970869a305"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-26T12:33:50.365Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoryAttemptFlowGuardsAndLocks|TestStoryAttemptFullFlowRewardsRankUpAndProgress|TestStoryAttemptCompleteIsConcurrencySafe|TestStoryAttemptRejectsUnpublishedAndGuardsComplete|TestStoryAttemptAdvancesOneRankAndClampsTrust)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptFlowGuardsAndLocks",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptFullFlowRewardsRankUpAndProgress",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptCompleteIsConcurrencySafe",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptRejectsUnpublishedAndGuardsComplete",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptAdvancesOneRankAndClampsTrust",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "fa720f45885e92df2e09827db21c5675f2b4bd9aff1b3648f82ceb970869a305"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-26T12:37:33.176Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1549,
+        "executed": 1549,
+        "passed": 1549,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1549 passed, 0 allowed skip(s)",
+      "fingerprint": "fa720f45885e92df2e09827db21c5675f2b4bd9aff1b3648f82ceb970869a305"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-26T13:12:15.470Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoryAttemptFlowGuardsAndLocks|TestStoryAttemptFullFlowRewardsRankUpAndProgress|TestStoryAttemptCompleteIsConcurrencySafe|TestStoryAttemptRejectsUnpublishedAndGuardsComplete|TestStoryAttemptAdvancesOneRankAndClampsTrust)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptFlowGuardsAndLocks",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptFullFlowRewardsRankUpAndProgress",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptCompleteIsConcurrencySafe",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptRejectsUnpublishedAndGuardsComplete",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptAdvancesOneRankAndClampsTrust",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8012f6d610fb89a5ebf11039377b7ca1822e99062e95deb12014a512738babf8"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-26T13:16:21.988Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1549,
+        "executed": 1549,
+        "passed": 1549,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1549 passed, 0 allowed skip(s)",
+      "fingerprint": "8012f6d610fb89a5ebf11039377b7ca1822e99062e95deb12014a512738babf8"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-26T13:43:43.703Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 14,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoryAttemptFlowGuardsAndLocks|TestStoryAttemptFullFlowRewardsRankUpAndProgress|TestStoryAttemptCompleteIsConcurrencySafe|TestStoryAttemptRejectsUnpublishedAndGuardsComplete|TestStoryAttemptAdvancesOneRankAndClampsTrust|TestStoryAttemptCompletionNeverReturnsNullLists)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptFlowGuardsAndLocks",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptFlowGuardsAndLocks handler_story_attempts_test.go:185: anonymous start status=404; want 401 --- FAIL: TestStoryAttemptFlowGuardsAndLocks (0.06s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptFullFlowRewardsRankUpAndProgress",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptFullFlowRewardsRankUpAndProgress handler_story_attempts_test.go:221: first start status=404 body=404 page not found ; want 201 --- FAIL: TestStoryAttemptFullFlowRewardsRankUpAndProgress (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptCompleteIsConcurrencySafe",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptCompleteIsConcurrencySafe handler_story_attempts_test.go:367: start status=404 --- FAIL: TestStoryAttemptCompleteIsConcurrencySafe (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptRejectsUnpublishedAndGuardsComplete",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptRejectsUnpublishedAndGuardsComplete handler_story_attempts_test.go:405: start unpublished arc: status=404 body=404 page not found ; want 404 chapter not found --- FAIL: TestStoryAttemptRejectsUnpublishedAndGuardsComplete (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptAdvancesOneRankAndClampsTrust",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptAdvancesOneRankAndClampsTrust handler_story_attempts_test.go:431: start status=404 body=404 page not found --- FAIL: TestStoryAttemptAdvancesOneRankAndClampsTrust (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptCompletionNeverReturnsNullLists",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryAttemptCompletionNeverReturnsNullLists handler_story_attempts_test.go:449: start 03d5e679-ea27-4b85-a3b2-b3e3edfeedb3 status=404 body=404 page not found --- FAIL: TestStoryAttemptCompletionNeverReturnsNullLists (0.03s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestStoryAttemptFlowGuardsAndLocks": "want 401",
+        "go:./internal/httpserver:TestStoryAttemptFullFlowRewardsRankUpAndProgress": "want 201",
+        "go:./internal/httpserver:TestStoryAttemptCompleteIsConcurrencySafe": "start status=404",
+        "go:./internal/httpserver:TestStoryAttemptRejectsUnpublishedAndGuardsComplete": "want 404 chapter not found",
+        "go:./internal/httpserver:TestStoryAttemptAdvancesOneRankAndClampsTrust": "start status=404",
+        "go:./internal/httpserver:TestStoryAttemptCompletionNeverReturnsNullLists": "status=404"
+      },
+      "fingerprint": "5515792a3f54bb16bc0586df1a3d7c71217329e1172b3d58bb0980090b0b13bc"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-26T13:44:00.916Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoryAttemptFlowGuardsAndLocks|TestStoryAttemptFullFlowRewardsRankUpAndProgress|TestStoryAttemptCompleteIsConcurrencySafe|TestStoryAttemptRejectsUnpublishedAndGuardsComplete|TestStoryAttemptAdvancesOneRankAndClampsTrust|TestStoryAttemptCompletionNeverReturnsNullLists)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptFlowGuardsAndLocks",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptFullFlowRewardsRankUpAndProgress",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptCompleteIsConcurrencySafe",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptRejectsUnpublishedAndGuardsComplete",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptAdvancesOneRankAndClampsTrust",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryAttemptCompletionNeverReturnsNullLists",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "5515792a3f54bb16bc0586df1a3d7c71217329e1172b3d58bb0980090b0b13bc"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-26T13:47:44.837Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1550,
+        "executed": 1550,
+        "passed": 1550,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1550 passed, 0 allowed skip(s)",
+      "fingerprint": "5515792a3f54bb16bc0586df1a3d7c71217329e1172b3d58bb0980090b0b13bc"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-26T13:48:33.138Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 530,
+        "executed": 530,
+        "passed": 530,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 830,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "5515792a3f54bb16bc0586df1a3d7c71217329e1172b3d58bb0980090b0b13bc"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-26T13:58:46.677Z",
+      "head": "43237c9b1675b154052fca0a2eb382100d4b10f0",
+      "kind": "review",
+      "mode": "human",
+      "reviewer": "Codex independent manual review",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "Reviewed current fingerprint: transaction/replay pool safety, learner+CSRF guards, publication and rank/sequence locks, null-safe completion collections, progress contract, API adapters, and focused regression tests. No blocking findings.",
+      "attested": true,
+      "fingerprint": "5515792a3f54bb16bc0586df1a3d7c71217329e1172b3d58bb0980090b0b13bc"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-26T13:58:49.300Z",
+    "head": "43237c9b1675b154052fca0a2eb382100d4b10f0",
+    "fingerprint": "5515792a3f54bb16bc0586df1a3d7c71217329e1172b3d58bb0980090b0b13bc",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/career/store.go": "b1462ce1a4b0d5cc340a44006f8d66d1b40aeeb0",
+      "apps/api-go/internal/career/story.go": "480a2de11dda835c7661af01c6d8f3a4f1539da0",
+      "apps/api-go/internal/httpserver/handler_career_content_gamification_misc.go": "b5f5486b7bfd2048b9aed5af705d4e21695782fc",
+      "apps/api-go/internal/httpserver/handler_story_attempts.go": "0d6e1a1deee1594f2856cd50955b9d9173dd3045",
+      "apps/api-go/internal/httpserver/handler_story_attempts_test.go": "2b2c2f08a3d4effdf8d32eca8257f7c1cd892271",
+      "apps/api-go/internal/httpserver/handler_story_chapter.go": "02856040b2db7931c5e4d261f7e49c714e8bdc31",
+      "apps/api-go/internal/httpserver/server.go": "43f4b7ce321ca540c1acd8f1bdf26c10c2180393",
+      "apps/web/app/[locale]/story/arcs/[slug]/_components/arc-detail-client.test.tsx": "c2aff00b5ddd4233eb9a91c8650fc46fe686631f",
+      "apps/web/app/[locale]/story/arcs/[slug]/_components/arc-detail-client.tsx": "61a1b02290cb0e4d0eb4976a393af0418bb9e9d8",
+      "apps/web/app/[locale]/story/arcs/_components/arcs-page-client.test.tsx": "c872be314ada32f46ee3ff7ca773f2b729874781",
+      "apps/web/app/[locale]/story/arcs/_components/arcs-page-client.tsx": "6747fd42f620888f23dbd33f1ba5b9ad5e159890",
+      "apps/web/app/[locale]/story/chapters/[id]/_components/chapter-player-client.test.tsx": "e21754aafebffc1e156feec5d1841d9b9de939c8",
+      "apps/web/app/[locale]/story/chapters/[id]/_components/chapter-player-client.tsx": "debe0ece0db7f373461a6dc2ba524a372965e904",
+      "apps/web/src/features/career-rpg/api.contract.test.ts": "4f2af51ef3f86d3a033136365b6748c66daae7f9",
+      "apps/web/src/features/career-rpg/api.ts": "b7fee429b2bf435d675a0d0a769f8141401622a4",
+      "apps/web/src/features/career-rpg/components/daily-standup-page.test.tsx": "2041a2d9130af853aff9d658827d6cdd5543c0ec",
+      "apps/web/src/features/career-rpg/components/daily-standup-page.tsx": "afb1bd47d40980d84cbde620891b74524fecebc4",
+      "apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx": "f4439aa55010c25ffb997ecaf67bc68fef0d3ab5",
+      "apps/web/src/features/career-rpg/components/mission-arc-card.tsx": "fad3fef694e59a8c24ffe3b6cb14c46ed3c6746f",
+      "apps/web/src/features/career-rpg/story-progress.ts": "8c942bfb12c53fee8e906cd9ee0001131049a3ff",
+      "apps/web/src/features/career-rpg/types.ts": "0260d883f4e8cd000ef83d00608849f4d8cae48c",
+      "docs/api-route-inventory.json": "35195a29a7667d0bedb0b3378670c6c1e41e6dfe",
+      "docs/openapi.json": "9d008d5db5da191cabab5aa51cca111f85f4db8b"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": [
+      {
+        "id": "38dd17dc-2b87-4e76-9b1f-d50b8bb62179",
+        "task": "STORY-256",
+        "action": {
+          "kind": "delete_persistent_data",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "0ae7aaa180962fc0764a0c35051d33fe5bd45d5b009088e49bd03c81bf4389c9",
+            "environment": "local"
+          },
+          "impact": "Destroy potentially persistent data",
+          "command": "docker rm -f kb-local-pg >/dev/null 2>&1; docker run -d --name kb-local-pg -p 127.0.0.1:55432:5432 --env-file /private/tmp/claude-501/-Users-thanhnguyen-Documents-Projects-nihongo-bjt/33c0021b-c000-489c-90ce-587cd272e212/scratchpad/local-pg.env postgres:17 >/dev/null && for i in $(seq 1 60); do docker exec kb-local-pg pg_isready -h 127.0.0.1 -U postgres -d nihongo_bjt -q && break; sleep 1; done; docker exec kb-local-pg pg_isready -h 127.0.0.1 -U postgres -d nihongo_bjt && echo PG_UP"
+        },
+        "impact": "Destroy potentially persistent data",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "0ae7aaa180962fc0764a0c35051d33fe5bd45d5b009088e49bd03c81bf4389c9",
+          "environment": "local"
+        },
+        "digest": "f4f6003fe89ec18d4ecee717dad102844f25da086182af31a738b580bb85d19f",
+        "continuation": {
+          "step": "native:toolu_01URGnP9pC8QYiJLfK8Sj7JR",
+          "native_tool_use_id": "toolu_01URGnP9pC8QYiJLfK8Sj7JR"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "native_permission_once",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-26T12:20:04.595Z"
+      }
+    ]
+  }
+}

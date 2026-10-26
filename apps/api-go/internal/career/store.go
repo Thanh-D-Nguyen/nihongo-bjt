@@ -27,6 +27,7 @@ type CareerMe struct {
 	StreakDays      int               `json:"streakDays"`
 	Skills          []CareerSkillStat `json:"skills"`
 	RankTitle       *RankTitle        `json:"rankTitle,omitempty"`
+	RankXPToNext    int               `json:"rankXpToNext"`
 }
 
 // RankTitle is the localized title for a rank.
@@ -144,20 +145,22 @@ func (s *Store) GetMe(ctx context.Context, userID string) (*CareerMe, error) {
 	}
 
 	// Load rank title
-	const rankQ = `SELECT title_ja, title_vi FROM career.career_rank WHERE rank_code = $1`
+	const rankQ = `SELECT title_ja, title_vi, xp_to_next FROM career.career_rank WHERE rank_code = $1`
 	var rt RankTitle
-	if err := s.db.QueryRow(ctx, rankQ, me.CurrentRankCode).Scan(&rt.TitleJa, &rt.TitleVi); err == nil {
+	if err := s.db.QueryRow(ctx, rankQ, me.CurrentRankCode).Scan(&rt.TitleJa, &rt.TitleVi, &me.RankXPToNext); err == nil {
 		me.RankTitle = &rt
 	}
 
 	return &me, nil
 }
 
+// insertDefaultCareerStateSQL creates the starting career state; shared by GetMe and story attempts.
+const insertDefaultCareerStateSQL = `INSERT INTO career.user_career_state (user_id, current_rank_code, rank_xp, jp_work_name, company_theme, hire_date, streak_days, updated_at)
+	VALUES ($1, 'R1', 0, '', '', CURRENT_DATE, 0, NOW())
+	ON CONFLICT (user_id) DO NOTHING`
+
 func (s *Store) createDefaultCareerState(ctx context.Context, userID string) (*CareerMe, error) {
-	const insertQ = `INSERT INTO career.user_career_state (user_id, current_rank_code, rank_xp, jp_work_name, company_theme, hire_date, streak_days, updated_at)
-		VALUES ($1, 'R1', 0, '', '', CURRENT_DATE, 0, NOW())
-		ON CONFLICT (user_id) DO NOTHING`
-	if _, err := s.db.Exec(ctx, insertQ, userID); err != nil {
+	if _, err := s.db.Exec(ctx, insertDefaultCareerStateSQL, userID); err != nil {
 		return nil, fmt.Errorf("career: create default: %w", err)
 	}
 	return s.GetMe(ctx, userID)

@@ -43,17 +43,26 @@ func parseStoryBriefing(raw json.RawMessage) storyBriefing {
 	return b
 }
 
+// canonicalChapterID extracts the {id} path segment of /api/story/chapters/{id}/...; uuid.Parse also accepts
+// urn:uuid:, braced and padded forms that Postgres rejects, so only the canonical form counts as an id.
+func canonicalChapterID(r *http.Request) (string, bool) {
+	raw := extractPathParam(r.URL.Path, "chapters", 1)
+	parsed, err := uuid.Parse(raw)
+	if err != nil || !strings.EqualFold(parsed.String(), raw) {
+		return "", false
+	}
+	return parsed.String(), true
+}
+
 // getStoryChapterHandler implements GET /api/story/chapters/{id}: the playable content of one chapter
 // of a published arc, for signed-in learners only (it carries the answer keys). Persona prompts are never exposed.
 func getStoryChapterHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// uuid.Parse also accepts urn:uuid:, braced and padded forms that Postgres rejects; only the canonical form is an id.
-		parsed, err := uuid.Parse(extractPathParam(r.URL.Path, "chapters", 1))
-		if err != nil || !strings.EqualFold(parsed.String(), extractPathParam(r.URL.Path, "chapters", 1)) {
+		id, ok := canonicalChapterID(r)
+		if !ok {
 			writeJSONError(w, "chapter not found", http.StatusNotFound)
 			return
 		}
-		id := parsed.String()
 
 		var (
 			chapterID, arcSlug, slug, titleJa, titleVi string

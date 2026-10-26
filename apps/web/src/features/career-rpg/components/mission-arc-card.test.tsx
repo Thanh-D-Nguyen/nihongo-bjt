@@ -68,4 +68,11 @@ describe("MissionArcCard", () => {
 
     expect(container.textContent).toContain("2 / 5");
   });
+
+  it("hides the progress row while progress is not tracked even when the chapter total is known", async () => {
+    const container = await render({ ...published, totalChapters: 4, completedChapters: 0, progressTracked: false });
+
+    expect(container.textContent).not.toContain("0 / 4");
+    expect(container.textContent).not.toContain(messages.careerRpg.arcs.chaptersProgress);
+  });
 });

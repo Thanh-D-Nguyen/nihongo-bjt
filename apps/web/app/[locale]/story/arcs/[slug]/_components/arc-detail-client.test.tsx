@@ -6,13 +6,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const { act } = React;
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
-const mocks = vi.hoisted(() => ({ storyArcDetail: vi.fn() }));
+const mocks = vi.hoisted(() => ({ storyArcDetail: vi.fn(), storyProgress: vi.fn() }));
 
 vi.mock("next/link", () => ({
   default: ({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) =>
     React.createElement("a", { href, ...props }, children)
 }));
-vi.mock("../../../../../../src/features/career-rpg/api", () => ({ storyArcDetail: mocks.storyArcDetail }));
+vi.mock("../../../../../../src/features/career-rpg/api", () => ({ storyArcDetail: mocks.storyArcDetail, storyProgress: mocks.storyProgress }));
 vi.mock("../../../../../../src/features/career-rpg/store", () => ({ useCareerRpg: () => ({ npcRelations: [] }) }));
 
 import messages from "../../../../../../messages/vi.json";
@@ -30,7 +30,8 @@ const chapter = (id: string, displayOrder: number): MissionChapter => ({
   briefingJa: "", briefingVi: "", yourRoleVi: "", isBoss: false, scenarios: [], estimatedMinutes: 4
 });
 
-async function render(a: MissionArc) {
+async function render(a: MissionArc, progress: unknown = null) {
+  mocks.storyProgress.mockResolvedValue(progress);
   mocks.storyArcDetail.mockResolvedValue({ arc: a, chapters: [chapter("c1", 1), chapter("c2", 2), chapter("c3", 3)], npcRelations: [], npcs: [] });
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -42,6 +43,9 @@ async function render(a: MissionArc) {
   return container;
 }
 
+const chapterLinks = (container: HTMLElement) =>
+  [...container.querySelectorAll("a")].map((a) => a.getAttribute("href")).filter((href) => href?.includes("/story/chapters/"));
+
 describe("ArcDetailClient", () => {
   afterEach(() => {
     document.body.innerHTML = "";
@@ -51,17 +55,21 @@ describe("ArcDetailClient", () => {
   it("links every chapter when the server does not track progress", async () => {
     const container = await render(arc({ progressTracked: false }));
 
-    const hrefs = [...container.querySelectorAll("a")].map((a) => a.getAttribute("href"));
-    expect(hrefs).toEqual(expect.arrayContaining(["/vi/story/chapters/c1", "/vi/story/chapters/c2", "/vi/story/chapters/c3"]));
+    expect(chapterLinks(container)).toEqual(["/vi/story/chapters/c1", "/vi/story/chapters/c2", "/vi/story/chapters/c3"]);
     expect(container.textContent).not.toContain(messages.careerRpg.arcDetail.chapterLocked);
   });
 
-  it("keeps locking later chapters when progress is tracked", async () => {
-    const container = await render(arc({ progressTracked: true, completedChapters: 1 }));
+  it("merges the learner's progress: completed chapters stay linkable for replay and later ones stay locked", async () => {
+    const container = await render(arc({ progressTracked: false }), { currentRankCode: "R1", completedChapterIds: ["c1"], arcs: { "arc.business-manner-basics": 1 } });
 
-    const hrefs = [...container.querySelectorAll("a")].map((a) => a.getAttribute("href"));
-    expect(hrefs).toContain("/vi/story/chapters/c2");
-    expect(hrefs).not.toContain("/vi/story/chapters/c1");
-    expect(hrefs).not.toContain("/vi/story/chapters/c3");
+    expect(chapterLinks(container)).toEqual(["/vi/story/chapters/c1", "/vi/story/chapters/c2"]);
+    expect(container.textContent).toContain(messages.careerRpg.arcDetail.chapterDone);
+    expect(container.textContent).toContain(messages.careerRpg.arcDetail.chapterLocked);
+  });
+
+  it("locks every chapter of an arc above the learner's rank", async () => {
+    const container = await render(arc({ progressTracked: false, rankCodeEntry: "R3" }), { currentRankCode: "R1", completedChapterIds: [], arcs: {} });
+
+    expect(chapterLinks(container)).toEqual([]);
   });
 });

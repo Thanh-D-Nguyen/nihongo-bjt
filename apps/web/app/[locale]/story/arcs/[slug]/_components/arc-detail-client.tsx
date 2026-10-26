@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { storyArcDetail } from "../../../../../../src/features/career-rpg/api";
 import { NpcRelationCard } from "../../../../../../src/features/career-rpg/components/npc-relation-card";
 import { useCareerRpg } from "../../../../../../src/features/career-rpg/store";
+import { applyStoryProgressToDetail, loadStoryProgress } from "../../../../../../src/features/career-rpg/story-progress";
 import type { CareerRpgLabels } from "../../../../../../src/features/career-rpg/i18n";
 import type { MissionArc, MissionChapter, NpcRelation, StoryNpc } from "../../../../../../src/features/career-rpg/types";
 
@@ -27,9 +28,10 @@ export function ArcDetailClient({ labels, locale, slug }: Props) {
 
   useEffect(() => {
     let alive = true;
-    void storyArcDetail(slug)
-      .then((detail) => {
+    void Promise.all([storyArcDetail(slug), loadStoryProgress()])
+      .then(([raw, progress]) => {
         if (!alive) return;
+        const detail = applyStoryProgressToDetail(raw, progress);
         setArc(detail.arc);
         setChapters(detail.chapters);
         setNpcRelations(detail.npcRelations);
@@ -119,7 +121,7 @@ export function ArcDetailClient({ labels, locale, slug }: Props) {
           {chapters.map((ch, idx) => {
             const tracked = arc.progressTracked !== false;
             const isCompleted = tracked && idx < arc.completedChapters;
-            const isLocked = tracked && idx > arc.completedChapters;
+            const isLocked = arc.status === "locked" || (tracked && idx > arc.completedChapters);
             return (
               <li key={ch.id}>
                 <ChapterRow
@@ -191,7 +193,8 @@ function ChapterRow({
     </Card>
   );
 
-  if (locked || done) return inner;
+  // Completed chapters stay open for replay: the server only pays what an earlier run has not awarded yet.
+  if (locked) return inner;
   return (
     <Link className="block" href={`/${locale}/story/chapters/${chapter.id}`}>
       {inner}

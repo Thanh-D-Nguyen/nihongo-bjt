@@ -78,7 +78,7 @@ export function MissionArcCard({ arc, labels, locale }: Props) {
           <p className="line-clamp-3 text-sm leading-relaxed text-[#4B5563]">{arc.synopsisVi}</p>
         ) : null}
         <div className="mt-auto space-y-2">
-          {arc.totalChapters > 0 ? (
+          {arc.totalChapters > 0 && arc.progressTracked !== false ? (
             <>
               <div className="flex items-baseline justify-between text-[11px] text-[#6B7280]">
                 <span>{labels.chaptersProgress}</span>

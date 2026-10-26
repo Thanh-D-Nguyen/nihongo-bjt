@@ -1797,6 +1797,7 @@ func NewRouter(deps Dependencies) http.Handler {
 			if deps.DBPool != nil {
 				lr.Get("/api/story/chapters/{id}", getStoryChapterHandler(deps.DBPool, deps.Logger))
 			}
+			lr.Get("/api/story/progress", getStoryProgressHandler(deps.CareerStore, deps.Logger))
 		})
 		r.Group(func(lr chi.Router) {
 			lr.Use(learnerGuard)
@@ -1804,6 +1805,8 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Patch("/api/career/me", updateCareerMeHandler(deps.CareerStore, deps.Logger))
 			lr.Post("/api/career/clock-in", clockInHandler(deps.CareerStore, deps.Logger))
 			lr.Patch("/api/career/inbox/{memoID}", updateCareerInboxFeedbackHandler(deps.CareerStore, deps.Logger))
+			lr.Post("/api/story/chapters/{id}/attempts", startStoryAttemptHandler(deps.CareerStore, deps.Logger))
+			lr.Post("/api/story/chapters/{id}/attempts/current/complete", completeStoryAttemptHandler(deps.CareerStore, deps.Logger))
 		})
 	}
 

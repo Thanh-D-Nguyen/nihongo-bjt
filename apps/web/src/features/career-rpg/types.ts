@@ -174,6 +174,14 @@ export interface MissionArc {
   progressTracked?: boolean;
 }
 
+/** The signed-in learner's story progress from GET /api/story/progress. */
+export interface StoryProgress {
+  currentRankCode: RankCode;
+  completedChapterIds: string[];
+  /** Completed chapter count per arc slug. */
+  arcs: Record<string, number>;
+}
+
 export interface ContextMemo {
   id: string;
   cardKind:

@@ -11,6 +11,7 @@ import type {
   MissionChapter,
   NpcRelation,
   StoryNpc,
+  StoryProgress,
   UserCareerState
 } from "./types";
 
@@ -27,6 +28,7 @@ interface CareerMeRecord {
   jpWorkName: string;
   lastClockInAt?: string;
   rankXp: number;
+  rankXpToNext?: number;
   skills: CareerSkillStat[];
   streakDays: number;
   userId: string;
@@ -43,6 +45,12 @@ export interface ChapterDetailResponse {
   chapter: MissionChapter;
   npcs: StoryNpc[];
   rewardsPayload: unknown;
+}
+
+interface ChapterCompleteRecord {
+  career: CareerMeRecord;
+  rankUp: ChapterCompleteResponse["rankUp"];
+  result: ChapterCompleteResponse["result"];
 }
 
 export interface ChapterCompleteResponse {
@@ -109,14 +117,27 @@ export function startChapterAttempt(id: string) {
   });
 }
 
-export function completeCurrentChapterAttempt(id: string) {
-  return apiJson<ChapterCompleteResponse>(
+/** The signed-in learner's story progress, or null when there is no session. */
+export async function storyProgress(): Promise<StoryProgress | null> {
+  const response = await learnerApiFetch("/api/story/progress", undefined);
+  if (response.status === 401) return null;
+  if (!response.ok) {
+    throw new Error(`Career RPG API failed: ${response.status}`);
+  }
+  return (await response.json()) as StoryProgress;
+}
+
+/** Completes the in-progress attempt; `optionKey` is the answer the learner chose (a wrong one earns less). */
+export async function completeCurrentChapterAttempt(id: string, optionKey?: string): Promise<ChapterCompleteResponse> {
+  const record = await apiJson<ChapterCompleteRecord>(
     `/api/story/chapters/${encodeURIComponent(id)}/attempts/current/complete`,
     {
+      body: JSON.stringify(optionKey ? { optionKey } : {}),
       headers: { "Content-Type": "application/json" },
       method: "POST"
     }
   );
+  return { career: toCareerMeResponse(record.career), rankUp: record.rankUp, result: record.result };
 }
 
 async function apiJson<T>(path: string, init?: RequestInit): Promise<T> {
@@ -138,6 +159,7 @@ interface StoryArcRecord {
   synopsisVi?: string;
   npcSlugs?: string[];
   artAccent?: string;
+  chapterIds?: string[];
 }
 
 interface StoryArcDetailRecord extends Omit<StoryArcRecord, "displayOrder"> {
@@ -167,8 +189,8 @@ function toMissionArc(record: StoryArcRecord): MissionArc {
     status: record.status === "published" ? "active" : UI_ARC_STATUSES.has(record.status) ? (record.status as MissionArc["status"]) : "locked",
     synopsisVi: record.synopsisVi ?? "",
     npcSlugs: record.npcSlugs ?? [],
-    chapterIds: [],
-    totalChapters: 0,
+    chapterIds: record.chapterIds ?? [],
+    totalChapters: record.chapterIds?.length ?? 0,
     completedChapters: 0,
     bossChapterId: null,
     artAccent: record.artAccent || NEUTRAL_ARC_ACCENT,
@@ -210,7 +232,7 @@ function toCareerMeResponse(record: CareerMeRecord): CareerMeResponse {
   return {
     state: {
       ...record,
-      rankXpToNext: 0,
+      rankXpToNext: record.rankXpToNext ?? 0,
       lastClockInAt: record.lastClockInAt ?? null
     },
     npcRelations: [],
