@@ -1,0 +1,143 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "OPS-247",
+  "title": "Add manual operator SSH recovery workflow",
+  "start_head": "f715c47424e3013f3a63a5da14b0e8023236d06e",
+  "preexisting_changes": {
+    "apps/api-go/internal/httpserver/handler_career_content_gamification_misc.go": "d9c75d78df7019459df5befef9cbd3ab25d5179a",
+    "apps/api-go/internal/httpserver/handler_lexeme_detail_test.go": "a3736f51d7746343689b0a48430bf146d8ed4f76",
+    "apps/api-go/internal/postgres/testdata/sql_conformance_baseline.json": "f828cce56ddc05d3635db6ce368ec3e53dccc8fc"
+  },
+  "spec": {
+    "problem": "Recover operator SSH access through the existing production runner with a manually approved IPv4-scoped UFW rule.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Only workflow_dispatch on refs/heads/main can run; production runner labels, oracle-production environment/concurrency, read-only contents and five-minute timeout match production."
+      },
+      {
+        "id": "AC2",
+        "text": "operator_ip enters through OPERATOR_IP; Python explicitly validates IPv4 and is_global before quoted sudo -n ufw allow from that address to TCP port 22."
+      },
+      {
+        "id": "AC3",
+        "text": "No account, SSH key, secret or other firewall changes; configuration and dry-run checks verify valid and invalid inputs without changing the real firewall."
+      }
+    ],
+    "expected_behavior": "Manual dispatch on main only uses the production runner, protected environment, and shared deployment concurrency; validates global IPv4 before one quoted sudo UFW allow command and status.",
+    "observed_behavior": "",
+    "rollback_plan": "Remove this temporary workflow after recovery; the operator can separately remove its exact scoped UFW allow rule. This local task performs no remote firewall operation."
+  },
+  "classification": {
+    "classes": [
+      "INFRASTRUCTURE",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "non_behavioral",
+    "rationale": "Environment-only manual recovery workflow with no application behavior change or meaningful unit RED; config and mocked-UFW dry runs, full harness, and independent review replace unit RED. The harness does not allow a redundant config_only exception for non_behavioral changes."
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-26T01:13:51.894Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-26T01:13:52.206Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-26T01:14:03.278Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-26T01:17:05.554Z",
+      "head": "67c0dc7c282eff7c374495829f325c8e75ad7ff4"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-26T01:17:20.438Z",
+      "head": "67c0dc7c282eff7c374495829f325c8e75ad7ff4"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-26T01:17:20.971Z",
+      "head": "67c0dc7c282eff7c374495829f325c8e75ad7ff4"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-26T01:14:49.371Z",
+      "head": "f715c47424e3013f3a63a5da14b0e8023236d06e",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "python3 -c import ast, json, os, pathlib, subprocess, tempfile, yaml path = pathlib.Path(\".github/workflows/recover-ssh.yml\") workflow = yaml.load(path.read_text(), Loader=yaml.BaseLoader) deploy = yaml.load(pathlib.Path(\".github/workflows/deploy-oci.yml\").read_text(), Loader=yaml.BaseLoader) assert set(workflow[\"on\"]) == {\"workflow_dispatch\"} assert workflow[\"on\"][\"workflow_dispatch\"][\"inputs\"] =…",
+      "exit_code": 0,
+      "fingerprint": "942e06dad68dca4177b62b6a0a799212aefdb1e8541803f4f6474930b31960d5"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-26T01:17:05.374Z",
+      "head": "67c0dc7c282eff7c374495829f325c8e75ad7ff4",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 266,
+        "executed": 266,
+        "passed": 266,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "942e06dad68dca4177b62b6a0a799212aefdb1e8541803f4f6474930b31960d5"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-26T01:17:20.260Z",
+      "head": "67c0dc7c282eff7c374495829f325c8e75ad7ff4",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "01a175c6-4955-7a70-86a6-a41b159d2c7d",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "Fresh independent security/correctness review approved final workflow fingerprint 942e06dad68d; zero findings. Production platform readiness and firewall application remain dispatch-time checks.",
+      "output_sha256": "af3c14979278ed339d9bbcee88424c6270b265255b5294bbf8ad2ea0661e4c17",
+      "attested": true,
+      "fingerprint": "942e06dad68dca4177b62b6a0a799212aefdb1e8541803f4f6474930b31960d5"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-26T01:17:20.951Z",
+    "head": "67c0dc7c282eff7c374495829f325c8e75ad7ff4",
+    "fingerprint": "942e06dad68dca4177b62b6a0a799212aefdb1e8541803f4f6474930b31960d5",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "suite_harness": "PASS",
+      "infra_validation": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      ".github/workflows/recover-ssh.yml": "33f9af085fb7a3507c8edfc11a6a176e7f628ef9"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

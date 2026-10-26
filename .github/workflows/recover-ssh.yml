@@ -1,0 +1,38 @@
+name: Recover operator SSH (one time)
+
+on:
+  workflow_dispatch:
+    inputs:
+      operator_ip:
+        description: Operator IPv4 address allowed to SSH
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oracle-production
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, Linux, ARM64, kotobawork-oci]
+    timeout-minutes: 5
+    environment: oracle-production
+    env:
+      OPERATOR_IP: ${{ inputs.operator_ip }}
+    steps:
+      - name: Validate operator IPv4 and allow SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYTHON'
+          import ipaddress, os
+          address = ipaddress.ip_address(os.environ["OPERATOR_IP"])
+          if not isinstance(address, ipaddress.IPv4Address) or not address.is_global:
+              raise SystemExit("A global IPv4 address is required")
+          PYTHON
+          sudo -n ufw allow from "$OPERATOR_IP" to any port 22 proto tcp comment 'KotobaWorks operator SSH'
+          sudo -n ufw status
