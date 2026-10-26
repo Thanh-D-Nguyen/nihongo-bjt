@@ -88,8 +88,9 @@ export async function updateCareerProfile(data: { jpWorkName: string }): Promise
   return toCareerMeResponse(record);
 }
 
-export function storyArcs() {
-  return apiJson<MissionArc[]>("/api/story/arcs");
+export async function storyArcs(): Promise<MissionArc[]> {
+  const records = await apiJson<StoryArcRecord[]>("/api/story/arcs");
+  return records.map(toMissionArc);
 }
 
 export function storyArcDetail(slug: string) {
@@ -123,6 +124,38 @@ async function apiJson<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(`Career RPG API failed: ${response.status}`);
   }
   return response.json() as Promise<T>;
+}
+
+// The Go list endpoint only returns published arcs with these fields; it carries no per-learner progress.
+interface StoryArcRecord {
+  displayOrder: number;
+  rankCodeEntry: MissionArc["rankCodeEntry"];
+  slug: string;
+  status: string;
+  titleJa: string;
+  titleVi: string;
+}
+
+const NEUTRAL_ARC_ACCENT = "#94A3B8";
+const UI_ARC_STATUSES: ReadonlySet<string> = new Set<MissionArc["status"]>(["draft", "active", "completed", "locked"]);
+
+function toMissionArc(record: StoryArcRecord): MissionArc {
+  return {
+    slug: record.slug,
+    titleJa: record.titleJa,
+    titleVi: record.titleVi,
+    rankCodeEntry: record.rankCodeEntry,
+    displayOrder: record.displayOrder,
+    // "published" is the catalogue state of a readable arc; an unrecognized state is locked rather than guessed.
+    status: record.status === "published" ? "active" : UI_ARC_STATUSES.has(record.status) ? (record.status as MissionArc["status"]) : "locked",
+    synopsisVi: "",
+    npcSlugs: [],
+    chapterIds: [],
+    totalChapters: 0,
+    completedChapters: 0,
+    bossChapterId: null,
+    artAccent: NEUTRAL_ARC_ACCENT
+  };
 }
 
 function toCareerMeResponse(record: CareerMeRecord): CareerMeResponse {

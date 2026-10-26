@@ -37,7 +37,7 @@ const STATUS_TONE: Record<MissionArc["status"], { ring: string; chipBg: string; 
 };
 
 export function MissionArcCard({ arc, labels, locale }: Props) {
-  const tone = STATUS_TONE[arc.status];
+  const tone = STATUS_TONE[arc.status] ?? STATUS_TONE.locked;
   const rank = findRankByCode(arc.rankCodeEntry);
   const progressPct =
     arc.totalChapters > 0 ? Math.round((arc.completedChapters / arc.totalChapters) * 100) : 0;
@@ -74,20 +74,26 @@ export function MissionArcCard({ arc, labels, locale }: Props) {
             {statusLabel}
           </span>
         </div>
-        <p className="line-clamp-3 text-sm leading-relaxed text-[#4B5563]">{arc.synopsisVi}</p>
+        {arc.synopsisVi ? (
+          <p className="line-clamp-3 text-sm leading-relaxed text-[#4B5563]">{arc.synopsisVi}</p>
+        ) : null}
         <div className="mt-auto space-y-2">
-          <div className="flex items-baseline justify-between text-[11px] text-[#6B7280]">
-            <span>{labels.chaptersProgress}</span>
-            <span className="font-semibold text-[#111827]">
-              {arc.completedChapters} / {arc.totalChapters}
-            </span>
-          </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-[#F1F5F9]">
-            <div
-              className="h-full rounded-full transition-[width] duration-500"
-              style={{ width: `${progressPct}%`, background: arc.artAccent }}
-            />
-          </div>
+          {arc.totalChapters > 0 ? (
+            <>
+              <div className="flex items-baseline justify-between text-[11px] text-[#6B7280]">
+                <span>{labels.chaptersProgress}</span>
+                <span className="font-semibold text-[#111827]">
+                  {arc.completedChapters} / {arc.totalChapters}
+                </span>
+              </div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-[#F1F5F9]">
+                <div
+                  className="h-full rounded-full transition-[width] duration-500"
+                  style={{ width: `${progressPct}%`, background: arc.artAccent }}
+                />
+              </div>
+            </>
+          ) : null}
         </div>
         {!isLocked ? (
           <span className="text-xs font-medium text-[#1B2A4A] group-hover:text-[#3B82F6]">

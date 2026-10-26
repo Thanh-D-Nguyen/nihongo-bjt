@@ -1,0 +1,453 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-252",
+  "title": "Story arcs list: adapt Go arcs contract so /story/arcs renders instead of crashing",
+  "start_head": "562242677454c6b5db43fcb700aac991e4d97f44",
+  "preexisting_changes": {
+    ".github/workflows/recover-ssh.yml": "336ab60d89f3ba6b697594661a6b5018e5e14104",
+    "TASK_HANDOFF.md": "448f2deffe0803384a75ebfb8950cfc0e1c57a77",
+    "docs/ops/dynamic-ssh.md": "3d520dd3061109d1d03836c8c89a42a494055738",
+    "scripts/ops/recover_ssh.py": "182ff5261426c2d473e9a206fc1cdc1ead9c769f",
+    "scripts/ops/ssh-recovery.test.ts": "7dba4cdb2a45120378e06b93b55f37479db669f4",
+    "scripts/ops/ssh_prod.py": "ea6194d74993a23f44fcdbbb5d301138822661dd",
+    "scripts/ops/test_ssh_recovery.py": "2bc5d3736cc6d4373b0975e110afd2f850c96d8b"
+  },
+  "spec": {
+    "problem": "Production /vi/story/arcs shows the error boundary: TypeError reading 'ring' because the Go /api/story/arcs returns status 'published' and omits progress/synopsis/accent fields the page assumes",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "storyArcs() adapts the Go list contract: status 'published' maps to 'active', missing totalChapters/completedChapters default to 0, missing npcSlugs/chapterIds to [], synopsis to empty, bossChapterId to null; slug, titles, rankCodeEntry and displayOrder are preserved"
+      },
+      {
+        "id": "AC2",
+        "text": "MissionArcCard renders for a published arc and for an unrecognized status without throwing; it omits the 'completed / total' progress row and empty synopsis when totalChapters is 0"
+      },
+      {
+        "id": "AC3",
+        "text": "Detail/chapter contracts and all existing career-rpg tests are unchanged and pass"
+      }
+    ],
+    "expected_behavior": "The arcs list renders every published arc; unknown statuses never crash; progress and synopsis are shown only when the backend supplies them (no fabricated counts)",
+    "observed_behavior": "GET /api/story/arcs returns [{id,slug,titleJa,titleVi,rankCodeEntry,status:'published',displayOrder}]; MissionArcCard does STATUS_TONE[arc.status].ring on undefined and the page crashes",
+    "rollback_plan": "Revert the commit; the list page returns to the error boundary but no data is affected"
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY",
+      "API_CONTRACT"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/src/features/career-rpg/api.contract.test.ts",
+      "test": "storyArcs API adapter > adapts the Go arcs list (status published, no progress fields) to a renderable MissionArc",
+      "expect": "to match object"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx",
+      "test": "MissionArcCard > does not crash on a status the UI does not know",
+      "expect": "to be undefined"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx",
+      "test": "MissionArcCard > renders a backend arc without progress counts and does not invent a 0 / 0 progress row",
+      "expect": "not to contain"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-26T09:33:24.195Z",
+      "head": "562242677454c6b5db43fcb700aac991e4d97f44"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-26T09:33:32.338Z",
+      "head": "562242677454c6b5db43fcb700aac991e4d97f44"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-26T09:33:32.618Z",
+      "head": "562242677454c6b5db43fcb700aac991e4d97f44"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T09:34:15.599Z",
+      "head": "562242677454c6b5db43fcb700aac991e4d97f44"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-26T09:34:18.206Z",
+      "head": "562242677454c6b5db43fcb700aac991e4d97f44"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T09:34:54.814Z",
+      "head": "562242677454c6b5db43fcb700aac991e4d97f44"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T09:35:09.508Z",
+      "head": "562242677454c6b5db43fcb700aac991e4d97f44"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-26T09:36:04.234Z",
+      "head": "562242677454c6b5db43fcb700aac991e4d97f44"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-26T09:36:14.936Z",
+      "head": "562242677454c6b5db43fcb700aac991e4d97f44"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-26T09:34:02.297Z",
+      "head": "562242677454c6b5db43fcb700aac991e4d97f44",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs API adapter > adapts the Go arcs list (status published, no progress fields) to a renderable MissionArc",
+          "outcome": "FAIL",
+          "excerpt": "expected { …(7) } to match object { …(12) } (1 matching property omitted from actual)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"status\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs API adapter > adapts the Go arcs list (status published, no progress fields) to a renderable MissionArc": "status"
+      },
+      "fingerprint": "5e949ef1d2823bccfe81722e16952feb9dedc3955f3213ff2c1b2c37b51bf360"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-26T09:34:15.354Z",
+      "head": "562242677454c6b5db43fcb700aac991e4d97f44",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs API adapter > adapts the Go arcs list (status published, no progress fields) to a renderable MissionArc",
+          "outcome": "FAIL",
+          "excerpt": "expected { …(7) } to match object { …(12) } (1 matching property omitted from actual)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs API adapter > adapts the Go arcs list (status published, no progress fields) to a renderable MissionArc": "to match object"
+      },
+      "fingerprint": "5e949ef1d2823bccfe81722e16952feb9dedc3955f3213ff2c1b2c37b51bf360"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-26T09:34:17.971Z",
+      "head": "562242677454c6b5db43fcb700aac991e4d97f44",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs API adapter > adapts the Go arcs list (status published, no progress fields) to a renderable MissionArc",
+          "outcome": "FAIL",
+          "excerpt": "expected { …(7) } to match object { …(12) } (1 matching property omitted from actual)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > does not crash on a status the UI does not know",
+          "outcome": "FAIL",
+          "excerpt": "Cannot read properties of undefined (reading 'ring')",
+          "valid": false,
+          "reason": "runtime crash or non-assertion exception is not a valid RED/sensitivity failure"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs API adapter > adapts the Go arcs list (status published, no progress fields) to a renderable MissionArc": "to match object",
+        "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > does not crash on a status the UI does not know": "ring"
+      },
+      "fingerprint": "5e949ef1d2823bccfe81722e16952feb9dedc3955f3213ff2c1b2c37b51bf360"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-26T09:34:28.919Z",
+      "head": "562242677454c6b5db43fcb700aac991e4d97f44",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs API adapter > adapts the Go arcs list (status published, no progress fields) to a renderable MissionArc",
+          "outcome": "FAIL",
+          "excerpt": "expected { …(7) } to match object { …(12) } (1 matching property omitted from actual)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > does not crash on a status the UI does not know",
+          "outcome": "FAIL",
+          "excerpt": "Cannot read properties of undefined (reading 'ring')",
+          "valid": false,
+          "reason": "runtime crash or non-assertion exception is not a valid RED/sensitivity failure"
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > renders a backend arc without progress counts and does not invent a 0 / 0 progress row",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Yêu cầu rank 内定者ビジネスマナー入門Nhập môn phé…' not to contain 'Tiến độ chương'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs API adapter > adapts the Go arcs list (status published, no progress fields) to a renderable MissionArc": "to match object",
+        "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > does not crash on a status the UI does not know": "ring",
+        "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > renders a backend arc without progress counts and does not invent a 0 / 0 progress row": "not to contain"
+      },
+      "fingerprint": "5e949ef1d2823bccfe81722e16952feb9dedc3955f3213ff2c1b2c37b51bf360"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-26T09:34:37.872Z",
+      "head": "562242677454c6b5db43fcb700aac991e4d97f44",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs API adapter > adapts the Go arcs list (status published, no progress fields) to a renderable MissionArc",
+          "outcome": "FAIL",
+          "excerpt": "expected { …(7) } to match object { …(12) } (1 matching property omitted from actual)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > does not crash on a status the UI does not know",
+          "outcome": "FAIL",
+          "excerpt": "Cannot read properties of undefined (reading 'ring')",
+          "valid": false,
+          "reason": "runtime crash or non-assertion exception is not a valid RED/sensitivity failure"
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > renders a backend arc without progress counts and does not invent a 0 / 0 progress row",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Yêu cầu rank 内定者ビジネスマナー入門Nhập môn phé…' not to contain 'Tiến độ chương'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs API adapter > adapts the Go arcs list (status published, no progress fields) to a renderable MissionArc": "to match object",
+        "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > does not crash on a status the UI does not know": "ring",
+        "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > renders a backend arc without progress counts and does not invent a 0 / 0 progress row": "not to contain"
+      },
+      "fingerprint": "5e949ef1d2823bccfe81722e16952feb9dedc3955f3213ff2c1b2c37b51bf360"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-26T09:34:47.990Z",
+      "head": "562242677454c6b5db43fcb700aac991e4d97f44",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs API adapter > adapts the Go arcs list (status published, no progress fields) to a renderable MissionArc",
+          "outcome": "FAIL",
+          "excerpt": "expected { …(7) } to match object { …(12) } (1 matching property omitted from actual)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > does not crash on a status the UI does not know",
+          "outcome": "FAIL",
+          "excerpt": "expected TypeError: Cannot read properties of unde… to be undefined",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"toBeUndefined\""
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > renders a backend arc without progress counts and does not invent a 0 / 0 progress row",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Yêu cầu rank 内定者ビジネスマナー入門Nhập môn phé…' not to contain 'Tiến độ chương'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs API adapter > adapts the Go arcs list (status published, no progress fields) to a renderable MissionArc": "to match object",
+        "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > does not crash on a status the UI does not know": "toBeUndefined",
+        "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > renders a backend arc without progress counts and does not invent a 0 / 0 progress row": "not to contain"
+      },
+      "fingerprint": "96f77a9d50ce23e3002975f2fff9b9333f5b1d02c3aebf933bf18748ef51c51b"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-26T09:34:54.591Z",
+      "head": "562242677454c6b5db43fcb700aac991e4d97f44",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs API adapter > adapts the Go arcs list (status published, no progress fields) to a renderable MissionArc",
+          "outcome": "FAIL",
+          "excerpt": "expected { …(7) } to match object { …(12) } (1 matching property omitted from actual)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > does not crash on a status the UI does not know",
+          "outcome": "FAIL",
+          "excerpt": "expected TypeError: Cannot read properties of unde… to be undefined",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > renders a backend arc without progress counts and does not invent a 0 / 0 progress row",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Yêu cầu rank 内定者ビジネスマナー入門Nhập môn phé…' not to contain 'Tiến độ chương'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs API adapter > adapts the Go arcs list (status published, no progress fields) to a renderable MissionArc": "to match object",
+        "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > does not crash on a status the UI does not know": "to be undefined",
+        "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > renders a backend arc without progress counts and does not invent a 0 / 0 progress row": "not to contain"
+      },
+      "fingerprint": "96f77a9d50ce23e3002975f2fff9b9333f5b1d02c3aebf933bf18748ef51c51b"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-26T09:35:09.199Z",
+      "head": "562242677454c6b5db43fcb700aac991e4d97f44",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/api.contract.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/api.contract.test.ts::storyArcs API adapter > adapts the Go arcs list (status published, no progress fields) to a renderable MissionArc",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > does not crash on a status the UI does not know",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx::MissionArcCard > renders a backend arc without progress counts and does not invent a 0 / 0 progress row",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "99280dadbd6a7b8d1cfcda80e460d3829ec4474a98c396e1855e4763798a3412"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-26T09:36:03.927Z",
+      "head": "562242677454c6b5db43fcb700aac991e4d97f44",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 514,
+        "executed": 514,
+        "passed": 514,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 828,
+        "lint_errors": 65,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "99280dadbd6a7b8d1cfcda80e460d3829ec4474a98c396e1855e4763798a3412"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-26T09:36:14.917Z",
+    "head": "562242677454c6b5db43fcb700aac991e4d97f44",
+    "fingerprint": "99280dadbd6a7b8d1cfcda80e460d3829ec4474a98c396e1855e4763798a3412",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/src/features/career-rpg/api.contract.test.ts": "472593dff507173be5744d751cfe6365ca1c0979",
+      "apps/web/src/features/career-rpg/api.ts": "a1c421a5e0f53bf5546e1414fcf8b3a69f0c6917",
+      "apps/web/src/features/career-rpg/components/mission-arc-card.test.tsx": "1c0e55b0597a634a2d8121f7094519c2b520895f",
+      "apps/web/src/features/career-rpg/components/mission-arc-card.tsx": "14f9902c2caeae0fa2a20ffeabc683ad476e74ba"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}
