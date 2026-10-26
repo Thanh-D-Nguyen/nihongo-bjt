@@ -1,0 +1,371 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "LIFE-250",
+  "title": "Publish approved source-backed city Life Lessons with daily refresh",
+  "start_head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c",
+  "preexisting_changes": {
+    ".github/workflows/recover-ssh.yml": "336ab60d89f3ba6b697594661a6b5018e5e14104",
+    "apps/api-go/internal/httpserver/handler_admin_operations_bjt.go": "daf8e145c3afda5161b92238c9f1c765d37fbe81",
+    "apps/api-go/internal/httpserver/handler_admin_operations_bjt_dashboard_test.go": "e1aa1f0189dae71b5158e50d4eea9252f797ad82",
+    "scripts/ops/recover_ssh.py": "182ff5261426c2d473e9a206fc1cdc1ead9c769f",
+    "scripts/ops/ssh-recovery.test.ts": "410e659d201d76b4611ce07c5bdc1d33745a4acf",
+    "scripts/ops/ssh_prod.py": "ea6194d74993a23f44fcdbbb5d301138822661dd",
+    "scripts/ops/test_ssh_recovery.py": "560745286b8f66c509c05faa4b14b13d3a59a299",
+    "docs/ops/dynamic-ssh.md": "3d520dd3061109d1d03836c8c89a42a494055738",
+    "TASK_HANDOFF.md": "448f2deffe0803384a75ebfb8950cfc0e1c57a77"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Ten supported cities receive reviewed Japanese geography lessons from verified Wikidata CC0 Japan-country facts with correct source timestamps, bilingual explanations, readings and exercises."
+      },
+      {
+        "id": "AC2",
+        "text": "An operator-approved fixed template and existing active publisher permission are required; manual edits and blocked/draft lessons are preserved; publication and refresh are audited atomically."
+      },
+      {
+        "id": "AC3",
+        "text": "Daily idempotent refresh retains last valid lessons on upstream errors and expires stale lessons; existing feed review gate and MET Norway cache/license checks remain enforced."
+      },
+      {
+        "id": "AC4",
+        "text": "Production includes a working reviewed life lesson for each city, MET Norway with real operator contact, and a scheduled refresh with failure-visible execution."
+      }
+    ],
+    "expected_behavior": "Source-backed lessons plus date and licensed live weather are served consistently without fabricating current facts or replacing human-reviewed edits.",
+    "observed_behavior": "",
+    "rollback_plan": "Disable scheduled refresh and MET_NORWAY_USER_AGENT; archive only this batch managed lessons through audited admin actions; application rollback preserves all other content and accounts."
+  },
+  "classification": {
+    "classes": [
+      "DOMAIN_LOGIC",
+      "DATABASE",
+      "INFRASTRUCTURE",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "add",
+    "rationale": ""
+  },
+  "red_exception": {
+    "category": "new_component",
+    "reason": "New deterministic source provider and publisher command; meaningful assertion mutation against the new production module supplies sensitivity evidence.",
+    "declared_before_red": true
+  },
+  "red_targets": [],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/api-go/internal/lifefeed/wikidata.go",
+      "find": "claim.Mainsnak.Value.Data.ID != \"Q17\"",
+      "replace": "claim.Mainsnak.Value.Data.ID == \"Q17\""
+    },
+    "targets": [
+      {
+        "runner": "go",
+        "package": "./internal/lifefeed",
+        "test": "TestWikidataLessonsRequireVerifiedJapanClaims",
+        "expect": "want 10 verified city lessons"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-26T06:41:48.832Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-26T06:41:49.230Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-26T06:41:49.701Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T07:11:19.356Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-26T07:14:29.981Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T07:19:12.740Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c"
+    },
+    {
+      "state": "EXCEPTION_APPROVED",
+      "at": "2026-10-26T07:26:53.347Z",
+      "head": "3540db14bb8c11d5de74b0f8cecfab042315aac4"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-26T07:45:00.155Z",
+      "head": "3540db14bb8c11d5de74b0f8cecfab042315aac4"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-26T07:04:49.502Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 266,
+        "executed": 266,
+        "passed": 266,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "236d639843db433ad0160522cdc12f2f4134d91bc2117aaf075d3d90af9ecf2d"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-26T07:05:55.025Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 1541,
+        "executed": 1541,
+        "passed": 1540,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "236d639843db433ad0160522cdc12f2f4134d91bc2117aaf075d3d90af9ecf2d"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-26T07:11:10.679Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/lifefeed/wikidata.go",
+        "find": "claim.Mainsnak.Value.Data.ID != \"Q17\"",
+        "replace": "claim.Mainsnak.Value.Data.ID == \"Q17\""
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWikidataLessonsRequireVerifiedJapanClaims)$ ./internal/lifefeed"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/lifefeed:TestWikidataLessonsRequireVerifiedJapanClaims",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestWikidataLessonsRequireVerifiedJapanClaims wikidata_test.go:50: want 10 verified city lessons in one request; cards=0 requests=1 err=unverified Japan-country claim for tokyo --- FAIL: TestWikidataLessonsRequireVerifiedJapanClaims (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/lifefeed:TestWikidataLessonsRequireVerifiedJapanClaims": "want 10 verified city lessons"
+      },
+      "fingerprint": "53497080ac53218e1a10165274b63390f881a6c2859c112a399dea6299eed69a"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-26T07:11:18.727Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestWikidataLessonsRequireVerifiedJapanClaims)$ ./internal/lifefeed"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/lifefeed:TestWikidataLessonsRequireVerifiedJapanClaims",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "53497080ac53218e1a10165274b63390f881a6c2859c112a399dea6299eed69a"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-26T07:14:29.151Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 266,
+        "executed": 266,
+        "passed": 266,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "53497080ac53218e1a10165274b63390f881a6c2859c112a399dea6299eed69a"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-26T07:18:59.483Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1541,
+        "executed": 1541,
+        "passed": 1541,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1541 passed, 0 allowed skip(s)",
+      "fingerprint": "5e2ab5d4023e207f94164b607471894f666388bb8f3a8fc65fe36d2ee2944a40"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-26T07:19:26.811Z",
+      "head": "b6259fe2fbb0c89676cdf185bd258b442c2c108c",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash scripts/quality/with-test-db.sh python3 /Users/thanhnguyen/.kotobawork/imports/20261026-production-followup/validate-life-infra.py",
+      "exit_code": 1,
+      "fingerprint": "53497080ac53218e1a10165274b63390f881a6c2859c112a399dea6299eed69a"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-26T07:20:27.027Z",
+      "head": "3540db14bb8c11d5de74b0f8cecfab042315aac4",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash scripts/quality/with-test-db.sh python3 /Users/thanhnguyen/.kotobawork/imports/20261026-production-followup/validate-life-infra.py",
+      "exit_code": 0,
+      "fingerprint": "53497080ac53218e1a10165274b63390f881a6c2859c112a399dea6299eed69a"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-26T07:20:47.310Z",
+      "head": "3540db14bb8c11d5de74b0f8cecfab042315aac4",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Carver/01a17708-4749-7900-8ae4-daf11dfe3d20",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "cf0e936aaf1cd0804b43ca6368ac3b095df6e0fe4b491535377ed9bc6f26b157",
+      "attested": true,
+      "fingerprint": "53497080ac53218e1a10165274b63390f881a6c2859c112a399dea6299eed69a"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-26T07:23:21.814Z",
+      "head": "3540db14bb8c11d5de74b0f8cecfab042315aac4",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 266,
+        "executed": 266,
+        "passed": 266,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "53497080ac53218e1a10165274b63390f881a6c2859c112a399dea6299eed69a"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-26T07:26:52.795Z",
+      "head": "3540db14bb8c11d5de74b0f8cecfab042315aac4",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1541,
+        "executed": 1541,
+        "passed": 1541,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1541 passed, 0 allowed skip(s)",
+      "fingerprint": "53497080ac53218e1a10165274b63390f881a6c2859c112a399dea6299eed69a"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-26T07:45:00.140Z",
+    "head": "3540db14bb8c11d5de74b0f8cecfab042315aac4",
+    "fingerprint": "53497080ac53218e1a10165274b63390f881a6c2859c112a399dea6299eed69a",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "green": "PASS",
+      "sensitivity": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_harness": "PASS",
+      "suite_go": "PASS",
+      "infra_validation": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      ".github/workflows/refresh-life-feed.yml": "57e9ac83198b903314121cd19f162ed994a11567",
+      "apps/api-go/Dockerfile": "49887c6f4b6749b93fa21fe6bd3319c24b32ee52",
+      "apps/api-go/cmd/life-feed-sync/main.go": "defc7fa5c258c0ad049cb4ea6976666f6efe7257",
+      "apps/api-go/internal/lifefeed/publish_geography.go": "f6d57ca4a20d4b8d6b737c777e9c0e6fb877cf74",
+      "apps/api-go/internal/lifefeed/publish_geography_test.go": "96e935df51f12f091f0f48801fa65eff8bf997ff",
+      "apps/api-go/internal/lifefeed/wikidata.go": "3e921917460812c9f437eefe764fc0dee2c79bf9",
+      "apps/api-go/internal/lifefeed/wikidata_test.go": "3be5be4889ddb945284df4693d78d310cb27d2c9",
+      "docs/ops/life-feed-approved-sources.md": "9d6d1648177d0894925170b4f3b7dec8b2af9f15"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [],
+  "disowned": [
+    {
+      "path": "docs/ops/dynamic-ssh.md",
+      "reason": "OPS-249 owns the concurrent SSH runbook; outside Life Lessons scope.",
+      "at": "2026-10-26T07:19:12.010Z"
+    },
+    {
+      "path": "TASK_HANDOFF.md",
+      "reason": "Session handoff document; not part of Life Lessons deliverable and must not be committed with LIFE-250.",
+      "at": "2026-10-26T07:44:53.135Z"
+    }
+  ]
+}

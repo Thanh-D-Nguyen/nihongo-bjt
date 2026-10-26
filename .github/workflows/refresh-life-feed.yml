@@ -1,0 +1,27 @@
+name: Refresh approved Life Lessons
+
+on:
+  schedule:
+    - cron: "17 17 * * *" # 02:17 JST; yesterday's verified snapshot covers midnight.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oracle-production
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, Linux, ARM64, kotobawork-oci]
+    timeout-minutes: 5
+    environment: oracle-production
+    steps:
+      - name: Refresh the operator-approved source and language template
+        shell: bash
+        run: |
+          set -euo pipefail
+          flock -w 120 /srv/kotobawork/runtime/deploy.lock \
+            sudo -n docker exec oci-api-1 /app/life-feed-sync

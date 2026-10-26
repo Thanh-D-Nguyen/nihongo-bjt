@@ -20,7 +20,9 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" \
     -o api-server ./cmd/api && \
     CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
-    go build -trimpath -ldflags="-s -w" -o bootstrap-admin ./cmd/bootstrap-admin
+    go build -trimpath -ldflags="-s -w" -o bootstrap-admin ./cmd/bootstrap-admin && \
+    CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+    go build -trimpath -ldflags="-s -w" -o life-feed-sync ./cmd/life-feed-sync
 
 # Runtime stage — minimal Alpine with only CA certs and timezone data.
 FROM alpine:3.21.3
@@ -34,6 +36,7 @@ WORKDIR /app
 COPY --from=builder /build/api-server .
 # One-off first-operator provisioning: docker exec -e BOOTSTRAP_ADMIN_* oci-api-1 ./bootstrap-admin
 COPY --from=builder /build/bootstrap-admin .
+COPY --from=builder /build/life-feed-sync .
 
 USER appuser
 
