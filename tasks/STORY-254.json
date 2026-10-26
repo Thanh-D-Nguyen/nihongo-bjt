@@ -1,0 +1,519 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "STORY-254",
+  "title": "Story read API: chapter detail endpoint and catalogue fields for arcs",
+  "start_head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb",
+  "preexisting_changes": {
+    ".github/workflows/recover-ssh.yml": "336ab60d89f3ba6b697594661a6b5018e5e14104",
+    "TASK_HANDOFF.md": "448f2deffe0803384a75ebfb8950cfc0e1c57a77",
+    "apps/web/next-env.d.ts": "ce4e94a6b10f160ee021fe18939af160d2927dcf",
+    "apps/web/tsconfig.tsbuildinfo": "b565692bac4f05dcbdbee23e87740519df07f898",
+    "docs/ops/dynamic-ssh.md": "3d520dd3061109d1d03836c8c89a42a494055738",
+    "scripts/ops/recover_ssh.py": "182ff5261426c2d473e9a206fc1cdc1ead9c769f",
+    "scripts/ops/ssh-recovery.test.ts": "7dba4cdb2a45120378e06b93b55f37479db669f4",
+    "scripts/ops/ssh_prod.py": "ea6194d74993a23f44fcdbbb5d301138822661dd",
+    "scripts/ops/test_ssh_recovery.py": "2bc5d3736cc6d4373b0975e110afd2f850c96d8b"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "GET /api/story/chapters/{id} requires a learner session (401 without one; answer keys are not public) and returns {chapter,npcs,rewardsPayload} for a chapter of a published arc: chapter has id, arcSlug, slug, displayOrder, titleJa/Vi, briefingJa/Vi, yourRoleVi, isBoss, estimatedMinutes and the scenarios array from scenario_payload"
+      },
+      {
+        "id": "AC2",
+        "text": "npcs lists every active story NPC (so reacting NPCs named only in option outcomes resolve) with slug, nameJa, roleJa, companyJa, defaultRelation and avatarInitial/avatarTint/bioVi read from story_npc.avatar_media (first rune of nameJa and empty values only when absent); inactive NPCs are excluded and persona_prompt is never exposed"
+      },
+      {
+        "id": "AC3",
+        "text": "Chapters of unpublished arcs, unknown ids and every non-canonical id (including urn:uuid: and padded forms) return 404 'chapter not found' and never reach SQL as invalid input"
+      },
+      {
+        "id": "AC4",
+        "text": "GET /api/story/arcs adds synopsisVi, npcSlugs and artAccent from story_payload with safe defaults when absent, and GET /api/story/arcs/{slug} chapters add displayOrder, isBoss and estimatedMinutes; existing fields and route tests are unchanged"
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "DOMAIN_LOGIC",
+      "API_CONTRACT"
+    ],
+    "change_kind": "add",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestStoryChapterDetailRoute",
+      "expect": "answer keys must require a learner session"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestStoryCatalogueExposesPayloadFields",
+      "expect": "list lacks synopsisVi"
+    }
+  ],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/api-go/internal/httpserver/handler_story_chapter.go",
+      "find": "WHERE c.id = $1::uuid AND a.status = 'published'",
+      "replace": "WHERE c.id = $1::uuid"
+    },
+    "targets": [
+      {
+        "runner": "go",
+        "package": "./internal/httpserver",
+        "test": "TestStoryChapterDetailRoute",
+        "expect": "want 404 chapter not found"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-26T11:18:57.832Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-26T11:19:03.277Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-26T11:19:03.530Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T11:21:10.212Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-26T11:25:17.145Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-26T11:26:10.211Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-26T11:39:11.909Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T11:40:14.446Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T11:41:23.303Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-26T11:46:13.811Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-26T11:49:57.727Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-26T11:20:38.815Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb",
+      "kind": "sensitivity",
+      "outcome": "INSENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_story_chapter.go",
+        "find": "WHERE c.id = $1::uuid AND a.status = 'published'",
+        "replace": "WHERE c.id = $1::uuid"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoryChapterDetailRoute)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStoryChapterDetailRoute",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestStoryChapterDetailRoute handler_story_chapter_test.go:59: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestStoryChapterDetailRoute (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestStoryChapterDetailRoute": "want 404 chapter not found"
+      },
+      "fingerprint": "e9ca4861ab17978c1aa7abcbcf95297394688dbfbf517c358256b9e03992de96"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-26T11:20:40.966Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoryChapterDetailRoute)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStoryChapterDetailRoute",
+          "outcome": "SKIP",
+          "valid": false,
+          "excerpt": "=== RUN TestStoryChapterDetailRoute handler_story_chapter_test.go:59: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestStoryChapterDetailRoute (0.00s)"
+        }
+      ],
+      "fingerprint": "e9ca4861ab17978c1aa7abcbcf95297394688dbfbf517c358256b9e03992de96"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-26T11:21:01.956Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_story_chapter.go",
+        "find": "WHERE c.id = $1::uuid AND a.status = 'published'",
+        "replace": "WHERE c.id = $1::uuid"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoryChapterDetailRoute)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStoryChapterDetailRoute",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryChapterDetailRoute handler_story_chapter_test.go:127: unpublished arc: status=200 body={\"chapter\":{\"arcSlug\":\"story-chapter-draft-72a23c54\",\"briefingJa\":\"\",\"briefingVi\":\"\",\"displayOrder\":1,\"estimatedMinutes\":0,\"id\":\"e1eae939-0273-4236-a179-74d4c8226f86\",\"isBoss\":false,\"scenarios\":[]…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestStoryChapterDetailRoute": "want 404 chapter not found"
+      },
+      "fingerprint": "e9ca4861ab17978c1aa7abcbcf95297394688dbfbf517c358256b9e03992de96"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-26T11:21:09.873Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoryChapterDetailRoute)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStoryChapterDetailRoute",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e9ca4861ab17978c1aa7abcbcf95297394688dbfbf517c358256b9e03992de96"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-26T11:25:16.747Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1544,
+        "executed": 1544,
+        "passed": 1544,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1544 passed, 0 allowed skip(s)",
+      "fingerprint": "cbd45502dd2f85c99314d3a7afdd82fa5abbe2ece452c41bd54550e12b75f72a"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-26T11:26:01.124Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/httpserver/handler_story_chapter.go",
+        "find": "WHERE c.id = $1::uuid AND a.status = 'published'",
+        "replace": "WHERE c.id = $1::uuid"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoryChapterDetailRoute)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStoryChapterDetailRoute",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryChapterDetailRoute handler_story_chapter_test.go:127: unpublished arc: status=200 body={\"chapter\":{\"arcSlug\":\"story-chapter-draft-cb8371f1\",\"briefingJa\":\"\",\"briefingVi\":\"\",\"displayOrder\":1,\"estimatedMinutes\":0,\"id\":\"e78d8839-d505-419e-87a8-884f61f2685c\",\"isBoss\":false,\"scenarios\":[]…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestStoryChapterDetailRoute": "want 404 chapter not found"
+      },
+      "fingerprint": "cbd45502dd2f85c99314d3a7afdd82fa5abbe2ece452c41bd54550e12b75f72a"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-26T11:26:09.811Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoryChapterDetailRoute)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStoryChapterDetailRoute",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "cbd45502dd2f85c99314d3a7afdd82fa5abbe2ece452c41bd54550e12b75f72a"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-26T11:38:04.604Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 3,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/handler_story_chapter.go",
+          "summary": "NPC avatarInitial/avatarTint/bioVi are fabricated (bioVi always empty, tint hardcoded #DBEAFE/#FEF3C7, wrong initial for miller_vp); the authoritative story_npc.avatar_media column, populated for all …"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/handler_story_chapter.go",
+          "summary": "AC2 violated: uuid.Parse (google/uuid v1.6.0) accepts 'urn:uuid:<uuid>' and any 38-char '?<uuid>?' while the raw string is sent as text to $1::uuid; Postgres rejects both (22P02), so the handler retur…"
+        },
+        {
+          "severity": "major",
+          "file": "tasks/STORY-254.json",
+          "summary": "new_component RED exception is inapplicable: both tests compile at start_head and fail there for the declared reasons (chi 404, missing catalogue fields), so RED was skipped; AC3 changes to existing h…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_story_chapter_test.go",
+          "summary": "Test gaps: no avatar_media fixture or defaultRelation/avatarTint/bioVi assertions; NPC selection (active-only, referenced-only) unpinned because the test DB has no other NPCs; only 'not-a-uuid' covers…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_story_chapter.go",
+          "summary": "npcs limited to scenario characters, but 18/88 seeded chapters reference other NPCs via option outcome.affectedNpcSlug or rewards (e.g. arc.client-email/polite-decline -> yamada_bucho), so clients can…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/server.go",
+          "summary": "Chapter content including full answer keys (isCorrect + outcome) is now public, whereas legacy /story/chapters/:id required KeycloakAuthGuard; declared in AC1 but needs explicit product/security sign-…"
+        }
+      ],
+      "package_sha256": "bd537f431f6ba0313dfc2ddb8df51b9ee4ed01ab0980b123c6f87b883065bd06",
+      "fingerprint": "cbd45502dd2f85c99314d3a7afdd82fa5abbe2ece452c41bd54550e12b75f72a"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-26T11:40:13.965Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoryChapterDetailRoute)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStoryChapterDetailRoute",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryChapterDetailRoute handler_story_chapter_test.go:107: anonymous chapter read status=404 body=404 page not found ; answer keys must require a learner session --- FAIL: TestStoryChapterDetailRoute (0.05s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestStoryChapterDetailRoute": "answer keys must require a learner session"
+      },
+      "fingerprint": "dfdd2ae6f0bef00e673e5f7529a8cb085287cb18a4bfe804b0f03f42d0bdec3d"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-26T11:40:35.728Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoryChapterDetailRoute|TestStoryCatalogueExposesPayloadFields)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStoryChapterDetailRoute",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryChapterDetailRoute handler_story_chapter_test.go:107: anonymous chapter read status=404 body=404 page not found ; answer keys must require a learner session --- FAIL: TestStoryChapterDetailRoute (0.06s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryCatalogueExposesPayloadFields",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestStoryCatalogueExposesPayloadFields handler_story_chapter_test.go:234: list lacks synopsisVi/npcSlugs/artAccent for story-chapter-edd05322: [{\"id\":\"79f79639-88f8-48dc-a723-a73f5324df77\",\"slug\":\"story-chapter-edd05322\",\"titleJa\":\"公開\",\"titleVi\":\"Published\",\"rankCodeEntry\":\"SCedd053\",\"status…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestStoryChapterDetailRoute": "answer keys must require a learner session",
+        "go:./internal/httpserver:TestStoryCatalogueExposesPayloadFields": "list lacks synopsisVi"
+      },
+      "fingerprint": "dfdd2ae6f0bef00e673e5f7529a8cb085287cb18a4bfe804b0f03f42d0bdec3d"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-26T11:41:22.904Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestStoryChapterDetailRoute|TestStoryCatalogueExposesPayloadFields)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestStoryChapterDetailRoute",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestStoryCatalogueExposesPayloadFields",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "facedf36ac950ac81a15f3e84be103d05f02abd087b07a5f76590c51ffe9df6c"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-26T11:42:20.123Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 1544,
+        "executed": 1544,
+        "passed": 1543,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "facedf36ac950ac81a15f3e84be103d05f02abd087b07a5f76590c51ffe9df6c"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-26T11:46:13.333Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1544,
+        "executed": 1544,
+        "passed": 1544,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1544 passed, 0 allowed skip(s)",
+      "fingerprint": "facedf36ac950ac81a15f3e84be103d05f02abd087b07a5f76590c51ffe9df6c"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-26T11:49:46.342Z",
+      "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1544,
+        "executed": 1544,
+        "passed": 1544,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1544 passed, 0 allowed skip(s)",
+      "fingerprint": "facedf36ac950ac81a15f3e84be103d05f02abd087b07a5f76590c51ffe9df6c"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-26T11:49:57.708Z",
+    "head": "66d8e68a9d4388fe06d3438f03ea1e8899eeb2bb",
+    "fingerprint": "facedf36ac950ac81a15f3e84be103d05f02abd087b07a5f76590c51ffe9df6c",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_career_content_gamification_misc.go": "2ac134c6f7812b111d515a68b3a86fc1c5c24957",
+      "apps/api-go/internal/httpserver/handler_story_chapter.go": "77968681c215ac4dd20363260e9a453167792635",
+      "apps/api-go/internal/httpserver/handler_story_chapter_test.go": "07577ec7d50d8753067b9ea1b75f3dbe6277cf3a",
+      "apps/api-go/internal/httpserver/server.go": "af0fd162d3b085b40e6d5a151bc8904a5dde6eca",
+      "docs/api-route-inventory.json": "8dfe46969153606fb4bf1684f719b8b456eb0f70",
+      "docs/openapi.json": "98726787711f58e0b1f872e3d62a3cbdc265e840"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

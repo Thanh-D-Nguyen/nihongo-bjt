@@ -23,7 +23,7 @@ import (
 // listStoryArcsHandler implements GET /api/story/arcs.
 func listStoryArcsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const q = `SELECT id, slug, title_ja, title_vi, rank_code_entry, status, display_order
+		const q = `SELECT id, slug, title_ja, title_vi, rank_code_entry, status, display_order, story_payload
 			FROM career.mission_arc WHERE status = 'published'
 			ORDER BY display_order ASC, created_at ASC`
 		rows, err := db.Query(r.Context(), q)
@@ -42,15 +42,18 @@ func listStoryArcsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFun
 			RankCodeEntry string `json:"rankCodeEntry"`
 			Status        string `json:"status"`
 			DisplayOrder  int    `json:"displayOrder"`
+			storyCatalogue
 		}
 		var arcs []Arc
 		for rows.Next() {
 			var a Arc
-			if err := rows.Scan(&a.ID, &a.Slug, &a.TitleJa, &a.TitleVi, &a.RankCodeEntry, &a.Status, &a.DisplayOrder); err != nil {
+			var payload json.RawMessage
+			if err := rows.Scan(&a.ID, &a.Slug, &a.TitleJa, &a.TitleVi, &a.RankCodeEntry, &a.Status, &a.DisplayOrder, &payload); err != nil {
 				logger.Error("scan story arc", "error", err)
 				writeJSONError(w, "internal error", http.StatusInternalServerError)
 				return
 			}
+			a.storyCatalogue = parseStoryCatalogue(payload)
 			arcs = append(arcs, a)
 		}
 		if err := rows.Err(); err != nil {
@@ -77,10 +80,13 @@ func getStoryArcDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handle
 		}
 
 		type Chapter struct {
-			ID      string `json:"id"`
-			Slug    string `json:"slug"`
-			TitleJa string `json:"titleJa"`
-			TitleVi string `json:"titleVi"`
+			ID               string `json:"id"`
+			Slug             string `json:"slug"`
+			TitleJa          string `json:"titleJa"`
+			TitleVi          string `json:"titleVi"`
+			DisplayOrder     int    `json:"displayOrder"`
+			IsBoss           bool   `json:"isBoss"`
+			EstimatedMinutes int    `json:"estimatedMinutes"`
 		}
 		type ArcDetail struct {
 			ID            string          `json:"id"`
@@ -107,8 +113,8 @@ func getStoryArcDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handle
 			return
 		}
 
-		const chQ = `SELECT id, slug, title_ja, title_vi FROM career.mission_chapter
-			WHERE arc_id = $1 ORDER BY display_order ASC`
+		const chQ = `SELECT id, slug, title_ja, title_vi, display_order, is_boss, briefing_payload
+			FROM career.mission_chapter WHERE arc_id = $1 ORDER BY display_order ASC`
 		cRows, err := db.Query(r.Context(), chQ, ad.ID)
 		if err != nil {
 			logger.Error("list story arc chapters", "error", err)
@@ -118,11 +124,13 @@ func getStoryArcDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handle
 		defer cRows.Close()
 		for cRows.Next() {
 			var ch Chapter
-			if err := cRows.Scan(&ch.ID, &ch.Slug, &ch.TitleJa, &ch.TitleVi); err != nil {
+			var briefing json.RawMessage
+			if err := cRows.Scan(&ch.ID, &ch.Slug, &ch.TitleJa, &ch.TitleVi, &ch.DisplayOrder, &ch.IsBoss, &briefing); err != nil {
 				logger.Error("scan story arc chapter", "error", err)
 				writeJSONError(w, "internal error", http.StatusInternalServerError)
 				return
 			}
+			ch.EstimatedMinutes = parseStoryBriefing(briefing).EstimatedMinutes
 			ad.Chapters = append(ad.Chapters, ch)
 		}
 		if err := cRows.Err(); err != nil {

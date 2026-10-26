@@ -1794,6 +1794,9 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Get("/api/career/me", getCareerMeHandler(deps.CareerStore, deps.Logger))
 			lr.Get("/api/career/ranks", listCareerRanksHandler(deps.CareerStore, deps.Logger))
 			lr.Get("/api/career/inbox", getCareerInboxHandler(deps.CareerStore, deps.Logger))
+			if deps.DBPool != nil {
+				lr.Get("/api/story/chapters/{id}", getStoryChapterHandler(deps.DBPool, deps.Logger))
+			}
 		})
 		r.Group(func(lr chi.Router) {
 			lr.Use(learnerGuard)

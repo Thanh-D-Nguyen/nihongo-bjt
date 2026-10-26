@@ -1,11 +1,11 @@
 {
   "scope": "Static /api inventory of direct NewRouter registrations (excludes /health and /ws). Conditions do not prove runtime availability.",
-  "sourceRegisteredOperations": 634,
-  "openAPIOperations": 634,
+  "sourceRegisteredOperations": 635,
+  "openAPIOperations": 635,
   "verifiedContracts": 0,
   "testEvidencedContracts": 13,
-  "sourceOnlyContracts": 621,
-  "unverifiedContracts": 634,
+  "sourceOnlyContracts": 622,
+  "unverifiedContracts": 635,
   "runtimeVerifiedOperations": 0,
   "families": {
     "Admin / actors": {
@@ -354,7 +354,7 @@
       "testEvidencedContracts": 0
     },
     "story": {
-      "routes": 2,
+      "routes": 3,
       "verifiedContracts": 0,
       "testEvidencedContracts": 0
     },
@@ -34239,6 +34239,59 @@
       },
       "runtimeAvailability": {
         "sourceConditions": [
+          "deps.DBPool != nil"
+        ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/story/chapters/{id}",
+      "handler": "getStoryChapterHandler(deps.DBPool, deps.Logger)",
+      "family": "story",
+      "guards": [
+        "learnerGuard"
+      ],
+      "runtimeConditions": [
+        "deps.CareerStore != nil && deps.SessionStore != nil",
+        "deps.DBPool != nil"
+      ],
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [
+          "learnerGuard"
+        ],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [],
+        "status": "unverified",
+        "subject": "handler integration tests"
+      },
+      "contract": {
+        "method": "get",
+        "openAPIPath": "/api/story/chapters/{id}",
+        "status": "unverified"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [
+          "deps.CareerStore != nil && deps.SessionStore != nil",
           "deps.DBPool != nil"
         ],
         "status": "not-runtime-verified"

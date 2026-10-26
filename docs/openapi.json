@@ -22777,6 +22777,45 @@
         }
       }
     },
+    "/api/story/chapters/{id}": {
+      "get": {
+        "operationId": "getApiStoryChaptersbyId",
+        "parameters": [
+          {
+            "description": "Path token; application-level format and validation are unverified.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Response schema is not yet verified; see the route inventory."
+          }
+        },
+        "summary": "Source-discovered route handled by getStoryChapterHandler(deps.DBPool, deps.Logger)",
+        "tags": [
+          "story"
+        ],
+        "x-contract-verification": {
+          "scope": "route/method/handler coverage only; request and response schemas are unverified",
+          "status": "unverified"
+        },
+        "x-route-source": {
+          "guards": [
+            "learnerGuard"
+          ],
+          "handler": "getStoryChapterHandler(deps.DBPool, deps.Logger)",
+          "runtimeConditions": [
+            "deps.CareerStore != nil && deps.SessionStore != nil",
+            "deps.DBPool != nil"
+          ]
+        }
+      }
+    },
     "/api/users/{userId}/profile": {
       "get": {
         "operationId": "getApiUsersbyUserIdProfile",
