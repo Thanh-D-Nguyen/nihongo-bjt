@@ -1,0 +1,197 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "NHK-266",
+  "title": "Link normal NHK articles directly to their source",
+  "start_head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "A1",
+        "text": "Homepage and news list normal news cards link directly to their NHK source."
+      }
+    ],
+    "expected_behavior": "Normal news entries open the NHK source directly.",
+    "observed_behavior": "Normal news entries open an internal summary page.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/news/nhk-news-regression.test.tsx",
+      "test": "NHK regression > links normal news directly to NHK in the homepage and list",
+      "expect": "to have a length of 2"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-27T03:35:52.493Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-27T03:36:14.125Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-27T03:36:19.551Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T03:36:32.343Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-27T03:36:51.969Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-27T03:38:42.665Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-27T03:36:32.181Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > links normal news directly to NHK in the homepage and list",
+          "outcome": "FAIL",
+          "excerpt": "expected to have a length of 2 but got +0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > links normal news directly to NHK in the homepage and list": "to have a length of 2"
+      },
+      "fingerprint": "97ff10ee6b9ee9d759d795f17fa3e9639cff6b1f984d28feae0667291574b1cd"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-27T03:36:42.139Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > links normal news directly to NHK in the homepage and list",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "Cannot read properties of undefined (reading 'backToHome')"
+        }
+      ],
+      "fingerprint": "0be92dad7c2c69ce23f5772dc5174e29c81417db20dc57b79ab8825ae40e84e3"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-27T03:36:51.729Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > links normal news directly to NHK in the homepage and list",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9ff1211f410db4acce4d8ae1c10fa7d54b5b1e06bca7e840d79fef10bd1cd1f1"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-27T03:37:13.931Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > links normal news directly to NHK in the homepage and list",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "683c5d3aca708b652ae6643c1f4b01572b754aa1bc86ced51bb12ceaba7442c0"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-27T03:38:24.171Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 566,
+        "executed": 566,
+        "passed": 566,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 843,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "683c5d3aca708b652ae6643c1f4b01572b754aa1bc86ced51bb12ceaba7442c0"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-27T03:38:42.646Z",
+    "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+    "fingerprint": "683c5d3aca708b652ae6643c1f4b01572b754aa1bc86ced51bb12ceaba7442c0",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/_components/homepage/featured-news-section.tsx": "51d9760bfa240e89cf79e34f033953d8d33ba7e0",
+      "apps/web/app/[locale]/news/_components/nhk-news-list-client.tsx": "031c4721a27ae1a9ed7c90d305054915b256f0ae",
+      "apps/web/app/[locale]/news/nhk-news-regression.test.tsx": "5dd20e2989782bf272c67a6021718a4b998288f7"
+    }
+  }
+}
