@@ -44,7 +44,7 @@ function WidgetCard({ card, locale, labels }: { card: DailyRadarCard; locale: st
 
   return (
     <Link
-      className={`group relative flex w-[min(18rem,calc(100vw-3rem))] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border shadow-sm outline-none transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:w-[300px] ${theme.card}`}
+      className={`daily-radar-card group relative flex w-[min(18rem,calc(100vw-3rem))] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border shadow-sm outline-none transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-blue-400 sm:w-[300px] ${theme.card}`}
       href={cardHref(card, locale)}
     >
       <div className={`h-1.5 bg-gradient-to-r ${gradient}`} />
@@ -55,13 +55,13 @@ function WidgetCard({ card, locale, labels }: { card: DailyRadarCard; locale: st
               <span className="text-lg">{card.iconKey}</span>
             </div>
           ) : null}
-          <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ring-1 ${theme.badge}`}>
+          <span className={`radar-badge rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ring-1 ${theme.badge}`}>
             {card.module.titleVi}
           </span>
         </div>
         <h3 className="text-[15px] font-bold leading-snug text-slate-800 line-clamp-1">{card.titleVi}</h3>
         {card.japaneseText && (
-          <p className="mt-3 text-xl font-semibold leading-relaxed text-[#1B2A4A]" lang="ja">{card.japaneseText}</p>
+          <p className="mt-3 text-xl font-semibold leading-relaxed text-ink" lang="ja">{card.japaneseText}</p>
         )}
         {card.readingText && (
           <p className="mt-1 text-xs font-medium text-slate-400" lang="ja">{card.readingText}</p>
@@ -86,35 +86,35 @@ function RadarCard({ card, labels, locale }: { card: DailyRadarCard; labels: Dai
   const showDisclaimer = needsDisclaimer(card);
   return (
     <Link
-      className={`group flex min-h-[230px] w-[min(18rem,calc(100vw-3rem))] shrink-0 snap-start flex-col rounded-2xl border p-4 shadow-sm outline-none transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-blue-400 sm:w-[21rem] ${theme.card}`}
+      className={`daily-radar-card group flex min-h-[230px] w-[min(18rem,calc(100vw-3rem))] shrink-0 snap-start flex-col rounded-2xl border p-4 shadow-sm outline-none transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-blue-400 sm:w-[21rem] ${theme.card}`}
       href={cardHref(card, locale)}
     >
       <div className="flex min-w-0 items-start justify-between gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${theme.badge}`}>
+          <span className={`radar-badge rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${theme.badge}`}>
             {categoryLabel(card.category, labels)}
           </span>
           {showDisclaimer ? (
-            <span className="rounded-full bg-amber-100 px-2 py-1 text-[11px] font-semibold text-amber-900 ring-1 ring-amber-200">
+            <span className="radar-badge rounded-full bg-amber-100 px-2 py-1 text-[11px] font-semibold text-amber-900 ring-1 ring-amber-200">
               {labels.disclaimerBadge}
             </span>
           ) : null}
         </div>
-        <span className="max-w-[48%] shrink-0 truncate rounded-full bg-white/80 px-2 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200">
+        <span className="radar-overlay max-w-[48%] shrink-0 truncate rounded-full bg-white/80 px-2 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200">
           {isComingSoon ? labels.comingSoon : (card.badgeTextVi ?? card.module.titleVi)}
         </span>
       </div>
       <h3 className="mt-4 line-clamp-2 text-base font-semibold leading-snug text-slate-950">{card.titleVi}</h3>
       <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-slate-700">{card.descriptionVi}</p>
       {card.recommendationReasonVi ? (
-        <p className="mt-3 line-clamp-2 rounded-xl bg-white/70 px-3 py-2 text-xs leading-relaxed text-slate-700 ring-1 ring-white/80">
+        <p className="radar-overlay mt-3 line-clamp-2 rounded-xl bg-white/70 px-3 py-2 text-xs leading-relaxed text-slate-700 ring-1 ring-white/80">
           {card.recommendationReasonVi}
         </p>
       ) : null}
       <div className="mt-auto space-y-3 pt-4">
         <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-600">
           {card.estimatedMinutes ? <span>{labels.minutes.replace("{n}", String(card.estimatedMinutes))}</span> : null}
-          {card.levelLabel ? <span className="rounded-full bg-white/70 px-2 py-0.5 ring-1 ring-slate-200">{card.levelLabel}</span> : null}
+          {card.levelLabel ? <span className="radar-overlay rounded-full bg-white/70 px-2 py-0.5 ring-1 ring-slate-200">{card.levelLabel}</span> : null}
         </div>
         <span className={`inline-flex min-h-10 items-center rounded-xl bg-white px-3 text-sm font-semibold shadow-sm ring-1 ring-slate-200 transition group-hover:ring-slate-300 ${theme.accent}`}>
           {card.ctaLabelVi || labels.ctaFallback}
@@ -145,12 +145,14 @@ function Spotlight({ card, labels, locale }: { card: DailyRadarCard; labels: Dai
               <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-900">{card.badgeTextVi}</span>
             ) : null}
             {showDisclaimer ? (
-              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-900">
+              <span className="radar-badge rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-900">
                 {labels.disclaimerBadge}
               </span>
             ) : null}
           </div>
           <h3 className="mt-5 max-w-2xl text-2xl font-semibold leading-tight sm:text-3xl">{card.titleVi}</h3>
+          {card.moduleType === "daily_widget" && card.japaneseText ? <p className="mt-3 w-fit rounded-lg bg-black/70 px-2 text-xl font-semibold text-white" lang="ja">{card.japaneseText}</p> : null}
+          {card.moduleType === "daily_widget" && card.readingText ? <p className="mt-1 w-fit rounded-lg bg-black/70 px-2 text-sm text-white" lang="ja">{card.readingText}</p> : null}
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/82 sm:text-base">{card.descriptionVi}</p>
           <div className="mt-auto flex flex-wrap items-center gap-3 pt-6">
             <span className="inline-flex min-h-11 items-center rounded-xl bg-white px-4 text-sm font-semibold text-slate-950 shadow-md transition group-hover:bg-slate-100">
@@ -217,7 +219,7 @@ function CategoryRail({
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <span className={`rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${theme.badge}`}>
+          <span className={`radar-badge rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${theme.badge}`}>
             {categoryLabel(category, labels)}
           </span>
           <span className="text-xs font-medium text-slate-400">{cards.length}</span>
@@ -344,6 +346,7 @@ export function DailyRadarSection({ labels, locale }: { labels: DailyRadarLabels
   const categoryGroups = useMemo(() => {
     const map = new Map<string, DailyRadarCard[]>();
     for (const card of payload?.cards ?? []) {
+      if (card.id === payload?.spotlight?.id) continue;
       const group = map.get(card.category);
       if (group) {
         group.push(card);

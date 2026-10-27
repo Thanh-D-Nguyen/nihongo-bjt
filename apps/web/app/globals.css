@@ -535,6 +535,17 @@
 }
 
 /* ─── Gradients: light gradient stops ─── */
+:is(.dark) .daily-radar-card {
+  background-color: var(--color-surface) !important;
+  background-image: none !important;
+}
+:is(.dark) .radar-badge,
+:is(.dark) .daily-radar-card .radar-badge {
+  color: var(--color-ink) !important;
+}
+:is(.dark) .daily-radar-card .radar-overlay {
+  background-color: var(--color-paper) !important;
+}
 :is(.dark) :is(.from-white) {
   --tw-gradient-from: var(--color-surface) !important;
 }

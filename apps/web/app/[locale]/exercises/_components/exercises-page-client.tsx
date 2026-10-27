@@ -180,7 +180,7 @@ export function ExercisesPageClient({
   const refreshStudyFeed = useCallback(async () => {
     setStudyFeedLoading(true);
     try {
-      const response = await learnerApiFetch("/api/recommendation/study-feed?limit=6");
+      const response = await learnerApiFetch("/api/recommendation/study-feed?limit=8");
       if (!response.ok) throw new Error("Failed to load recommendations");
       const data = await response.json();
       setStudyFeed(Array.isArray(data.items) ? data.items : []);

@@ -1,0 +1,2328 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "BUG-265",
+  "title": "Repair October 27 learner retest regressions and home dark contrast",
+  "start_head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+  "preexisting_changes": {
+    ".github/workflows/recover-ssh.yml": "336ab60d89f3ba6b697594661a6b5018e5e14104",
+    "TASK_HANDOFF.md": "448f2deffe0803384a75ebfb8950cfc0e1c57a77",
+    "apps/admin/next-env.d.ts": "ce4e94a6b10f160ee021fe18939af160d2927dcf",
+    "apps/admin/tsconfig.tsbuildinfo": "50a6b87c6c60903e2b4fcde168dcf63283c43ac3",
+    "apps/web/next-env.d.ts": "ce4e94a6b10f160ee021fe18939af160d2927dcf",
+    "apps/web/tsconfig.tsbuildinfo": "1f394ffd5cdb694463bc99d9bd38ca45ae6f4e9d",
+    "docs/ops/dynamic-ssh.md": "3d520dd3061109d1d03836c8c89a42a494055738",
+    "scripts/ops/recover_ssh.py": "182ff5261426c2d473e9a206fc1cdc1ead9c769f",
+    "scripts/ops/ssh-recovery.test.ts": "7dba4cdb2a45120378e06b93b55f37479db669f4",
+    "scripts/ops/ssh_prod.py": "ea6194d74993a23f44fcdbbb5d301138822661dd",
+    "scripts/ops/test_ssh_recovery.py": "2bc5d3736cc6d4373b0975e110afd2f850c96d8b"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Home news and BJT level cards remain readable in dark mode"
+      },
+      {
+        "id": "AC2",
+        "text": "Repair confirmed outstanding learner retest regressions without fabricating data"
+      }
+    ],
+    "expected_behavior": "Filter the reported refusal, use the same recommendation limit, render spotlight once, and improve the identified dark-mode contrast.",
+    "observed_behavior": "A refusal gloss remains visible, recommendations use different limits, a spotlight is repeated, and some home and NHK warning colors have poor dark contrast.",
+    "rollback_plan": "Revert the task commit and restore the previous release; no schema changes in these edits."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY",
+      "DOMAIN_LOGIC",
+      "API_CONTRACT",
+      "DATABASE"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestDictionaryRejectsRetestRefusal",
+      "expect": "translation refusal must not appear as a dictionary definition"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+      "expect": "text-[#3B82F6]"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx",
+      "test": "Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+      "expect": "limit=8"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "dark theme contrast > preserves the white background of the guest progress action in dark mode",
+      "expect": "dark:bg-white"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/news/nhk-news-regression.test.tsx",
+      "test": "NHK regression > renders the stored plain summary and normal source breadcrumb",
+      "expect": "bg-amber-50"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/src/features/daily-radar/daily-radar-section.test.tsx",
+      "test": "shows a spotlight only once",
+      "expect": "to have a length of 2"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "dark theme contrast > uses the dark-aware warning text utility for NHK summaries",
+      "expect": "text-amber-800"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "dark theme contrast > uses the theme foreground for Japanese text in daily radar cards",
+      "expect": "text-ink"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/src/features/daily-radar/daily-radar-section.test.tsx",
+      "test": "retains Japanese text and reading on a featured daily widget",
+      "expect": "日本語の例文"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "dark theme contrast > uses a dark surface for daily radar card gradients",
+      "expect": "to match"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "dark theme contrast > keeps dark radar badge text and translucent overlays readable",
+      "expect": "daily-radar-card"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "dark theme contrast > uses the dark-aware badge on category headings",
+      "expect": "radar-badge"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/src/features/daily-radar/daily-radar-section.test.tsx",
+      "test": "uses a dark-aware disclaimer badge on the spotlight",
+      "expect": "radar-badge"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-26T23:34:54.517Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-26T23:35:02.910Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-26T23:35:06.009Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T23:35:32.097Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T23:35:49.444Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T23:36:14.530Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T23:36:27.507Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T23:43:41.252Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T23:44:36.737Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-26T23:45:04.833Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-26T23:46:10.009Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-26T23:49:48.399Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T03:37:30.281Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-27T03:38:55.416Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T03:40:54.268Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-27T03:41:15.451Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-27T03:43:21.158Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T03:43:59.250Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-27T03:44:23.271Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T03:44:44.865Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-27T03:45:03.850Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T03:46:46.551Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-27T03:47:12.474Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T03:47:41.070Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-27T03:48:03.962Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T03:49:02.742Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-27T03:49:19.946Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-27T03:53:37.008Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-27T04:01:59.621Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-27T08:44:36.661Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-26T23:35:31.901Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDictionaryRejectsRetestRefusal handler_dictionary_retest_test.go:8: translation refusal must not appear as a dictionary definition --- FAIL: TestDictionaryRejectsRetestRefusal (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal": "translation refusal must not appear as a dictionary definition"
+      },
+      "fingerprint": "27da6cfa229007fd326cc7a1e0502a12db9d31e4ae7b44f67c88c8299663e382"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-26T23:35:49.210Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "67ec6e65406d5af5f470421ac8aea9306db1165bb70452ea67f4b429ed7d452e"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-26T23:36:14.171Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDictionaryRejectsRetestRefusal handler_dictionary_retest_test.go:8: translation refusal must not appear as a dictionary definition --- FAIL: TestDictionaryRejectsRetestRefusal (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "FAIL",
+          "excerpt": "[locale]/_components/homepage/featured-news-section.tsx: expected '\"use client\";\\n\\nimport { Badge, Butt…' not to contain 'text-[#3B82F6]'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal": "translation refusal must not appear as a dictionary definition",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces": "text-[#3B82F6]"
+      },
+      "fingerprint": "84c382bdc87ba7a1954b225a35dfcf2ab03bd345605ffa56452526b77a1c9671"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-26T23:36:27.155Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "759794ec9461c0f283fd19e13d5840a70202507bb4e0556a00dd09da26694492"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-26T23:43:40.545Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 1609,
+        "executed": 1609,
+        "passed": 1609,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "759794ec9461c0f283fd19e13d5840a70202507bb4e0556a00dd09da26694492"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-26T23:44:28.217Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 567,
+        "executed": 567,
+        "passed": 567,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 843,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "86f5d9fc5c19a773975b8537d3122508677b80a20b805ae8a1505ccdf29d7fdb"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-26T23:44:36.135Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "86f5d9fc5c19a773975b8537d3122508677b80a20b805ae8a1505ccdf29d7fdb"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-26T23:45:04.114Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDictionaryRejectsRetestRefusal handler_dictionary_retest_test.go:8: translation refusal must not appear as a dictionary definition --- FAIL: TestDictionaryRejectsRetestRefusal (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "FAIL",
+          "excerpt": "[locale]/_components/homepage/featured-news-section.tsx: expected '\"use client\";\\n\\nimport { Badge, Butt…' not to contain 'text-[#3B82F6]'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Received: 1st vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/daily-progress\", ] 2nd vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/review/due?limit=50\", ] 3rd vi.fn() call: [ - …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal": "translation refusal must not appear as a dictionary definition",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces": "text-[#3B82F6]",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links": "limit=8"
+      },
+      "fingerprint": "86f5d9fc5c19a773975b8537d3122508677b80a20b805ae8a1505ccdf29d7fdb"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-26T23:45:20.953Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDictionaryRejectsRetestRefusal handler_dictionary_retest_test.go:8: translation refusal must not appear as a dictionary definition --- FAIL: TestDictionaryRejectsRetestRefusal (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "FAIL",
+          "excerpt": "[locale]/_components/homepage/featured-news-section.tsx: expected '\"use client\";\\n\\nimport { Badge, Butt…' not to contain 'text-[#3B82F6]'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Received: 1st vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/daily-progress\", ] 2nd vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/review/due?limit=50\", ] 3rd vi.fn() call: [ - …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "FAIL",
+          "excerpt": "expected ' className=\"mt-5 inline-fl…' to contain 'dark:bg-white'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal": "translation refusal must not appear as a dictionary definition",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces": "text-[#3B82F6]",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links": "limit=8",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode": "dark:bg-white"
+      },
+      "fingerprint": "86f5d9fc5c19a773975b8537d3122508677b80a20b805ae8a1505ccdf29d7fdb"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-26T23:45:40.254Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDictionaryRejectsRetestRefusal handler_dictionary_retest_test.go:8: translation refusal must not appear as a dictionary definition --- FAIL: TestDictionaryRejectsRetestRefusal (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "FAIL",
+          "excerpt": "[locale]/_components/homepage/featured-news-section.tsx: expected '\"use client\";\\n\\nimport { Badge, Butt…' not to contain 'text-[#3B82F6]'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Received: 1st vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/daily-progress\", ] 2nd vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/review/due?limit=50\", ] 3rd vi.fn() call: [ - …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "FAIL",
+          "excerpt": "expected ' className=\"mt-5 inline-fl…' to contain 'dark:bg-white'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "FAIL",
+          "excerpt": "expected 'mt-5 flex items-start gap-3 rounded-x…' to contain 'bg-amber-50 '",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal": "translation refusal must not appear as a dictionary definition",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces": "text-[#3B82F6]",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links": "limit=8",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode": "dark:bg-white",
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb": "bg-amber-50"
+      },
+      "fingerprint": "86f5d9fc5c19a773975b8537d3122508677b80a20b805ae8a1505ccdf29d7fdb"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-26T23:45:59.290Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDictionaryRejectsRetestRefusal handler_dictionary_retest_test.go:8: translation refusal must not appear as a dictionary definition --- FAIL: TestDictionaryRejectsRetestRefusal (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "FAIL",
+          "excerpt": "[locale]/_components/homepage/featured-news-section.tsx: expected '\"use client\";\\n\\nimport { Badge, Butt…' not to contain 'text-[#3B82F6]'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Received: 1st vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/daily-progress\", ] 2nd vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/review/due?limit=50\", ] 3rd vi.fn() call: [ - …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "FAIL",
+          "excerpt": "expected ' className=\"mt-5 inline-fl…' to contain 'dark:bg-white'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "FAIL",
+          "excerpt": "expected 'mt-5 flex items-start gap-3 rounded-x…' to contain 'bg-amber-50 '",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once",
+          "outcome": "FAIL",
+          "excerpt": "expected [ '', 'OpenWork日本語1Work', 'Open' ] to have a length of 2 but got 3",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal": "translation refusal must not appear as a dictionary definition",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces": "text-[#3B82F6]",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links": "limit=8",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode": "dark:bg-white",
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb": "bg-amber-50",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once": "to have a length of 2"
+      },
+      "fingerprint": "86f5d9fc5c19a773975b8537d3122508677b80a20b805ae8a1505ccdf29d7fdb"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-26T23:46:09.411Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "86f5d9fc5c19a773975b8537d3122508677b80a20b805ae8a1505ccdf29d7fdb"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-26T23:49:47.743Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1609,
+        "executed": 1609,
+        "passed": 1609,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1609 passed, 0 allowed skip(s)",
+      "fingerprint": "86f5d9fc5c19a773975b8537d3122508677b80a20b805ae8a1505ccdf29d7fdb"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-27T03:37:29.437Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDictionaryRejectsRetestRefusal handler_dictionary_retest_test.go:8: translation refusal must not appear as a dictionary definition --- FAIL: TestDictionaryRejectsRetestRefusal (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "FAIL",
+          "excerpt": "[locale]/_components/homepage/featured-news-section.tsx: expected '\"use client\";\\n\\nimport { Badge, Butt…' not to contain 'text-[#3B82F6]'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Received: 1st vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/daily-progress\", ] 2nd vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/review/due?limit=50\", ] 3rd vi.fn() call: [ - …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "FAIL",
+          "excerpt": "expected ' className=\"mt-5 inline-fl…' to contain 'dark:bg-white'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "FAIL",
+          "excerpt": "expected 'mt-5 flex items-start gap-3 rounded-x…' to contain 'bg-amber-50 '",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once",
+          "outcome": "FAIL",
+          "excerpt": "expected [ '', 'OpenWork日本語1Work', 'Open' ] to have a length of 2 but got 3",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <span className=\"rounded …' to contain 'text-amber-800'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal": "translation refusal must not appear as a dictionary definition",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces": "text-[#3B82F6]",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links": "limit=8",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode": "dark:bg-white",
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb": "bg-amber-50",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once": "to have a length of 2",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries": "text-amber-800"
+      },
+      "fingerprint": "5d50155591b79c8b813902d166b072bcfbe2cbf51856e7fa8ec8c4acf33d8747"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-27T03:37:59.895Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "expected ' <span className=\"rounded …' to contain 'text-amber-800'"
+        }
+      ],
+      "fingerprint": "c752398fe560b73c365d7b34aed2e94677d3896986e7c5ea346743e421c6a5af"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-27T03:38:38.812Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDictionaryRejectsRetestRefusal handler_dictionary_retest_test.go:8: translation refusal must not appear as a dictionary definition --- FAIL: TestDictionaryRejectsRetestRefusal (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "FAIL",
+          "excerpt": "[locale]/_components/homepage/featured-news-section.tsx: expected '\"use client\";\\n\\nimport { Badge, Butt…' not to contain 'text-[#3B82F6]'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Received: 1st vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/daily-progress\", ] 2nd vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/review/due?limit=50\", ] 3rd vi.fn() call: [ - …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "FAIL",
+          "excerpt": "expected ' className=\"mt-5 inline-fl…' to contain 'dark:bg-white'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "FAIL",
+          "excerpt": "expected 'mt-5 flex items-start gap-3 rounded-x…' to contain 'bg-amber-50 '",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once",
+          "outcome": "FAIL",
+          "excerpt": "expected [ '', 'OpenWork日本語1Work', 'Open' ] to have a length of 2 but got 3",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <div className=\"mt-5 flex ite…' to contain 'text-amber-800'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal": "translation refusal must not appear as a dictionary definition",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces": "text-[#3B82F6]",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links": "limit=8",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode": "dark:bg-white",
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb": "bg-amber-50",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once": "to have a length of 2",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries": "text-amber-800"
+      },
+      "fingerprint": "1072b285ea9c5744754688a87cf30817d45529dd82b811e5f7d2fe458f4b410e"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-27T03:38:54.641Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1072b285ea9c5744754688a87cf30817d45529dd82b811e5f7d2fe458f4b410e"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-27T03:40:53.554Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDictionaryRejectsRetestRefusal handler_dictionary_retest_test.go:8: translation refusal must not appear as a dictionary definition --- FAIL: TestDictionaryRejectsRetestRefusal (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "FAIL",
+          "excerpt": "[locale]/_components/homepage/featured-news-section.tsx: expected '\"use client\";\\n\\nimport { Badge, Butt…' not to contain 'text-[#3B82F6]'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Received: 1st vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/daily-progress\", ] 2nd vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/review/due?limit=50\", ] 3rd vi.fn() call: [ - …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "FAIL",
+          "excerpt": "expected ' className=\"mt-5 inline-fl…' to contain 'dark:bg-white'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "FAIL",
+          "excerpt": "expected 'mt-5 flex items-start gap-3 rounded-x…' to contain 'bg-amber-50 '",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once",
+          "outcome": "FAIL",
+          "excerpt": "expected [ '', 'OpenWork日本語1Work', 'Open' ] to have a length of 2 but got 3",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <div className=\"mt-5 flex ite…' to contain 'text-amber-800'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <p className=\"mt-3 text-xl …' to contain 'text-ink'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal": "translation refusal must not appear as a dictionary definition",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces": "text-[#3B82F6]",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links": "limit=8",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode": "dark:bg-white",
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb": "bg-amber-50",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once": "to have a length of 2",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries": "text-amber-800",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards": "text-ink"
+      },
+      "fingerprint": "448f9a35e5225d3b34ad5427b1e3c6edd4f5e00f49de4d65f71e8103cdcf1d4c"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-27T03:41:14.839Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "b431c457764ec7c7d525775396a849871d64d89e477b517a9b39bba9a7a4ebc4"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-27T03:43:20.447Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDictionaryRejectsRetestRefusal handler_dictionary_retest_test.go:8: translation refusal must not appear as a dictionary definition --- FAIL: TestDictionaryRejectsRetestRefusal (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "FAIL",
+          "excerpt": "[locale]/_components/homepage/featured-news-section.tsx: expected '\"use client\";\\n\\nimport { Badge, Butt…' not to contain 'text-[#3B82F6]'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Received: 1st vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/daily-progress\", ] 2nd vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/review/due?limit=50\", ] 3rd vi.fn() call: [ - …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "FAIL",
+          "excerpt": "expected ' className=\"mt-5 inline-fl…' to contain 'dark:bg-white'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "FAIL",
+          "excerpt": "expected 'mt-5 flex items-start gap-3 rounded-x…' to contain 'bg-amber-50 '",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once",
+          "outcome": "FAIL",
+          "excerpt": "expected [ Array(3) ] to have a length of 2 but got 3",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <div className=\"mt-5 flex ite…' to contain 'text-amber-800'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <p className=\"mt-3 text-xl …' to contain 'text-ink'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::retains Japanese text and reading on a featured daily widget",
+          "outcome": "PASS",
+          "excerpt": "",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal": "translation refusal must not appear as a dictionary definition",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces": "text-[#3B82F6]",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links": "limit=8",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode": "dark:bg-white",
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb": "bg-amber-50",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once": "to have a length of 2",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries": "text-amber-800",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards": "text-ink",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::retains Japanese text and reading on a featured daily widget": "日本語の例文"
+      },
+      "fingerprint": "9f5cdda71a00f4491d1dbf8ea0a4329a8aafb257649c77fe50ac24582f3cdbc8"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-27T03:43:57.942Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDictionaryRejectsRetestRefusal handler_dictionary_retest_test.go:8: translation refusal must not appear as a dictionary definition --- FAIL: TestDictionaryRejectsRetestRefusal (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "FAIL",
+          "excerpt": "[locale]/_components/homepage/featured-news-section.tsx: expected '\"use client\";\\n\\nimport { Badge, Butt…' not to contain 'text-[#3B82F6]'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Received: 1st vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/daily-progress\", ] 2nd vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/review/due?limit=50\", ] 3rd vi.fn() call: [ - …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "FAIL",
+          "excerpt": "expected ' className=\"mt-5 inline-fl…' to contain 'dark:bg-white'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "FAIL",
+          "excerpt": "expected 'mt-5 flex items-start gap-3 rounded-x…' to contain 'bg-amber-50 '",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once",
+          "outcome": "FAIL",
+          "excerpt": "expected [ Array(3) ] to have a length of 2 but got 3",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <div className=\"mt-5 flex ite…' to contain 'text-amber-800'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <p className=\"mt-3 text-xl …' to contain 'text-ink'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::retains Japanese text and reading on a featured daily widget",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Unique spotlightOpenWork日本語' to contain '日本語の例文'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal": "translation refusal must not appear as a dictionary definition",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces": "text-[#3B82F6]",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links": "limit=8",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode": "dark:bg-white",
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb": "bg-amber-50",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once": "to have a length of 2",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries": "text-amber-800",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards": "text-ink",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::retains Japanese text and reading on a featured daily widget": "日本語の例文"
+      },
+      "fingerprint": "3c7ca1ed78e7c73671c75693fffd5f0ff5c1dc67c3a7a333a20c740936841fe4"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-27T03:44:22.632Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDictionaryRejectsRetestRefusal handler_dictionary_retest_test.go:8: translation refusal must not appear as a dictionary definition --- FAIL: TestDictionaryRejectsRetestRefusal (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "FAIL",
+          "excerpt": "[locale]/_components/homepage/featured-news-section.tsx: expected '\"use client\";\\n\\nimport { Badge, Butt…' not to contain 'text-[#3B82F6]'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Received: 1st vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/daily-progress\", ] 2nd vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/review/due?limit=50\", ] 3rd vi.fn() call: [ - …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "FAIL",
+          "excerpt": "expected ' className=\"mt-5 inline-fl…' to contain 'dark:bg-white'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "FAIL",
+          "excerpt": "expected 'mt-5 flex items-start gap-3 rounded-x…' to contain 'bg-amber-50 '",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once",
+          "outcome": "FAIL",
+          "excerpt": "expected [ Array(3) ] to have a length of 2 but got 3",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <div className=\"mt-5 flex ite…' to contain 'text-amber-800'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <p className=\"mt-3 text-xl …' to contain 'text-ink'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::retains Japanese text and reading on a featured daily widget",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Unique spotlightOpenWork日本語' to contain '日本語の例文'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses a dark surface for daily radar card gradients",
+          "outcome": "FAIL",
+          "excerpt": "expected '@import \"tailwindcss\";\\n\\n@source \"..…' to match /:is\\(\\.dark\\) \\.daily-radar-card\\s*\\…/s",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"background-image\""
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal": "translation refusal must not appear as a dictionary definition",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces": "text-[#3B82F6]",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links": "limit=8",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode": "dark:bg-white",
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb": "bg-amber-50",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once": "to have a length of 2",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries": "text-amber-800",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards": "text-ink",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::retains Japanese text and reading on a featured daily widget": "日本語の例文",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses a dark surface for daily radar card gradients": "background-image"
+      },
+      "fingerprint": "3c7ca1ed78e7c73671c75693fffd5f0ff5c1dc67c3a7a333a20c740936841fe4"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-27T03:44:44.133Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 6,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDictionaryRejectsRetestRefusal handler_dictionary_retest_test.go:8: translation refusal must not appear as a dictionary definition --- FAIL: TestDictionaryRejectsRetestRefusal (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "FAIL",
+          "excerpt": "[locale]/_components/homepage/featured-news-section.tsx: expected '\"use client\";\\n\\nimport { Badge, Butt…' not to contain 'text-[#3B82F6]'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Received: 1st vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/daily-progress\", ] 2nd vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/review/due?limit=50\", ] 3rd vi.fn() call: [ - …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "FAIL",
+          "excerpt": "expected ' className=\"mt-5 inline-fl…' to contain 'dark:bg-white'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "FAIL",
+          "excerpt": "expected 'mt-5 flex items-start gap-3 rounded-x…' to contain 'bg-amber-50 '",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once",
+          "outcome": "FAIL",
+          "excerpt": "expected [ Array(3) ] to have a length of 2 but got 3",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <div className=\"mt-5 flex ite…' to contain 'text-amber-800'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <p className=\"mt-3 text-xl …' to contain 'text-ink'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::retains Japanese text and reading on a featured daily widget",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Unique spotlightOpenWork日本語' to contain '日本語の例文'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses a dark surface for daily radar card gradients",
+          "outcome": "FAIL",
+          "excerpt": "expected '@import \"tailwindcss\";\\n\\n@source \"..…' to match /:is\\(\\.dark\\) \\.daily-radar-card\\s*\\…/s",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal": "translation refusal must not appear as a dictionary definition",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces": "text-[#3B82F6]",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links": "limit=8",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode": "dark:bg-white",
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb": "bg-amber-50",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once": "to have a length of 2",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries": "text-amber-800",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards": "text-ink",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::retains Japanese text and reading on a featured daily widget": "日本語の例文",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses a dark surface for daily radar card gradients": "to match"
+      },
+      "fingerprint": "3c7ca1ed78e7c73671c75693fffd5f0ff5c1dc67c3a7a333a20c740936841fe4"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-27T03:45:03.210Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::retains Japanese text and reading on a featured daily widget",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses a dark surface for daily radar card gradients",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0054f19cd7eed4439e2fe1ef7cda193c4cafa44c9cda98a7e749efd6bc72fa00"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-27T03:46:45.838Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDictionaryRejectsRetestRefusal handler_dictionary_retest_test.go:8: translation refusal must not appear as a dictionary definition --- FAIL: TestDictionaryRejectsRetestRefusal (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "FAIL",
+          "excerpt": "[locale]/_components/homepage/featured-news-section.tsx: expected '\"use client\";\\n\\nimport { Badge, Butt…' not to contain 'text-[#3B82F6]'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Received: 1st vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/daily-progress\", ] 2nd vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/review/due?limit=50\", ] 3rd vi.fn() call: [ - …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "FAIL",
+          "excerpt": "expected ' className=\"mt-5 inline-fl…' to contain 'dark:bg-white'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "FAIL",
+          "excerpt": "expected 'mt-5 flex items-start gap-3 rounded-x…' to contain 'bg-amber-50 '",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once",
+          "outcome": "FAIL",
+          "excerpt": "expected [ Array(3) ] to have a length of 2 but got 3",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <div className=\"mt-5 flex ite…' to contain 'text-amber-800'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <p className=\"mt-3 text-xl …' to contain 'text-ink'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::retains Japanese text and reading on a featured daily widget",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Unique spotlightOpenWork日本語' to contain '日本語の例文'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses a dark surface for daily radar card gradients",
+          "outcome": "FAIL",
+          "excerpt": "expected '@import \"tailwindcss\";\\n\\n@source \"..…' to match /:is\\(\\.dark\\) \\.daily-radar-card\\s*\\…/s",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps dark radar badge text and translucent overlays readable",
+          "outcome": "FAIL",
+          "excerpt": "expected '@import \"tailwindcss\";\\n\\n@source \"..…' to contain '.daily-radar-card .radar-badge'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal": "translation refusal must not appear as a dictionary definition",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces": "text-[#3B82F6]",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links": "limit=8",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode": "dark:bg-white",
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb": "bg-amber-50",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once": "to have a length of 2",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries": "text-amber-800",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards": "text-ink",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::retains Japanese text and reading on a featured daily widget": "日本語の例文",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses a dark surface for daily radar card gradients": "to match",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps dark radar badge text and translucent overlays readable": "daily-radar-card"
+      },
+      "fingerprint": "59af2d3168f7f80fe614291854671da39235a05f6aae24dc69ee84eb172933c8"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-27T03:47:11.775Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::retains Japanese text and reading on a featured daily widget",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses a dark surface for daily radar card gradients",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps dark radar badge text and translucent overlays readable",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9830b8645ffe687f38e4b8630b1fb4879197e46860b640ee218dd2479f81ba05"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-27T03:47:40.427Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDictionaryRejectsRetestRefusal handler_dictionary_retest_test.go:8: translation refusal must not appear as a dictionary definition --- FAIL: TestDictionaryRejectsRetestRefusal (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "FAIL",
+          "excerpt": "[locale]/_components/homepage/featured-news-section.tsx: expected '\"use client\";\\n\\nimport { Badge, Butt…' not to contain 'text-[#3B82F6]'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Received: 1st vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/daily-progress\", ] 2nd vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/review/due?limit=50\", ] 3rd vi.fn() call: [ - …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "FAIL",
+          "excerpt": "expected ' className=\"mt-5 inline-fl…' to contain 'dark:bg-white'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "FAIL",
+          "excerpt": "expected 'mt-5 flex items-start gap-3 rounded-x…' to contain 'bg-amber-50 '",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once",
+          "outcome": "FAIL",
+          "excerpt": "expected [ Array(3) ] to have a length of 2 but got 3",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <div className=\"mt-5 flex ite…' to contain 'text-amber-800'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <p className=\"mt-3 text-xl …' to contain 'text-ink'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::retains Japanese text and reading on a featured daily widget",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Unique spotlightOpenWork日本語' to contain '日本語の例文'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses a dark surface for daily radar card gradients",
+          "outcome": "FAIL",
+          "excerpt": "expected '@import \"tailwindcss\";\\n\\n@source \"..…' to match /:is\\(\\.dark\\) \\.daily-radar-card\\s*\\…/s",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps dark radar badge text and translucent overlays readable",
+          "outcome": "FAIL",
+          "excerpt": "expected '@import \"tailwindcss\";\\n\\n@source \"..…' to contain '.daily-radar-card .radar-badge'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware badge on category headings",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <span className={`rounded-f…' to contain 'radar-badge'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal": "translation refusal must not appear as a dictionary definition",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces": "text-[#3B82F6]",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links": "limit=8",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode": "dark:bg-white",
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb": "bg-amber-50",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once": "to have a length of 2",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries": "text-amber-800",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards": "text-ink",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::retains Japanese text and reading on a featured daily widget": "日本語の例文",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses a dark surface for daily radar card gradients": "to match",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps dark radar badge text and translucent overlays readable": "daily-radar-card",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware badge on category headings": "radar-badge"
+      },
+      "fingerprint": "5f3e8d5e78699018423c4bc8868bde80f4f5a3e37ed8896ef66d6024179040ca"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-27T03:48:03.330Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::retains Japanese text and reading on a featured daily widget",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses a dark surface for daily radar card gradients",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps dark radar badge text and translucent overlays readable",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware badge on category headings",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "5c7737be849214f95dffc2797a0adde2e0bf9eb77a32c224ed7bf193a0b7477d"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-27T03:49:01.931Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 7,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDictionaryRejectsRetestRefusal handler_dictionary_retest_test.go:8: translation refusal must not appear as a dictionary definition --- FAIL: TestDictionaryRejectsRetestRefusal (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "FAIL",
+          "excerpt": "[locale]/_components/homepage/featured-news-section.tsx: expected '\"use client\";\\n\\nimport { Badge, Butt…' not to contain 'text-[#3B82F6]'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "FAIL",
+          "excerpt": "expected \"vi.fn()\" to be called with arguments: [ Array(1) ] Received: 1st vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/daily-progress\", ] 2nd vi.fn() call: [ - \"/api/recommendation/study-feed?limit=8\", + \"/api/exercises/review/due?limit=50\", ] 3rd vi.fn() call: [ - …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "FAIL",
+          "excerpt": "expected ' className=\"mt-5 inline-fl…' to contain 'dark:bg-white'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "FAIL",
+          "excerpt": "expected 'mt-5 flex items-start gap-3 rounded-x…' to contain 'bg-amber-50 '",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once",
+          "outcome": "FAIL",
+          "excerpt": "expected [ '', 'OpenWork日本語Notice1Work', …(1) ] to have a length of 2 but got 3",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <div className=\"mt-5 flex ite…' to contain 'text-amber-800'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <p className=\"mt-3 text-xl …' to contain 'text-ink'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::retains Japanese text and reading on a featured daily widget",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Unique spotlightOpenWork日本語Notice' to contain '日本語の例文'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses a dark surface for daily radar card gradients",
+          "outcome": "FAIL",
+          "excerpt": "expected '@import \"tailwindcss\";\\n\\n@source \"..…' to match /:is\\(\\.dark\\) \\.daily-radar-card\\s*\\…/s",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps dark radar badge text and translucent overlays readable",
+          "outcome": "FAIL",
+          "excerpt": "expected '@import \"tailwindcss\";\\n\\n@source \"..…' to contain '.daily-radar-card .radar-badge'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware badge on category headings",
+          "outcome": "FAIL",
+          "excerpt": "expected ' <span className={`rounded-f…' to contain 'radar-badge'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::uses a dark-aware disclaimer badge on the spotlight",
+          "outcome": "FAIL",
+          "excerpt": "expected 'rounded-full bg-amber-100 px-3 py-1 t…' to contain 'radar-badge'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal": "translation refusal must not appear as a dictionary definition",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces": "text-[#3B82F6]",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links": "limit=8",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode": "dark:bg-white",
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb": "bg-amber-50",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once": "to have a length of 2",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries": "text-amber-800",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards": "text-ink",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::retains Japanese text and reading on a featured daily widget": "日本語の例文",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses a dark surface for daily radar card gradients": "to match",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps dark radar badge text and translucent overlays readable": "daily-radar-card",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware badge on category headings": "radar-badge",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::uses a dark-aware disclaimer badge on the spotlight": "radar-badge"
+      },
+      "fingerprint": "8f6df7fcbdcc1a91d0ba4adae448816e93968cccd5d85c0d858b5ebee932e54a"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-27T03:49:19.321Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDictionaryRejectsRetestRefusal)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestDictionaryRejectsRetestRefusal",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps homepage news and progress links readable on dark surfaces",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > shows lesson recommendations from the shared feed as lesson links",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > preserves the white background of the guest progress action in dark mode",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders the stored plain summary and normal source breadcrumb",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows a spotlight only once",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware warning text utility for NHK summaries",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the theme foreground for Japanese text in daily radar cards",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::retains Japanese text and reading on a featured daily widget",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses a dark surface for daily radar card gradients",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > keeps dark radar badge text and translucent overlays readable",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::dark theme contrast > uses the dark-aware badge on category headings",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::uses a dark-aware disclaimer badge on the spotlight",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "58758dd477bf143cd2d1951ce2ddaa58d6fa85a4e6d93c207ed172195a63f3f5"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-27T03:52:48.282Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1609,
+        "executed": 1609,
+        "passed": 1609,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1609 passed, 0 allowed skip(s)",
+      "fingerprint": "58758dd477bf143cd2d1951ce2ddaa58d6fa85a4e6d93c207ed172195a63f3f5"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-27T03:53:36.350Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 572,
+        "executed": 572,
+        "passed": 572,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 843,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "58758dd477bf143cd2d1951ce2ddaa58d6fa85a4e6d93c207ed172195a63f3f5"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-27T04:01:58.992Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [
+        {
+          "severity": "minor",
+          "file": "apps/web/app/theme-contrast.regression.test.ts",
+          "summary": "Home-link test: accent-token assertion is unrelated (passes at base; links do not use text-accent) and the case-sensitive negative class check would accept text-[#3b82f6] or text-blue-500 (3.98:1 in d…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/src/features/daily-radar/daily-radar-section.test.tsx",
+          "summary": "Dark hooks daily-radar-card, card radar-badge and radar-overlay are unpinned: fixture is daily_widget-only and CSS tests only toContain selector strings, so removing the classes from the components ke…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/app/[locale]/_components/homepage/bjt-levels-section.tsx",
+          "summary": "AC1 names BJT level cards but this file is untouched with no new evidence; all AC1 evidence is static class/CSS string matching with no rendered dark-mode check (existing overrides appear sufficient)"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_dictionary_retest_test.go",
+          "summary": "One-off unit test instead of a row in the DB-backed TestBUG264DictionaryRejectsInvalidGlosses table, which would also pin list/detail/sense wiring; the phrase list keeps needing new variants"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/app/globals.css",
+          "summary": "Daily-radar rules sit under the Gradients section comment and the second .radar-badge selector is already covered by the first"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx",
+          "summary": "Pins literal limit=8 rather than parity with the home ForYouFeedWidget; a shared constant would prevent future drift"
+        }
+      ],
+      "package_sha256": "2244d73ab8ef0115385ce0df7d28bad301bbff154dd54f200dd3589697716e96",
+      "fingerprint": "58758dd477bf143cd2d1951ce2ddaa58d6fa85a4e6d93c207ed172195a63f3f5"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-27T08:44:36.646Z",
+    "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+    "fingerprint": "58758dd477bf143cd2d1951ce2ddaa58d6fa85a4e6d93c207ed172195a63f3f5",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_dictionary_quality.go": "620186bd1cb9ca5e4022c0c273c00991682d44d7",
+      "apps/api-go/internal/httpserver/handler_dictionary_retest_test.go": "7cc2cde960024e63d435d906f417d85145d143ec",
+      "apps/web/app/[locale]/_components/homepage/featured-news-section.tsx": "825c840f2d1542318a8dcd1625dcc3b1f4a02fd8",
+      "apps/web/app/[locale]/_components/homepage/progress-section.tsx": "bf34fcf43e37024482835e722058dd4843623320",
+      "apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx": "ec8d098ebbe3ff69d088481996155d72e121a018",
+      "apps/web/app/[locale]/exercises/_components/exercises-page-client.tsx": "b71abf28b71c77337d9601eb598bbfcb777048b4",
+      "apps/web/app/[locale]/news/[id]/_components/nhk-article-detail-client.tsx": "b71b1ba2671e4e9884a13fde40389dffa28297ad",
+      "apps/web/app/[locale]/news/nhk-news-regression.test.tsx": "dc65e31e138cb3b46302ded6807e01389fc815e5",
+      "apps/web/app/globals.css": "47dd53faa40273c9a40b21f3e582aa22c75a4ddf",
+      "apps/web/app/theme-contrast.regression.test.ts": "b98bf474ea7f59dceea6c32297258edbe60a0e64",
+      "apps/web/src/features/daily-radar/daily-radar-section.test.tsx": "ca0e9c90ece36e7bfa83ff9c9ffdd5e1a57e0648",
+      "apps/web/src/features/daily-radar/daily-radar-section.tsx": "0ad98ac481ad375a57c86303fc879fb167806215"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

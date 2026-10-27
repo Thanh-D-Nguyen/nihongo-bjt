@@ -1,0 +1,251 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "BUG-266",
+  "title": "Fix lesson and login retest labels",
+  "start_head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Known lesson activity and stimulus types display localized labels and audio controls hide technical metadata."
+      },
+      {
+        "id": "AC2",
+        "text": "Login displays site header and footer and localized metadata while preserving session behavior."
+      }
+    ],
+    "expected_behavior": "Lesson badges are localized without audio diagnostics; login includes site chrome and localized title.",
+    "observed_behavior": "Lesson badges and audio reveal technical strings; login hides site chrome and lacks server-rendered title.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx",
+      "test": "LessonDetailClient > localizes activity labels and hides audio implementation details",
+      "expect": "Chọn cách diễn đạt phù hợp"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/login/login-chrome.test.tsx",
+      "test": "login site chrome > renders the site header and footer around login",
+      "expect": "<header"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-27T03:35:57.763Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-27T03:36:37.333Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-27T03:36:37.642Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T03:36:50.171Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-27T03:37:29.077Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T03:38:52.053Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-27T03:39:03.426Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-27T03:39:09.189Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-27T03:36:50.011Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > localizes activity labels and hides audio implementation details",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Cấp độJ1Bài học 11Bài học thửテストレッスンT…' to contain 'Chọn cách diễn đạt phù hợp'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > localizes activity labels and hides audio implementation details": "Chọn cách diễn đạt phù hợp"
+      },
+      "fingerprint": "239571284bd00096638886e4620d93917a81c4812e0762b5143b52d983624156"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-27T03:37:04.027Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/login/login-chrome.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > localizes activity labels and hides audio implementation details",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Cấp độJ1Bài học 11Bài học thửテストレッスンT…' to contain 'Chọn cách diễn đạt phù hợp'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/login/login-chrome.test.tsx::login site chrome > renders the site header and footer around login",
+          "outcome": "FAIL",
+          "excerpt": "expected '<p>Login form</p>' to contain '<header'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > localizes activity labels and hides audio implementation details": "Chọn cách diễn đạt phù hợp",
+        "vitest:apps/web/app/[locale]/login/login-chrome.test.tsx::login site chrome > renders the site header and footer around login": "<header"
+      },
+      "fingerprint": "88c088b5504fceb0d17ffb8c54ca1201e428133dfeecad8e954752934164c66c"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-27T03:37:28.399Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/login/login-chrome.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > localizes activity labels and hides audio implementation details",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/login/login-chrome.test.tsx::login site chrome > renders the site header and footer around login",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e2fb77333bf65e0cdc7fd57b9c77024380ea32137f5847799d386f0331629874"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-27T03:38:51.498Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 566,
+        "executed": 566,
+        "passed": 566,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 843,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "3cb344bdc7646ff06fe5b6e7f043f2de7f2e5333ed77681a5148a567ffc228d4"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-27T03:39:02.919Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/login/login-chrome.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx::LessonDetailClient > localizes activity labels and hides audio implementation details",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/login/login-chrome.test.tsx::login site chrome > renders the site header and footer around login",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3cb344bdc7646ff06fe5b6e7f043f2de7f2e5333ed77681a5148a567ffc228d4"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-27T03:39:09.170Z",
+    "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+    "fingerprint": "3cb344bdc7646ff06fe5b6e7f043f2de7f2e5333ed77681a5148a567ffc228d4",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.test.tsx": "af537ad60f762fabf2eed6c52438f0019a2f153a",
+      "apps/web/app/[locale]/levels/[level]/lessons/[slug]/_components/lesson-detail-client.tsx": "bcd122915b3a08ee0e64e6706bb062d39e04b467",
+      "apps/web/app/[locale]/login/layout.tsx": "33bf5b99bfd20c5add412be945304bf306fab4d6",
+      "apps/web/app/[locale]/login/login-chrome.test.tsx": "d8b520ca84a76c679193c5a8762e27b98581f8f4",
+      "apps/web/app/[locale]/login/page.tsx": "940ba6ef799e77f01692c7802c2ffb079526a2dd",
+      "apps/web/app/_components/learner-app-frame.tsx": "a10bcd9367b82e32ebc39604ecbff0e5a0980c5c",
+      "apps/web/messages/en.json": "0677c2a7e2d33b8ede887558da5324c630d4dee8",
+      "apps/web/messages/ja.json": "c99abc760374258634c9fc2af1fc7a9926f03a7e",
+      "apps/web/messages/vi.json": "f2ed3966d66780467bc0fbd010d94078bbc4152d"
+    }
+  }
+}

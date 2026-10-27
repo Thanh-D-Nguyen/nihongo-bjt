@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 
 import { LessonDetailClient } from "./lesson-detail-client";
+import vietnamese from "../../../../../../../messages/vi.json";
 
 const { apiFetch } = vi.hoisted(() => ({ apiFetch: vi.fn() }));
 
@@ -107,6 +108,18 @@ describe("LessonDetailClient", () => {
 	beforeEach(() => {
 		apiFetch.mockReset();
 	});
+
+ it("localizes activity labels and hides audio implementation details", async () => {
+  const activity = { ...richContent.activities[0], stimulusType: "telephone", audioScript: "こんにちは", audioAssetStatus: "tts_ready", audioProvider: "browser_tts", audioVoice: "ja-JP-default", audioVersion: "tts-v1" };
+  apiFetch.mockResolvedValueOnce(response({ ...lesson, lessonContent: { ...richContent, activities: [activity] } }));
+  await act(async () => { root.render(<LessonDetailClient slug={lesson.slug} levelCode="J1" labels={vietnamese.lessonDetail} locale="vi" />); });
+  await act(async () => { await Promise.resolve(); });
+  expect(host.textContent).toContain("Chọn cách diễn đạt phù hợp");
+  expect(host.textContent).toContain("Điện thoại");
+  expect(host.textContent).not.toContain("browser_tts");
+  expect(host.textContent).not.toContain("ja-JP-default");
+  expect(host.textContent).not.toContain("tts-v1");
+ });
 
  it("counts embedded lesson content in the header", async () => {
   apiFetch.mockResolvedValueOnce(response({ ...lesson, lessonContent: richContent }));

@@ -18,6 +18,7 @@ describe("Exercises shared recommendations", () => {
     api.mockImplementation(async (url: string) => ({ ok: true, json: async () => url.includes("study-feed") ? { items: [{ id: "lesson-1", type: "lesson", title: "Business greetings", metadata: { slug: "greetings", levelCode: "J5" } }] } : [] }));
     host = document.createElement("div"); document.body.append(host); root = createRoot(host);
     await act(async () => root.render(<ExercisesPageClient labels={labels} locale="vi" />));
+    expect(api).toHaveBeenCalledWith("/api/recommendation/study-feed?limit=8");
     expect(host.textContent).toContain("Business greetings");
     expect(host.querySelector('a[href="/vi/levels/J5/lessons/greetings"]')).not.toBeNull();
   });

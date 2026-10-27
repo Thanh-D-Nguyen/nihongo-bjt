@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../messages/en.json";
 import { FeaturedNewsSection } from "../_components/homepage/featured-news-section";
+import { NhkNewsListClient } from "./_components/nhk-news-list-client";
 import { NhkArticleDetailClient } from "./[id]/_components/nhk-article-detail-client";
 import { generateMetadata } from "./[id]/page";
 
@@ -51,6 +52,23 @@ describe("NHK regression", () => {
     expect(html).not.toContain(en.homepage.newsCardsUnavailable);
   });
 
+  it("links normal news directly to NHK in the homepage and list", async () => {
+    const normalArticles = [article, { ...article, id: "normal-test-2" }];
+    api.article = normalArticles;
+    const container = document.createElement("div");
+    const root = createRoot(container);
+    await act(async () => root.render(<FeaturedNewsSection articlesByType={{ easy: [], normal: normalArticles }} labels={en.homepage} locale="en" onRetry={() => undefined} />));
+    await act(async () => (container.querySelectorAll('[role="tab"]')[1] as HTMLElement).click());
+    expect(container.querySelectorAll(`a[href="${article.url}"]`)).toHaveLength(2);
+    for (const link of container.querySelectorAll(`a[href="${article.url}"]`)) {
+      expect(link.getAttribute("aria-label")).toBe(`${en.homepage.newsReadMore} ${en.homepage.newsNormal}`);
+    }
+    await act(async () => root.render(<NhkNewsListClient labels={en.nhkDetail} homepageLabels={en.homepage} locale="en" />));
+    await act(async () => (container.querySelectorAll('[role="tab"]')[1] as HTMLElement).click());
+    expect(container.querySelectorAll(`a[href="${article.url}"]`)).toHaveLength(2);
+    await act(async () => root.unmount());
+  });
+
   it("renders the stored plain summary and normal source breadcrumb", async () => {
     api.article = article;
     const container = document.createElement("div");
@@ -58,6 +76,7 @@ describe("NHK regression", () => {
     await act(async () => root.render(<NhkArticleDetailClient articleId={article.id} labels={{ ...en.nhkDetail, titleNormal: "NHK news" }} locale="en" />));
     expect(container.querySelector("article")?.textContent).toContain("本文の要約");
     expect(container.querySelector("nav")?.textContent).toContain("NHK news");
+    expect(Array.from(container.querySelectorAll("div")).find((el) => el.textContent === en.nhkDetail.summaryNote)?.className).toContain("bg-amber-50 ");
     await act(async () => root.unmount());
   });
 

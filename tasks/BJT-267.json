@@ -1,0 +1,545 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "BJT-267",
+  "title": "Fix BJT accuracy and exercise gloss integrity",
+  "start_head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+  "preexisting_changes": {
+    "apps/api-go/internal/httpserver/handler_exercise_generate.go": "ca54c2fd4b499d521f1452ec0c4def126ce676ef",
+    "apps/api-go/internal/httpserver/handler_final_batch.go": "99cb9116b1f8b3239c08b2e770ddcef94b2a58cd",
+    "apps/api-go/internal/httpserver/handler_progress_gloss_retest_test.go": "67ba34d38cca1e0886c2d28c66a868a937bdcd3c"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "BJT accuracy uses completed question totals for the authenticated learner"
+      },
+      {
+        "id": "AC2",
+        "text": "Exercise generation excludes recognizable invalid glosses and preserves assigned questions"
+      }
+    ],
+    "expected_behavior": "Accuracy reflects persisted totals and new exercises use usable glosses without changing assignments",
+    "observed_behavior": "Session averaging distorts question accuracy and exercise generation can include contaminated glosses",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestRetestBJTAccuracyUsesQuestionTotals",
+      "expect": "BJT accuracy must use question totals"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestRetestExerciseRejectsInvalidGloss",
+      "expect": "exercise must reject invalid gloss"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestRetestExerciseRejectsInvalidLaterSense",
+      "expect": "exercise must reject invalid later sense"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestRetestExerciseFindsEnoughUsableGlosses",
+      "expect": "exercise must find usable glosses before limiting"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-27T03:42:18.695Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-27T03:42:22.913Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-27T03:42:26.381Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T03:42:55.207Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-27T03:42:57.666Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T03:46:27.917Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-27T03:46:52.832Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T03:48:03.496Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-27T03:48:10.381Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T03:51:58.407Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-27T03:52:28.070Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-27T03:56:10.079Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-27T03:56:28.606Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-27T03:42:54.852Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRetestBJTAccuracyUsesQuestionTotals|TestRetestExerciseRejectsInvalidGloss)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRetestBJTAccuracyUsesQuestionTotals",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRetestBJTAccuracyUsesQuestionTotals handler_progress_gloss_retest_test.go:52: BJT accuracy must use question totals: {BjtAccuracyPct:50 CompletedBjtSessions:2} --- FAIL: TestRetestBJTAccuracyUsesQuestionTotals (0.08s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseRejectsInvalidGloss",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRetestExerciseRejectsInvalidGloss handler_progress_gloss_retest_test.go:70: exercise must reject invalid gloss: \"tôi không thể dịch\" --- FAIL: TestRetestExerciseRejectsInvalidGloss (0.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestRetestBJTAccuracyUsesQuestionTotals": "BJT accuracy must use question totals",
+        "go:./internal/httpserver:TestRetestExerciseRejectsInvalidGloss": "exercise must reject invalid gloss"
+      },
+      "fingerprint": "66a73e9e4ef236ca912c8b413c83eb9ab867d1a5d5d712db35987b2df76a4f19"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-27T03:42:57.412Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRetestBJTAccuracyUsesQuestionTotals|TestRetestExerciseRejectsInvalidGloss)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRetestBJTAccuracyUsesQuestionTotals",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseRejectsInvalidGloss",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "66a73e9e4ef236ca912c8b413c83eb9ab867d1a5d5d712db35987b2df76a4f19"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-27T03:46:27.660Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 1611,
+        "executed": 1611,
+        "passed": 1611,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "66a73e9e4ef236ca912c8b413c83eb9ab867d1a5d5d712db35987b2df76a4f19"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-27T03:46:52.578Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRetestBJTAccuracyUsesQuestionTotals|TestRetestExerciseRejectsInvalidGloss|TestRetestExerciseRejectsInvalidLaterSense|TestRetestExerciseFindsEnoughUsableGlosses)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRetestBJTAccuracyUsesQuestionTotals",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRetestBJTAccuracyUsesQuestionTotals handler_progress_gloss_retest_test.go:53: BJT accuracy must use question totals: {BjtAccuracyPct:50 CompletedBjtSessions:2} --- FAIL: TestRetestBJTAccuracyUsesQuestionTotals (0.07s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseRejectsInvalidGloss",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRetestExerciseRejectsInvalidGloss handler_progress_gloss_retest_test.go:71: exercise must reject invalid gloss: \"tôi không thể dịch\" --- FAIL: TestRetestExerciseRejectsInvalidGloss (0.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseRejectsInvalidLaterSense",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRetestExerciseRejectsInvalidLaterSense handler_progress_gloss_retest_test.go:119: exercise must reject invalid later sense: \"công việc; 『猫』 là con mèo\" --- FAIL: TestRetestExerciseRejectsInvalidLaterSense (0.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseFindsEnoughUsableGlosses",
+          "outcome": "PASS",
+          "excerpt": "=== RUN TestRetestExerciseFindsEnoughUsableGlosses --- PASS: TestRetestExerciseFindsEnoughUsableGlosses (0.05s)",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestRetestBJTAccuracyUsesQuestionTotals": "BJT accuracy must use question totals",
+        "go:./internal/httpserver:TestRetestExerciseRejectsInvalidGloss": "exercise must reject invalid gloss",
+        "go:./internal/httpserver:TestRetestExerciseRejectsInvalidLaterSense": "exercise must reject invalid later sense",
+        "go:./internal/httpserver:TestRetestExerciseFindsEnoughUsableGlosses": "exercise must find usable glosses before limiting"
+      },
+      "fingerprint": "3831515746b40d386f2ca0c0c9471fc1f299c8a9115ec77fb3fb5709dd687c2f"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-27T03:47:22.966Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRetestBJTAccuracyUsesQuestionTotals|TestRetestExerciseRejectsInvalidGloss|TestRetestExerciseRejectsInvalidLaterSense|TestRetestExerciseFindsEnoughUsableGlosses)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRetestBJTAccuracyUsesQuestionTotals",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRetestBJTAccuracyUsesQuestionTotals handler_progress_gloss_retest_test.go:53: BJT accuracy must use question totals: {BjtAccuracyPct:50 CompletedBjtSessions:2} --- FAIL: TestRetestBJTAccuracyUsesQuestionTotals (0.07s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseRejectsInvalidGloss",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRetestExerciseRejectsInvalidGloss handler_progress_gloss_retest_test.go:71: exercise must reject invalid gloss: \"tôi không thể dịch\" --- FAIL: TestRetestExerciseRejectsInvalidGloss (0.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseRejectsInvalidLaterSense",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRetestExerciseRejectsInvalidLaterSense handler_progress_gloss_retest_test.go:119: exercise must reject invalid later sense: \"công việc; 『猫』 là con mèo\" --- FAIL: TestRetestExerciseRejectsInvalidLaterSense (0.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseFindsEnoughUsableGlosses",
+          "outcome": "PASS",
+          "excerpt": "=== RUN TestRetestExerciseFindsEnoughUsableGlosses --- PASS: TestRetestExerciseFindsEnoughUsableGlosses (0.05s)",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestRetestBJTAccuracyUsesQuestionTotals": "BJT accuracy must use question totals",
+        "go:./internal/httpserver:TestRetestExerciseRejectsInvalidGloss": "exercise must reject invalid gloss",
+        "go:./internal/httpserver:TestRetestExerciseRejectsInvalidLaterSense": "exercise must reject invalid later sense",
+        "go:./internal/httpserver:TestRetestExerciseFindsEnoughUsableGlosses": "exercise must find usable glosses before limiting"
+      },
+      "fingerprint": "3831515746b40d386f2ca0c0c9471fc1f299c8a9115ec77fb3fb5709dd687c2f"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-27T03:48:03.128Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRetestBJTAccuracyUsesQuestionTotals|TestRetestExerciseRejectsInvalidGloss|TestRetestExerciseRejectsInvalidLaterSense|TestRetestExerciseFindsEnoughUsableGlosses)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRetestBJTAccuracyUsesQuestionTotals",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRetestBJTAccuracyUsesQuestionTotals handler_progress_gloss_retest_test.go:53: BJT accuracy must use question totals: {BjtAccuracyPct:50 CompletedBjtSessions:2} --- FAIL: TestRetestBJTAccuracyUsesQuestionTotals (0.26s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseRejectsInvalidGloss",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRetestExerciseRejectsInvalidGloss handler_progress_gloss_retest_test.go:71: exercise must reject invalid gloss: \"tôi không thể dịch\" --- FAIL: TestRetestExerciseRejectsInvalidGloss (0.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseRejectsInvalidLaterSense",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRetestExerciseRejectsInvalidLaterSense handler_progress_gloss_retest_test.go:119: exercise must reject invalid later sense: \"công việc; 『猫』 là con mèo\" --- FAIL: TestRetestExerciseRejectsInvalidLaterSense (0.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseFindsEnoughUsableGlosses",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRetestExerciseFindsEnoughUsableGlosses handler_progress_gloss_retest_test.go:157: exercise must find usable glosses before limiting: invalid \"tôi không thể dịch\" --- FAIL: TestRetestExerciseFindsEnoughUsableGlosses (0.08s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestRetestBJTAccuracyUsesQuestionTotals": "BJT accuracy must use question totals",
+        "go:./internal/httpserver:TestRetestExerciseRejectsInvalidGloss": "exercise must reject invalid gloss",
+        "go:./internal/httpserver:TestRetestExerciseRejectsInvalidLaterSense": "exercise must reject invalid later sense",
+        "go:./internal/httpserver:TestRetestExerciseFindsEnoughUsableGlosses": "exercise must find usable glosses before limiting"
+      },
+      "fingerprint": "e4277e94042d955c6297765111e0ecf92ac327f43b7d65c489f40a558ebb9cfe"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-27T03:48:10.100Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRetestBJTAccuracyUsesQuestionTotals|TestRetestExerciseRejectsInvalidGloss|TestRetestExerciseRejectsInvalidLaterSense|TestRetestExerciseFindsEnoughUsableGlosses)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRetestBJTAccuracyUsesQuestionTotals",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseRejectsInvalidGloss",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseRejectsInvalidLaterSense",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseFindsEnoughUsableGlosses",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e4277e94042d955c6297765111e0ecf92ac327f43b7d65c489f40a558ebb9cfe"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-27T03:51:58.106Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 1613,
+        "executed": 1613,
+        "passed": 1613,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "e4277e94042d955c6297765111e0ecf92ac327f43b7d65c489f40a558ebb9cfe"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-27T03:52:25.119Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRetestBJTAccuracyUsesQuestionTotals|TestRetestExerciseRejectsInvalidGloss|TestRetestExerciseRejectsInvalidLaterSense|TestRetestExerciseFindsEnoughUsableGlosses)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRetestBJTAccuracyUsesQuestionTotals",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRetestBJTAccuracyUsesQuestionTotals handler_progress_gloss_retest_test.go:53: BJT accuracy must use question totals: {BjtAccuracyPct:50 CompletedBjtSessions:2} --- FAIL: TestRetestBJTAccuracyUsesQuestionTotals (0.06s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseRejectsInvalidGloss",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRetestExerciseRejectsInvalidGloss handler_progress_gloss_retest_test.go:71: exercise must reject invalid gloss: \"tôi không thể dịch\" --- FAIL: TestRetestExerciseRejectsInvalidGloss (0.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseRejectsInvalidLaterSense",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRetestExerciseRejectsInvalidLaterSense handler_progress_gloss_retest_test.go:119: exercise must reject invalid later sense: \"công việc; 『猫』 là con mèo\" --- FAIL: TestRetestExerciseRejectsInvalidLaterSense (0.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseFindsEnoughUsableGlosses",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestRetestExerciseFindsEnoughUsableGlosses handler_progress_gloss_retest_test.go:157: exercise must find usable glosses before limiting: invalid \"tôi không thể dịch\" --- FAIL: TestRetestExerciseFindsEnoughUsableGlosses (0.06s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestRetestBJTAccuracyUsesQuestionTotals": "BJT accuracy must use question totals",
+        "go:./internal/httpserver:TestRetestExerciseRejectsInvalidGloss": "exercise must reject invalid gloss",
+        "go:./internal/httpserver:TestRetestExerciseRejectsInvalidLaterSense": "exercise must reject invalid later sense",
+        "go:./internal/httpserver:TestRetestExerciseFindsEnoughUsableGlosses": "exercise must find usable glosses before limiting"
+      },
+      "fingerprint": "a642d0cfba52c3ac89d4b029df532c84127d69535b11775d1752ce79bfd7a00c"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-27T03:52:27.797Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestRetestBJTAccuracyUsesQuestionTotals|TestRetestExerciseRejectsInvalidGloss|TestRetestExerciseRejectsInvalidLaterSense|TestRetestExerciseFindsEnoughUsableGlosses)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestRetestBJTAccuracyUsesQuestionTotals",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseRejectsInvalidGloss",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseRejectsInvalidLaterSense",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestRetestExerciseFindsEnoughUsableGlosses",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a642d0cfba52c3ac89d4b029df532c84127d69535b11775d1752ce79bfd7a00c"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-27T03:56:09.811Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1613,
+        "executed": 1613,
+        "passed": 1613,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1613 passed, 0 allowed skip(s)",
+      "fingerprint": "a642d0cfba52c3ac89d4b029df532c84127d69535b11775d1752ce79bfd7a00c"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-27T03:56:28.590Z",
+    "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+    "fingerprint": "a642d0cfba52c3ac89d4b029df532c84127d69535b11775d1752ce79bfd7a00c",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_exercise_generate.go": "b725caa02d5be6e040836dc45f1da065d126348a",
+      "apps/api-go/internal/httpserver/handler_final_batch.go": "99cb9116b1f8b3239c08b2e770ddcef94b2a58cd",
+      "apps/api-go/internal/httpserver/handler_progress_gloss_retest_test.go": "03150a9b481e648aea7e10e30521113e1e35b50f"
+    }
+  },
+  "claimed": [
+    "apps/api-go/internal/httpserver/handler_exercise_generate.go",
+    "apps/api-go/internal/httpserver/handler_final_batch.go",
+    "apps/api-go/internal/httpserver/handler_progress_gloss_retest_test.go"
+  ]
+}
