@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import en from "@/messages/en.json";
+import ja from "@/messages/ja.json";
+import vi from "@/messages/vi.json";
 
 import { fetchDailyRadarHome } from "./api";
 import { themeFor } from "./module-theme";
@@ -207,6 +210,7 @@ function CategoryRail({
   const visible = cards.slice(0, RAIL_MAX);
   const hasMore = cards.length > RAIL_MAX;
   const theme = themeFor(undefined, category);
+  const copy = (locale === "ja" ? ja : locale === "en" ? en : vi).a11y;
 
   // Find a moduleKey from the first card to build the "view all" link
   const moduleKey = cards[0]?.module.moduleKey;
@@ -224,7 +228,7 @@ function CategoryRail({
           {visible.length > 2 ? (
             <>
               <button
-                aria-label="Scroll left"
+                aria-label={copy.scrollLeft}
                 className="hidden rounded-full border border-slate-200 p-1.5 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 sm:inline-flex"
                 onClick={() => railRef.current?.scrollBy({ behavior: "smooth", left: -340 })}
                 type="button"
@@ -232,7 +236,7 @@ function CategoryRail({
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
               </button>
               <button
-                aria-label="Scroll right"
+                aria-label={copy.scrollRight}
                 className="hidden rounded-full border border-slate-200 p-1.5 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 sm:inline-flex"
                 onClick={() => railRef.current?.scrollBy({ behavior: "smooth", left: 340 })}
                 type="button"
