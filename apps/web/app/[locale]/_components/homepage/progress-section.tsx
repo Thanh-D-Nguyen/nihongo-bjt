@@ -187,7 +187,7 @@ export function ProgressSection({
           </div>
           <Link
             href={`/${locale}/login`}
-            className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-white px-5 text-sm font-bold text-[#1B2A4A] shadow-[0_4px_16px_rgba(255,255,255,0.2)] outline-none transition-all duration-200 hover:bg-blue-50 hover:shadow-[0_6px_24px_rgba(255,255,255,0.3)] focus-visible:ring-2 focus-visible:ring-white/50"
+            className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-white px-5 text-sm font-bold text-[#1B2A4A] shadow-[0_4px_16px_rgba(255,255,255,0.2)] outline-none transition-all duration-200 hover:bg-blue-50 hover:shadow-[0_6px_24px_rgba(255,255,255,0.3)] focus-visible:ring-2 focus-visible:ring-white/50 dark:bg-white"
           >
             {labels.progressSignInCta}
           </Link>
@@ -204,7 +204,7 @@ export function ProgressSection({
         actions={
           <Link
             href={`/${locale}/analytics`}
-            className="text-sm font-semibold text-[#3B82F6] outline-none hover:text-[#2563EB] focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2"
+            className="text-sm font-semibold text-blue-600 outline-none hover:text-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2"
           >
             {labels.sectionViewAll}
           </Link>
@@ -263,7 +263,7 @@ export function ProgressSection({
 
           <Link
             href={`/${locale}/analytics`}
-            className="mt-4 flex items-center justify-center gap-1.5 rounded-xl bg-slate-50 py-2.5 text-sm font-semibold text-[#3B82F6] transition-colors hover:bg-blue-50 hover:text-[#2563EB]"
+            className="mt-4 flex items-center justify-center gap-1.5 rounded-xl bg-slate-50 py-2.5 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
           >
             {labels.sectionViewAll}
             <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>

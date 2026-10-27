@@ -58,6 +58,7 @@ describe("NHK regression", () => {
     await act(async () => root.render(<NhkArticleDetailClient articleId={article.id} labels={{ ...en.nhkDetail, titleNormal: "NHK news" }} locale="en" />));
     expect(container.querySelector("article")?.textContent).toContain("本文の要約");
     expect(container.querySelector("nav")?.textContent).toContain("NHK news");
+    expect(Array.from(container.querySelectorAll("div")).find((el) => el.textContent === en.nhkDetail.summaryNote)?.className).toContain("bg-amber-50 ");
     await act(async () => root.unmount());
   });
 

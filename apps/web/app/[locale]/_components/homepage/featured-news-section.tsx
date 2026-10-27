@@ -311,7 +311,7 @@ export function FeaturedNewsSection({
     <section>
       <SectionHeader
         actions={
-          <Link className="text-sm font-semibold text-[#3B82F6] transition hover:text-[#2563EB]" href={`/${locale}/news`}>
+          <Link className="text-sm font-semibold text-blue-600 transition hover:text-blue-700" href={`/${locale}/news`}>
             {labels.newsViewAll}
           </Link>
         }
