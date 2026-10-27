@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"math/rand"
 	"net/http"
@@ -320,7 +321,7 @@ func persistExerciseDrafts(ctx context.Context, db *pgxpool.Pool, exerciseType s
 		generationKey := exerciseType + ":" + draft.sourceType + ":" + draft.sourceID
 		if draft.sourceType == "lexeme" {
 			// Keep assigned questions immutable while replacing cached, abbreviated gloss choices.
-			generationKey += ":primary-senses-v2"
+			generationKey += ":primary-senses-v3"
 		}
 		var id string
 		var storedPrompt, storedChoices []byte
@@ -359,7 +360,14 @@ func persistExerciseDrafts(ctx context.Context, db *pgxpool.Pool, exerciseType s
 }
 
 func selectExerciseLexemes(ctx context.Context, db *pgxpool.Pool, level string, limit int) ([]exerciseLexeme, error) {
-	rows, err := db.Query(ctx, `SELECT id::text, headword, COALESCE(reading, ''),
+	lexemes := make([]exerciseLexeme, 0, limit)
+	tx, err := db.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+	batchSize := max(limit, 50)
+	_, err = tx.Exec(ctx, `DECLARE exercise_lexemes NO SCROLL CURSOR FOR SELECT id::text, headword, COALESCE(reading, ''),
 		COALESCE((SELECT NULLIF(trim(s.meaning_vi), '') FROM content.lexeme_sense s
 			WHERE s.lexeme_id = l.id AND trim(s.meaning_vi) <> '' ORDER BY s.position LIMIT 1),
 			NULLIF(kanji_meaning_vi, ''), short_meaning_vi), jlpt_level
@@ -368,25 +376,55 @@ func selectExerciseLexemes(ctx context.Context, db *pgxpool.Pool, level string, 
 			AND (EXISTS (SELECT 1 FROM content.lexeme_sense s WHERE s.lexeme_id = l.id AND trim(s.meaning_vi) <> '')
 				OR COALESCE(NULLIF(kanji_meaning_vi, ''), NULLIF(short_meaning_vi, '')) IS NOT NULL)
 			AND ($1 = '' OR jlpt_level ~ ('(^|,)' || $1 || '(,|$)'))
-		ORDER BY random() LIMIT $2`, level, limit)
+		ORDER BY random()`, level)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	lexemes := make([]exerciseLexeme, 0, limit)
-	for rows.Next() {
-		var item exerciseLexeme
-		if err := rows.Scan(&item.ID, &item.Headword, &item.Reading, &item.Meaning, &item.Level); err != nil {
+	for len(lexemes) < limit {
+		rows, err := tx.Query(ctx, fmt.Sprintf("FETCH FORWARD %d FROM exercise_lexemes", batchSize))
+		if err != nil {
 			return nil, err
 		}
-		senses := strings.FieldsFunc(item.Meaning, func(r rune) bool { return r == ';' || r == '；' })
-		for i := range senses {
-			senses[i] = strings.TrimSpace(senses[i])
+		count := 0
+		for rows.Next() {
+			count++
+			var item exerciseLexeme
+			if err := rows.Scan(&item.ID, &item.Headword, &item.Reading, &item.Meaning, &item.Level); err != nil {
+				rows.Close()
+				return nil, err
+			}
+			if !dictionaryGlossUsable(item.Headword, &item.Meaning) {
+				continue
+			}
+			senses := strings.FieldsFunc(item.Meaning, func(r rune) bool { return r == ';' || r == '；' })
+			for i := range senses {
+				senses[i] = strings.TrimSpace(senses[i])
+			}
+			senses = senses[:min(2, len(senses))]
+			usable := true
+			for i := range senses {
+				if !dictionaryGlossUsable(item.Headword, &senses[i]) {
+					usable = false
+					break
+				}
+			}
+			if !usable {
+				continue
+			}
+			item.Meaning = strings.Join(senses, "; ")
+			if len(lexemes) < limit {
+				lexemes = append(lexemes, item)
+			}
 		}
-		item.Meaning = strings.Join(senses[:min(2, len(senses))], "; ")
-		lexemes = append(lexemes, item)
+		rows.Close()
+		if err := rows.Err(); err != nil {
+			return nil, err
+		}
+		if count < batchSize {
+			break
+		}
 	}
-	return lexemes, rows.Err()
+	return lexemes, nil
 }
 
 func selectClozeTargets(ctx context.Context, db *pgxpool.Pool, level string, limit int) ([]clozeTarget, error) {

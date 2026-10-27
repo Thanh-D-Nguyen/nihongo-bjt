@@ -1,0 +1,319 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "UI-269",
+  "title": "Verify merged news and daily radar accessibility changes",
+  "start_head": "8466050540ac8f3899495ab8964cd0c55616f40f",
+  "preexisting_changes": {
+    ".github/workflows/recover-ssh.yml": "336ab60d89f3ba6b697594661a6b5018e5e14104",
+    "TASK_HANDOFF.md": "448f2deffe0803384a75ebfb8950cfc0e1c57a77",
+    "apps/admin/next-env.d.ts": "ce4e94a6b10f160ee021fe18939af160d2927dcf",
+    "apps/admin/tsconfig.tsbuildinfo": "50a6b87c6c60903e2b4fcde168dcf63283c43ac3",
+    "apps/web/next-env.d.ts": "ce4e94a6b10f160ee021fe18939af160d2927dcf",
+    "apps/web/tsconfig.tsbuildinfo": "36fd3dad79015afd6d88744c81259546ca974e04",
+    "docs/ops/dynamic-ssh.md": "3d520dd3061109d1d03836c8c89a42a494055738",
+    "scripts/ops/recover_ssh.py": "182ff5261426c2d473e9a206fc1cdc1ead9c769f",
+    "scripts/ops/ssh-recovery.test.ts": "7dba4cdb2a45120378e06b93b55f37479db669f4",
+    "scripts/ops/ssh_prod.py": "ea6194d74993a23f44fcdbbb5d301138822661dd",
+    "scripts/ops/test_ssh_recovery.py": "2bc5d3736cc6d4373b0975e110afd2f850c96d8b"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Normal NHK article links identify their source to assistive technology"
+      },
+      {
+        "id": "AC2",
+        "text": "Daily radar widget links provide visible keyboard focus"
+      }
+    ],
+    "expected_behavior": "Normal news links identify the source and daily widget links show a focus ring.",
+    "observed_behavior": "Normal news links have generic labels and widget cards suppress the keyboard focus outline.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/news/nhk-news-regression.test.tsx",
+      "test": "NHK regression > links normal news directly to NHK in the homepage and list",
+      "expect": "NHK"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/src/features/daily-radar/daily-radar-section.test.tsx",
+      "test": "shows keyboard focus on a daily widget card",
+      "expect": "focus-visible:ring-2"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-27T08:45:53.898Z",
+      "head": "8466050540ac8f3899495ab8964cd0c55616f40f"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-27T08:46:17.778Z",
+      "head": "8466050540ac8f3899495ab8964cd0c55616f40f"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-27T08:46:23.191Z",
+      "head": "8466050540ac8f3899495ab8964cd0c55616f40f"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T08:47:04.293Z",
+      "head": "8466050540ac8f3899495ab8964cd0c55616f40f"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-27T08:48:14.939Z",
+      "head": "8466050540ac8f3899495ab8964cd0c55616f40f"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-27T08:49:14.744Z",
+      "head": "8466050540ac8f3899495ab8964cd0c55616f40f"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-27T08:49:48.632Z",
+      "head": "8466050540ac8f3899495ab8964cd0c55616f40f"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-27T08:46:43.815Z",
+      "head": "8466050540ac8f3899495ab8964cd0c55616f40f",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > links normal news directly to NHK in the homepage and list",
+          "outcome": "FAIL",
+          "excerpt": "the given combination of arguments (null and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"NHK\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > links normal news directly to NHK in the homepage and list": "NHK"
+      },
+      "fingerprint": "cfef8c0d4beb0d7e94963dd854deb1eff70f2e077adef637e8ff4b1031ae3e62"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-27T08:47:04.113Z",
+      "head": "8466050540ac8f3899495ab8964cd0c55616f40f",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > links normal news directly to NHK in the homepage and list",
+          "outcome": "FAIL",
+          "excerpt": "expected null to be 'Read article → Normal NHK' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > links normal news directly to NHK in the homepage and list": "NHK"
+      },
+      "fingerprint": "7d0dd5969a16c1d6ec4ea28213767bdc2d364bbdfdbb8d6e889dbe495597ce9f"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-27T08:47:18.187Z",
+      "head": "8466050540ac8f3899495ab8964cd0c55616f40f",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > links normal news directly to NHK in the homepage and list",
+          "outcome": "FAIL",
+          "excerpt": "expected null to be 'Read article → Normal NHK' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows keyboard focus on a daily widget card",
+          "outcome": "FAIL",
+          "excerpt": "expected '' to contain 'focus-visible:ring-2'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > links normal news directly to NHK in the homepage and list": "NHK",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows keyboard focus on a daily widget card": "focus-visible:ring-2"
+      },
+      "fingerprint": "7d0dd5969a16c1d6ec4ea28213767bdc2d364bbdfdbb8d6e889dbe495597ce9f"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-27T08:47:41.485Z",
+      "head": "8466050540ac8f3899495ab8964cd0c55616f40f",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > links normal news directly to NHK in the homepage and list",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows keyboard focus on a daily widget card",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "expected '' to contain 'focus-visible:ring-2'"
+        }
+      ],
+      "fingerprint": "d23205c877263166c9ea239615f9c52513aa0837c719faa7a575ba6106c5d798"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-27T08:48:05.890Z",
+      "head": "8466050540ac8f3899495ab8964cd0c55616f40f",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > links normal news directly to NHK in the homepage and list",
+          "outcome": "FAIL",
+          "excerpt": "expected null to be 'Read article → Normal NHK' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows keyboard focus on a daily widget card",
+          "outcome": "FAIL",
+          "excerpt": "expected 'daily-radar-card group relative flex …' to contain 'focus-visible:ring-2'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > links normal news directly to NHK in the homepage and list": "NHK",
+        "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows keyboard focus on a daily widget card": "focus-visible:ring-2"
+      },
+      "fingerprint": "b6c547c72792fc80c0a35c87d63e86aec77fe62e449c8c1106219b52500bcba7"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-27T08:48:14.693Z",
+      "head": "8466050540ac8f3899495ab8964cd0c55616f40f",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/src/features/daily-radar/daily-radar-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > links normal news directly to NHK in the homepage and list",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/src/features/daily-radar/daily-radar-section.test.tsx::shows keyboard focus on a daily widget card",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "b6c547c72792fc80c0a35c87d63e86aec77fe62e449c8c1106219b52500bcba7"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-27T08:49:14.479Z",
+      "head": "8466050540ac8f3899495ab8964cd0c55616f40f",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 584,
+        "executed": 584,
+        "passed": 584,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 847,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "b6c547c72792fc80c0a35c87d63e86aec77fe62e449c8c1106219b52500bcba7"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-27T08:49:48.616Z",
+    "head": "8466050540ac8f3899495ab8964cd0c55616f40f",
+    "fingerprint": "b6c547c72792fc80c0a35c87d63e86aec77fe62e449c8c1106219b52500bcba7",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/_components/homepage/featured-news-section.tsx": "727527c4ab2939c6738d852255debff3684e4e6d",
+      "apps/web/app/[locale]/news/nhk-news-regression.test.tsx": "9b3b3618d8cdf50019bd2055787423681aba37d6",
+      "apps/web/src/features/daily-radar/daily-radar-section.test.tsx": "fe242f1b2c091cbeea4038788f65bec159041376",
+      "apps/web/src/features/daily-radar/daily-radar-section.tsx": "fd7ad805fdaeb24c18060e71292e5cd92f35f317"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

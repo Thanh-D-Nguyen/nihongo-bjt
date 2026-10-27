@@ -60,6 +60,9 @@ describe("NHK regression", () => {
     await act(async () => root.render(<FeaturedNewsSection articlesByType={{ easy: [], normal: normalArticles }} labels={en.homepage} locale="en" onRetry={() => undefined} />));
     await act(async () => (container.querySelectorAll('[role="tab"]')[1] as HTMLElement).click());
     expect(container.querySelectorAll(`a[href="${article.url}"]`)).toHaveLength(2);
+    for (const link of container.querySelectorAll(`a[href="${article.url}"]`)) {
+      expect(link.getAttribute("aria-label")).toBe(`${en.homepage.newsReadMore} ${en.homepage.newsNormal}`);
+    }
     await act(async () => root.render(<NhkNewsListClient labels={en.nhkDetail} homepageLabels={en.homepage} locale="en" />));
     await act(async () => (container.querySelectorAll('[role="tab"]')[1] as HTMLElement).click());
     expect(container.querySelectorAll(`a[href="${article.url}"]`)).toHaveLength(2);
@@ -73,6 +76,7 @@ describe("NHK regression", () => {
     await act(async () => root.render(<NhkArticleDetailClient articleId={article.id} labels={{ ...en.nhkDetail, titleNormal: "NHK news" }} locale="en" />));
     expect(container.querySelector("article")?.textContent).toContain("本文の要約");
     expect(container.querySelector("nav")?.textContent).toContain("NHK news");
+    expect(Array.from(container.querySelectorAll("div")).find((el) => el.textContent === en.nhkDetail.summaryNote)?.className).toContain("bg-amber-50 ");
     await act(async () => root.unmount());
   });
 

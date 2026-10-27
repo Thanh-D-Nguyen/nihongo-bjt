@@ -16,7 +16,7 @@ func dictionaryGlossUsable(headword string, gloss *string) bool {
 	for _, refusal := range []string{
 		"i cannot provide", "i can't provide", "i cannot translate", "i can't translate",
 		"i am unable to translate", "i'm unable to translate", "as an ai",
-		"không có thông tin đủ để dịch", "không đủ thông tin để dịch", "không có đủ thông tin để dịch", "tôi không thể dịch",
+		"không có thông tin đủ để dịch", "không có thông tin đầy đủ để dịch", "không đủ thông tin để dịch", "không có đủ thông tin để dịch", "tôi không thể dịch",
 		"tôi không thể cung cấp bản dịch", "翻訳できません",
 	} {
 		if strings.Contains(text, refusal) {

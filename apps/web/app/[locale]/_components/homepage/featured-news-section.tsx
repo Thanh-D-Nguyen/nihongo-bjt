@@ -105,6 +105,7 @@ function FeaturedNewsCard({
 
           <div className="mt-6 flex flex-wrap gap-2">
             <Link
+              aria-label={type === "normal" ? `${labels.newsReadMore} ${sourceLabel(type, labels)}` : undefined}
               className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#1B2A4A] px-5 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:bg-[#243560] hover:shadow-md"
               href={type === "normal" ? article.url : `/${locale}/news/${article.id}`}
             >
@@ -180,6 +181,7 @@ function CompactNewsCard({
 
         <div className="mt-3 flex gap-2">
           <Link
+            aria-label={type === "normal" ? `${labels.newsReadMore} ${sourceLabel(type, labels)}` : undefined}
             className="inline-flex min-h-9 flex-1 items-center justify-center rounded-lg bg-[#1B2A4A] px-3 text-xs font-bold text-white transition-all hover:bg-[#243560]"
             href={type === "normal" ? article.url : `/${locale}/news/${article.id}`}
           >
@@ -311,7 +313,7 @@ export function FeaturedNewsSection({
     <section>
       <SectionHeader
         actions={
-          <Link className="text-sm font-semibold text-[#3B82F6] transition hover:text-[#2563EB]" href={`/${locale}/news`}>
+          <Link className="text-sm font-semibold text-blue-600 transition hover:text-blue-700" href={`/${locale}/news`}>
             {labels.newsViewAll}
           </Link>
         }

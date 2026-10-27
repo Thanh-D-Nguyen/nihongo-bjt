@@ -2515,6 +2515,8 @@
     "incorrectAnswer": "Not the best answer",
     "chooseAnswer": "Choose an answer",
     "explanationLabel": "Explanation",
+    "activityTypes": {"best_expression": "Best expression", "fill_phrase": "Fill in the phrase", "role_response": "Role response", "politeness_check": "Politeness check", "mini_case_inference": "Case inference", "sentence_order": "Sentence order", "error_correction": "Error correction", "reading_comprehension": "Reading comprehension", "speaker_intent": "Speaker intent", "context_match": "Context match"},
+    "stimulusTypes": {"dialogue": "Dialogue", "email": "Email", "internal_chat": "Internal chat", "memo": "Memo", "telephone": "Telephone", "meeting": "Meeting", "announcement": "Announcement", "report": "Report", "table": "Table", "policy": "Policy", "proposal": "Proposal", "complaint": "Complaint"},
     "audioUnavailable": "Licensed audio is not available yet; the transcript remains usable for study.",
     "audioTtsReady": "Japanese TTS is ready",
     "audioGeneratedReady": "Generated audio is ready",

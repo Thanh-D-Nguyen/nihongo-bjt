@@ -2443,6 +2443,8 @@
     "incorrectAnswer": "最適な答えではありません",
     "chooseAnswer": "答えを選んでください",
     "explanationLabel": "解説",
+    "activityTypes": {"best_expression": "適切な表現", "fill_phrase": "語句の穴埋め", "role_response": "立場に応じた応答", "politeness_check": "敬意の確認", "mini_case_inference": "事例の推論", "sentence_order": "文の並べ替え", "error_correction": "誤りの訂正", "reading_comprehension": "読解", "speaker_intent": "話し手の意図", "context_match": "場面の組み合わせ"},
+    "stimulusTypes": {"dialogue": "会話", "email": "メール", "internal_chat": "社内チャット", "memo": "メモ", "telephone": "電話", "meeting": "会議", "announcement": "お知らせ", "report": "報告", "table": "表", "policy": "方針", "proposal": "提案", "complaint": "苦情"},
     "audioUnavailable": "ライセンス済み音声は未提供です。スクリプトで学習できます。",
     "audioTtsReady": "日本語TTSを利用できます",
     "audioGeneratedReady": "生成済み音声を利用できます",

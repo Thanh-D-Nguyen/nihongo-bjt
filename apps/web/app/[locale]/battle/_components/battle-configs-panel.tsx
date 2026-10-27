@@ -1,6 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import en from "@/messages/en.json";
+import ja from "@/messages/ja.json";
+import vi from "@/messages/vi.json";
 
 import { apiBase, type BattlePageLabels } from "./battle-types";
 
@@ -80,7 +83,8 @@ function getGameTypeMeta(gameType: string): GameTypeMeta {
   return GAME_TYPE_META[gameType] ?? GAME_TYPE_META.custom!;
 }
 
-export function BattleConfigsPanel({ onSelectConfig, selectedConfigId }: Props) {
+export function BattleConfigsPanel({ locale, onSelectConfig, selectedConfigId }: Props) {
+  const copy = (locale === "ja" ? ja : locale === "en" ? en : vi).a11y;
   const [configs, setConfigs] = useState<BattleConfigItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [countdownTick, setCountdownTick] = useState(0);
@@ -189,7 +193,7 @@ export function BattleConfigsPanel({ onSelectConfig, selectedConfigId }: Props) 
         {(canScrollLeft || canScrollRight) && (
           <div className="flex items-center gap-1">
             <button
-              aria-label="Scroll left"
+              aria-label={copy.scrollLeft}
               className="grid h-11 w-11 place-items-center rounded-xl border border-ink/10 bg-white text-sm text-ink transition hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:opacity-30 sm:h-9 sm:w-9"
               disabled={!canScrollLeft}
               onClick={() => scroll("left")}
@@ -198,7 +202,7 @@ export function BattleConfigsPanel({ onSelectConfig, selectedConfigId }: Props) 
               ←
             </button>
             <button
-              aria-label="Scroll right"
+              aria-label={copy.scrollRight}
               className="grid h-11 w-11 place-items-center rounded-xl border border-ink/10 bg-white text-sm text-ink transition hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:opacity-30 sm:h-9 sm:w-9"
               disabled={!canScrollRight}
               onClick={() => scroll("right")}

@@ -1,0 +1,210 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "NAV-268",
+  "title": "Localize scroll control accessibility labels",
+  "start_head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Both scroll buttons have localized accessible names in all three locales and retain their behavior."
+      }
+    ],
+    "expected_behavior": "Both controls expose localized accessible names in vi, ja, and en.",
+    "observed_behavior": "Daily Radar and Battle scroll controls expose English aria labels in Vietnamese and Japanese.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/scroll-labels.regression.test.tsx",
+      "test": "localized scroll controls > names and scrolls Daily Radar buttons in each locale",
+      "expect": "vi left accessible name"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/scroll-labels.regression.test.tsx",
+      "test": "localized scroll controls > names and scrolls Battle buttons in each locale",
+      "expect": "vi left accessible name"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-27T03:42:18.353Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-27T03:42:22.655Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-27T03:42:28.467Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T03:42:55.870Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-27T03:43:11.282Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-27T03:44:21.653Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-27T03:44:31.742Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-27T03:42:55.687Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/scroll-labels.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/scroll-labels.regression.test.tsx::localized scroll controls > names and scrolls Daily Radar buttons in each locale",
+          "outcome": "FAIL",
+          "excerpt": "vi left accessible name: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/scroll-labels.regression.test.tsx::localized scroll controls > names and scrolls Daily Radar buttons in each locale": "vi left accessible name"
+      },
+      "fingerprint": "81be36e0f10589ba67879df1ee946b5f2b05bd23fceab06dbead7e635e456023"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-27T03:43:00.252Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/scroll-labels.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/scroll-labels.regression.test.tsx::localized scroll controls > names and scrolls Daily Radar buttons in each locale",
+          "outcome": "FAIL",
+          "excerpt": "vi left accessible name: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/scroll-labels.regression.test.tsx::localized scroll controls > names and scrolls Battle buttons in each locale",
+          "outcome": "FAIL",
+          "excerpt": "vi left accessible name: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/scroll-labels.regression.test.tsx::localized scroll controls > names and scrolls Daily Radar buttons in each locale": "vi left accessible name",
+        "vitest:apps/web/app/scroll-labels.regression.test.tsx::localized scroll controls > names and scrolls Battle buttons in each locale": "vi left accessible name"
+      },
+      "fingerprint": "81be36e0f10589ba67879df1ee946b5f2b05bd23fceab06dbead7e635e456023"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-27T03:43:11.008Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/scroll-labels.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/scroll-labels.regression.test.tsx::localized scroll controls > names and scrolls Daily Radar buttons in each locale",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/scroll-labels.regression.test.tsx::localized scroll controls > names and scrolls Battle buttons in each locale",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "24085d09e973f45f904f6d01cf8ff6532c09caf15cab70ca63d50d4944ec815a"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-27T03:44:21.379Z",
+      "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 567,
+        "executed": 567,
+        "passed": 567,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 844,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "24085d09e973f45f904f6d01cf8ff6532c09caf15cab70ca63d50d4944ec815a"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-27T03:44:31.726Z",
+    "head": "bf53684ed5363142e2f971a53577cf3b6e9d2cac",
+    "fingerprint": "24085d09e973f45f904f6d01cf8ff6532c09caf15cab70ca63d50d4944ec815a",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/battle/_components/battle-configs-panel.tsx": "d0d2062418de4d1038d54def6d720babe844ca65",
+      "apps/web/app/scroll-labels.regression.test.tsx": "5f603896929a498bfdb3c74c222c2f7233d116e5",
+      "apps/web/src/features/daily-radar/daily-radar-section.tsx": "58efc8f46e53d99c1bad0333047c1973f2732f87"
+    }
+  }
+}

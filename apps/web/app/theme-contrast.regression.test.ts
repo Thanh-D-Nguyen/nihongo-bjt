@@ -30,4 +30,40 @@ describe("dark theme contrast", () => {
   const token = (name: string) => dark.match(new RegExp(`--color-${name}: (#[a-f0-9]+)`))![1];
   expect((luminance(token("subtle")) + 0.05) / (luminance(token("surface")) + 0.05)).toBeGreaterThanOrEqual(4.5);
  });
+ it("keeps homepage news and progress links readable on dark surfaces", () => {
+  for (const file of ["[locale]/_components/homepage/featured-news-section.tsx", "[locale]/_components/homepage/progress-section.tsx"]) {
+   const source = readFileSync(new URL(file, import.meta.url), "utf8");
+   expect(source, file).not.toContain("text-[#3B82F6]");
+  }
+  const dark = css.match(/\.dark \{([\s\S]*?)\n\}/)![1];
+  const token = (name: string) => dark.match(new RegExp(`--color-${name}: (#[a-f0-9]+)`))![1];
+  expect((luminance(token("accent")) + 0.05) / (luminance(token("surface")) + 0.05)).toBeGreaterThanOrEqual(4.5);
+ });
+ it("preserves the white background of the guest progress action in dark mode", () => {
+  const source = readFileSync(new URL("[locale]/_components/homepage/progress-section.tsx", import.meta.url), "utf8");
+  const action = source.split("\n").find(line => line.includes("bg-white") && line.includes("text-[#1B2A4A]"));
+  expect(action).toContain("dark:bg-white");
+ });
+ it("uses the dark-aware warning text utility for NHK summaries", () => {
+  const source = readFileSync(new URL("[locale]/news/[id]/_components/nhk-article-detail-client.tsx", import.meta.url), "utf8");
+  const warning = source.split("\n").find(line => line.includes("bg-amber-50") && line.includes("border-amber-200"));
+  expect(warning).toContain("text-amber-800");
+ });
+ it("uses the theme foreground for Japanese text in daily radar cards", () => {
+  const source = readFileSync(new URL("../src/features/daily-radar/daily-radar-section.tsx", import.meta.url), "utf8");
+  const japanese = source.split("\n").find(line => line.includes("{card.japaneseText}"));
+  expect(japanese).toContain("text-ink");
+ });
+ it("uses a dark surface for daily radar card gradients", () => {
+  expect(css).toMatch(/:is\(\.dark\) \.daily-radar-card\s*\{[^}]*background-image:\s*none/s);
+ });
+ it("keeps dark radar badge text and translucent overlays readable", () => {
+  expect(css).toContain(".daily-radar-card .radar-badge");
+  expect(css).toContain(".daily-radar-card .radar-overlay");
+ });
+ it("uses the dark-aware badge on category headings", () => {
+  const source = readFileSync(new URL("../src/features/daily-radar/daily-radar-section.tsx", import.meta.url), "utf8");
+  const heading = source.split("\n").find(line => line.includes("text-xs font-bold ring-1") && line.includes("theme.badge"));
+  expect(heading).toContain("radar-badge");
+ });
 });

@@ -174,7 +174,7 @@ func getAnalyticsLearnerHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 		var exerciseAccuracy float64
 		err = db.QueryRow(r.Context(), `SELECT
 			(SELECT COUNT(*) FROM assessment.quiz_session WHERE user_id = $1 AND status = 'completed'),
-			(SELECT COALESCE(AVG(100.0 * correct_count / NULLIF(total_questions, 0)), 0) FROM assessment.quiz_session WHERE user_id = $1 AND status = 'completed'),
+			(SELECT COALESCE(100.0 * SUM(correct_count) / NULLIF(SUM(total_questions), 0), 0) FROM assessment.quiz_session WHERE user_id = $1 AND status = 'completed'),
 			(SELECT COUNT(*) FROM learning.review_event WHERE user_id = $1),
 			(SELECT COALESCE(MAX(us.current_streak), 0) FROM gamification.user_streak us
 			 JOIN gamification.streak_config sc ON sc.id = us.streak_config_id AND sc.enabled
