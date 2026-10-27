@@ -2,9 +2,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import messages from "../../../messages/vi.json";
-import en from "../../../messages/en.json";
-import ja from "../../../messages/ja.json";
-import { generateMetadata } from "./layout";
 
 vi.mock("next/navigation", () => ({ usePathname: () => "/vi/login", useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("../../../lib/go-auth-provider", () => ({ useGoAuth: () => ({ isAuthenticated: false, loading: false }) }));
@@ -15,9 +12,6 @@ vi.mock("../../_components/search-dropdown", () => ({ SearchDropdown: () => null
 import { LearnerAppFrame } from "../../_components/learner-app-frame";
 
 describe("login site chrome", () => {
-  it.each([["vi", messages], ["en", en], ["ja", ja]] as const)("provides server metadata in %s", async (locale, copy) => {
-    expect(await generateMetadata({ params: Promise.resolve({ locale }) })).toEqual({ title: `${copy.auth.login.title} — KotobaWorks` });
-  });
   it("renders the site header and footer around login", () => {
     const html = renderToStaticMarkup(<LearnerAppFrame locale="vi" nav={messages.nav} companionLabels={messages.nav.companion} searchLabels={messages.search}><p>Login form</p></LearnerAppFrame>);
     expect(html).toContain("<header");

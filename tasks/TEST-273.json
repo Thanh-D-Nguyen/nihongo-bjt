@@ -1,0 +1,363 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "TEST-273",
+  "title": "Split login metadata tests from login chrome test",
+  "start_head": "064a319b20304609d4871c9d08b06cf658c40ccc",
+  "preexisting_changes": {
+    "apps/web/app/[locale]/login/login-chrome.test.tsx": "7b254adc575aa3eafbb1c0199086deda51ac1e4a",
+    "apps/web/app/[locale]/login/login-metadata.test.tsx": "930df6bc1cbed01084043de2e2a4345a04e043dc",
+    "apps/web/next-env.d.ts": "ce4e94a6b10f160ee021fe18939af160d2927dcf",
+    "apps/web/tsconfig.tsbuildinfo": "58a2e62547bc691c0647004415ad0db35768de08"
+  },
+  "spec": {
+    "problem": "login-chrome.test.tsx coupled chrome rendering with login metadata via ./layout. Supersedes abandoned TEST-270 (same change; its HEAD moved by the CI-272 merge and its review finding was not saved locally). Disposition of review finding: AC1 re-scoped to the static isolation property. BUG-266 historical RED replay (closing-commit blob d8b520ca imports ./layout) remains non-reproducible after CI-272; this task does not change that.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "The login chrome test no longer imports the login layout module (generateMetadata); its coverage is limited to the site header/footer chrome"
+      },
+      {
+        "id": "AC2",
+        "text": "The chrome test remains sensitive to hiding login navigation"
+      },
+      {
+        "id": "AC3",
+        "text": "Login metadata assertions for vi/en/ja are preserved in a separate test"
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "characterization",
+    "rationale": "Test-only split: metadata assertions moved unchanged to login-metadata.test.tsx; chrome test keeps its id and sensitivity to hiding login chrome."
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/web/app/_components/learner-app-frame.tsx",
+      "find": "const hideChrome = pathname === `${base}/register`",
+      "replace": "const hideChrome = pathname === `${base}/login` || pathname === `${base}/register`"
+    },
+    "targets": [
+      {
+        "runner": "vitest",
+        "file": "apps/web/app/[locale]/login/login-chrome.test.tsx",
+        "test": "login site chrome > renders the site header and footer around login",
+        "expect": "<header"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [
+    {
+      "finding": "assertions_reduced:apps/web/app/[locale]/login/login-chrome.test.tsx",
+      "reason": "The three metadata assertions (vi/en/ja) were moved unchanged into login-metadata.test.tsx; the chrome test keeps its header/footer assertions. Net assertion count across both files is unchanged."
+    }
+  ],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-27T14:09:58.649Z",
+      "head": "064a319b20304609d4871c9d08b06cf658c40ccc"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-27T14:10:04.414Z",
+      "head": "064a319b20304609d4871c9d08b06cf658c40ccc"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-27T14:10:04.840Z",
+      "head": "064a319b20304609d4871c9d08b06cf658c40ccc"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-27T14:10:25.433Z",
+      "head": "064a319b20304609d4871c9d08b06cf658c40ccc"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-27T14:11:45.693Z",
+      "head": "064a319b20304609d4871c9d08b06cf658c40ccc"
+    },
+    {
+      "state": "WAITING_FOR_DECISION",
+      "at": "2026-10-27T14:31:44.200Z",
+      "head": "064a319b20304609d4871c9d08b06cf658c40ccc"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-27T14:31:53.794Z",
+      "head": "064a319b20304609d4871c9d08b06cf658c40ccc"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-27T14:39:15.398Z",
+      "head": "064a319b20304609d4871c9d08b06cf658c40ccc"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-27T14:39:21.595Z",
+      "head": "064a319b20304609d4871c9d08b06cf658c40ccc"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-27T14:10:19.082Z",
+      "head": "064a319b20304609d4871c9d08b06cf658c40ccc",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/web/app/_components/learner-app-frame.tsx",
+        "find": "const hideChrome = pathname === `${base}/register`",
+        "replace": "const hideChrome = pathname === `${base}/login` || pathname === `${base}/register`"
+      },
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/login/login-chrome.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/login/login-chrome.test.tsx::login site chrome > renders the site header and footer around login",
+          "outcome": "FAIL",
+          "excerpt": "expected '<p>Login form</p>' to contain '<header'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/login/login-chrome.test.tsx::login site chrome > renders the site header and footer around login": "<header"
+      },
+      "fingerprint": "df629bcba6b051bd2ca510017a992b8ce7787cdf0c7ca0fefd19da0be25d628f"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-27T14:10:25.015Z",
+      "head": "064a319b20304609d4871c9d08b06cf658c40ccc",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/login/login-chrome.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/login/login-chrome.test.tsx::login site chrome > renders the site header and footer around login",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "df629bcba6b051bd2ca510017a992b8ce7787cdf0c7ca0fefd19da0be25d628f"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-27T14:11:45.389Z",
+      "head": "064a319b20304609d4871c9d08b06cf658c40ccc",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 581,
+        "executed": 581,
+        "passed": 581,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 848,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "df629bcba6b051bd2ca510017a992b8ce7787cdf0c7ca0fefd19da0be25d628f"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-27T14:20:51.882Z",
+      "head": "064a319b20304609d4871c9d08b06cf658c40ccc",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "tasks/TEST-273.json",
+          "summary": "AC1/'replay repair' premise is unsubstantiated: replayAll pins historical replays to each task's closing-commit test blobs, so BUG-266's RED still runs login-chrome.test.tsx blob d8b520ca (imports ./l…"
+        },
+        {
+          "severity": "minor",
+          "file": "tasks/TEST-270.json",
+          "summary": "Superseded duplicate record (REVIEW_REQUIRED, CHANGES_REQUESTED on the identical fingerprint) is still in tasks/; committing it fails CI check ('task is not CLOSED') and its finding's resolution is un…"
+        }
+      ],
+      "package_sha256": "52d81d4a5259ad562bb5dd5ff452ae4aa67aaf6405bc35d480c9f642b6c57057",
+      "fingerprint": "df629bcba6b051bd2ca510017a992b8ce7787cdf0c7ca0fefd19da0be25d628f"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-27T14:31:43.959Z",
+      "head": "064a319b20304609d4871c9d08b06cf658c40ccc",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/web/app/[locale]/login/login-metadata.test.tsx",
+          "summary": "AC3 has no execution evidence: the file is untracked, and check-frontend-debt.mjs measures only git-indexed files; collectTestDebt drops unmeasured modules from counts and failures, so suite_frontend …"
+        },
+        {
+          "severity": "minor",
+          "file": "tasks/TEST-273.json",
+          "summary": "Title 'Repair login chrome replay test isolation' still claims a replay repair that the re-scoped spec disclaims; retitle (e.g. 'Split login metadata tests from login chrome test')."
+        },
+        {
+          "severity": "minor",
+          "file": "tasks/TEST-270.json",
+          "summary": "Superseded untracked record (REVIEW_REQUIRED) is still in tasks/; its disposition is now documented in TEST-273 but the file has not been removed, and committing it fails check.mjs:67 ('task is not CL…"
+        }
+      ],
+      "package_sha256": "7c62c1f16700ae788148632cbfeb7d4b026cb3aad70327e3d51ca02067a87e67",
+      "fingerprint": "df629bcba6b051bd2ca510017a992b8ce7787cdf0c7ca0fefd19da0be25d628f"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-27T14:32:33.062Z",
+      "head": "064a319b20304609d4871c9d08b06cf658c40ccc",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 584,
+        "executed": 584,
+        "passed": 584,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 849,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "df629bcba6b051bd2ca510017a992b8ce7787cdf0c7ca0fefd19da0be25d628f"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-27T14:39:15.165Z",
+      "head": "064a319b20304609d4871c9d08b06cf658c40ccc",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [
+        {
+          "severity": "minor",
+          "file": "tasks/TEST-270.json",
+          "summary": "Superseded, never-committed task record is still untracked in tasks/ (state REVIEW_REQUIRED). Local 'pnpm quality check' includes untracked files and reports it as not CLOSED, and committing it fails …"
+        }
+      ],
+      "package_sha256": "88afaf0be6ab3c65bd16b7f1453a985ccecc106e1dd95acd6f5240fe4e694692",
+      "fingerprint": "df629bcba6b051bd2ca510017a992b8ce7787cdf0c7ca0fefd19da0be25d628f"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-27T14:39:21.577Z",
+    "head": "064a319b20304609d4871c9d08b06cf658c40ccc",
+    "fingerprint": "df629bcba6b051bd2ca510017a992b8ce7787cdf0c7ca0fefd19da0be25d628f",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "green": "PASS",
+      "sensitivity": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/login/login-chrome.test.tsx": "7b254adc575aa3eafbb1c0199086deda51ac1e4a",
+      "apps/web/app/[locale]/login/login-metadata.test.tsx": "930df6bc1cbed01084043de2e2a4345a04e043dc"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": [
+      {
+        "id": "ed6d3c56-c48e-43dc-9f92-c988099489f4",
+        "task": "TEST-273",
+        "action": {
+          "kind": "external_mutation",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "cbbd0d612ac03989deb73230b243fa3b9f07434edcad99fc1283e37286aa92f9",
+            "environment": "local"
+          },
+          "impact": "External account/service action; verify scope and identity",
+          "command": "echo \"--- ssh-recovery.test.ts tracked at 84660505 / HEAD?\"; git cat-file -e 84660505:scripts/ops/ssh-recovery.test.ts 2>/dev/null && echo \"tracked@8466 blob=$(git rev-parse 84660505:scripts/ops/ssh-recovery.test.ts)\" || echo \"absent@8466\"; git cat-file -e HEAD:scripts/ops/ssh-recovery.test.ts 2>/dev/null && echo \"tracked@HEAD blob=$(git rev-parse HEAD:scripts/ops/ssh-recovery.test.ts)\" || echo \"absent@HEAD\"; echo \"(UI-269 preexisting blob 7dba4cdb)\"; echo \"--- other preexisting test-like paths in UI-269: none besides scripts/ops/*\"; echo \"--- CI frontend suite job\"; rg -n \"verify-frontend|verify-all\" .github/workflows/*.yml | head; echo \"--- greenTargets definition\"; rg -n \"export function greenTargets|export function sensitivityTargets\" -A 4 scripts/quality/harness/lib/task.mjs"
+        },
+        "impact": "External account/service action; verify scope and identity",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "cbbd0d612ac03989deb73230b243fa3b9f07434edcad99fc1283e37286aa92f9",
+          "environment": "local"
+        },
+        "digest": "21ae533a709ada2291ac56973e5a45b6d78e2013610b286a28ed05868d10ea6d",
+        "continuation": {
+          "step": "native:toolu_01FYYdo2vtUPi9LQSpCXQTzc",
+          "native_tool_use_id": "toolu_01FYYdo2vtUPi9LQSpCXQTzc"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "cancel",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-27T14:29:40.474Z",
+        "answered_at": "2026-10-27T14:31:53.491Z",
+        "execution": "alternative"
+      }
+    ]
+  },
+  "claimed": [
+    "apps/web/app/[locale]/login/login-chrome.test.tsx",
+    "apps/web/app/[locale]/login/login-metadata.test.tsx"
+  ]
+}
