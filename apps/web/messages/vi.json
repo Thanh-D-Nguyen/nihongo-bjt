@@ -2443,6 +2443,8 @@
     "incorrectAnswer": "Chưa phù hợp nhất",
     "chooseAnswer": "Chọn một đáp án",
     "explanationLabel": "Giải thích",
+    "activityTypes": {"best_expression": "Chọn cách diễn đạt phù hợp", "fill_phrase": "Điền cụm từ", "role_response": "Ứng đáp theo vai", "politeness_check": "Kiểm tra mức độ lịch sự", "mini_case_inference": "Suy luận tình huống", "sentence_order": "Sắp xếp câu", "error_correction": "Sửa lỗi", "reading_comprehension": "Đọc hiểu", "speaker_intent": "Ý định người nói", "context_match": "Ghép ngữ cảnh"},
+    "stimulusTypes": {"dialogue": "Hội thoại", "email": "Email", "internal_chat": "Tin nhắn nội bộ", "memo": "Bản ghi nhớ", "telephone": "Điện thoại", "meeting": "Cuộc họp", "announcement": "Thông báo", "report": "Báo cáo", "table": "Bảng", "policy": "Quy định", "proposal": "Đề xuất", "complaint": "Khiếu nại"},
     "audioUnavailable": "Chưa có audio được cấp phép; transcript vẫn dùng được cho bài học.",
     "audioTtsReady": "TTS tiếng Nhật sẵn sàng",
     "audioGeneratedReady": "Audio tạo sẵn sàng",

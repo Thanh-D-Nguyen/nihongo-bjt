@@ -167,6 +167,8 @@ interface Labels {
   incorrectAnswer: string;
   chooseAnswer: string;
   explanationLabel: string;
+  activityTypes: Record<string, string>;
+  stimulusTypes: Record<string, string>;
   audioUnavailable: string;
   audioTtsReady: string;
   audioGeneratedReady: string;
@@ -831,11 +833,10 @@ function ActivityCard({
   const isCorrect = checked && selected === activity.answer;
   return (
     <article className="rounded-2xl border border-border bg-surface p-5">
-      <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-muted">
+      <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold tracking-wide text-muted">
         <span>#{index + 1}</span>
-        <span>{activity.questionType.replaceAll("_", " ")}</span>
-        <span>·</span>
-        <span>{activity.stimulusType}</span>
+        <span>{labels.activityTypes?.[activity.questionType]}</span>
+        {labels.stimulusTypes?.[activity.stimulusType] ? <span>· {labels.stimulusTypes[activity.stimulusType]}</span> : null}
       </div>
       <p className="mt-3 text-sm leading-6 text-muted">{activity.scenarioVi}</p>
       <p
@@ -971,10 +972,6 @@ function ActivityAudioPlayer({ activity, labels }: { activity: LessonActivity; l
         <div className="text-xs leading-5 text-[#1E3A8A]">
           <p className="font-semibold">
             {generated ? labels.audioGeneratedReady : labels.audioTtsReady}
-          </p>
-          <p>
-            {activity.audioProvider ?? "browser_tts"} · {activity.audioVoice ?? "ja-JP"} ·{" "}
-            {activity.audioVersion ?? "tts-v1"}
           </p>
         </div>
       </div>

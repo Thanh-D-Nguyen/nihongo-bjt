@@ -79,7 +79,7 @@ export default function LoginPage() {
  if (isLoading || isAuthenticated) return <div role="status" className="px-4 py-12 text-center text-muted">{messages.nav.sessionChecking}</div>;
 
  return (
- <div className="min-h-screen flex items-center justify-center px-4">
+ <div className="flex items-center justify-center px-4 py-12">
  <div className="w-full max-w-md space-y-8">
  <Link className="inline-flex min-h-12 items-center text-sm font-medium text-accent" href={`/${locale}`}>← {messages.nav.home}</Link>
  <div className="text-center">
