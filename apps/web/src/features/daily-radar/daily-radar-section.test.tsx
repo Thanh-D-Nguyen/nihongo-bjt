@@ -6,8 +6,8 @@ import { DailyRadarSection } from "./daily-radar-section";
 import type { DailyRadarLabels } from "./types";
 
 const card = { id: "one", slug: "one", category: "work", titleVi: "Unique spotlight", titleJa: "", japaneseText: "日本語の例文", readingText: "にほんご", descriptionVi: "", ctaLabelVi: "Open", moduleType: "daily_widget", module: { moduleKey: "work", titleVi: "Work", disclaimerVi: "Notice" } };
-vi.mock("./api", () => ({ fetchDailyRadarHome: async () => ({ cards: [card], spotlight: card, categories: ["work"] }) }));
-vi.mock("next/link", () => ({ default: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a> }));
+vi.mock("./api", () => ({ fetchDailyRadarHome: async () => ({ cards: [card, { ...card, id: "two", slug: "two", titleVi: "Other widget" }], spotlight: card, categories: ["work"] }) }));
+vi.mock("next/link", () => ({ default: ({ children, href, className }: { children: React.ReactNode; href: string; className?: string }) => <a className={className} href={href}>{children}</a> }));
 
 it("shows a spotlight only once", async () => {
   const host = document.createElement("div");
@@ -27,6 +27,17 @@ it("uses a dark-aware disclaimer badge on the spotlight", async () => {
   const labels = new Proxy({}, { get: () => "" }) as DailyRadarLabels;
   await act(async () => root.render(<DailyRadarSection labels={labels} locale="vi" />));
   expect(host.querySelector("a .text-amber-900")?.className).toContain("radar-badge");
+  await act(async () => root.unmount());
+  host.remove();
+});
+
+it("shows keyboard focus on a daily widget card", async () => {
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root = createRoot(host);
+  const labels = new Proxy({}, { get: () => "" }) as DailyRadarLabels;
+  await act(async () => root.render(<DailyRadarSection labels={labels} locale="vi" />));
+  expect(host.querySelector('a[href="/vi/radar/two"]')?.className).toContain("focus-visible:ring-2");
   await act(async () => root.unmount());
   host.remove();
 });

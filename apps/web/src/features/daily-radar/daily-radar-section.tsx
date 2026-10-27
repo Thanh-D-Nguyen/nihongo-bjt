@@ -44,7 +44,7 @@ function WidgetCard({ card, locale, labels }: { card: DailyRadarCard; locale: st
 
   return (
     <Link
-      className={`daily-radar-card group relative flex w-[min(18rem,calc(100vw-3rem))] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border shadow-sm outline-none transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:w-[300px] ${theme.card}`}
+      className={`daily-radar-card group relative flex w-[min(18rem,calc(100vw-3rem))] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border shadow-sm outline-none transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-blue-400 sm:w-[300px] ${theme.card}`}
       href={cardHref(card, locale)}
     >
       <div className={`h-1.5 bg-gradient-to-r ${gradient}`} />
