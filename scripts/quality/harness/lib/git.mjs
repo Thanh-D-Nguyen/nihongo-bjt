@@ -76,9 +76,11 @@ export function worktreeBlobs(root, paths) {
 export function blobsAt(root, rev, paths) {
   const result = Object.fromEntries(paths.map((p) => [p, null]));
   if (!paths.length) return result;
-  const out = git(root, ["ls-tree", "-r", "-z", "--full-tree", rev, "--", ...paths]).stdout;
+  const out = git(root, ["--literal-pathspecs", "ls-tree", "-r", "-z", "--full-tree", rev, "--", ...paths]).stdout;
   for (const entry of zsplit(out)) {
-    const [meta, file] = entry.split("\t");
+    const separator = entry.indexOf("\t");
+    const meta = entry.slice(0, separator);
+    const file = entry.slice(separator + 1);
     const [, type, id] = meta.split(" ");
     if (type === "blob" && file in result) result[file] = id;
   }
@@ -86,8 +88,8 @@ export function blobsAt(root, rev, paths) {
 }
 
 export function showFile(root, rev, file) {
-  const r = git(root, ["show", `${rev}:${file}`], { allowFail: true });
-  return r.status === 0 ? r.stdout : null;
+  const id = blobsAt(root, rev, [file])[file];
+  return id === null ? null : git(root, ["cat-file", "blob", id]).stdout;
 }
 
 /** sha256 over sorted `path NUL blob` lines; the content identity of a set of files. */

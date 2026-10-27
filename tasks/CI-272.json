@@ -1,0 +1,385 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "CI-272",
+  "title": "Fix historical replay absence detection",
+  "start_head": "2c235c8363230a56f9de80248f241faa8a95d262",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Replay restores absent historical paths as absent and preserves empty tracked files"
+      },
+      {
+        "id": "AC2",
+        "text": "Missing objects and git failures cannot pass as absent files"
+      }
+    ],
+    "expected_behavior": "Historical absence is detected from tree membership and replay fails closed on git errors",
+    "observed_behavior": "git show can exit successfully with empty output for a missing path, producing a false RED pass",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "scripts/quality/harness/replay-absence.test.ts",
+      "test": "restores absent paths as absent even when git show reports success",
+      "expect": "historically absent path must be removed"
+    }
+  ],
+  "sensitivity": {
+    "mutation": {
+      "file": "scripts/quality/harness/lib/git.mjs",
+      "find": "return id === null ? null : git(root, [\"cat-file\", \"blob\", id]).stdout;",
+      "replace": "return git(root, [\"show\", `${rev}:${file}`], { allowFail: true }).stdout;"
+    },
+    "targets": [
+      {
+        "runner": "vitest",
+        "file": "scripts/quality/harness/replay-absence.test.ts",
+        "test": "restores absent paths as absent even when git show reports success",
+        "expect": "historically absent path must be removed"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-27T09:21:31.415Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-27T09:21:37.485Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-27T09:21:45.127Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T09:22:12.784Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-27T09:22:28.044Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T09:24:40.027Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-27T13:48:54.957Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T13:50:06.246Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-27T13:50:24.681Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-27T13:51:26.839Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-27T13:51:41.851Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-27T13:56:15.140Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-27T13:56:29.806Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-27T09:22:12.620Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/replay-absence.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/replay-absence.test.ts::restores absent paths as absent even when git show reports success",
+          "outcome": "FAIL",
+          "excerpt": "historically absent path must be removed: expected true to be false // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/replay-absence.test.ts::restores absent paths as absent even when git show reports success": "historically absent path must be removed"
+      },
+      "fingerprint": "17345ff619b75d19084f1714545b587365ddbf5c40983161636af08d63b60ce2"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-27T09:22:27.838Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/replay-absence.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/replay-absence.test.ts::restores absent paths as absent even when git show reports success",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ae9e25f867a9551cb7770911a3044ade8701ee64a7fb3377403722bcf0a25b98"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-27T09:24:39.776Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 267,
+        "executed": 267,
+        "passed": 267,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "ae9e25f867a9551cb7770911a3044ade8701ee64a7fb3377403722bcf0a25b98"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-27T09:25:06.514Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "scripts/quality/harness/lib/git.mjs",
+        "find": "return id === null ? null : git(root, [\"cat-file\", \"blob\", id]).stdout;",
+        "replace": "return git(root, [\"show\", `${rev}:${file}`], { allowFail: true }).stdout;"
+      },
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/replay-absence.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/replay-absence.test.ts::restores absent paths as absent even when git show reports success",
+          "outcome": "FAIL",
+          "excerpt": "historically absent path must be removed: expected true to be false // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/replay-absence.test.ts::restores absent paths as absent even when git show reports success": "historically absent path must be removed"
+      },
+      "fingerprint": "3abc5c60c79df436922298ad1d9fb70112263e5ef81d95b94e892df746b5712a"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-27T09:27:11.180Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 267,
+        "executed": 267,
+        "passed": 267,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "3abc5c60c79df436922298ad1d9fb70112263e5ef81d95b94e892df746b5712a"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-27T13:48:54.655Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/replay-absence.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/replay-absence.test.ts::restores absent paths as absent even when git show reports success",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3abc5c60c79df436922298ad1d9fb70112263e5ef81d95b94e892df746b5712a"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-27T13:50:05.961Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/replay-absence.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/replay-absence.test.ts::restores absent paths as absent even when git show reports success",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "expected null to be 'tabbed filename' // Object.is equality"
+        }
+      ],
+      "fingerprint": "20ea687c53c36ddd7d2d036f3ae1cf67e8b766d1a2b1ee44f9be4c6e75f6724c"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-27T13:50:23.986Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/replay-absence.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/replay-absence.test.ts::restores absent paths as absent even when git show reports success",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f42f828e045a0c3e2274ba9c5437cd28ec3160b7009637d5ba8a721486357a8d"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-27T13:51:26.541Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/replay-absence.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/replay-absence.test.ts::restores absent paths as absent even when git show reports success",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "git ls-tree -r -z --full-tree 4c1c940f6bd9fd20f3c6cc789dcbc5a09a02bb38 -- :(exclude)file.txt failed (exit 128): fatal: :(exclude)file.txt: pathspec magic not supported by this command: 'exclude' (mnemonic: '!')"
+        }
+      ],
+      "fingerprint": "794dc4fc4445e90b813e245745a7899086cee210d651f069b8264ac4848a568b"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-27T13:51:41.411Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/replay-absence.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/replay-absence.test.ts::restores absent paths as absent even when git show reports success",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "b39332f7132c24808e75fe3e6fdaae0734cc9e0955ee7381d61caa318b3a26db"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-27T13:53:10.937Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "agent-Bohr",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "1a276574c473c9dbc7b4f5f57567502f4dcb3cb4ac11591f2e59c885c25c0c0d",
+      "attested": true,
+      "fingerprint": "b39332f7132c24808e75fe3e6fdaae0734cc9e0955ee7381d61caa318b3a26db"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-27T13:56:14.819Z",
+      "head": "2c235c8363230a56f9de80248f241faa8a95d262",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 267,
+        "executed": 267,
+        "passed": 267,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "b39332f7132c24808e75fe3e6fdaae0734cc9e0955ee7381d61caa318b3a26db"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-27T13:56:29.768Z",
+    "head": "2c235c8363230a56f9de80248f241faa8a95d262",
+    "fingerprint": "b39332f7132c24808e75fe3e6fdaae0734cc9e0955ee7381d61caa318b3a26db",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_harness": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "docs/engineering/engineering-policy.json": "c8666b08249dae50eae011b567f18df17c56ba36",
+      "scripts/quality/harness/lib/git.mjs": "1915f80327c1ad4fd7aeb6beeb0a1990cbf2a4df",
+      "scripts/quality/harness/replay-absence.test.ts": "28fc07e27546b74b8311fb9beea5edae5f1cfaeb"
+    }
+  }
+}
