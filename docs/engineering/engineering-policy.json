@@ -979,6 +979,7 @@
       "scripts/quality/harness/guard.test.ts",
       "scripts/quality/harness/runners.test.ts",
       "scripts/quality/harness/diffscan.test.ts",
+      "scripts/quality/harness/replay-absence.test.ts",
       "scripts/quality/harness/invariants.test.ts",
       "scripts/quality/harness/lifecycle.e2e.test.ts",
       "scripts/quality/harness/adversarial.test.ts",
