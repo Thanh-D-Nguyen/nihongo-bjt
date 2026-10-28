@@ -15,6 +15,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
+import { createLobbyActionQueue } from "../../../../lib/lobby-action-queue";
 import { recordStudyProgress } from "../../../_hooks/use-study-progress";
 import {
   apiBase,
@@ -130,6 +131,9 @@ function markPending() {
   }
 }
 
+/** How long a queued lobby action waits for battle:lobby_joined before it is abandoned. */
+const LOBBY_READY_TIMEOUT_MS = 10_000;
+
 function clearPending() {
   try {
     sessionStorage.removeItem(PENDING_KEY);
@@ -152,7 +156,7 @@ export function BattleRuntimeProvider({
   const socketRef = useRef<GoRealtimeClient | null>(null);
   const handledUrlIntentsRef = useRef<Set<string>>(new Set());
   const lobbyJoinedRef = useRef(false);
-  const pendingLobbyActionsRef = useRef<Array<(socket: GoRealtimeClient) => void>>([]);
+  const pendingLobbyActionsRef = useRef(createLobbyActionQueue<GoRealtimeClient>({ timeoutMs: LOBBY_READY_TIMEOUT_MS }));
   const { displayName, email, isAuthenticated, userId } = useGoAuth();
   const [answerPending, setAnswerPending] = useState(false);
   const [answerResult, setAnswerResult] = useState<AnswerResultEvent | null>(null);
@@ -221,7 +225,7 @@ export function BattleRuntimeProvider({
       socketRef.current = null;
     }
     lobbyJoinedRef.current = false;
-    pendingLobbyActionsRef.current = [];
+    pendingLobbyActionsRef.current.clear();
   }, []);
 
   /** Leaving match via in-app link leaves outcome in memory; clear on lobby so roster is not "still in match" */
@@ -282,10 +286,7 @@ export function BattleRuntimeProvider({
       });
       s.on("battle:lobby_joined", () => {
         lobbyJoinedRef.current = true;
-        const pending = pendingLobbyActionsRef.current.splice(0);
-        for (const action of pending) {
-          action(s);
-        }
+        pendingLobbyActionsRef.current.flush(s);
       });
       s.on("battle:lobby_presence", (p: { users: PresenceUser[] }) => {
         setPresence(p.users);
@@ -503,10 +504,15 @@ export function BattleRuntimeProvider({
         action(s);
         return true;
       }
-      pendingLobbyActionsRef.current.push(action);
+      // Never stay on "connecting" forever when the lobby is not joined in time.
+      pendingLobbyActionsRef.current.enqueue(action, () => {
+        clearPending();
+        setStatus(null);
+        setError(`${labels.error} (lobby_timeout)`);
+      });
       return true;
     },
-    [ensureSocket]
+    [ensureSocket, labels.error]
   );
 
   useEffect(() => {
@@ -659,6 +665,8 @@ export function BattleRuntimeProvider({
     setShareUrl(null);
     // Timeout: if server doesn't respond within 8s, reset to idle
     const timeout = window.setTimeout(() => {
+      // The UI reports the challenge as expired, so it must not be sent afterwards.
+      pendingLobbyActionsRef.current.clear();
       setStatus((prev) => {
         if (prev === labels.connecting) {
           clearPending();
@@ -857,6 +865,8 @@ export function BattleRuntimeProvider({
     if (s && uid && leavingActivePvp && activePvpRoom) {
       s.emit("battle:pvp_forfeit", { roomCode: activePvpRoom, userId: uid });
     }
+    // Leaving the flow abandons anything still waiting for the lobby.
+    pendingLobbyActionsRef.current.clear();
     clearPending();
     setQuestion(null);
     setOutcome(null);
@@ -894,6 +904,7 @@ export function BattleRuntimeProvider({
   const cancelCountdown = useCallback(() => {
     const s = socketRef.current;
     const uid = userId;
+    pendingLobbyActionsRef.current.clear();
     if (battleMode === "pvp" && pvpRoomCode && uid) {
       s?.emit("battle:pvp_forfeit", { roomCode: pvpRoomCode, userId: uid });
       return;

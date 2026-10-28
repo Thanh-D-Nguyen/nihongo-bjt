@@ -294,7 +294,7 @@ function ConfigCard({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/80 text-base shadow-sm ring-1 ring-ink/5" aria-hidden>
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-surface/80 text-base shadow-sm ring-1 ring-ink/5" aria-hidden>
             {meta.icon}
           </span>
           <div className="min-w-0 flex-1">
@@ -312,16 +312,16 @@ function ConfigCard({
         </p>
       )}
       <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px] font-bold text-muted">
-        <span className="inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 ring-1 ring-ink/5">
+        <span className="inline-flex items-center gap-1 rounded-full bg-surface/70 px-2 py-0.5 ring-1 ring-ink/5">
           📝 {config.questionCount}Q
         </span>
-        <span className="inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 ring-1 ring-ink/5">
+        <span className="inline-flex items-center gap-1 rounded-full bg-surface/70 px-2 py-0.5 ring-1 ring-ink/5">
           ⏱️ {config.timePerQuestionSec}s
         </span>
-        <span className="inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 ring-1 ring-ink/5">
+        <span className="inline-flex items-center gap-1 rounded-full bg-surface/70 px-2 py-0.5 ring-1 ring-ink/5">
           ⏳ {durationLabel}
         </span>
-        <span className="inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 ring-1 ring-ink/5">
+        <span className="inline-flex items-center gap-1 rounded-full bg-surface/70 px-2 py-0.5 ring-1 ring-ink/5">
           📚 {poolLabel}
         </span>
         {countdown && (

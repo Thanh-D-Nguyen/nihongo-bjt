@@ -86,8 +86,8 @@ export function TeamRoomRound({
               {/* Team vote indicator after answer */}
               {answerResult && correct && (
                 <span className="absolute -top-1.5 -right-1.5 flex gap-0.5">
-                  <span className="h-3 w-3 rounded-full bg-green-500 ring-2 ring-white" />
-                  <span className="h-3 w-3 rounded-full bg-purple-500 ring-2 ring-white" />
+                  <span className="h-3 w-3 rounded-full bg-green-500 ring-2 ring-surface" />
+                  <span className="h-3 w-3 rounded-full bg-purple-500 ring-2 ring-surface" />
                 </span>
               )}
             </button>

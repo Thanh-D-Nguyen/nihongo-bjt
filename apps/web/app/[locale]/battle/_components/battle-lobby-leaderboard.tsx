@@ -112,7 +112,7 @@ export function BattleLobbyLeaderboardPanel({
               className={`min-h-9 rounded-lg px-3 text-xs font-black transition ${
                 opt.key === windowKey
                   ? "bg-ink text-surface shadow-sm"
-                  : "text-ink hover:bg-white"
+                  : "text-ink hover:bg-surface"
               }`}
               key={opt.key}
               onClick={() => setWindowKey(opt.key)}
@@ -149,7 +149,7 @@ export function BattleLobbyLeaderboardPanel({
       ) : null}
 
       {!loading && data && data.items.length > 0 ? (
-        <div className="mt-4 overflow-x-auto rounded-xl border border-ink/10 bg-white/85">
+        <div className="mt-4 overflow-x-auto rounded-xl border border-ink/10 bg-surface/85">
           <table className="w-full min-w-[36rem] text-left text-sm">
             <thead>
               <tr className="border-b border-ink/10 bg-paper/90 text-[11px] font-black uppercase tracking-wide text-muted">

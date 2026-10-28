@@ -175,7 +175,7 @@ function LobbyRosterColumn({
               className={`battle-bot-card grid w-full grid-cols-[40px_1fr_auto] items-center gap-2.5 rounded-xl border p-2.5 text-left ${
                 selected
                   ? `battle-bot-card-selected ${style.border} bg-gradient-to-r from-blue-50/60 to-indigo-50/40 shadow-md`
-                  : "border-ink/10 bg-white/75 hover:bg-paper hover:shadow-sm"
+                  : "border-ink/10 bg-surface/75 hover:bg-paper hover:shadow-sm"
               }`}
               key={bot.key}
               onClick={(e) => {
@@ -195,7 +195,7 @@ function LobbyRosterColumn({
                   variant="card"
                 />
                 {selected ? (
-                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-accent" aria-hidden />
+                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface bg-accent" aria-hidden />
                 ) : null}
               </div>
               <span className="min-w-0">
@@ -233,7 +233,7 @@ function LobbyRosterColumn({
           const name = user.displayName || labels.userLabel;
           return (
             <div
-              className="flex cursor-pointer items-center gap-2 rounded-xl border border-ink/10 bg-paper p-2 transition hover:bg-white"
+              className="flex cursor-pointer items-center gap-2 rounded-xl border border-ink/10 bg-paper p-2 transition hover:bg-surface"
               key={user.userId}
               onClick={(e) => openUser(user, e.currentTarget)}
               onKeyDown={(e) => {
@@ -689,7 +689,7 @@ export function BattleLobbyClient() {
       <section className="mt-4 rounded-2xl border border-indigo-200/50 bg-gradient-to-br from-indigo-50/80 via-surface to-blue-50/50 p-3 shadow-sm lg:hidden">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] font-black uppercase tracking-wide text-indigo-800/80">
+            <p className="text-[11px] font-black uppercase tracking-wide text-indigo-800">
               {labels.chooseArena}
             </p>
             <p className="mt-1 text-xs font-semibold leading-5 text-muted">
@@ -707,7 +707,7 @@ export function BattleLobbyClient() {
             {labels.lobbyRoster}
           </button>
         </div>
-        <div className="mt-3 flex min-h-14 items-center gap-3 rounded-xl border border-ink/10 bg-white/80 px-3 py-2">
+        <div className="mt-3 flex min-h-14 items-center gap-3 rounded-xl border border-ink/10 bg-surface/80 px-3 py-2">
           <BattleBotAvatar
             className="h-11 w-11 shrink-0 rounded-xl"
             fallback={displayedBot.avatarFallback}
@@ -777,7 +777,7 @@ export function BattleLobbyClient() {
                   aria-controls={rosterSheetId}
                   aria-expanded={rosterOpen}
                   aria-label={labels.lobbyOpenRoster}
-                  className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-ink/15 bg-paper shadow-sm outline-none ring-offset-2 transition hover:bg-white focus-visible:ring-2 focus-visible:ring-accent lg:hidden"
+                  className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-ink/15 bg-paper shadow-sm outline-none ring-offset-2 transition hover:bg-surface focus-visible:ring-2 focus-visible:ring-accent lg:hidden"
                   onClick={() => setRosterOpen((open) => !open)}
                   type="button"
                 >
@@ -806,7 +806,7 @@ export function BattleLobbyClient() {
             ref={chatScrollRef}
           >
             {lobbyMessages.length === 0 ? (
-              <div className="flex min-h-[10rem] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-ink/10 bg-gradient-to-b from-paper/80 to-white/60 p-6 text-center">
+              <div className="flex min-h-[10rem] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-ink/10 bg-gradient-to-b from-paper/80 to-surface/60 p-6 text-center">
                 <span className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 text-2xl shadow-sm" aria-hidden>💬</span>
                 <p className="max-w-[18rem] text-xs font-semibold leading-5 text-muted">
                   {labels.lobbyEmpty}
@@ -831,12 +831,12 @@ export function BattleLobbyClient() {
                           ? "rounded-[1.35rem] rounded-br-md bg-gradient-to-br from-ink via-ink to-ink/92 text-surface ring-1 ring-ink/20"
                           : isBot
                             ? "rounded-[1.35rem] rounded-bl-md bg-gradient-to-b from-violet-50/95 to-indigo-50/90 text-ink ring-1 ring-violet-200/45"
-                            : "rounded-[1.35rem] rounded-bl-md bg-white/95 text-ink ring-1 ring-ink/10"
+                            : "rounded-[1.35rem] rounded-bl-md bg-surface/95 text-ink ring-1 ring-ink/10"
                       }`}
                     >
                       <p
                         className={`text-[11px] font-black ${
-                          mine ? "text-surface/70" : isBot ? "text-violet-800/90" : "text-muted"
+                          mine ? "text-surface/70" : isBot ? "text-violet-800" : "text-muted"
                         }`}
                       >
                         {isBot

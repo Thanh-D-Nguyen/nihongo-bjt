@@ -39,7 +39,7 @@ export function BusinessRoleplayRound({
           </div>
         </div>
         {/* Frame body — the scenario prompt */}
-        <div className="bg-white/95 p-4">
+        <div className="bg-surface/95 p-4">
           <p className="text-sm font-medium leading-6 text-ink whitespace-pre-line">
             {round.question.prompt}
           </p>

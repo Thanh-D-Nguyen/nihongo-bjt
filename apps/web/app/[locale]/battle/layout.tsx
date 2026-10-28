@@ -19,8 +19,10 @@ export default async function BattleLayout({
   const t = messages[locale as keyof typeof messages] ?? messages.vi;
   const labels = t.battle as unknown as BattlePageLabels;
   return (
-    <BattleRuntimeProvider labels={labels} locale={locale}>
-      {children}
-    </BattleRuntimeProvider>
+    <div className="battle-scope">
+      <BattleRuntimeProvider labels={labels} locale={locale}>
+        {children}
+      </BattleRuntimeProvider>
+    </div>
   );
 }
