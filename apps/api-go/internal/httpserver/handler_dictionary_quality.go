@@ -90,4 +90,3 @@ func dictionaryGlossUsable(headword string, gloss *string) bool {
 	}
 	return true
 }
-

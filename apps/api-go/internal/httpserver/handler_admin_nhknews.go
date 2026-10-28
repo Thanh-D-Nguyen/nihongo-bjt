@@ -26,12 +26,12 @@ import (
 )
 
 const (
-	nhkEasyFeedDefault       = "https://nhkeasier.com/feed/"
-	nhkNormalFeedDefault     = "https://news.web.nhk/n-data/conf/na/rss/cat0.xml"
-	nhkLegacyEasyFeedURL     = "https://www3.nhk.or.jp/news/easy/news-list.json"
-	nhkLegacyEasyWebFeedURL  = "https://news.web.nhk/news/easy/news-list.json"
-	nhkLegacyNormalFeedURL   = "https://www3.nhk.or.jp/rss/news/cat0.xml"
-	nhkFeedMaxBytes          = 8 << 20
+	nhkEasyFeedDefault      = "https://nhkeasier.com/feed/"
+	nhkNormalFeedDefault    = "https://news.web.nhk/n-data/conf/na/rss/cat0.xml"
+	nhkLegacyEasyFeedURL    = "https://www3.nhk.or.jp/news/easy/news-list.json"
+	nhkLegacyEasyWebFeedURL = "https://news.web.nhk/news/easy/news-list.json"
+	nhkLegacyNormalFeedURL  = "https://www3.nhk.or.jp/rss/news/cat0.xml"
+	nhkFeedMaxBytes         = 8 << 20
 )
 
 type nhkNewsConfig struct {
@@ -966,19 +966,19 @@ func enrichNHKArticlesWithLexemes(ctx context.Context, db *pgxpool.Pool, article
 			COALESCE(
 				(SELECT ls.meaning_vi FROM content.lexeme_sense ls
 				 WHERE ls.lexeme_id = l.id AND COALESCE(btrim(ls.meaning_vi),'') != ''
-				 ORDER BY ls.sense_order ASC LIMIT 1),
+				 ORDER BY ls.position ASC LIMIT 1),
 				NULLIF(btrim(l.short_meaning_vi),''),
 				''
 			) AS meaning_vi,
 			COALESCE(
-				(SELECT ls.pos FROM content.lexeme_sense ls
-				 WHERE ls.lexeme_id = l.id AND COALESCE(btrim(ls.pos),'') != ''
-				 ORDER BY ls.sense_order ASC LIMIT 1),
+				(SELECT ls.part_of_speech FROM content.lexeme_sense ls
+				 WHERE ls.lexeme_id = l.id AND COALESCE(btrim(ls.part_of_speech),'') != ''
+				 ORDER BY ls.position ASC LIMIT 1),
 				'noun'
 			) AS pos
 			FROM content.lexeme l
 			WHERE l.status='active' AND l.headword = ANY($1)
-			ORDER BY l.frequency_rank ASC NULLS LAST`, candidates)
+			ORDER BY l.jlpt_level ASC NULLS LAST, l.created_at ASC`, candidates)
 		if err == nil {
 			for rows.Next() {
 				var hw, reading, meaning, pos string

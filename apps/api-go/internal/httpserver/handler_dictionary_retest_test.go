@@ -33,4 +33,3 @@ func TestDictionaryRejectsCorruptedAndMistranslatedGlosses(t *testing.T) {
 		t.Fatalf("expected valid gloss %q to be accepted", good)
 	}
 }
-

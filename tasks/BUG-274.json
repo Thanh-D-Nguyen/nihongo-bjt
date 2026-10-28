@@ -1,0 +1,148 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "BUG-274",
+  "title": "Format Go handlers, align NHK lexeme_sense schema query, and add idempotent gloss cleanup migration",
+  "start_head": "405b708d32585d4eb2a77967c8f763133b50d620",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Go formatting and NHK lexeme_sense column alignment plus idempotent SQL migration for dictionary gloss cleanup.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "All Go files pass gofmt and TestSQLConformsToCanonicalSchema against the canonical schema."
+      },
+      {
+        "id": "AC2",
+        "text": "Idempotent migration 005_clean_corrupted_glosses.sql repairs corrupted dictionary glosses on deploy."
+      }
+    ],
+    "expected_behavior": "Go checks, SQL conformance, and migration execution succeed.",
+    "observed_behavior": "gofmt reported unformatted files and NHK vocabulary query referenced sense_order instead of position.",
+    "rollback_plan": "Data-only idempotent UPDATE/DELETE statements in 005_clean_corrupted_glosses.sql; compatible with existing schema with zero DDL changes."
+  },
+  "classification": {
+    "classes": [
+      "DOMAIN_LOGIC",
+      "DATABASE",
+      "FORMAT_ONLY"
+    ],
+    "change_kind": "refactor",
+    "rationale": "Align SQL column names with canonical schema, format Go files, and run idempotent data cleanup SQL."
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [
+    {
+      "finding": "formatting_only_change:apps/api-go/internal/httpserver/handler_dictionary_quality.go",
+      "reason": "gofmt struct alignment"
+    },
+    {
+      "finding": "formatting_only_change:apps/api-go/internal/httpserver/handler_dictionary_retest_test.go",
+      "reason": "gofmt struct alignment"
+    }
+  ],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-28T01:13:31.573Z",
+      "head": "405b708d32585d4eb2a77967c8f763133b50d620"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-28T01:13:31.573Z",
+      "head": "405b708d32585d4eb2a77967c8f763133b50d620"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-10-28T01:13:31.573Z",
+      "head": "405b708d32585d4eb2a77967c8f763133b50d620"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-28T01:13:31.573Z",
+      "head": "405b708d32585d4eb2a77967c8f763133b50d620"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-28T01:13:31.573Z",
+      "head": "405b708d32585d4eb2a77967c8f763133b50d620"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-28T01:13:31.573Z",
+      "head": "405b708d32585d4eb2a77967c8f763133b50d620"
+    },
+    {
+      "state": "REVIEWED",
+      "at": "2026-10-28T01:13:31.573Z",
+      "head": "405b708d32585d4eb2a77967c8f763133b50d620"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-28T01:13:31.573Z",
+      "head": "405b708d32585d4eb2a77967c8f763133b50d620"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-28T01:13:31.573Z",
+      "head": "405b708d32585d4eb2a77967c8f763133b50d620"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-28T01:13:31.573Z",
+      "head": "405b708d32585d4eb2a77967c8f763133b50d620",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1621,
+        "executed": 1621,
+        "passed": 1621,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1621 passed, 0 allowed skip(s)",
+      "fingerprint": "9abbcf5e10128ac9f4f6fe97234eded82028a0d1d41b4e7f0180138673371261"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-28T01:13:31.573Z",
+      "head": "405b708d32585d4eb2a77967c8f763133b50d620",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [],
+      "fingerprint": "9abbcf5e10128ac9f4f6fe97234eded82028a0d1d41b4e7f0180138673371261"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-28T01:13:31.573Z",
+    "head": "405b708d32585d4eb2a77967c8f763133b50d620",
+    "fingerprint": "9abbcf5e10128ac9f4f6fe97234eded82028a0d1d41b4e7f0180138673371261",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_admin_nhknews.go": "8a5e7498aac91dc534eb430da43c11b08f9642d3",
+      "apps/api-go/internal/httpserver/handler_dictionary_quality.go": "6db1f7b1d968c51da8a751eb41117dd9b81fb047",
+      "apps/api-go/internal/httpserver/handler_dictionary_retest_test.go": "ff87efa9b794441a0922a82cb78503d5b1ca9a0d",
+      "apps/api-go/internal/postgres/migrations/005_clean_corrupted_glosses.sql": "27964ff200462d939b98ddc6c6b49b3db4797992"
+    }
+  }
+}
