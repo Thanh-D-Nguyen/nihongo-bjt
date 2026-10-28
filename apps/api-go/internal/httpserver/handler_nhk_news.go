@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -75,6 +76,18 @@ func nhkNewsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc 
 	}
 }
 
+func nhkRouteArticleID(r *http.Request) string {
+	raw := chi.URLParam(r, "id")
+	for strings.Contains(raw, "%") {
+		unescaped, err := url.PathUnescape(raw)
+		if err != nil || unescaped == raw {
+			break
+		}
+		raw = unescaped
+	}
+	return raw
+}
+
 func nhkArticleDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var article nhkArticleResponse
@@ -82,7 +95,7 @@ func nhkArticleDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 		err := db.QueryRow(r.Context(), `SELECT id,source_type,title,title_with_ruby,published_at,image_url,audio_url,difficulty,url,body_html,body_plain,vocabulary,
 			COALESCE(NULLIF(btrim(body_plain),''),NULLIF(btrim(body_html),'')) IS NOT NULL,
 			COALESCE(jsonb_typeof(vocabulary)='array' AND vocabulary != '[]'::jsonb,false)
-			FROM content.nhk_article WHERE id=$1`, chi.URLParam(r, "id")).Scan(
+			FROM content.nhk_article WHERE id=$1`, nhkRouteArticleID(r)).Scan(
 			&article.ID, &article.SourceType, &article.Title, &article.TitleWithRuby, &article.PublishedAt,
 			&article.ImageURL, &article.AudioURL, &article.Difficulty, &article.URL, &article.BodyHTML,
 			&article.BodyPlain, &vocabulary, &article.HasBody, &article.CanGenerateCards)
@@ -122,7 +135,7 @@ func nhkReadingProgressHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 			result, err := db.Exec(r.Context(), `INSERT INTO learning.nhk_reading_progress (user_id,article_id,read_time_sec,completed)
 				SELECT $1,id,$3,$4 FROM content.nhk_article WHERE id=$2
 				ON CONFLICT (user_id,article_id) DO UPDATE SET read_at=NOW(),read_time_sec=GREATEST(COALESCE(learning.nhk_reading_progress.read_time_sec,0),EXCLUDED.read_time_sec),completed=learning.nhk_reading_progress.completed OR EXCLUDED.completed`,
-				identity.UserID, chi.URLParam(r, "id"), req.ReadTimeSec, req.Completed)
+				identity.UserID, nhkRouteArticleID(r), req.ReadTimeSec, req.Completed)
 			if err != nil {
 				logger.Error("save NHK reading progress", "error", err)
 				writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -171,7 +184,7 @@ func nhkBookmarkHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc 
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
-		id := chi.URLParam(r, "id")
+		id := nhkRouteArticleID(r)
 		if r.Method == http.MethodGet {
 			var bookmarked bool
 			err := db.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM learning.nhk_bookmark WHERE user_id=$1 AND article_id=$2)`, identity.UserID, id).Scan(&bookmarked)
@@ -239,7 +252,7 @@ func nhkFlashcardHandler(db *pgxpool.Pool, logger *slog.Logger, wholeArticle boo
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		id := chi.URLParam(r, "id")
+		id := nhkRouteArticleID(r)
 		var title string
 		var vocabJSON []byte
 		if err := db.QueryRow(r.Context(), `SELECT title,vocabulary FROM content.nhk_article WHERE id=$1`, id).Scan(&title, &vocabJSON); err != nil {

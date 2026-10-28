@@ -9,9 +9,10 @@ import (
 
 // Handlers holds all job handler functions and their dependencies.
 type Handlers struct {
-	db     *pgxpool.Pool
-	logger *slog.Logger
-	cfg    Config
+	db              *pgxpool.Pool
+	logger          *slog.Logger
+	cfg             Config
+	NHKNewsSyncFunc JobFunc
 }
 
 // NewHandlers creates job handlers with the given dependencies.
@@ -152,4 +153,12 @@ func (h *Handlers) OperationsSweep(ctx context.Context) (int, error) {
 func (h *Handlers) AnalyticsAdmin(ctx context.Context) (int, error) {
 	h.logger.DebugContext(ctx, "analytics_admin: stub — no NestJS processor found")
 	return 0, nil
+}
+
+// NHKNewsSync refreshes NHK Easy and Normal news feeds into content.nhk_article.
+func (h *Handlers) NHKNewsSync(ctx context.Context) (int, error) {
+	if h.NHKNewsSyncFunc == nil {
+		return 0, nil
+	}
+	return h.NHKNewsSyncFunc(ctx)
 }

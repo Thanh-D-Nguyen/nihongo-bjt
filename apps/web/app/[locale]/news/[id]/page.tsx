@@ -6,14 +6,23 @@ import { NhkArticleDetailClient } from "./_components/nhk-article-detail-client"
 
 const messages = { ja, vi, en };
 
+function normalizeArticleId(raw: string): string {
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ locale: string; id: string }>;
 }): Promise<Metadata> {
   const { locale, id } = await params;
+  const articleId = normalizeArticleId(id);
   const t = (messages as Record<string, typeof vi>)[locale] ?? messages.vi;
-  return { title: `${id.startsWith("normal") ? t.homepage.newsNormal : t.nhkDetail.title} — KotobaWorks` };
+  return { title: `${articleId.startsWith("normal") ? t.homepage.newsNormal : t.nhkDetail.title} — KotobaWorks` };
 }
 
 export default async function NhkArticlePage({
@@ -24,5 +33,5 @@ export default async function NhkArticlePage({
   const { locale, id } = await params;
   const t = messages[locale] ?? messages.vi;
 
-  return <NhkArticleDetailClient articleId={id} labels={t.nhkDetail} locale={locale} />;
+  return <NhkArticleDetailClient articleId={normalizeArticleId(id)} labels={t.nhkDetail} locale={locale} />;
 }

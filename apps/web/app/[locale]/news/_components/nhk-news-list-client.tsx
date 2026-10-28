@@ -167,7 +167,7 @@ export function NhkNewsListClient({
           {articles.map((article, index) => (
             <Link
               key={article.id}
-              href={activeType === "normal" ? article.url : `/${locale}/news/${article.id}`}
+              href={`/${locale}/news/${article.id}`}
               className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-ink/5 transition-all hover:shadow-md hover:-translate-y-0.5"
             >
               <div className="relative aspect-[16/9] w-full overflow-hidden bg-gray-100">

@@ -107,7 +107,7 @@ function FeaturedNewsCard({
             <Link
               aria-label={type === "normal" ? `${labels.newsReadMore} ${sourceLabel(type, labels)}` : undefined}
               className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#1B2A4A] px-5 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:bg-[#243560] hover:shadow-md"
-              href={type === "normal" ? article.url : `/${locale}/news/${article.id}`}
+              href={`/${locale}/news/${article.id}`}
             >
               {labels.newsReadMore}
               <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
@@ -183,7 +183,7 @@ function CompactNewsCard({
           <Link
             aria-label={type === "normal" ? `${labels.newsReadMore} ${sourceLabel(type, labels)}` : undefined}
             className="inline-flex min-h-9 flex-1 items-center justify-center rounded-lg bg-[#1B2A4A] px-3 text-xs font-bold text-white transition-all hover:bg-[#243560]"
-            href={type === "normal" ? article.url : `/${locale}/news/${article.id}`}
+            href={`/${locale}/news/${article.id}`}
           >
             {labels.newsReadMore}
           </Link>

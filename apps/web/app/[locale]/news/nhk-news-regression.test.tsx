@@ -52,20 +52,22 @@ describe("NHK regression", () => {
     expect(html).not.toContain(en.homepage.newsCardsUnavailable);
   });
 
-  it("links normal news directly to NHK in the homepage and list", async () => {
+  it("links normal news to internal detail pages in the homepage and list", async () => {
     const normalArticles = [article, { ...article, id: "normal-test-2" }];
     api.article = normalArticles;
     const container = document.createElement("div");
     const root = createRoot(container);
     await act(async () => root.render(<FeaturedNewsSection articlesByType={{ easy: [], normal: normalArticles }} labels={en.homepage} locale="en" onRetry={() => undefined} />));
     await act(async () => (container.querySelectorAll('[role="tab"]')[1] as HTMLElement).click());
-    expect(container.querySelectorAll(`a[href="${article.url}"]`)).toHaveLength(2);
-    for (const link of container.querySelectorAll(`a[href="${article.url}"]`)) {
+    expect(container.querySelectorAll('a[href="/en/news/normal-test"]')).toHaveLength(1);
+    expect(container.querySelectorAll('a[href="/en/news/normal-test-2"]')).toHaveLength(1);
+    for (const link of container.querySelectorAll('a[href^="/en/news/normal-test"]')) {
       expect(link.getAttribute("aria-label")).toBe(`${en.homepage.newsReadMore} ${en.homepage.newsNormal}`);
     }
     await act(async () => root.render(<NhkNewsListClient labels={en.nhkDetail} homepageLabels={en.homepage} locale="en" />));
     await act(async () => (container.querySelectorAll('[role="tab"]')[1] as HTMLElement).click());
-    expect(container.querySelectorAll(`a[href="${article.url}"]`)).toHaveLength(2);
+    expect(container.querySelectorAll('a[href="/en/news/normal-test"]')).toHaveLength(1);
+    expect(container.querySelectorAll('a[href="/en/news/normal-test-2"]')).toHaveLength(1);
     await act(async () => root.unmount());
   });
 

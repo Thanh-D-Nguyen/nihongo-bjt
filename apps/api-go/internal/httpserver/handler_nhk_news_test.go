@@ -131,3 +131,39 @@ func withNHKRouteID(r *http.Request, id string) *http.Request {
 	routeContext.URLParams.Add("id", id)
 	return r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, routeContext))
 }
+
+func TestParseNHKEasyRSSExtractsBodyRubyAndImage(t *testing.T) {
+	rss := []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+<item>
+<title>総理大臣が会議を開いた</title>
+<link>https://nhkeasier.com/story/10065/</link>
+<guid>https://nhkeasier.com/story/10065/</guid>
+<pubDate>2026-10-27 20:10:00 +0900</pubDate>
+<description><![CDATA[<img src="/media/jpg/2026-10-27_test.jpg"/><p><ruby>総理大臣<rt>そうりだいじん</rt></ruby>が<ruby>会議<rt>かいぎ</rt></ruby>を<ruby>開<rt>ひら</rt></ruby>いた。</p>]]></description>
+</item>
+</channel></rss>`)
+	articles, err := parseNHKEasyRSS(rss)
+	if err != nil {
+		t.Fatalf("parseNHKEasyRSS error: %v", err)
+	}
+	if len(articles) != 1 {
+		t.Fatalf("expected 1 article, got %d", len(articles))
+	}
+	got := articles[0]
+	if got.ID != "easy:nhkeasier-10065" {
+		t.Fatalf("unexpected ID %q", got.ID)
+	}
+	if got.ImageURL != "https://nhkeasier.com/media/jpg/2026-10-27_test.jpg" {
+		t.Fatalf("unexpected ImageURL %q", got.ImageURL)
+	}
+	if !strings.Contains(got.BodyHTML, "<ruby>総理大臣<rt>そうりだいじん</rt></ruby>") {
+		t.Fatalf("expected ruby in BodyHTML, got %q", got.BodyHTML)
+	}
+	if got.BodyPlain != "総理大臣が会議を開いた。" {
+		t.Fatalf("expected clean BodyPlain without rt readings, got %q", got.BodyPlain)
+	}
+	if !strings.Contains(got.TitleWithRuby, "<ruby>総理大臣<rt>そうりだいじん</rt></ruby>") {
+		t.Fatalf("expected TitleWithRuby to annotate title kanji, got %q", got.TitleWithRuby)
+	}
+}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
@@ -193,6 +194,9 @@ func New(version string) (*App, error) {
 	jobsCfg := jobs.LoadConfig()
 	scheduler := jobs.NewScheduler(dbPool, logger, jobsCfg)
 	handlers := jobs.NewHandlers(dbPool, logger, jobsCfg)
+	handlers.NHKNewsSyncFunc = func(ctx context.Context) (int, error) {
+		return httpserver.SyncNHKNewsFeeds(ctx, dbPool, logger)
+	}
 	if err := jobs.RegisterAll(scheduler, handlers); err != nil {
 		publicReadRateLimiter.Stop()
 		rateLimiter.Stop()
@@ -200,6 +204,18 @@ func New(version string) (*App, error) {
 		return nil, fmt.Errorf("app: jobs registration: %w", err)
 	}
 	scheduler.Start()
+	if jobsCfg.Enabled {
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+			defer cancel()
+			count, err := httpserver.SyncNHKNewsFeeds(ctx, dbPool, logger)
+			if err != nil {
+				logger.Warn("jobs: startup nhk_news_sync failed", "error", err)
+				return
+			}
+			logger.Info("jobs: startup nhk_news_sync completed", "items_processed", count)
+		}()
+	}
 
 	return &App{
 		Config:                cfg,

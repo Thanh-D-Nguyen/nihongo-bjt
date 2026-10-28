@@ -54,5 +54,9 @@ func RegisterAll(s *Scheduler, h *Handlers) error {
 		return fmt.Errorf("register loto_autopilot_catchup: %w", err)
 	}
 
+	if err := s.Register("nhk_news_sync", "0 15 */4 * * *", h.NHKNewsSync); err != nil {
+		return fmt.Errorf("register nhk_news_sync: %w", err)
+	}
+
 	return nil
 }
