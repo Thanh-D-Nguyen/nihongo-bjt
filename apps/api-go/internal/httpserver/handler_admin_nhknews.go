@@ -661,6 +661,7 @@ func parseNHKEasyRSS(body []byte) ([]nhkFeedArticle, error) {
 		return nil, fmt.Errorf("decode easy RSS feed: missing channel")
 	}
 	articles := make([]nhkFeedArticle, 0, len(feed.Channel.Items))
+	var lastErr error
 	for _, item := range feed.Channel.Items {
 		title := strings.TrimSpace(item.Title)
 		articleURL := strings.TrimSpace(item.Link)
@@ -668,11 +669,13 @@ func parseNHKEasyRSS(body []byte) ([]nhkFeedArticle, error) {
 			articleURL = strings.TrimSpace(item.GUID)
 		}
 		if title == "" || !validNHKArticleURL(articleURL) {
-			return nil, fmt.Errorf("easy RSS item lacks title or valid URL")
+			lastErr = fmt.Errorf("easy RSS item lacks title or valid URL")
+			continue
 		}
 		published, err := parseNHKDate(item.PubDate)
 		if err != nil {
-			return nil, fmt.Errorf("parse easy RSS date for %s: %w", articleURL, err)
+			lastErr = fmt.Errorf("parse easy RSS date for %s: %w", articleURL, err)
+			continue
 		}
 		id := ""
 		if m := nhkEasierStoryPathRe.FindStringSubmatch(articleURL); len(m) == 2 {
@@ -707,6 +710,9 @@ func parseNHKEasyRSS(body []byte) ([]nhkFeedArticle, error) {
 			URL: articleURL, PublishedAt: published, BodyHTML: bodyHTML, BodyPlain: bodyPlain,
 			ImageURL: imageURL, AudioURL: audioURL, Difficulty: "N4",
 		})
+	}
+	if len(articles) == 0 && lastErr != nil {
+		return nil, lastErr
 	}
 	return articles, nil
 }
@@ -1129,6 +1135,8 @@ func parseNHKDate(value string) (time.Time, error) {
 	for _, layout := range []string{
 		time.RFC1123Z,
 		time.RFC1123,
+		"Mon, 2 Jan 2006 15:04:05 -0700",
+		"Mon, 2 Jan 2006 15:04:05 MST",
 		time.RFC3339,
 		"2006-01-02 15:04:05 -0700",
 		"2006-01-02 15:04:05 MST",

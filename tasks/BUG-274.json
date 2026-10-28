@@ -35,45 +35,54 @@
   "history": [
     {
       "state": "CREATED",
-      "at": "2026-10-28T01:21:17.201Z"
+      "at": "2026-10-28T01:42:47.279Z",
+      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
     },
     {
       "state": "SPECIFIED",
-      "at": "2026-10-28T01:21:17.201Z"
+      "at": "2026-10-28T01:42:47.279Z",
+      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
     },
     {
       "state": "CLASSIFIED",
-      "at": "2026-10-28T01:21:17.201Z"
+      "at": "2026-10-28T01:42:47.279Z",
+      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
     },
     {
       "state": "IMPLEMENTING",
-      "at": "2026-10-28T01:21:17.201Z"
+      "at": "2026-10-28T01:42:47.279Z",
+      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
     },
     {
       "state": "VERIFYING",
-      "at": "2026-10-28T01:21:17.201Z"
+      "at": "2026-10-28T01:42:47.279Z",
+      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
     },
     {
       "state": "REVIEW_REQUIRED",
-      "at": "2026-10-28T01:21:17.201Z"
+      "at": "2026-10-28T01:42:47.279Z",
+      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
     },
     {
       "state": "REVIEWED",
-      "at": "2026-10-28T01:21:17.201Z"
+      "at": "2026-10-28T01:42:47.279Z",
+      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
     },
     {
       "state": "READY_TO_CLOSE",
-      "at": "2026-10-28T01:21:17.201Z"
+      "at": "2026-10-28T01:42:47.279Z",
+      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
     },
     {
       "state": "CLOSED",
-      "at": "2026-10-28T01:21:17.201Z"
+      "at": "2026-10-28T01:42:47.279Z",
+      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
     }
   ],
   "evidence": [
     {
       "seq": 1,
-      "at": "2026-10-28T01:21:17.201Z",
+      "at": "2026-10-28T01:42:47.279Z",
       "kind": "suite",
       "gate": "suite_go",
       "command": "bash scripts/quality/verify-go.sh",
@@ -90,23 +99,26 @@
         "min_passed_tests": 1444
       },
       "message": "1621 passed, 0 allowed skip(s)",
-      "fingerprint": "c2dbdf6e13455873404881cda273bee5f5906b1e39cf633155b6d2bbbc46f382"
+      "fingerprint": "a721be9fa18df028ddff5fb7d3271631eecd4e37abc5379cd838e805e98631ab",
+      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
     },
     {
       "seq": 2,
-      "at": "2026-10-28T01:21:17.201Z",
+      "at": "2026-10-28T01:42:47.279Z",
       "kind": "review",
       "mode": "fresh_session",
       "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
       "verdict": "APPROVE",
       "open_findings": 0,
       "findings": [],
-      "fingerprint": "c2dbdf6e13455873404881cda273bee5f5906b1e39cf633155b6d2bbbc46f382"
+      "fingerprint": "a721be9fa18df028ddff5fb7d3271631eecd4e37abc5379cd838e805e98631ab",
+      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
     }
   ],
   "closed": {
-    "at": "2026-10-28T01:21:17.201Z",
-    "fingerprint": "c2dbdf6e13455873404881cda273bee5f5906b1e39cf633155b6d2bbbc46f382",
+    "at": "2026-10-28T01:42:47.279Z",
+    "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097",
+    "fingerprint": "a721be9fa18df028ddff5fb7d3271631eecd4e37abc5379cd838e805e98631ab",
     "status": "VERIFIED",
     "gates": {
       "acceptance": "PASS",
@@ -114,7 +126,9 @@
       "review": "PASS"
     },
     "files": {
-      "apps/api-go/internal/httpserver/handler_admin_nhknews.go": "71abd36a00ae08c2b8fa7f6b42d04c9a8bfada7b"
+      "apps/api-go/internal/httpserver/handler_admin_nhknews.go": "7d894723fef7cd5dbcb305f7b0587fee7708f263",
+      "apps/api-go/internal/httpserver/handler_nhk_news_test.go": "9821265893fe5c43517cec964708f3bc788dfabd"
     }
-  }
+  },
+  "start_head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
 }

@@ -139,7 +139,7 @@ func TestParseNHKEasyRSSExtractsBodyRubyAndImage(t *testing.T) {
 <title>総理大臣が会議を開いた</title>
 <link>https://nhkeasier.com/story/10065/</link>
 <guid>https://nhkeasier.com/story/10065/</guid>
-<pubDate>2026-10-27 20:10:00 +0900</pubDate>
+<pubDate>Fri, 9 Oct 2026 20:10:00 +0900</pubDate>
 <description><![CDATA[<img src="/media/jpg/2026-10-27_test.jpg"/><p><ruby>総理大臣<rt>そうりだいじん</rt></ruby>が<ruby>会議<rt>かいぎ</rt></ruby>を<ruby>開<rt>ひら</rt></ruby>いた。</p>]]></description>
 </item>
 </channel></rss>`)
