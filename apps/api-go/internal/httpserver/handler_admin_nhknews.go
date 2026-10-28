@@ -1059,9 +1059,9 @@ func enrichNHKArticlesWithLexemes(ctx context.Context, db *pgxpool.Pool, article
 			}
 			vocab = append(vocab, nhkVocabItem{Word: word, Reading: rPtr, Meaning: mPtr, Pos: pPtr})
 		}
-		// 1. Dictionary-matched words with meaning
+		// 1. Dictionary-matched words with meaning or reading
 		for _, w := range articleCandidates[i] {
-			if entry, ok := lexemeMap[w]; ok && entry.Meaning != "" {
+			if entry, ok := lexemeMap[w]; ok && (entry.Meaning != "" || entry.Reading != "") {
 				reading := entry.Reading
 				if r, hasRuby := articleRuby[w]; hasRuby && r != "" {
 					reading = r
@@ -1082,15 +1082,6 @@ func enrichNHKArticlesWithLexemes(ctx context.Context, db *pgxpool.Pool, article
 					pos = "noun"
 				}
 				appendVocab(w, reading, entry.Meaning, pos)
-			}
-		}
-		// 3. Final fallback if article has bodyPlain but no dictionary/ruby match yet
-		if len(vocab) == 0 {
-			for _, w := range articleCandidates[i] {
-				if len([]rune(w)) >= 2 {
-					entry := lexemeMap[w]
-					appendVocab(w, entry.Reading, entry.Meaning, "noun")
-				}
 			}
 		}
 		if len(vocab) > 0 {
