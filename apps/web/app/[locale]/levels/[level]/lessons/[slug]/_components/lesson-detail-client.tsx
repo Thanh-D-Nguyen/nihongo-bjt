@@ -344,7 +344,7 @@ export function LessonDetailClient({
           </Link>
           <ChevronRight />
           <span className="font-medium text-muted">
-            {labels.pageTitle} {lesson.sortOrder}
+            {`${labels.pageTitle} ${lesson.sortOrder}`}
           </span>
         </nav>
 
@@ -368,11 +368,11 @@ export function LessonDetailClient({
                 ) : null}
                 <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold text-muted">
                   <span className="rounded-full bg-accent-soft px-2.5 py-1">
-                    {labels.weekLabel} {lesson.weekNumber}
+                    {`${labels.weekLabel} ${lesson.weekNumber}`}
                   </span>
                   <span className="rounded-full bg-paper px-2.5 py-1">{unitTypeLabel}</span>
                   <span className="rounded-full bg-paper px-2.5 py-1">
-                    {lesson.estimatedDurationMin} {labels.minutesLabel}
+                    {`${lesson.estimatedDurationMin} ${labels.minutesLabel}`}
                   </span>
                 </div>
               </div>
@@ -621,11 +621,11 @@ export function LessonDetailClient({
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
           <div className="flex items-center gap-2 text-xs text-muted">
             <span className="font-medium text-ink">
-              {labels.pageTitle} {lesson.sortOrder}
+              {`${labels.pageTitle} ${lesson.sortOrder}`}
             </span>
             <span>·</span>
             <span>
-              {totalItems + richActivityCount} {labels.itemsInLesson}
+              {`${totalItems + richActivityCount} ${labels.itemsInLesson}`}
             </span>
             {isCompleted ? (
               <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-[10px] font-medium text-success">
@@ -681,6 +681,29 @@ export function LessonDetailClient({
   );
 }
 
+function localizeLessonTextVi(text: string): string {
+  if (!text) return text;
+  return text
+    .replace(/\bRegister mục tiêu\b/g, "Văn phong mục tiêu")
+    .replace(/\bdialogue\b/g, "hội thoại")
+    .replace(/\binternal_chat\b/g, "chat nội bộ")
+    .replace(/\bmemo\b/g, "biên bản nội bộ")
+    .replace(/\btelephone\b/g, "điện thoại")
+    .replace(/\bmeeting\b/g, "cuộc họp")
+    .replace(/\bannouncement\b/g, "thông báo nội bộ")
+    .replace(/\breport\b/g, "báo cáo công việc")
+    .replace(/\btable\b/g, "bảng số liệu")
+    .replace(/\bpolicy\b/g, "quy định nội bộ")
+    .replace(/\bproposal\b/g, "đề xuất")
+    .replace(/\bcomplaint\b/g, "phản hồi khách hàng")
+    .replace(/\bcolleague-colleague\b/g, "đồng nghiệp")
+    .replace(/\bsenior-junior\b/g, "tiền bối – hậu bối")
+    .replace(/\bmanager-staff\b/g, "quản lý – nhân viên")
+    .replace(/\bemployee-customer\b/g, "nhân viên – khách hàng")
+    .replace(/\bcompany-partner\b/g, "doanh nghiệp – đối tác")
+    .replace(/\bexecutive-stakeholder\b/g, "lãnh đạo – bên liên quan");
+}
+
 function RichLessonSections({
   content,
   labels
@@ -696,7 +719,7 @@ function RichLessonSections({
           {content.learningObjectives.map((objective) => (
             <li className="flex gap-2" key={objective}>
               <span className="text-accent">✓</span>
-              <span>{objective}</span>
+              <span>{localizeLessonTextVi(objective)}</span>
             </li>
           ))}
         </ul>
@@ -709,10 +732,10 @@ function RichLessonSections({
             {content.workplaceScenario.contextJa}
           </p>
           <p className="mt-2 text-sm leading-6 text-muted">
-            {content.workplaceScenario.contextVi}
+            {localizeLessonTextVi(content.workplaceScenario.contextVi)}
           </p>
           <p className="mt-3 text-xs leading-5 text-muted">
-            {content.workplaceScenario.problemVi} {content.workplaceScenario.desiredOutcomeVi}
+            {localizeLessonTextVi(content.workplaceScenario.problemVi)} {localizeLessonTextVi(content.workplaceScenario.desiredOutcomeVi)}
           </p>
         </div>
         <div className="rounded-2xl border border-border bg-surface p-5">
@@ -720,11 +743,11 @@ function RichLessonSections({
           <ul className="mt-3 space-y-2 text-sm leading-6 text-ink">
             {content.knowledgePoints.map((point) => (
               <li className="rounded-xl bg-paper px-3 py-2" key={point}>
-                {point}
+                {localizeLessonTextVi(point)}
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-sm leading-6 text-muted">{content.businessUsageVi}</p>
+          <p className="mt-3 text-sm leading-6 text-muted">{localizeLessonTextVi(content.businessUsageVi)}</p>
         </div>
       </section>
 
@@ -853,7 +876,7 @@ function ActivityCard({
       <p className="mt-4 text-base font-semibold leading-7 text-ink" lang="ja">
         {activity.prompt}
       </p>
-      <p className="mt-1 text-sm leading-6 text-muted">{activity.promptVi}</p>
+      <p className="mt-1 text-sm leading-6 text-muted">{localizeLessonTextVi(activity.promptVi)}</p>
       <div className="mt-3 grid gap-2">
         {activity.options.map((option) => {
           const selectedOption = selected === option.key;
@@ -876,7 +899,7 @@ function ActivityCard({
               <span className="mr-2 font-bold">{option.key}.</span>
               <span lang="ja">{option.text}</span>
               {checked && (selectedOption || option.isCorrect) ? (
-                <span className="mt-1 block text-xs text-muted">{option.rationaleVi}</span>
+                <span className="mt-1 block text-xs text-muted">{localizeLessonTextVi(option.rationaleVi)}</span>
               ) : null}
             </button>
           );

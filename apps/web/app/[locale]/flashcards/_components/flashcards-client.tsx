@@ -589,13 +589,13 @@ export function FlashcardsClient({
       >
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-ink">
           <span className="tabular-nums text-muted">
-            {labels.statDueSession}: <strong className="text-ink">{cards.length}</strong>
+            {`${labels.statDueSession}: `}<strong className="text-ink">{cards.length}</strong>
           </span>
           <span className="hidden text-muted sm:inline" aria-hidden>
             ·
           </span>
           <span className="tabular-nums text-muted">
-            {labels.statPendingSync}: <strong className="text-ink">{pendingOffline}</strong>
+            {`${labels.statPendingSync}: `}<strong className="text-ink">{pendingOffline}</strong>
           </span>
           {quotaLine ? (
             <>

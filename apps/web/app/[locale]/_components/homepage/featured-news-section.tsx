@@ -12,15 +12,54 @@ import type { HomepageLabels, NhkArticle } from "./types";
 
 type NewsType = "easy" | "normal";
 
-/* ─── Progressive image ─── */
+/* ─── Progressive image with branded fallback ─── */
 
-function ProgressiveImage({ src, alt, priority }: { src: string; alt: string; priority?: boolean }) {
+function NhkCoverArt({ type, large }: { type: NewsType; large?: boolean }) {
+  return (
+    <div
+      className={`flex h-full w-full flex-col items-center justify-center bg-gradient-to-br ${
+        type === "easy"
+          ? "from-sky-600 via-blue-700 to-indigo-900"
+          : "from-[#1B2A4A] via-slate-800 to-indigo-950"
+      } text-white select-none`}
+    >
+      <div className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3.5 py-1.5 backdrop-blur-sm">
+        <IconDocument aria-hidden size={large ? 22 : 16} />
+        <span className={`font-black tracking-widest ${large ? "text-base" : "text-xs"}`}>
+          {type === "easy" ? "NHK NEWS EASY" : "NHK NEWS WEB"}
+        </span>
+      </div>
+      <span className={`mt-2 font-medium text-white/75 ${large ? "text-xs" : "text-[10px]"}`} lang="ja">
+        {type === "easy" ? "やさしい日本語ニュース" : "ビジネス・総合ニュース"}
+      </span>
+    </div>
+  );
+}
+
+function ProgressiveImage({
+  src,
+  alt,
+  priority,
+  type = "normal",
+  large,
+}: {
+  src: string;
+  alt: string;
+  priority?: boolean;
+  type?: NewsType;
+  large?: boolean;
+}) {
   const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return <NhkCoverArt large={large} type={type} />;
+  }
   return (
     <img
       alt={alt}
       className={`h-full w-full object-cover transition-all duration-500 group-hover:scale-105 ${loaded ? "" : "scale-105 blur-sm"}`}
       loading={priority ? "eager" : "lazy"}
+      onError={() => setFailed(true)}
       onLoad={() => setLoaded(true)}
       src={src}
     />
@@ -67,11 +106,9 @@ function FeaturedNewsCard({
         {/* Image half */}
         <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 md:aspect-auto md:min-h-[280px]">
           {article.imageUrl ? (
-            <ProgressiveImage alt={article.title} priority src={article.imageUrl} />
+            <ProgressiveImage alt={article.title} large priority src={article.imageUrl} type={type} />
           ) : (
-            <div className="flex h-full min-h-[200px] items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 text-blue-300">
-              <IconDocument aria-hidden size={48} />
-            </div>
+            <NhkCoverArt large type={type} />
           )}
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:via-transparent md:to-white/20" />
@@ -149,11 +186,9 @@ function CompactNewsCard({
       {/* Image top */}
       <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
         {article.imageUrl ? (
-          <ProgressiveImage alt={article.title} src={article.imageUrl} />
+          <ProgressiveImage alt={article.title} src={article.imageUrl} type={type} />
         ) : (
-          <div className="flex h-full items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 text-blue-300">
-            <IconDocument aria-hidden size={28} />
-          </div>
+          <NhkCoverArt type={type} />
         )}
         {/* Bottom gradient */}
         <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/20 to-transparent" />

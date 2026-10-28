@@ -1966,6 +1966,7 @@
       "complete": "完了"
     },
     "completed": {
+      "dailyGoal": "今日の目標",
       "goalComplete": "目標達成！",
       "todayProgress": "今日 {completed}/{goal} 問"
     }

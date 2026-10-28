@@ -179,8 +179,16 @@ export function NhkNewsListClient({
                     src={article.imageUrl}
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-paper text-muted">
-                    <span className="text-sm font-semibold">NHK</span>
+                  <div
+                    className={`flex h-full w-full flex-col items-center justify-center bg-gradient-to-br ${
+                      activeType === "easy"
+                        ? "from-sky-600 via-blue-700 to-indigo-900"
+                        : "from-[#1B2A4A] via-slate-800 to-indigo-950"
+                    } text-white select-none`}
+                  >
+                    <span className="rounded-lg border border-white/20 bg-white/10 px-3 py-1 text-xs font-black tracking-widest backdrop-blur-sm">
+                      {activeType === "easy" ? "NHK NEWS EASY" : "NHK NEWS WEB"}
+                    </span>
                   </div>
                 )}
                 <div className="absolute left-2 top-2 flex flex-wrap gap-1">

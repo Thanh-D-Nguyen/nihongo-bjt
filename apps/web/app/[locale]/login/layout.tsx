@@ -8,7 +8,7 @@ const messages = { en, ja, vi };
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = messages[locale as keyof typeof messages] ?? vi;
-  return { title: `${t.auth.login.title} — KotobaWorks` };
+  return { title: t.auth.login.metaTitle };
 }
 
 export default function LoginLayout({ children }: { children: React.ReactNode }) {

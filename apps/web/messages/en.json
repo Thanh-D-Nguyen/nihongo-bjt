@@ -2038,6 +2038,7 @@
       "complete": "Complete"
     },
     "completed": {
+      "dailyGoal": "Daily Goal",
       "goalComplete": "Goal complete!",
       "todayProgress": "{completed}/{goal} exercises today"
     }

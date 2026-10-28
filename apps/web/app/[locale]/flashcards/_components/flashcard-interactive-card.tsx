@@ -147,7 +147,7 @@ function MentorBubble({
       aria-live="polite"
     >
       {/* Mentor avatar */}
-      <div className="fc-avatar-pulse flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm ring-1 ring-ink/10">
+      <div className="fc-avatar-pulse flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm ring-1 ring-ink/10 dark:bg-slate-800 dark:ring-slate-700">
         {emoji}
       </div>
       <div className="min-w-0 flex-1">
@@ -156,7 +156,7 @@ function MentorBubble({
         </p>
         <p className="mt-0.5 text-sm leading-relaxed text-ink">{text}</p>
         {milestoneText && milestone ? (
-          <div className="fc-milestone-burst mt-2 inline-flex items-center gap-1.5 rounded-lg bg-white/80 px-2.5 py-1 text-xs font-bold text-leaf shadow-sm ring-1 ring-leaf/20">
+          <div className="fc-milestone-burst mt-2 inline-flex items-center gap-1.5 rounded-lg bg-white/80 px-2.5 py-1 text-xs font-bold text-leaf shadow-sm ring-1 ring-leaf/20 dark:bg-slate-800/90">
             <span className="fc-confetti">
               🔥
               <span className="fc-confetti-extra" aria-hidden />
@@ -330,9 +330,9 @@ export function FlashcardInteractiveCard({
     >
       <div
         className={cn(
-          "border border-ink/10 bg-surface",
+          "border border-ink/10 bg-surface dark:border-slate-700/80 dark:bg-slate-900/95",
           compact
-            ? "rounded-3xl p-5 shadow-md ring-1 ring-ink/[0.05] sm:p-6"
+            ? "rounded-3xl p-5 shadow-md ring-1 ring-ink/[0.05] dark:ring-slate-700/60 sm:p-6"
             : "rounded-2xl p-4 shadow-sm sm:p-5",
           revealed && "fc-card-reveal"
         )}
@@ -376,7 +376,7 @@ export function FlashcardInteractiveCard({
 
           {/* Answer (animated entrance) */}
           {revealed ? (
-            <div className="fc-answer-enter min-h-[7rem] rounded-xl border border-ink/10 bg-paper/50 p-4">
+            <div className="fc-answer-enter min-h-[7rem] rounded-xl border border-ink/10 bg-paper/50 p-4 dark:border-slate-700/70 dark:bg-slate-800/85">
               {answerContent}
             </div>
           ) : null}

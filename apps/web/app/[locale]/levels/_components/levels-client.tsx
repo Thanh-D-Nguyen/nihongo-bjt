@@ -42,6 +42,7 @@ interface Labels {
   vocab: string;
   kanji: string;
   grammar: string;
+  comingSoon?: string;
   loading: string;
   error: string;
   assessmentIntro: string;
@@ -194,15 +195,23 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
 
                   {/* Skill Chips */}
                   <div className="mt-3 flex flex-wrap gap-1.5">
-                    <span className="rounded-md bg-[var(--color-paper)] px-2 py-1 text-[10px] font-medium text-muted ring-1 ring-[var(--color-border)]">
-                      {labels.vocab}: {lv.vocabCount}
-                    </span>
-                    <span className="rounded-md bg-[var(--color-paper)] px-2 py-1 text-[10px] font-medium text-muted ring-1 ring-[var(--color-border)]">
-                      {labels.kanji}: {lv.kanjiCount}
-                    </span>
-                    <span className="rounded-md bg-[var(--color-paper)] px-2 py-1 text-[10px] font-medium text-muted ring-1 ring-[var(--color-border)]">
-                      {labels.grammar}: {lv.grammarCount}
-                    </span>
+                    {lv.vocabCount + lv.kanjiCount + lv.grammarCount > 0 ? (
+                      <>
+                        <span className="rounded-md bg-[var(--color-paper)] px-2 py-1 text-[10px] font-medium text-muted ring-1 ring-[var(--color-border)]">
+                          {`${labels.vocab}: ${lv.vocabCount}`}
+                        </span>
+                        <span className="rounded-md bg-[var(--color-paper)] px-2 py-1 text-[10px] font-medium text-muted ring-1 ring-[var(--color-border)]">
+                          {`${labels.kanji}: ${lv.kanjiCount}`}
+                        </span>
+                        <span className="rounded-md bg-[var(--color-paper)] px-2 py-1 text-[10px] font-medium text-muted ring-1 ring-[var(--color-border)]">
+                          {`${labels.grammar}: ${lv.grammarCount}`}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="rounded-md bg-[var(--color-paper)] px-2.5 py-1 text-[10px] font-semibold text-muted ring-1 ring-[var(--color-border)]">
+                        {labels.comingSoon ?? (locale === "ja" ? "近日公開" : locale === "en" ? "Coming soon" : "Sắp ra mắt")}
+                      </span>
+                    )}
                   </div>
                 </Link>
               </div>

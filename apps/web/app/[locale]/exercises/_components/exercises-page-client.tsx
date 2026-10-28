@@ -105,6 +105,7 @@ export interface ExercisesLabels {
     complete: string;
   };
   completed?: {
+    dailyGoal?: string;
     goalComplete: string;
     todayProgress: string;
   };
@@ -503,7 +504,9 @@ export function ExercisesPageClient({
           {dailyProgress && (
             <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-overline text-muted">Daily Goal</span>
+                <span className="text-overline text-muted">
+                  {labels.completed?.dailyGoal ?? (locale === "ja" ? "今日の目標" : locale === "en" ? "Daily Goal" : "Mục tiêu ngày")}
+                </span>
                 {dailyProgress.isComplete && (
                   <span className="rounded-full bg-[var(--color-leaf)]/12 px-2.5 py-0.5 text-xs font-bold text-[var(--color-leaf)]">✓</span>
                 )}

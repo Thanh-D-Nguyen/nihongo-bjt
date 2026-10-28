@@ -432,13 +432,13 @@ function LessonsList({
                   </div>
                   <div className="mt-1.5 flex flex-wrap gap-2 text-[10px] font-semibold text-[#64748B]">
                     <span>
-                      {labels.weekLabel} {lesson.weekNumber}
+                      {`${labels.weekLabel} ${lesson.weekNumber}`}
                     </span>
                     <span>·</span>
                     <span>{unitTypeLabel}</span>
                     <span>·</span>
                     <span>
-                      {lesson.estimatedDurationMin} {labels.minutesLabel}
+                      {`${lesson.estimatedDurationMin} ${labels.minutesLabel}`}
                     </span>
                   </div>
                   <p className="mt-0.5 text-xs text-[#6B7280] leading-relaxed" lang="ja">
@@ -454,25 +454,25 @@ function LessonsList({
                   <div className="mt-2 flex flex-wrap gap-2">
                     {lesson.vocabCount > 0 ? (
                       <span className="inline-flex items-center rounded-md bg-[#DBEAFE] px-2 py-0.5 text-[10px] font-medium text-[#1D4ED8]">
-                        {lesson.vocabCount} {labels.vocabShort}
+                        {`${lesson.vocabCount} ${labels.vocabShort}`}
                       </span>
                     ) : null}
                     {lesson.kanjiCount > 0 ? (
                       <span className="inline-flex items-center rounded-md bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-medium text-[#92400E]">
-                        {lesson.kanjiCount} {labels.kanjiShort}
+                        {`${lesson.kanjiCount} ${labels.kanjiShort}`}
                       </span>
                     ) : null}
                     {lesson.grammarCount > 0 ? (
                       <span className="inline-flex items-center rounded-md bg-[#EDE9FE] px-2 py-0.5 text-[10px] font-medium text-[#6D28D9]">
-                        {lesson.grammarCount} {labels.grammarShort}
+                        {`${lesson.grammarCount} ${labels.grammarShort}`}
                       </span>
                     ) : null}
                     {lesson.activityCount > 0 ? (
                       <span className="inline-flex items-center rounded-md bg-[#ECFDF5] px-2 py-0.5 text-[10px] font-medium text-[#047857]">
-                        {lesson.activityCount} {labels.activitiesLabel}
+                        {`${lesson.activityCount} ${labels.activitiesLabel}`}
                       </span>
                     ) : null}
-                    <span className="text-[10px] text-[#9CA3AF]">{totalItems} items</span>
+                    <span className="text-[10px] text-[#9CA3AF]">{`${totalItems} items`}</span>
                   </div>
                 </div>
 

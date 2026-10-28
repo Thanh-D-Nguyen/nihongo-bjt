@@ -125,7 +125,7 @@ export function DeckCard({
   const metaInner = (
     <>
       <span className="tabular-nums">
-        {n} {labels.cards}
+        {`${n} ${labels.cards}`}
       </span>
       <span aria-hidden>·</span>
       <span>{statusLabel}</span>
@@ -133,7 +133,7 @@ export function DeckCard({
         <>
           <span aria-hidden>·</span>
           <span>
-            {dateLabel}: {dateStr}
+            {`${dateLabel}: ${dateStr}`}
           </span>
         </>
       ) : null}

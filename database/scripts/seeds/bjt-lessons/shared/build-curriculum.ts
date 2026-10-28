@@ -17,6 +17,7 @@ import type {
   LessonDocument,
   LevelBlueprint,
   ProductionLessonUnit,
+  Relationship,
   StimulusType,
   UnitType,
   WeekSeed
@@ -88,6 +89,30 @@ const STIMULUS_LABELS_JA: Record<StimulusType, string> = {
   policy: "社内規程",
   proposal: "提案書",
   complaint: "お客様からの申し出"
+};
+
+const STIMULUS_LABELS_VI: Record<StimulusType, string> = {
+  dialogue: "hội thoại",
+  email: "email",
+  internal_chat: "chat nội bộ",
+  memo: "biên bản nội bộ",
+  telephone: "điện thoại",
+  meeting: "cuộc họp",
+  announcement: "thông báo nội bộ",
+  report: "báo cáo công việc",
+  table: "bảng số liệu",
+  policy: "quy định nội bộ",
+  proposal: "đề xuất",
+  complaint: "phản hồi khách hàng"
+};
+
+const RELATIONSHIP_LABELS_VI: Record<Relationship, string> = {
+  "colleague-colleague": "đồng nghiệp",
+  "senior-junior": "tiền bối – hậu bối",
+  "manager-staff": "quản lý – nhân viên",
+  "employee-customer": "nhân viên – khách hàng",
+  "company-partner": "doanh nghiệp – đối tác",
+  "executive-stakeholder": "lãnh đạo – bên liên quan"
 };
 
 function buildStimulusText(blueprint: LevelBlueprint, week: WeekSeed, focus: FocusSeed): string {
@@ -185,10 +210,10 @@ function buildActivity(
     promptVi = `Ở bước ${stage.vi} trong ${week.themeVi}, cần ${focus.intentVi}. Hãy chọn biểu đạt tự nhiên nhất cho chỗ trống.`;
   } else if (type === "politeness_check" || type === "error_correction") {
     prompt = `${stage.ja}です。相手との立場の違いを踏まえ、失礼にならず意図を明確に伝えられる表現を選んでください。`;
-    promptVi = `Ở bước ${stage.vi} với quan hệ ${week.relationship}, chọn cách nói vừa rõ ý vừa không thất lễ khi cần ${focus.intentVi}.`;
+    promptVi = `Ở bước ${stage.vi} với quan hệ ${RELATIONSHIP_LABELS_VI[week.relationship]}, chọn cách nói vừa rõ ý vừa không thất lễ khi cần ${focus.intentVi}.`;
   } else if (type === "reading_comprehension" || type === "context_match") {
     prompt = `${stage.ja}です。次の${STIMULUS_LABELS_JA[week.stimulusType]}で「${focus.phraseJa}」を確認した後、取るべき行動として最も適切なものを選んでください。`;
-    promptVi = `Ở bước ${stage.vi}, sau khi thấy “${focus.phraseJa}” trong ${week.stimulusType}, hãy chọn hành động phù hợp nhất.`;
+    promptVi = `Ở bước ${stage.vi}, sau khi thấy “${focus.phraseJa}” trong ${STIMULUS_LABELS_VI[week.stimulusType]}, hãy chọn hành động phù hợp nhất.`;
   } else if (type === "sentence_order") {
     correctText = focus.phraseJa;
     prompt = `${stage.ja}です。意図を正確に伝えるため、語順と敬意の向きが自然になる完成文を選んでください。`;
@@ -199,7 +224,7 @@ function buildActivity(
     correctText,
     distractors,
     answer,
-    `Đúng vì biểu đạt này thực hiện chính xác mục đích “${focus.intentVi}” và phù hợp quan hệ ${week.relationship}.`,
+    `Đúng vì biểu đạt này thực hiện chính xác mục đích “${focus.intentVi}” và phù hợp quan hệ ${RELATIONSHIP_LABELS_VI[week.relationship]}.`,
     [
       "Có thể đúng ngữ pháp nhưng lệch mục đích giao tiếp cần đạt trong tình huống.",
       "Mức độ lịch sự hoặc phạm vi trách nhiệm không phù hợp với quan hệ giữa hai bên.",
@@ -272,12 +297,12 @@ function buildDocument(
     },
     knowledgePoints: [
       `Trọng tâm: ${focus.phraseJa} — ${focus.meaningVi}.`,
-      `Kênh giao tiếp: ${week.stimulusType}; quan hệ: ${week.relationship}.`,
-      `Register mục tiêu của ${blueprint.level}: ${blueprint.register}.`
+      `Kênh giao tiếp: ${STIMULUS_LABELS_VI[week.stimulusType]}; quan hệ: ${RELATIONSHIP_LABELS_VI[week.relationship]}.`,
+      `Văn phong mục tiêu của ${blueprint.level}: ${blueprint.register}.`
     ],
     vocabulary: selectedVocabulary,
     grammar: selectedGrammar,
-    businessUsageVi: `Dùng trong ${week.themeVi} khi ${week.problemVi.toLowerCase()} Người học cần nêu hành động hoặc trách nhiệm đủ rõ, đồng thời giữ khoảng cách phù hợp với ${week.relationship}.`,
+    businessUsageVi: `Dùng trong ${week.themeVi} khi ${week.problemVi.toLowerCase()} Người học cần nêu hành động hoặc trách nhiệm đủ rõ, đồng thời giữ khoảng cách phù hợp với ${RELATIONSHIP_LABELS_VI[week.relationship]}.`,
     examples: [
       {
         japanese: `${blueprint.speakerRoleJa}：${focus.phraseJa}`,
@@ -301,7 +326,7 @@ function buildDocument(
       "Cùng một câu có thể thay đổi mức độ phù hợp tùy người nghe, thời điểm và trách nhiệm của người nói.",
       "Trong môi trường Nhật, nói giảm nhẹ không đồng nghĩa với né tránh: hành động tiếp theo vẫn phải cụ thể."
     ],
-    politenessHierarchyVi: `Với quan hệ ${week.relationship}, ưu tiên ${blueprint.register}. Tránh dùng kính ngữ hướng sai chủ thể hoặc lịch sự quá mức khiến trách nhiệm trở nên mơ hồ.`,
+    politenessHierarchyVi: `Với quan hệ ${RELATIONSHIP_LABELS_VI[week.relationship]}, ưu tiên ${blueprint.register}. Tránh dùng kính ngữ hướng sai chủ thể hoặc lịch sự quá mức khiến trách nhiệm trở nên mơ hồ.`,
     vietnameseLearnerPitfalls: [
       "Dịch từng chữ từ tiếng Việt và đặt chủ ngữ quá nhiều làm câu cứng, thiếu tự nhiên.",
       "Chỉ nói 「はい」 nhưng không xác nhận phạm vi, thời hạn hoặc bước tiếp theo.",

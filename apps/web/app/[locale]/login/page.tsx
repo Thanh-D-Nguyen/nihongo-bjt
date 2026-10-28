@@ -40,8 +40,8 @@ export default function LoginPage() {
  const googleError = useCallback((status: number) => setError(status === 409 ? messages.auth.register.userExists : t.errorLoginFailed), [messages.auth.register.userExists, t.errorLoginFailed]);
 
  useEffect(() => {
-  document.title = `${t.title} — KotobaWorks`;
- }, [t.title]);
+  document.title = t.metaTitle;
+ }, [t.metaTitle]);
 
  useEffect(() => {
   if (!isLoading && isAuthenticated) {

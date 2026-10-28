@@ -92,7 +92,7 @@ describe("learner auth pages regression", () => {
  it("provides a localized home link and page title", async () => {
   await render(LoginPage);
   expect(container.querySelector('a[href="/vi"]')?.textContent).toContain(vietnamese.nav.home);
-  expect(document.title).toBe(`${vietnamese.auth.login.title} — KotobaWorks`);
+  expect(document.title).toBe(vietnamese.auth.login.metaTitle);
  });
   it.each([
     ["/vi/learn?tab=due#list", "/vi/learn?tab=due#list"],

@@ -1966,6 +1966,7 @@
       "complete": "Hoàn thành"
     },
     "completed": {
+      "dailyGoal": "Mục tiêu ngày",
       "goalComplete": "Mục tiêu hoàn thành!",
       "todayProgress": "{completed}/{goal} bài hôm nay"
     }

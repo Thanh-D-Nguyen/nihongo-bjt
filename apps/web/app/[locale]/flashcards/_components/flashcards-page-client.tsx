@@ -263,13 +263,13 @@ export function FlashcardsPageClient({
         <div className="grid grid-cols-2 border-t border-ink/[0.08] bg-paper/55 sm:flex sm:justify-end">
           <div className="flex min-h-12 items-center justify-center px-4 text-xs font-semibold text-muted sm:justify-start">
             <span className="tabular-nums">
-              {flashcardLabels.statDueSession}:{" "}
+              {`${flashcardLabels.statDueSession}: `}
               <span className="font-black text-ink">{heroDue ?? "—"}</span>
             </span>
           </div>
           <div className="flex min-h-12 items-center justify-center border-l border-ink/[0.08] px-4 text-xs font-semibold text-muted sm:justify-start">
             <span className="tabular-nums">
-              {flashcardLabels.statPendingSync}:{" "}
+              {`${flashcardLabels.statPendingSync}: `}
               <span className="font-black text-ink">{heroPending ?? "—"}</span>
             </span>
           </div>

@@ -71,6 +71,8 @@ describe("LevelsClient", () => {
   apiFetch.mockImplementation((path: string) => Promise.resolve(new Response(JSON.stringify(path === "/api/levels" ? [{ ...empty, publishedLessonCount: 1 }, { ...empty, code: "J0" }] : { totals: {} }))));
   await act(async () => root.render(<LevelsClient labels={labels.vi} locale="vi" />));
   expect({ lessonOnly: !!host.querySelector('a[href="/vi/levels/J1+"]'), empty: !!host.querySelector('a[href="/vi/levels/J0"]') }, "level availability follows public lessons and reference data").toEqual({ lessonOnly: true, empty: false });
+  expect(host.textContent).toContain("Sắp ra mắt");
+  expect(host.textContent).not.toContain("Từ vựng: 0");
  });
  it("hides levels with no available content", async () => {
   apiFetch.mockImplementation((path: string) => Promise.resolve(new Response(JSON.stringify(path === "/api/levels" ? [level, { ...level, code: "J1+", vocabCount: 0, kanjiCount: 0, grammarCount: 0 }] : { totals: {} }))));

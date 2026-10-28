@@ -23,6 +23,7 @@ interface Labels {
   vocab: string;
   kanji: string;
   grammar: string;
+  comingSoon?: string;
   error: string;
 }
 
@@ -67,20 +68,28 @@ export function BjtLevelsSection({ labels, locale }: { labels: Labels; locale: s
               <span className="ml-2 text-xs font-medium text-slate-500">
                 {locale === "ja" ? lv.nameJa ?? lv.nameVi : locale === "en" ? lv.nameEn ?? lv.nameVi : lv.nameVi}
               </span>
-              <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                <div>
-                  <p className="text-sm font-bold tabular-nums text-slate-700">{lv.vocabCount}</p>
-                  <p className="text-[9px] font-medium uppercase tracking-wider text-slate-400">{labels.vocab}</p>
+              {lv.vocabCount + lv.kanjiCount + lv.grammarCount > 0 ? (
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <p className="text-sm font-bold tabular-nums text-slate-700">{lv.vocabCount}</p>
+                    <p className="text-[9px] font-medium uppercase tracking-wider text-slate-400">{labels.vocab}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold tabular-nums text-slate-700">{lv.kanjiCount}</p>
+                    <p className="text-[9px] font-medium uppercase tracking-wider text-slate-400">{labels.kanji}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold tabular-nums text-slate-700">{lv.grammarCount}</p>
+                    <p className="text-[9px] font-medium uppercase tracking-wider text-slate-400">{labels.grammar}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-bold tabular-nums text-slate-700">{lv.kanjiCount}</p>
-                  <p className="text-[9px] font-medium uppercase tracking-wider text-slate-400">{labels.kanji}</p>
+              ) : (
+                <div className="mt-3 flex justify-center">
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-500">
+                    {labels.comingSoon ?? (locale === "ja" ? "近日公開" : locale === "en" ? "Coming soon" : "Sắp ra mắt")}
+                  </span>
                 </div>
-                <div>
-                  <p className="text-sm font-bold tabular-nums text-slate-700">{lv.grammarCount}</p>
-                  <p className="text-[9px] font-medium uppercase tracking-wider text-slate-400">{labels.grammar}</p>
-                </div>
-              </div>
+              )}
             </div>
           </Link>
         ))}
