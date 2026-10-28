@@ -221,7 +221,15 @@ export function NhkArticleDetailClient({
           setDeckDialogOpen(false);
           setDeckStatus(labels.deckCreated);
         } else {
-          setDeckError(res.status === 422 ? labels.cardsUnavailable ?? labels.addFlashcardError : labels.addFlashcardError);
+          const errPayload = (await res.json().catch(() => null)) as { error?: string; message?: string } | null;
+          const detail = errPayload?.error ?? errPayload?.message;
+          if (res.status === 401 || res.status === 403) {
+            setDeckError(labels.signInToAdd);
+          } else if (res.status === 422) {
+            setDeckError(labels.cardsUnavailable ?? labels.addFlashcardError);
+          } else {
+            setDeckError(detail ? `${labels.addFlashcardError} (${detail})` : labels.addFlashcardError);
+          }
         }
       } catch {
         setDeckError(labels.addFlashcardError);
@@ -229,7 +237,7 @@ export function NhkArticleDetailClient({
         setCreatingDeck(false);
       }
     },
-    [auth.userId, articleId, labels.addFlashcardError, labels.cardsUnavailable, labels.deckCreated]
+    [auth.userId, articleId, labels.addFlashcardError, labels.cardsUnavailable, labels.deckCreated, labels.signInToAdd]
   );
 
   if (loading) {

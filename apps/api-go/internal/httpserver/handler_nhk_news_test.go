@@ -166,4 +166,8 @@ func TestParseNHKEasyRSSExtractsBodyRubyAndImage(t *testing.T) {
 	if !strings.Contains(got.TitleWithRuby, "<ruby>総理大臣<rt>そうりだいじん</rt></ruby>") {
 		t.Fatalf("expected TitleWithRuby to annotate title kanji, got %q", got.TitleWithRuby)
 	}
+	enrichNHKArticlesWithLexemes(context.Background(), nil, articles)
+	if len(articles[0].VocabularyJSON) == 0 || !strings.Contains(string(articles[0].VocabularyJSON), `"word":"総理大臣"`) {
+		t.Fatalf("expected extracted vocabulary JSON, got %s", string(articles[0].VocabularyJSON))
+	}
 }

@@ -286,13 +286,21 @@ export function FeaturedNewsSection({
       setCreatingDeck(true);
       setCreateError(null);
       try {
-        const createRes = await learnerApiFetch(`/api/nhk-news/${pendingArticleId}/flashcards`, {
+        const createRes = await learnerApiFetch(`/api/nhk-news/${encodeURIComponent(pendingArticleId)}/flashcards`, {
           body: JSON.stringify({ deckTitle }),
           headers: { "Content-Type": "application/json" },
           method: "POST"
         });
         if (!createRes.ok) {
-          setCreateError(createRes.status === 422 ? labels.newsCardsUnavailable ?? labels.newsFlashcardError : labels.newsFlashcardError);
+          const errPayload = (await createRes.json().catch(() => null)) as { error?: string; message?: string } | null;
+          const detail = errPayload?.error ?? errPayload?.message;
+          if (createRes.status === 401 || createRes.status === 403) {
+            setCreateError(labels.progressSignIn);
+          } else if (createRes.status === 422) {
+            setCreateError(labels.newsCardsUnavailable ?? labels.newsFlashcardError);
+          } else {
+            setCreateError(detail ? `${labels.newsFlashcardError} (${detail})` : labels.newsFlashcardError);
+          }
           return;
         }
         setPendingArticleId(null);
@@ -304,7 +312,7 @@ export function FeaturedNewsSection({
         setCreatingDeck(false);
       }
     },
-    [labels.newsFlashcardCreated, labels.newsFlashcardError, labels.newsCardsUnavailable, pendingArticleId]
+    [labels.newsFlashcardCreated, labels.newsFlashcardError, labels.newsCardsUnavailable, labels.progressSignIn, pendingArticleId]
   );
 
   const [featured, ...rest] = articles;

@@ -178,7 +178,7 @@ func (s *Store) ListDecks(ctx context.Context, userID string, limit int) ([]Deck
 		(SELECT COUNT(*) FROM learning.deck_card dc WHERE dc.deck_id = d.id) as card_count
 	FROM learning.deck d
 	WHERE d.status != 'archived' AND (d.owner_user_id = $1 OR d.visibility = 'public')
-	ORDER BY d.updated_at DESC
+	ORDER BY (d.owner_user_id = $1) DESC, d.updated_at DESC
 	LIMIT $2`
 	rows, err := s.db.Query(ctx, q, userID, limit)
 	if err != nil {

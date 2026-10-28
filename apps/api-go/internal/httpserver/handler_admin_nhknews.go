@@ -443,7 +443,47 @@ func SyncNHKNewsFeeds(ctx context.Context, db *pgxpool.Pool, logger *slog.Logger
 	if err := tx.Commit(ctx); err != nil {
 		return 0, err
 	}
+	backfillNHKArticleVocabulary(ctx, db)
 	return len(articles), nil
+}
+
+func backfillNHKArticleVocabulary(ctx context.Context, db *pgxpool.Pool) {
+	if db == nil {
+		return
+	}
+	rows, err := db.Query(ctx, `SELECT id, source_type, title, COALESCE(title_with_ruby,''), COALESCE(body_html,''), COALESCE(body_plain,'')
+		FROM content.nhk_article
+		WHERE COALESCE(NULLIF(btrim(body_plain),''), NULLIF(btrim(body_html),'')) IS NOT NULL
+		  AND (vocabulary IS NULL OR vocabulary = '[]'::jsonb OR body_html IS NULL OR btrim(body_html) = '')
+		ORDER BY published_at DESC
+		LIMIT 100`)
+	if err != nil {
+		return
+	}
+	var existing []nhkFeedArticle
+	for rows.Next() {
+		var a nhkFeedArticle
+		if err := rows.Scan(&a.ID, &a.SourceType, &a.Title, &a.TitleWithRuby, &a.BodyHTML, &a.BodyPlain); err == nil {
+			existing = append(existing, a)
+		}
+	}
+	rows.Close()
+	if len(existing) == 0 {
+		return
+	}
+	enrichNHKArticlesWithLexemes(ctx, db, existing)
+	for _, a := range existing {
+		vocabStr := "[]"
+		if len(a.VocabularyJSON) > 0 {
+			vocabStr = string(a.VocabularyJSON)
+		}
+		_, _ = db.Exec(ctx, `UPDATE content.nhk_article
+			SET title_with_ruby = COALESCE(NULLIF($2,''), title_with_ruby),
+			    body_html = COALESCE(NULLIF($3,''), body_html),
+			    vocabulary = CASE WHEN $4::jsonb != '[]'::jsonb THEN $4::jsonb ELSE vocabulary END,
+			    updated_at = NOW()
+			WHERE id = $1`, a.ID, a.TitleWithRuby, a.BodyHTML, vocabStr)
+	}
 }
 
 func persistNHKFeedArticles(ctx context.Context, tx pgx.Tx, articles []nhkFeedArticle) error {
@@ -525,7 +565,15 @@ var (
 	nhkNormalWebKeyRe    = regexp.MustCompile(`/newsweb/na/([a-z0-9-]+)`)
 	nhkRubyPairRe        = regexp.MustCompile(`<ruby>\s*([^<]+?)\s*(?:<rp>[^<]*</rp>)?<rt>\s*([^<]+?)\s*</rt>(?:<rp>[^<]*</rp>)?\s*</ruby>`)
 	nhkKanjiSeqRe        = regexp.MustCompile(`[\p{Han}][\p{Han}ヶヵ々]*`)
+	nhkKatakanaSeqRe     = regexp.MustCompile(`[\p{Katakana}ー]{2,12}`)
 )
+
+type nhkVocabItem struct {
+	Word    string  `json:"word"`
+	Reading *string `json:"reading"`
+	Meaning *string `json:"meaning"`
+	Pos     *string `json:"pos"`
+}
 
 func fetchNHKEasy(ctx context.Context, client *http.Client, feedURL string) ([]nhkFeedArticle, error) {
 	body, err := fetchNHKFeed(ctx, client, feedURL)
@@ -701,7 +749,14 @@ func extractNHKEasierDescription(raw string) (imageURL string, bodyHTML string) 
 	return imageURL, strings.TrimSpace(out.String())
 }
 
-func extractRubyPairsFromHTML(bodyHTML string) map[string]string {
+type nhkLexemeEntry struct {
+	Reading string
+	Meaning string
+	Pos     string
+}
+
+func extractOrderedRubyWords(bodyHTML string) ([]string, map[string]string) {
+	var ordered []string
 	pairs := make(map[string]string)
 	for _, m := range nhkRubyPairRe.FindAllStringSubmatch(bodyHTML, -1) {
 		if len(m) == 3 {
@@ -710,10 +765,16 @@ func extractRubyPairsFromHTML(bodyHTML string) map[string]string {
 			if base != "" && rt != "" && base != rt {
 				if _, exists := pairs[base]; !exists {
 					pairs[base] = rt
+					ordered = append(ordered, base)
 				}
 			}
 		}
 	}
+	return ordered, pairs
+}
+
+func extractRubyPairsFromHTML(bodyHTML string) map[string]string {
+	_, pairs := extractOrderedRubyWords(bodyHTML)
 	return pairs
 }
 
@@ -848,56 +909,103 @@ func fetchNHKWebArticleMeta(ctx context.Context, client *http.Client, articleURL
 	return imageURL, strings.TrimSpace(summary)
 }
 
+func collectArticleCandidateWords(a nhkFeedArticle) []string {
+	seen := make(map[string]struct{})
+	var ordered []string
+	add := func(w string) {
+		w = strings.TrimSpace(w)
+		if w == "" {
+			return
+		}
+		rLen := len([]rune(w))
+		if rLen < 1 || rLen > 12 {
+			return
+		}
+		if _, ok := seen[w]; !ok {
+			seen[w] = struct{}{}
+			ordered = append(ordered, w)
+		}
+	}
+	rubyOrdered, _ := extractOrderedRubyWords(a.BodyHTML)
+	for _, w := range rubyOrdered {
+		add(w)
+	}
+	for _, w := range nhkKanjiSeqRe.FindAllString(a.Title, -1) {
+		add(w)
+	}
+	for _, w := range nhkKanjiSeqRe.FindAllString(a.BodyPlain, -1) {
+		add(w)
+	}
+	for _, w := range nhkKatakanaSeqRe.FindAllString(a.Title+"\n"+a.BodyPlain, -1) {
+		add(w)
+	}
+	return ordered
+}
+
 func enrichNHKArticlesWithLexemes(ctx context.Context, db *pgxpool.Pool, articles []nhkFeedArticle) {
-	if db == nil || len(articles) == 0 {
+	if len(articles) == 0 {
 		return
 	}
 	candidateSet := make(map[string]struct{})
+	articleCandidates := make([][]string, len(articles))
 	for i := range articles {
-		for _, w := range nhkKanjiSeqRe.FindAllString(articles[i].Title, -1) {
-			if len([]rune(w)) >= 1 && len([]rune(w)) <= 10 {
-				candidateSet[w] = struct{}{}
-			}
-		}
-		for _, w := range nhkKanjiSeqRe.FindAllString(articles[i].BodyPlain, -1) {
-			if len([]rune(w)) >= 1 && len([]rune(w)) <= 10 {
-				candidateSet[w] = struct{}{}
-			}
-		}
-		for w := range extractRubyPairsFromHTML(articles[i].BodyHTML) {
+		cands := collectArticleCandidateWords(articles[i])
+		articleCandidates[i] = cands
+		for _, w := range cands {
 			candidateSet[w] = struct{}{}
 		}
 	}
-	if len(candidateSet) == 0 {
-		return
+	lexemeMap := make(map[string]nhkLexemeEntry)
+	if db != nil && len(candidateSet) > 0 {
+		candidates := make([]string, 0, len(candidateSet))
+		for w := range candidateSet {
+			candidates = append(candidates, w)
+		}
+		rows, err := db.Query(ctx, `SELECT l.headword,
+			COALESCE(NULLIF(btrim(l.reading),''), ''),
+			COALESCE(
+				(SELECT ls.meaning_vi FROM content.lexeme_sense ls
+				 WHERE ls.lexeme_id = l.id AND COALESCE(btrim(ls.meaning_vi),'') != ''
+				 ORDER BY ls.sense_order ASC LIMIT 1),
+				NULLIF(btrim(l.short_meaning_vi),''),
+				''
+			) AS meaning_vi,
+			COALESCE(
+				(SELECT ls.pos FROM content.lexeme_sense ls
+				 WHERE ls.lexeme_id = l.id AND COALESCE(btrim(ls.pos),'') != ''
+				 ORDER BY ls.sense_order ASC LIMIT 1),
+				'noun'
+			) AS pos
+			FROM content.lexeme l
+			WHERE l.status='active' AND l.headword = ANY($1)
+			ORDER BY l.frequency_rank ASC NULLS LAST`, candidates)
+		if err == nil {
+			for rows.Next() {
+				var hw, reading, meaning, pos string
+				if err := rows.Scan(&hw, &reading, &meaning, &pos); err == nil && hw != "" {
+					meaning = strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(meaning), ")"))
+					if !dictionaryGlossUsable(hw, &meaning) {
+						meaning = ""
+					}
+					prev, exists := lexemeMap[hw]
+					if !exists || (prev.Meaning == "" && meaning != "") {
+						lexemeMap[hw] = nhkLexemeEntry{Reading: reading, Meaning: meaning, Pos: pos}
+					}
+				}
+			}
+			rows.Close()
+		}
 	}
-	candidates := make([]string, 0, len(candidateSet))
-	for w := range candidateSet {
-		candidates = append(candidates, w)
-	}
-	rows, err := db.Query(ctx, `SELECT headword, COALESCE(reading,'')
-		FROM content.lexeme
-		WHERE status='active' AND headword = ANY($1) AND COALESCE(btrim(reading),'') != ''
-		ORDER BY frequency_rank ASC NULLS LAST`, candidates)
-	if err != nil {
-		return
-	}
-	defer rows.Close()
-	lexemeReadings := make(map[string]string)
-	for rows.Next() {
-		var hw, reading string
-		if err := rows.Scan(&hw, &reading); err == nil && hw != "" && reading != "" {
-			if _, exists := lexemeReadings[hw]; !exists {
-				lexemeReadings[hw] = reading
+
+	for i := range articles {
+		rubyOrdered, articleRuby := extractOrderedRubyWords(articles[i].BodyHTML)
+		rubyMap := make(map[string]string, len(lexemeMap)+len(articleRuby))
+		for k, v := range lexemeMap {
+			if v.Reading != "" {
+				rubyMap[k] = v.Reading
 			}
 		}
-	}
-	for i := range articles {
-		rubyMap := make(map[string]string, len(lexemeReadings))
-		for k, v := range lexemeReadings {
-			rubyMap[k] = v
-		}
-		for k, v := range extractRubyPairsFromHTML(articles[i].BodyHTML) {
+		for k, v := range articleRuby {
 			rubyMap[k] = v
 		}
 		if articles[i].TitleWithRuby == "" {
@@ -920,6 +1028,75 @@ func enrichNHKArticlesWithLexemes(ctx context.Context, db *pgxpool.Pool, article
 				htmlBuf.WriteString("</p>")
 			}
 			articles[i].BodyHTML = htmlBuf.String()
+		}
+		hasBodyContent := strings.TrimSpace(articles[i].BodyHTML) != "" || strings.TrimSpace(articles[i].BodyPlain) != ""
+		if !hasBodyContent {
+			continue
+		}
+		var vocab []nhkVocabItem
+		usedWords := make(map[string]struct{})
+		appendVocab := func(word, reading, meaning, pos string) {
+			word = strings.TrimSpace(word)
+			if word == "" || len(vocab) >= 20 {
+				return
+			}
+			if _, exists := usedWords[word]; exists {
+				return
+			}
+			usedWords[word] = struct{}{}
+			var rPtr, mPtr, pPtr *string
+			if reading != "" {
+				r := reading
+				rPtr = &r
+			}
+			if meaning != "" {
+				m := meaning
+				mPtr = &m
+			}
+			if pos != "" {
+				p := pos
+				pPtr = &p
+			}
+			vocab = append(vocab, nhkVocabItem{Word: word, Reading: rPtr, Meaning: mPtr, Pos: pPtr})
+		}
+		// 1. Dictionary-matched words with meaning
+		for _, w := range articleCandidates[i] {
+			if entry, ok := lexemeMap[w]; ok && entry.Meaning != "" {
+				reading := entry.Reading
+				if r, hasRuby := articleRuby[w]; hasRuby && r != "" {
+					reading = r
+				}
+				appendVocab(w, reading, entry.Meaning, entry.Pos)
+			}
+		}
+		// 2. Fallback: ruby-annotated words from article HTML
+		if len(vocab) < 8 {
+			for _, w := range rubyOrdered {
+				entry := lexemeMap[w]
+				reading := articleRuby[w]
+				if reading == "" {
+					reading = entry.Reading
+				}
+				pos := entry.Pos
+				if pos == "" {
+					pos = "noun"
+				}
+				appendVocab(w, reading, entry.Meaning, pos)
+			}
+		}
+		// 3. Final fallback if article has bodyPlain but no dictionary/ruby match yet
+		if len(vocab) == 0 {
+			for _, w := range articleCandidates[i] {
+				if len([]rune(w)) >= 2 {
+					entry := lexemeMap[w]
+					appendVocab(w, entry.Reading, entry.Meaning, "noun")
+				}
+			}
+		}
+		if len(vocab) > 0 {
+			if b, err := json.Marshal(vocab); err == nil {
+				articles[i].VocabularyJSON = b
+			}
 		}
 	}
 }

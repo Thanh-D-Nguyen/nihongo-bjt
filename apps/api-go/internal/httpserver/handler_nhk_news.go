@@ -111,6 +111,22 @@ func nhkArticleDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 		if len(vocabulary) == 0 || string(vocabulary) == "null" {
 			vocabulary = []byte("[]")
 		}
+		if !article.CanGenerateCards && article.HasBody {
+			sample := []nhkFeedArticle{{
+				ID:            article.ID,
+				SourceType:    article.SourceType,
+				Title:         article.Title,
+				TitleWithRuby: stringValue(article.TitleWithRuby),
+				BodyHTML:      stringValue(article.BodyHTML),
+				BodyPlain:     stringValue(article.BodyPlain),
+			}}
+			enrichNHKArticlesWithLexemes(r.Context(), db, sample)
+			if len(sample[0].VocabularyJSON) > 0 && string(sample[0].VocabularyJSON) != "[]" {
+				vocabulary = sample[0].VocabularyJSON
+				article.CanGenerateCards = true
+				_, _ = db.Exec(r.Context(), `UPDATE content.nhk_article SET vocabulary=$2::jsonb, updated_at=NOW() WHERE id=$1`, article.ID, string(vocabulary))
+			}
+		}
 		article.Vocabulary = vocabulary
 		writeJSON(w, http.StatusOK, article)
 	}
@@ -254,8 +270,9 @@ func nhkFlashcardHandler(db *pgxpool.Pool, logger *slog.Logger, wholeArticle boo
 		}
 		id := nhkRouteArticleID(r)
 		var title string
+		var bodyHTML, bodyPlain *string
 		var vocabJSON []byte
-		if err := db.QueryRow(r.Context(), `SELECT title,vocabulary FROM content.nhk_article WHERE id=$1`, id).Scan(&title, &vocabJSON); err != nil {
+		if err := db.QueryRow(r.Context(), `SELECT title,body_html,body_plain,vocabulary FROM content.nhk_article WHERE id=$1`, id).Scan(&title, &bodyHTML, &bodyPlain, &vocabJSON); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				writeJSONError(w, "article not found", http.StatusNotFound)
 				return
@@ -276,6 +293,19 @@ func nhkFlashcardHandler(db *pgxpool.Pool, logger *slog.Logger, wholeArticle boo
 			logger.Error("decode NHK vocabulary", "error", err)
 			writeJSONError(w, "article vocabulary is invalid", http.StatusInternalServerError)
 			return
+		}
+		if len(words) == 0 && (strings.TrimSpace(stringValue(bodyHTML)) != "" || strings.TrimSpace(stringValue(bodyPlain)) != "") {
+			sample := []nhkFeedArticle{{
+				ID:        id,
+				Title:     title,
+				BodyHTML:  stringValue(bodyHTML),
+				BodyPlain: stringValue(bodyPlain),
+			}}
+			enrichNHKArticlesWithLexemes(r.Context(), db, sample)
+			if len(sample[0].VocabularyJSON) > 0 && string(sample[0].VocabularyJSON) != "[]" {
+				_ = json.Unmarshal(sample[0].VocabularyJSON, &words)
+				_, _ = db.Exec(r.Context(), `UPDATE content.nhk_article SET vocabulary=$2::jsonb, updated_at=NOW() WHERE id=$1`, id, string(sample[0].VocabularyJSON))
+			}
 		}
 		if wholeArticle {
 			if req.DeckTitle != nil && (len(strings.TrimSpace(*req.DeckTitle)) == 0 || len(*req.DeckTitle) > 120) {
@@ -342,8 +372,15 @@ func nhkFlashcardHandler(db *pgxpool.Pool, logger *slog.Logger, wholeArticle boo
 				if posErr != nil {
 					err = posErr
 				} else {
+					backText := strings.TrimSpace(stringValue(word.Meaning))
+					if backText == "" {
+						backText = strings.TrimSpace(stringValue(word.Reading))
+					}
+					if backText == "" {
+						backText = word.Word
+					}
 					err = tx.QueryRow(r.Context(), `INSERT INTO learning.flashcard_variant (source_type,source_id,front_text,back_text,reading,status,updated_at)
-						VALUES ('custom',$1,$2,$3,$4,'active',NOW()) RETURNING id::text`, deckID, word.Word, stringValue(word.Meaning), word.Reading).Scan(&cardID)
+						VALUES ('custom',$1,$2,$3,$4,'active',NOW()) RETURNING id::text`, deckID, word.Word, backText, word.Reading).Scan(&cardID)
 					if err == nil {
 						_, err = tx.Exec(r.Context(), `INSERT INTO learning.deck_card (deck_id,card_id,position) VALUES ($1,$2,$3)`, deckID, cardID, position)
 					}
