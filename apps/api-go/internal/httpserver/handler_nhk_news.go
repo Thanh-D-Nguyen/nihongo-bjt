@@ -35,14 +35,23 @@ type nhkArticleResponse struct {
 	CanGenerateCards bool            `json:"canGenerateCards"`
 }
 
+func isAllowedNewsType(kind string) bool {
+	switch kind {
+	case "easy", "normal", "business", "livedoor":
+		return true
+	default:
+		return false
+	}
+}
+
 func nhkNewsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		kind := r.URL.Query().Get("type")
 		if kind == "" {
 			kind = "easy"
 		}
-		if kind != "easy" && kind != "normal" {
-			writeJSONError(w, "type must be easy or normal", http.StatusBadRequest)
+		if !isAllowedNewsType(kind) {
+			writeJSONError(w, "type must be easy, normal, business, or livedoor", http.StatusBadRequest)
 			return
 		}
 		limit := nhkPageValue(r, "limit", 12, 1, 48)

@@ -171,3 +171,37 @@ func TestParseNHKEasyRSSExtractsBodyRubyAndImage(t *testing.T) {
 		t.Fatalf("expected extracted vocabulary JSON, got %s", string(articles[0].VocabularyJSON))
 	}
 }
+
+func TestParseLivedoorRSSAndBusinessListTypes(t *testing.T) {
+	rss := []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+<item>
+<title>為替相場で円安が進む</title>
+<link>https://news.livedoor.com/article/detail/31066598/</link>
+<guid>https://news.livedoor.com/article/detail/31066598/</guid>
+<pubDate>Tue, 28 Oct 2026 09:00:00 +0900</pubDate>
+<enclosure url="https://image.news.livedoor.com/newsimage/stf/test.jpg" type="image/jpeg" />
+<description><![CDATA[<h2>ざっくり言うと</h2><ul><li>東京外国為替市場で円安が進んだ</li><li>日銀の金融政策決定会合が注目されている</li></ul>]]></description>
+</item>
+</channel></rss>`)
+	articles, err := parseLivedoorRSS(context.Background(), nil, rss)
+	if err != nil {
+		t.Fatalf("parseLivedoorRSS error: %v", err)
+	}
+	if len(articles) != 1 {
+		t.Fatalf("expected 1 article, got %d", len(articles))
+	}
+	got := articles[0]
+	if got.ID != "livedoor:31066598" || got.SourceType != "livedoor" {
+		t.Fatalf("unexpected article ID/SourceType: %+v", got)
+	}
+	if got.ImageURL != "https://image.news.livedoor.com/newsimage/stf/test.jpg" {
+		t.Fatalf("unexpected ImageURL %q", got.ImageURL)
+	}
+	if !strings.Contains(got.BodyPlain, "・東京外国為替市場で円安が進んだ") {
+		t.Fatalf("unexpected BodyPlain %q", got.BodyPlain)
+	}
+	if !isAllowedNewsType("business") || !isAllowedNewsType("livedoor") || isAllowedNewsType("invalid") {
+		t.Fatalf("unexpected isAllowedNewsType results")
+	}
+}

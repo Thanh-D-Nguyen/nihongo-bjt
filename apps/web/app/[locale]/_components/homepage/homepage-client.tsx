@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetchOptional } from "../../../../lib/learner-api";
 import { AdSlot, type AdSlotLabels } from "../ads/ad-slot";
-import type { HomepageLabels, LearnerAnalytics, NhkArticle } from "./types";
+import type { HomepageLabels, LearnerAnalytics, NewsType, NhkArticle } from "./types";
 import { PushPromptBanner, type PushBannerLabels } from "./push-prompt-banner";
 import { OnboardingFlow } from "./onboarding-flow";
 import { HomepageSectionsTabs } from "./homepage-sections-tabs";
@@ -36,10 +36,12 @@ export function HomepageClient({
   const [hubError, setHubError] = useState(false);
   const [hubReady, setHubReady] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
-  const [nhkArticlesByType, setNhkArticlesByType] = useState<{
-    easy: NhkArticle[];
-    normal: NhkArticle[];
-  }>({ easy: [], normal: [] });
+  const [nhkArticlesByType, setNhkArticlesByType] = useState<Record<NewsType, NhkArticle[]>>({
+    easy: [],
+    normal: [],
+    business: [],
+    livedoor: [],
+  });
   const [nhkReady, setNhkReady] = useState(false);
   const [nhkError, setNhkError] = useState(false);
   const [analytics, setAnalytics] = useState<LearnerAnalytics | null>(null);
@@ -72,7 +74,7 @@ export function HomepageClient({
       })
       .finally(() => setHubReady(true));
 
-    void Promise.allSettled((["easy", "normal"] as const).map(async (type) => {
+    void Promise.allSettled((["easy", "normal", "business", "livedoor"] as const).map(async (type) => {
       const response = await learnerApiFetchOptional(`/api/nhk-news?type=${type}&limit=8&locale=${locale}`);
       if (!response?.ok) throw new Error("News request failed");
       const articles = await response.json();
@@ -141,7 +143,7 @@ export function HomepageClient({
 
   /** Lazy-load a specific news type on demand (e.g. when user switches tab) */
   const loadNewsType = useCallback(
-    (type: "easy" | "normal") => {
+    (type: NewsType) => {
       if (nhkArticlesByType[type].length > 0) return; // already loaded
       void learnerApiFetchOptional(`/api/nhk-news?type=${type}&limit=8&locale=${locale}`)
         .then(async (res) => {

@@ -1,6 +1,8 @@
 /** Shared types for homepage section components */
 import type { DailyRadarLabels } from "@/src/features/daily-radar/types";
 
+export type NewsType = "easy" | "normal" | "business" | "livedoor";
+
 export interface HomepageLabels {
   heroGreeting: string;
   /** When user is logged in and display name is known: `{name}`, `{timeOfDay}` */
@@ -80,6 +82,8 @@ export interface HomepageLabels {
   newsEmpty: string;
   newsError: string;
   newsNormal: string;
+  newsBusiness?: string;
+  newsLivedoor?: string;
   newsViewAll: string;
   newsTimeAgo: string;
   newsMinutesAgo: string;
@@ -158,7 +162,7 @@ export interface NhkArticle {
   imageUrl: string | null;
   difficulty: string | null;
   url: string;
-  sourceType?: "easy" | "normal";
+  sourceType?: NewsType;
   sourceLabel?: string;
   canGenerateCards?: boolean;
   hasBody?: boolean;

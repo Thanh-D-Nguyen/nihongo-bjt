@@ -368,6 +368,8 @@
     "newsEmpty": "No articles are available from this source yet. Try the other source or reload later.",
     "newsError": "Could not load NHK sources. Check source config or retry.",
     "newsNormal": "Normal NHK",
+    "newsBusiness": "NHK Business",
+    "newsLivedoor": "Livedoor Business",
     "newsViewAll": "All news →",
     "newsTimeAgo": "{time} ago",
     "newsMinutesAgo": "{n} minutes",

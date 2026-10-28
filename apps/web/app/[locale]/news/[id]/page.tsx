@@ -22,7 +22,14 @@ export async function generateMetadata({
   const { locale, id } = await params;
   const articleId = normalizeArticleId(id);
   const t = (messages as Record<string, typeof vi>)[locale] ?? messages.vi;
-  return { title: `${articleId.startsWith("normal") ? t.homepage.newsNormal : t.nhkDetail.title} — KotobaWorks` };
+  const pageTitle = articleId.startsWith("normal")
+    ? t.homepage.newsNormal
+    : articleId.startsWith("business")
+      ? (t.homepage.newsBusiness ?? t.homepage.newsNormal)
+      : articleId.startsWith("livedoor")
+        ? (t.homepage.newsLivedoor ?? t.homepage.newsNormal)
+        : t.nhkDetail.title;
+  return { title: `${pageTitle} — KotobaWorks` };
 }
 
 export default async function NhkArticlePage({

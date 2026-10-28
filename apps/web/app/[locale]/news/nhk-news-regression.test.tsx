@@ -38,7 +38,12 @@ describe("NHK regression", () => {
     expect(html).toMatch(/disabled=""/);
     expect(html).toContain("No extracted vocabulary");
     const tabs = new DOMParser().parseFromString(html, "text/html").querySelectorAll('[role="tab"]');
-    expect(Array.from(tabs, (tab) => tab.textContent)).toEqual([en.homepage.newsEasy, en.homepage.newsNormal]);
+    expect(Array.from(tabs, (tab) => tab.textContent)).toEqual([
+      en.homepage.newsEasy,
+      en.homepage.newsNormal,
+      en.homepage.newsBusiness,
+      en.homepage.newsLivedoor,
+    ]);
     expect(html).toContain("Latest available:");
     expect(html).toContain("Showing saved articles");
   });

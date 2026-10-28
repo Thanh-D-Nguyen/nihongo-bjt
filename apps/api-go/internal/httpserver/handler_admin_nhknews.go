@@ -26,12 +26,14 @@ import (
 )
 
 const (
-	nhkEasyFeedDefault      = "https://nhkeasier.com/feed/"
-	nhkNormalFeedDefault    = "https://news.web.nhk/n-data/conf/na/rss/cat0.xml"
-	nhkLegacyEasyFeedURL    = "https://www3.nhk.or.jp/news/easy/news-list.json"
-	nhkLegacyEasyWebFeedURL = "https://news.web.nhk/news/easy/news-list.json"
-	nhkLegacyNormalFeedURL  = "https://www3.nhk.or.jp/rss/news/cat0.xml"
-	nhkFeedMaxBytes         = 8 << 20
+	nhkEasyFeedDefault          = "https://nhkeasier.com/feed/"
+	nhkNormalFeedDefault        = "https://news.web.nhk/n-data/conf/na/rss/cat0.xml"
+	nhkBusinessFeedDefault      = "https://news.web.nhk/n-data/conf/na/rss/cat5.xml"
+	livedoorBusinessFeedDefault = "https://news.livedoor.com/topics/rss/eco.xml"
+	nhkLegacyEasyFeedURL        = "https://www3.nhk.or.jp/news/easy/news-list.json"
+	nhkLegacyEasyWebFeedURL     = "https://news.web.nhk/news/easy/news-list.json"
+	nhkLegacyNormalFeedURL      = "https://www3.nhk.or.jp/rss/news/cat0.xml"
+	nhkFeedMaxBytes             = 8 << 20
 )
 
 type nhkNewsConfig struct {
@@ -224,7 +226,7 @@ func validNHKFeedURL(raw string) bool {
 
 func validNHKArticleURL(raw string) bool {
 	u, err := url.ParseRequestURI(strings.TrimSpace(raw))
-	return err == nil && u.Hostname() != "" && (u.Scheme == "https" || u.Scheme == "http") && u.User == nil && u.Fragment == "" && isNHKHost(strings.ToLower(u.Hostname()))
+	return err == nil && u.Hostname() != "" && (u.Scheme == "https" || u.Scheme == "http") && u.User == nil && u.Fragment == "" && isAllowedNewsHost(strings.ToLower(u.Hostname()))
 }
 
 func isNHKHost(host string) bool {
@@ -234,6 +236,13 @@ func isNHKHost(host string) bool {
 		strings.HasSuffix(host, ".web.nhk") ||
 		host == "nhkeasier.com" ||
 		strings.HasSuffix(host, ".nhkeasier.com")
+}
+
+func isAllowedNewsHost(host string) bool {
+	return isNHKHost(host) ||
+		host == "news.livedoor.com" ||
+		host == "image.news.livedoor.com" ||
+		strings.HasSuffix(host, ".livedoor.com")
 }
 
 type nhkFeedArticle struct {
@@ -290,7 +299,7 @@ type nhkRSSItem struct {
 
 func newNHKFeedHTTPClient() *http.Client {
 	return &http.Client{Timeout: 15 * time.Second, CheckRedirect: func(req *http.Request, via []*http.Request) error {
-		if len(via) >= 3 || !validNHKFeedURL(req.URL.String()) {
+		if len(via) >= 3 || !validNHKFeedFetchURL(req.URL.String()) {
 			return fmt.Errorf("unsafe NHK redirect")
 		}
 		return nil
@@ -420,6 +429,18 @@ func SyncNHKNewsFeeds(ctx context.Context, db *pgxpool.Pool, logger *slog.Logger
 			logger.Warn("nhk_news_sync: normal feed failed", "error", err)
 		} else {
 			articles = append(articles, normal...)
+		}
+		business, err := fetchNHKBusiness(ctx, client, nhkBusinessFeedDefault)
+		if err != nil {
+			logger.Warn("nhk_news_sync: business feed failed", "error", err)
+		} else {
+			articles = append(articles, business...)
+		}
+		livedoor, err := fetchLivedoorBusiness(ctx, client, livedoorBusinessFeedDefault)
+		if err != nil {
+			logger.Warn("nhk_news_sync: livedoor feed failed", "error", err)
+		} else {
+			articles = append(articles, livedoor...)
 		}
 	}
 	if len(articles) == 0 {
@@ -553,7 +574,13 @@ func validNHKFeedFetchURL(raw string) bool {
 		return true
 	}
 	u, err := url.ParseRequestURI(strings.TrimSpace(raw))
-	if err != nil || u.Scheme != "http" || u.User != nil || u.Fragment != "" {
+	if err != nil || u.Hostname() == "" || u.User != nil || u.Fragment != "" {
+		return false
+	}
+	if u.Scheme == "https" && isAllowedNewsHost(strings.ToLower(u.Hostname())) {
+		return true
+	}
+	if u.Scheme != "http" {
 		return false
 	}
 	ip := net.ParseIP(u.Hostname())
@@ -563,6 +590,8 @@ func validNHKFeedFetchURL(raw string) bool {
 var (
 	nhkEasierStoryPathRe = regexp.MustCompile(`/story/([0-9]+)/?`)
 	nhkNormalWebKeyRe    = regexp.MustCompile(`/newsweb/na/([a-z0-9-]+)`)
+	livedoorDetailPathRe = regexp.MustCompile(`/article/detail/([0-9]+)/?`)
+	livedoorBodySpanRe   = regexp.MustCompile(`(?is)<span[^>]*itemprop=["']articleBody["'][^>]*>(.*?)</span>`)
 	nhkRubyPairRe        = regexp.MustCompile(`<ruby>\s*([^<]+?)\s*(?:<rp>[^<]*</rp>)?<rt>\s*([^<]+?)\s*</rt>(?:<rp>[^<]*</rp>)?\s*</ruby>`)
 	nhkKanjiSeqRe        = regexp.MustCompile(`[\p{Han}][\p{Han}ヶヵ々]*`)
 	nhkKatakanaSeqRe     = regexp.MustCompile(`[\p{Katakana}ー]{2,12}`)
@@ -802,6 +831,14 @@ func annotateTextWithRubyPairs(text string, rubyMap map[string]string) string {
 }
 
 func fetchNHKNormal(ctx context.Context, client *http.Client, feedURL string) ([]nhkFeedArticle, error) {
+	return fetchNHKNormalWithSourceType(ctx, client, feedURL, "normal")
+}
+
+func fetchNHKBusiness(ctx context.Context, client *http.Client, feedURL string) ([]nhkFeedArticle, error) {
+	return fetchNHKNormalWithSourceType(ctx, client, feedURL, "business")
+}
+
+func fetchNHKNormalWithSourceType(ctx context.Context, client *http.Client, feedURL string, sourceType string) ([]nhkFeedArticle, error) {
 	body, err := fetchNHKFeed(ctx, client, feedURL)
 	if err != nil {
 		return nil, err
@@ -856,11 +893,181 @@ func fetchNHKNormal(ctx context.Context, client *http.Client, feedURL string) ([
 			}
 		}
 		articles = append(articles, nhkFeedArticle{
-			ID: "normal:" + hex.EncodeToString(hash[:])[:56], SourceType: "normal", Title: title, URL: articleURL,
+			ID: sourceType + ":" + hex.EncodeToString(hash[:])[:54], SourceType: sourceType, Title: title, URL: articleURL,
 			PublishedAt: published, BodyPlain: summary, ImageURL: imageURL, Difficulty: "N2",
 		})
 	}
 	return articles, nil
+}
+
+func fetchLivedoorBusiness(ctx context.Context, client *http.Client, feedURL string) ([]nhkFeedArticle, error) {
+	body, err := fetchNHKFeed(ctx, client, feedURL)
+	if err != nil {
+		return nil, err
+	}
+	return parseLivedoorRSS(ctx, client, body)
+}
+
+func parseLivedoorRSS(ctx context.Context, client *http.Client, body []byte) ([]nhkFeedArticle, error) {
+	var feed nhkRSS
+	if err := xml.Unmarshal(body, &feed); err != nil {
+		return nil, fmt.Errorf("decode livedoor RSS feed: %w", err)
+	}
+	if feed.Channel == nil {
+		return nil, fmt.Errorf("decode livedoor RSS feed: missing channel")
+	}
+	articles := make([]nhkFeedArticle, 0, len(feed.Channel.Items))
+	var lastErr error
+	for idx, item := range feed.Channel.Items {
+		title := strings.TrimSpace(item.Title)
+		articleURL := strings.TrimSpace(item.Link)
+		if articleURL == "" {
+			articleURL = strings.TrimSpace(item.GUID)
+		}
+		if title == "" || !validNHKArticleURL(articleURL) {
+			lastErr = fmt.Errorf("livedoor RSS item lacks title or valid URL")
+			continue
+		}
+		published, err := parseNHKDate(item.PubDate)
+		if err != nil {
+			lastErr = fmt.Errorf("parse livedoor RSS date for %s: %w", articleURL, err)
+			continue
+		}
+		id := ""
+		if m := livedoorDetailPathRe.FindStringSubmatch(articleURL); len(m) == 2 {
+			id = "livedoor:" + m[1]
+		} else {
+			idSource := strings.TrimSpace(item.GUID)
+			if idSource == "" {
+				idSource = articleURL
+			}
+			hash := sha256.Sum256([]byte(idSource))
+			id = "livedoor:" + hex.EncodeToString(hash[:])[:52]
+		}
+		imageURL := ""
+		for _, enclosure := range item.Enclosures {
+			if strings.HasPrefix(enclosure.Type, "image/") && validNHKArticleURL(enclosure.URL) {
+				imageURL = enclosure.URL
+				break
+			}
+		}
+		summary := extractLivedoorSummary(item.Description)
+		bodyPlain := summary
+		if idx < 12 && client != nil {
+			if fullBody := fetchLivedoorArticleBody(ctx, client, articleURL); len([]rune(fullBody)) > len([]rune(bodyPlain)) {
+				bodyPlain = fullBody
+			}
+		}
+		articles = append(articles, nhkFeedArticle{
+			ID: id, SourceType: "livedoor", Title: title, URL: articleURL,
+			PublishedAt: published, BodyPlain: bodyPlain, ImageURL: imageURL, Difficulty: "N2",
+		})
+	}
+	if len(articles) == 0 && lastErr != nil {
+		return nil, lastErr
+	}
+	return articles, nil
+}
+
+func extractLivedoorSummary(raw string) string {
+	tokenizer := html.NewTokenizer(strings.NewReader(raw))
+	var bullets []string
+	var current strings.Builder
+	inLI := false
+	for {
+		tt := tokenizer.Next()
+		if tt == html.ErrorToken {
+			break
+		}
+		switch tt {
+		case html.StartTagToken:
+			tok := tokenizer.Token()
+			if tok.Data == "li" {
+				inLI = true
+				current.Reset()
+			}
+		case html.EndTagToken:
+			tok := tokenizer.Token()
+			if tok.Data == "li" && inLI {
+				inLI = false
+				item := strings.TrimSpace(current.String())
+				if item != "" {
+					bullets = append(bullets, "・"+item)
+				}
+			}
+		case html.TextToken:
+			if inLI {
+				current.WriteString(strings.TrimSpace(tokenizer.Token().Data))
+			}
+		}
+	}
+	if len(bullets) > 0 {
+		return strings.Join(bullets, "\n")
+	}
+	cleaned := strings.TrimSpace(strings.TrimPrefix(nhkSummaryText(raw), "ざっくり言うと"))
+	cleaned = strings.TrimSpace(strings.TrimSuffix(cleaned, "記事を読む"))
+	return cleaned
+}
+
+func fetchLivedoorArticleBody(ctx context.Context, client *http.Client, articleURL string) string {
+	u, err := url.Parse(articleURL)
+	if err != nil || !strings.EqualFold(u.Hostname(), "news.livedoor.com") {
+		return ""
+	}
+	reqCtx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	defer cancel()
+	payload, err := fetchNHKFeed(reqCtx, client, articleURL)
+	if err != nil {
+		return ""
+	}
+	m := livedoorBodySpanRe.FindSubmatch(payload)
+	if len(m) != 2 {
+		return ""
+	}
+	return extractMultiParagraphText(string(m[1]))
+}
+
+func extractMultiParagraphText(fragment string) string {
+	tokenizer := html.NewTokenizer(strings.NewReader(fragment))
+	var paragraphs []string
+	var cur strings.Builder
+	ignoredDepth := 0
+	flush := func() {
+		line := strings.Join(strings.Fields(cur.String()), " ")
+		cur.Reset()
+		if line != "" {
+			paragraphs = append(paragraphs, line)
+		}
+	}
+	for {
+		switch tokenizer.Next() {
+		case html.ErrorToken:
+			flush()
+			return strings.Join(paragraphs, "\n")
+		case html.StartTagToken, html.SelfClosingTagToken:
+			tok := tokenizer.Token()
+			if tok.Data == "script" || tok.Data == "style" || tok.Data == "rt" || tok.Data == "rp" {
+				if tokenizer.Token().Type == html.StartTagToken {
+					ignoredDepth++
+				}
+			}
+			if tok.Data == "p" || tok.Data == "br" || tok.Data == "div" || tok.Data == "li" || tok.Data == "h2" || tok.Data == "h3" {
+				flush()
+			}
+		case html.EndTagToken:
+			tok := tokenizer.Token()
+			if (tok.Data == "script" || tok.Data == "style" || tok.Data == "rt" || tok.Data == "rp") && ignoredDepth > 0 {
+				ignoredDepth--
+			}
+			if tok.Data == "p" || tok.Data == "div" || tok.Data == "li" || tok.Data == "h2" || tok.Data == "h3" {
+				flush()
+			}
+		case html.TextToken:
+			if ignoredDepth == 0 {
+				cur.Write(tokenizer.Text())
+			}
+		}
+	}
 }
 
 func fetchNHKWebArticleMeta(ctx context.Context, client *http.Client, articleURL string) (imageURL string, summary string) {

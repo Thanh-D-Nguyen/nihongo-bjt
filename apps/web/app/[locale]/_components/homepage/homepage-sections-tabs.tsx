@@ -16,7 +16,7 @@ import { RevengeModeWidget } from "./revenge-mode-widget";
 import { FocusTimerWidget } from "./focus-timer-widget";
 import { AmbientModeWidget } from "./ambient-mode-widget";
 import { LotoTeaserWidget } from "./loto-teaser-widget";
-import type { HomepageLabels, LearnerAnalytics, NhkArticle } from "./types";
+import type { HomepageLabels, LearnerAnalytics, NewsType, NhkArticle } from "./types";
 
 export type HomepageTabKey = "today" | "progress" | "rewards" | "focus";
 
@@ -66,11 +66,11 @@ export function HomepageSectionsTabs({
   isLoggedIn: boolean;
   analytics: LearnerAnalytics | null;
   analyticsLoading: boolean;
-  nhkArticlesByType: { easy: NhkArticle[]; normal: NhkArticle[] };
+  nhkArticlesByType: Partial<Record<NewsType, NhkArticle[]>> & { easy: NhkArticle[]; normal: NhkArticle[] };
   nhkReady: boolean;
   nhkError: boolean;
   onNhkRetry: () => void;
-  onNhkTabChange: (type: "easy" | "normal") => void;
+  onNhkTabChange: (type: NewsType) => void;
   onboardingJustCompleted: boolean;
 }) {
   const [active, setActive] = useState<HomepageTabKey>("today");

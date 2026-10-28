@@ -8,29 +8,47 @@ import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { IconBookmark, IconDocument } from "../../../_components/app-icons";
 import { NhkCreateDeckDialog } from "../nhk-create-deck-dialog";
-import type { HomepageLabels, NhkArticle } from "./types";
+import type { HomepageLabels, NewsType, NhkArticle } from "./types";
 
-type NewsType = "easy" | "normal";
+const NEWS_TABS: readonly NewsType[] = ["easy", "normal", "business", "livedoor"];
 
 /* ─── Progressive image with branded fallback ─── */
 
 function NhkCoverArt({ type, large }: { type: NewsType; large?: boolean }) {
+  const brandTitle =
+    type === "easy"
+      ? "NHK NEWS EASY"
+      : type === "business"
+        ? "NHK BUSINESS"
+        : type === "livedoor"
+          ? "LIVEDOOR ECO"
+          : "NHK NEWS WEB";
+  const brandSub =
+    type === "easy"
+      ? "やさしい日本語ニュース"
+      : type === "business"
+        ? "NHK 経済・ビジネス"
+        : type === "livedoor"
+          ? "ライブドア経済ニュース"
+          : "ビジネス・総合ニュース";
   return (
     <div
       className={`flex h-full w-full flex-col items-center justify-center bg-gradient-to-br ${
         type === "easy"
           ? "from-sky-600 via-blue-700 to-indigo-900"
-          : "from-[#1B2A4A] via-slate-800 to-indigo-950"
+          : type === "livedoor"
+            ? "from-emerald-700 via-teal-800 to-slate-900"
+            : "from-[#1B2A4A] via-slate-800 to-indigo-950"
       } text-white select-none`}
     >
       <div className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3.5 py-1.5 backdrop-blur-sm">
         <IconDocument aria-hidden size={large ? 22 : 16} />
         <span className={`font-black tracking-widest ${large ? "text-base" : "text-xs"}`}>
-          {type === "easy" ? "NHK NEWS EASY" : "NHK NEWS WEB"}
+          {brandTitle}
         </span>
       </div>
       <span className={`mt-2 font-medium text-white/75 ${large ? "text-xs" : "text-[10px]"}`} lang="ja">
-        {type === "easy" ? "やさしい日本語ニュース" : "ビジネス・総合ニュース"}
+        {brandSub}
       </span>
     </div>
   );
@@ -82,7 +100,16 @@ function timeAgo(dateStr: string, labels: HomepageLabels): string {
 }
 
 function sourceLabel(type: NewsType, labels: HomepageLabels) {
-  return type === "easy" ? labels.newsEasy : labels.newsNormal;
+  switch (type) {
+    case "easy":
+      return labels.newsEasy;
+    case "business":
+      return labels.newsBusiness ?? "NHK Business";
+    case "livedoor":
+      return labels.newsLivedoor ?? "Livedoor Business";
+    default:
+      return labels.newsNormal;
+  }
 }
 
 /* ─── Featured (hero) news card — first article, full-width ─── */
@@ -283,7 +310,7 @@ export function FeaturedNewsSection({
   onRetry,
   onTabChange
 }: {
-  articlesByType: Record<NewsType, NhkArticle[]>;
+  articlesByType: Partial<Record<NewsType, NhkArticle[]>> & { easy: NhkArticle[]; normal: NhkArticle[] };
   error?: boolean;
   labels: HomepageLabels;
   loading?: boolean;
@@ -365,8 +392,8 @@ export function FeaturedNewsSection({
       />
 
       {/* Tabs */}
-      <TabsList className="mb-5 w-fit">
-        {(["easy", "normal"] as const).map((type) => (
+      <TabsList className="mb-5 flex w-full flex-wrap sm:w-fit">
+        {NEWS_TABS.map((type) => (
           <TabButton active={activeType === type} key={type} onClick={() => { setActiveType(type); onTabChange?.(type); }}>
             {sourceLabel(type, labels)}
           </TabButton>

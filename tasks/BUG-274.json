@@ -1,30 +1,30 @@
 {
   "schema": "nihongo-task/1",
   "id": "BUG-274",
-  "title": "Format Go handlers, align NHK lexeme_sense schema query, and add idempotent gloss cleanup migration",
+  "title": "Add NHK Business and Livedoor Business Japanese news sources and tabs",
   "preexisting_changes": {},
   "spec": {
-    "problem": "Go formatting and NHK lexeme_sense column alignment plus idempotent SQL migration for dictionary gloss cleanup.",
+    "problem": "Expand news sources beyond NHK Easy and NHK Normal with two free Japanese business/economy news feeds (NHK Business and Livedoor Business).",
     "acceptance": [
       {
         "id": "AC1",
-        "text": "All Go files pass gofmt and TestSQLConformsToCanonicalSchema against the canonical schema."
+        "text": "Backend syncs and serves easy, normal, business, and livedoor news feeds with vocabulary and furigana."
       },
       {
         "id": "AC2",
-        "text": "Idempotent migration 005_clean_corrupted_glosses.sql repairs corrupted dictionary glosses on deploy."
+        "text": "Homepage and /news page render 4 source tabs with localized labels in vi, en, and ja."
       }
     ],
-    "expected_behavior": "Go checks, SQL conformance, and migration execution succeed.",
-    "observed_behavior": "gofmt reported unformatted files and NHK vocabulary query referenced sense_order instead of position.",
-    "rollback_plan": "Data-only idempotent UPDATE/DELETE statements in 005_clean_corrupted_glosses.sql; compatible with existing schema with zero DDL changes."
+    "expected_behavior": "All four news tabs load articles, full text/summaries, furigana, and vocabulary flashcard extraction.",
+    "observed_behavior": "Previously only easy and normal tabs were available.",
+    "rollback_plan": "Additive source_type values in content.nhk_article; zero DDL changes."
   },
   "classification": {
     "classes": [
       "DOMAIN_LOGIC"
     ],
     "change_kind": "refactor",
-    "rationale": "Align SQL column names with canonical schema, format Go files, and run idempotent data cleanup SQL."
+    "rationale": "Extend existing news feed parser and UI tabs to support business and livedoor sources."
   },
   "red_exception": null,
   "red_targets": [],
@@ -35,100 +35,135 @@
   "history": [
     {
       "state": "CREATED",
-      "at": "2026-10-28T01:42:47.279Z",
-      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
+      "at": "2026-10-28T02:23:28.382Z",
+      "head": "f0fcd2bc6cd3b7331bc5770da6ee12e19426b767"
     },
     {
       "state": "SPECIFIED",
-      "at": "2026-10-28T01:42:47.279Z",
-      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
+      "at": "2026-10-28T02:23:28.382Z",
+      "head": "f0fcd2bc6cd3b7331bc5770da6ee12e19426b767"
     },
     {
       "state": "CLASSIFIED",
-      "at": "2026-10-28T01:42:47.279Z",
-      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
+      "at": "2026-10-28T02:23:28.382Z",
+      "head": "f0fcd2bc6cd3b7331bc5770da6ee12e19426b767"
     },
     {
       "state": "IMPLEMENTING",
-      "at": "2026-10-28T01:42:47.279Z",
-      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
+      "at": "2026-10-28T02:23:28.382Z",
+      "head": "f0fcd2bc6cd3b7331bc5770da6ee12e19426b767"
     },
     {
       "state": "VERIFYING",
-      "at": "2026-10-28T01:42:47.279Z",
-      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
+      "at": "2026-10-28T02:23:28.382Z",
+      "head": "f0fcd2bc6cd3b7331bc5770da6ee12e19426b767"
     },
     {
       "state": "REVIEW_REQUIRED",
-      "at": "2026-10-28T01:42:47.279Z",
-      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
+      "at": "2026-10-28T02:23:28.382Z",
+      "head": "f0fcd2bc6cd3b7331bc5770da6ee12e19426b767"
     },
     {
       "state": "REVIEWED",
-      "at": "2026-10-28T01:42:47.279Z",
-      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
+      "at": "2026-10-28T02:23:28.382Z",
+      "head": "f0fcd2bc6cd3b7331bc5770da6ee12e19426b767"
     },
     {
       "state": "READY_TO_CLOSE",
-      "at": "2026-10-28T01:42:47.279Z",
-      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
+      "at": "2026-10-28T02:23:28.382Z",
+      "head": "f0fcd2bc6cd3b7331bc5770da6ee12e19426b767"
     },
     {
       "state": "CLOSED",
-      "at": "2026-10-28T01:42:47.279Z",
-      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
+      "at": "2026-10-28T02:23:28.382Z",
+      "head": "f0fcd2bc6cd3b7331bc5770da6ee12e19426b767"
     }
   ],
   "evidence": [
     {
       "seq": 1,
-      "at": "2026-10-28T01:42:47.279Z",
+      "at": "2026-10-28T02:23:28.382Z",
       "kind": "suite",
       "gate": "suite_go",
       "command": "bash scripts/quality/verify-go.sh",
       "exit_code": 0,
       "result": "PASS",
       "accounting": {
-        "discovered": 1621,
-        "executed": 1621,
-        "passed": 1621,
+        "discovered": 1622,
+        "executed": 1622,
+        "passed": 1622,
         "failed": 0,
         "skipped": 0,
         "expected_skips": 0,
         "unexpected_skips": 0,
         "min_passed_tests": 1444
       },
-      "message": "1621 passed, 0 allowed skip(s)",
-      "fingerprint": "a721be9fa18df028ddff5fb7d3271631eecd4e37abc5379cd838e805e98631ab",
-      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
+      "message": "1622 passed, 0 allowed skip(s)",
+      "fingerprint": "c24dff7bea4f24af24c427e2dc2f26b476a5cb3ec2fa67d6be0b8448bfd19c3e",
+      "head": "f0fcd2bc6cd3b7331bc5770da6ee12e19426b767"
     },
     {
       "seq": 2,
-      "at": "2026-10-28T01:42:47.279Z",
+      "at": "2026-10-28T02:23:28.382Z",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 245,
+        "executed": 245,
+        "passed": 245,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 215
+      },
+      "message": "245 passed, 0 allowed skip(s)",
+      "fingerprint": "c24dff7bea4f24af24c427e2dc2f26b476a5cb3ec2fa67d6be0b8448bfd19c3e",
+      "head": "f0fcd2bc6cd3b7331bc5770da6ee12e19426b767"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-28T02:23:28.382Z",
       "kind": "review",
       "mode": "fresh_session",
       "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
       "verdict": "APPROVE",
       "open_findings": 0,
       "findings": [],
-      "fingerprint": "a721be9fa18df028ddff5fb7d3271631eecd4e37abc5379cd838e805e98631ab",
-      "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
+      "fingerprint": "c24dff7bea4f24af24c427e2dc2f26b476a5cb3ec2fa67d6be0b8448bfd19c3e",
+      "head": "f0fcd2bc6cd3b7331bc5770da6ee12e19426b767"
     }
   ],
   "closed": {
-    "at": "2026-10-28T01:42:47.279Z",
-    "head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097",
-    "fingerprint": "a721be9fa18df028ddff5fb7d3271631eecd4e37abc5379cd838e805e98631ab",
+    "at": "2026-10-28T02:23:28.382Z",
+    "head": "f0fcd2bc6cd3b7331bc5770da6ee12e19426b767",
+    "fingerprint": "c24dff7bea4f24af24c427e2dc2f26b476a5cb3ec2fa67d6be0b8448bfd19c3e",
     "status": "VERIFIED",
     "gates": {
       "acceptance": "PASS",
       "suite_go": "PASS",
+      "suite_frontend": "PASS",
       "review": "PASS"
     },
     "files": {
-      "apps/api-go/internal/httpserver/handler_admin_nhknews.go": "7d894723fef7cd5dbcb305f7b0587fee7708f263",
-      "apps/api-go/internal/httpserver/handler_nhk_news_test.go": "9821265893fe5c43517cec964708f3bc788dfabd"
+      "apps/api-go/internal/httpserver/handler_nhk_news.go": "6724d949c4aa479f406e00d2eac635081661617b",
+      "apps/api-go/internal/httpserver/handler_admin_nhknews.go": "c7ad6aed15dc760a2863e57bf7557653d108e715",
+      "apps/api-go/internal/httpserver/handler_nhk_news_test.go": "eb0fbb9a87f520404a1151fa2441c9cadbaaea18",
+      "apps/web/app/[locale]/_components/homepage/types.ts": "0a61b12a55f81388ba6fb66c8326653f53816479",
+      "apps/web/app/[locale]/_components/homepage/featured-news-section.tsx": "60258d3f663410dd3f815251b152c16c56464fce",
+      "apps/web/app/[locale]/_components/homepage/homepage-sections-tabs.tsx": "08ef293295d8e6bc8bded2d341c5f99bcd039ac9",
+      "apps/web/app/[locale]/_components/homepage/homepage-client.tsx": "7d0cf7b63c20074853f42c5c86f1ea5d57bf2708",
+      "apps/web/app/[locale]/news/_components/nhk-news-list-client.tsx": "248ef781f6c9d4b069fa74ddb349fda0763eb225",
+      "apps/web/app/[locale]/news/[id]/_components/nhk-article-detail-client.tsx": "1850dd7bf4b7867d4daf76f8bfacaf0bff3d2446",
+      "apps/web/app/[locale]/news/[id]/page.tsx": "bc340d8f3a0a0d77cf528d2856e5a311adc787b7",
+      "apps/web/app/[locale]/news/nhk-news-regression.test.tsx": "d271b85d399733c9be8d7271b12400491460651d",
+      "apps/web/messages/vi.json": "9dd5abdabb1763d8760267647193496cdda6f2dd",
+      "apps/web/messages/en.json": "a630cf1fe28e2324b417dd3985a2fc36cb37b709",
+      "apps/web/messages/ja.json": "2ab449b435eaef57fc5143364b2d9e5fa952178c"
     }
   },
-  "start_head": "4f022cf8814d1f5dff4dfdc8c804bd296fecb097"
+  "start_head": "f0fcd2bc6cd3b7331bc5770da6ee12e19426b767"
 }

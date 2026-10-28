@@ -296,6 +296,8 @@
     "newsEmpty": "このニュース種別には現在記事がありません。別の種別を試してください。",
     "newsError": "NHKニュースを読み込めません。ソース設定を確認するか再試行してください。",
     "newsNormal": "通常NHK",
+    "newsBusiness": "NHK 経済",
+    "newsLivedoor": "Livedoor 経済",
     "newsViewAll": "すべてのニュース →",
     "newsTimeAgo": "{time}前",
     "newsMinutesAgo": "{n}分",

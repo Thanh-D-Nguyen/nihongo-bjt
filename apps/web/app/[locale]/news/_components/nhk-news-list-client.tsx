@@ -7,6 +7,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetchOptional } from "../../../../lib/learner-api";
 
+type NewsType = "easy" | "normal" | "business" | "livedoor";
+
 interface NhkArticle {
   id: string;
   title: string;
@@ -14,7 +16,7 @@ interface NhkArticle {
   imageUrl: string | null;
   difficulty: string | null;
   url: string;
-  sourceType?: "easy" | "normal";
+  sourceType?: NewsType;
   hasBody: boolean;
 }
 
@@ -30,6 +32,8 @@ interface HomepageLabels {
   newsEasy: string;
   newsEmpty: string;
   newsNormal: string;
+  newsBusiness?: string;
+  newsLivedoor?: string;
   newsTimeAgo: string;
   newsMinutesAgo: string;
   newsHoursAgo: string;
@@ -39,6 +43,19 @@ interface HomepageLabels {
   newsContentUnavailable?: string;
   newsLatestPublished?: string;
   newsStale?: string;
+}
+
+function sourceTabLabel(type: NewsType, labels: HomepageLabels): string {
+  switch (type) {
+    case "easy":
+      return labels.newsEasy;
+    case "business":
+      return labels.newsBusiness ?? "NHK Business";
+    case "livedoor":
+      return labels.newsLivedoor ?? "Livedoor Business";
+    default:
+      return labels.newsNormal;
+  }
 }
 
 function timeAgo(dateStr: string, labels: HomepageLabels): string {
@@ -66,7 +83,7 @@ export function NhkNewsListClient({
 }) {
   const auth = useGoAuth();
   const PAGE_SIZE = 12;
-  const [activeType, setActiveType] = useState<"easy" | "normal">("easy");
+  const [activeType, setActiveType] = useState<NewsType>("easy");
   const [articles, setArticles] = useState<NhkArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -135,13 +152,12 @@ export function NhkNewsListClient({
 
       <h1 className="mb-2 text-2xl font-bold text-ink">{labels.title}</h1>
 
-      <TabsList className="mt-4 w-fit">
-        <TabButton active={activeType === "easy"} onClick={() => setActiveType("easy")}>
-          {homepageLabels.newsEasy}
-        </TabButton>
-        <TabButton active={activeType === "normal"} onClick={() => setActiveType("normal")}>
-          {homepageLabels.newsNormal}
-        </TabButton>
+      <TabsList className="mt-4 flex w-full flex-wrap sm:w-fit">
+        {(["easy", "normal", "business", "livedoor"] as const).map((type) => (
+          <TabButton active={activeType === type} key={type} onClick={() => setActiveType(type)}>
+            {sourceTabLabel(type, homepageLabels)}
+          </TabButton>
+        ))}
       </TabsList>
       {!loading && !error && latestPublished > 0 && <p className="mt-4 text-sm text-muted" role="status">
         {homepageLabels.newsLatestPublished?.replace("{time}", new Date(latestPublished).toLocaleDateString(locale))}
@@ -187,13 +203,13 @@ export function NhkNewsListClient({
                     } text-white select-none`}
                   >
                     <span className="rounded-lg border border-white/20 bg-white/10 px-3 py-1 text-xs font-black tracking-widest backdrop-blur-sm">
-                      {activeType === "easy" ? "NHK NEWS EASY" : "NHK NEWS WEB"}
+                      {activeType === "easy" ? "NHK NEWS EASY" : activeType === "business" ? "NHK BUSINESS" : activeType === "livedoor" ? "LIVEDOOR ECO" : "NHK NEWS WEB"}
                     </span>
                   </div>
                 )}
                 <div className="absolute left-2 top-2 flex flex-wrap gap-1">
                   <Badge tone={activeType === "easy" ? "accent" : "neutral"}>
-                    {activeType === "easy" ? homepageLabels.newsEasy : homepageLabels.newsNormal}
+                    {sourceTabLabel(activeType, homepageLabels)}
                   </Badge>
                   {article.difficulty ? <Badge>{article.difficulty}</Badge> : null}
                   {readArticleIds.has(article.id) && (
