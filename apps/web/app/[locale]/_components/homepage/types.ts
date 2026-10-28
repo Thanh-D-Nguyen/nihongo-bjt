@@ -170,6 +170,8 @@ export interface LearnerAnalytics {
     bjtAccuracyPct: number;
     completedBjtSessions: number;
     completedSessions?: number;
+    completedExerciseSessions?: number;
+    exerciseAccuracyPct?: number;
     reviewCount: number;
     streakDays: number;
   };

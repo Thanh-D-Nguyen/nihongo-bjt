@@ -25,12 +25,13 @@ const baseProps = {
 };
 
 describe("TodayPlanHub", () => {
-  it("counts exercise sessions in the completed sessions total without treating them as BJT exams", () => {
+  it("reflects completed exercise sessions in recent accuracy and completed sessions total", () => {
     const html = renderToStaticMarkup(<TodayPlanHub {...baseProps} analytics={{ insight: "", totals: {
-      bjtAccuracyPct: 0, completedBjtSessions: 0, completedSessions: 42, reviewCount: 0, streakDays: 1
+      bjtAccuracyPct: 100, completedBjtSessions: 0, completedSessions: 3, exerciseAccuracyPct: 100, reviewCount: 0, streakDays: 2
     } }} />);
-    expect(html).toContain(">42</p>");
-    expect(html).toContain("Chưa có bài hoàn tất");
+    expect(html).toContain(">3</p>");
+    expect(html).toContain("100%");
+    expect(html).not.toContain("Chưa có bài hoàn tất");
   });
   it("renders honest empty review and analytics states", () => {
     const html = renderToStaticMarkup(<TodayPlanHub {...baseProps} />);

@@ -27,6 +27,9 @@ interface LearnerAnalytics {
   totals: {
     bjtAccuracyPct: number;
     completedBjtSessions: number;
+    completedSessions?: number;
+    completedExerciseSessions?: number;
+    exerciseAccuracyPct?: number;
     reviewCount: number;
     streakDays: number;
   };
@@ -109,8 +112,16 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
     );
   }
 
-  const readinessPct = analytics?.totals.bjtAccuracyPct ?? 0;
-  const hasSessions = (analytics?.totals.completedBjtSessions ?? 0) > 0;
+  const completedSessionCount =
+    analytics?.totals.completedSessions ??
+    analytics?.totals.completedBjtSessions ??
+    0;
+  const readinessPct = Math.round(
+    (analytics?.totals.bjtAccuracyPct ?? 0) > 0
+      ? (analytics?.totals.bjtAccuracyPct ?? 0)
+      : (analytics?.totals.exerciseAccuracyPct ?? 0)
+  );
+  const hasSessions = completedSessionCount > 0;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
@@ -219,7 +230,7 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
             {analyticsFailed
               ? labels.analyticsError
               : hasSessions
-                ? labels.accuracyAcross.replace("{count}", String(analytics?.totals.completedBjtSessions ?? 0))
+                ? labels.accuracyAcross.replace("{count}", String(completedSessionCount))
                 : labels.noSessions}
           </span>
         </div>

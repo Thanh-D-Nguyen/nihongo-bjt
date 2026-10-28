@@ -156,7 +156,11 @@ export function MePageClient({
         setStats({
           streakDays: totals.streakDays ?? 0,
           reviewCount: totals.reviewCount ?? 0,
-          bjtAccuracyPct: totals.bjtAccuracyPct ?? 0,
+          bjtAccuracyPct: Math.round(
+            (totals.bjtAccuracyPct ?? 0) > 0
+              ? (totals.bjtAccuracyPct ?? 0)
+              : (totals.exerciseAccuracyPct ?? 0)
+          ),
           dueFlashcards: Array.isArray(dueCards) ? dueCards.length : 0,
         });
       }

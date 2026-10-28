@@ -169,7 +169,11 @@ export function ProgressSection({
 
   const animStreak = useCountUp(totals?.streakDays ?? 0);
   const animReviews = useCountUp(totals?.reviewCount ?? 0);
-  const animAccuracy = useCountUp(totals?.bjtAccuracyPct ?? 0);
+  const accuracyValue =
+    (totals?.bjtAccuracyPct ?? 0) > 0
+      ? (totals?.bjtAccuracyPct ?? 0)
+      : (totals?.exerciseAccuracyPct ?? 0);
+  const animAccuracy = useCountUp(Math.round(accuracyValue));
   const animSessions = useCountUp(totals?.completedSessions ?? totals?.completedBjtSessions ?? 0);
 
   if (!isLoggedIn) {

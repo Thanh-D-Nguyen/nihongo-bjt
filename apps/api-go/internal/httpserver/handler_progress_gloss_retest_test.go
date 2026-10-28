@@ -52,6 +52,32 @@ func TestRetestBJTAccuracyUsesQuestionTotals(t *testing.T) {
 	if result.Totals.BjtAccuracyPct != 10 || result.Totals.CompletedBjtSessions != 2 {
 		t.Fatalf("BJT accuracy must use question totals: %+v", result.Totals)
 	}
+	exSessionID := newUUID(t)
+	t.Cleanup(func() {
+		_, _ = db.Exec(ctx, `DELETE FROM exercise.exercise_session WHERE id = $1`, exSessionID)
+	})
+	if _, err := db.Exec(ctx, `INSERT INTO exercise.exercise_session (id, user_id, session_type, exercise_type, status, correct_count, total_questions, exercise_ids)
+		VALUES ($1, $2, 'practice_tab', 'meaning_match', 'completed', 9, 10, '{}')`, exSessionID, userID); err != nil {
+		t.Fatal(err)
+	}
+	req2 := httptest.NewRequest(http.MethodGet, "/api/analytics/learner", nil)
+	req2.AddCookie(&http.Cookie{Name: "bjt_web_session", Value: token})
+	res2 := httptest.NewRecorder()
+	router.ServeHTTP(res2, req2)
+	var result2 struct {
+		Totals struct {
+			BjtAccuracyPct            float64
+			CompletedBjtSessions      int
+			CompletedExerciseSessions int
+			CompletedSessions         int
+		}
+	}
+	if err := json.Unmarshal(res2.Body.Bytes(), &result2); err != nil {
+		t.Fatal(err)
+	}
+	if result2.Totals.BjtAccuracyPct != 50 || result2.Totals.CompletedSessions != 3 || result2.Totals.CompletedExerciseSessions != 1 {
+		t.Fatalf("combined accuracy must include completed exercise sessions (10/20 = 50%%): %+v", result2.Totals)
+	}
 }
 
 func TestRetestExerciseRejectsInvalidGloss(t *testing.T) {

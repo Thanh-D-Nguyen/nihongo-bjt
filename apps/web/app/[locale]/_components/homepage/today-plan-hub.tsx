@@ -150,11 +150,19 @@ export function TodayPlanHub({
 }: TodayPlanHubProps) {
   const copy = labels.todayPlan;
   const dueCount = hub?.dueReviews ?? 0;
-  const hasBjtSessions = Boolean(analytics?.totals.completedBjtSessions);
+  const hasCompletedSessions = Boolean(
+    (analytics?.totals.completedSessions ?? 0) > 0 ||
+      (analytics?.totals.completedBjtSessions ?? 0) > 0 ||
+      (analytics?.totals.completedExerciseSessions ?? 0) > 0
+  );
+  const accuracyPct =
+    (analytics?.totals.bjtAccuracyPct ?? 0) > 0
+      ? (analytics?.totals.bjtAccuracyPct ?? 0)
+      : (analytics?.totals.exerciseAccuracyPct ?? 0);
   const readiness = analyticsError
     ? copy.analyticsUnavailable
-    : hasBjtSessions
-      ? `${Math.round(analytics?.totals.bjtAccuracyPct ?? 0)}%`
+    : hasCompletedSessions
+      ? `${Math.round(accuracyPct)}%`
       : copy.readinessUnavailable;
   const streak = analytics?.totals.streakDays ?? 0;
 
@@ -354,7 +362,7 @@ export function TodayPlanHub({
                 <p
                   className={cn(
                     "font-bold tabular-nums text-brand-navy",
-                    hasBjtSessions && !analyticsError ? "text-3xl" : "text-lg leading-snug"
+                    hasCompletedSessions && !analyticsError ? "text-3xl" : "text-lg leading-snug"
                   )}
                 >
                   {readiness}

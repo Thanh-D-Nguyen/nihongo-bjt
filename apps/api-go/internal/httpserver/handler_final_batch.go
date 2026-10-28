@@ -11,6 +11,7 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"math"
 	"mime"
 	"net"
 	"net/http"
@@ -166,14 +167,17 @@ func getAnalyticsLearnerHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 
 		// Compute totals expected by frontend LearnerAnalytics interface
 		var completedBjtSessions int
+		var bjtCorrect, bjtQuestions int
 		var bjtAccuracyPct float64
 		var reviewCount int
 		var streakDays int
 
-		var completedExercises, exerciseAnswers int
+		var completedExercises, exerciseCorrect, exerciseAnswers int
 		var exerciseAccuracy float64
 		err = db.QueryRow(r.Context(), `SELECT
 			(SELECT COUNT(*) FROM assessment.quiz_session WHERE user_id = $1 AND status = 'completed'),
+			(SELECT COALESCE(SUM(correct_count), 0) FROM assessment.quiz_session WHERE user_id = $1 AND status = 'completed'),
+			(SELECT COALESCE(SUM(total_questions), 0) FROM assessment.quiz_session WHERE user_id = $1 AND status = 'completed'),
 			(SELECT COALESCE(100.0 * SUM(correct_count) / NULLIF(SUM(total_questions), 0), 0) FROM assessment.quiz_session WHERE user_id = $1 AND status = 'completed'),
 			(SELECT COUNT(*) FROM learning.review_event WHERE user_id = $1),
 			(SELECT COALESCE(MAX(us.current_streak), 0) FROM gamification.user_streak us
@@ -181,15 +185,20 @@ func getAnalyticsLearnerHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 			 JOIN profile.user_profile p ON p.id = us.user_id
 			 LEFT JOIN pg_timezone_names tz ON tz.name = p.timezone
 			 WHERE us.user_id = $1 AND us.last_activity_date >= (NOW() AT TIME ZONE COALESCE(tz.name, 'UTC'))::date - 1),
-			COUNT(*), COALESCE(SUM(total_questions), 0),
+			COUNT(*), COALESCE(SUM(correct_count), 0), COALESCE(SUM(total_questions), 0),
 			COALESCE(100.0 * SUM(correct_count) / NULLIF(SUM(total_questions), 0), 0)
 			FROM exercise.exercise_session WHERE user_id = $1 AND status = 'completed'`, userID).
-			Scan(&completedBjtSessions, &bjtAccuracyPct, &reviewCount, &streakDays, &completedExercises, &exerciseAnswers, &exerciseAccuracy)
+			Scan(&completedBjtSessions, &bjtCorrect, &bjtQuestions, &bjtAccuracyPct, &reviewCount, &streakDays, &completedExercises, &exerciseCorrect, &exerciseAnswers, &exerciseAccuracy)
 		if err != nil {
 			logger.Error("get learner progress totals", "error", err)
 			writeJSONError(w, "unable to load learner analytics", http.StatusInternalServerError)
 			return
 		}
+		totalQuestions := bjtQuestions + exerciseAnswers
+		if totalQuestions > 0 {
+			bjtAccuracyPct = math.Round((100.0*float64(bjtCorrect+exerciseCorrect)/float64(totalQuestions))*10) / 10
+		}
+		exerciseAccuracy = math.Round(exerciseAccuracy*10) / 10
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
