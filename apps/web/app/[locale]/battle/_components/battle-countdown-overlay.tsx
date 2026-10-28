@@ -160,13 +160,13 @@ export function BattleCountdownOverlay({
   // Reduced motion: simple static text
   if (reducedMotion) {
     return (
-      <div className="fixed inset-0 z-50 grid place-items-center bg-ink/85 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/90 backdrop-blur-md">
         <div className="text-center">
-          <p className="text-lg font-bold text-white/60">
+          <p className="text-lg font-bold text-white/75">
             {userDisplayName} {countdownLabels.vs} {botName}
           </p>
           {botDifficultyLabel ? (
-            <span className="mt-2 inline-block rounded-full border border-white/20 px-3 py-0.5 text-xs font-black uppercase text-white/70">
+            <span className="mt-2 inline-block rounded-full border border-white/25 px-3 py-0.5 text-xs font-black uppercase text-white/80">
               {botDifficultyLabel}
             </span>
           ) : null}
@@ -177,7 +177,7 @@ export function BattleCountdownOverlay({
           </p>
           {onCancel ? (
             <button
-              className="mt-6 rounded-xl border border-white/20 px-4 py-2 text-sm font-bold text-white/70 hover:bg-white/10"
+              className="mt-6 rounded-xl border border-white/25 px-4 py-2 text-sm font-bold text-white/80 hover:bg-white/10"
               onClick={onCancel}
               type="button"
             >
@@ -191,14 +191,14 @@ export function BattleCountdownOverlay({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-ink/85 backdrop-blur-sm transition-opacity duration-300 ${
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-md transition-opacity duration-300 ${
         exiting ? "opacity-0" : "opacity-100"
       }`}
     >
       {/* Connection status */}
       <div className="absolute left-4 top-4 flex items-center gap-2">
         <span className={`h-2 w-2 rounded-full ${connectionStatus !== false ? "bg-leaf" : "bg-amber"}`} />
-        <span className="text-xs font-bold text-white/50">
+        <span className="text-xs font-bold text-white/75">
           {connectionStatus !== false ? countdownLabels.connected : countdownLabels.reconnecting}
         </span>
       </div>
@@ -206,7 +206,7 @@ export function BattleCountdownOverlay({
       {/* Cancel button (top-right) */}
       {onCancel ? (
         <button
-          className="absolute right-4 top-4 rounded-xl border border-white/20 px-3 py-1.5 text-xs font-bold text-white/60 transition hover:bg-white/10 hover:text-white/80"
+          className="absolute right-4 top-4 rounded-xl border border-white/25 px-3 py-1.5 text-xs font-bold text-white/75 transition hover:bg-white/10 hover:text-white"
           onClick={onCancel}
           type="button"
         >
@@ -237,9 +237,9 @@ export function BattleCountdownOverlay({
 
         {/* VS + Countdown center */}
         <div className="flex flex-col items-center gap-2">
-          <p className="text-xs font-black uppercase tracking-widest text-white/40">{countdownLabels.vs}</p>
+          <p className="text-xs font-black uppercase tracking-widest text-white/70">{countdownLabels.vs}</p>
           {botDifficultyLabel ? (
-            <span className="rounded-full border border-white/25 px-2.5 py-0.5 text-[10px] font-black uppercase text-white/75">
+            <span className="rounded-full border border-white/25 px-2.5 py-0.5 text-[10px] font-black uppercase text-white/80">
               {botDifficultyLabel}
             </span>
           ) : null}
@@ -261,7 +261,7 @@ export function BattleCountdownOverlay({
             </div>
           ) : (
             <div className="grid h-20 w-20 place-items-center sm:h-24 sm:w-24">
-              <span className="animate-pulse text-center text-sm font-black leading-tight text-white/45">
+              <span className="animate-pulse text-center text-sm font-black leading-tight text-white/70">
                 {countdownLabels.preparing}
               </span>
             </div>

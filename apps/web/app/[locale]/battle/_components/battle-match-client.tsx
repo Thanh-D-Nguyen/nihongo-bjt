@@ -48,7 +48,7 @@ function StatTile({
   const toneRing = tone === "green" ? "ring-leaf/10" : tone === "amber" ? "ring-amber/10" : "ring-ink/5";
   const toneBg = tone === "green" ? "from-leaf/5 to-transparent" : tone === "amber" ? "from-amber/5 to-transparent" : "from-ink/[0.02] to-transparent";
   return (
-    <div className={`relative overflow-hidden rounded-2xl border border-ink/10 bg-white/78 p-3.5 shadow-sm ring-1 ${toneRing} ${
+    <div className={`relative overflow-hidden rounded-2xl border border-ink/10 bg-surface/90 p-3.5 shadow-sm ring-1 ${toneRing} ${
       hero ? "col-span-2" : ""
     }`}>
       <div className={`absolute inset-0 bg-gradient-to-br ${toneBg}`} aria-hidden />
@@ -226,8 +226,8 @@ export function BattleMatchClient() {
   const showPvpVictoryFireworks = isPvp && outcome === "win";
   const showBotVictoryConfetti = !isPvp && outcome === "win";
   const arenaShell = isPvp
-    ? "border-rose-200/50 bg-gradient-to-br from-rose-50/90 via-surface to-indigo-50/50 shadow-[0_0_0_1px_rgba(244,63,94,0.08)]"
-    : "border-indigo-200/40 bg-gradient-to-br from-indigo-50/70 via-surface to-emerald-50/40 shadow-[0_0_0_1px_rgba(79,70,229,0.06)]";
+    ? "border-rose-500/25 bg-gradient-to-br from-rose-500/10 via-surface to-indigo-500/10 shadow-[0_0_0_1px_rgba(244,63,94,0.08)]"
+    : "border-indigo-500/20 bg-gradient-to-br from-indigo-500/10 via-surface to-emerald-500/10 shadow-[0_0_0_1px_rgba(79,70,229,0.06)]";
 
   const vsStrip = isPvp ? "from-rose-600/90 to-indigo-700" : "from-indigo-700 to-emerald-700";
 
@@ -292,7 +292,7 @@ export function BattleMatchClient() {
             <div className="flex flex-wrap items-center gap-2">
               <div
                 aria-live="polite"
-                className="w-full rounded-2xl border border-ink/10 bg-white/90 px-4 py-2.5 shadow-sm sm:w-auto sm:min-w-[12rem]"
+                className="w-full rounded-2xl border border-ink/10 bg-surface px-4 py-2.5 shadow-sm sm:w-auto sm:min-w-[12rem]"
               >
                 <p className="text-[10px] font-black uppercase tracking-wider text-muted">{labels.finalScore}</p>
                 <p className="mt-0.5 text-xl font-black tabular-nums text-ink">{scoreLabel}</p>
@@ -344,7 +344,7 @@ export function BattleMatchClient() {
           </div>
 
           {isPvp ? (
-            <div className="mt-5 flex flex-wrap items-center gap-4 rounded-2xl border border-rose-200/40 bg-rose-50/50 p-4">
+            <div className="mt-5 flex flex-wrap items-center gap-4 rounded-2xl border border-rose-500/25 bg-rose-500/10 p-4">
               <div
                 aria-hidden
                 className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-rose-500 to-indigo-600 text-[11px] font-black leading-tight text-white"
@@ -359,7 +359,7 @@ export function BattleMatchClient() {
               </div>
             </div>
           ) : (
-            <div className="mt-5 flex flex-wrap items-center gap-4 rounded-2xl border border-indigo-200/35 bg-indigo-50/40 p-4">
+            <div className="mt-5 flex flex-wrap items-center gap-4 rounded-2xl border border-indigo-500/25 bg-indigo-500/10 p-4">
               <BattleBotAvatar
                 className="h-14 w-14 shrink-0 rounded-2xl"
                 fallback={displayedBot.avatarFallback}
@@ -368,7 +368,7 @@ export function BattleMatchClient() {
                 state={botState}
               />
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-black uppercase tracking-wide text-indigo-800/80">
+                <p className="text-xs font-black uppercase tracking-wide text-indigo-700">
                   {labels.botBadge}
                 </p>
                 <p className="truncate text-base font-bold text-ink">{botName(labels, displayedBot.label)}</p>
@@ -380,15 +380,15 @@ export function BattleMatchClient() {
           {/* Bot speech bubble */}
           {botComment && battleMode === "bot" && (
             <div className="relative mt-2 ml-8 animate-[fadeIn_0.2s_ease-out]" role="status" aria-live="polite">
-              <div className="absolute -top-1.5 left-6 h-3 w-3 rotate-45 border-l border-t border-indigo-200/60 bg-white" />
-              <div className="rounded-xl border border-indigo-200/60 bg-white px-3.5 py-2 shadow-sm">
+              <div className="absolute -top-1.5 left-6 h-3 w-3 rotate-45 border-l border-t border-indigo-500/25 bg-surface" />
+              <div className="rounded-xl border border-indigo-500/25 bg-surface px-3.5 py-2 shadow-sm">
                 <p className="text-sm font-semibold leading-5 text-ink" lang="ja">{botComment}</p>
               </div>
             </div>
           )}
 
           <section
-            className={`relative mt-6 overflow-hidden rounded-2xl border border-ink/10 bg-white/90 shadow-sm ${
+            className={`relative mt-6 overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-sm ${
               round && !answerResult ? "battle-question-active" : ""
             }`}
           >
@@ -410,7 +410,7 @@ export function BattleMatchClient() {
                     ) : (
                       <>
                         <button
-                          className="inline-flex min-h-10 items-center rounded-xl bg-leaf px-4 text-sm font-bold text-white hover:bg-leaf/90 disabled:opacity-50"
+                          className="inline-flex min-h-10 items-center rounded-xl bg-emerald-600 px-4 text-sm font-bold text-white hover:bg-emerald-500 disabled:opacity-50"
                           disabled={!userId || rematchBusy}
                           onClick={connectAndStart}
                           type="button"
@@ -418,7 +418,7 @@ export function BattleMatchClient() {
                           {rematchBusy ? labels.connecting : labels.rematch}
                         </button>
                         <Link
-                          className="inline-flex min-h-10 items-center rounded-xl border border-ink/20 bg-white px-4 text-sm font-bold text-ink hover:bg-paper"
+                          className="inline-flex min-h-10 items-center rounded-xl border border-ink/20 bg-surface px-4 text-sm font-bold text-ink hover:bg-paper"
                           href={`/${locale}/battle`}
                         >
                           {labels.backToLobby}
@@ -473,9 +473,9 @@ export function BattleMatchClient() {
               ) : null}
 
               {!round && !outcome ? (
-                <div className="grid min-h-[12rem] place-items-center rounded-2xl border border-dashed border-ink/10 bg-gradient-to-b from-paper/80 to-white/60 p-8 text-center">
+                <div className="grid min-h-[12rem] place-items-center rounded-2xl border border-dashed border-ink/10 bg-gradient-to-b from-paper/80 to-surface/60 p-8 text-center">
                   <div className="flex flex-col items-center gap-3">
-                    <span className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 text-2xl shadow-sm" aria-hidden>⚔️</span>
+                    <span className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-indigo-500/15 to-blue-500/15 text-2xl shadow-sm" aria-hidden>⚔️</span>
                     <p className="max-w-md text-sm font-semibold leading-6 text-muted">
                       {showCountdownOverlay ? labels.countdownPreparing : labels.notStartedHint}
                     </p>
@@ -535,7 +535,7 @@ export function BattleMatchClient() {
               ) : null}
 
               {outcome ? (
-                <div className="relative overflow-hidden rounded-2xl border border-ink/10 bg-gradient-to-br from-paper/90 to-white p-5">
+                <div className="relative overflow-hidden rounded-2xl border border-ink/10 bg-gradient-to-br from-paper/90 to-surface p-5">
                   <BattlePvpOutcomeEffects fireworks={showPvpVictoryFireworks} />
                   <BattleVictoryConfetti active={showBotVictoryConfetti} />
                   <div className="relative z-[2]">
@@ -547,7 +547,7 @@ export function BattleMatchClient() {
                         {pvpOutcomeBody}
                       </p>
                     ) : null}
-                    <p className="mt-3 inline-flex items-center gap-2 rounded-xl border border-ink/10 bg-white px-4 py-2 text-base font-black tabular-nums text-ink shadow-sm">
+                    <p className="mt-3 inline-flex items-center gap-2 rounded-xl border border-ink/10 bg-surface px-4 py-2 text-base font-black tabular-nums text-ink shadow-sm">
                       <span className="text-muted">{labels.finalScore}:</span> {userScore} - {opponentScore}
                     </p>
                     <div className="mt-5 flex flex-wrap gap-2">
@@ -560,7 +560,7 @@ export function BattleMatchClient() {
                       </Link>
                     ) : (
                       <button
-                        className="inline-flex min-h-10 items-center rounded-xl bg-leaf px-4 text-sm font-bold text-white hover:bg-leaf/90 disabled:opacity-50"
+                        className="inline-flex min-h-10 items-center rounded-xl bg-emerald-600 px-4 text-sm font-bold text-white hover:bg-emerald-500 disabled:opacity-50"
                         disabled={!userId || rematchBusy}
                         onClick={connectAndStart}
                         type="button"
@@ -570,7 +570,7 @@ export function BattleMatchClient() {
                     )}
                     {!isPvp && outcome === "lose" && remediation ? (
                       <a
-                        className="inline-flex min-h-10 items-center rounded-xl border border-ink/15 bg-white px-3 text-sm font-bold text-ink hover:bg-paper"
+                        className="inline-flex min-h-10 items-center rounded-xl border border-ink/15 bg-surface px-3 text-sm font-bold text-ink hover:bg-paper"
                         href={remediation.ctaPath}
                       >
                         {labels.finishedLoseCta}
@@ -578,7 +578,7 @@ export function BattleMatchClient() {
                     ) : null}
                     {labels.shareResult && !shareUrl ? (
                       <button
-                        className="inline-flex min-h-10 items-center rounded-xl border border-ink/20 bg-white px-4 text-sm font-bold text-ink hover:bg-paper disabled:opacity-50"
+                        className="inline-flex min-h-10 items-center rounded-xl border border-ink/20 bg-surface px-4 text-sm font-bold text-ink hover:bg-paper disabled:opacity-50"
                         disabled={shareLoading || !userId}
                         onClick={() => void handleShareResult()}
                         type="button"
@@ -587,7 +587,7 @@ export function BattleMatchClient() {
                       </button>
                     ) : null}
                     <button
-                      className="inline-flex min-h-10 items-center rounded-xl border border-[hsl(var(--border))] px-4 text-sm font-medium text-[hsl(var(--muted))] hover:text-[hsl(var(--ink))] transition-colors"
+                      className="inline-flex min-h-10 items-center rounded-xl border border-ink/20 bg-surface px-4 text-sm font-medium text-muted hover:bg-paper hover:text-ink transition-colors"
                       disabled={!userId}
                       onClick={() => setShareDrawerOpen(true)}
                       type="button"

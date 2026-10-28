@@ -30,6 +30,7 @@ import (
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcarddeck"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/realtime"
 )
 
 // ── Analytics ───────────────────────────────────────────────────────────────
@@ -572,8 +573,8 @@ func getBattleChatRecentHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 	}
 }
 
-// postBattleChatHandler persists a learner's global lobby message.
-func postBattleChatHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
+// postBattleChatHandler persists a learner's global lobby message and broadcasts it to the lobby.
+func postBattleChatHandler(db *pgxpool.Pool, battle *realtime.BattleHandler, logger *slog.Logger) http.HandlerFunc {
 	type message struct {
 		CreatedAt   string  `json:"createdAt"`
 		DisplayName *string `json:"displayName"`
@@ -607,6 +608,15 @@ func postBattleChatHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 			writeJSONError(w, "message must contain 1 to 500 characters", http.StatusBadRequest)
 			return
 		}
+		if battle != nil && !battle.CheckAndRecordChatRate(identity.UserID) {
+			const rateQ = `INSERT INTO analytics.analytics_event (event_name, user_id, source, payload)
+				VALUES ('battle_chat_rate_limited', $1, 'api', '{"roomKey":"global","transport":"http"}'::jsonb)`
+			if _, err := db.Exec(r.Context(), rateQ, identity.UserID); err != nil {
+				logger.Warn("record battle chat rate-limit event", "error", err)
+			}
+			writeJSONError(w, "Chat rate limit exceeded. Please wait before sending more messages.", http.StatusTooManyRequests)
+			return
+		}
 		var saved message
 		var createdAt time.Time
 		const q = `INSERT INTO learning.battle_chat_message (room_key, user_id, display_name, message, kind, moderation_state)
@@ -621,7 +631,66 @@ func postBattleChatHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 			return
 		}
 		saved.CreatedAt = createdAt.UTC().Format(time.RFC3339)
+		if battle != nil {
+			battle.BroadcastLobbyMessage(realtime.LobbyMessage{
+				CreatedAt:   saved.CreatedAt,
+				DisplayName: saved.DisplayName,
+				ID:          saved.ID,
+				Kind:        saved.Kind,
+				Message:     saved.Message,
+				RoomKey:     saved.RoomKey,
+				UserID:      saved.UserID,
+			})
+		}
 		writeJSON(w, http.StatusCreated, saved)
+	}
+}
+
+// getBattlePlayerStatsHandler implements GET /api/battle/player-stats?userId=<uuid>.
+// Authenticated learner route returning aggregate battle stats for a player.
+func getBattlePlayerStatsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := authn.GetLearnerIdentity(r.Context()); !ok {
+			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		targetUserID := strings.TrimSpace(r.URL.Query().Get("userId"))
+		if targetUserID == "" || !isValidUUID(targetUserID) {
+			writeJSONError(w, "userId must be a valid UUID", http.StatusBadRequest)
+			return
+		}
+		const q = `WITH participants AS (
+			SELECT bs.user_score AS my_score, bs.opponent_score AS their_score
+			FROM learning.battle_session bs
+			WHERE bs.status = 'completed' AND bs.user_id = $1::uuid
+			UNION ALL
+			SELECT bs.opponent_score AS my_score, bs.user_score AS their_score
+			FROM learning.battle_session bs
+			WHERE bs.status = 'completed' AND bs.mode = 'pvp' AND bs.opponent_user_id = $1::uuid
+		)
+		SELECT
+			COUNT(*)::int AS completed_matches,
+			COUNT(*) FILTER (WHERE my_score > their_score)::int AS wins,
+			COUNT(*) FILTER (WHERE my_score < their_score)::int AS losses,
+			COUNT(*) FILTER (WHERE my_score = their_score)::int AS draws
+		FROM participants`
+		var completedMatches, wins, losses, draws int
+		if err := db.QueryRow(r.Context(), q, targetUserID).Scan(&completedMatches, &wins, &losses, &draws); err != nil {
+			logger.Error("query battle player stats", "error", err, "target_user_id", targetUserID)
+			writeJSONError(w, "unable to load player stats", http.StatusInternalServerError)
+			return
+		}
+		winRatePct := 0.0
+		if completedMatches > 0 {
+			winRatePct = math.Round((float64(wins)/float64(completedMatches))*1000) / 10
+		}
+		writeJSON(w, http.StatusOK, map[string]any{
+			"completedMatches": completedMatches,
+			"draws":            draws,
+			"losses":           losses,
+			"winRatePct":       winRatePct,
+			"wins":             wins,
+		})
 	}
 }
 

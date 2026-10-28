@@ -16342,7 +16342,7 @@
             "learnerGuard",
             "authn.CSRFGuard(csrfCfg)"
           ],
-          "handler": "postBattleChatHandler(deps.DBPool, deps.Logger)",
+          "handler": "postBattleChatHandler(deps.DBPool, battleRealtime, deps.Logger)",
           "runtimeConditions": [
             "deps.DBPool != nil && deps.SessionStore != nil"
           ]
@@ -16422,6 +16422,33 @@
             "learnerGuard"
           ],
           "handler": "getBattleLeaderboardHandler(deps.DBPool, deps.Logger)",
+          "runtimeConditions": [
+            "deps.DBPool != nil && deps.SessionStore != nil"
+          ]
+        }
+      }
+    },
+    "/api/battle/player-stats": {
+      "get": {
+        "operationId": "getApiBattlePlayerStats",
+        "responses": {
+          "default": {
+            "description": "Response schema is not yet verified; see the route inventory."
+          }
+        },
+        "summary": "Source-discovered route handled by getBattlePlayerStatsHandler(deps.DBPool, deps.Logger)",
+        "tags": [
+          "battle"
+        ],
+        "x-contract-verification": {
+          "scope": "route/method/handler coverage only; request and response schemas are unverified",
+          "status": "unverified"
+        },
+        "x-route-source": {
+          "guards": [
+            "learnerGuard"
+          ],
+          "handler": "getBattlePlayerStatsHandler(deps.DBPool, deps.Logger)",
           "runtimeConditions": [
             "deps.DBPool != nil && deps.SessionStore != nil"
           ]

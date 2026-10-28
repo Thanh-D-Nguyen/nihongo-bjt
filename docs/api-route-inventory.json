@@ -1,11 +1,11 @@
 {
   "scope": "Static /api inventory of direct NewRouter registrations (excludes /health and /ws). Conditions do not prove runtime availability.",
-  "sourceRegisteredOperations": 638,
-  "openAPIOperations": 638,
+  "sourceRegisteredOperations": 639,
+  "openAPIOperations": 639,
   "verifiedContracts": 0,
   "testEvidencedContracts": 13,
-  "sourceOnlyContracts": 625,
-  "unverifiedContracts": 638,
+  "sourceOnlyContracts": 626,
+  "unverifiedContracts": 639,
   "runtimeVerifiedOperations": 0,
   "families": {
     "Admin / actors": {
@@ -264,7 +264,7 @@
       "testEvidencedContracts": 0
     },
     "battle": {
-      "routes": 5,
+      "routes": 6,
       "verifiedContracts": 0,
       "testEvidencedContracts": 0
     },
@@ -24540,7 +24540,7 @@
     {
       "method": "POST",
       "path": "/api/battle/chat",
-      "handler": "postBattleChatHandler(deps.DBPool, deps.Logger)",
+      "handler": "postBattleChatHandler(deps.DBPool, battleRealtime, deps.Logger)",
       "family": "battle",
       "guards": [
         "learnerGuard",
@@ -24730,6 +24730,57 @@
       "contract": {
         "method": "get",
         "openAPIPath": "/api/battle/leaderboard",
+        "status": "unverified"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [
+          "deps.DBPool != nil && deps.SessionStore != nil"
+        ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/battle/player-stats",
+      "handler": "getBattlePlayerStatsHandler(deps.DBPool, deps.Logger)",
+      "family": "battle",
+      "guards": [
+        "learnerGuard"
+      ],
+      "runtimeConditions": [
+        "deps.DBPool != nil && deps.SessionStore != nil"
+      ],
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [
+          "learnerGuard"
+        ],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [],
+        "status": "unverified",
+        "subject": "handler integration tests"
+      },
+      "contract": {
+        "method": "get",
+        "openAPIPath": "/api/battle/player-stats",
         "status": "unverified"
       },
       "runtimeAvailability": {

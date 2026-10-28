@@ -45,7 +45,7 @@ const moodStyle: Record<
   },
   idle: {
     aura: "bg-accent/10",
-    badge: "bg-surface text-muted",
+    badge: "bg-muted/70 text-white",
     motion: "scale-100",
     ring: "border-ink/10"
   },
@@ -208,7 +208,7 @@ export function BattleBotAvatar({
   return (
     <span
       aria-label={label}
-      className={`relative grid aspect-square place-items-center overflow-hidden ${isCompanion ? "rounded-full" : `rounded-[1.65rem] border bg-white/82 shadow-sm ${style.ring}`} ${pad} ${className}`}
+      className={`relative grid aspect-square place-items-center overflow-hidden ${isCompanion ? "rounded-full" : `rounded-[1.65rem] border bg-surface/90 shadow-sm ${style.ring}`} ${pad} ${className}`}
       role={label ? "img" : undefined}
       style={{ containerType: "inline-size" }}
     >
@@ -230,7 +230,7 @@ export function BattleBotAvatar({
       {showSignal ? (
         <span
           aria-hidden
-          className={`absolute right-2 top-2 h-3 w-3 rounded-full border-2 border-white shadow-sm ${style.badge}`}
+          className={`absolute right-2 top-2 h-3 w-3 rounded-full border-2 border-surface shadow-sm ${style.badge}`}
         />
       ) : null}
     </span>

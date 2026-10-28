@@ -276,9 +276,14 @@ func NewRouter(deps Dependencies) http.Handler {
 	}
 
 	// M12: Realtime WebSocket endpoints — battle and presence namespaces.
+	var battleRealtime *realtime.BattleHandler
 	if deps.SessionStore != nil {
 		rtServer := realtime.NewServer(deps.SessionStore, deps.Logger)
 		rtServer.SetPresenceService(deps.PresenceService)
+		if deps.DBPool != nil {
+			rtServer.SetBattleStore(realtime.NewPostgresBattleStore(deps.DBPool))
+		}
+		battleRealtime = rtServer.BattleHandler()
 		rtServer.Start()
 		realtime.MountRoutes(r, deps.SessionStore, rtServer, csrfCfg)
 	}
@@ -1903,11 +1908,12 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Use(learnerGuard)
 			lr.Get("/api/battle/leaderboard", getBattleLeaderboardHandler(deps.DBPool, deps.Logger))
 			lr.Get("/api/battle/chat/recent", getBattleChatRecentHandler(deps.DBPool, deps.Logger))
+			lr.Get("/api/battle/player-stats", getBattlePlayerStatsHandler(deps.DBPool, deps.Logger))
 		})
 		r.Group(func(lr chi.Router) {
 			lr.Use(learnerGuard)
 			lr.Use(authn.CSRFGuard(csrfCfg))
-			lr.Post("/api/battle/chat", postBattleChatHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/battle/chat", postBattleChatHandler(deps.DBPool, battleRealtime, deps.Logger))
 		})
 	}
 

@@ -67,6 +67,18 @@ func (s *Server) SetPresenceService(service *PresenceService) {
 	s.presence.SetService(service)
 }
 
+// SetBattleStore attaches the BattleStore used by the battle engine.
+func (s *Server) SetBattleStore(store BattleStore) {
+	if s.battle != nil {
+		s.battle.SetStore(store)
+	}
+}
+
+// BattleHandler returns the server's battle namespace handler.
+func (s *Server) BattleHandler() *BattleHandler {
+	return s.battle
+}
+
 func (s *Server) lockPresence(userID string) func() {
 	s.presenceLocksMu.Lock()
 	lock := s.presenceLocks[userID]

@@ -389,23 +389,23 @@ export function styleFor(token: BattleBotStageProfile["styleToken"]) {
   if (token === "calm") {
     return {
       accent: "bg-sky-500",
-      border: "border-sky-200",
-      panel: "from-sky-50 via-white to-emerald-50",
+      border: "border-sky-500/25",
+      panel: "from-sky-500/10 via-surface to-emerald-500/10",
       text: "text-sky-700"
     };
   }
   if (token === "sharp") {
     return {
       accent: "bg-rose-500",
-      border: "border-rose-200",
-      panel: "from-rose-50 via-white to-amber-50",
+      border: "border-rose-500/25",
+      panel: "from-rose-500/10 via-surface to-amber-500/10",
       text: "text-rose-700"
     };
   }
   return {
     accent: "bg-accent",
-    border: "border-accent/20",
-    panel: "from-blue-50 via-white to-emerald-50",
+    border: "border-accent/25",
+    panel: "from-blue-500/10 via-surface to-emerald-500/10",
     text: "text-accent"
   };
 }

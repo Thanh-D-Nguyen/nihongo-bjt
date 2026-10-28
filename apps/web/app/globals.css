@@ -1713,6 +1713,15 @@ button.primary:disabled {
   animation: battle-shimmer 1.5s ease-in-out infinite;
   border-radius: 12px;
 }
+.dark .battle-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.04) 75%
+  );
+  background-size: 200% 100%;
+}
 
 /* ─── ForYou Feed: Shimmer skeleton ─── */
 @keyframes foryou-shimmer {
@@ -1767,6 +1776,11 @@ button.primary:disabled {
     0 4px 16px -2px rgba(59, 130, 246, 0.15),
     0 0 0 1px rgba(59, 130, 246, 0.12);
 }
+.dark .battle-bot-card-selected {
+  box-shadow:
+    0 6px 20px -2px rgba(96, 165, 250, 0.25),
+    0 0 0 1px rgba(96, 165, 250, 0.35);
+}
 
 /* ─── Battle: Answer option press ─── */
 .battle-answer-btn {
@@ -1779,6 +1793,9 @@ button.primary:disabled {
 .battle-answer-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px -3px rgba(0, 0, 0, 0.08);
+}
+.dark .battle-answer-btn:hover:not(:disabled) {
+  box-shadow: 0 4px 14px -3px rgba(0, 0, 0, 0.45);
 }
 .battle-answer-btn:active:not(:disabled) {
   transform: scale(0.97);
@@ -1793,6 +1810,14 @@ button.primary:disabled {
     background-color: rgba(5, 150, 105, 0.06);
   }
 }
+@keyframes battle-correct-flash-dark {
+  0% {
+    background-color: rgba(52, 211, 153, 0.28);
+  }
+  100% {
+    background-color: rgba(52, 211, 153, 0.14);
+  }
+}
 @keyframes battle-wrong-flash {
   0% {
     background-color: rgba(220, 38, 38, 0.15);
@@ -1801,11 +1826,25 @@ button.primary:disabled {
     background-color: rgba(220, 38, 38, 0.06);
   }
 }
+@keyframes battle-wrong-flash-dark {
+  0% {
+    background-color: rgba(248, 113, 113, 0.28);
+  }
+  100% {
+    background-color: rgba(248, 113, 113, 0.14);
+  }
+}
 .battle-answer-correct {
   animation: battle-correct-flash 600ms ease-out;
 }
+.dark .battle-answer-correct {
+  animation: battle-correct-flash-dark 600ms ease-out;
+}
 .battle-answer-wrong {
   animation: battle-wrong-flash 600ms ease-out;
+}
+.dark .battle-answer-wrong {
+  animation: battle-wrong-flash-dark 600ms ease-out;
 }
 
 /* ─── Battle: Score pulse on change ─── */

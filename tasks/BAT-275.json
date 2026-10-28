@@ -1,0 +1,1305 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "BAT-275",
+  "title": "Battle realtime engine in Go: bot battle, PvP, lobby chat broadcast, player stats",
+  "start_head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+  "preexisting_changes": {
+    ".claude/skills/go-code-review": null,
+    ".claude/skills/go-concurrency": null,
+    ".claude/skills/go-context": null,
+    ".claude/skills/go-control-flow": null,
+    ".claude/skills/go-data-structures": null,
+    ".claude/skills/go-declarations": null,
+    ".claude/skills/go-defensive": null,
+    ".claude/skills/go-documentation": null,
+    ".claude/skills/go-error-handling": null,
+    ".claude/skills/go-functional-options": null,
+    ".claude/skills/go-functions": null,
+    ".claude/skills/go-generics": null,
+    ".claude/skills/go-interfaces": null,
+    ".claude/skills/go-linting": null,
+    ".claude/skills/go-logging": null,
+    ".claude/skills/go-naming": null,
+    ".claude/skills/go-packages": null,
+    ".claude/skills/go-performance": null,
+    ".claude/skills/go-style-core": null,
+    ".claude/skills/go-testing": null,
+    "data/skills/go-code-review": null,
+    "data/skills/go-concurrency": null,
+    "data/skills/go-context": null,
+    "data/skills/go-control-flow": null,
+    "data/skills/go-data-structures": null,
+    "data/skills/go-declarations": null,
+    "data/skills/go-defensive": null,
+    "data/skills/go-documentation": null,
+    "data/skills/go-error-handling": null,
+    "data/skills/go-functional-options": null,
+    "data/skills/go-functions": null,
+    "data/skills/go-generics": null,
+    "data/skills/go-interfaces": null,
+    "data/skills/go-linting": null,
+    "data/skills/go-logging": null,
+    "data/skills/go-naming": null,
+    "data/skills/go-packages": null,
+    "data/skills/go-performance": null,
+    "data/skills/go-style-core": null,
+    "data/skills/go-testing": null,
+    ".agents/skills/go-code-review/SKILL.md": "7fe964fc46fa0f83c5a6782aea8afa9d42c8e120",
+    ".agents/skills/go-code-review/assets/review-template.md": "8a9783efd0ec1c76628410657774b598a2907293",
+    ".agents/skills/go-code-review/references/WEB-SERVER.md": "4fcdde6babb435d50f6282abb384740a5ee408a9",
+    ".agents/skills/go-code-review/scripts/pre-review.sh": "e0b1334be59928788c20d7faeaf24a8510eeab34",
+    ".agents/skills/go-concurrency/SKILL.md": "417bb46ef3c1f7c23a8f5e8fc88cd1e0bc9cab2d",
+    ".agents/skills/go-concurrency/references/ADVANCED-PATTERNS.md": "5e9d68fedc50fcfdd51f8d8de18f0080a05e04c5",
+    ".agents/skills/go-concurrency/references/BUFFER-POOLING.md": "64bcc0b563bbe469118e7c71add00aabc9315da1",
+    ".agents/skills/go-concurrency/references/GOROUTINE-PATTERNS.md": "a3f6541f7c6f2e575e83cf3a2384a43c4a28e691",
+    ".agents/skills/go-concurrency/references/SYNC-PRIMITIVES.md": "ad2a14c5f066f6600af62fb42daef449fc7312d4",
+    ".agents/skills/go-context/SKILL.md": "514123426d4c5927d9cf9ccd209b4e669799d5ea",
+    ".agents/skills/go-context/references/PATTERNS.md": "e4562cf4f26a70586fd2e40eaf12bd0f00a3e5b3",
+    ".agents/skills/go-control-flow/SKILL.md": "beeb46ceca8596e0b7ceb08f9d0409991f7fadb2",
+    ".agents/skills/go-control-flow/references/BLANK-IDENTIFIER.md": "29ab4f1ababbeb6c3f7cd6db61a144e0f95e90d3",
+    ".agents/skills/go-control-flow/references/SWITCH-PATTERNS.md": "931d9ab97cfbac5a7c7afde29bb3e9597510834c",
+    ".agents/skills/go-data-structures/SKILL.md": "bd35416b3eb9245c0da81e03dbc9291915008ce1",
+    ".agents/skills/go-data-structures/references/SLICES.md": "ac88d798c3170a72293c61f56b0a1e97a2196d01",
+    ".agents/skills/go-declarations/SKILL.md": "0764413ec0110a4f1afe841f25923778fa1dff27",
+    ".agents/skills/go-declarations/references/INITIALIZATION.md": "cdd5ee0180c903587cfa90800bf0a4f8804ede9e",
+    ".agents/skills/go-declarations/references/IOTA.md": "1a9181deff7d79f9736489325548d8a2980e335c",
+    ".agents/skills/go-declarations/references/LITERALS.md": "1295afd2606710f26f0dde0471e008a4849c6c23",
+    ".agents/skills/go-declarations/references/SCOPE.md": "9f0a7fed185877c6069328b0d3c6cbee446064ac",
+    ".agents/skills/go-declarations/references/SHADOWING.md": "6e7a8c579ac3820a9782bf6c89030fcade46c74d",
+    ".agents/skills/go-declarations/references/STRUCTS.md": "c60e484bc666b193781cdd258598b4eea00008cf",
+    ".agents/skills/go-defensive/SKILL.md": "22ca0d797d3a5ddfa8fb7a1e4c26a89863b4d6d4",
+    ".agents/skills/go-defensive/references/BOUNDARY-COPYING.md": "f7c0110221233525c04db16750fbc754057cd3d9",
+    ".agents/skills/go-defensive/references/GLOBAL-STATE.md": "56379e0373d1749dd3bc4b638c3971bb4a0bc69d",
+    ".agents/skills/go-defensive/references/MUST-FUNCTIONS.md": "a8f7f0341af60535aa8632aa05e90d6eeb27afce",
+    ".agents/skills/go-defensive/references/PANIC-RECOVER.md": "9f3457aa3ee717118ffce6fde640fd01e4624b8e",
+    ".agents/skills/go-defensive/references/TIME-ENUMS-TAGS.md": "e381cd5c10d99bdab07d61a991a27567ed06d34e",
+    ".agents/skills/go-documentation/SKILL.md": "eeca8e8a5e8133b4ef43e77dcbd83c48d0635c11",
+    ".agents/skills/go-documentation/assets/doc-template.go": "a2c54b85855d15d364238297dcf47de0c721ffc8",
+    ".agents/skills/go-documentation/references/CONVENTIONS.md": "12b8df0bd055c11bdc044e2a5e20cc4b829763cf",
+    ".agents/skills/go-documentation/references/EXAMPLES.md": "0b2b3879b19125593417e52d9f1d4a8f42a8be75",
+    ".agents/skills/go-documentation/references/FORMATTING.md": "4977008a67dfe01cde2fe05c8915511113b97bc1",
+    ".agents/skills/go-documentation/scripts/check-docs-ast.go": "ff1564b1d5f7bd97a6bdd6167830f3ce4b657042",
+    ".agents/skills/go-documentation/scripts/check-docs.sh": "de69f135fe4cb5850101108a9d7bbcb70f68c8b9",
+    ".agents/skills/go-error-handling/SKILL.md": "275a1a65cc6c02d4a611b7bd83ec73c5d493792a",
+    ".agents/skills/go-error-handling/references/ERROR-FLOW.md": "182827f4235397d8d7b837153351ba4443cbb78a",
+    ".agents/skills/go-error-handling/references/ERROR-TYPES.md": "e0d3ef3fb7f61daa2a65b5e356543d0160a5c048",
+    ".agents/skills/go-error-handling/references/WRAPPING.md": "954cd6dabf682ebe1a6485fca463903418454d5a",
+    ".agents/skills/go-error-handling/scripts/check-errors-ast.go": "d68d6e91e8a6e2ed110b7682a3deebc7f865904c",
+    ".agents/skills/go-error-handling/scripts/check-errors.sh": "40c5be771e6b8ff91a54097f4d1ef39fbd04d6f4",
+    ".agents/skills/go-functional-options/SKILL.md": "aa249b24abfef30bcdc4199aeab4974b7f63ced5",
+    ".agents/skills/go-functional-options/references/OPTIONS-VS-STRUCTS.md": "6b323dc0b8f166fb228c8bff86e43a6003890a29",
+    ".agents/skills/go-functions/SKILL.md": "906fa01432c3aa6899ced2a490558a9a4784d45e",
+    ".agents/skills/go-functions/references/PRINTF-STRINGER.md": "1c348839d960dfe0732266ce975cd334c3349387",
+    ".agents/skills/go-functions/references/SIGNATURES.md": "d1ae7ca3b7bec091a7840450c3ee8370538431eb",
+    ".agents/skills/go-generics/SKILL.md": "0cfa9811a90ca9d76137bfd6dc96d2cd0faee8ea",
+    ".agents/skills/go-generics/references/CONSTRAINTS.md": "16a871fc474137f11234ba1b52b711c36eee89cd",
+    ".agents/skills/go-interfaces/SKILL.md": "358cab26d71de1fbd788855fbb312425bca86022",
+    ".agents/skills/go-interfaces/references/EMBEDDING.md": "e65e34b28910406614ad1afb6c65e3f64d78d0c3",
+    ".agents/skills/go-interfaces/references/RECEIVER-TYPE.md": "3c0c1ef6eca9521d7e449a28eb5d30a1cd3d86a5",
+    ".agents/skills/go-interfaces/scripts/check-interface-compliance.go": "69870981bc6f7e28115aa3fedf2aa816ff48385c",
+    ".agents/skills/go-interfaces/scripts/check-interface-compliance.sh": "bbd0472539cabf40df1a43a4e8a6017ea4e7498f",
+    ".agents/skills/go-linting/SKILL.md": "9c1964f70a0fadfe9df78836596468c13466798a",
+    ".agents/skills/go-linting/assets/golangci.yml": "3a50744b8efb33c6c75cf487f74abca3dc330d74",
+    ".agents/skills/go-linting/scripts/setup-lint.sh": "7ae0c10e9ddf6d2ed5dba97157d7d8a645ac2482",
+    ".agents/skills/go-logging/SKILL.md": "2db7104d437e1b52774b85a9512749831c88e83c",
+    ".agents/skills/go-logging/references/LEVELS-AND-CONTEXT.md": "b5c3e9518dc7960e58f3253120fd3b786a055d8e",
+    ".agents/skills/go-logging/references/LOGGING-PATTERNS.md": "e96f6da3d61366fcfd000aa348e51e96624b3aca",
+    ".agents/skills/go-naming/SKILL.md": "22cd09ecd7f1ec994e95c5721cb5417cba5b6e35",
+    ".agents/skills/go-naming/references/IDENTIFIERS.md": "45fed1977addffe5e798ee8d22a7fd3abcad961a",
+    ".agents/skills/go-naming/references/REPETITION.md": "cac938e443d28684dc06b1cba6fffba0afbefd43",
+    ".agents/skills/go-naming/references/VARIABLES.md": "a53492626e166a540b232210fba35f19eb6c9ccd",
+    ".agents/skills/go-naming/scripts/check-naming.sh": "229fd02ea1d97cbd554c1c188c098390c68807d7",
+    ".agents/skills/go-packages/SKILL.md": "2dbb93b4ba4e6272fce380f248f0bd90f122f353",
+    ".agents/skills/go-packages/references/IMPORTS.md": "e8a78251cc55f4a0ee2cede26ec8380cd47c4b1c",
+    ".agents/skills/go-packages/references/PACKAGE-SIZE.md": "1eb3e8198d594ab4d74f347d321301923f70b244",
+    ".agents/skills/go-performance/SKILL.md": "377e4707284c09c29e38383906f0c86cbb32013d",
+    ".agents/skills/go-performance/references/BENCHMARKS.md": "7598daa22af80a1041e4cd664f4880ee8b4da961",
+    ".agents/skills/go-performance/references/STRING-OPTIMIZATION.md": "c938bb9b7ee1969abb0efb32250ceabf0cb2e9d1",
+    ".agents/skills/go-performance/scripts/bench-compare.sh": "47f03925514e874f41e0f1c060ec2ee340599fba",
+    ".agents/skills/go-style-core/SKILL.md": "24d8c9308c077057fee6dba6b2e819296efc6c0a",
+    ".agents/skills/go-style-core/references/FORMATTING.md": "57150714c9c4823e3eaad5697d47ee60a9148ef9",
+    ".agents/skills/go-style-core/references/PRINCIPLES.md": "ac3882e1c383a49d4d1119987b0da5fabf7856e8",
+    ".agents/skills/go-testing/SKILL.md": "151955b5e5c11231f95c4963de0b60b701d2613f",
+    ".agents/skills/go-testing/assets/table-test-template.go": "35ca80331a034f24b2c0303bf7899aafa3e8f76b",
+    ".agents/skills/go-testing/references/INTEGRATION.md": "908d12fda7a455f65a6f010daa08d7bca64b5edb",
+    ".agents/skills/go-testing/references/TABLE-DRIVEN-TESTS.md": "37c05d34880c1ca9082793cb9e01ed3a946bab3a",
+    ".agents/skills/go-testing/references/TEST-HELPERS.md": "68c1be3799f2e9034ac44c91671c7e3188461da5",
+    ".agents/skills/go-testing/references/TEST-ORGANIZATION.md": "3f550d6b5acc8342d67bcefa1e29f50f92dc2aa3",
+    ".agents/skills/go-testing/references/VALIDATION-APIS.md": "1174baeadf7bab191254539f427812af691e63d5",
+    ".agents/skills/go-testing/scripts/gen-table-test.sh": "bd4aff5c775c73e1cd08c95eca6b8fcf5105a248",
+    ".claude/settings.local.json": "6f5f8c1b02179af4f269ccdf3f9adb17ff6614b3",
+    "agent/skills/go-code-review/SKILL.md": "38e1370af3709e0dacef67208f4740421e0c819a",
+    "agent/skills/go-code-review/assets/review-template.md": "8a9783efd0ec1c76628410657774b598a2907293",
+    "agent/skills/go-code-review/references/WEB-SERVER.md": "4fcdde6babb435d50f6282abb384740a5ee408a9",
+    "agent/skills/go-code-review/scripts/pre-review.sh": "e0b1334be59928788c20d7faeaf24a8510eeab34",
+    "agent/skills/go-concurrency/SKILL.md": "ae151dd07e18ec8d50624e59aea42289766a9bb7",
+    "agent/skills/go-concurrency/references/ADVANCED-PATTERNS.md": "5e9d68fedc50fcfdd51f8d8de18f0080a05e04c5",
+    "agent/skills/go-concurrency/references/BUFFER-POOLING.md": "64bcc0b563bbe469118e7c71add00aabc9315da1",
+    "agent/skills/go-concurrency/references/GOROUTINE-PATTERNS.md": "a3f6541f7c6f2e575e83cf3a2384a43c4a28e691",
+    "agent/skills/go-concurrency/references/SYNC-PRIMITIVES.md": "ad2a14c5f066f6600af62fb42daef449fc7312d4",
+    "agent/skills/go-context/SKILL.md": "dc510e8b08fbf09e81d776bb0dace5d60571a10a",
+    "agent/skills/go-context/references/PATTERNS.md": "e4562cf4f26a70586fd2e40eaf12bd0f00a3e5b3",
+    "agent/skills/go-control-flow/SKILL.md": "d4f7488b330c62731fa189c201e76a4d7de4c320",
+    "agent/skills/go-control-flow/references/BLANK-IDENTIFIER.md": "29ab4f1ababbeb6c3f7cd6db61a144e0f95e90d3",
+    "agent/skills/go-control-flow/references/SWITCH-PATTERNS.md": "931d9ab97cfbac5a7c7afde29bb3e9597510834c",
+    "agent/skills/go-data-structures/SKILL.md": "ccfb7dc53efd7f31a25db1c1f890949f9f44e3e8",
+    "agent/skills/go-data-structures/references/SLICES.md": "ac88d798c3170a72293c61f56b0a1e97a2196d01",
+    "agent/skills/go-declarations/SKILL.md": "778ada6895ce51c1ca450c97c78a8d48067d02b9",
+    "agent/skills/go-declarations/references/INITIALIZATION.md": "cdd5ee0180c903587cfa90800bf0a4f8804ede9e",
+    "agent/skills/go-declarations/references/IOTA.md": "1a9181deff7d79f9736489325548d8a2980e335c",
+    "agent/skills/go-declarations/references/LITERALS.md": "1295afd2606710f26f0dde0471e008a4849c6c23",
+    "agent/skills/go-declarations/references/SCOPE.md": "9f0a7fed185877c6069328b0d3c6cbee446064ac",
+    "agent/skills/go-declarations/references/SHADOWING.md": "6e7a8c579ac3820a9782bf6c89030fcade46c74d",
+    "agent/skills/go-declarations/references/STRUCTS.md": "c60e484bc666b193781cdd258598b4eea00008cf",
+    "agent/skills/go-defensive/SKILL.md": "74b548c880442d44d8c397f170ebb01f579138d0",
+    "agent/skills/go-defensive/references/BOUNDARY-COPYING.md": "f7c0110221233525c04db16750fbc754057cd3d9",
+    "agent/skills/go-defensive/references/GLOBAL-STATE.md": "56379e0373d1749dd3bc4b638c3971bb4a0bc69d",
+    "agent/skills/go-defensive/references/MUST-FUNCTIONS.md": "a8f7f0341af60535aa8632aa05e90d6eeb27afce",
+    "agent/skills/go-defensive/references/PANIC-RECOVER.md": "9f3457aa3ee717118ffce6fde640fd01e4624b8e",
+    "agent/skills/go-defensive/references/TIME-ENUMS-TAGS.md": "e381cd5c10d99bdab07d61a991a27567ed06d34e",
+    "agent/skills/go-documentation/SKILL.md": "5a6f8e99fcb94c022b9da10af2db5b76bcbd68a6",
+    "agent/skills/go-documentation/assets/doc-template.go": "a2c54b85855d15d364238297dcf47de0c721ffc8",
+    "agent/skills/go-documentation/references/CONVENTIONS.md": "12b8df0bd055c11bdc044e2a5e20cc4b829763cf",
+    "agent/skills/go-documentation/references/EXAMPLES.md": "0b2b3879b19125593417e52d9f1d4a8f42a8be75",
+    "agent/skills/go-documentation/references/FORMATTING.md": "4977008a67dfe01cde2fe05c8915511113b97bc1",
+    "agent/skills/go-documentation/scripts/check-docs-ast.go": "ff1564b1d5f7bd97a6bdd6167830f3ce4b657042",
+    "agent/skills/go-documentation/scripts/check-docs.sh": "de69f135fe4cb5850101108a9d7bbcb70f68c8b9",
+    "agent/skills/go-error-handling/SKILL.md": "4e2e7e00e6c1e62b79b0a9a0e92c4f9a227f4478",
+    "agent/skills/go-error-handling/references/ERROR-FLOW.md": "182827f4235397d8d7b837153351ba4443cbb78a",
+    "agent/skills/go-error-handling/references/ERROR-TYPES.md": "e0d3ef3fb7f61daa2a65b5e356543d0160a5c048",
+    "agent/skills/go-error-handling/references/WRAPPING.md": "954cd6dabf682ebe1a6485fca463903418454d5a",
+    "agent/skills/go-error-handling/scripts/check-errors-ast.go": "d68d6e91e8a6e2ed110b7682a3deebc7f865904c",
+    "agent/skills/go-error-handling/scripts/check-errors.sh": "40c5be771e6b8ff91a54097f4d1ef39fbd04d6f4",
+    "agent/skills/go-functional-options/SKILL.md": "ac1f6b91390d8606e8476aa22bb0ea9d6b39d85d",
+    "agent/skills/go-functional-options/references/OPTIONS-VS-STRUCTS.md": "6b323dc0b8f166fb228c8bff86e43a6003890a29",
+    "agent/skills/go-functions/SKILL.md": "ed1cff83b92245295252c85998142ff2eb4e8eaa",
+    "agent/skills/go-functions/references/PRINTF-STRINGER.md": "1c348839d960dfe0732266ce975cd334c3349387",
+    "agent/skills/go-functions/references/SIGNATURES.md": "d1ae7ca3b7bec091a7840450c3ee8370538431eb",
+    "agent/skills/go-generics/SKILL.md": "079e81d17cd4f657207d6fcdd3f84e0525e79b88",
+    "agent/skills/go-generics/references/CONSTRAINTS.md": "16a871fc474137f11234ba1b52b711c36eee89cd",
+    "agent/skills/go-interfaces/SKILL.md": "582a1c6355c88cd021528826fa211daf1a88ff3e",
+    "agent/skills/go-interfaces/references/EMBEDDING.md": "e65e34b28910406614ad1afb6c65e3f64d78d0c3",
+    "agent/skills/go-interfaces/references/RECEIVER-TYPE.md": "3c0c1ef6eca9521d7e449a28eb5d30a1cd3d86a5",
+    "agent/skills/go-interfaces/scripts/check-interface-compliance.go": "69870981bc6f7e28115aa3fedf2aa816ff48385c",
+    "agent/skills/go-interfaces/scripts/check-interface-compliance.sh": "bbd0472539cabf40df1a43a4e8a6017ea4e7498f",
+    "agent/skills/go-linting/SKILL.md": "283c456cb27919b0ae3df92c4bfb6534c073b3f0",
+    "agent/skills/go-linting/assets/golangci.yml": "3a50744b8efb33c6c75cf487f74abca3dc330d74",
+    "agent/skills/go-linting/scripts/setup-lint.sh": "7ae0c10e9ddf6d2ed5dba97157d7d8a645ac2482",
+    "agent/skills/go-logging/SKILL.md": "c8d6f92a88553f852f71d48f18f4cc3535a98a0c",
+    "agent/skills/go-logging/references/LEVELS-AND-CONTEXT.md": "b5c3e9518dc7960e58f3253120fd3b786a055d8e",
+    "agent/skills/go-logging/references/LOGGING-PATTERNS.md": "e96f6da3d61366fcfd000aa348e51e96624b3aca",
+    "agent/skills/go-naming/SKILL.md": "401bf66254da686d3ff094d7ff5cfac378d1e788",
+    "agent/skills/go-naming/references/IDENTIFIERS.md": "45fed1977addffe5e798ee8d22a7fd3abcad961a",
+    "agent/skills/go-naming/references/REPETITION.md": "cac938e443d28684dc06b1cba6fffba0afbefd43",
+    "agent/skills/go-naming/references/VARIABLES.md": "a53492626e166a540b232210fba35f19eb6c9ccd",
+    "agent/skills/go-naming/scripts/check-naming.sh": "229fd02ea1d97cbd554c1c188c098390c68807d7",
+    "agent/skills/go-packages/SKILL.md": "c59032518d91b5d0725a5b6a2b8a9cd2393b8ca3",
+    "agent/skills/go-packages/references/IMPORTS.md": "e8a78251cc55f4a0ee2cede26ec8380cd47c4b1c",
+    "agent/skills/go-packages/references/PACKAGE-SIZE.md": "1eb3e8198d594ab4d74f347d321301923f70b244",
+    "agent/skills/go-performance/SKILL.md": "230475c02e37af5d59c39b261582ab9633f10b3e",
+    "agent/skills/go-performance/references/BENCHMARKS.md": "7598daa22af80a1041e4cd664f4880ee8b4da961",
+    "agent/skills/go-performance/references/STRING-OPTIMIZATION.md": "c938bb9b7ee1969abb0efb32250ceabf0cb2e9d1",
+    "agent/skills/go-performance/scripts/bench-compare.sh": "47f03925514e874f41e0f1c060ec2ee340599fba",
+    "agent/skills/go-style-core/SKILL.md": "dbdd41acbe868abd361fa9809b1a2c22d48b2837",
+    "agent/skills/go-style-core/references/FORMATTING.md": "57150714c9c4823e3eaad5697d47ee60a9148ef9",
+    "agent/skills/go-style-core/references/PRINCIPLES.md": "ac3882e1c383a49d4d1119987b0da5fabf7856e8",
+    "agent/skills/go-testing/SKILL.md": "76051ea4e579817abb8196767c170a93657f14d9",
+    "agent/skills/go-testing/assets/table-test-template.go": "35ca80331a034f24b2c0303bf7899aafa3e8f76b",
+    "agent/skills/go-testing/references/INTEGRATION.md": "908d12fda7a455f65a6f010daa08d7bca64b5edb",
+    "agent/skills/go-testing/references/TABLE-DRIVEN-TESTS.md": "37c05d34880c1ca9082793cb9e01ed3a946bab3a",
+    "agent/skills/go-testing/references/TEST-HELPERS.md": "68c1be3799f2e9034ac44c91671c7e3188461da5",
+    "agent/skills/go-testing/references/TEST-ORGANIZATION.md": "3f550d6b5acc8342d67bcefa1e29f50f92dc2aa3",
+    "agent/skills/go-testing/references/VALIDATION-APIS.md": "1174baeadf7bab191254539f427812af691e63d5",
+    "agent/skills/go-testing/scripts/gen-table-test.sh": "bd4aff5c775c73e1cd08c95eca6b8fcf5105a248",
+    "apps/web/next-env.d.ts": "ce4e94a6b10f160ee021fe18939af160d2927dcf",
+    "apps/web/tsconfig.tsbuildinfo": "c63438fea453696cfb6150cfbc6986d084fc9f58",
+    "skills-lock.json": "df5b1109db0d0231747f4561543fea4abaa34327"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "challenge_bot starts a server-authoritative bot match: match_found, countdown, question (no correct key leaked), answer_result, score_update, finished; persisted in learning.battle_session/battle_round"
+      },
+      {
+        "id": "AC2",
+        "text": "battle:answer validates room owner, round index, option key and idempotency; 3 invalid attempts abandon the match"
+      },
+      {
+        "id": "AC3",
+        "text": "PvP: challenge_user/accept/decline with server-derived identity; both players get pvp_match_found, synchronized questions, per-player answer_result/score_update, finished with correct outcome; forfeit and disconnect grace end the match cleanly"
+      },
+      {
+        "id": "AC4",
+        "text": "POST /api/battle/chat broadcasts battle:lobby_message to lobby members and is rate limited (429); GET /api/battle/player-stats returns compact stats"
+      },
+      {
+        "id": "AC5",
+        "text": "Client-supplied userId is never trusted: identity always comes from the authenticated connection"
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "REALTIME",
+      "API_CONTRACT",
+      "DOMAIN_LOGIC",
+      "UI_ONLY"
+    ],
+    "change_kind": "add",
+    "rationale": ""
+  },
+  "red_exception": {
+    "category": "new_component",
+    "reason": "Go battle engine (bot/PvP/commentary/store), player-stats endpoint, and Battle UI dark mode + runtime socket readiness",
+    "declared_before_red": true
+  },
+  "red_targets": [],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/api-go/internal/realtime/battle_handler.go",
+      "find": "strikes >= invalidAnswerStrikeLimit",
+      "replace": "strikes > invalidAnswerStrikeLimit"
+    },
+    "targets": [
+      {
+        "runner": "go",
+        "package": "./internal/realtime",
+        "test": "TestBattleEngine_BotAnswerValidationAndAbuse",
+        "expect": "timed out waiting for abuse_detected"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-28T02:40:57.907Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-28T02:44:34.294Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-28T02:44:34.650Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-28T04:33:37.361Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-10-28T04:40:28.673Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-28T04:41:26.692Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-28T04:41:37.602Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4"
+    },
+    {
+      "state": "WAITING_FOR_DECISION",
+      "at": "2026-10-28T04:58:14.785Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-28T04:58:43.362Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-28T05:01:07.195Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-28T05:06:15.402Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-28T05:25:11.091Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-28T05:30:19.353Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-28T05:47:22.573Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-28T05:52:28.106Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4"
+    },
+    {
+      "state": "WAITING_FOR_DECISION",
+      "at": "2026-10-28T06:09:46.046Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4"
+    },
+    {
+      "state": "EXCEPTION_APPROVED",
+      "at": "2026-10-28T06:10:11.412Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-28T06:10:20.834Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-28T04:32:28.837Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "sensitivity",
+      "outcome": "INSENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/realtime/battle_handler.go",
+        "find": "strikes >= invalidAnswerStrikeLimit",
+        "replace": "strikes > invalidAnswerStrikeLimit"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBattleEngine_BotAnswerValidationAndAbuse)$ ./apps/api-go/internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/realtime stat /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-V0uc6P/tree/apps/api-go/apps/api-go/internal/realtime: directory not found FAIL ./apps/api-go/internal/realtime [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse": "timed out waiting for abuse_detected"
+      },
+      "fingerprint": "ad87d01dafa6cbbbb8cefac85e6490c74aab02290ed3ce75ee0b6729fbeb0b9d"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-28T04:32:46.192Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "sensitivity",
+      "outcome": "INSENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/realtime/battle_handler.go",
+        "find": "strikes >= invalidAnswerStrikeLimit",
+        "replace": "strikes > invalidAnswerStrikeLimit"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBattleEngine_BotAnswerValidationAndAbuse)$ ./apps/api-go/internal/realtime",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBattleEngine_BotAnswerValidationAndAbuse)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/realtime stat /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-ki7kjw/tree/apps/api-go/apps/api-go/internal/realtime: directory not found FAIL ./apps/api-go/internal/realtime [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBattleEngine_BotAnswerValidationAndAbuse battle_engine_test.go:379: timed out waiting for abuse_detected on c1 --- FAIL: TestBattleEngine_BotAnswerValidationAndAbuse (1.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse": "timed out waiting for abuse_detected",
+        "go:./internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse": "timed out waiting for abuse_detected"
+      },
+      "fingerprint": "ad87d01dafa6cbbbb8cefac85e6490c74aab02290ed3ce75ee0b6729fbeb0b9d"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-28T04:33:29.355Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/realtime/battle_handler.go",
+        "find": "strikes >= invalidAnswerStrikeLimit",
+        "replace": "strikes > invalidAnswerStrikeLimit"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBattleEngine_BotAnswerValidationAndAbuse)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBattleEngine_BotAnswerValidationAndAbuse battle_engine_test.go:379: timed out waiting for abuse_detected on c1 --- FAIL: TestBattleEngine_BotAnswerValidationAndAbuse (1.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse": "timed out waiting for abuse_detected"
+      },
+      "fingerprint": "ad87d01dafa6cbbbb8cefac85e6490c74aab02290ed3ce75ee0b6729fbeb0b9d"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-28T04:33:35.970Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBattleEngine_BotAnswerValidationAndAbuse)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "ad87d01dafa6cbbbb8cefac85e6490c74aab02290ed3ce75ee0b6729fbeb0b9d"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-28T04:34:49.180Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 1626,
+        "executed": 1626,
+        "passed": 1624,
+        "failed": 2,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "go test failed (exit 1; 2 failing test(s), 2 failing package(s))",
+      "fingerprint": "ad87d01dafa6cbbbb8cefac85e6490c74aab02290ed3ce75ee0b6729fbeb0b9d"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-28T04:35:42.032Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 584,
+        "executed": 584,
+        "passed": 584,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 849,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "ad87d01dafa6cbbbb8cefac85e6490c74aab02290ed3ce75ee0b6729fbeb0b9d"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-28T04:40:27.293Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1626,
+        "executed": 1626,
+        "passed": 1626,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1626 passed, 0 allowed skip(s)",
+      "fingerprint": "e20205a63c5878954b137d6c89db6f02b46e91481a0bdff773ffb20c3b4d247c"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-28T04:41:11.665Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 584,
+        "executed": 584,
+        "passed": 584,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 849,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "e20205a63c5878954b137d6c89db6f02b46e91481a0bdff773ffb20c3b4d247c"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-28T04:41:25.207Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBattleEngine_BotAnswerValidationAndAbuse)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e20205a63c5878954b137d6c89db6f02b46e91481a0bdff773ffb20c3b4d247c"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-28T04:41:36.246Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/realtime/battle_handler.go",
+        "find": "strikes >= invalidAnswerStrikeLimit",
+        "replace": "strikes > invalidAnswerStrikeLimit"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBattleEngine_BotAnswerValidationAndAbuse)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBattleEngine_BotAnswerValidationAndAbuse battle_engine_test.go:379: timed out waiting for abuse_detected on c1 --- FAIL: TestBattleEngine_BotAnswerValidationAndAbuse (1.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse": "timed out waiting for abuse_detected"
+      },
+      "fingerprint": "e20205a63c5878954b137d6c89db6f02b46e91481a0bdff773ffb20c3b4d247c"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-28T04:58:10.939Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 3,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/realtime/battle_handler.go",
+          "summary": "Non-owner battle:answer attempts increment the owner's strike counter (settleBotRoundAnswer :850, handleInvalidBotStrike :894); 3 messages from any user holding the room code abandon the victim's matc…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/handler_battle_lobby_contract_test.go",
+          "summary": "AC4 POST /api/battle/chat broadcast and 429 are untested (rate limit only tested on the WS path); AC3 disconnect grace untested; AC1 countdown/score_update not asserted; only one mutation-proven targe…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/realtime/battle_handler.go",
+          "summary": "25 persistence/analytics errors discarded with no logging (UpdateBotRoundWithScores, UpdatePvpRoundWithScores, MarkCompleted, MarkAbandoned, AbandonInProgressForUser), unlike the sibling presence hand…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_handler.go",
+          "summary": "Data race confirmed with -race: handleInvalidBotStrike reads room.CurrentRound without room.mu (:902) while finishBotRound writes it (:1015); masked in tests by the fake store mutex"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_handler.go",
+          "summary": "PvP disconnect grace keyed on remaining connection count (:479): no timer when the remaining player has 2+ tabs, departed user can be misidentified, and any lobby_join (:292) clears the absent player'…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_store.go",
+          "summary": "MarkCompleted/MarkAbandoned/round updates lack a status='in_progress' guard (:622); an admin abort of a live match is silently reverted to completed and counted in stats"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_handler.go",
+          "summary": "challenge_user (:1166) has no rate limit, target validation or pending-challenge cap (unbounded timers, analytics rows, fan-out to all target sockets); WS lobby_message accepts an arbitrary client roo…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_handler.go",
+          "summary": "Product decision needed: forfeits and disconnects persist as abandoned so a losing player can quit to avoid a recorded loss; archived registry bots remain playable via WS"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_ws_integration_test.go",
+          "summary": "DB tests depend on the global published-question count: the e2e test hits 3 strikes once 3+ questions exist, and the SQL conformance test assumes every picked question's correct key is A"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_commentary.go",
+          "summary": "Dead code: SetTimings/SetRandom have no callers (tests write bh.timings directly) and the user_wrong/bot_wrong triggers are never selected"
+        }
+      ],
+      "package_sha256": "9cd18a4e13e28054de7a48bc197646a2cf0c6a9ee91fe5929a628b025d71af06",
+      "fingerprint": "e20205a63c5878954b137d6c89db6f02b46e91481a0bdff773ffb20c3b4d247c"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-28T05:01:05.671Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBattleEngine_BotAnswerValidationAndAbuse)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "37c9b462013e1c2d475a53487acbe94053d9391268d1765ff40fc4b99612209b"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-28T05:01:16.651Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/realtime/battle_handler.go",
+        "find": "strikes >= invalidAnswerStrikeLimit",
+        "replace": "strikes > invalidAnswerStrikeLimit"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBattleEngine_BotAnswerValidationAndAbuse)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBattleEngine_BotAnswerValidationAndAbuse battle_engine_test.go:401: timed out waiting for abuse_detected on c1 --- FAIL: TestBattleEngine_BotAnswerValidationAndAbuse (1.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse": "timed out waiting for abuse_detected"
+      },
+      "fingerprint": "37c9b462013e1c2d475a53487acbe94053d9391268d1765ff40fc4b99612209b"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-28T05:05:34.884Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1628,
+        "executed": 1628,
+        "passed": 1628,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1628 passed, 0 allowed skip(s)",
+      "fingerprint": "37c9b462013e1c2d475a53487acbe94053d9391268d1765ff40fc4b99612209b"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-28T05:06:13.570Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 584,
+        "executed": 584,
+        "passed": 584,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 849,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "37c9b462013e1c2d475a53487acbe94053d9391268d1765ff40fc4b99612209b"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-28T05:23:27.835Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/realtime/battle_engine_test.go",
+          "summary": "Security-relevant AC sub-clauses are unpinned: no test for AC3 decline; none for PvP server-derived identity (accept by non-target or wrong fromUserId :1300, decline by non-target :1257, pvp_answer by…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_handler.go",
+          "summary": "Data race: handleLobbyJoin reads PvpRoomState.Status under h.mu only (:257) while beginPvpRound/handlePvpAnswer/settlePvpRoundTimeout/finishPvpRound/abandonPvpRoom write it under room.mu only; not exe…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_handler.go",
+          "summary": "PvP grace still keyed on remaining connection count (:417/:460); a lobby_join by the present player clears the absent player's forfeit timer (:270); a challenger already offline at accept (:1375) gets…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_handler.go",
+          "summary": "challenge_user (:1173) has no rate limit, dedupe, cap or UUID validation of targetUserId (the legacy zod schema validated it); each message creates a 60s timer, a synchronous analytics INSERT and a cr…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_store.go",
+          "summary": "AbandonInProgressForUser (:349, called on every challenge_bot at battle_handler.go:572) also abandons a live PvP session where the user is the acceptor; the later MarkCompleted no-ops on the in_progre…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_final_batch.go",
+          "summary": "HTTP 429 path swallows the analytics insert error (:614) and writes source='server' while the WS path writes 'api' for the same battle_chat_rate_limited event; the web client shows a generic error ins…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_handler.go",
+          "summary": "randomHex fallback slices a 16-char zero string by numBytes*2 (:2025), which panics for the randomHex(16) fairness seed on the WS read-loop goroutine (go 1.23 crypto/rand.Read may still return an erro…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_handler.go",
+          "summary": "WS lobby_message accepts any client roomKey (bounded only by the DB VarChar(64)) and an unbounded clientMessageId stored in metadata (legacy capped it at 80); the rows are unreadable via GET (NULL ses…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_types.go",
+          "summary": "Leftovers and product decisions: DefaultBots/BotProfile duplicates registryBots (two sources of truth, test-only), user_wrong/bot_wrong commentary triggers are never selected, the pool is always the f…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/app/globals.css",
+          "summary": "Scope: Battle UI dark-mode restyle bundled into the realtime engine task (declared; consistent with the .dark token overrides, no defect found)"
+        }
+      ],
+      "package_sha256": "87139385ad8255f277469e49dcf9c853a07dbbcedb33a4c78a1109451c9ebbc1",
+      "fingerprint": "37c9b462013e1c2d475a53487acbe94053d9391268d1765ff40fc4b99612209b"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-28T05:25:09.634Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBattleEngine_BotAnswerValidationAndAbuse)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "687b9093d47acd426d43397a03f2651402844fcc4cb8808a9d0d3d0a97c4d241"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-28T05:25:20.116Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/realtime/battle_handler.go",
+        "find": "strikes >= invalidAnswerStrikeLimit",
+        "replace": "strikes > invalidAnswerStrikeLimit"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBattleEngine_BotAnswerValidationAndAbuse)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBattleEngine_BotAnswerValidationAndAbuse battle_engine_test.go:401: timed out waiting for abuse_detected on c1 --- FAIL: TestBattleEngine_BotAnswerValidationAndAbuse (1.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse": "timed out waiting for abuse_detected"
+      },
+      "fingerprint": "687b9093d47acd426d43397a03f2651402844fcc4cb8808a9d0d3d0a97c4d241"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-28T05:29:38.305Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1633,
+        "executed": 1633,
+        "passed": 1633,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1633 passed, 0 allowed skip(s)",
+      "fingerprint": "687b9093d47acd426d43397a03f2651402844fcc4cb8808a9d0d3d0a97c4d241"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-28T05:30:17.879Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 584,
+        "executed": 584,
+        "passed": 584,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 849,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "687b9093d47acd426d43397a03f2651402844fcc4cb8808a9d0d3d0a97c4d241"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-28T05:45:42.972Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 2,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/realtime/battle_handler.go",
+          "summary": "WS payloads lost the legacy zod size/format limits: handlePvpAnswer stores every message's idempotencyKey (no length or count cap, never reset; legacy max 64) before the already-answered and option ch…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/realtime/battle_engine_test.go",
+          "summary": "AC2 idempotency has no test: no test resends battle:answer or pvp_answer in the same round or reuses an idempotencyKey, and deleting the Idempotency checks (battle_handler.go:873, :1537) fails no test…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_handler.go",
+          "summary": "Data race still open from review #16: handleLobbyJoin reads PvpRoomState.Status while holding only h.mu (:257) but every writer holds room.mu; -race misses it because the tests synchronize through cha…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_handler.go",
+          "summary": "randomHex fallback '0000000000000000'[:numBytes*2] panics for randomHex(16) (:2025); production builds with Go 1.23.8, where crypto/rand.Read can still return an error, and the panic would crash the p…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_handler.go",
+          "summary": "PvP disconnect grace counts raw connections (:460): no timer starts when the player who stayed has 2+ tabs, and any lobby_join, even from that player, clears the absent player's timer (:271)"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_handler.go",
+          "summary": "WS lobby_message accepts any roomKey from the client (:339); those rows get a NULL session_id so GET can never read them, but they are still broadcast to the whole lobby"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_engine_test.go",
+          "summary": "Answer-leak checks only look for lowercase 'isCorrect' (:269; battle_ws_integration_test.go:92); a field without a JSON tag would serialize as IsCorrect and slip past, so assert the option object keys…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_engine_test.go",
+          "summary": "Untested: the AC3 reconnect_timeout path (both players gone) and the AC4 case that non-lobby sockets don't receive the lobby broadcast"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_final_batch.go",
+          "summary": "The chat throttle doesn't limit DB writes: every blocked message (WS and HTTP 429) still does an analytics INSERT, and the quota is used up before the chat INSERT even if that insert fails"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_store.go",
+          "summary": "Product decision (same as legacy): forfeits and disconnects are stored as abandoned, so player-stats and the leaderboard never record that win or loss; leftovers: user_wrong and bot_wrong commentary l…"
+        }
+      ],
+      "package_sha256": "f4bb093efc7372f0892219ba1381f0c5b0941a6a4f53743095c6d10f28631bd3",
+      "fingerprint": "687b9093d47acd426d43397a03f2651402844fcc4cb8808a9d0d3d0a97c4d241"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-28T05:47:21.054Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBattleEngine_BotAnswerValidationAndAbuse)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "171891d5b9e2795bf26d66d1e7d64f8e940e0f16f2c08cb9f8add55b00ae896c"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-28T05:47:31.796Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/realtime/battle_handler.go",
+        "find": "strikes >= invalidAnswerStrikeLimit",
+        "replace": "strikes > invalidAnswerStrikeLimit"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBattleEngine_BotAnswerValidationAndAbuse)$ ./internal/realtime"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBattleEngine_BotAnswerValidationAndAbuse battle_engine_test.go:401: timed out waiting for abuse_detected on c1 --- FAIL: TestBattleEngine_BotAnswerValidationAndAbuse (1.01s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/realtime:TestBattleEngine_BotAnswerValidationAndAbuse": "timed out waiting for abuse_detected"
+      },
+      "fingerprint": "171891d5b9e2795bf26d66d1e7d64f8e940e0f16f2c08cb9f8add55b00ae896c"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-28T05:51:46.954Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1636,
+        "executed": 1636,
+        "passed": 1636,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1636 passed, 0 allowed skip(s)",
+      "fingerprint": "171891d5b9e2795bf26d66d1e7d64f8e940e0f16f2c08cb9f8add55b00ae896c"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-28T05:52:26.726Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 584,
+        "executed": 584,
+        "passed": 584,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 849,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "171891d5b9e2795bf26d66d1e7d64f8e940e0f16f2c08cb9f8add55b00ae896c"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-28T06:09:44.626Z",
+      "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_handler.go",
+          "summary": "handleChallengeUser has no per-user rate limit/cap/dedupe (legacy parity): each message creates a 60s timer and a sync analytics INSERT, and notification floods can fill a victim's 256-slot send buffe…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_final_batch.go",
+          "summary": "Throttled/rejected paths (WS rate_limited, HTTP 429, non-owner answers) still INSERT one analytics row per message, so the chat throttle does not bound DB writes (legacy parity)"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_handler.go",
+          "summary": "PvP disconnect grace keyed on raw connection count (no timer when the staying player has 2+ mapped tabs) and a lobby_join by the staying player clears the absent opponent's forfeit timer; match still …"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_store.go",
+          "summary": "AbandonInProgressForUser is now bot-only, so PvP sessions orphaned by a restart stay in_progress indefinitely (inflates admin in-progress metric); consider a startup sweep"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_engine_test.go",
+          "summary": "reconnect_timeout path (both players gone) untested; grace test asserts only a non-empty abandon reason; DB tests depend on the global published-question pool (ORDER BY id LIMIT 200, SQL test assumes …"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_handler.go",
+          "summary": "Product decision (legacy parity): forfeit/disconnect results persist as abandoned, so the winner's win never reaches player-stats or the leaderboard"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/app/globals.css",
+          "summary": "Scope/hygiene: dark-mode restyle bundled (declared); build artifacts apps/web/next-env.d.ts and tsconfig.tsbuildinfo modified and must not be committed; MIGRATION_CLOSURE.md gap #1 now stale and the l…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/realtime/battle_commentary.go",
+          "summary": "Dead/redundant code: user_wrong/bot_wrong triggers never selected, unread RoomState.ConnID/ConfigID/CreatedAt and PendingChallenge.ExpiresAt, idempotency maps redundant with status/already-answered ga…"
+        }
+      ],
+      "package_sha256": "0af12f9c7e08fd680167ed36bfae2e9ce841eeb487b16086b5eb6f41febaaf6f",
+      "fingerprint": "171891d5b9e2795bf26d66d1e7d64f8e940e0f16f2c08cb9f8add55b00ae896c"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-28T06:10:20.814Z",
+    "head": "97521fb99efd29acb3fc6c46cdaeb40c0c6842e4",
+    "fingerprint": "171891d5b9e2795bf26d66d1e7d64f8e940e0f16f2c08cb9f8add55b00ae896c",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "green": "PASS",
+      "sensitivity": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_battle_chat_broadcast_test.go": "9b64767c738b3acce2d397b3dd79e0ae29cbcd0f",
+      "apps/api-go/internal/httpserver/handler_battle_lobby_contract_test.go": "8759ed1157782f5e3a31c7a7ed72dd550ddf1a7c",
+      "apps/api-go/internal/httpserver/handler_final_batch.go": "14da2c2d9b832341d324e84d5c39cae884d2cb7a",
+      "apps/api-go/internal/httpserver/server.go": "426d737e7ad431bff5764d505bc8f591945dbc91",
+      "apps/api-go/internal/realtime/battle_commentary.go": "bb00909e807fbda8b57228f09181d7a93f8b5f4d",
+      "apps/api-go/internal/realtime/battle_engine_test.go": "bfcd37a986205cf0cc113288e977c2829ea38785",
+      "apps/api-go/internal/realtime/battle_handler.go": "c1d137f2726973557725647bf431b621e4724c76",
+      "apps/api-go/internal/realtime/battle_pvp_security_test.go": "fd0f6a54f42db5d52251cc658450adc3aeed18a7",
+      "apps/api-go/internal/realtime/battle_store.go": "7de8c1f9e6b498a30812491cb8a821509695e9dc",
+      "apps/api-go/internal/realtime/battle_store_sql_test.go": "1799d6adf5368b0e9bd9d3483f64321138f1b2c1",
+      "apps/api-go/internal/realtime/battle_types.go": "1b01269979d442cc7b658ec2ebd054f4bdf2b2b5",
+      "apps/api-go/internal/realtime/battle_ws_integration_test.go": "d489a56dfbb71cdb6e2b799f4952f9818f8c967d",
+      "apps/api-go/internal/realtime/server.go": "dad9e14c2c1dff2dbda98b1a14187d2356b12644",
+      "apps/web/app/[locale]/battle/_components/battle-countdown-overlay.tsx": "a80460bd5d775135f4bce92f8009cf692c5eef91",
+      "apps/web/app/[locale]/battle/_components/battle-match-client.tsx": "0dbaa13628ded6a95a1155533ab7d6d465624d84",
+      "apps/web/app/[locale]/battle/_components/battle-runtime-provider.tsx": "d075fe976e406d8694ab708caa3088ae388293dd",
+      "apps/web/app/[locale]/battle/_components/battle-types.ts": "1f61c16b5f8b302e938475d58722aad30c46cce2",
+      "apps/web/app/_components/battle-bot-avatar.tsx": "72d6c96119bd3d30c1be33d5b97a15fdd006bc17",
+      "apps/web/app/globals.css": "f766fc4e512503f8212430a51d476a02cc0da658",
+      "docs/api-route-inventory.json": "6aca9626a97f4aa3a3ce52fa87003ae09037754b",
+      "docs/openapi.json": "2023f6246c2347ace7a07b1b48981c6debe29888"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": [
+      {
+        "id": "c70c122f-da2b-4b05-8e61-1ff23a413a8a",
+        "task": "BAT-275",
+        "action": {
+          "kind": "delete_persistent_data",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "4a4a67d2a74fa946753146bc6d4e6c704dcf9fb1a7604135af1dc55bdaeea56f",
+            "environment": "local"
+          },
+          "impact": "Destroy potentially persistent data",
+          "command": "sed -n 1,80p scripts/quality/verify-go.sh | rg -n \"go test|-p |race|TEST_DATABASE_URL|parallel\" ; echo '--- with-test-db'; rg -n \"createdb|DROP DATABASE|CREATE DATABASE|migrat|seed|TEST_DATABASE_URL\" scripts/quality/with-test-db.sh | head -20"
+        },
+        "impact": "Destroy potentially persistent data",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "4a4a67d2a74fa946753146bc6d4e6c704dcf9fb1a7604135af1dc55bdaeea56f",
+          "environment": "local"
+        },
+        "digest": "30e6c6d83ba88911448c6ae43dc7be87adb7d5b845841b7d52101992c932fcc1",
+        "continuation": {
+          "step": "native:toolu_0181fHRgYa1ksbSd1NJ3Lqxq",
+          "native_tool_use_id": "toolu_0181fHRgYa1ksbSd1NJ3Lqxq"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "cancel",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-28T04:49:46.697Z",
+        "answered_at": "2026-10-28T04:58:41.959Z",
+        "execution": "alternative"
+      },
+      {
+        "id": "8265c574-ece1-4003-b81c-4e02f7c12d99",
+        "task": "BAT-275",
+        "action": {
+          "kind": "delete_persistent_data",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "1548fff2e8ca123d2d99c671adb17983f79ce1fffcc9847cf94ef6d4acef1dbf",
+            "environment": "local"
+          },
+          "impact": "Destroy potentially persistent data",
+          "command": "sed -n 1,60p scripts/quality/with-test-db.sh 2>/dev/null | grep -n \"seed\\|migrate\\|createdb\\|DROP DATABASE\\|CREATE DATABASE\\|docker\\|TEST_DATABASE_URL\" | head -20"
+        },
+        "impact": "Destroy potentially persistent data",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "1548fff2e8ca123d2d99c671adb17983f79ce1fffcc9847cf94ef6d4acef1dbf",
+          "environment": "local"
+        },
+        "digest": "08d87496f3c06378602f4792f7fbab2cc4b8f82650b349d5ca3c816e0fb03dd9",
+        "continuation": {
+          "step": "native:toolu_01JAcoToF7uMJ7b7wSQnHifV",
+          "native_tool_use_id": "toolu_01JAcoToF7uMJ7b7wSQnHifV"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "cancel",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-28T06:05:36.743Z",
+        "answered_at": "2026-10-28T06:10:09.847Z",
+        "execution": "alternative"
+      }
+    ]
+  }
+}

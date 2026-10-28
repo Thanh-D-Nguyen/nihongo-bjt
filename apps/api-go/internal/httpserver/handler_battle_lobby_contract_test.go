@@ -239,4 +239,41 @@ func TestBattleLobbyCanonicalContracts(t *testing.T) {
 	if outsiderResponse.Code != http.StatusOK || outsiderResponse.Body.String() != "[]\n" {
 		t.Fatalf("outsider received private chat: status=%d body=%s", outsiderResponse.Code, outsiderResponse.Body.String())
 	}
+
+	// Player stats contract: 401 unauthenticated, 400 invalid userId, 200 aggregate stats.
+	if got := request("/api/battle/player-stats?userId="+userID, false).Code; got != http.StatusUnauthorized {
+		t.Fatalf("anonymous player-stats status=%d, want 401", got)
+	}
+	if got := request("/api/battle/player-stats?userId=not-a-uuid", true).Code; got != http.StatusBadRequest {
+		t.Fatalf("invalid UUID player-stats status=%d, want 400", got)
+	}
+	statsRoomWin := "swin" + strings.ReplaceAll(userID[:8], "-", "")
+	statsRoomLoss := "sloss" + strings.ReplaceAll(userID[:8], "-", "")
+	t.Cleanup(func() {
+		_, _ = db.Exec(context.Background(), `DELETE FROM learning.battle_session WHERE room_code IN ($1, $2)`, statsRoomWin, statsRoomLoss)
+	})
+	if _, err := db.Exec(context.Background(), `
+		INSERT INTO learning.battle_session (user_id, opponent_user_id, room_code, mode, status, max_rounds, user_score, opponent_score, fairness_seed)
+		VALUES ($1, NULL, $3, 'bot', 'completed', 5, 400, 200, 'seed-w'),
+		       ($2, $1, $4, 'pvp', 'completed', 5, 500, 300, 'seed-l')`,
+		userID, participantID, statsRoomWin, statsRoomLoss); err != nil {
+		t.Fatalf("seed player-stats sessions: %v", err)
+	}
+	statsRes := request("/api/battle/player-stats?userId="+userID, true)
+	if statsRes.Code != http.StatusOK {
+		t.Fatalf("player-stats status=%d body=%s", statsRes.Code, statsRes.Body.String())
+	}
+	var stats struct {
+		CompletedMatches int     `json:"completedMatches"`
+		Draws            int     `json:"draws"`
+		Losses           int     `json:"losses"`
+		WinRatePct       float64 `json:"winRatePct"`
+		Wins             int     `json:"wins"`
+	}
+	if err := json.Unmarshal(statsRes.Body.Bytes(), &stats); err != nil {
+		t.Fatalf("decode player-stats: %v", err)
+	}
+	if stats.CompletedMatches != 2 || stats.Wins != 1 || stats.Losses != 1 || stats.Draws != 0 || stats.WinRatePct != 50 {
+		t.Fatalf("unexpected player-stats payload: %+v", stats)
+	}
 }

@@ -603,19 +603,18 @@ export function BattleRuntimeProvider({
     setStatus(labels.connecting);
     setTimeLeft(null);
     setUserScore(0);
-    const s = ensureSocket();
-    if (!s) {
+    if (
+      !runWhenLobbyReady((s) =>
+        s.emit("battle:challenge_bot", {
+          botKey,
+          configId: selectedConfigId ?? undefined,
+          userId: uid
+        })
+      )
+    ) {
       clearPending();
-      return;
     }
-    if (s.connected) {
-      s.emit("battle:challenge_bot", { botKey, configId: selectedConfigId ?? undefined, userId: uid });
-      return;
-    }
-    s.once("connect", () => {
-      s.emit("battle:challenge_bot", { botKey, configId: selectedConfigId ?? undefined, userId: uid });
-    });
-  }, [botKey, ensureSocket, labels.connecting, selectedBot, selectedConfigId, userId]);
+  }, [botKey, labels.connecting, runWhenLobbyReady, selectedBot, selectedConfigId, userId]);
 
   const submitAnswer = useCallback(
     (optionKey: string) => {
