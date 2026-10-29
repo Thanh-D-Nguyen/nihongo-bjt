@@ -2054,8 +2054,25 @@ func getSearchSuggestHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 			Reading *string `json:"reading"`
 			Title   string  `json:"title"`
 		}
-		const query = `SELECT id::text, 'lexeme'::text, reading, headword FROM content.lexeme WHERE status IN ('active','published') AND (headword ILIKE $1 OR reading ILIKE $1) ORDER BY headword, id LIMIT $2`
-		rows, err := db.Query(r.Context(), query, "%"+q+"%", limit)
+		hira, kata, remaining := suggestionKana(q)
+		longKata := suggestionLongVowels(kata)
+		escape := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
+		continuations := []string{}
+		if remaining != "" {
+			for romaji, kana := range romajiKana {
+				if strings.HasPrefix(romaji, remaining) {
+					_, katakana, _ := suggestionKana(kana)
+					continuations = append(continuations, escape.Replace(hira+kana)+"%", escape.Replace(kata+katakana)+"%")
+				}
+			}
+		}
+		const query = `SELECT id::text, 'lexeme'::text, reading, headword FROM content.lexeme
+			WHERE status IN ('active','published') AND (headword ILIKE $1 OR reading ILIKE $1 OR headword ILIKE $2 OR reading ILIKE $2 OR headword ILIKE $3 OR reading ILIKE $3 OR headword ILIKE $4 OR reading ILIKE $4 OR headword ILIKE ANY($11::text[]) OR reading ILIKE ANY($11::text[]))
+			ORDER BY CASE WHEN lower(headword) = lower($5) THEN 0 WHEN lower(reading) = lower($5) OR ($9 AND (lower(headword) IN (lower($6), lower($7), lower($8)) OR lower(reading) IN (lower($6), lower($7), lower($8)))) THEN 1 WHEN headword ILIKE ANY($11::text[]) OR reading ILIKE ANY($11::text[]) THEN 2 ELSE 3 END, length(headword), headword, id LIMIT $10`
+		if hira == "" {
+			hira, kata, longKata = q, q, q
+		}
+		rows, err := db.Query(r.Context(), query, "%"+escape.Replace(q)+"%", "%"+escape.Replace(hira)+"%", "%"+escape.Replace(kata)+"%", "%"+escape.Replace(longKata)+"%", q, hira, kata, longKata, remaining == "", limit, continuations)
 		if err != nil {
 			logger.Error("search suggest", "error", err)
 			writeJSONError(w, "search suggest failed", http.StatusInternalServerError)
