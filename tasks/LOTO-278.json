@@ -267,7 +267,7 @@
   "sensitivity": null,
   "deletion": null,
   "risk_acknowledgements": [],
-  "state": "READY_TO_CLOSE",
+  "state": "CLOSED",
   "history": [
     {
       "state": "CREATED",
@@ -298,6 +298,11 @@
       "state": "READY_TO_CLOSE",
       "at": "2026-10-29T08:13:14.203Z",
       "head": "e19fc7e1c16bf2366274e0f5193ef5a58f4b105d"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-29T08:15:04.347Z",
+      "head": "b16d5994c1acfbf05dd6ee6b7620712a3679f788"
     }
   ],
   "evidence": [
@@ -422,9 +427,31 @@
       "fingerprint": "b3cc81f5515062891ec0a7c043651421df9562a2bb780e33282dad2393754d28"
     }
   ],
-  "closed": null,
+  "closed": {
+    "at": "2026-10-29T08:15:04.326Z",
+    "head": "b16d5994c1acfbf05dd6ee6b7620712a3679f788",
+    "fingerprint": "b3cc81f5515062891ec0a7c043651421df9562a2bb780e33282dad2393754d28",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/loto/engine.go": "6274ee876e5796f1d8c7f581f9cad04d4d9490b5",
+      "apps/api-go/internal/loto/service.go": "ff3d09897a4226626629773fd610d0844dceb15c",
+      "apps/api-go/internal/loto/service_test.go": "572bf42f03c70b1160886ce80bbabf1feb3ff55e",
+      "apps/api-go/internal/loto/stats_test.go": "1fe84793b78fa31a2282c2b93bbf3108fca103c9",
+      "apps/api-go/internal/loto/store.go": "6323d2d5edebebe24f7a00bb378acab05d6e477a",
+      "apps/web/app/[locale]/magazine/_components/magazine-article-view.test.tsx": "0164b8c10ba3dcd57a3ea21d4fd05d9ab671f069",
+      "apps/web/app/[locale]/magazine/_components/magazine-article-view.tsx": "88c16d6b94db0e2083b076e1f810277828405f5a",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-stats-lab.tsx": "1576ce9aba0c2c1cadab3b4573dcce76555de48c"
+    }
+  },
   "execution": {
-    "status": "WAITING_FOR_DECISION",
+    "status": "RUNNING",
     "decisions": [
       {
         "id": "c6e3fcfa-a7f5-4eee-bca1-aa5aed8edbcd",
@@ -473,9 +500,9 @@
             "scope": "ONCE"
           }
         ],
-        "selected": null,
-        "scope": null,
-        "status": "WAITING_FOR_DECISION",
+        "selected": "native_permission_once",
+        "scope": "ONCE",
+        "status": "COMPLETED",
         "at": "2026-10-29T08:13:19.745Z"
       }
     ]
