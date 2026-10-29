@@ -33,6 +33,8 @@ const (
 	RunBacktest  = "backtest"
 	// RunRejected marks a published run whose magazine article an admin rejected.
 	RunRejected = "rejected"
+	// RunSuperseded marks a published run replaced by a later publication for the same draw.
+	RunSuperseded = "superseded"
 )
 
 // StoredSet is a persisted generated set.

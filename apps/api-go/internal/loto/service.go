@@ -307,6 +307,11 @@ func PublishRun(ctx context.Context, tx DBTX, runID string, setIDs []string, adm
 	if _, err := tx.Exec(ctx, `UPDATE daily.loto_generation_run SET status='published', selected_set_id=$2, updated_at=NOW() WHERE id=$1`, runID, sets[0].ID); err != nil {
 		return PublishResult{}, fmt.Errorf("mark run published: %w", err)
 	}
+	// One draw has one visible reference set: later publications replace earlier ones.
+	if _, err := tx.Exec(ctx, `UPDATE daily.loto_generation_run SET status='superseded', updated_at=NOW()
+		WHERE game=$1 AND target_draw_date=$2::date AND status='published' AND id<>$3`, gameRaw, dateKey, runID); err != nil {
+		return PublishResult{}, fmt.Errorf("supersede earlier published runs: %w", err)
+	}
 	return PublishResult{ArticleID: articleID, Slug: slug, PublishedAt: now, SelectedSets: len(setIDs)}, nil
 }
 
@@ -405,7 +410,7 @@ func (s *Service) RunAutopilot(ctx context.Context, game Game) (AutopilotResult,
 			existing = &created
 		}
 		result.RunID = existing.ID
-		if existing.Status == RunPublished || existing.Status == RunRejected {
+		if existing.Status == RunPublished || existing.Status == RunRejected || existing.Status == RunSuperseded {
 			result.Status = AutopilotDone
 			return result, nil
 		}

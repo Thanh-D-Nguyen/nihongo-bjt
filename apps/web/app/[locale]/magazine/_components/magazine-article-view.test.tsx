@@ -32,4 +32,26 @@ describe("magazine article body", () => {
     expect(container.textContent).toContain("会議で使う表現を学びましょう。");
     expect(container.textContent).toContain("Học cách diễn đạt trong cuộc họp.");
   });
+
+  it("renders published loto reference sets stored under content.sets", async () => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    await act(async () => root.render(
+      <MagazineArticleView
+        article={{
+          id: "article-2", slug: "loto6-prediction-2026-10-29", widgetKind: "magazine_loto6",
+          titleJp: "ロト6", titleVi: "Loto6", publishDate: "2026-10-29",
+          contentJson: {
+            sets: [{ mainNumbers: [3, 9, 14, 22, 31, 40], bonusNumbers: [], score: 0.6 }],
+            japaneseSentence: { textJp: "確率は同じです。", reading: "かくりつはおなじです。", textVi: "Xác suất như nhau." },
+          },
+        }}
+        locale="vi"
+        t={{ vocabSection: "Từ vựng", quizSection: "Quiz" } as never}
+      />,
+    ));
+    expect(container.textContent).toContain("31");
+    expect(container.textContent).toContain("確率は同じです。");
+  });
 });

@@ -157,7 +157,7 @@ function ContentBody({ content }: { content: Record<string, unknown> }) {
     );
   }
 
-  const generatedSets = content.generatedSets as
+  const generatedSets = (content.generatedSets ?? content.sets) as
     | { mainNumbers: number[]; bonusNumbers?: number[]; score?: number }[]
     | undefined;
   if (generatedSets?.length) {

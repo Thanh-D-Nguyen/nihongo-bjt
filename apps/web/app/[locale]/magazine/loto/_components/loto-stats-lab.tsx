@@ -57,6 +57,7 @@ function NumberChips({
   game: LotoGame;
   caption: string;
 }) {
+  if (numbers.length === 0) return null;
   return (
     <div>
       <p className="mb-1.5 text-xs font-medium text-muted">{caption}</p>
@@ -384,7 +385,7 @@ export function LotoStatsLab({ game, labels }: { game: LotoGame; labels: LotoLab
             game={game}
             caption={labels.cold ?? "Ít xuất hiện"}
           />
-          <div>
+          <div hidden={stats.overdueNumbers.length === 0}>
             <p className="mb-1.5 text-xs font-medium text-muted">
               {labels.overdue ?? "Lâu chưa ra"}
             </p>

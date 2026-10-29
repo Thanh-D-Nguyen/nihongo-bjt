@@ -160,6 +160,11 @@ func Summarize(spec Spec, draws []Draw) Summary {
 		}
 		summary.sumSamples = append(summary.sumSamples, sum)
 	}
+	if len(draws) == 0 {
+		// Without history there is nothing to rank; never present an arbitrary order as a finding.
+		summary.Hot, summary.Cold, summary.Overdue = []int{}, []int{}, []int{}
+		return summary
+	}
 	numbers := make([]int, spec.MaxNumber)
 	for i := range numbers {
 		numbers[i] = i + 1

@@ -83,3 +83,13 @@ func TestOddAndSumDistributions(t *testing.T) {
 		t.Fatalf("empty sum = %+v", empty)
 	}
 }
+
+func TestSummarizeWithoutHistoryInventsNoNumberLists(t *testing.T) {
+	summary := Summarize(SpecFor(Loto6), nil)
+	if len(summary.Hot) != 0 || len(summary.Cold) != 0 || len(summary.Overdue) != 0 {
+		t.Fatalf("hot=%v cold=%v overdue=%v, want empty lists when there is no history", summary.Hot, summary.Cold, summary.Overdue)
+	}
+	if summary.Draws != 0 || len(summary.Frequency) != 43 {
+		t.Fatalf("summary shape = %+v", summary)
+	}
+}

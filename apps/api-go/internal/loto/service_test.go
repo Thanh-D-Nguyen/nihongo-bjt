@@ -332,3 +332,40 @@ func TestStatsCountEachDrawOnceWhenSeveralRunsTargetIt(t *testing.T) {
 		t.Fatalf("accuracy = %+v, want one sample from the published run", stats.Accuracy)
 	}
 }
+
+func TestPublishingSupersedesOtherPublishedRunsForTheSameDraw(t *testing.T) {
+	tx := testTx(t)
+	ctx := context.Background()
+	source := &fakeSource{draws: map[Game][]Draw{Loto6: scheduledHistory(t, 40, "2026-10-26")}}
+	now := time.Date(2026, 10, 28, 3, 0, 0, 0, time.UTC)
+	svc := &Service{DB: tx, Source: source, Now: func() time.Time { return now }}
+
+	first, err := svc.RunAutopilot(ctx, Loto6)
+	if err != nil || first.Status != AutopilotPublish {
+		t.Fatalf("autopilot: %+v, %v", first, err)
+	}
+	admin, err := svc.GenerateRun(ctx, tx, GenerateRequest{Game: Loto6, TargetDateKey: "2026-10-29", SetCount: 1, Seed: "admin-override"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := PublishRun(ctx, tx, admin.ID, []string{admin.Sets[0].ID}, "", now); err != nil {
+		t.Fatalf("admin publish: %v", err)
+	}
+	var autopilotStatus, adminStatus string
+	if err := tx.QueryRow(ctx, `SELECT status FROM daily.loto_generation_run WHERE id=$1`, first.RunID).Scan(&autopilotStatus); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.QueryRow(ctx, `SELECT status FROM daily.loto_generation_run WHERE id=$1`, admin.ID).Scan(&adminStatus); err != nil {
+		t.Fatal(err)
+	}
+	if autopilotStatus != "superseded" || adminStatus != RunPublished {
+		t.Fatalf("autopilot run=%s admin run=%s, want superseded and published", autopilotStatus, adminStatus)
+	}
+	again, err := svc.RunAutopilot(ctx, Loto6)
+	if err != nil || again.Status != AutopilotDone {
+		t.Fatalf("autopilot after supersede = %+v, %v; want already_done", again, err)
+	}
+	if got := countRows(t, tx, `SELECT COUNT(*) FROM daily.loto_generation_run WHERE game='loto6' AND target_draw_date='2026-10-29' AND status='published'`); got != 1 {
+		t.Fatalf("published runs for the draw = %d, want exactly the admin run", got)
+	}
+}
