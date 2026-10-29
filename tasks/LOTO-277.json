@@ -1,0 +1,1074 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "LOTO-277",
+  "title": "Loto learning hub: restore real result sync, autopilot generation and learner stats (Go pipeline was stubbed; prod has 0 draws)",
+  "start_head": "754f62321b3c24f337ba808ead0dbf1b60fd4647",
+  "preexisting_changes": {
+    ".claude/skills/go-code-review": null,
+    ".claude/skills/go-concurrency": null,
+    ".claude/skills/go-context": null,
+    ".claude/skills/go-control-flow": null,
+    ".claude/skills/go-data-structures": null,
+    ".claude/skills/go-declarations": null,
+    ".claude/skills/go-defensive": null,
+    ".claude/skills/go-documentation": null,
+    ".claude/skills/go-error-handling": null,
+    ".claude/skills/go-functional-options": null,
+    ".claude/skills/go-functions": null,
+    ".claude/skills/go-generics": null,
+    ".claude/skills/go-interfaces": null,
+    ".claude/skills/go-linting": null,
+    ".claude/skills/go-logging": null,
+    ".claude/skills/go-naming": null,
+    ".claude/skills/go-packages": null,
+    ".claude/skills/go-performance": null,
+    ".claude/skills/go-style-core": null,
+    ".claude/skills/go-testing": null,
+    "data/skills/go-code-review": null,
+    "data/skills/go-concurrency": null,
+    "data/skills/go-context": null,
+    "data/skills/go-control-flow": null,
+    "data/skills/go-data-structures": null,
+    "data/skills/go-declarations": null,
+    "data/skills/go-defensive": null,
+    "data/skills/go-documentation": null,
+    "data/skills/go-error-handling": null,
+    "data/skills/go-functional-options": null,
+    "data/skills/go-functions": null,
+    "data/skills/go-generics": null,
+    "data/skills/go-interfaces": null,
+    "data/skills/go-linting": null,
+    "data/skills/go-logging": null,
+    "data/skills/go-naming": null,
+    "data/skills/go-packages": null,
+    "data/skills/go-performance": null,
+    "data/skills/go-style-core": null,
+    "data/skills/go-testing": null,
+    ".agents/skills/go-code-review/SKILL.md": "7fe964fc46fa0f83c5a6782aea8afa9d42c8e120",
+    ".agents/skills/go-code-review/assets/review-template.md": "8a9783efd0ec1c76628410657774b598a2907293",
+    ".agents/skills/go-code-review/references/WEB-SERVER.md": "4fcdde6babb435d50f6282abb384740a5ee408a9",
+    ".agents/skills/go-code-review/scripts/pre-review.sh": "e0b1334be59928788c20d7faeaf24a8510eeab34",
+    ".agents/skills/go-concurrency/SKILL.md": "417bb46ef3c1f7c23a8f5e8fc88cd1e0bc9cab2d",
+    ".agents/skills/go-concurrency/references/ADVANCED-PATTERNS.md": "5e9d68fedc50fcfdd51f8d8de18f0080a05e04c5",
+    ".agents/skills/go-concurrency/references/BUFFER-POOLING.md": "64bcc0b563bbe469118e7c71add00aabc9315da1",
+    ".agents/skills/go-concurrency/references/GOROUTINE-PATTERNS.md": "a3f6541f7c6f2e575e83cf3a2384a43c4a28e691",
+    ".agents/skills/go-concurrency/references/SYNC-PRIMITIVES.md": "ad2a14c5f066f6600af62fb42daef449fc7312d4",
+    ".agents/skills/go-context/SKILL.md": "514123426d4c5927d9cf9ccd209b4e669799d5ea",
+    ".agents/skills/go-context/references/PATTERNS.md": "e4562cf4f26a70586fd2e40eaf12bd0f00a3e5b3",
+    ".agents/skills/go-control-flow/SKILL.md": "beeb46ceca8596e0b7ceb08f9d0409991f7fadb2",
+    ".agents/skills/go-control-flow/references/BLANK-IDENTIFIER.md": "29ab4f1ababbeb6c3f7cd6db61a144e0f95e90d3",
+    ".agents/skills/go-control-flow/references/SWITCH-PATTERNS.md": "931d9ab97cfbac5a7c7afde29bb3e9597510834c",
+    ".agents/skills/go-data-structures/SKILL.md": "bd35416b3eb9245c0da81e03dbc9291915008ce1",
+    ".agents/skills/go-data-structures/references/SLICES.md": "ac88d798c3170a72293c61f56b0a1e97a2196d01",
+    ".agents/skills/go-declarations/SKILL.md": "0764413ec0110a4f1afe841f25923778fa1dff27",
+    ".agents/skills/go-declarations/references/INITIALIZATION.md": "cdd5ee0180c903587cfa90800bf0a4f8804ede9e",
+    ".agents/skills/go-declarations/references/IOTA.md": "1a9181deff7d79f9736489325548d8a2980e335c",
+    ".agents/skills/go-declarations/references/LITERALS.md": "1295afd2606710f26f0dde0471e008a4849c6c23",
+    ".agents/skills/go-declarations/references/SCOPE.md": "9f0a7fed185877c6069328b0d3c6cbee446064ac",
+    ".agents/skills/go-declarations/references/SHADOWING.md": "6e7a8c579ac3820a9782bf6c89030fcade46c74d",
+    ".agents/skills/go-declarations/references/STRUCTS.md": "c60e484bc666b193781cdd258598b4eea00008cf",
+    ".agents/skills/go-defensive/SKILL.md": "22ca0d797d3a5ddfa8fb7a1e4c26a89863b4d6d4",
+    ".agents/skills/go-defensive/references/BOUNDARY-COPYING.md": "f7c0110221233525c04db16750fbc754057cd3d9",
+    ".agents/skills/go-defensive/references/GLOBAL-STATE.md": "56379e0373d1749dd3bc4b638c3971bb4a0bc69d",
+    ".agents/skills/go-defensive/references/MUST-FUNCTIONS.md": "a8f7f0341af60535aa8632aa05e90d6eeb27afce",
+    ".agents/skills/go-defensive/references/PANIC-RECOVER.md": "9f3457aa3ee717118ffce6fde640fd01e4624b8e",
+    ".agents/skills/go-defensive/references/TIME-ENUMS-TAGS.md": "e381cd5c10d99bdab07d61a991a27567ed06d34e",
+    ".agents/skills/go-documentation/SKILL.md": "eeca8e8a5e8133b4ef43e77dcbd83c48d0635c11",
+    ".agents/skills/go-documentation/assets/doc-template.go": "a2c54b85855d15d364238297dcf47de0c721ffc8",
+    ".agents/skills/go-documentation/references/CONVENTIONS.md": "12b8df0bd055c11bdc044e2a5e20cc4b829763cf",
+    ".agents/skills/go-documentation/references/EXAMPLES.md": "0b2b3879b19125593417e52d9f1d4a8f42a8be75",
+    ".agents/skills/go-documentation/references/FORMATTING.md": "4977008a67dfe01cde2fe05c8915511113b97bc1",
+    ".agents/skills/go-documentation/scripts/check-docs-ast.go": "ff1564b1d5f7bd97a6bdd6167830f3ce4b657042",
+    ".agents/skills/go-documentation/scripts/check-docs.sh": "de69f135fe4cb5850101108a9d7bbcb70f68c8b9",
+    ".agents/skills/go-error-handling/SKILL.md": "275a1a65cc6c02d4a611b7bd83ec73c5d493792a",
+    ".agents/skills/go-error-handling/references/ERROR-FLOW.md": "182827f4235397d8d7b837153351ba4443cbb78a",
+    ".agents/skills/go-error-handling/references/ERROR-TYPES.md": "e0d3ef3fb7f61daa2a65b5e356543d0160a5c048",
+    ".agents/skills/go-error-handling/references/WRAPPING.md": "954cd6dabf682ebe1a6485fca463903418454d5a",
+    ".agents/skills/go-error-handling/scripts/check-errors-ast.go": "d68d6e91e8a6e2ed110b7682a3deebc7f865904c",
+    ".agents/skills/go-error-handling/scripts/check-errors.sh": "40c5be771e6b8ff91a54097f4d1ef39fbd04d6f4",
+    ".agents/skills/go-functional-options/SKILL.md": "aa249b24abfef30bcdc4199aeab4974b7f63ced5",
+    ".agents/skills/go-functional-options/references/OPTIONS-VS-STRUCTS.md": "6b323dc0b8f166fb228c8bff86e43a6003890a29",
+    ".agents/skills/go-functions/SKILL.md": "906fa01432c3aa6899ced2a490558a9a4784d45e",
+    ".agents/skills/go-functions/references/PRINTF-STRINGER.md": "1c348839d960dfe0732266ce975cd334c3349387",
+    ".agents/skills/go-functions/references/SIGNATURES.md": "d1ae7ca3b7bec091a7840450c3ee8370538431eb",
+    ".agents/skills/go-generics/SKILL.md": "0cfa9811a90ca9d76137bfd6dc96d2cd0faee8ea",
+    ".agents/skills/go-generics/references/CONSTRAINTS.md": "16a871fc474137f11234ba1b52b711c36eee89cd",
+    ".agents/skills/go-interfaces/SKILL.md": "358cab26d71de1fbd788855fbb312425bca86022",
+    ".agents/skills/go-interfaces/references/EMBEDDING.md": "e65e34b28910406614ad1afb6c65e3f64d78d0c3",
+    ".agents/skills/go-interfaces/references/RECEIVER-TYPE.md": "3c0c1ef6eca9521d7e449a28eb5d30a1cd3d86a5",
+    ".agents/skills/go-interfaces/scripts/check-interface-compliance.go": "69870981bc6f7e28115aa3fedf2aa816ff48385c",
+    ".agents/skills/go-interfaces/scripts/check-interface-compliance.sh": "bbd0472539cabf40df1a43a4e8a6017ea4e7498f",
+    ".agents/skills/go-linting/SKILL.md": "9c1964f70a0fadfe9df78836596468c13466798a",
+    ".agents/skills/go-linting/assets/golangci.yml": "3a50744b8efb33c6c75cf487f74abca3dc330d74",
+    ".agents/skills/go-linting/scripts/setup-lint.sh": "7ae0c10e9ddf6d2ed5dba97157d7d8a645ac2482",
+    ".agents/skills/go-logging/SKILL.md": "2db7104d437e1b52774b85a9512749831c88e83c",
+    ".agents/skills/go-logging/references/LEVELS-AND-CONTEXT.md": "b5c3e9518dc7960e58f3253120fd3b786a055d8e",
+    ".agents/skills/go-logging/references/LOGGING-PATTERNS.md": "e96f6da3d61366fcfd000aa348e51e96624b3aca",
+    ".agents/skills/go-naming/SKILL.md": "22cd09ecd7f1ec994e95c5721cb5417cba5b6e35",
+    ".agents/skills/go-naming/references/IDENTIFIERS.md": "45fed1977addffe5e798ee8d22a7fd3abcad961a",
+    ".agents/skills/go-naming/references/REPETITION.md": "cac938e443d28684dc06b1cba6fffba0afbefd43",
+    ".agents/skills/go-naming/references/VARIABLES.md": "a53492626e166a540b232210fba35f19eb6c9ccd",
+    ".agents/skills/go-naming/scripts/check-naming.sh": "229fd02ea1d97cbd554c1c188c098390c68807d7",
+    ".agents/skills/go-packages/SKILL.md": "2dbb93b4ba4e6272fce380f248f0bd90f122f353",
+    ".agents/skills/go-packages/references/IMPORTS.md": "e8a78251cc55f4a0ee2cede26ec8380cd47c4b1c",
+    ".agents/skills/go-packages/references/PACKAGE-SIZE.md": "1eb3e8198d594ab4d74f347d321301923f70b244",
+    ".agents/skills/go-performance/SKILL.md": "377e4707284c09c29e38383906f0c86cbb32013d",
+    ".agents/skills/go-performance/references/BENCHMARKS.md": "7598daa22af80a1041e4cd664f4880ee8b4da961",
+    ".agents/skills/go-performance/references/STRING-OPTIMIZATION.md": "c938bb9b7ee1969abb0efb32250ceabf0cb2e9d1",
+    ".agents/skills/go-performance/scripts/bench-compare.sh": "47f03925514e874f41e0f1c060ec2ee340599fba",
+    ".agents/skills/go-style-core/SKILL.md": "24d8c9308c077057fee6dba6b2e819296efc6c0a",
+    ".agents/skills/go-style-core/references/FORMATTING.md": "57150714c9c4823e3eaad5697d47ee60a9148ef9",
+    ".agents/skills/go-style-core/references/PRINCIPLES.md": "ac3882e1c383a49d4d1119987b0da5fabf7856e8",
+    ".agents/skills/go-testing/SKILL.md": "151955b5e5c11231f95c4963de0b60b701d2613f",
+    ".agents/skills/go-testing/assets/table-test-template.go": "35ca80331a034f24b2c0303bf7899aafa3e8f76b",
+    ".agents/skills/go-testing/references/INTEGRATION.md": "908d12fda7a455f65a6f010daa08d7bca64b5edb",
+    ".agents/skills/go-testing/references/TABLE-DRIVEN-TESTS.md": "37c05d34880c1ca9082793cb9e01ed3a946bab3a",
+    ".agents/skills/go-testing/references/TEST-HELPERS.md": "68c1be3799f2e9034ac44c91671c7e3188461da5",
+    ".agents/skills/go-testing/references/TEST-ORGANIZATION.md": "3f550d6b5acc8342d67bcefa1e29f50f92dc2aa3",
+    ".agents/skills/go-testing/references/VALIDATION-APIS.md": "1174baeadf7bab191254539f427812af691e63d5",
+    ".agents/skills/go-testing/scripts/gen-table-test.sh": "bd4aff5c775c73e1cd08c95eca6b8fcf5105a248",
+    ".claude/settings.local.json": "6f5f8c1b02179af4f269ccdf3f9adb17ff6614b3",
+    "agent/skills/go-code-review/SKILL.md": "38e1370af3709e0dacef67208f4740421e0c819a",
+    "agent/skills/go-code-review/assets/review-template.md": "8a9783efd0ec1c76628410657774b598a2907293",
+    "agent/skills/go-code-review/references/WEB-SERVER.md": "4fcdde6babb435d50f6282abb384740a5ee408a9",
+    "agent/skills/go-code-review/scripts/pre-review.sh": "e0b1334be59928788c20d7faeaf24a8510eeab34",
+    "agent/skills/go-concurrency/SKILL.md": "ae151dd07e18ec8d50624e59aea42289766a9bb7",
+    "agent/skills/go-concurrency/references/ADVANCED-PATTERNS.md": "5e9d68fedc50fcfdd51f8d8de18f0080a05e04c5",
+    "agent/skills/go-concurrency/references/BUFFER-POOLING.md": "64bcc0b563bbe469118e7c71add00aabc9315da1",
+    "agent/skills/go-concurrency/references/GOROUTINE-PATTERNS.md": "a3f6541f7c6f2e575e83cf3a2384a43c4a28e691",
+    "agent/skills/go-concurrency/references/SYNC-PRIMITIVES.md": "ad2a14c5f066f6600af62fb42daef449fc7312d4",
+    "agent/skills/go-context/SKILL.md": "dc510e8b08fbf09e81d776bb0dace5d60571a10a",
+    "agent/skills/go-context/references/PATTERNS.md": "e4562cf4f26a70586fd2e40eaf12bd0f00a3e5b3",
+    "agent/skills/go-control-flow/SKILL.md": "d4f7488b330c62731fa189c201e76a4d7de4c320",
+    "agent/skills/go-control-flow/references/BLANK-IDENTIFIER.md": "29ab4f1ababbeb6c3f7cd6db61a144e0f95e90d3",
+    "agent/skills/go-control-flow/references/SWITCH-PATTERNS.md": "931d9ab97cfbac5a7c7afde29bb3e9597510834c",
+    "agent/skills/go-data-structures/SKILL.md": "ccfb7dc53efd7f31a25db1c1f890949f9f44e3e8",
+    "agent/skills/go-data-structures/references/SLICES.md": "ac88d798c3170a72293c61f56b0a1e97a2196d01",
+    "agent/skills/go-declarations/SKILL.md": "778ada6895ce51c1ca450c97c78a8d48067d02b9",
+    "agent/skills/go-declarations/references/INITIALIZATION.md": "cdd5ee0180c903587cfa90800bf0a4f8804ede9e",
+    "agent/skills/go-declarations/references/IOTA.md": "1a9181deff7d79f9736489325548d8a2980e335c",
+    "agent/skills/go-declarations/references/LITERALS.md": "1295afd2606710f26f0dde0471e008a4849c6c23",
+    "agent/skills/go-declarations/references/SCOPE.md": "9f0a7fed185877c6069328b0d3c6cbee446064ac",
+    "agent/skills/go-declarations/references/SHADOWING.md": "6e7a8c579ac3820a9782bf6c89030fcade46c74d",
+    "agent/skills/go-declarations/references/STRUCTS.md": "c60e484bc666b193781cdd258598b4eea00008cf",
+    "agent/skills/go-defensive/SKILL.md": "74b548c880442d44d8c397f170ebb01f579138d0",
+    "agent/skills/go-defensive/references/BOUNDARY-COPYING.md": "f7c0110221233525c04db16750fbc754057cd3d9",
+    "agent/skills/go-defensive/references/GLOBAL-STATE.md": "56379e0373d1749dd3bc4b638c3971bb4a0bc69d",
+    "agent/skills/go-defensive/references/MUST-FUNCTIONS.md": "a8f7f0341af60535aa8632aa05e90d6eeb27afce",
+    "agent/skills/go-defensive/references/PANIC-RECOVER.md": "9f3457aa3ee717118ffce6fde640fd01e4624b8e",
+    "agent/skills/go-defensive/references/TIME-ENUMS-TAGS.md": "e381cd5c10d99bdab07d61a991a27567ed06d34e",
+    "agent/skills/go-documentation/SKILL.md": "5a6f8e99fcb94c022b9da10af2db5b76bcbd68a6",
+    "agent/skills/go-documentation/assets/doc-template.go": "a2c54b85855d15d364238297dcf47de0c721ffc8",
+    "agent/skills/go-documentation/references/CONVENTIONS.md": "12b8df0bd055c11bdc044e2a5e20cc4b829763cf",
+    "agent/skills/go-documentation/references/EXAMPLES.md": "0b2b3879b19125593417e52d9f1d4a8f42a8be75",
+    "agent/skills/go-documentation/references/FORMATTING.md": "4977008a67dfe01cde2fe05c8915511113b97bc1",
+    "agent/skills/go-documentation/scripts/check-docs-ast.go": "ff1564b1d5f7bd97a6bdd6167830f3ce4b657042",
+    "agent/skills/go-documentation/scripts/check-docs.sh": "de69f135fe4cb5850101108a9d7bbcb70f68c8b9",
+    "agent/skills/go-error-handling/SKILL.md": "4e2e7e00e6c1e62b79b0a9a0e92c4f9a227f4478",
+    "agent/skills/go-error-handling/references/ERROR-FLOW.md": "182827f4235397d8d7b837153351ba4443cbb78a",
+    "agent/skills/go-error-handling/references/ERROR-TYPES.md": "e0d3ef3fb7f61daa2a65b5e356543d0160a5c048",
+    "agent/skills/go-error-handling/references/WRAPPING.md": "954cd6dabf682ebe1a6485fca463903418454d5a",
+    "agent/skills/go-error-handling/scripts/check-errors-ast.go": "d68d6e91e8a6e2ed110b7682a3deebc7f865904c",
+    "agent/skills/go-error-handling/scripts/check-errors.sh": "40c5be771e6b8ff91a54097f4d1ef39fbd04d6f4",
+    "agent/skills/go-functional-options/SKILL.md": "ac1f6b91390d8606e8476aa22bb0ea9d6b39d85d",
+    "agent/skills/go-functional-options/references/OPTIONS-VS-STRUCTS.md": "6b323dc0b8f166fb228c8bff86e43a6003890a29",
+    "agent/skills/go-functions/SKILL.md": "ed1cff83b92245295252c85998142ff2eb4e8eaa",
+    "agent/skills/go-functions/references/PRINTF-STRINGER.md": "1c348839d960dfe0732266ce975cd334c3349387",
+    "agent/skills/go-functions/references/SIGNATURES.md": "d1ae7ca3b7bec091a7840450c3ee8370538431eb",
+    "agent/skills/go-generics/SKILL.md": "079e81d17cd4f657207d6fcdd3f84e0525e79b88",
+    "agent/skills/go-generics/references/CONSTRAINTS.md": "16a871fc474137f11234ba1b52b711c36eee89cd",
+    "agent/skills/go-interfaces/SKILL.md": "582a1c6355c88cd021528826fa211daf1a88ff3e",
+    "agent/skills/go-interfaces/references/EMBEDDING.md": "e65e34b28910406614ad1afb6c65e3f64d78d0c3",
+    "agent/skills/go-interfaces/references/RECEIVER-TYPE.md": "3c0c1ef6eca9521d7e449a28eb5d30a1cd3d86a5",
+    "agent/skills/go-interfaces/scripts/check-interface-compliance.go": "69870981bc6f7e28115aa3fedf2aa816ff48385c",
+    "agent/skills/go-interfaces/scripts/check-interface-compliance.sh": "bbd0472539cabf40df1a43a4e8a6017ea4e7498f",
+    "agent/skills/go-linting/SKILL.md": "283c456cb27919b0ae3df92c4bfb6534c073b3f0",
+    "agent/skills/go-linting/assets/golangci.yml": "3a50744b8efb33c6c75cf487f74abca3dc330d74",
+    "agent/skills/go-linting/scripts/setup-lint.sh": "7ae0c10e9ddf6d2ed5dba97157d7d8a645ac2482",
+    "agent/skills/go-logging/SKILL.md": "c8d6f92a88553f852f71d48f18f4cc3535a98a0c",
+    "agent/skills/go-logging/references/LEVELS-AND-CONTEXT.md": "b5c3e9518dc7960e58f3253120fd3b786a055d8e",
+    "agent/skills/go-logging/references/LOGGING-PATTERNS.md": "e96f6da3d61366fcfd000aa348e51e96624b3aca",
+    "agent/skills/go-naming/SKILL.md": "401bf66254da686d3ff094d7ff5cfac378d1e788",
+    "agent/skills/go-naming/references/IDENTIFIERS.md": "45fed1977addffe5e798ee8d22a7fd3abcad961a",
+    "agent/skills/go-naming/references/REPETITION.md": "cac938e443d28684dc06b1cba6fffba0afbefd43",
+    "agent/skills/go-naming/references/VARIABLES.md": "a53492626e166a540b232210fba35f19eb6c9ccd",
+    "agent/skills/go-naming/scripts/check-naming.sh": "229fd02ea1d97cbd554c1c188c098390c68807d7",
+    "agent/skills/go-packages/SKILL.md": "c59032518d91b5d0725a5b6a2b8a9cd2393b8ca3",
+    "agent/skills/go-packages/references/IMPORTS.md": "e8a78251cc55f4a0ee2cede26ec8380cd47c4b1c",
+    "agent/skills/go-packages/references/PACKAGE-SIZE.md": "1eb3e8198d594ab4d74f347d321301923f70b244",
+    "agent/skills/go-performance/SKILL.md": "230475c02e37af5d59c39b261582ab9633f10b3e",
+    "agent/skills/go-performance/references/BENCHMARKS.md": "7598daa22af80a1041e4cd664f4880ee8b4da961",
+    "agent/skills/go-performance/references/STRING-OPTIMIZATION.md": "c938bb9b7ee1969abb0efb32250ceabf0cb2e9d1",
+    "agent/skills/go-performance/scripts/bench-compare.sh": "47f03925514e874f41e0f1c060ec2ee340599fba",
+    "agent/skills/go-style-core/SKILL.md": "dbdd41acbe868abd361fa9809b1a2c22d48b2837",
+    "agent/skills/go-style-core/references/FORMATTING.md": "57150714c9c4823e3eaad5697d47ee60a9148ef9",
+    "agent/skills/go-style-core/references/PRINCIPLES.md": "ac3882e1c383a49d4d1119987b0da5fabf7856e8",
+    "agent/skills/go-testing/SKILL.md": "76051ea4e579817abb8196767c170a93657f14d9",
+    "agent/skills/go-testing/assets/table-test-template.go": "35ca80331a034f24b2c0303bf7899aafa3e8f76b",
+    "agent/skills/go-testing/references/INTEGRATION.md": "908d12fda7a455f65a6f010daa08d7bca64b5edb",
+    "agent/skills/go-testing/references/TABLE-DRIVEN-TESTS.md": "37c05d34880c1ca9082793cb9e01ed3a946bab3a",
+    "agent/skills/go-testing/references/TEST-HELPERS.md": "68c1be3799f2e9034ac44c91671c7e3188461da5",
+    "agent/skills/go-testing/references/TEST-ORGANIZATION.md": "3f550d6b5acc8342d67bcefa1e29f50f92dc2aa3",
+    "agent/skills/go-testing/references/VALIDATION-APIS.md": "1174baeadf7bab191254539f427812af691e63d5",
+    "agent/skills/go-testing/scripts/gen-table-test.sh": "bd4aff5c775c73e1cd08c95eca6b8fcf5105a248",
+    "apps/web/next-env.d.ts": "ce4e94a6b10f160ee021fe18939af160d2927dcf",
+    "apps/web/tsconfig.tsbuildinfo": "4d3317b93dac6c9c377795215bda4bf344d220b9",
+    "skills-lock.json": "df5b1109db0d0231747f4561543fea4abaa34327"
+  },
+  "spec": {
+    "problem": "kiokoto.com /magazine/loto is empty: prod returns totalDraws=0, nextDraw=null, feed=[]. The Go port stubbed the legacy NestJS pipeline: admin sync only writes an audit row, autopilot/catchup crons are TODO no-ops, generate emits placeholder sequences, next-draw returns drawNumber/vocab/confidence as null, stats exposes only counts.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "AC1: loto.ParseCSV decodes the Shift_JIS thekyo CSV (loto6 and loto7 headers, 2000/10/5 style dates) into validated draws and rejects out-of-range, duplicate or wrong-count rows naming the row"
+      },
+      {
+        "id": "AC2",
+        "text": "AC2: loto.Generate is deterministic for a seed, returns N unique sorted sets inside 1..max that satisfy the shape filter, honours pinned/excluded numbers, ignores weight keys it does not model, and falls back to a seeded uniform choice when fewer than 10 official draws exist"
+      },
+      {
+        "id": "AC3",
+        "text": "AC3: loto.NextScheduledDrawDate and ResolveAutopilotTarget use the JST calendar (loto6 Mon/Thu, loto7 Fri) and report waiting_result when the next draw is not in the future"
+      },
+      {
+        "id": "AC4",
+        "text": "AC4: loto.Service.RunAutopilot imports new draws, then creates exactly one published run per game+target date (autopilot_key), republishes a half-done run, returns already_done on repeats, and backfills a labelled backtest history"
+      },
+      {
+        "id": "AC5",
+        "text": "AC5: GET /api/magazine/loto/next-draw returns drawNumber, confidence, vocabItems, schedule fields and a JST daysUntil; GET /api/magazine/loto/feed lists published predictions (and backtests) with the matched official result, hitCount, bonusHit and jpSentence"
+      },
+      {
+        "id": "AC6",
+        "text": "AC6: GET /api/magazine/loto/stats returns per-number frequency, hot/cold/overdue lists, parity and sum distributions, recent official results and prediction accuracy versus the random-baseline expectation, keeping the existing totalDraws/latestDraw/earliestDraw fields"
+      },
+      {
+        "id": "AC7",
+        "text": "AC7: admin sync, autopilot and generate endpoints run the real service instead of audit-only or placeholder behaviour, and the loto6/loto7/catchup cron jobs plus a startup catch-up call the service"
+      },
+      {
+        "id": "AC8",
+        "text": "AC8: the web hub renders a statistics lab tab and official results strip from /stats with vi/en/ja labels, and the hero shows the draw number, confidence hint, schedule and vocab from next-draw"
+      }
+    ],
+    "expected_behavior": "Result data is synced from the allowlisted CSV source on a schedule and at startup; each upcoming draw gets exactly one idempotent seeded prediction run published with a Japanese learning sentence and vocab; the learner hub shows next draw, history with hit/miss and official results, plus a statistics lab (frequency, hot/cold/overdue, parity, accuracy vs random baseline).",
+    "observed_behavior": "Empty feed, no hero card, stats with only counts, cron jobs log 'stub' and do nothing, admin Generate creates 1,8,15.. style placeholder sets.",
+    "rollback_plan": "Revert the commit; the cron jobs return to no-ops. No schema migration is added, imported draws and generated runs remain valid rows."
+  },
+  "classification": {
+    "classes": [
+      "DOMAIN_LOGIC",
+      "API_CONTRACT",
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLotoNextDrawReportsDrawNumberVocabAndSchedule",
+      "expect": "want a number after the latest official draw"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLotoStatsReportsFrequencyAndAccuracyAgainstChance",
+      "expect": "want Loto7 rules with C(37,7) combinations"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx",
+      "test": "LotoHubClient statistics lab > opens the lab tab and renders frequency heat cells, accuracy versus chance and official results from /stats",
+      "expect": "expected undefined to be truthy"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [
+    {
+      "finding": "test_skip_added:apps/api-go/internal/loto/service_test.go",
+      "reason": "New test file; testTx follows the repository's testPool convention (skip only when TEST_DATABASE_URL is unset, for --unit-only runs). The gated suite_go run provisions PostgreSQL and recorded skipped=0, so the DB-backed loto service tests executed; CI additionally rejects any skip via check-go-test-report.mjs."
+    }
+  ],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-29T06:00:36.412Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-29T06:00:47.603Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-29T06:00:51.012Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-29T06:04:45.657Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-29T06:30:12.061Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-29T06:36:03.029Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647"
+    },
+    {
+      "state": "WAITING_FOR_DECISION",
+      "at": "2026-10-29T06:51:32.268Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-29T06:52:02.709Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-29T06:54:38.727Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-29T07:00:37.660Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-29T07:05:04.701Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-29T07:28:54.517Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-29T07:34:21.171Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-29T07:57:52.561Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-29T07:58:17.383Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-29T06:04:25.632Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLotoNextDrawReportsDrawNumberVocabAndSchedule|TestLotoStatsReportsFrequencyAndAccuracyAgainstChance)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLotoNextDrawReportsDrawNumberVocabAndSchedule",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestLotoNextDrawReportsDrawNumberVocabAndSchedule handler_loto_test.go:181: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLotoNextDrawReportsDrawNumberVocabAndSchedule (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoStatsReportsFrequencyAndAccuracyAgainstChance",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestLotoStatsReportsFrequencyAndAccuracyAgainstChance handler_loto_test.go:251: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLotoStatsReportsFrequencyAndAccuracyAgainstChance (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient statistics lab > opens the lab tab and renders frequency heat cells, accuracy versus chance and official results from /stats",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to be truthy",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLotoNextDrawReportsDrawNumberVocabAndSchedule": "want a number after the latest official draw",
+        "go:./internal/httpserver:TestLotoStatsReportsFrequencyAndAccuracyAgainstChance": "want Loto7 rules with C(37,7) combinations",
+        "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient statistics lab > opens the lab tab and renders frequency heat cells, accuracy versus chance and official results from /stats": "expected undefined to be truthy"
+      },
+      "fingerprint": "bfc570e8c33db2d5fa5b85bbea88e05c5e91b979c46b570a8c52867372f081f0"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-29T06:04:45.251Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLotoNextDrawReportsDrawNumberVocabAndSchedule|TestLotoStatsReportsFrequencyAndAccuracyAgainstChance)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLotoNextDrawReportsDrawNumberVocabAndSchedule",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLotoNextDrawReportsDrawNumberVocabAndSchedule handler_loto_test.go:234: drawNumber=<nil>, want a number after the latest official draw 8100000 --- FAIL: TestLotoNextDrawReportsDrawNumberVocabAndSchedule (0.05s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoStatsReportsFrequencyAndAccuracyAgainstChance",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLotoStatsReportsFrequencyAndAccuracyAgainstChance handler_loto_test.go:303: spec={MainCount:0 MaxNumber:0 TotalCombinations:0}, want Loto7 rules with C(37,7) combinations --- FAIL: TestLotoStatsReportsFrequencyAndAccuracyAgainstChance (0.05s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient statistics lab > opens the lab tab and renders frequency heat cells, accuracy versus chance and official results from /stats",
+          "outcome": "FAIL",
+          "excerpt": "expected undefined to be truthy",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLotoNextDrawReportsDrawNumberVocabAndSchedule": "want a number after the latest official draw",
+        "go:./internal/httpserver:TestLotoStatsReportsFrequencyAndAccuracyAgainstChance": "want Loto7 rules with C(37,7) combinations",
+        "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient statistics lab > opens the lab tab and renders frequency heat cells, accuracy versus chance and official results from /stats": "expected undefined to be truthy"
+      },
+      "fingerprint": "bfc570e8c33db2d5fa5b85bbea88e05c5e91b979c46b570a8c52867372f081f0"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-29T06:30:08.966Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLotoNextDrawReportsDrawNumberVocabAndSchedule|TestLotoStatsReportsFrequencyAndAccuracyAgainstChance)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLotoNextDrawReportsDrawNumberVocabAndSchedule",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoStatsReportsFrequencyAndAccuracyAgainstChance",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient statistics lab > opens the lab tab and renders frequency heat cells, accuracy versus chance and official results from /stats",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "5dfc1f699018a63a4102642d50cdc04cde4920f5ad869394413b6a679fdd3070"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-29T06:34:57.949Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1665,
+        "executed": 1665,
+        "passed": 1665,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1665 passed, 0 allowed skip(s)",
+      "fingerprint": "5dfc1f699018a63a4102642d50cdc04cde4920f5ad869394413b6a679fdd3070"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-29T06:35:59.998Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 595,
+        "executed": 595,
+        "passed": 595,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 853,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "5dfc1f699018a63a4102642d50cdc04cde4920f5ad869394413b6a679fdd3070"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-29T06:51:29.392Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 2,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/handler_loto_hub.go",
+          "summary": "next-draw keeps returning today's already-drawn run (target_draw_date >= JST today) after the result is imported (~21:00 JST) until midnight, hiding the newly published next-draw set; EstimateDrawNumb…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/jobs/handlers.go",
+          "summary": "AC7 cron/startup half is unpinned: no test covers LotoAutopilotLoto6/Loto7/Catchup delegation, the disabled short-circuit, catchup error aggregation, the app.go result-to-count/error mapping or the st…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/server.go",
+          "summary": "LotoResultSource is documented as nil outside production and the sync handler as record-only on staging, but app.go always wires a live Fetcher, so dev/staging hit the third-party mirror on every star…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_admin_magazine.go",
+          "summary": "sync maps every SyncGame error, including DB failures, to 502 'result source unavailable' and echoes the raw error; autopilot audits only when it publishes (imports/backtests unaudited) and discards a…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/loto/engine.go",
+          "summary": "heuristic path can return fewer than SetCount sets without top-up, and the zero-candidate fallback emits uniform sets that ignore the shape filter, contrary to the AC2 wording for constrained pin/excl…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/loto/stats_service.go",
+          "summary": "predictionSamples does not dedupe by target date, so two published runs (admin + autopilot) or a backtest plus a later publish for one draw are double-counted in the accuracy figures"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/loto/calendar.go",
+          "summary": "draw schedule ignores the New-Year break: Thu 2026-12-31 (Loto6) and Fri 2027-01-01 (Loto7) become phantom published targets and the following real draw gets no reference set (legacy behaved the same)"
+        },
+        {
+          "severity": "minor",
+          "file": "e2e/audit/audit138-admin-apis.mjs",
+          "summary": "audit still asserts the admin autopilot returns waiting_result although the endpoint now syncs, backfills backtests and publishes"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/go.mod",
+          "summary": "golang.org/x/text left in the indirect require block without the indirect comment, so go mod tidy would rewrite it"
+        }
+      ],
+      "package_sha256": "45e7ea8c436b900d39e056e2e0baade31edf5af46349ebab83e63e23d0ec1ad2",
+      "fingerprint": "5dfc1f699018a63a4102642d50cdc04cde4920f5ad869394413b6a679fdd3070"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-29T06:54:35.692Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLotoNextDrawReportsDrawNumberVocabAndSchedule|TestLotoStatsReportsFrequencyAndAccuracyAgainstChance)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLotoNextDrawReportsDrawNumberVocabAndSchedule",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoStatsReportsFrequencyAndAccuracyAgainstChance",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient statistics lab > opens the lab tab and renders frequency heat cells, accuracy versus chance and official results from /stats",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "7636c9244c2569d1038dae7a1f36a0583ad17225f7f3fa54b349f70d59210b6f"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-29T06:59:25.313Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1673,
+        "executed": 1673,
+        "passed": 1673,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1673 passed, 0 allowed skip(s)",
+      "fingerprint": "7636c9244c2569d1038dae7a1f36a0583ad17225f7f3fa54b349f70d59210b6f"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-29T07:00:34.348Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 595,
+        "executed": 595,
+        "passed": 595,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 853,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "7636c9244c2569d1038dae7a1f36a0583ad17225f7f3fa54b349f70d59210b6f"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-29T07:05:01.579Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1673,
+        "executed": 1673,
+        "passed": 1673,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1673 passed, 0 allowed skip(s)",
+      "fingerprint": "ed251376477995ec6f90cac8162e6cc00d07b01a4655514515745af17dc13e84"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-29T07:06:00.675Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 595,
+        "executed": 595,
+        "passed": 595,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 853,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "ed251376477995ec6f90cac8162e6cc00d07b01a4655514515745af17dc13e84"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-29T07:25:15.107Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/httpserver/handler_loto_hub.go",
+          "summary": "next-draw (L238), feed (L154) and stats accuracy (loto/stats_service.go L165) select runs only by loto_generation_run.status and ignore magazine_article moderation; admin Reject (handler_admin_magazin…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_admin_magazine.go",
+          "summary": "sync (L1064-1091) and autopilot (L1130) audit after the mutation in a separate tx and only log audit failures; the repo convention, and this handler before the change, is same-tx fail-closed audit; ru…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/loto/csv.go",
+          "summary": "AC1 verified only on a synthetic fixture (the live thekyo check was cancelled); the parser is stricter than legacy and validates every historical row although only rows above max-3 are imported, so on…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/loto/fetch.go",
+          "summary": "SSRF-relevant Fetcher guards (https-only, host allowlist, userinfo/port rejection, redirect re-check, 5 MB cap, non-200) have no tests"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_admin_magazine_rbac_test.go",
+          "summary": "new admin autopilot HTTP behaviour (per-tick audit event, published/already_done response, 500 mapping) is unpinned; the unchanged RBAC test still asserts waiting_result, which holds only because loto…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/loto/service.go",
+          "summary": "admin runs for past target dates are generated with history that includes the target's own result, then outrank the honest backtest in the accuracy stats, and PublishRun (L255) stamps drawNumber=lates…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/app/[locale]/magazine/loto/_components/loto-hero-prediction.tsx",
+          "summary": "hero schedule always renders scheduleJp plus scheduleVi, so en users see Vietnamese; the new scheduleEn is unused (AC8 vi/en/ja labels)"
+        },
+        {
+          "severity": "minor",
+          "file": "tasks/LOTO-277.json",
+          "summary": "green gate is STALE for the final fingerprint ed2513 (last GREEN at 7636c9), so re-run pnpm quality green; the risk ack says three DB-backed loto tests but service_test.go has five"
+        }
+      ],
+      "package_sha256": "38c103e4eaf0c98c614361df4d8bc6924da0f17f2436ee5460a42c004803102f",
+      "fingerprint": "ed251376477995ec6f90cac8162e6cc00d07b01a4655514515745af17dc13e84"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-29T07:28:51.300Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLotoNextDrawReportsDrawNumberVocabAndSchedule|TestLotoStatsReportsFrequencyAndAccuracyAgainstChance)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLotoNextDrawReportsDrawNumberVocabAndSchedule",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLotoStatsReportsFrequencyAndAccuracyAgainstChance",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx::LotoHubClient statistics lab > opens the lab tab and renders frequency heat cells, accuracy versus chance and official results from /stats",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "47b66c81fc40223ddd264e49a1a8e3f643fc347d5d5851b93c96fa4d87c187a9"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-29T07:33:24.063Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1678,
+        "executed": 1678,
+        "passed": 1678,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1678 passed, 0 allowed skip(s)",
+      "fingerprint": "47b66c81fc40223ddd264e49a1a8e3f643fc347d5d5851b93c96fa4d87c187a9"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-29T07:34:18.028Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 595,
+        "executed": 595,
+        "passed": 595,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 853,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "47b66c81fc40223ddd264e49a1a8e3f643fc347d5d5851b93c96fa4d87c187a9"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-29T07:57:49.776Z",
+      "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/loto/service.go",
+          "summary": "PublishRun never supersedes other published runs for the same game/date; after an admin publishes over the autopilot run and then rejects it, the autopilot run resurfaces in /next-draw and /feed while…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_admin_magazine.go",
+          "summary": "sync/autopilot use 25 s budgets (Fetcher timeout 25 s) but the default server WriteTimeout is 15 s, so a slow mirror drops the response after the import commits; sync also holds a DB tx open during th…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/loto/stats_service.go",
+          "summary": "with 0 draws Stats returns fabricated hot/cold/overdue lists (1..k, last k, 1..k) that the stats lab renders as facts; return empty lists when there is no history"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/loto/service_test.go",
+          "summary": "TestJobCountReconcileAndCuratedRunsAreRespected asserts loto7 waiting_result although testTx only resets loto6, so it depends on committed loto7 rows in the shared DB; the RBAC test's autopilot waitin…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/app/[locale]/magazine/_components/magazine-article-view.tsx",
+          "summary": "pre-existing: the article view renders loto content only from content.generatedSets while PublishRun (legacy shape) writes content.sets, so the now auto-published loto articles open with an empty body"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/loto/service.go",
+          "summary": "admin runs for past target dates are generated from history that includes the target's own result and then outrank honest backtests in feed/stats; PublishRun stamps drawNumber latest+1 (estimated) for…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/loto/csv.go",
+          "summary": "robustness nits: a csv.Reader parse error (no LazyQuotes) aborts the whole lenient mirror parse; the global MAX(draw_number)-3 cutoff (legacy parity) stops all imports after one bogus high draw number…"
+        }
+      ],
+      "package_sha256": "e4c4027e7624ca9a2924d26a85e97a0eff3a5c44c8e7ca42b32e3ae526b190e7",
+      "fingerprint": "47b66c81fc40223ddd264e49a1a8e3f643fc347d5d5851b93c96fa4d87c187a9"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-29T07:58:17.362Z",
+    "head": "754f62321b3c24f337ba808ead0dbf1b60fd4647",
+    "fingerprint": "47b66c81fc40223ddd264e49a1a8e3f643fc347d5d5851b93c96fa4d87c187a9",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/go.mod": "1999ab95658dfddd2330243bf1fba95fed5afbb9",
+      "apps/api-go/internal/app/app.go": "fe582495902d86c98b96dca575c1205d46adde3e",
+      "apps/api-go/internal/httpserver/handler_admin_magazine.go": "196d247511831f573b298950d1f23df4eab683f2",
+      "apps/api-go/internal/httpserver/handler_career_content_gamification_misc.go": "aeef7f8a128b6eb72e3b8b704060c05ca86de37b",
+      "apps/api-go/internal/httpserver/handler_loto_hub.go": "0722bc92c913d127b669b5bf70782b34fee581a6",
+      "apps/api-go/internal/httpserver/handler_loto_pipeline_test.go": "adb14bfa99e9db6dfa105c9a6fb198ee80b26130",
+      "apps/api-go/internal/httpserver/handler_loto_reject_test.go": "4bd35cea54484755550a5869ffd0389c9af234cd",
+      "apps/api-go/internal/httpserver/handler_loto_test.go": "8723d962067cd9c6ee7a8347248ebaaea8b7f082",
+      "apps/api-go/internal/httpserver/server.go": "b9a9037ef2092c3e927c0401955314789366eca6",
+      "apps/api-go/internal/jobs/handlers.go": "83bde0b46bd6ac9c6dcf3916f868165c9b01c8d3",
+      "apps/api-go/internal/jobs/loto_handlers_test.go": "09785b4e8effb4ddcd2875dac8bacb6771ef755d",
+      "apps/api-go/internal/loto/calendar.go": "6c900a202e518e630c74f3223d5891a0853ea6d3",
+      "apps/api-go/internal/loto/calendar_test.go": "1ad167d98d0d0f0acf41d0e9c8817eb2381b004f",
+      "apps/api-go/internal/loto/csv.go": "64763cbd6a7baf3b5fda2cf64a098ab9704b78f5",
+      "apps/api-go/internal/loto/csv_test.go": "1ffa907d21c4685d9082abf1b8b05f86b46bb777",
+      "apps/api-go/internal/loto/engine.go": "a37f2042b83eaeb907b2ad5a97e69ead1d834217",
+      "apps/api-go/internal/loto/engine_test.go": "d92917c60a91506735c06689768cd72068f29b81",
+      "apps/api-go/internal/loto/fetch.go": "c45486ac01e52a5850f80fe70529a59ffb3ca1e3",
+      "apps/api-go/internal/loto/fetch_test.go": "201d985080641f84d63415f8ed9c0b42e26120ad",
+      "apps/api-go/internal/loto/sentence.go": "d383a0aef45de7825fba81a602e95c8b04935e6b",
+      "apps/api-go/internal/loto/sentence_test.go": "ba54c583bd7c2d61452767c9907fc2c787682494",
+      "apps/api-go/internal/loto/service.go": "12c23c938e3c106cb3186504327bdb3335992d1e",
+      "apps/api-go/internal/loto/service_test.go": "d892ba2b8dd08b058ddd1b419cc6ecf85dcbb922",
+      "apps/api-go/internal/loto/stats.go": "65a8e97b6633dd27e7e6846f8fd9c0fdb9e09d18",
+      "apps/api-go/internal/loto/stats_service.go": "868cbcccfb59fa62a3b1425039cd2a08162c5ae0",
+      "apps/api-go/internal/loto/stats_test.go": "7d68be8484e410ce2448e78305075b65b041300a",
+      "apps/api-go/internal/loto/store.go": "fcef070ad4b428d3d8a278efe06a2aa66ce2111f",
+      "apps/api-go/internal/loto/types.go": "18f1d0ceef9cd1dabe3c853a688a733f365613bc",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-balls.tsx": "9f010b6d060a4287e058832b9824553aa2e1e14a",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-components.test.tsx": "1a5114e52a00325658374bdbac1ce689aebcd3ec",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-game-toggle.tsx": "58bbfb23c962863b46d3f75846e213900d10abe0",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-hero-prediction.tsx": "b9947181ff60806697588c58fd438b05244067ee",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-history-card.tsx": "a9b6cae96cda28e2319f5076c5dd758b67012f46",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.test.tsx": "b9088c8f81bb60fa5d64417ecca97cbe0b5523e8",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.tsx": "c62f1e550512a2fa488acbf972bdb458fa4a586e",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-stats-lab.tsx": "89435d1fa57b39b09bf86292979628ef9990c582",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-tabs.tsx": "8aaa145cadc906c66e3841e5e3bbd78b7ea4a1fa",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-types.ts": "969cbeff6a8bf79fdb19664e0a4cd28fb02dbb52",
+      "apps/web/messages/en.json": "d5016d6e9e8f395f7a8d652ab99abf125a163335",
+      "apps/web/messages/ja.json": "f513eeaf793794fcff4599e3e3dce546e70f0334",
+      "apps/web/messages/vi.json": "2639b1d6209f8a732dae642c7fbcf7c2e9b8b185",
+      "docs/api-route-inventory.json": "4cdee90d317a40f09c77599c7635b109413b27a5",
+      "docs/openapi.json": "3312993ace0db1e89246ec87013814586cd21107",
+      "e2e/audit/audit138-admin-apis.mjs": "bbfa9fca774f04b2a9f9284602b6b629596080d0"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": [
+      {
+        "id": "465a99ed-60a1-4b2e-a198-de30c0d5a0f7",
+        "task": "LOTO-277",
+        "action": {
+          "kind": "delete_persistent_data",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "1b1fd0763de42c53122b84e31af10276c84d927cba165e94d75be995ff5bd03b",
+            "environment": "local"
+          },
+          "impact": "Destroy potentially persistent data",
+          "command": "pkill -f 'next dev --port 3000'; pkill -f cors-proxy.mjs; pkill -f api-loto; rm -rf 'apps/web/app/[locale]/loto-preview'; sed -i '' 's#bg-primary/70#bg-primary#' 'apps/web/app/[locale]/magazine/loto/_components/loto-hero-prediction.tsx'; grep -n 'route-contract\\|api:contract\\|openapi' docs/mobile/IOS_API_CONTRACT_GUIDE.md | head -12; git status --short | grep -v '^??' | grep -c .; git status --short apps/web | head"
+        },
+        "impact": "Destroy potentially persistent data",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "1b1fd0763de42c53122b84e31af10276c84d927cba165e94d75be995ff5bd03b",
+          "environment": "local"
+        },
+        "digest": "d0a3b72ddb971159a1c9678b7b2482fb3573c0fe28baab470606d2458b90a06b",
+        "continuation": {
+          "step": "native:toolu_01Q8KLKRYKAksEPeAsWAWBwT",
+          "native_tool_use_id": "toolu_01Q8KLKRYKAksEPeAsWAWBwT"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "native_permission_once",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-29T06:27:08.431Z"
+      },
+      {
+        "id": "4fcd9ac2-d6db-4f5f-9d94-1639ffae8c8f",
+        "task": "LOTO-277",
+        "action": {
+          "kind": "external_mutation",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "81f4103d084c62440f912f0fe4c9616059d4bbd7959ff82d73778a59b8345b15",
+            "environment": "local"
+          },
+          "impact": "Publish or mutate an external service/account",
+          "command": "for g in loto6 loto7; do curl -sS --max-time 20 \"https://$g.thekyo.jp/data/$g.csv\" | iconv -f SHIFT_JIS -t UTF-8 | node -e '\nconst g=process.argv[1]; const spec=g===\"loto6\"?{m:6,b:1,max:43}:{m:7,b:2,max:37};\nlet s=\"\";process.stdin.on(\"data\",d=>s+=d).on(\"end\",()=>{\n const lines=s.split(/\\r?\\n/).filter(l=>l.trim()!==\"\");\n const h=lines[0].split(\",\").map(x=>x.trim().toLowerCase());\n const idx=k=>h.indexOf(k);\n const nIdx=[...Array(spec.m)].map((_,i)=>idx(`第${i+1}数字`));\n const bIdx=spec.b===1?[idx(\"bonus数字\")]:[idx(\"bonus数字1\"),idx(\"bonus数字2\")];\n const errs=[]; const seen=new Set(); let last=null, prevDate=\"\";\n lines.slice(1).forEach((l,i)=>{const r=l.split(\",\").map(x=>x.trim()); const row=i+2;\n  if(r.length!==h.length) errs.push(`row ${row}: ${r.length} fields vs ${h.length}`);\n  const no=Number(r[0]); if(!Number.isInteger(no)||no<1) errs.push(`row ${row}: bad no ${r[0]}`);\n  if(seen.has(no)) errs.push(`row ${row}: dup ${no}`); seen.add(no);\n  const p=r[1].split(/[\\/.-]/); const d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));\n  if(p.length!==3||p[0].length!==4||d.getUTCDate()!==+p[2]) errs.push(`row ${row}: bad date ${r[1]}`);\n  const key=`${p[0]}-${p[1].padStart(2,\"0\")}-${p[2].padStart(2,\"0\")}`;\n  const nums=[...nIdx,...bIdx].map(j=>r[j]); const ints=nums.map(Number);\n  if(ints.some(n=>!Number.isInteger(n)||n<1||n>spec.max)) errs.push(`row ${row}: range ${nums}`);\n  if(new Set(ints).size!==ints.length) errs.push(`row ${row}: dup numbers ${nums}`);\n  const wd=d.getUTCDay(); const okWd=g===\"loto6\"?(wd===1||wd===4):(wd===5);\n  if(!okWd) errs.push(`row ${row}: off-schedule ${key} wd=${wd}`);\n  if(key<=prevDate) errs.push(`row ${row}: non-increasing date ${key}`); prevDate=key; last=[no,key];\n });\n console.log(g,\"rows\",lines.length-1,\"last\",last,\"errors\",errs.length); console.log(errs.slice(0,15).join(\"\\n\"));\n});' $g; done"
+        },
+        "impact": "Publish or mutate an external service/account",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "81f4103d084c62440f912f0fe4c9616059d4bbd7959ff82d73778a59b8345b15",
+          "environment": "local"
+        },
+        "digest": "6d1425333cc9281a6d60c67ec5eb3ea41d9057b512e61884d9d1db6af73f68c0",
+        "continuation": {
+          "step": "native:toolu_016QGMFsmfwE9SdEnPttu6SU",
+          "native_tool_use_id": "toolu_016QGMFsmfwE9SdEnPttu6SU"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "cancel",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-29T06:46:31.263Z",
+        "answered_at": "2026-10-29T06:51:59.594Z",
+        "execution": "alternative"
+      }
+    ]
+  }
+}

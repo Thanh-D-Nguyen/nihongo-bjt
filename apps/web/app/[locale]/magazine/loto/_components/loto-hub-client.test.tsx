@@ -22,7 +22,11 @@ vi.mock("./loto-game-toggle", () => ({
 
 vi.mock("./loto-hero-prediction", () => ({
   LotoHeroPrediction: ({ data }: { data: { sets?: unknown[] } }) =>
-    data.sets ? <div data-testid="hero-prediction" /> : <div data-testid="hero-invalid-prediction" />
+    data.sets ? (
+      <div data-testid="hero-prediction" />
+    ) : (
+      <div data-testid="hero-invalid-prediction" />
+    )
 }));
 
 vi.mock("./loto-history-card", () => ({
@@ -102,15 +106,11 @@ describe("LotoHubClient pagination", () => {
       if (url.includes("/next-draw")) {
         return Promise.resolve(new Response(JSON.stringify({ nextDraw: null }), { status: 200 }));
       }
-      return Promise.resolve(
-        new Response(JSON.stringify({ data: [], total: 0 }), { status: 200 })
-      );
+      return Promise.resolve(new Response(JSON.stringify({ data: [], total: 0 }), { status: 200 }));
     });
 
     await act(async () => {
-      root.render(
-        <LotoHubClient labels={{ empty: "Chưa có tổ hợp tham khảo." }} locale="vi" />
-      );
+      root.render(<LotoHubClient labels={{ empty: "Chưa có tổ hợp tham khảo." }} locale="vi" />);
     });
     await flushEffects();
 
@@ -168,5 +168,80 @@ describe("LotoHubClient pagination", () => {
       .map(([input]) => String(input))
       .filter((url) => url.includes("/feed") && url.includes("page=2"));
     expect(feedRequestsAfterSettling).toHaveLength(1);
+  });
+});
+
+describe("LotoHubClient statistics lab", () => {
+  it("opens the lab tab and renders frequency heat cells, accuracy versus chance and official results from /stats", async () => {
+    const stats = {
+      game: "loto6",
+      totalDraws: 2149,
+      spec: { mainCount: 6, bonusCount: 1, maxNumber: 43, totalCombinations: 6096454 },
+      frequency: Array.from({ length: 43 }, (_, index) => ({
+        number: index + 1,
+        count: 300 + index,
+        recent: index % 5,
+        gap: index
+      })),
+      hotNumbers: [43, 42, 41, 40, 39, 38],
+      coldNumbers: [1, 2, 3, 4, 5, 6],
+      overdueNumbers: [20, 21, 22, 23, 24, 25],
+      recentDraws: [
+        {
+          drawNumber: 2149,
+          drawDate: "2026-10-26",
+          mainNumbers: [2, 11, 15, 19, 24, 36],
+          bonusNumbers: [27]
+        }
+      ],
+      accuracy: {
+        samples: 24,
+        avgHits: 0.83,
+        baselineHits: 0.8372,
+        bestHits: 3,
+        distribution: [10, 9, 4, 1, 0, 0, 0],
+        expectedDistribution: [0.4, 0.4, 0.15, 0.04, 0.01, 0, 0]
+      }
+    };
+    fetchMock.mockImplementation((input: string | URL | Request) => {
+      const url = String(input);
+      if (url.includes("/next-draw")) {
+        return Promise.resolve(new Response(JSON.stringify({ nextDraw: null }), { status: 200 }));
+      }
+      if (url.includes("/stats")) {
+        return Promise.resolve(new Response(JSON.stringify(stats), { status: 200 }));
+      }
+      return Promise.resolve(new Response(JSON.stringify({ data: [], total: 0 }), { status: 200 }));
+    });
+
+    await act(async () => {
+      root.render(
+        <LotoHubClient
+          labels={{
+            tabPredictions: "Dự đoán",
+            tabLab: "Phòng thí nghiệm",
+            accuracyTitle: "Đối chiếu với ngẫu nhiên",
+            resultsTitle: "Kết quả chính thức gần đây"
+          }}
+          locale="vi"
+        />
+      );
+    });
+    await flushEffects();
+
+    const tab = [...host.querySelectorAll("[role=tab]")].find((node) =>
+      node.textContent?.includes("Phòng thí nghiệm")
+    );
+    expect(tab).toBeTruthy();
+    await act(async () => {
+      (tab as HTMLElement).click();
+    });
+    await flushEffects();
+    await flushEffects();
+
+    expect(host.querySelectorAll("[data-testid=frequency-cell]")).toHaveLength(43);
+    expect(host.textContent).toContain("Đối chiếu với ngẫu nhiên");
+    expect(host.textContent).toContain("Kết quả chính thức gần đây");
+    expect(host.textContent).toContain("2149");
   });
 });

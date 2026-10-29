@@ -27,6 +27,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/gamification"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/jobs"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/loto"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/notification"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/onboarding"
@@ -148,7 +149,13 @@ func New(version string) (*App, error) {
 		}
 	}
 
+	lotoService := loto.NewService(dbPool, logger)
+	lotoSource := loto.ResultSource(nil)
+	if jobs.LoadConfig().LotoAutopilotEnabled {
+		lotoSource = lotoService.Source
+	}
 	deps := httpserver.Dependencies{
+		LotoResultSource:      lotoSource,
 		Config:                cfg,
 		Logger:                logger,
 		DB:                    dbPool,
@@ -197,6 +204,13 @@ func New(version string) (*App, error) {
 	handlers.NHKNewsSyncFunc = func(ctx context.Context) (int, error) {
 		return httpserver.SyncNHKNewsFeeds(ctx, dbPool, logger)
 	}
+	handlers.LotoAutopilotFunc = func(ctx context.Context, game string) (int, error) {
+		parsed, ok := loto.ParseGame(game)
+		if !ok {
+			return 0, fmt.Errorf("loto autopilot: unknown game %q", game)
+		}
+		return lotoService.JobCount(ctx, parsed)
+	}
 	if err := jobs.RegisterAll(scheduler, handlers); err != nil {
 		publicReadRateLimiter.Stop()
 		rateLimiter.Stop()
@@ -204,6 +218,17 @@ func New(version string) (*App, error) {
 		return nil, fmt.Errorf("app: jobs registration: %w", err)
 	}
 	scheduler.Start()
+	if jobsCfg.Enabled && jobsCfg.LotoAutopilotEnabled {
+		// Reconcile after every deploy: import results, publish the next reference
+		// set and top up the backtest history.
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			defer cancel()
+			for game, result := range lotoService.Reconcile(ctx) {
+				logger.Info("jobs: startup loto autopilot completed", "game", game, "status", result.Status, "backtests", result.Backtests)
+			}
+		}()
+	}
 	if jobsCfg.Enabled {
 		go func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)

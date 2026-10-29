@@ -11219,7 +11219,7 @@
             "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")",
             "authn.CSRFGuard(csrfCfg)"
           ],
-          "handler": "adminLotoAutopilotHandler(deps.DBPool, deps.Logger)",
+          "handler": "adminLotoAutopilotHandler(deps.DBPool, deps.Logger, deps.LotoResultSource)",
           "runtimeConditions": [
             "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
           ]
@@ -11556,7 +11556,7 @@
             "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")",
             "authn.CSRFGuard(csrfCfg)"
           ],
-          "handler": "adminLotoSyncHandler(deps.DBPool, deps.Logger)",
+          "handler": "adminLotoSyncHandler(deps.DBPool, deps.Logger, deps.LotoResultSource)",
           "runtimeConditions": [
             "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
           ]

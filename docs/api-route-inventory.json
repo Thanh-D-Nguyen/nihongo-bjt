@@ -16072,7 +16072,7 @@
     {
       "method": "POST",
       "path": "/api/admin/magazine/loto/autopilot",
-      "handler": "adminLotoAutopilotHandler(deps.DBPool, deps.Logger)",
+      "handler": "adminLotoAutopilotHandler(deps.DBPool, deps.Logger, deps.LotoResultSource)",
       "family": "Admin / magazine",
       "guards": [
         "adminGuard",
@@ -16691,7 +16691,7 @@
     {
       "method": "POST",
       "path": "/api/admin/magazine/loto/sync",
-      "handler": "adminLotoSyncHandler(deps.DBPool, deps.Logger)",
+      "handler": "adminLotoSyncHandler(deps.DBPool, deps.Logger, deps.LotoResultSource)",
       "family": "Admin / magazine",
       "guards": [
         "adminGuard",

@@ -7,84 +7,12 @@ import { useGoAuth } from "../../../../../lib/go-auth-provider";
 import { LotoGameToggle } from "./loto-game-toggle";
 import { LotoHeroPrediction } from "./loto-hero-prediction";
 import { LotoHistoryCard } from "./loto-history-card";
-
-type LotoGame = "loto6" | "loto7";
-
-interface LotoLabels {
-  title?: string;
-  subtitle?: string;
-  nextDraw?: string;
-  drawNumber?: string;
-  countdown?: string;
-  history?: string;
-  prediction?: string;
-  result?: string;
-  hitCount?: string;
-  pending?: string;
-  loadMore?: string;
-  jpSentence?: string;
-  vocab?: string;
-  viewDetail?: string;
-  confidence?: string;
-  confidenceHint?: string;
-  loginRequired?: string;
-  set?: string;
-  bonus?: string;
-  loto6?: string;
-  loto7?: string;
-  tabLoto6?: string;
-  tabLoto7?: string;
-  disclaimer?: string;
-  empty?: string;
-  error?: string;
-  retry?: string;
-  collapse?: string;
-}
-
-interface FeedItem {
-  id: string;
-  drawNumber: number | null;
-  drawDate: string;
-  drawDayJp?: string;
-  drawTime?: string;
-  scheduleJp?: string;
-  scheduleVi?: string;
-  game: LotoGame;
-  sets: Array<{ mainNumbers: number[]; bonusNumbers: number[]; score: number }>;
-  result: { mainNumbers: number[]; bonusNumbers: number[] } | null;
-  hitCount: number;
-  bonusHit: boolean;
-  jpSentence: {
-    textJp: string;
-    reading: string;
-    textVi: string;
-    vocabItems: Array<{ wordJp: string; reading: string; meaningVi: string }>;
-  } | null;
-}
-
-interface NextDrawData {
-  id: string;
-  drawNumber: number | null;
-  drawDate: string;
-  drawDayJp?: string;
-  drawTime?: string;
-  scheduleJp?: string;
-  scheduleVi?: string;
-  game: LotoGame;
-  sets: Array<{ mainNumbers: number[]; bonusNumbers: number[]; score: number }>;
-  jpSentence: {
-    textJp: string;
-    reading: string;
-    textVi: string;
-    vocabItems: Array<{ wordJp: string; reading: string; meaningVi: string }>;
-  } | null;
-  vocabItems: Array<{ wordJp: string; reading: string; meaningVi: string }>;
-  confidence: number | null;
-  daysUntil: number;
-}
+import { LotoStatsLab } from "./loto-stats-lab";
+import { LotoTabs, type LotoTab } from "./loto-tabs";
+import type { LotoFeedItem, LotoGame, LotoLabels, LotoNextDraw } from "./loto-types";
 
 interface FeedResponse {
-  data?: FeedItem[];
+  data?: LotoFeedItem[];
   total?: number;
 }
 
@@ -102,11 +30,12 @@ export function LotoHubClient({ labels, locale }: { labels: LotoLabels; locale: 
   );
 }
 
-function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
+function LotoHubInner({ labels, locale }: { labels: LotoLabels; locale: string }) {
   const { isAuthenticated } = useGoAuth();
   const [game, setGame] = useState<LotoGame>("loto6");
-  const [nextDraw, setNextDraw] = useState<NextDrawData | null>(null);
-  const [feed, setFeed] = useState<FeedItem[]>([]);
+  const [tab, setTab] = useState<LotoTab>("predictions");
+  const [nextDraw, setNextDraw] = useState<LotoNextDraw | null>(null);
+  const [feed, setFeed] = useState<LotoFeedItem[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -138,7 +67,7 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
         if (!r.ok) throw new Error(`Next draw request failed: ${r.status}`);
         return r.json();
       })
-      .then((data: { nextDraw: NextDrawData | null }) => setNextDraw(data.nextDraw))
+      .then((data: { nextDraw: LotoNextDraw | null }) => setNextDraw(data.nextDraw))
       .catch((error: unknown) => {
         if (!isAbortError(error)) setNextDrawError(true);
       });
@@ -284,44 +213,35 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
             labelLoto6={labels.tabLoto6 ?? "Loto6 (6/43)"}
             labelLoto7={labels.tabLoto7 ?? "Loto7 (7/37)"}
           />
+          <LotoTabs
+            tab={tab}
+            onChange={setTab}
+            labelPredictions={labels.tabPredictions ?? "Tổ hợp & lịch sử"}
+            labelLab={labels.tabLab ?? "Phòng thí nghiệm"}
+          />
         </div>
 
-        {/* Next draw analysis */}
-        {nextDraw && (
-          <section className="mb-8">
-            <LotoHeroPrediction data={nextDraw} labels={labels} game={game} />
-          </section>
-        )}
-
-        {nextDrawError && !nextDraw && (
-          <div className="mb-8 flex items-center justify-between gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3">
-            <p className="text-sm text-destructive">
-              {labels.error ?? "Tạm chưa tải được dữ liệu Loto."}
-            </p>
-            <button
-              type="button"
-              onClick={() => setRetryKey((value) => value + 1)}
-              className="min-h-10 shrink-0 rounded-xl bg-destructive/10 px-4 text-sm font-semibold text-destructive transition hover:bg-destructive/15"
-            >
-              {labels.retry ?? "Thử lại"}
-            </button>
+        {tab === "lab" && (
+          <div id="loto-panel-lab" role="tabpanel" aria-labelledby="loto-tab-lab" className="mt-5">
+            <LotoStatsLab game={game} labels={labels} />
           </div>
         )}
 
-        {/* History section */}
-        <section>
-          <h2 className="mb-4 text-lg font-semibold text-ink/80">
-            {labels.history ?? "Lịch sử tổ hợp & kết quả"}
-          </h2>
-
-          {feed.length === 0 && !loading && !feedError && (
-            <div className="rounded-2xl border border-border/40 bg-surface/60 p-8 text-center">
-              <p className="text-sm text-muted">{labels.empty ?? "Chưa có tổ hợp tham khảo."}</p>
-            </div>
+        <div
+          id="loto-panel-predictions"
+          role="tabpanel"
+          aria-labelledby="loto-tab-predictions"
+          hidden={tab !== "predictions"}
+        >
+          {/* Next draw analysis */}
+          {nextDraw && (
+            <section className="mb-8">
+              <LotoHeroPrediction data={nextDraw} labels={labels} game={game} locale={locale} />
+            </section>
           )}
 
-          {feedError && (
-            <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3">
+          {nextDrawError && !nextDraw && (
+            <div className="mb-8 flex items-center justify-between gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3">
               <p className="text-sm text-destructive">
                 {labels.error ?? "Tạm chưa tải được dữ liệu Loto."}
               </p>
@@ -335,35 +255,63 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
             </div>
           )}
 
-          <div className="space-y-4">
-            {feed.map((item) => (
-              <LotoHistoryCard key={item.id} item={item} labels={labels} game={game} />
-            ))}
-          </div>
+          {/* History section */}
+          <section>
+            <h2 className="mb-4 text-lg font-semibold text-ink/80">
+              {labels.history ?? "Lịch sử tổ hợp & kết quả"}
+            </h2>
 
-          {/* Loading skeleton */}
-          {loading && (
-            <div className="mt-4 space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-40 animate-pulse rounded-2xl bg-surface/60" />
+            {feed.length === 0 && !loading && !feedError && (
+              <div className="rounded-2xl border border-border/40 bg-surface/60 p-8 text-center">
+                <p className="text-sm text-muted">{labels.empty ?? "Chưa có tổ hợp tham khảo."}</p>
+              </div>
+            )}
+
+            {feedError && (
+              <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3">
+                <p className="text-sm text-destructive">
+                  {labels.error ?? "Tạm chưa tải được dữ liệu Loto."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setRetryKey((value) => value + 1)}
+                  className="min-h-10 shrink-0 rounded-xl bg-destructive/10 px-4 text-sm font-semibold text-destructive transition hover:bg-destructive/15"
+                >
+                  {labels.retry ?? "Thử lại"}
+                </button>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              {feed.map((item) => (
+                <LotoHistoryCard key={item.id} item={item} labels={labels} game={game} />
               ))}
             </div>
-          )}
 
-          {/* Infinite scroll sentinel */}
-          {hasMore && !feedError && <div ref={observerRef} className="h-10" />}
+            {/* Loading skeleton */}
+            {loading && (
+              <div className="mt-4 space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-40 animate-pulse rounded-2xl bg-surface/60" />
+                ))}
+              </div>
+            )}
 
-          {/* Load more button fallback */}
-          {hasMore && !loading && !feedError && (
-            <button
-              type="button"
-              onClick={loadMore}
-              className="mx-auto mt-4 flex min-h-12 items-center gap-2 rounded-xl bg-primary/10 px-6 py-3 text-sm font-medium text-primary transition-all duration-150 hover:bg-primary/20 active:scale-95"
-            >
-              {labels.loadMore ?? "Tải thêm"} ↓
-            </button>
-          )}
-        </section>
+            {/* Infinite scroll sentinel */}
+            {hasMore && !feedError && <div ref={observerRef} className="h-10" />}
+
+            {/* Load more button fallback */}
+            {hasMore && !loading && !feedError && (
+              <button
+                type="button"
+                onClick={loadMore}
+                className="mx-auto mt-4 flex min-h-12 items-center gap-2 rounded-xl bg-primary/10 px-6 py-3 text-sm font-medium text-primary transition-all duration-150 hover:bg-primary/20 active:scale-95"
+              >
+                {labels.loadMore ?? "Tải thêm"} ↓
+              </button>
+            )}
+          </section>
+        </div>
       </div>
     </main>
   );

@@ -13,6 +13,9 @@ type Handlers struct {
 	logger          *slog.Logger
 	cfg             Config
 	NHKNewsSyncFunc JobFunc
+	// LotoAutopilotFunc runs one idempotent loto autopilot tick for a game
+	// ("loto6" or "loto7") and returns the number of reference sets published.
+	LotoAutopilotFunc func(ctx context.Context, game string) (int, error)
 }
 
 // NewHandlers creates job handlers with the given dependencies.
@@ -53,42 +56,43 @@ func (h *Handlers) MagazineGeneration(ctx context.Context) (int, error) {
 }
 
 // LotoAutopilotLoto6 polls and publishes Loto6 results on draw days.
-// Migrated from: apps/api/src/magazine/loto/loto-autopilot.cron.ts
 // Schedule: 0,30 21-23 * * 1,4 (Asia/Tokyo)
 func (h *Handlers) LotoAutopilotLoto6(ctx context.Context) (int, error) {
-	if !h.cfg.LotoAutopilotEnabled {
-		h.logger.DebugContext(ctx, "loto_autopilot_loto6: disabled by config")
-		return 0, nil
-	}
-	// TODO(M10): Implement runAutopilotIfResultReady("loto6")
-	h.logger.DebugContext(ctx, "loto_autopilot_loto6: stub — business logic pending")
-	return 0, nil
+	return h.lotoAutopilot(ctx, "loto6")
 }
 
 // LotoAutopilotLoto7 polls and publishes Loto7 results on draw days.
-// Migrated from: apps/api/src/magazine/loto/loto-autopilot.cron.ts
 // Schedule: 0,30 21-23 * * 5 (Asia/Tokyo)
 func (h *Handlers) LotoAutopilotLoto7(ctx context.Context) (int, error) {
-	if !h.cfg.LotoAutopilotEnabled {
-		h.logger.DebugContext(ctx, "loto_autopilot_loto7: disabled by config")
-		return 0, nil
-	}
-	// TODO(M10): Implement runAutopilotIfResultReady("loto7")
-	h.logger.DebugContext(ctx, "loto_autopilot_loto7: stub — business logic pending")
-	return 0, nil
+	return h.lotoAutopilot(ctx, "loto7")
 }
 
-// LotoAutopilotCatchup recovers missed Loto results after downtime.
-// Migrated from: apps/api/src/magazine/loto/loto-autopilot.cron.ts
+// LotoAutopilotCatchup recovers missed Loto results after downtime or a result
+// published outside the evening window.
 // Schedule: 15 6 * * * (Asia/Tokyo)
 func (h *Handlers) LotoAutopilotCatchup(ctx context.Context) (int, error) {
+	published := 0
+	var firstErr error
+	for _, game := range []string{"loto6", "loto7"} {
+		count, err := h.lotoAutopilot(ctx, game)
+		published += count
+		if err != nil && firstErr == nil {
+			firstErr = err
+		}
+	}
+	return published, firstErr
+}
+
+func (h *Handlers) lotoAutopilot(ctx context.Context, game string) (int, error) {
 	if !h.cfg.LotoAutopilotEnabled {
-		h.logger.DebugContext(ctx, "loto_autopilot_catchup: disabled by config")
+		h.logger.DebugContext(ctx, "loto_autopilot: disabled by config", "game", game)
 		return 0, nil
 	}
-	// TODO(M10): Implement catchup tick for both loto6 and loto7
-	h.logger.DebugContext(ctx, "loto_autopilot_catchup: stub — business logic pending")
-	return 0, nil
+	if h.LotoAutopilotFunc == nil {
+		h.logger.WarnContext(ctx, "loto_autopilot: no runner wired", "game", game)
+		return 0, nil
+	}
+	return h.LotoAutopilotFunc(ctx, game)
 }
 
 // PushNotificationDailyKanji sends daily Kanji push notifications to all opted-in users.

@@ -73,7 +73,8 @@ try {
     return { status: response.status, body: await response.json() };
   });
   assert.equal(autopilotResponse.status, 200);
-  assert.equal(autopilotResponse.body.status, "waiting_result");
+  // The autopilot now syncs results and publishes the next reference set, so any of its three outcomes is valid.
+  assert.ok(["waiting_result", "already_done", "published"].includes(autopilotResponse.body.status), `unexpected autopilot status ${autopilotResponse.body.status}`);
   assert.equal(autopilotResponse.body.game, "loto6");
 
   const menu = page.getByRole("button", { name: "Menu" });

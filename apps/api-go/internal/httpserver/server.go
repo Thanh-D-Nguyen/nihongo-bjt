@@ -27,6 +27,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardreview"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardstyle"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/gamification"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/loto"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/notification"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/onboarding"
@@ -75,6 +76,7 @@ type Dependencies struct {
 	QuizTemplateStore     *quiztemplate.Store    // nil if DB not configured; quiz template endpoints return 503
 	StudyPlanStore        *studyplan.Store       // nil if DB not configured; study plan endpoints return 503
 	CareerStore           *career.Store          // nil if DB not configured; career endpoints return 503
+	LotoResultSource      loto.ResultSource      // nil when LOTO_AUTOPILOT_ENABLED=false and in tests: admin loto sync then only records the request and autopilot skips the import
 	ScenarioStore         *scenario.Store        // nil if DB not configured; scenario endpoints return 503
 	Version               string
 }
@@ -1313,9 +1315,9 @@ func NewRouter(deps Dependencies) http.Handler {
 			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
 				Post("/api/admin/magazine/loto/import-csv", adminLotoImportCSVHandler(deps.DBPool, deps.Logger))
 			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
-				Post("/api/admin/magazine/loto/sync", adminLotoSyncHandler(deps.DBPool, deps.Logger))
+				Post("/api/admin/magazine/loto/sync", adminLotoSyncHandler(deps.DBPool, deps.Logger, deps.LotoResultSource))
 			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
-				Post("/api/admin/magazine/loto/autopilot", adminLotoAutopilotHandler(deps.DBPool, deps.Logger))
+				Post("/api/admin/magazine/loto/autopilot", adminLotoAutopilotHandler(deps.DBPool, deps.Logger, deps.LotoResultSource))
 			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
 				Post("/api/admin/magazine/loto/generate", adminLotoGenerateHandler(deps.DBPool, deps.Logger))
 			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).

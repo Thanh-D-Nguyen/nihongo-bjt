@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
 )
@@ -173,5 +174,147 @@ func TestLotoNextDrawReturnsGeneratedSets(t *testing.T) {
 	}
 	if got.NextDraw == nil || got.NextDraw.ID != runID || got.NextDraw.Game != game || len(got.NextDraw.Sets) != 1 || len(got.NextDraw.Sets[0].MainNumbers) != 7 || len(got.NextDraw.Sets[0].BonusNumbers) != 2 || got.NextDraw.Sets[0].Score != 92.5 || got.NextDraw.VocabItems == nil {
 		t.Fatalf("next draw envelope=%+v, expected complete generated set", got.NextDraw)
+	}
+}
+
+func TestLotoNextDrawReportsDrawNumberVocabAndSchedule(t *testing.T) {
+	db := testPool(t)
+	game := "loto7"
+	ctx := context.Background()
+	jst := time.FixedZone("JST", 9*3600)
+	targetKey := time.Now().In(jst).AddDate(0, 0, 1).Format("2006-01-02")
+	drawNumber := 8100000 + int(time.Now().UnixNano()%1000)
+	if _, err := db.Exec(ctx, `INSERT INTO daily.loto_draw (game, draw_number, draw_date, main_numbers, bonus_numbers)
+		VALUES ($1, $2, CURRENT_DATE, ARRAY[1,2,3,4,5,6,7], ARRAY[8,9])`, game, drawNumber); err != nil {
+		t.Fatalf("insert latest official draw: %v", err)
+	}
+	runID := newUUID(t)
+	sentence := `{"textJp":"確率は同じです。","reading":"かくりつはおなじです。","textVi":"Xác suất như nhau.","vocabItems":[{"wordJp":"確率","reading":"かくりつ","meaningVi":"xác suất"}]}`
+	if _, err := db.Exec(ctx, `INSERT INTO daily.loto_generation_run (id, game, target_draw_date, status, japanese_sentence_json)
+		VALUES ($1, $2, $3::date, 'published', $4::jsonb)`, runID, game, targetKey, sentence); err != nil {
+		t.Fatalf("insert published run: %v", err)
+	}
+	if _, err := db.Exec(ctx, `INSERT INTO daily.loto_generated_set (run_id, rank, main_numbers, bonus_numbers, score, selected_for_magazine)
+		VALUES ($1, 1, ARRAY[3,6,9,12,15,18,21], ARRAY[]::integer[], 0.61, true)`, runID); err != nil {
+		t.Fatalf("insert selected set: %v", err)
+	}
+	t.Cleanup(func() {
+		_, _ = db.Exec(ctx, `DELETE FROM daily.loto_generation_run WHERE id=$1`, runID)
+		_, _ = db.Exec(ctx, `DELETE FROM daily.loto_draw WHERE game=$1 AND draw_number=$2`, game, drawNumber)
+	})
+
+	response := httptest.NewRecorder()
+	lotoNextDrawHandler(db, testLogger()).ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/magazine/loto/next-draw?game=loto7", nil))
+	if response.Code != http.StatusOK {
+		t.Fatalf("next draw status=%d body=%s", response.Code, response.Body.String())
+	}
+	var got struct {
+		NextDraw *struct {
+			ID         string   `json:"id"`
+			DrawNumber *int     `json:"drawNumber"`
+			DrawDayJP  string   `json:"drawDayJp"`
+			DrawTime   string   `json:"drawTime"`
+			ScheduleJP string   `json:"scheduleJp"`
+			ScheduleVI string   `json:"scheduleVi"`
+			Confidence *float64 `json:"confidence"`
+			DaysUntil  int      `json:"daysUntil"`
+			VocabItems []struct {
+				WordJP string `json:"wordJp"`
+			} `json:"vocabItems"`
+		} `json:"nextDraw"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &got); err != nil {
+		t.Fatalf("decode next draw: %v", err)
+	}
+	next := got.NextDraw
+	if next == nil || next.ID != runID {
+		t.Fatalf("next draw=%+v, want published run %s", next, runID)
+	}
+	if next.DrawNumber == nil || *next.DrawNumber <= drawNumber {
+		t.Fatalf("drawNumber=%v, want a number after the latest official draw %d", next.DrawNumber, drawNumber)
+	}
+	if next.DrawTime != "18:45 JST" || next.DrawDayJP == "" || next.ScheduleJP == "" || next.ScheduleVI == "" {
+		t.Fatalf("schedule fields missing: %+v", next)
+	}
+	if next.Confidence == nil || *next.Confidence != 0.61 {
+		t.Fatalf("confidence=%v, want the top set score 0.61", next.Confidence)
+	}
+	if next.DaysUntil != 1 {
+		t.Fatalf("daysUntil=%d, want 1 in JST", next.DaysUntil)
+	}
+	if len(next.VocabItems) != 1 || next.VocabItems[0].WordJP != "確率" {
+		t.Fatalf("vocabItems=%+v, want the sentence vocab", next.VocabItems)
+	}
+}
+
+func TestLotoStatsReportsFrequencyAndAccuracyAgainstChance(t *testing.T) {
+	db := testPool(t)
+	game := "loto7"
+	ctx := context.Background()
+	base := 8200000 + int(time.Now().UnixNano()%1000)*20
+	for i := 0; i < 12; i++ {
+		if _, err := db.Exec(ctx, `INSERT INTO daily.loto_draw (game, draw_number, draw_date, main_numbers, bonus_numbers)
+			VALUES ($1, $2, DATE '1999-01-01' + $3::integer, ARRAY[1,2,3,4,5,6,7], ARRAY[8,9])`, game, base+i, i); err != nil {
+			t.Fatalf("insert draw %d: %v", i, err)
+		}
+	}
+	t.Cleanup(func() {
+		_, _ = db.Exec(ctx, `DELETE FROM daily.loto_draw WHERE game=$1 AND draw_number >= $2 AND draw_number < $3`, game, base, base+20)
+	})
+
+	response := httptest.NewRecorder()
+	lotoStatsHandler(db, testLogger()).ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/magazine/loto/stats?game=loto7", nil))
+	if response.Code != http.StatusOK {
+		t.Fatalf("stats status=%d body=%s", response.Code, response.Body.String())
+	}
+	var got struct {
+		Game       string `json:"game"`
+		TotalDraws int    `json:"totalDraws"`
+		Spec       struct {
+			MainCount         int   `json:"mainCount"`
+			MaxNumber         int   `json:"maxNumber"`
+			TotalCombinations int64 `json:"totalCombinations"`
+		} `json:"spec"`
+		Frequency []struct {
+			Number int `json:"number"`
+			Count  int `json:"count"`
+		} `json:"frequency"`
+		HotNumbers     []int `json:"hotNumbers"`
+		ColdNumbers    []int `json:"coldNumbers"`
+		OverdueNumbers []int `json:"overdueNumbers"`
+		RecentDraws    []struct {
+			DrawNumber  int   `json:"drawNumber"`
+			MainNumbers []int `json:"mainNumbers"`
+		} `json:"recentDraws"`
+		Accuracy struct {
+			Samples      int       `json:"samples"`
+			BaselineHits float64   `json:"baselineHits"`
+			Distribution []int     `json:"distribution"`
+			Expected     []float64 `json:"expectedDistribution"`
+		} `json:"accuracy"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &got); err != nil {
+		t.Fatalf("decode stats: %v", err)
+	}
+	if got.Game != game || got.TotalDraws < 12 {
+		t.Fatalf("legacy fields game=%q totalDraws=%d", got.Game, got.TotalDraws)
+	}
+	if got.Spec.MainCount != 7 || got.Spec.MaxNumber != 37 || got.Spec.TotalCombinations != 10295472 {
+		t.Fatalf("spec=%+v, want Loto7 rules with C(37,7) combinations", got.Spec)
+	}
+	if len(got.Frequency) != 37 || got.Frequency[0].Number != 1 || got.Frequency[0].Count < 12 {
+		t.Fatalf("frequency=%v, want 37 entries with number 1 seen in every inserted draw", got.Frequency)
+	}
+	if len(got.HotNumbers) != 7 || len(got.ColdNumbers) != 7 || len(got.OverdueNumbers) != 7 {
+		t.Fatalf("hot/cold/overdue sizes = %d/%d/%d, want 7 each", len(got.HotNumbers), len(got.ColdNumbers), len(got.OverdueNumbers))
+	}
+	if len(got.RecentDraws) == 0 || len(got.RecentDraws) > 10 || len(got.RecentDraws[0].MainNumbers) != 7 {
+		t.Fatalf("recentDraws=%+v, want up to ten complete official results", got.RecentDraws)
+	}
+	if got.Accuracy.BaselineHits < 1.3243 || got.Accuracy.BaselineHits > 1.3244 {
+		t.Fatalf("baselineHits=%v, want 7*7/37", got.Accuracy.BaselineHits)
+	}
+	if len(got.Accuracy.Distribution) != 8 || len(got.Accuracy.Expected) != 8 {
+		t.Fatalf("hit distributions=%v / %v, want 0..7 buckets", got.Accuracy.Distribution, got.Accuracy.Expected)
 	}
 }
