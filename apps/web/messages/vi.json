@@ -2102,7 +2102,8 @@
     "viewDeck": "Ôn tập thẻ vừa tạo",
     "previewResult": "Ước tính: {count} thẻ",
     "jobs": "Lịch sử tạo thẻ",
-    "error": "Có lỗi xảy ra. Vui lòng thử lại."
+    "error": "Có lỗi xảy ra. Vui lòng thử lại.",
+    "noMatches": "Không có nội dung nào khớp với các tùy chọn này"
   },
   "careerRpg": {
     "brand": {

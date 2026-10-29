@@ -2174,7 +2174,8 @@
     "viewDeck": "Review generated cards",
     "previewResult": "Estimated: {count} cards",
     "jobs": "Generation history",
-    "error": "An error has occurred. Please try again."
+    "error": "An error has occurred. Please try again.",
+    "noMatches": "No content matches these options"
   },
   "careerRpg": {
     "brand": {

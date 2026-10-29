@@ -332,6 +332,10 @@ func generateDeckHandler(store *flashcarddeck.Store, logger *slog.Logger) http.H
 			Limit:       req.Limit,
 			Direction:   req.Direction,
 		})
+		if errors.Is(err, flashcarddeck.ErrNoMatches) {
+			writeJSONError(w, "no content matches these options", http.StatusUnprocessableEntity)
+			return
+		}
 		if err != nil {
 			logger.Error("generate deck", "error", err, "user_id", identity.UserID)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)

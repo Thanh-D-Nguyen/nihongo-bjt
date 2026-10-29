@@ -20,6 +20,9 @@ var ErrNotFound = errors.New("flashcarddeck: not found")
 // ErrNotOwner is returned when the authenticated user does not own the deck.
 var ErrNotOwner = errors.New("flashcarddeck: not owner")
 
+// ErrNoMatches is returned when generation filters match no canonical content.
+var ErrNoMatches = errors.New("flashcarddeck: no content matches generation filters")
+
 // Deck represents a flashcard deck with metadata.
 type Deck struct {
 	ID            string    `json:"id"`
@@ -623,19 +626,30 @@ func (s *Store) CloneDeck(ctx context.Context, userID, token string) (*Deck, err
 	return &d, nil
 }
 
-// PreviewGenerateCount returns the number of available content items matching the generation filters.
+// PreviewGenerateCount returns the number of canonical content items matching the generation filters.
 func (s *Store) PreviewGenerateCount(ctx context.Context, input GenerateDeckInput) (*PreviewCountResult, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	jlptLevels, kanjiLevels := normalizeLevels(input.Levels)
-	const q = `SELECT COUNT(*) FROM learning.flashcard_variant fv
-		WHERE fv.status = 'active'
-		AND ($1::text[] IS NULL OR fv.source_type = ANY($1))
-		AND ((fv.source_type='lexeme' AND EXISTS (SELECT 1 FROM content.lexeme l WHERE l.id=fv.source_id AND l.status='active' AND ($2::text[] IS NULL OR l.jlpt_level=ANY($2)))) OR
-			(fv.source_type='grammar' AND EXISTS (SELECT 1 FROM content.grammar_point g WHERE g.id=fv.source_id AND g.status='active' AND ($2::text[] IS NULL OR g.jlpt_level=ANY($2)))) OR
-			(fv.source_type='kanji' AND EXISTS (SELECT 1 FROM content.kanji k WHERE k.id=fv.source_id AND k.status='active' AND ($3::int[] IS NULL OR k.level=ANY($3)))) )`
+	const countQ = `WITH candidates AS (
+		SELECT 'lexeme'::text AS source_type, l.id, l.headword AS front,
+			COALESCE(NULLIF(l.short_meaning_vi,''),NULLIF(l.kanji_meaning_vi,''),'') AS back, COALESCE(l.reading,'') AS reading
+		FROM content.lexeme l
+		WHERE l.status='active' AND ($1::text[] IS NULL OR 'lexeme'=ANY($1))
+			AND ($2::text[] IS NULL OR string_to_array(l.jlpt_level,',') && $2)
+		UNION ALL
+		SELECT 'grammar', g.id, g.pattern, g.meaning_vi, ''
+		FROM content.grammar_point g
+		WHERE g.status='active' AND ($1::text[] IS NULL OR 'grammar'=ANY($1))
+			AND ($2::text[] IS NULL OR string_to_array(g.jlpt_level,',') && $2)
+		UNION ALL
+		SELECT 'kanji', k.id, k.character, COALESCE(k.meaning_vi,''), COALESCE(NULLIF(k.onyomi,''),k.kunyomi,'')
+		FROM content.kanji k
+		WHERE k.status='active' AND ($1::text[] IS NULL OR 'kanji'=ANY($1))
+			AND ($3::int[] IS NULL OR k.level=ANY($3))
+	) SELECT COUNT(*) FROM candidates`
 	var count int
-	if err := s.db.QueryRow(ctx, q, input.SourceTypes, jlptLevels, kanjiLevels).Scan(&count); err != nil {
+	if err := s.db.QueryRow(ctx, countQ, input.SourceTypes, jlptLevels, kanjiLevels).Scan(&count); err != nil {
 		return nil, fmt.Errorf("flashcarddeck: preview count: %w", err)
 	}
 	return &PreviewCountResult{AvailableCount: count}, nil
@@ -676,15 +690,74 @@ func normalizeLevels(levels []string) ([]string, []int) {
 	return jlptLevels, kanjiLevels
 }
 
-// GenerateDeck auto-generates a deck from dictionary content matching the filters.
+// candidate is canonical content chosen for generation, with the curated variant that overrides its wording, if any.
+type candidate struct {
+	sourceType, sourceID, front, back, reading           string
+	variantID, variantFront, variantBack, variantReading *string
+}
+
+// GenerateDeck auto-generates a deck from canonical dictionary content matching the filters.
+// A curated active variant keeps its wording; otherwise the canonical headword and meaning are used.
+// Reversed directions reuse or create the matching variant. It returns ErrNoMatches without creating
+// a deck when the filters match no content.
 func (s *Store) GenerateDeck(ctx context.Context, input GenerateDeckInput) (*Deck, error) {
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
+	limit := input.Limit
+	if limit <= 0 || limit > 500 {
+		limit = 50
+	}
+	jlptLevels, kanjiLevels := normalizeLevels(input.Levels)
 	tx, err := s.db.Begin(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("flashcarddeck: begin tx: %w", err)
 	}
 	defer tx.Rollback(ctx)
+	const selectQ = `WITH candidates AS (
+		SELECT 'lexeme'::text AS source_type, l.id, l.headword AS front,
+			COALESCE(NULLIF(l.short_meaning_vi,''),NULLIF(l.kanji_meaning_vi,''),'') AS back, COALESCE(l.reading,'') AS reading
+		FROM content.lexeme l
+		WHERE l.status='active' AND ($1::text[] IS NULL OR 'lexeme'=ANY($1))
+			AND ($2::text[] IS NULL OR string_to_array(l.jlpt_level,',') && $2)
+		UNION ALL
+		SELECT 'grammar', g.id, g.pattern, g.meaning_vi, ''
+		FROM content.grammar_point g
+		WHERE g.status='active' AND ($1::text[] IS NULL OR 'grammar'=ANY($1))
+			AND ($2::text[] IS NULL OR string_to_array(g.jlpt_level,',') && $2)
+		UNION ALL
+		SELECT 'kanji', k.id, k.character, COALESCE(k.meaning_vi,''), COALESCE(NULLIF(k.onyomi,''),k.kunyomi,'')
+		FROM content.kanji k
+		WHERE k.status='active' AND ($1::text[] IS NULL OR 'kanji'=ANY($1))
+			AND ($3::int[] IS NULL OR k.level=ANY($3))
+	) SELECT c.source_type, c.id::text, c.front, c.back, c.reading,
+			v.id::text, v.front_text, v.back_text, v.reading
+		FROM (SELECT * FROM candidates ORDER BY RANDOM() LIMIT $4) c
+		LEFT JOIN LATERAL (
+			SELECT fv.id, fv.front_text, fv.back_text, fv.reading FROM learning.flashcard_variant fv
+			WHERE fv.source_type = c.source_type AND fv.source_id = c.id AND fv.status = 'active'
+			ORDER BY fv.updated_at DESC, fv.id LIMIT 1
+		) v ON TRUE`
+	rows, err := tx.Query(ctx, selectQ, input.SourceTypes, jlptLevels, kanjiLevels, limit)
+	if err != nil {
+		return nil, fmt.Errorf("flashcarddeck: select content: %w", err)
+	}
+	defer rows.Close()
+	var candidates []candidate
+	for rows.Next() {
+		var c candidate
+		if err := rows.Scan(&c.sourceType, &c.sourceID, &c.front, &c.back, &c.reading,
+			&c.variantID, &c.variantFront, &c.variantBack, &c.variantReading); err != nil {
+			return nil, fmt.Errorf("flashcarddeck: scan content: %w", err)
+		}
+		candidates = append(candidates, c)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("flashcarddeck: iterate content: %w", err)
+	}
+	rows.Close()
+	if len(candidates) == 0 {
+		return nil, ErrNoMatches
+	}
 	// Create the deck
 	const createQ = `INSERT INTO learning.deck (owner_user_id, title_vi, visibility, status, updated_at)
 		VALUES ($1, $2, 'private', 'active', NOW()) RETURNING id, created_at, updated_at`
@@ -695,50 +768,12 @@ func (s *Store) GenerateDeck(ctx context.Context, input GenerateDeckInput) (*Dec
 	if err := tx.QueryRow(ctx, createQ, input.UserID, input.Name).Scan(&d.ID, &d.CreatedAt, &d.UpdatedAt); err != nil {
 		return nil, fmt.Errorf("flashcarddeck: create generated deck: %w", err)
 	}
-	// Select variants matching filters
-	limit := input.Limit
-	if limit <= 0 || limit > 500 {
-		limit = 50
-	}
-	jlptLevels, kanjiLevels := normalizeLevels(input.Levels)
-	const selectQ = `SELECT fv.id,fv.source_type,fv.source_id,fv.front_text,fv.back_text,fv.reading FROM learning.flashcard_variant fv
-		WHERE fv.status = 'active'
-		AND ($1::text[] IS NULL OR fv.source_type = ANY($1))
-		AND ((fv.source_type='lexeme' AND EXISTS (SELECT 1 FROM content.lexeme l WHERE l.id=fv.source_id AND l.status='active' AND ($2::text[] IS NULL OR l.jlpt_level=ANY($2)))) OR
-			(fv.source_type='grammar' AND EXISTS (SELECT 1 FROM content.grammar_point g WHERE g.id=fv.source_id AND g.status='active' AND ($2::text[] IS NULL OR g.jlpt_level=ANY($2)))) OR
-			(fv.source_type='kanji' AND EXISTS (SELECT 1 FROM content.kanji k WHERE k.id=fv.source_id AND k.status='active' AND ($3::int[] IS NULL OR k.level=ANY($3)))) )
-		ORDER BY RANDOM() LIMIT $4`
-	rows, err := tx.Query(ctx, selectQ, input.SourceTypes, jlptLevels, kanjiLevels, limit)
-	if err != nil {
-		return nil, fmt.Errorf("flashcarddeck: select variants: %w", err)
-	}
-	defer rows.Close()
-	type variant struct {
-		id, sourceType, sourceID, front, back string
-		reading                               *string
-	}
-	var variants []variant
-	for rows.Next() {
-		var v variant
-		if err := rows.Scan(&v.id, &v.sourceType, &v.sourceID, &v.front, &v.back, &v.reading); err != nil {
-			return nil, fmt.Errorf("flashcarddeck: scan variant: %w", err)
-		}
-		variants = append(variants, v)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("flashcarddeck: iterate variants: %w", err)
-	}
-	rows.Close()
 	// Insert deck-card links and user_flashcard entries
-	for i, v := range variants {
-		cardID := v.id
+	for i, c := range candidates {
 		reverse := input.Direction == "vn_to_jp" || (input.Direction == "both" && i%2 == 1)
-		if reverse {
-			const cloneQ = `INSERT INTO learning.flashcard_variant (source_type,source_id,front_text,back_text,reading,status,updated_at)
-				VALUES ($1,$2,$3,$4,$5,'active',NOW()) RETURNING id`
-			if err := tx.QueryRow(ctx, cloneQ, v.sourceType, v.sourceID, v.back, v.front, v.reading).Scan(&cardID); err != nil {
-				return nil, fmt.Errorf("flashcarddeck: create reversed card: %w", err)
-			}
+		cardID, err := resolveCardVariant(ctx, tx, c, reverse)
+		if err != nil {
+			return nil, fmt.Errorf("flashcarddeck: resolve card for %s %s: %w", c.sourceType, c.sourceID, err)
 		}
 		const linkQ = `INSERT INTO learning.deck_card (deck_id, card_id, position) VALUES ($1, $2, $3)`
 		if _, err := tx.Exec(ctx, linkQ, d.ID, cardID, i); err != nil {
@@ -750,12 +785,55 @@ func (s *Store) GenerateDeck(ctx context.Context, input GenerateDeckInput) (*Dec
 			return nil, fmt.Errorf("flashcarddeck: create user flashcard: %w", err)
 		}
 	}
-	d.CardCount = len(variants)
+	d.CardCount = len(candidates)
 	d.Count.Cards = d.CardCount
 	if err := tx.Commit(ctx); err != nil {
 		return nil, fmt.Errorf("flashcarddeck: commit: %w", err)
 	}
 	return &d, nil
+}
+
+// resolveCardVariant returns the active variant that carries the candidate's card. The curated variant
+// is reused when it exists and the direction is not reversed; otherwise the matching texts are reused or created.
+func resolveCardVariant(ctx context.Context, tx pgx.Tx, c candidate, reverse bool) (string, error) {
+	if c.variantID != nil && !reverse {
+		return *c.variantID, nil
+	}
+	front, back, reading := c.front, c.back, c.reading
+	if c.variantID != nil {
+		front, back, reading = *c.variantFront, *c.variantBack, stringOrEmpty(c.variantReading)
+	}
+	if reverse {
+		front, back = back, front
+	}
+	return ensureCardVariant(ctx, tx, c.sourceType, c.sourceID, front, back, reading)
+}
+
+// ensureCardVariant returns the active variant with these texts, creating it when absent.
+func ensureCardVariant(ctx context.Context, tx pgx.Tx, sourceType, sourceID, front, back, reading string) (string, error) {
+	const findQ = `SELECT id::text FROM learning.flashcard_variant
+		WHERE source_type=$1 AND source_id=$2 AND front_text=$3 AND back_text=$4 AND status='active' LIMIT 1`
+	var id string
+	err := tx.QueryRow(ctx, findQ, sourceType, sourceID, front, back).Scan(&id)
+	if err == nil {
+		return id, nil
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return "", fmt.Errorf("find variant: %w", err)
+	}
+	const insertQ = `INSERT INTO learning.flashcard_variant (source_type,source_id,front_text,back_text,reading,status,updated_at)
+		VALUES ($1,$2,$3,$4,$5,'active',NOW()) RETURNING id::text`
+	if err := tx.QueryRow(ctx, insertQ, sourceType, sourceID, front, back, nullIfEmpty(reading)).Scan(&id); err != nil {
+		return "", fmt.Errorf("insert variant: %w", err)
+	}
+	return id, nil
+}
+
+func stringOrEmpty(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
 }
 
 // SuggestCards returns card suggestions for manual deck composition.

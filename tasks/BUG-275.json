@@ -1,0 +1,703 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "BUG-275",
+  "title": "Flashcard auto-generate creates no cards",
+  "start_head": "c8a397534cc168dd8d5249efcc30a1d2af514f67",
+  "preexisting_changes": {
+    ".claude/skills/go-code-review": null,
+    ".claude/skills/go-concurrency": null,
+    ".claude/skills/go-context": null,
+    ".claude/skills/go-control-flow": null,
+    ".claude/skills/go-data-structures": null,
+    ".claude/skills/go-declarations": null,
+    ".claude/skills/go-defensive": null,
+    ".claude/skills/go-documentation": null,
+    ".claude/skills/go-error-handling": null,
+    ".claude/skills/go-functional-options": null,
+    ".claude/skills/go-functions": null,
+    ".claude/skills/go-generics": null,
+    ".claude/skills/go-interfaces": null,
+    ".claude/skills/go-linting": null,
+    ".claude/skills/go-logging": null,
+    ".claude/skills/go-naming": null,
+    ".claude/skills/go-packages": null,
+    ".claude/skills/go-performance": null,
+    ".claude/skills/go-style-core": null,
+    ".claude/skills/go-testing": null,
+    "data/skills/go-code-review": null,
+    "data/skills/go-concurrency": null,
+    "data/skills/go-context": null,
+    "data/skills/go-control-flow": null,
+    "data/skills/go-data-structures": null,
+    "data/skills/go-declarations": null,
+    "data/skills/go-defensive": null,
+    "data/skills/go-documentation": null,
+    "data/skills/go-error-handling": null,
+    "data/skills/go-functional-options": null,
+    "data/skills/go-functions": null,
+    "data/skills/go-generics": null,
+    "data/skills/go-interfaces": null,
+    "data/skills/go-linting": null,
+    "data/skills/go-logging": null,
+    "data/skills/go-naming": null,
+    "data/skills/go-packages": null,
+    "data/skills/go-performance": null,
+    "data/skills/go-style-core": null,
+    "data/skills/go-testing": null,
+    ".agents/skills/go-code-review/SKILL.md": "7fe964fc46fa0f83c5a6782aea8afa9d42c8e120",
+    ".agents/skills/go-code-review/assets/review-template.md": "8a9783efd0ec1c76628410657774b598a2907293",
+    ".agents/skills/go-code-review/references/WEB-SERVER.md": "4fcdde6babb435d50f6282abb384740a5ee408a9",
+    ".agents/skills/go-code-review/scripts/pre-review.sh": "e0b1334be59928788c20d7faeaf24a8510eeab34",
+    ".agents/skills/go-concurrency/SKILL.md": "417bb46ef3c1f7c23a8f5e8fc88cd1e0bc9cab2d",
+    ".agents/skills/go-concurrency/references/ADVANCED-PATTERNS.md": "5e9d68fedc50fcfdd51f8d8de18f0080a05e04c5",
+    ".agents/skills/go-concurrency/references/BUFFER-POOLING.md": "64bcc0b563bbe469118e7c71add00aabc9315da1",
+    ".agents/skills/go-concurrency/references/GOROUTINE-PATTERNS.md": "a3f6541f7c6f2e575e83cf3a2384a43c4a28e691",
+    ".agents/skills/go-concurrency/references/SYNC-PRIMITIVES.md": "ad2a14c5f066f6600af62fb42daef449fc7312d4",
+    ".agents/skills/go-context/SKILL.md": "514123426d4c5927d9cf9ccd209b4e669799d5ea",
+    ".agents/skills/go-context/references/PATTERNS.md": "e4562cf4f26a70586fd2e40eaf12bd0f00a3e5b3",
+    ".agents/skills/go-control-flow/SKILL.md": "beeb46ceca8596e0b7ceb08f9d0409991f7fadb2",
+    ".agents/skills/go-control-flow/references/BLANK-IDENTIFIER.md": "29ab4f1ababbeb6c3f7cd6db61a144e0f95e90d3",
+    ".agents/skills/go-control-flow/references/SWITCH-PATTERNS.md": "931d9ab97cfbac5a7c7afde29bb3e9597510834c",
+    ".agents/skills/go-data-structures/SKILL.md": "bd35416b3eb9245c0da81e03dbc9291915008ce1",
+    ".agents/skills/go-data-structures/references/SLICES.md": "ac88d798c3170a72293c61f56b0a1e97a2196d01",
+    ".agents/skills/go-declarations/SKILL.md": "0764413ec0110a4f1afe841f25923778fa1dff27",
+    ".agents/skills/go-declarations/references/INITIALIZATION.md": "cdd5ee0180c903587cfa90800bf0a4f8804ede9e",
+    ".agents/skills/go-declarations/references/IOTA.md": "1a9181deff7d79f9736489325548d8a2980e335c",
+    ".agents/skills/go-declarations/references/LITERALS.md": "1295afd2606710f26f0dde0471e008a4849c6c23",
+    ".agents/skills/go-declarations/references/SCOPE.md": "9f0a7fed185877c6069328b0d3c6cbee446064ac",
+    ".agents/skills/go-declarations/references/SHADOWING.md": "6e7a8c579ac3820a9782bf6c89030fcade46c74d",
+    ".agents/skills/go-declarations/references/STRUCTS.md": "c60e484bc666b193781cdd258598b4eea00008cf",
+    ".agents/skills/go-defensive/SKILL.md": "22ca0d797d3a5ddfa8fb7a1e4c26a89863b4d6d4",
+    ".agents/skills/go-defensive/references/BOUNDARY-COPYING.md": "f7c0110221233525c04db16750fbc754057cd3d9",
+    ".agents/skills/go-defensive/references/GLOBAL-STATE.md": "56379e0373d1749dd3bc4b638c3971bb4a0bc69d",
+    ".agents/skills/go-defensive/references/MUST-FUNCTIONS.md": "a8f7f0341af60535aa8632aa05e90d6eeb27afce",
+    ".agents/skills/go-defensive/references/PANIC-RECOVER.md": "9f3457aa3ee717118ffce6fde640fd01e4624b8e",
+    ".agents/skills/go-defensive/references/TIME-ENUMS-TAGS.md": "e381cd5c10d99bdab07d61a991a27567ed06d34e",
+    ".agents/skills/go-documentation/SKILL.md": "eeca8e8a5e8133b4ef43e77dcbd83c48d0635c11",
+    ".agents/skills/go-documentation/assets/doc-template.go": "a2c54b85855d15d364238297dcf47de0c721ffc8",
+    ".agents/skills/go-documentation/references/CONVENTIONS.md": "12b8df0bd055c11bdc044e2a5e20cc4b829763cf",
+    ".agents/skills/go-documentation/references/EXAMPLES.md": "0b2b3879b19125593417e52d9f1d4a8f42a8be75",
+    ".agents/skills/go-documentation/references/FORMATTING.md": "4977008a67dfe01cde2fe05c8915511113b97bc1",
+    ".agents/skills/go-documentation/scripts/check-docs-ast.go": "ff1564b1d5f7bd97a6bdd6167830f3ce4b657042",
+    ".agents/skills/go-documentation/scripts/check-docs.sh": "de69f135fe4cb5850101108a9d7bbcb70f68c8b9",
+    ".agents/skills/go-error-handling/SKILL.md": "275a1a65cc6c02d4a611b7bd83ec73c5d493792a",
+    ".agents/skills/go-error-handling/references/ERROR-FLOW.md": "182827f4235397d8d7b837153351ba4443cbb78a",
+    ".agents/skills/go-error-handling/references/ERROR-TYPES.md": "e0d3ef3fb7f61daa2a65b5e356543d0160a5c048",
+    ".agents/skills/go-error-handling/references/WRAPPING.md": "954cd6dabf682ebe1a6485fca463903418454d5a",
+    ".agents/skills/go-error-handling/scripts/check-errors-ast.go": "d68d6e91e8a6e2ed110b7682a3deebc7f865904c",
+    ".agents/skills/go-error-handling/scripts/check-errors.sh": "40c5be771e6b8ff91a54097f4d1ef39fbd04d6f4",
+    ".agents/skills/go-functional-options/SKILL.md": "aa249b24abfef30bcdc4199aeab4974b7f63ced5",
+    ".agents/skills/go-functional-options/references/OPTIONS-VS-STRUCTS.md": "6b323dc0b8f166fb228c8bff86e43a6003890a29",
+    ".agents/skills/go-functions/SKILL.md": "906fa01432c3aa6899ced2a490558a9a4784d45e",
+    ".agents/skills/go-functions/references/PRINTF-STRINGER.md": "1c348839d960dfe0732266ce975cd334c3349387",
+    ".agents/skills/go-functions/references/SIGNATURES.md": "d1ae7ca3b7bec091a7840450c3ee8370538431eb",
+    ".agents/skills/go-generics/SKILL.md": "0cfa9811a90ca9d76137bfd6dc96d2cd0faee8ea",
+    ".agents/skills/go-generics/references/CONSTRAINTS.md": "16a871fc474137f11234ba1b52b711c36eee89cd",
+    ".agents/skills/go-interfaces/SKILL.md": "358cab26d71de1fbd788855fbb312425bca86022",
+    ".agents/skills/go-interfaces/references/EMBEDDING.md": "e65e34b28910406614ad1afb6c65e3f64d78d0c3",
+    ".agents/skills/go-interfaces/references/RECEIVER-TYPE.md": "3c0c1ef6eca9521d7e449a28eb5d30a1cd3d86a5",
+    ".agents/skills/go-interfaces/scripts/check-interface-compliance.go": "69870981bc6f7e28115aa3fedf2aa816ff48385c",
+    ".agents/skills/go-interfaces/scripts/check-interface-compliance.sh": "bbd0472539cabf40df1a43a4e8a6017ea4e7498f",
+    ".agents/skills/go-linting/SKILL.md": "9c1964f70a0fadfe9df78836596468c13466798a",
+    ".agents/skills/go-linting/assets/golangci.yml": "3a50744b8efb33c6c75cf487f74abca3dc330d74",
+    ".agents/skills/go-linting/scripts/setup-lint.sh": "7ae0c10e9ddf6d2ed5dba97157d7d8a645ac2482",
+    ".agents/skills/go-logging/SKILL.md": "2db7104d437e1b52774b85a9512749831c88e83c",
+    ".agents/skills/go-logging/references/LEVELS-AND-CONTEXT.md": "b5c3e9518dc7960e58f3253120fd3b786a055d8e",
+    ".agents/skills/go-logging/references/LOGGING-PATTERNS.md": "e96f6da3d61366fcfd000aa348e51e96624b3aca",
+    ".agents/skills/go-naming/SKILL.md": "22cd09ecd7f1ec994e95c5721cb5417cba5b6e35",
+    ".agents/skills/go-naming/references/IDENTIFIERS.md": "45fed1977addffe5e798ee8d22a7fd3abcad961a",
+    ".agents/skills/go-naming/references/REPETITION.md": "cac938e443d28684dc06b1cba6fffba0afbefd43",
+    ".agents/skills/go-naming/references/VARIABLES.md": "a53492626e166a540b232210fba35f19eb6c9ccd",
+    ".agents/skills/go-naming/scripts/check-naming.sh": "229fd02ea1d97cbd554c1c188c098390c68807d7",
+    ".agents/skills/go-packages/SKILL.md": "2dbb93b4ba4e6272fce380f248f0bd90f122f353",
+    ".agents/skills/go-packages/references/IMPORTS.md": "e8a78251cc55f4a0ee2cede26ec8380cd47c4b1c",
+    ".agents/skills/go-packages/references/PACKAGE-SIZE.md": "1eb3e8198d594ab4d74f347d321301923f70b244",
+    ".agents/skills/go-performance/SKILL.md": "377e4707284c09c29e38383906f0c86cbb32013d",
+    ".agents/skills/go-performance/references/BENCHMARKS.md": "7598daa22af80a1041e4cd664f4880ee8b4da961",
+    ".agents/skills/go-performance/references/STRING-OPTIMIZATION.md": "c938bb9b7ee1969abb0efb32250ceabf0cb2e9d1",
+    ".agents/skills/go-performance/scripts/bench-compare.sh": "47f03925514e874f41e0f1c060ec2ee340599fba",
+    ".agents/skills/go-style-core/SKILL.md": "24d8c9308c077057fee6dba6b2e819296efc6c0a",
+    ".agents/skills/go-style-core/references/FORMATTING.md": "57150714c9c4823e3eaad5697d47ee60a9148ef9",
+    ".agents/skills/go-style-core/references/PRINCIPLES.md": "ac3882e1c383a49d4d1119987b0da5fabf7856e8",
+    ".agents/skills/go-testing/SKILL.md": "151955b5e5c11231f95c4963de0b60b701d2613f",
+    ".agents/skills/go-testing/assets/table-test-template.go": "35ca80331a034f24b2c0303bf7899aafa3e8f76b",
+    ".agents/skills/go-testing/references/INTEGRATION.md": "908d12fda7a455f65a6f010daa08d7bca64b5edb",
+    ".agents/skills/go-testing/references/TABLE-DRIVEN-TESTS.md": "37c05d34880c1ca9082793cb9e01ed3a946bab3a",
+    ".agents/skills/go-testing/references/TEST-HELPERS.md": "68c1be3799f2e9034ac44c91671c7e3188461da5",
+    ".agents/skills/go-testing/references/TEST-ORGANIZATION.md": "3f550d6b5acc8342d67bcefa1e29f50f92dc2aa3",
+    ".agents/skills/go-testing/references/VALIDATION-APIS.md": "1174baeadf7bab191254539f427812af691e63d5",
+    ".agents/skills/go-testing/scripts/gen-table-test.sh": "bd4aff5c775c73e1cd08c95eca6b8fcf5105a248",
+    ".claude/settings.local.json": "6f5f8c1b02179af4f269ccdf3f9adb17ff6614b3",
+    "agent/skills/go-code-review/SKILL.md": "38e1370af3709e0dacef67208f4740421e0c819a",
+    "agent/skills/go-code-review/assets/review-template.md": "8a9783efd0ec1c76628410657774b598a2907293",
+    "agent/skills/go-code-review/references/WEB-SERVER.md": "4fcdde6babb435d50f6282abb384740a5ee408a9",
+    "agent/skills/go-code-review/scripts/pre-review.sh": "e0b1334be59928788c20d7faeaf24a8510eeab34",
+    "agent/skills/go-concurrency/SKILL.md": "ae151dd07e18ec8d50624e59aea42289766a9bb7",
+    "agent/skills/go-concurrency/references/ADVANCED-PATTERNS.md": "5e9d68fedc50fcfdd51f8d8de18f0080a05e04c5",
+    "agent/skills/go-concurrency/references/BUFFER-POOLING.md": "64bcc0b563bbe469118e7c71add00aabc9315da1",
+    "agent/skills/go-concurrency/references/GOROUTINE-PATTERNS.md": "a3f6541f7c6f2e575e83cf3a2384a43c4a28e691",
+    "agent/skills/go-concurrency/references/SYNC-PRIMITIVES.md": "ad2a14c5f066f6600af62fb42daef449fc7312d4",
+    "agent/skills/go-context/SKILL.md": "dc510e8b08fbf09e81d776bb0dace5d60571a10a",
+    "agent/skills/go-context/references/PATTERNS.md": "e4562cf4f26a70586fd2e40eaf12bd0f00a3e5b3",
+    "agent/skills/go-control-flow/SKILL.md": "d4f7488b330c62731fa189c201e76a4d7de4c320",
+    "agent/skills/go-control-flow/references/BLANK-IDENTIFIER.md": "29ab4f1ababbeb6c3f7cd6db61a144e0f95e90d3",
+    "agent/skills/go-control-flow/references/SWITCH-PATTERNS.md": "931d9ab97cfbac5a7c7afde29bb3e9597510834c",
+    "agent/skills/go-data-structures/SKILL.md": "ccfb7dc53efd7f31a25db1c1f890949f9f44e3e8",
+    "agent/skills/go-data-structures/references/SLICES.md": "ac88d798c3170a72293c61f56b0a1e97a2196d01",
+    "agent/skills/go-declarations/SKILL.md": "778ada6895ce51c1ca450c97c78a8d48067d02b9",
+    "agent/skills/go-declarations/references/INITIALIZATION.md": "cdd5ee0180c903587cfa90800bf0a4f8804ede9e",
+    "agent/skills/go-declarations/references/IOTA.md": "1a9181deff7d79f9736489325548d8a2980e335c",
+    "agent/skills/go-declarations/references/LITERALS.md": "1295afd2606710f26f0dde0471e008a4849c6c23",
+    "agent/skills/go-declarations/references/SCOPE.md": "9f0a7fed185877c6069328b0d3c6cbee446064ac",
+    "agent/skills/go-declarations/references/SHADOWING.md": "6e7a8c579ac3820a9782bf6c89030fcade46c74d",
+    "agent/skills/go-declarations/references/STRUCTS.md": "c60e484bc666b193781cdd258598b4eea00008cf",
+    "agent/skills/go-defensive/SKILL.md": "74b548c880442d44d8c397f170ebb01f579138d0",
+    "agent/skills/go-defensive/references/BOUNDARY-COPYING.md": "f7c0110221233525c04db16750fbc754057cd3d9",
+    "agent/skills/go-defensive/references/GLOBAL-STATE.md": "56379e0373d1749dd3bc4b638c3971bb4a0bc69d",
+    "agent/skills/go-defensive/references/MUST-FUNCTIONS.md": "a8f7f0341af60535aa8632aa05e90d6eeb27afce",
+    "agent/skills/go-defensive/references/PANIC-RECOVER.md": "9f3457aa3ee717118ffce6fde640fd01e4624b8e",
+    "agent/skills/go-defensive/references/TIME-ENUMS-TAGS.md": "e381cd5c10d99bdab07d61a991a27567ed06d34e",
+    "agent/skills/go-documentation/SKILL.md": "5a6f8e99fcb94c022b9da10af2db5b76bcbd68a6",
+    "agent/skills/go-documentation/assets/doc-template.go": "a2c54b85855d15d364238297dcf47de0c721ffc8",
+    "agent/skills/go-documentation/references/CONVENTIONS.md": "12b8df0bd055c11bdc044e2a5e20cc4b829763cf",
+    "agent/skills/go-documentation/references/EXAMPLES.md": "0b2b3879b19125593417e52d9f1d4a8f42a8be75",
+    "agent/skills/go-documentation/references/FORMATTING.md": "4977008a67dfe01cde2fe05c8915511113b97bc1",
+    "agent/skills/go-documentation/scripts/check-docs-ast.go": "ff1564b1d5f7bd97a6bdd6167830f3ce4b657042",
+    "agent/skills/go-documentation/scripts/check-docs.sh": "de69f135fe4cb5850101108a9d7bbcb70f68c8b9",
+    "agent/skills/go-error-handling/SKILL.md": "4e2e7e00e6c1e62b79b0a9a0e92c4f9a227f4478",
+    "agent/skills/go-error-handling/references/ERROR-FLOW.md": "182827f4235397d8d7b837153351ba4443cbb78a",
+    "agent/skills/go-error-handling/references/ERROR-TYPES.md": "e0d3ef3fb7f61daa2a65b5e356543d0160a5c048",
+    "agent/skills/go-error-handling/references/WRAPPING.md": "954cd6dabf682ebe1a6485fca463903418454d5a",
+    "agent/skills/go-error-handling/scripts/check-errors-ast.go": "d68d6e91e8a6e2ed110b7682a3deebc7f865904c",
+    "agent/skills/go-error-handling/scripts/check-errors.sh": "40c5be771e6b8ff91a54097f4d1ef39fbd04d6f4",
+    "agent/skills/go-functional-options/SKILL.md": "ac1f6b91390d8606e8476aa22bb0ea9d6b39d85d",
+    "agent/skills/go-functional-options/references/OPTIONS-VS-STRUCTS.md": "6b323dc0b8f166fb228c8bff86e43a6003890a29",
+    "agent/skills/go-functions/SKILL.md": "ed1cff83b92245295252c85998142ff2eb4e8eaa",
+    "agent/skills/go-functions/references/PRINTF-STRINGER.md": "1c348839d960dfe0732266ce975cd334c3349387",
+    "agent/skills/go-functions/references/SIGNATURES.md": "d1ae7ca3b7bec091a7840450c3ee8370538431eb",
+    "agent/skills/go-generics/SKILL.md": "079e81d17cd4f657207d6fcdd3f84e0525e79b88",
+    "agent/skills/go-generics/references/CONSTRAINTS.md": "16a871fc474137f11234ba1b52b711c36eee89cd",
+    "agent/skills/go-interfaces/SKILL.md": "582a1c6355c88cd021528826fa211daf1a88ff3e",
+    "agent/skills/go-interfaces/references/EMBEDDING.md": "e65e34b28910406614ad1afb6c65e3f64d78d0c3",
+    "agent/skills/go-interfaces/references/RECEIVER-TYPE.md": "3c0c1ef6eca9521d7e449a28eb5d30a1cd3d86a5",
+    "agent/skills/go-interfaces/scripts/check-interface-compliance.go": "69870981bc6f7e28115aa3fedf2aa816ff48385c",
+    "agent/skills/go-interfaces/scripts/check-interface-compliance.sh": "bbd0472539cabf40df1a43a4e8a6017ea4e7498f",
+    "agent/skills/go-linting/SKILL.md": "283c456cb27919b0ae3df92c4bfb6534c073b3f0",
+    "agent/skills/go-linting/assets/golangci.yml": "3a50744b8efb33c6c75cf487f74abca3dc330d74",
+    "agent/skills/go-linting/scripts/setup-lint.sh": "7ae0c10e9ddf6d2ed5dba97157d7d8a645ac2482",
+    "agent/skills/go-logging/SKILL.md": "c8d6f92a88553f852f71d48f18f4cc3535a98a0c",
+    "agent/skills/go-logging/references/LEVELS-AND-CONTEXT.md": "b5c3e9518dc7960e58f3253120fd3b786a055d8e",
+    "agent/skills/go-logging/references/LOGGING-PATTERNS.md": "e96f6da3d61366fcfd000aa348e51e96624b3aca",
+    "agent/skills/go-naming/SKILL.md": "401bf66254da686d3ff094d7ff5cfac378d1e788",
+    "agent/skills/go-naming/references/IDENTIFIERS.md": "45fed1977addffe5e798ee8d22a7fd3abcad961a",
+    "agent/skills/go-naming/references/REPETITION.md": "cac938e443d28684dc06b1cba6fffba0afbefd43",
+    "agent/skills/go-naming/references/VARIABLES.md": "a53492626e166a540b232210fba35f19eb6c9ccd",
+    "agent/skills/go-naming/scripts/check-naming.sh": "229fd02ea1d97cbd554c1c188c098390c68807d7",
+    "agent/skills/go-packages/SKILL.md": "c59032518d91b5d0725a5b6a2b8a9cd2393b8ca3",
+    "agent/skills/go-packages/references/IMPORTS.md": "e8a78251cc55f4a0ee2cede26ec8380cd47c4b1c",
+    "agent/skills/go-packages/references/PACKAGE-SIZE.md": "1eb3e8198d594ab4d74f347d321301923f70b244",
+    "agent/skills/go-performance/SKILL.md": "230475c02e37af5d59c39b261582ab9633f10b3e",
+    "agent/skills/go-performance/references/BENCHMARKS.md": "7598daa22af80a1041e4cd664f4880ee8b4da961",
+    "agent/skills/go-performance/references/STRING-OPTIMIZATION.md": "c938bb9b7ee1969abb0efb32250ceabf0cb2e9d1",
+    "agent/skills/go-performance/scripts/bench-compare.sh": "47f03925514e874f41e0f1c060ec2ee340599fba",
+    "agent/skills/go-style-core/SKILL.md": "dbdd41acbe868abd361fa9809b1a2c22d48b2837",
+    "agent/skills/go-style-core/references/FORMATTING.md": "57150714c9c4823e3eaad5697d47ee60a9148ef9",
+    "agent/skills/go-style-core/references/PRINCIPLES.md": "ac3882e1c383a49d4d1119987b0da5fabf7856e8",
+    "agent/skills/go-testing/SKILL.md": "76051ea4e579817abb8196767c170a93657f14d9",
+    "agent/skills/go-testing/assets/table-test-template.go": "35ca80331a034f24b2c0303bf7899aafa3e8f76b",
+    "agent/skills/go-testing/references/INTEGRATION.md": "908d12fda7a455f65a6f010daa08d7bca64b5edb",
+    "agent/skills/go-testing/references/TABLE-DRIVEN-TESTS.md": "37c05d34880c1ca9082793cb9e01ed3a946bab3a",
+    "agent/skills/go-testing/references/TEST-HELPERS.md": "68c1be3799f2e9034ac44c91671c7e3188461da5",
+    "agent/skills/go-testing/references/TEST-ORGANIZATION.md": "3f550d6b5acc8342d67bcefa1e29f50f92dc2aa3",
+    "agent/skills/go-testing/references/VALIDATION-APIS.md": "1174baeadf7bab191254539f427812af691e63d5",
+    "agent/skills/go-testing/scripts/gen-table-test.sh": "bd4aff5c775c73e1cd08c95eca6b8fcf5105a248",
+    "apps/web/next-env.d.ts": "ce4e94a6b10f160ee021fe18939af160d2927dcf",
+    "apps/web/tsconfig.tsbuildinfo": "eadf19f00fd9ad5b2302d2b4ec4db9278e36f8a7",
+    "skills-lock.json": "df5b1109db0d0231747f4561543fea4abaa34327"
+  },
+  "spec": {
+    "problem": "Auto-generate flashcard deck on /flashcards creates no cards: generation and preview only read learning.flashcard_variant, which is a sparse curated pool (80 N5 lexeme variants, 0 kanji/grammar), so most level/source combinations yield an empty deck reported as success.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Deck preview and generation select canonical content (content.lexeme, content.grammar_point, content.kanji) filtered by JLPT level and source type, so cards are created without a pre-curated variant row"
+      },
+      {
+        "id": "AC2",
+        "text": "A curated active flashcard_variant for a source keeps its wording; reverse/both directions reuse or create the variant without duplicates"
+      },
+      {
+        "id": "AC3",
+        "text": "When no canonical content matches, generation returns 422 and creates no deck; the dialog shows the server error instead of a silent empty success"
+      },
+      {
+        "id": "AC4",
+        "text": "Existing generation contract tests keep passing; a new test fails on the current code without curated variants"
+      }
+    ],
+    "expected_behavior": "Generation and preview select canonical content by level and source type and create the deck with the matching card count; zero matches return 422 and no deck.",
+    "observed_behavior": "POST /api/flashcards/decks/generate returns 201 with an empty deck when no curated learning.flashcard_variant rows exist for the requested JLPT level or source type; preview reports the same empty pool.",
+    "rollback_plan": "Revert the change; the old endpoints and response shapes are unchanged except the 422 for zero matches."
+  },
+  "classification": {
+    "classes": [
+      "DOMAIN_LOGIC",
+      "API_CONTRACT",
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants",
+      "expect": "canonical preview available="
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck",
+      "expect": "empty pool generate status="
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.test.tsx",
+      "test": "AutoGenDialog > shows the no-match message when generation returns 422",
+      "expect": "No content matches these options"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-29T05:13:56.919Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-29T05:14:55.446Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-29T05:14:55.885Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-29T05:16:34.407Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-29T05:19:29.026Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-29T05:20:44.828Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-29T05:21:31.657Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-29T05:31:15.928Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-29T05:31:24.507Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-29T05:16:33.971Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants handler_flashcard_deck_store_contract_test.go:255: canonical preview available=0 want>=2 without curated variants --- FAIL: TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants (0.05s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants": "canonical preview available="
+      },
+      "fingerprint": "b0be700ba198c32aa929c6fb359d02463321cb982abf71858260c546075af26a"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-29T05:16:50.404Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants|TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants handler_flashcard_deck_store_contract_test.go:255: canonical preview available=0 want>=2 without curated variants --- FAIL: TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck handler_flashcard_deck_store_contract_test.go:286: empty pool generate status=201 want 422 body={\"id\":\"e95e724e-65e6-4dc4-9796-83cf0f57b6d9\",\"ownerUserId\":\"77d408d3-01b5-48fc-9305-fdaf98cc2201\",\"titleVi\":\"No match\",\"titleJa\":null,\"…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants": "canonical preview available=",
+        "go:./internal/httpserver:TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck": "empty pool generate status="
+      },
+      "fingerprint": "b0be700ba198c32aa929c6fb359d02463321cb982abf71858260c546075af26a"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-29T05:19:28.542Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants|TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants handler_flashcard_deck_store_contract_test.go:229: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck",
+          "outcome": "SKIP",
+          "excerpt": "=== RUN TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck handler_flashcard_deck_store_contract_test.go:278: TEST_DATABASE_URL not set; skipping integration test --- SKIP: TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck (0.00s)",
+          "valid": false,
+          "reason": "test was skipped — a skip is neither RED nor GREEN (missing TEST_DATABASE_URL? run under scripts/quality/with-test-db.sh)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.test.tsx::\"AutoGenDialog > shows the no-match message when generation returns 422\"",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"\\\"AutoGenDialog > shows the no-match message when generation returns 422\\\"\" in apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants": "canonical preview available=",
+        "go:./internal/httpserver:TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck": "empty pool generate status=",
+        "vitest:apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.test.tsx::\"AutoGenDialog > shows the no-match message when generation returns 422\"": "No content matches these options"
+      },
+      "fingerprint": "d38f86f0c4c69f9ae294754290576fdecba868d62ef986571cb83b93524eb096"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-29T05:20:02.749Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants|TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants handler_flashcard_deck_store_contract_test.go:255: canonical preview available=0 want>=2 without curated variants --- FAIL: TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants (0.05s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck handler_flashcard_deck_store_contract_test.go:286: empty pool generate status=201 want 422 body={\"id\":\"cfa3f6fe-2ba5-46a8-9b24-4200b04d53c8\",\"ownerUserId\":\"5db420a7-ffd0-4529-83af-5ed2da176f03\",\"titleVi\":\"No match\",\"titleJa\":null,\"…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.test.tsx::\"AutoGenDialog > shows the no-match message when generation returns 422\"",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"\\\"AutoGenDialog > shows the no-match message when generation returns 422\\\"\" in apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.test.tsx::AutoGenDialog > shows the no-match message when generation returns 422",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Auto cardsBuild a deckLevelJ5J4J3J2J1…' to contain 'No content matches these options'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants": "canonical preview available=",
+        "go:./internal/httpserver:TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck": "empty pool generate status=",
+        "vitest:apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.test.tsx::\"AutoGenDialog > shows the no-match message when generation returns 422\"": "No content matches these options",
+        "vitest:apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.test.tsx::AutoGenDialog > shows the no-match message when generation returns 422": "No content matches these options"
+      },
+      "fingerprint": "d38f86f0c4c69f9ae294754290576fdecba868d62ef986571cb83b93524eb096"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-29T05:20:44.367Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 2,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants|TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants handler_flashcard_deck_store_contract_test.go:255: canonical preview available=0 want>=2 without curated variants --- FAIL: TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants (0.06s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck handler_flashcard_deck_store_contract_test.go:286: empty pool generate status=201 want 422 body={\"id\":\"9f130063-7491-474d-aa4a-80bd2a6cc93c\",\"ownerUserId\":\"61511f85-7eea-4f5d-92c7-e097624c5f78\",\"titleVi\":\"No match\",\"titleJa\":null,\"…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.test.tsx::AutoGenDialog > shows the no-match message when generation returns 422",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Auto cardsBuild a deckLevelJ5J4J3J2J1…' to contain 'No content matches these options'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants": "canonical preview available=",
+        "go:./internal/httpserver:TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck": "empty pool generate status=",
+        "vitest:apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.test.tsx::AutoGenDialog > shows the no-match message when generation returns 422": "No content matches these options"
+      },
+      "fingerprint": "d38f86f0c4c69f9ae294754290576fdecba868d62ef986571cb83b93524eb096"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-29T05:21:30.861Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants|TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.test.tsx::AutoGenDialog > shows the no-match message when generation returns 422",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f6bef2a5af88611cb81a5a8d8707c8125d2525f24e0425c575af8f4bd1ec85c4"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-29T05:22:52.310Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 1638,
+        "executed": 1638,
+        "passed": 1637,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "f6bef2a5af88611cb81a5a8d8707c8125d2525f24e0425c575af8f4bd1ec85c4"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-29T05:23:46.615Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 593,
+        "executed": 593,
+        "passed": 593,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 852,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "f6bef2a5af88611cb81a5a8d8707c8125d2525f24e0425c575af8f4bd1ec85c4"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-29T05:24:58.056Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants|TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck)$ ./internal/httpserver",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.test.tsx::AutoGenDialog > shows the no-match message when generation returns 422",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "fb844733b8ee9fee482dda7f8bea570a8e27745641837b00983a01ffab9c42e7"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-29T05:30:32.387Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1638,
+        "executed": 1638,
+        "passed": 1638,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1638 passed, 0 allowed skip(s)",
+      "fingerprint": "fb844733b8ee9fee482dda7f8bea570a8e27745641837b00983a01ffab9c42e7"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-29T05:31:15.189Z",
+      "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 593,
+        "executed": 593,
+        "passed": 593,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 852,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "fb844733b8ee9fee482dda7f8bea570a8e27745641837b00983a01ffab9c42e7"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-29T05:31:24.485Z",
+    "head": "c8a397534cc168dd8d5249efcc30a1d2af514f67",
+    "fingerprint": "fb844733b8ee9fee482dda7f8bea570a8e27745641837b00983a01ffab9c42e7",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/flashcarddeck/store.go": "b2e9552273432090a2a8f99470b0a94a3ad3c0f2",
+      "apps/api-go/internal/httpserver/handler_flashcard_deck.go": "026be63f4decdbb0f87e4425366b46df0d9c9173",
+      "apps/api-go/internal/httpserver/handler_flashcard_deck_store_contract_test.go": "a2e31205e6f6369d409de76cf11bee405ceb0dc3",
+      "apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.test.tsx": "b32ca700517f7e54e2c9b8f93dd831cfdb1843f4",
+      "apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.tsx": "d046c04cdf803edfdb2d3d6dda42efed03b07b77",
+      "apps/web/messages/en.json": "ef484461811cad8dc179bacd3575dfdebe6fd0fb",
+      "apps/web/messages/ja.json": "06d756e6b7462c954498640a1cf7d06863e415d9",
+      "apps/web/messages/vi.json": "3e74c7df73b4dca320b5fc126e89c83b21e35506"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

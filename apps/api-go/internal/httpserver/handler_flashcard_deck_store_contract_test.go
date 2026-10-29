@@ -225,6 +225,72 @@ func TestLearnerDeckGenerationCoversCanonicalVocabularyKanjiGrammar(t *testing.T
 	}
 }
 
+func TestLearnerDeckGenerationCreatesCardsFromCanonicalContentWithoutCuratedVariants(t *testing.T) {
+	db := testPool(t)
+	userID := newUUID(t)
+	seedActiveUser(t, db, userID, "Deck canonical fixture", fmt.Sprintf("deck-canon-%s@example.test", userID), "")
+	lexemeID, kanjiID := newUUID(t), newUUID(t)
+	if _, err := db.Exec(context.Background(), `INSERT INTO content.lexeme (id,headword,reading,jlpt_level,short_meaning_vi,status,created_at,updated_at)
+		VALUES ($1,'経済 canonical fixture','けいざい','N4','kinh tế','active',NOW(),NOW())`, lexemeID); err != nil {
+		t.Fatalf("insert canonical lexeme: %v", err)
+	}
+	if _, err := db.Exec(context.Background(), `INSERT INTO content.kanji (id,character,meaning_vi,level,status,created_at,updated_at)
+		VALUES ($1,'鬯','rượu tế fixture',4,'active',NOW(),NOW())`, kanjiID); err != nil {
+		t.Fatalf("insert canonical kanji: %v", err)
+	}
+	t.Cleanup(func() {
+		_, _ = db.Exec(context.Background(), `DELETE FROM learning.user_flashcard WHERE user_id=$1`, userID)
+		_, _ = db.Exec(context.Background(), `DELETE FROM learning.deck WHERE owner_user_id=$1`, userID)
+		_, _ = db.Exec(context.Background(), `DELETE FROM learning.flashcard_variant WHERE source_id = ANY($1::uuid[])`, []string{lexemeID, kanjiID})
+		_, _ = db.Exec(context.Background(), `DELETE FROM content.lexeme WHERE id=$1`, lexemeID)
+		_, _ = db.Exec(context.Background(), `DELETE FROM content.kanji WHERE id=$1`, kanjiID)
+	})
+	store := flashcarddeck.NewStore(db)
+	input := flashcarddeck.GenerateDeckInput{UserID: userID, Name: "N4 canonical", SourceTypes: []string{"lexeme", "kanji"}, Levels: []string{"J4"}, Limit: 500, Direction: "jp_to_vn"}
+	preview, err := store.PreviewGenerateCount(context.Background(), input)
+	if err != nil {
+		t.Fatalf("canonical preview err=%v", err)
+	}
+	if preview.AvailableCount < 2 {
+		t.Fatalf("canonical preview available=%d want>=2 without curated variants", preview.AvailableCount)
+	}
+	deck, err := store.GenerateDeck(context.Background(), input)
+	if err != nil {
+		t.Fatalf("canonical generate err=%v", err)
+	}
+	if deck.CardCount != preview.AvailableCount {
+		t.Fatalf("canonical generate cards=%d want preview=%d", deck.CardCount, preview.AvailableCount)
+	}
+	detail, err := store.GetDeck(context.Background(), userID, deck.ID)
+	if err != nil {
+		t.Fatalf("canonical deck detail err=%v", err)
+	}
+	fronts := map[string]string{}
+	for _, row := range detail.Cards {
+		fronts[row.Card.SourceID] = row.Card.FrontText
+	}
+	if fronts[lexemeID] != "経済 canonical fixture" || fronts[kanjiID] != "鬯" {
+		t.Fatalf("canonical generation cards missing fixture content: %+v", detail.Cards)
+	}
+}
+
+func TestLearnerDeckGenerationRejectsEmptyPoolWithoutCreatingDeck(t *testing.T) {
+	db := testPool(t)
+	userID, req := cardgenAuthenticatedRequest(t, db, http.MethodPost, "/api/flashcards/decks/generate", `{"name":"No match","sourceTypes":["bjt_vocabulary"],"levels":["J5"],"limit":10,"direction":"jp_to_vn"}`)
+	t.Cleanup(func() {
+		_, _ = db.Exec(context.Background(), `DELETE FROM learning.deck WHERE owner_user_id=$1`, userID)
+	})
+	rr := httptest.NewRecorder()
+	generateDeckHandler(flashcarddeck.NewStore(db), testLogger()).ServeHTTP(rr, req)
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("empty pool generate status=%d want 422 body=%s", rr.Code, rr.Body.String())
+	}
+	var decks int
+	if err := db.QueryRow(context.Background(), `SELECT COUNT(*) FROM learning.deck WHERE owner_user_id=$1`, userID).Scan(&decks); err != nil || decks != 0 {
+		t.Fatalf("empty pool created decks=%d err=%v", decks, err)
+	}
+}
+
 func deckRequestAsUser(t *testing.T, db *pgxpool.Pool, userID, method, path, body string) *http.Request {
 	t.Helper()
 	store := session.NewStore(db)

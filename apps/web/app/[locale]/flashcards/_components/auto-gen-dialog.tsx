@@ -29,6 +29,7 @@ export interface CardgenLabels {
   previewResult: string;
   jobs: string;
   error: string;
+  noMatches: string;
 }
 
 interface Props {
@@ -116,8 +117,7 @@ export function AutoGenDialog({ open, onClose, locale, labels }: Props) {
         })
       });
       if (!res.ok) {
-        const data = (await res.json()) as { code?: string; message?: string };
-        setError(data.message ?? labels.error);
+        setError(res.status === 422 ? labels.noMatches : labels.error);
         return;
       }
       const data = (await res.json()) as { id: string; titleVi: string; cardCount: number };
