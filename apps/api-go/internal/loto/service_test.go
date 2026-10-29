@@ -52,12 +52,12 @@ func testTx(t *testing.T) pgx.Tx {
 		InvalidateCaches()
 	})
 	for _, stmt := range []string{
-		`DELETE FROM daily.magazine_article WHERE widget_kind='magazine_loto6'`,
-		`DELETE FROM daily.loto_generation_run WHERE game='loto6'`,
-		`DELETE FROM daily.loto_draw WHERE game='loto6'`,
+		`DELETE FROM daily.magazine_article WHERE widget_kind IN ('magazine_loto6','magazine_loto7')`,
+		`DELETE FROM daily.loto_generation_run WHERE game IN ('loto6','loto7')`,
+		`DELETE FROM daily.loto_draw WHERE game IN ('loto6','loto7')`,
 	} {
 		if _, err := tx.Exec(ctx, stmt); err != nil {
-			t.Fatalf("reset loto6 fixtures: %v", err)
+			t.Fatalf("reset loto fixtures: %v", err)
 		}
 	}
 	InvalidateCaches()
