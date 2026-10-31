@@ -35,6 +35,7 @@ const copy = {
   title: "Business scenarios",
   description: "Practice Japanese workplace communication.",
   difficulty: { beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced" },
+  categories: { email: "Email", shopping: "Shopping" },
   duration: "{count} min",
   steps: "{count} steps",
   attempts: "{count} attempts",
@@ -61,6 +62,23 @@ afterEach(() => {
 });
 
 describe("scenario list", () => {
+  it("groups scenarios by category while preserving navigation and unknown categories", async () => {
+    state.fetch.mockResolvedValueOnce(new Response(JSON.stringify([
+      scenarios[0],
+      { ...scenarios[0], id: "shop-1", category: "shopping", titleJa: "買い物" },
+      { ...scenarios[0], id: "email-2", titleJa: "メール２" },
+      { ...scenarios[0], id: "other-1", category: "future_category", titleJa: "未来" },
+    ]), { status: 200 }));
+    const { container, root } = await mount("ja");
+    const sections = [...container.querySelectorAll("section")];
+    expect(sections.map((section) => section.querySelector("h2")?.textContent)).toEqual(["Email", "Shopping", "future category"]);
+    expect(sections[0]?.querySelectorAll("button")).toHaveLength(2);
+    expect(sections[1]?.textContent).toContain("買い物");
+    await act(async () => sections[1]?.querySelector("button")?.click());
+    expect(state.push).toHaveBeenCalledWith("/ja/scenarios/shop-1");
+    act(() => root.unmount());
+  });
+
   it("shows localized scenario data and navigates to the selected detail", async () => {
     state.fetch.mockResolvedValueOnce(new Response(JSON.stringify(scenarios), { status: 200 }));
     const { container, root } = await mount("en");

@@ -23,6 +23,7 @@ interface ScenarioListCopy {
   title: string;
   description: string;
   difficulty: Record<string, string>;
+  categories: Record<string, string>;
   duration: string;
   steps: string;
   attempts: string;
@@ -43,6 +44,10 @@ export function ScenarioListClient({ locale, copy }: { locale: string; copy: Sce
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const groups = new Map<string, Scenario[]>();
+  for (const scenario of scenarios) {
+    groups.set(scenario.category, [...(groups.get(scenario.category) ?? []), scenario]);
+  }
 
   const load = useCallback(async () => {
     if (!userId) return;
@@ -85,43 +90,50 @@ export function ScenarioListClient({ locale, copy }: { locale: string; copy: Sce
         {copy.description}
       </p>
 
-      <div className="space-y-3">
-        {scenarios.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => router.push(`/${locale}/scenarios/${s.id}`)}
-            className="w-full rounded-2xl border border-ink/8 bg-surface p-4 text-left shadow-sm transition-all hover:shadow-md hover:border-ink/15 active:scale-[0.99]"
-          >
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">{s.iconEmoji}</span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-ink truncate">
-                    {locale === "vi" ? s.titleVi : s.titleJa || s.titleVi}
-                  </h3>
-                  <span
-                    className={cn(
-                      "rounded-full px-2 py-0.5 text-[10px] font-bold",
-                      DIFFICULTY_COLORS[s.difficulty],
-                    )}
-                  >
-                    {copy.difficulty[s.difficulty] ?? s.difficulty}
-                  </span>
-                </div>
-                {locale === "vi" && s.descriptionVi && (
-                  <p className="mt-1 text-xs text-muted line-clamp-2">
-                    {s.descriptionVi}
-                  </p>
-                )}
-                <div className="mt-2 flex gap-3 text-[10px] text-muted">
-                  <span>{copy.duration.replace("{count}", String(s.estimatedMin))}</span>
-                  <span>{copy.steps.replace("{count}", String(s._count.steps))}</span>
-                  <span>{copy.attempts.replace("{count}", String(s._count.attempts))}</span>
-                </div>
-              </div>
-              <span className="text-muted text-sm">→</span>
+      <div className="space-y-8">
+        {[...groups].map(([category, items]) => (
+          <section key={category}>
+            <h2 className="mb-3 text-lg font-bold text-ink">{copy.categories[category] ?? category.replace(/[_-]+/g, " ")}</h2>
+            <div className="space-y-3">
+              {items.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => router.push(`/${locale}/scenarios/${s.id}`)}
+                  className="w-full rounded-2xl border border-ink/8 bg-surface p-4 text-left shadow-sm transition-all hover:shadow-md hover:border-ink/15 active:scale-[0.99]"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">{s.iconEmoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-ink truncate">
+                          {locale === "vi" ? s.titleVi : s.titleJa || s.titleVi}
+                        </h3>
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-[10px] font-bold",
+                            DIFFICULTY_COLORS[s.difficulty],
+                          )}
+                        >
+                          {copy.difficulty[s.difficulty] ?? s.difficulty}
+                        </span>
+                      </div>
+                      {locale === "vi" && s.descriptionVi && (
+                        <p className="mt-1 text-xs text-muted line-clamp-2">
+                          {s.descriptionVi}
+                        </p>
+                      )}
+                      <div className="mt-2 flex gap-3 text-[10px] text-muted">
+                        <span>{copy.duration.replace("{count}", String(s.estimatedMin))}</span>
+                        <span>{copy.steps.replace("{count}", String(s._count.steps))}</span>
+                        <span>{copy.attempts.replace("{count}", String(s._count.attempts))}</span>
+                      </div>
+                    </div>
+                    <span className="text-muted text-sm">→</span>
+                  </div>
+                </button>
+              ))}
             </div>
-          </button>
+          </section>
         ))}
       </div>
 
