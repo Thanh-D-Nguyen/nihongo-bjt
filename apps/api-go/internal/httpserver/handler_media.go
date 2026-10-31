@@ -296,6 +296,9 @@ func streamMediaHandler(store *media.Store, bucket *blob.Bucket, logger *slog.Lo
 		w.Header().Set("Content-Length", fmt.Sprintf("%d", asset.SizeBytes))
 		w.Header().Set("Accept-Ranges", "bytes")
 		w.Header().Set("Cache-Control", streamCacheControl)
+		if asset.Revocable || (asset.UploadedBy != nil && strings.HasPrefix(asset.ContentType, "image/")) || strings.HasPrefix(asset.StorageKey, "image-selection/") {
+			w.Header().Set("Cache-Control", "no-store")
+		}
 
 		// Inline disposition for images/audio; attachment for others.
 		disposition := "inline"

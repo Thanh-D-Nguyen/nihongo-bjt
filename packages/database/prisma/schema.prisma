@@ -455,6 +455,18 @@ model KanjiComponent {
   @@schema("content")
 }
 
+model ImageSearchCache {
+  namespace String
+  cacheKey  String   @map("cache_key")
+  images    Json     @default("[]")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+
+  @@id([namespace, cacheKey])
+  @@index([expiresAt], map: "idx_image_search_cache_expires_at")
+  @@map("image_search_cache")
+  @@schema("media")
+}
+
 model MediaAsset {
   id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   ownerUserId    String?         @map("owner_user_id") @db.Uuid

@@ -17,7 +17,8 @@ COPY packages/ packages/
 COPY tsconfig.json ./
 
 # Build
-ENV NEXT_PUBLIC_API_URL=http://192.168.1.8:14001
+ARG NEXT_PUBLIC_API_URL=http://192.168.1.8:14001
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV API_URL=http://api:4001
 ENV NODE_ENV=production
 RUN cd apps/web && pnpm build

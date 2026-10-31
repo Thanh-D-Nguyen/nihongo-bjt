@@ -12,6 +12,13 @@ reverse_proxy api-proxy:4001
 # Public media (read-only via Caddy)
 handle_path /media/* {
 root * /srv/kotobawork/data/media
+@private path /image-selection /image-selection/*
+respond @private 404
+@upload path_regexp upload (?i)^/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$
+handle @upload {
+rewrite * /api/media/{re.upload.1}/stream
+reverse_proxy api-proxy:4001
+}
 file_server
 }
 

@@ -75,6 +75,7 @@ export interface DeckComposerLabels {
   composerTermPlaceholder: string;
   composerToolbarAria: string;
   composerUploadImage: string;
+  composerRemoveImage: string;
   composerUploading: string;
   composerVisibilityLabel: string;
   imgSearchBtn: string;
@@ -85,6 +86,10 @@ export interface DeckComposerLabels {
   imgSearchQuotaBody: string;
   imgSearchQuotaCta: string;
   imgSearchCredit: string;
+  imgSearchError: string;
+  imgSearchRateLimit: string;
+  imgSelectError: string;
+  imgSelecting: string;
   composerEmojiLabel: string;
   composerTemplateVocab: string;
   composerTemplateKanji: string;
@@ -131,6 +136,7 @@ type DraftRow = {
   id: string;
   imageAssetId: string | null;
   imageUrl: string;
+  imageRemoved?: boolean;
   reading: string;
 };
 
@@ -165,6 +171,7 @@ async function uploadLearnerImage(file: File, userId: string): Promise<string> {
     body: JSON.stringify({
       fileName: file.name || "upload.bin",
       mimeType: file.type,
+      purpose: "flashcard",
       userId
     }),
     headers: { "Content-Type": "application/json" },
@@ -237,7 +244,8 @@ export function DeckComposerPanel({
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [uploadingRowId, setUploadingRowId] = useState<string | null>(null);
+  const uploadingRows = useRef(new Set<string>());
+  const [uploadingRowIds, setUploadingRowIds] = useState<Set<string>>(() => new Set());
   const dragFrom = useRef<number | null>(null);
   const submittingRef = useRef(false);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -256,72 +264,96 @@ export function DeckComposerPanel({
   const [suggestFetched, setSuggestFetched] = useState(false);
 
   // ── Image Search state (per row) ──
-  type ImgSuggestion = { id: string; thumbUrl: string; fullUrl: string; source: string };
+  type ImgSuggestion = { handle: string; provider: string; url: string; sourceUrl: string; author: string; authorUrl?: string; license: string; licenseUrl?: string };
   const [imgSearchResults, setImgSearchResults] = useState<Record<string, ImgSuggestion[]>>({});
   const [imgSearchLoading, setImgSearchLoading] = useState<Record<string, boolean>>({});
-  const [imgSearchQuotaHit, setImgSearchQuotaHit] = useState(false);
-  const [imgProxyingRowId, setImgProxyingRowId] = useState<string | null>(null);
+  const [imgSearchStatus, setImgSearchStatus] = useState<Record<string, "error" | "empty" | "quota" | "rateLimit" | "selectionError">>({});
   const imgSearchLastQuery = useRef<Record<string, string>>({});
+  const imgSearchRequests = useRef<Record<string, number>>({});
+  const selectingRows = useRef(new Set<string>());
+  const [selectingRowId, setSelectingRowId] = useState<string | null>(null);
+  const [selectedImages, setSelectedImages] = useState<Record<string, { handle: string; assetId: string }>>({});
 
   const searchImagesForRow = useCallback(async (rowId: string, query: string) => {
     if (!query.trim() || query.trim().length < 2) return;
     if (imgSearchLastQuery.current[rowId] === query.trim()) return;
     imgSearchLastQuery.current[rowId] = query.trim();
+    const requestId = (imgSearchRequests.current[rowId] ?? 0) + 1;
+    imgSearchRequests.current[rowId] = requestId;
     setImgSearchLoading((p) => ({ ...p, [rowId]: true }));
+    setImgSearchResults((p) => ({ ...p, [rowId]: [] }));
+    setImgSearchStatus((p) => { const next = { ...p }; delete next[rowId]; return next; });
     try {
       const res = await learnerApiFetch("/api/media/search-images", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: query.trim(), limit: 6, userId }),
+        body: JSON.stringify({ query: query.trim() }),
       });
+      if (imgSearchRequests.current[rowId] !== requestId) return;
+      if (res.status === 429) {
+        setImgSearchStatus((p) => ({ ...p, [rowId]: "rateLimit" }));
+        delete imgSearchLastQuery.current[rowId];
+        return;
+      }
       if (res.status === 403) {
         const data = await res.json().catch(() => ({}));
+        if (imgSearchRequests.current[rowId] !== requestId) return;
         if (data?.code === "QUOTA_EXCEEDED") {
-          setImgSearchQuotaHit(true);
+          setImgSearchStatus((p) => ({ ...p, [rowId]: "quota" }));
+          delete imgSearchLastQuery.current[rowId];
           return;
         }
       }
-      if (!res.ok) return;
+      if (!res.ok) throw new Error("image search failed");
       const data = await res.json();
-      setImgSearchResults((p) => ({ ...p, [rowId]: data.images ?? [] }));
-    } catch { /* silent */ } finally {
-      setImgSearchLoading((p) => ({ ...p, [rowId]: false }));
+      if (imgSearchRequests.current[rowId] !== requestId) return;
+      if (!Array.isArray(data.results) || data.results.some((img: unknown) => {
+        if (!img || typeof img !== "object") return true;
+        const item = img as Record<string, unknown>;
+        return [item.handle, item.provider, item.url, item.sourceUrl, item.author, item.license].some((value) => typeof value !== "string" || !value) || [item.authorUrl, item.licenseUrl].some((value) => value != null && typeof value !== "string");
+      })) throw new Error("invalid image search response");
+      setImgSearchResults((p) => ({ ...p, [rowId]: data.results }));
+      if (!data.results.length) {
+        delete imgSearchLastQuery.current[rowId];
+        setImgSearchStatus((p) => ({ ...p, [rowId]: "empty" }));
+      }
+    } catch {
+      if (imgSearchRequests.current[rowId] !== requestId) return;
+      delete imgSearchLastQuery.current[rowId];
+      setImgSearchStatus((p) => ({ ...p, [rowId]: "error" }));
+    } finally {
+      if (imgSearchRequests.current[rowId] === requestId) setImgSearchLoading((p) => ({ ...p, [rowId]: false }));
     }
-  }, [userId]);
+  }, []);
 
-  // ── Proxy image to S3 immediately on selection ──
-  const proxyImageForRow = useCallback(async (rowId: string, rowIndex: number, fullUrl: string, altText: string, source: string) => {
-    // Immediately show the image URL for instant visual feedback
-    setRows((prev) => {
-      const next = [...prev];
-      const x = next[rowIndex];
-      if (x) next[rowIndex] = { ...x, imageAssetId: null, imageUrl: fullUrl };
-      return next;
-    });
-    // Proxy to S3 in background
-    setImgProxyingRowId(rowId);
+  const selectImageForRow = useCallback(async (row: DraftRow, img: ImgSuggestion) => {
+    if (selectingRows.current.size || uploadingRows.current.has(row.id) || submittingRef.current) return;
+    selectingRows.current.add(row.id);
+    setSelectingRowId(row.id);
+    setImgSearchStatus((p) => { const next = { ...p }; delete next[row.id]; return next; });
     try {
-      const res = await learnerApiFetch("/api/media/proxy-image", {
+      const res = await learnerApiFetch("/api/media/image-selections", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: fullUrl, userId, altText, source }),
+        body: JSON.stringify({ handle: img.handle })
       });
-      if (res.ok) {
-        const data = (await res.json()) as { assetId: string };
-        setRows((prev) => {
-          const next = [...prev];
-          const idx = next.findIndex((r) => r.id === rowId);
-          if (idx >= 0) {
-            next[idx] = { ...next[idx]!, imageAssetId: data.assetId, imageUrl: "" };
-          }
-          return next;
-        });
+      if (res.status === 429) {
+        setImgSearchStatus((p) => ({ ...p, [row.id]: "rateLimit" }));
+        return;
       }
-      // If proxy fails, keep fullUrl — backend will retry on deck save
-    } catch { /* silent — fallback to URL mode */ } finally {
-      setImgProxyingRowId(null);
+      if (!res.ok) throw new Error("image selection failed");
+      const data = await res.json();
+      if (typeof data.assetId !== "string" || !data.assetId) throw new Error("invalid selection response");
+      setRows((prev) => prev.map((current) => current.id === row.id && current.imageAssetId === row.imageAssetId && current.imageUrl === row.imageUrl
+        ? { ...current, imageAssetId: data.assetId, imageUrl: "" } : current));
+      setSelectedImages((prev) => ({ ...prev, [row.id]: { handle: img.handle, assetId: data.assetId } }));
+    } catch {
+      setImgSearchStatus((p) => ({ ...p, [row.id]: "selectionError" }));
+    } finally {
+      selectingRows.current.delete(row.id);
+      setSelectingRowId(null);
     }
-  }, [userId]);
+  }, []);
 
   // ── Auto-generate reading from Japanese text ──
   const readingLastQuery = useRef<Record<string, string>>({});
@@ -508,11 +540,15 @@ export function DeckComposerPanel({
   const submit = useCallback(
     async (startReview: boolean) => {
       setError(null);
-      if (submittingRef.current) {
+      if (submittingRef.current || selectingRows.current.size || uploadingRows.current.size) {
         return;
       }
       if (!titleVi.trim()) {
         setError(labels.composerNeedTitle);
+        return;
+      }
+      if (rows.some((row) => row.imageUrl.trim())) {
+        setError(labels.composerImageUrlLabel);
         return;
       }
       const cards = rows
@@ -521,8 +557,8 @@ export function DeckComposerPanel({
           cardId: r.cardId,
           deckCardId: r.deckCardId,
           frontText: r.front.trim(),
-          imageUrl: r.imageUrl.trim() || undefined,
           primaryImageAssetId: r.imageAssetId || undefined,
+          removePrimaryImage: r.imageRemoved && !r.imageAssetId || undefined,
           reading: r.reading.trim() || undefined
         }))
         .filter((c) => c.frontText.length > 0 && c.backText.length > 0);
@@ -601,24 +637,18 @@ export function DeckComposerPanel({
     const file = ev.target.files?.[0];
     ev.target.value = "";
     if (!file) return;
-    const idx = rows.findIndex((r) => r.id === rowId);
-    if (idx < 0) return;
-    setUploadingRowId(rowId);
+    if (!rows.some((r) => r.id === rowId) || uploadingRows.current.has(rowId) || selectingRows.current.has(rowId) || submittingRef.current) return;
+    uploadingRows.current.add(rowId);
+    setUploadingRowIds(new Set(uploadingRows.current));
     setError(null);
     try {
       const assetId = await uploadLearnerImage(file, userId);
-      setRows((prev) => {
-        const next = [...prev];
-        const r = next[idx];
-        if (r) {
-          next[idx] = { ...r, imageAssetId: assetId, imageUrl: "" };
-        }
-        return next;
-      });
+      setRows((prev) => prev.map((r) => r.id === rowId ? { ...r, imageAssetId: assetId, imageUrl: "" } : r));
     } catch {
       setError(labels.error);
     } finally {
-      setUploadingRowId(null);
+      uploadingRows.current.delete(rowId);
+      setUploadingRowIds(new Set(uploadingRows.current));
     }
   };
 
@@ -634,14 +664,14 @@ export function DeckComposerPanel({
       </button>
       <button
         className={btnSecondary}
-        disabled={submitting}
+        disabled={submitting || selectingRowId !== null || uploadingRowIds.size > 0}
         onClick={() => void submit(false)}
         type="button"
       >
         {submitting ? labels.composerCreating : isEdit ? labels.composerSave : labels.composerCreate}
       </button>
       {!isEdit ? (
-        <button className={btnPrimary} disabled={submitting} onClick={() => void submit(true)} type="button">
+        <button className={btnPrimary} disabled={submitting || selectingRowId !== null || uploadingRowIds.size > 0} onClick={() => void submit(true)} type="button">
           {submitting ? labels.composerCreating : labels.composerCreateAndPractice}
         </button>
       ) : null}
@@ -1122,6 +1152,7 @@ export function DeckComposerPanel({
         ) : null}
         {filteredIndexes.map((rowIndex) => {
           const r = rows[rowIndex]!;
+          const imageLocked = submitting || uploadingRowIds.has(r.id) || selectingRowId === r.id;
           const displayNum = rowIndex + 1;
           const isDropTarget = dragOverIndex === rowIndex;
           const isDragging = draggingIndex === rowIndex;
@@ -1358,12 +1389,7 @@ export function DeckComposerPanel({
                         <path d="m21 15-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
                       </svg>
                     )}
-                    {imgProxyingRowId === r.id ? (
-                      <div className="absolute inset-0 flex items-center justify-center bg-paper/80">
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-leaf/30 border-t-leaf" />
-                      </div>
-                    ) : null}
-                    {uploadingRowId === r.id ? (
+                    {uploadingRowIds.has(r.id) ? (
                       <div className="absolute inset-0 flex items-center justify-center bg-paper/80 text-[9px] font-bold text-ink">
                         {labels.composerUploading}
                       </div>
@@ -1371,6 +1397,7 @@ export function DeckComposerPanel({
                     <button
                       type="button"
                       aria-label={labels.composerUploadImage}
+                      disabled={imageLocked}
                       className="absolute inset-0 z-10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                       onClick={() => {
                         const el = document.getElementById(`${formId}-img-${r.id}`);
@@ -1383,26 +1410,25 @@ export function DeckComposerPanel({
                     accept="image/jpeg,image/png,image/webp,image/gif"
                     className="sr-only"
                     id={`${formId}-img-${r.id}`}
+                    disabled={imageLocked}
                     onChange={(e) => void handleRowFile(r.id, e)}
                     type="file"
                   />
                   <input
                     className="min-h-9 min-w-0 flex-1 rounded-lg border border-ink/10 bg-paper/60 px-3 text-xs text-ink outline-none transition placeholder:text-muted/40 focus:border-leaf focus:ring-1 focus:ring-leaf"
+                    disabled={imageLocked}
                     maxLength={2000}
                     onChange={(e) => {
+                      if (uploadingRows.current.has(r.id) || selectingRows.current.has(r.id) || submittingRef.current) return;
                       const v = e.target.value;
-                      setRows((prev) => {
-                        const next = [...prev];
-                        const x = next[rowIndex];
-                        if (x) next[rowIndex] = { ...x, imageAssetId: null, imageUrl: v };
-                        return next;
-                      });
+                      setRows((prev) => prev.map((row) => row.id === r.id ? { ...row, imageUrl: v } : row));
                     }}
                     placeholder={labels.composerRowImageUrlPlaceholder}
                     type="url"
                     value={r.imageUrl}
                   />
                   <span className="text-[10px] font-bold text-muted/50">{labels.composerImageUrlLabel}</span>
+                  {r.imageAssetId ? <button type="button" disabled={imageLocked} className="rounded-md px-2 py-1 text-xs text-muted hover:text-ink" onClick={() => { if (!uploadingRows.current.has(r.id) && !selectingRows.current.has(r.id) && !submittingRef.current) setRows((prev) => prev.map((row) => row.id === r.id ? { ...row, imageAssetId: null, imageUrl: "", imageRemoved: true } : row)); }}>{labels.composerRemoveImage}</button> : null}
                   <button
                     className="rounded-md bg-ink/6 px-2 py-1 text-[10px] font-bold text-muted hover:bg-ink/12 transition-colors"
                     onClick={() => void searchImagesForRow(r.id, r.front)}
@@ -1414,7 +1440,8 @@ export function DeckComposerPanel({
                 </div>
 
                 {/* ── Image search suggestions ── */}
-                {imgSearchQuotaHit && !imgSearchResults[r.id]?.length ? (
+                {selectingRowId === r.id ? <p className="mt-2 text-xs text-muted" role="status">{labels.imgSelecting}</p> : null}
+                {imgSearchStatus[r.id] === "quota" ? (
                   <div className="mt-2 rounded-lg border border-amber-300/40 bg-amber-50/60 p-2.5 text-center">
                     <p className="text-xs font-bold text-amber-700">{labels.imgSearchQuotaTitle}</p>
                     <p className="mt-0.5 text-[10px] text-amber-600">{labels.imgSearchQuotaBody}</p>
@@ -1428,10 +1455,14 @@ export function DeckComposerPanel({
                   </div>
                 ) : null}
 
+                {imgSearchStatus[r.id] === "error" || imgSearchStatus[r.id] === "empty" || imgSearchStatus[r.id] === "rateLimit" || imgSearchStatus[r.id] === "selectionError" ? (
+                  <p className="mt-2 text-xs text-muted" role="status">{imgSearchStatus[r.id] === "error" ? labels.imgSearchError : imgSearchStatus[r.id] === "rateLimit" ? labels.imgSearchRateLimit : imgSearchStatus[r.id] === "selectionError" ? labels.imgSelectError : labels.imgSearchEmpty}</p>
+                ) : null}
+
                 {imgSearchResults[r.id]?.length ? (
                   <div className="mt-2 space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-muted">{labels.imgSearchCredit.replace("{source}", "Unsplash / Pixabay / Google")}</span>
+                      <span className="text-[10px] text-muted">{labels.imgSearchCredit.replace("{source}", imgSearchResults[r.id]![0]!.provider)}</span>
                       <button
                         className="text-[10px] text-accent hover:underline"
                         onClick={() => {
@@ -1445,41 +1476,31 @@ export function DeckComposerPanel({
                     </div>
                     <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
                       {imgSearchResults[r.id]!.map((img) => (
+                        <div key={img.handle} className="min-w-0">
                         <button
-                          className={`group/img relative aspect-square overflow-hidden rounded-lg border transition-all duration-150 hover:ring-2 hover:ring-leaf/40 ${
-                            r.imageUrl === img.fullUrl || (r.imageAssetId && imgProxyingRowId !== r.id) ? "border-leaf ring-2 ring-leaf/30" : "border-ink/10"
+                          className={`group/img relative aspect-square w-full overflow-hidden rounded-lg border transition-all duration-150 hover:ring-2 hover:ring-leaf/40 ${
+                            selectedImages[r.id]?.handle === img.handle && selectedImages[r.id]?.assetId === r.imageAssetId ? "border-leaf ring-2 ring-leaf/30" : "border-ink/10"
                           }`}
-                          key={img.id}
-                          disabled={imgProxyingRowId === r.id}
-                          onClick={() => {
-                            void proxyImageForRow(r.id, rowIndex, img.fullUrl, r.front.slice(0, 200), img.source);
-                          }}
+                          disabled={selectingRowId !== null || imageLocked}
+                          aria-label={labels.imgSearchCredit.replace("{source}", img.author)}
+                          onClick={() => void selectImageForRow(r, img)}
                           type="button"
                         >
                           <img
                             alt=""
                             className="h-full w-full object-cover transition-transform duration-200 group-hover/img:scale-105"
                             loading="lazy"
-                            src={img.thumbUrl}
+                            src={img.url}
                           />
-                          {r.imageUrl === img.fullUrl && imgProxyingRowId === r.id ? (
-                            <div className="absolute inset-0 flex items-center justify-center bg-leaf/20">
-                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/60 border-t-white" />
-                            </div>
-                          ) : r.imageAssetId && imgProxyingRowId !== r.id ? (
-                            <div className="absolute inset-0 flex items-center justify-center bg-leaf/20">
-                              <svg className="h-4 w-4 text-white drop-shadow" fill="currentColor" viewBox="0 0 20 20">
-                                <path clipRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fillRule="evenodd" />
-                              </svg>
-                            </div>
-                          ) : r.imageUrl === img.fullUrl ? (
-                            <div className="absolute inset-0 flex items-center justify-center bg-leaf/20">
-                              <svg className="h-4 w-4 text-white drop-shadow" fill="currentColor" viewBox="0 0 20 20">
-                                <path clipRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fillRule="evenodd" />
-                              </svg>
-                            </div>
-                          ) : null}
                         </button>
+                        <p className="break-words text-[10px] text-muted">
+                          {img.authorUrl?.startsWith("https://") ? <a href={img.authorUrl} rel="noopener noreferrer" target="_blank">{img.author || img.provider}</a> : (img.author || img.provider)}
+                          {" · "}
+                          {img.sourceUrl?.startsWith("https://") ? <a href={img.sourceUrl} rel="noopener noreferrer" target="_blank">{img.provider}</a> : img.provider}
+                          {img.license ? <> · {img.licenseUrl?.startsWith("https://") ? <a href={img.licenseUrl} rel="noopener noreferrer" target="_blank">{img.license}</a> : img.license}</> : null}
+                        </p>
+
+                        </div>
                       ))}
                     </div>
                   </div>

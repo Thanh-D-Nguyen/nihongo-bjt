@@ -265,7 +265,7 @@ func adminMediaMetadataPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		defer tx.Rollback(ctx)
 		// Get before state
 		var beforeJSON json.RawMessage
-		err = tx.QueryRow(ctx, `SELECT row_to_json(t) FROM (SELECT license, rights_status, source_url, provenance, accessibility FROM media.asset WHERE id=$1 FOR UPDATE) t`, id).Scan(&beforeJSON)
+		err = tx.QueryRow(ctx, `SELECT row_to_json(t) FROM (SELECT license, rights_status, source_url, provenance, accessibility, status FROM media.asset WHERE id=$1 FOR UPDATE) t`, id).Scan(&beforeJSON)
 		if errors.Is(err, pgx.ErrNoRows) {
 			writeJSONError(w, "media asset not found", http.StatusNotFound)
 			return
@@ -289,7 +289,16 @@ func adminMediaMetadataPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			argIdx++
 		}
 		if req.RightsStatus != nil {
-			setClauses = append(setClauses, "rights_status = $"+itoa(argIdx))
+			setClauses = append(setClauses, "rights_status = $"+itoa(argIdx)+"::text")
+			setClauses = append(setClauses, `status = CASE
+				WHEN object_key LIKE 'image-selection/%' AND mime_type LIKE 'image/%'
+				 AND ((provider IN ('pixabay','pexels','wikimedia') AND provenance->>'delivery' = 'rehosted')
+				   OR (provider = 'unsplash' AND provenance->>'delivery' = 'hotlink')) THEN CASE
+					WHEN status IN ('pending_review','blocked') AND $`+itoa(argIdx)+`::text = 'cleared' THEN 'active'
+					WHEN status = 'active' AND $`+itoa(argIdx)+`::text <> 'cleared' THEN 'blocked'
+					WHEN status = 'pending_review' AND $`+itoa(argIdx)+`::text NOT IN ('cleared','pending_review') THEN 'blocked'
+					ELSE status END
+				ELSE status END`)
 			args = append(args, *req.RightsStatus)
 			argIdx++
 		}
@@ -325,7 +334,7 @@ func adminMediaMetadataPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		}
 
 		var afterJSON json.RawMessage
-		if err := tx.QueryRow(ctx, `SELECT row_to_json(t) FROM (SELECT license, rights_status, source_url, provenance, accessibility FROM media.asset WHERE id=$1) t`, id).Scan(&afterJSON); err != nil {
+		if err := tx.QueryRow(ctx, `SELECT row_to_json(t) FROM (SELECT license, rights_status, source_url, provenance, accessibility, status FROM media.asset WHERE id=$1) t`, id).Scan(&afterJSON); err != nil {
 			logger.Error("read media metadata after update", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return

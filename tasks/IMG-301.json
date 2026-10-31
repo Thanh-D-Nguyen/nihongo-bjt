@@ -1,0 +1,1753 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "IMG-301",
+  "title": "Flashcard image provider fallback",
+  "start_head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+  "preexisting_changes": {
+    ".claude/skills/go-code-review": null,
+    ".claude/skills/go-concurrency": null,
+    ".claude/skills/go-context": null,
+    ".claude/skills/go-control-flow": null,
+    ".claude/skills/go-data-structures": null,
+    ".claude/skills/go-declarations": null,
+    ".claude/skills/go-defensive": null,
+    ".claude/skills/go-documentation": null,
+    ".claude/skills/go-error-handling": null,
+    ".claude/skills/go-functional-options": null,
+    ".claude/skills/go-functions": null,
+    ".claude/skills/go-generics": null,
+    ".claude/skills/go-interfaces": null,
+    ".claude/skills/go-linting": null,
+    ".claude/skills/go-logging": null,
+    ".claude/skills/go-naming": null,
+    ".claude/skills/go-packages": null,
+    ".claude/skills/go-performance": null,
+    ".claude/skills/go-style-core": null,
+    ".claude/skills/go-testing": null,
+    "data/skills/go-code-review": null,
+    "data/skills/go-concurrency": null,
+    "data/skills/go-context": null,
+    "data/skills/go-control-flow": null,
+    "data/skills/go-data-structures": null,
+    "data/skills/go-declarations": null,
+    "data/skills/go-defensive": null,
+    "data/skills/go-documentation": null,
+    "data/skills/go-error-handling": null,
+    "data/skills/go-functional-options": null,
+    "data/skills/go-functions": null,
+    "data/skills/go-generics": null,
+    "data/skills/go-interfaces": null,
+    "data/skills/go-linting": null,
+    "data/skills/go-logging": null,
+    "data/skills/go-naming": null,
+    "data/skills/go-packages": null,
+    "data/skills/go-performance": null,
+    "data/skills/go-style-core": null,
+    "data/skills/go-testing": null,
+    ".agents/skills/go-code-review/SKILL.md": "7fe964fc46fa0f83c5a6782aea8afa9d42c8e120",
+    ".agents/skills/go-code-review/assets/review-template.md": "8a9783efd0ec1c76628410657774b598a2907293",
+    ".agents/skills/go-code-review/references/WEB-SERVER.md": "4fcdde6babb435d50f6282abb384740a5ee408a9",
+    ".agents/skills/go-code-review/scripts/pre-review.sh": "e0b1334be59928788c20d7faeaf24a8510eeab34",
+    ".agents/skills/go-concurrency/SKILL.md": "417bb46ef3c1f7c23a8f5e8fc88cd1e0bc9cab2d",
+    ".agents/skills/go-concurrency/references/ADVANCED-PATTERNS.md": "5e9d68fedc50fcfdd51f8d8de18f0080a05e04c5",
+    ".agents/skills/go-concurrency/references/BUFFER-POOLING.md": "64bcc0b563bbe469118e7c71add00aabc9315da1",
+    ".agents/skills/go-concurrency/references/GOROUTINE-PATTERNS.md": "a3f6541f7c6f2e575e83cf3a2384a43c4a28e691",
+    ".agents/skills/go-concurrency/references/SYNC-PRIMITIVES.md": "ad2a14c5f066f6600af62fb42daef449fc7312d4",
+    ".agents/skills/go-context/SKILL.md": "514123426d4c5927d9cf9ccd209b4e669799d5ea",
+    ".agents/skills/go-context/references/PATTERNS.md": "e4562cf4f26a70586fd2e40eaf12bd0f00a3e5b3",
+    ".agents/skills/go-control-flow/SKILL.md": "beeb46ceca8596e0b7ceb08f9d0409991f7fadb2",
+    ".agents/skills/go-control-flow/references/BLANK-IDENTIFIER.md": "29ab4f1ababbeb6c3f7cd6db61a144e0f95e90d3",
+    ".agents/skills/go-control-flow/references/SWITCH-PATTERNS.md": "931d9ab97cfbac5a7c7afde29bb3e9597510834c",
+    ".agents/skills/go-data-structures/SKILL.md": "bd35416b3eb9245c0da81e03dbc9291915008ce1",
+    ".agents/skills/go-data-structures/references/SLICES.md": "ac88d798c3170a72293c61f56b0a1e97a2196d01",
+    ".agents/skills/go-declarations/SKILL.md": "0764413ec0110a4f1afe841f25923778fa1dff27",
+    ".agents/skills/go-declarations/references/INITIALIZATION.md": "cdd5ee0180c903587cfa90800bf0a4f8804ede9e",
+    ".agents/skills/go-declarations/references/IOTA.md": "1a9181deff7d79f9736489325548d8a2980e335c",
+    ".agents/skills/go-declarations/references/LITERALS.md": "1295afd2606710f26f0dde0471e008a4849c6c23",
+    ".agents/skills/go-declarations/references/SCOPE.md": "9f0a7fed185877c6069328b0d3c6cbee446064ac",
+    ".agents/skills/go-declarations/references/SHADOWING.md": "6e7a8c579ac3820a9782bf6c89030fcade46c74d",
+    ".agents/skills/go-declarations/references/STRUCTS.md": "c60e484bc666b193781cdd258598b4eea00008cf",
+    ".agents/skills/go-defensive/SKILL.md": "22ca0d797d3a5ddfa8fb7a1e4c26a89863b4d6d4",
+    ".agents/skills/go-defensive/references/BOUNDARY-COPYING.md": "f7c0110221233525c04db16750fbc754057cd3d9",
+    ".agents/skills/go-defensive/references/GLOBAL-STATE.md": "56379e0373d1749dd3bc4b638c3971bb4a0bc69d",
+    ".agents/skills/go-defensive/references/MUST-FUNCTIONS.md": "a8f7f0341af60535aa8632aa05e90d6eeb27afce",
+    ".agents/skills/go-defensive/references/PANIC-RECOVER.md": "9f3457aa3ee717118ffce6fde640fd01e4624b8e",
+    ".agents/skills/go-defensive/references/TIME-ENUMS-TAGS.md": "e381cd5c10d99bdab07d61a991a27567ed06d34e",
+    ".agents/skills/go-documentation/SKILL.md": "eeca8e8a5e8133b4ef43e77dcbd83c48d0635c11",
+    ".agents/skills/go-documentation/assets/doc-template.go": "a2c54b85855d15d364238297dcf47de0c721ffc8",
+    ".agents/skills/go-documentation/references/CONVENTIONS.md": "12b8df0bd055c11bdc044e2a5e20cc4b829763cf",
+    ".agents/skills/go-documentation/references/EXAMPLES.md": "0b2b3879b19125593417e52d9f1d4a8f42a8be75",
+    ".agents/skills/go-documentation/references/FORMATTING.md": "4977008a67dfe01cde2fe05c8915511113b97bc1",
+    ".agents/skills/go-documentation/scripts/check-docs-ast.go": "ff1564b1d5f7bd97a6bdd6167830f3ce4b657042",
+    ".agents/skills/go-documentation/scripts/check-docs.sh": "de69f135fe4cb5850101108a9d7bbcb70f68c8b9",
+    ".agents/skills/go-error-handling/SKILL.md": "275a1a65cc6c02d4a611b7bd83ec73c5d493792a",
+    ".agents/skills/go-error-handling/references/ERROR-FLOW.md": "182827f4235397d8d7b837153351ba4443cbb78a",
+    ".agents/skills/go-error-handling/references/ERROR-TYPES.md": "e0d3ef3fb7f61daa2a65b5e356543d0160a5c048",
+    ".agents/skills/go-error-handling/references/WRAPPING.md": "954cd6dabf682ebe1a6485fca463903418454d5a",
+    ".agents/skills/go-error-handling/scripts/check-errors-ast.go": "d68d6e91e8a6e2ed110b7682a3deebc7f865904c",
+    ".agents/skills/go-error-handling/scripts/check-errors.sh": "40c5be771e6b8ff91a54097f4d1ef39fbd04d6f4",
+    ".agents/skills/go-functional-options/SKILL.md": "aa249b24abfef30bcdc4199aeab4974b7f63ced5",
+    ".agents/skills/go-functional-options/references/OPTIONS-VS-STRUCTS.md": "6b323dc0b8f166fb228c8bff86e43a6003890a29",
+    ".agents/skills/go-functions/SKILL.md": "906fa01432c3aa6899ced2a490558a9a4784d45e",
+    ".agents/skills/go-functions/references/PRINTF-STRINGER.md": "1c348839d960dfe0732266ce975cd334c3349387",
+    ".agents/skills/go-functions/references/SIGNATURES.md": "d1ae7ca3b7bec091a7840450c3ee8370538431eb",
+    ".agents/skills/go-generics/SKILL.md": "0cfa9811a90ca9d76137bfd6dc96d2cd0faee8ea",
+    ".agents/skills/go-generics/references/CONSTRAINTS.md": "16a871fc474137f11234ba1b52b711c36eee89cd",
+    ".agents/skills/go-interfaces/SKILL.md": "358cab26d71de1fbd788855fbb312425bca86022",
+    ".agents/skills/go-interfaces/references/EMBEDDING.md": "e65e34b28910406614ad1afb6c65e3f64d78d0c3",
+    ".agents/skills/go-interfaces/references/RECEIVER-TYPE.md": "3c0c1ef6eca9521d7e449a28eb5d30a1cd3d86a5",
+    ".agents/skills/go-interfaces/scripts/check-interface-compliance.go": "69870981bc6f7e28115aa3fedf2aa816ff48385c",
+    ".agents/skills/go-interfaces/scripts/check-interface-compliance.sh": "bbd0472539cabf40df1a43a4e8a6017ea4e7498f",
+    ".agents/skills/go-linting/SKILL.md": "9c1964f70a0fadfe9df78836596468c13466798a",
+    ".agents/skills/go-linting/assets/golangci.yml": "3a50744b8efb33c6c75cf487f74abca3dc330d74",
+    ".agents/skills/go-linting/scripts/setup-lint.sh": "7ae0c10e9ddf6d2ed5dba97157d7d8a645ac2482",
+    ".agents/skills/go-logging/SKILL.md": "2db7104d437e1b52774b85a9512749831c88e83c",
+    ".agents/skills/go-logging/references/LEVELS-AND-CONTEXT.md": "b5c3e9518dc7960e58f3253120fd3b786a055d8e",
+    ".agents/skills/go-logging/references/LOGGING-PATTERNS.md": "e96f6da3d61366fcfd000aa348e51e96624b3aca",
+    ".agents/skills/go-naming/SKILL.md": "22cd09ecd7f1ec994e95c5721cb5417cba5b6e35",
+    ".agents/skills/go-naming/references/IDENTIFIERS.md": "45fed1977addffe5e798ee8d22a7fd3abcad961a",
+    ".agents/skills/go-naming/references/REPETITION.md": "cac938e443d28684dc06b1cba6fffba0afbefd43",
+    ".agents/skills/go-naming/references/VARIABLES.md": "a53492626e166a540b232210fba35f19eb6c9ccd",
+    ".agents/skills/go-naming/scripts/check-naming.sh": "229fd02ea1d97cbd554c1c188c098390c68807d7",
+    ".agents/skills/go-packages/SKILL.md": "2dbb93b4ba4e6272fce380f248f0bd90f122f353",
+    ".agents/skills/go-packages/references/IMPORTS.md": "e8a78251cc55f4a0ee2cede26ec8380cd47c4b1c",
+    ".agents/skills/go-packages/references/PACKAGE-SIZE.md": "1eb3e8198d594ab4d74f347d321301923f70b244",
+    ".agents/skills/go-performance/SKILL.md": "377e4707284c09c29e38383906f0c86cbb32013d",
+    ".agents/skills/go-performance/references/BENCHMARKS.md": "7598daa22af80a1041e4cd664f4880ee8b4da961",
+    ".agents/skills/go-performance/references/STRING-OPTIMIZATION.md": "c938bb9b7ee1969abb0efb32250ceabf0cb2e9d1",
+    ".agents/skills/go-performance/scripts/bench-compare.sh": "47f03925514e874f41e0f1c060ec2ee340599fba",
+    ".agents/skills/go-style-core/SKILL.md": "24d8c9308c077057fee6dba6b2e819296efc6c0a",
+    ".agents/skills/go-style-core/references/FORMATTING.md": "57150714c9c4823e3eaad5697d47ee60a9148ef9",
+    ".agents/skills/go-style-core/references/PRINCIPLES.md": "ac3882e1c383a49d4d1119987b0da5fabf7856e8",
+    ".agents/skills/go-testing/SKILL.md": "151955b5e5c11231f95c4963de0b60b701d2613f",
+    ".agents/skills/go-testing/assets/table-test-template.go": "35ca80331a034f24b2c0303bf7899aafa3e8f76b",
+    ".agents/skills/go-testing/references/INTEGRATION.md": "908d12fda7a455f65a6f010daa08d7bca64b5edb",
+    ".agents/skills/go-testing/references/TABLE-DRIVEN-TESTS.md": "37c05d34880c1ca9082793cb9e01ed3a946bab3a",
+    ".agents/skills/go-testing/references/TEST-HELPERS.md": "68c1be3799f2e9034ac44c91671c7e3188461da5",
+    ".agents/skills/go-testing/references/TEST-ORGANIZATION.md": "3f550d6b5acc8342d67bcefa1e29f50f92dc2aa3",
+    ".agents/skills/go-testing/references/VALIDATION-APIS.md": "1174baeadf7bab191254539f427812af691e63d5",
+    ".agents/skills/go-testing/scripts/gen-table-test.sh": "bd4aff5c775c73e1cd08c95eca6b8fcf5105a248",
+    ".claude/settings.local.json": "6f5f8c1b02179af4f269ccdf3f9adb17ff6614b3",
+    "agent/skills/go-code-review/SKILL.md": "38e1370af3709e0dacef67208f4740421e0c819a",
+    "agent/skills/go-code-review/assets/review-template.md": "8a9783efd0ec1c76628410657774b598a2907293",
+    "agent/skills/go-code-review/references/WEB-SERVER.md": "4fcdde6babb435d50f6282abb384740a5ee408a9",
+    "agent/skills/go-code-review/scripts/pre-review.sh": "e0b1334be59928788c20d7faeaf24a8510eeab34",
+    "agent/skills/go-concurrency/SKILL.md": "ae151dd07e18ec8d50624e59aea42289766a9bb7",
+    "agent/skills/go-concurrency/references/ADVANCED-PATTERNS.md": "5e9d68fedc50fcfdd51f8d8de18f0080a05e04c5",
+    "agent/skills/go-concurrency/references/BUFFER-POOLING.md": "64bcc0b563bbe469118e7c71add00aabc9315da1",
+    "agent/skills/go-concurrency/references/GOROUTINE-PATTERNS.md": "a3f6541f7c6f2e575e83cf3a2384a43c4a28e691",
+    "agent/skills/go-concurrency/references/SYNC-PRIMITIVES.md": "ad2a14c5f066f6600af62fb42daef449fc7312d4",
+    "agent/skills/go-context/SKILL.md": "dc510e8b08fbf09e81d776bb0dace5d60571a10a",
+    "agent/skills/go-context/references/PATTERNS.md": "e4562cf4f26a70586fd2e40eaf12bd0f00a3e5b3",
+    "agent/skills/go-control-flow/SKILL.md": "d4f7488b330c62731fa189c201e76a4d7de4c320",
+    "agent/skills/go-control-flow/references/BLANK-IDENTIFIER.md": "29ab4f1ababbeb6c3f7cd6db61a144e0f95e90d3",
+    "agent/skills/go-control-flow/references/SWITCH-PATTERNS.md": "931d9ab97cfbac5a7c7afde29bb3e9597510834c",
+    "agent/skills/go-data-structures/SKILL.md": "ccfb7dc53efd7f31a25db1c1f890949f9f44e3e8",
+    "agent/skills/go-data-structures/references/SLICES.md": "ac88d798c3170a72293c61f56b0a1e97a2196d01",
+    "agent/skills/go-declarations/SKILL.md": "778ada6895ce51c1ca450c97c78a8d48067d02b9",
+    "agent/skills/go-declarations/references/INITIALIZATION.md": "cdd5ee0180c903587cfa90800bf0a4f8804ede9e",
+    "agent/skills/go-declarations/references/IOTA.md": "1a9181deff7d79f9736489325548d8a2980e335c",
+    "agent/skills/go-declarations/references/LITERALS.md": "1295afd2606710f26f0dde0471e008a4849c6c23",
+    "agent/skills/go-declarations/references/SCOPE.md": "9f0a7fed185877c6069328b0d3c6cbee446064ac",
+    "agent/skills/go-declarations/references/SHADOWING.md": "6e7a8c579ac3820a9782bf6c89030fcade46c74d",
+    "agent/skills/go-declarations/references/STRUCTS.md": "c60e484bc666b193781cdd258598b4eea00008cf",
+    "agent/skills/go-defensive/SKILL.md": "74b548c880442d44d8c397f170ebb01f579138d0",
+    "agent/skills/go-defensive/references/BOUNDARY-COPYING.md": "f7c0110221233525c04db16750fbc754057cd3d9",
+    "agent/skills/go-defensive/references/GLOBAL-STATE.md": "56379e0373d1749dd3bc4b638c3971bb4a0bc69d",
+    "agent/skills/go-defensive/references/MUST-FUNCTIONS.md": "a8f7f0341af60535aa8632aa05e90d6eeb27afce",
+    "agent/skills/go-defensive/references/PANIC-RECOVER.md": "9f3457aa3ee717118ffce6fde640fd01e4624b8e",
+    "agent/skills/go-defensive/references/TIME-ENUMS-TAGS.md": "e381cd5c10d99bdab07d61a991a27567ed06d34e",
+    "agent/skills/go-documentation/SKILL.md": "5a6f8e99fcb94c022b9da10af2db5b76bcbd68a6",
+    "agent/skills/go-documentation/assets/doc-template.go": "a2c54b85855d15d364238297dcf47de0c721ffc8",
+    "agent/skills/go-documentation/references/CONVENTIONS.md": "12b8df0bd055c11bdc044e2a5e20cc4b829763cf",
+    "agent/skills/go-documentation/references/EXAMPLES.md": "0b2b3879b19125593417e52d9f1d4a8f42a8be75",
+    "agent/skills/go-documentation/references/FORMATTING.md": "4977008a67dfe01cde2fe05c8915511113b97bc1",
+    "agent/skills/go-documentation/scripts/check-docs-ast.go": "ff1564b1d5f7bd97a6bdd6167830f3ce4b657042",
+    "agent/skills/go-documentation/scripts/check-docs.sh": "de69f135fe4cb5850101108a9d7bbcb70f68c8b9",
+    "agent/skills/go-error-handling/SKILL.md": "4e2e7e00e6c1e62b79b0a9a0e92c4f9a227f4478",
+    "agent/skills/go-error-handling/references/ERROR-FLOW.md": "182827f4235397d8d7b837153351ba4443cbb78a",
+    "agent/skills/go-error-handling/references/ERROR-TYPES.md": "e0d3ef3fb7f61daa2a65b5e356543d0160a5c048",
+    "agent/skills/go-error-handling/references/WRAPPING.md": "954cd6dabf682ebe1a6485fca463903418454d5a",
+    "agent/skills/go-error-handling/scripts/check-errors-ast.go": "d68d6e91e8a6e2ed110b7682a3deebc7f865904c",
+    "agent/skills/go-error-handling/scripts/check-errors.sh": "40c5be771e6b8ff91a54097f4d1ef39fbd04d6f4",
+    "agent/skills/go-functional-options/SKILL.md": "ac1f6b91390d8606e8476aa22bb0ea9d6b39d85d",
+    "agent/skills/go-functional-options/references/OPTIONS-VS-STRUCTS.md": "6b323dc0b8f166fb228c8bff86e43a6003890a29",
+    "agent/skills/go-functions/SKILL.md": "ed1cff83b92245295252c85998142ff2eb4e8eaa",
+    "agent/skills/go-functions/references/PRINTF-STRINGER.md": "1c348839d960dfe0732266ce975cd334c3349387",
+    "agent/skills/go-functions/references/SIGNATURES.md": "d1ae7ca3b7bec091a7840450c3ee8370538431eb",
+    "agent/skills/go-generics/SKILL.md": "079e81d17cd4f657207d6fcdd3f84e0525e79b88",
+    "agent/skills/go-generics/references/CONSTRAINTS.md": "16a871fc474137f11234ba1b52b711c36eee89cd",
+    "agent/skills/go-interfaces/SKILL.md": "582a1c6355c88cd021528826fa211daf1a88ff3e",
+    "agent/skills/go-interfaces/references/EMBEDDING.md": "e65e34b28910406614ad1afb6c65e3f64d78d0c3",
+    "agent/skills/go-interfaces/references/RECEIVER-TYPE.md": "3c0c1ef6eca9521d7e449a28eb5d30a1cd3d86a5",
+    "agent/skills/go-interfaces/scripts/check-interface-compliance.go": "69870981bc6f7e28115aa3fedf2aa816ff48385c",
+    "agent/skills/go-interfaces/scripts/check-interface-compliance.sh": "bbd0472539cabf40df1a43a4e8a6017ea4e7498f",
+    "agent/skills/go-linting/SKILL.md": "283c456cb27919b0ae3df92c4bfb6534c073b3f0",
+    "agent/skills/go-linting/assets/golangci.yml": "3a50744b8efb33c6c75cf487f74abca3dc330d74",
+    "agent/skills/go-linting/scripts/setup-lint.sh": "7ae0c10e9ddf6d2ed5dba97157d7d8a645ac2482",
+    "agent/skills/go-logging/SKILL.md": "c8d6f92a88553f852f71d48f18f4cc3535a98a0c",
+    "agent/skills/go-logging/references/LEVELS-AND-CONTEXT.md": "b5c3e9518dc7960e58f3253120fd3b786a055d8e",
+    "agent/skills/go-logging/references/LOGGING-PATTERNS.md": "e96f6da3d61366fcfd000aa348e51e96624b3aca",
+    "agent/skills/go-naming/SKILL.md": "401bf66254da686d3ff094d7ff5cfac378d1e788",
+    "agent/skills/go-naming/references/IDENTIFIERS.md": "45fed1977addffe5e798ee8d22a7fd3abcad961a",
+    "agent/skills/go-naming/references/REPETITION.md": "cac938e443d28684dc06b1cba6fffba0afbefd43",
+    "agent/skills/go-naming/references/VARIABLES.md": "a53492626e166a540b232210fba35f19eb6c9ccd",
+    "agent/skills/go-naming/scripts/check-naming.sh": "229fd02ea1d97cbd554c1c188c098390c68807d7",
+    "agent/skills/go-packages/SKILL.md": "c59032518d91b5d0725a5b6a2b8a9cd2393b8ca3",
+    "agent/skills/go-packages/references/IMPORTS.md": "e8a78251cc55f4a0ee2cede26ec8380cd47c4b1c",
+    "agent/skills/go-packages/references/PACKAGE-SIZE.md": "1eb3e8198d594ab4d74f347d321301923f70b244",
+    "agent/skills/go-performance/SKILL.md": "230475c02e37af5d59c39b261582ab9633f10b3e",
+    "agent/skills/go-performance/references/BENCHMARKS.md": "7598daa22af80a1041e4cd664f4880ee8b4da961",
+    "agent/skills/go-performance/references/STRING-OPTIMIZATION.md": "c938bb9b7ee1969abb0efb32250ceabf0cb2e9d1",
+    "agent/skills/go-performance/scripts/bench-compare.sh": "47f03925514e874f41e0f1c060ec2ee340599fba",
+    "agent/skills/go-style-core/SKILL.md": "dbdd41acbe868abd361fa9809b1a2c22d48b2837",
+    "agent/skills/go-style-core/references/FORMATTING.md": "57150714c9c4823e3eaad5697d47ee60a9148ef9",
+    "agent/skills/go-style-core/references/PRINCIPLES.md": "ac3882e1c383a49d4d1119987b0da5fabf7856e8",
+    "agent/skills/go-testing/SKILL.md": "76051ea4e579817abb8196767c170a93657f14d9",
+    "agent/skills/go-testing/assets/table-test-template.go": "35ca80331a034f24b2c0303bf7899aafa3e8f76b",
+    "agent/skills/go-testing/references/INTEGRATION.md": "908d12fda7a455f65a6f010daa08d7bca64b5edb",
+    "agent/skills/go-testing/references/TABLE-DRIVEN-TESTS.md": "37c05d34880c1ca9082793cb9e01ed3a946bab3a",
+    "agent/skills/go-testing/references/TEST-HELPERS.md": "68c1be3799f2e9034ac44c91671c7e3188461da5",
+    "agent/skills/go-testing/references/TEST-ORGANIZATION.md": "3f550d6b5acc8342d67bcefa1e29f50f92dc2aa3",
+    "agent/skills/go-testing/references/VALIDATION-APIS.md": "1174baeadf7bab191254539f427812af691e63d5",
+    "agent/skills/go-testing/scripts/gen-table-test.sh": "bd4aff5c775c73e1cd08c95eca6b8fcf5105a248",
+    "apps/web/next-env.d.ts": "ce4e94a6b10f160ee021fe18939af160d2927dcf",
+    "apps/web/tsconfig.tsbuildinfo": "e61fc97ba006668da31adc1cdec56d879e007991",
+    "skills-lock.json": "df5b1109db0d0231747f4561543fea4abaa34327"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Image search uses available providers in order and falls back on rate limit or failure without exposing secrets"
+      },
+      {
+        "id": "AC2",
+        "text": "Selected images persist with required source attribution and provider policies"
+      },
+      {
+        "id": "AC3",
+        "text": "Search and selection are authenticated, bounded and tested"
+      }
+    ],
+    "expected_behavior": "Learners can find and persist attributed images using provider fallback",
+    "observed_behavior": "Go search returns 503 and deck image input is ignored",
+    "rollback_plan": "Revert the commit; no schema change. Unsetting PEXELS_API_KEY disables Pexels without a code change."
+  },
+  "classification": {
+    "classes": [
+      "API_CONTRACT",
+      "AUTH_SECURITY",
+      "DATABASE",
+      "CACHE",
+      "DOMAIN_LOGIC",
+      "CROSS_CUTTING",
+      "INFRASTRUCTURE"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/flashcarddeck",
+      "test": "TestDeckCardInputPreservesImageAsset",
+      "expect": "primary image asset is lost from deck card input"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-29T14:06:29.037Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-29T14:06:36.613Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-29T14:06:56.913Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-29T14:07:10.507Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-29T14:37:36.691Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-29T14:38:53.642Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-29T14:39:01.408Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-29T14:52:41.268Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-29T15:17:59.529Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-30T06:38:55.821Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-30T06:39:46.436Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-30T06:48:56.577Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-30T11:43:18.031Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-30T22:13:56.053Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-30T22:26:18.292Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-30T22:31:53.225Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-30T22:36:31.098Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-31T03:10:36.852Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-31T03:10:48.617Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-31T03:10:52.250Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-29T14:07:10.301Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDeckCardInputPreservesImageAsset image_contract_test.go:19: primary image asset is lost from deck card input --- FAIL: TestDeckCardInputPreservesImageAsset (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset": "primary image asset is lost from deck card input"
+      },
+      "fingerprint": "91463a0e2ce71ae6bf388904bd9fb4940ce7a15610ca1b529e67b5bfdb87648b"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-29T14:37:35.144Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f68a697a5d5658f6d7748bbc2bde75ac4fb6fafd4734c7cabd03e7c3f685bf92"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-29T14:38:59.768Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f1f59a1c775f5ebd701e5fcad843538d6011366dcc693065f8520ad5116c7047"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-29T14:40:08.258Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 1733,
+        "executed": 1733,
+        "passed": 1731,
+        "failed": 2,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "go test failed (exit 1; 2 failing test(s), 2 failing package(s))",
+      "fingerprint": "f1f59a1c775f5ebd701e5fcad843538d6011366dcc693065f8520ad5116c7047"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-29T14:41:07.836Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 608,
+        "executed": 608,
+        "passed": 608,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 858,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "f1f59a1c775f5ebd701e5fcad843538d6011366dcc693065f8520ad5116c7047"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-29T14:42:47.970Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f88905d553c6c4e6c257598e543cb31d43eb0fe33945af23d4c62a096d95f743"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-29T14:47:54.020Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1733,
+        "executed": 1733,
+        "passed": 1733,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1733 passed, 0 allowed skip(s)",
+      "fingerprint": "f88905d553c6c4e6c257598e543cb31d43eb0fe33945af23d4c62a096d95f743"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-29T14:48:44.252Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 608,
+        "executed": 608,
+        "passed": 608,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 858,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "f88905d553c6c4e6c257598e543cb31d43eb0fe33945af23d4c62a096d95f743"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-29T14:51:09.017Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "pnpm exec playwright test e2e/flashcards-themes.visual.spec.ts",
+      "exit_code": 1,
+      "fingerprint": "f88905d553c6c4e6c257598e543cb31d43eb0fe33945af23d4c62a096d95f743"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-29T14:52:37.265Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "pnpm exec playwright test e2e/flashcards-themes.visual.spec.ts",
+      "exit_code": -1,
+      "fingerprint": "f88905d553c6c4e6c257598e543cb31d43eb0fe33945af23d4c62a096d95f743"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-29T15:06:03.037Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "pnpm exec playwright test e2e/flashcards-themes.visual.spec.ts --reporter=line",
+      "exit_code": 1,
+      "fingerprint": "18e470aa4cb4ccd276ec1ba8df7715dab1bc03f6bb36265e76d84596bce14110"
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-29T15:17:57.947Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f88905d553c6c4e6c257598e543cb31d43eb0fe33945af23d4c62a096d95f743"
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-29T15:21:53.111Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1733,
+        "executed": 1733,
+        "passed": 1733,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1733 passed, 0 allowed skip(s)",
+      "fingerprint": "f88905d553c6c4e6c257598e543cb31d43eb0fe33945af23d4c62a096d95f743"
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-29T15:22:46.949Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 608,
+        "executed": 608,
+        "passed": 608,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 858,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "f88905d553c6c4e6c257598e543cb31d43eb0fe33945af23d4c62a096d95f743"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-29T15:35:39.186Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 3,
+      "findings": [
+        {
+          "severity": "blocker",
+          "file": "apps/api-go/internal/flashcarddeck/store.go",
+          "summary": "Rehosted selections (Pixabay/Pexels/Wikimedia) remain status=pending_review forever (no code path activates them; admin PATCH only edits rights_status, complete-upload requires status=uploaded); GetDe…"
+        },
+        {
+          "severity": "blocker",
+          "file": "apps/api-go/internal/httpserver/image_search_integration_test.go",
+          "summary": "TestImageSearchRedisCoordinationAndUserLimits calls t.Fatal without a local redis-server binary; CI provides Redis only via the TEST_REDIS_URL service container and ubuntu-24.04 runners ship no Redis,…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/flashcarddeck/store.go",
+          "summary": "Adding/changing an image on a canonical card, or editing any custom card of a cloned deck (new shared check), forks the variant with a fresh 'new' user_flashcard row; existing SRS progress is orphaned…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_flashcard_deck.go",
+          "summary": "createDeckHandler does not map ErrNotOwner; a foreign or stale primaryImageAssetId on create returns 500 and logs an error"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_image_selection.go",
+          "summary": "Limiter errors return 429 instead of 503, and quota is consumed before body validation"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_image_selection.go",
+          "summary": "Fallback stops at the first non-empty provider; if all its results fail validSelectionImage (e.g. http CC license URLs accepted by allowedLicense) the search returns 503 instead of trying the next pro…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_image_selection.go",
+          "summary": "persistImageSelection holds a DB transaction (pool max 20) across the provider download and Unsplash tracking; blob is orphaned if commit fails"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/image_search.go",
+          "summary": "Per-query Redis lock serializes all providers though only Pixabay is cached, plus a process-wide mutex across the Pixabay HTTP call; an unlock failure discards a successful result"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_final_batch.go",
+          "summary": "Unused services variadic branch in postMediaSearchImagesHandler is dead code; its 503 message names provider env vars and is now misleading"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_image_private_preview_test.go",
+          "summary": "Shares the fixed object key image-selection/aaaa... with TestImageSelectionPersistence; a failed cleanup cascades into the other test"
+        }
+      ],
+      "package_sha256": "fe269acc49dfda700c08df1137a76783fd6d301ec8180946d31d2f5512146ea1",
+      "fingerprint": "f88905d553c6c4e6c257598e543cb31d43eb0fe33945af23d4c62a096d95f743"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-29T15:40:14.839Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "394e4efe91fa9473ebb0f1791509c54c28f0a8a9725cd45523d53e323dce9978"
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-29T15:41:29.596Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 1733,
+        "executed": 1733,
+        "passed": 1732,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "394e4efe91fa9473ebb0f1791509c54c28f0a8a9725cd45523d53e323dce9978"
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-29T15:42:24.836Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 608,
+        "executed": 608,
+        "passed": 608,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 858,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "394e4efe91fa9473ebb0f1791509c54c28f0a8a9725cd45523d53e323dce9978"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-29T15:42:36.812Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "556961015c5925ff59b52976acc625ed4f007958b427e0ee9679b58b9a0174c4"
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-29T15:46:55.529Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1733,
+        "executed": 1733,
+        "passed": 1733,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1733 passed, 0 allowed skip(s)",
+      "fingerprint": "556961015c5925ff59b52976acc625ed4f007958b427e0ee9679b58b9a0174c4"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-29T15:47:32.413Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 608,
+        "executed": 608,
+        "passed": 608,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 858,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "556961015c5925ff59b52976acc625ed4f007958b427e0ee9679b58b9a0174c4"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-29T15:48:40.077Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "4faf23626fd9305222d97a3869154aaeba52596635b40707086517f4106270e2"
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-29T15:52:29.619Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1741,
+        "executed": 1741,
+        "passed": 1741,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1741 passed, 0 allowed skip(s)",
+      "fingerprint": "4faf23626fd9305222d97a3869154aaeba52596635b40707086517f4106270e2"
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-29T15:53:05.365Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 608,
+        "executed": 608,
+        "passed": 608,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 858,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "4faf23626fd9305222d97a3869154aaeba52596635b40707086517f4106270e2"
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-30T06:32:15.440Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1f0fe0bdc3aab848a6a37167b68946515d5b4361e1b02cea77f190999de60280"
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-30T06:36:43.037Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1765,
+        "executed": 1765,
+        "passed": 1765,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1765 passed, 0 allowed skip(s)",
+      "fingerprint": "1f0fe0bdc3aab848a6a37167b68946515d5b4361e1b02cea77f190999de60280"
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-30T06:39:44.354Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "57d51395731405fac485a0f0b95811e37fda70c14d2b433c371d0695a71e9092"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-30T06:39:54.413Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "python3 deploy/linux/caddy_security_test.py",
+      "exit_code": 0,
+      "fingerprint": "57d51395731405fac485a0f0b95811e37fda70c14d2b433c371d0695a71e9092"
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-30T06:43:48.108Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "pnpm exec playwright test e2e/flashcard-image-search.spec.ts --reporter=line",
+      "exit_code": 0,
+      "fingerprint": "57d51395731405fac485a0f0b95811e37fda70c14d2b433c371d0695a71e9092"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-30T06:47:53.917Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1765,
+        "executed": 1765,
+        "passed": 1765,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1765 passed, 0 allowed skip(s)",
+      "fingerprint": "57d51395731405fac485a0f0b95811e37fda70c14d2b433c371d0695a71e9092"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-30T06:48:53.765Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 619,
+        "executed": 619,
+        "passed": 619,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 862,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "57d51395731405fac485a0f0b95811e37fda70c14d2b433c371d0695a71e9092"
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-30T11:43:15.530Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "4649d6208d2a809853d2944edd88a4701e42ef059e55edb5a3e81e64b41cadd7"
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-30T11:43:31.104Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "python3 -B -m unittest discover -s deploy/linux -p *_test.py",
+      "exit_code": 0,
+      "fingerprint": "4649d6208d2a809853d2944edd88a4701e42ef059e55edb5a3e81e64b41cadd7"
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-30T11:44:08.641Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/img-301/run.sh",
+      "exit_code": 0,
+      "fingerprint": "4649d6208d2a809853d2944edd88a4701e42ef059e55edb5a3e81e64b41cadd7"
+    },
+    {
+      "seq": 35,
+      "at": "2026-10-30T21:59:16.391Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "148462aa47f5ef1372dc2f7615e8f6a772b2a8fae895766a3d32fdf2610fd0cc"
+    },
+    {
+      "seq": 36,
+      "at": "2026-10-30T22:00:34.206Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 1783,
+        "executed": 1783,
+        "passed": 1782,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "148462aa47f5ef1372dc2f7615e8f6a772b2a8fae895766a3d32fdf2610fd0cc"
+    },
+    {
+      "seq": 37,
+      "at": "2026-10-30T22:01:31.574Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "fa632e68cf1249ad12da01c54e2d81778575c95eb33a604f7d7f2df7a28fa132"
+    },
+    {
+      "seq": 38,
+      "at": "2026-10-30T22:05:43.608Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1783,
+        "executed": 1783,
+        "passed": 1783,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1783 passed, 0 allowed skip(s)",
+      "fingerprint": "fa632e68cf1249ad12da01c54e2d81778575c95eb33a604f7d7f2df7a28fa132"
+    },
+    {
+      "seq": 39,
+      "at": "2026-10-30T22:06:21.130Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 623,
+        "executed": 623,
+        "passed": 623,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 866,
+        "lint_errors": 74,
+        "lint_warnings": 22,
+        "new_debt": 2
+      },
+      "message": "RATCHET_VIOLATION: 2 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "fa632e68cf1249ad12da01c54e2d81778575c95eb33a604f7d7f2df7a28fa132"
+    },
+    {
+      "seq": 40,
+      "at": "2026-10-30T22:06:48.568Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e3a5656028584eabdc9e53f97f9d5c950f0d9069a304e8e2677c3837fc2dc3a6"
+    },
+    {
+      "seq": 41,
+      "at": "2026-10-30T22:08:05.486Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "7b4a5b0dad05dc2584f5f7650097e8a4095104b8f5bd821b9039dd48025d60ec"
+    },
+    {
+      "seq": 42,
+      "at": "2026-10-30T22:12:26.843Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1783,
+        "executed": 1783,
+        "passed": 1783,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1783 passed, 0 allowed skip(s)",
+      "fingerprint": "7b4a5b0dad05dc2584f5f7650097e8a4095104b8f5bd821b9039dd48025d60ec"
+    },
+    {
+      "seq": 43,
+      "at": "2026-10-30T22:13:15.737Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 623,
+        "executed": 623,
+        "passed": 623,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 866,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "7b4a5b0dad05dc2584f5f7650097e8a4095104b8f5bd821b9039dd48025d60ec"
+    },
+    {
+      "seq": 44,
+      "at": "2026-10-30T22:13:26.739Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "python3 -B -m unittest discover -s deploy/linux -p *_test.py",
+      "exit_code": 0,
+      "fingerprint": "7b4a5b0dad05dc2584f5f7650097e8a4095104b8f5bd821b9039dd48025d60ec"
+    },
+    {
+      "seq": 45,
+      "at": "2026-10-30T22:13:53.401Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/img-301/run.sh",
+      "exit_code": 0,
+      "fingerprint": "7b4a5b0dad05dc2584f5f7650097e8a4095104b8f5bd821b9039dd48025d60ec"
+    },
+    {
+      "seq": 46,
+      "at": "2026-10-30T22:26:15.554Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8e3e4caf21a9919f83d7b5b5fec870bc6f84027cb002f54ad2b13d7a3f4661bc"
+    },
+    {
+      "seq": 47,
+      "at": "2026-10-30T22:30:36.993Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1785,
+        "executed": 1785,
+        "passed": 1785,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1785 passed, 0 allowed skip(s)",
+      "fingerprint": "8e3e4caf21a9919f83d7b5b5fec870bc6f84027cb002f54ad2b13d7a3f4661bc"
+    },
+    {
+      "seq": 48,
+      "at": "2026-10-30T22:31:14.229Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 623,
+        "executed": 623,
+        "passed": 623,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 866,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "8e3e4caf21a9919f83d7b5b5fec870bc6f84027cb002f54ad2b13d7a3f4661bc"
+    },
+    {
+      "seq": 49,
+      "at": "2026-10-30T22:31:23.805Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "python3 -B -m unittest discover -s deploy/linux -p *_test.py",
+      "exit_code": 0,
+      "fingerprint": "8e3e4caf21a9919f83d7b5b5fec870bc6f84027cb002f54ad2b13d7a3f4661bc"
+    },
+    {
+      "seq": 50,
+      "at": "2026-10-30T22:31:50.494Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/img-301/run.sh",
+      "exit_code": 0,
+      "fingerprint": "8e3e4caf21a9919f83d7b5b5fec870bc6f84027cb002f54ad2b13d7a3f4661bc"
+    },
+    {
+      "seq": 51,
+      "at": "2026-10-30T22:36:28.381Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3251bef2b7ff0ba3680ece2ce9d9f9af864326345118d7f4aa44c8af4d25f6c4"
+    },
+    {
+      "seq": 52,
+      "at": "2026-10-30T22:37:32.374Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "2c086e8ce064b02f43e909ca240ff7a091679f1b2c4f91c86f4f27f5ba1ad0df"
+    },
+    {
+      "seq": 53,
+      "at": "2026-10-30T22:41:34.493Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1839bdd9e5867ffe8cde6119d7de3e8cdd76651043630dcf12229b56b5d5bdf7"
+    },
+    {
+      "seq": 54,
+      "at": "2026-10-30T22:44:25.446Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDeckCardInputPreservesImageAsset)$ ./internal/flashcarddeck"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/flashcarddeck:TestDeckCardInputPreservesImageAsset",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "6da65fa7df0008b700f6d710ddc9bcafea77557a6af8f4cc1461b706e9dec7bc"
+    },
+    {
+      "seq": 55,
+      "at": "2026-10-30T22:48:35.896Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1788,
+        "executed": 1788,
+        "passed": 1788,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1788 passed, 0 allowed skip(s)",
+      "fingerprint": "6da65fa7df0008b700f6d710ddc9bcafea77557a6af8f4cc1461b706e9dec7bc"
+    },
+    {
+      "seq": 56,
+      "at": "2026-10-30T22:49:25.306Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 631,
+        "executed": 631,
+        "passed": 631,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 866,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "6da65fa7df0008b700f6d710ddc9bcafea77557a6af8f4cc1461b706e9dec7bc"
+    },
+    {
+      "seq": 57,
+      "at": "2026-10-31T03:10:00.567Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "python3 -B -m unittest discover -s deploy/linux -p *_test.py",
+      "exit_code": 0,
+      "fingerprint": "6da65fa7df0008b700f6d710ddc9bcafea77557a6af8f4cc1461b706e9dec7bc"
+    },
+    {
+      "seq": 58,
+      "at": "2026-10-31T03:10:32.608Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "command",
+      "gate": "browser_e2e",
+      "command": "bash e2e/img-301/run.sh",
+      "exit_code": 0,
+      "fingerprint": "6da65fa7df0008b700f6d710ddc9bcafea77557a6af8f4cc1461b706e9dec7bc"
+    },
+    {
+      "seq": 59,
+      "at": "2026-10-31T03:10:45.519Z",
+      "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "independent-codex",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "68d6f5ddeea56c0dac01b7047d024060bb9e9e970d16391411176362422c8927",
+      "attested": true,
+      "fingerprint": "6da65fa7df0008b700f6d710ddc9bcafea77557a6af8f4cc1461b706e9dec7bc"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-31T03:10:52.230Z",
+    "head": "355f0ab198a2a597010d5eda65d8a43f3ac8b954",
+    "fingerprint": "6da65fa7df0008b700f6d710ddc9bcafea77557a6af8f4cc1461b706e9dec7bc",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "infra_validation": "PASS",
+      "browser_e2e": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      ".env.example": "3efc7e763e15c547f4664775414fff6c7ae7ad27",
+      "apps/api-go/internal/app/app.go": "b233fadf2eb45a6dd948f17cd84b905d5d6e5f7b",
+      "apps/api-go/internal/config/config.go": "69ad4796d77e57e72a17df6ff9f8247858c64a6e",
+      "apps/api-go/internal/flashcarddeck/image_contract_test.go": "cd0e0cc9848dffb9b5d96e39ed40951ac2fbd38d",
+      "apps/api-go/internal/flashcarddeck/image_persistence_test.go": "bfc84ba7c19a4ff7e200e23449517b69dee78611",
+      "apps/api-go/internal/flashcarddeck/store.go": "995f98a3a5fbf83d1b7e4fe5771549440090a3d1",
+      "apps/api-go/internal/flashcardreview/image_integration_test.go": "12206a1500d0866da41aa0eb7ac1f32b9fb74687",
+      "apps/api-go/internal/flashcardreview/store.go": "5c892c2b3ac36e727c7b81db5c2455e7be338274",
+      "apps/api-go/internal/httpserver/handler_admin_media_companion_privacy.go": "7bbee0fda4e50ad47027a0ccaa0aea6109daff9a",
+      "apps/api-go/internal/httpserver/handler_admin_media_image_review_test.go": "9ac9adb2212fc5bbc2305895eaf5cd59d34682e6",
+      "apps/api-go/internal/httpserver/handler_final_batch.go": "1b25cefe75d3890d014da49342638ae95bdebd6b",
+      "apps/api-go/internal/httpserver/handler_flashcard_deck.go": "b7e059577b5261a5a4bede4917b696c5e616ed39",
+      "apps/api-go/internal/httpserver/handler_flashcard_deck_image_url_test.go": "c9fc7697bbcaeac506b9fd5edf686f92cafc029e",
+      "apps/api-go/internal/httpserver/handler_image_private_asset.go": "c5ede20d1c8a52e1b2e8bcad370a3a2c55945b2c",
+      "apps/api-go/internal/httpserver/handler_image_private_asset_test.go": "69c270624d3522acbf794db98d07c411033a45d7",
+      "apps/api-go/internal/httpserver/handler_image_private_preview_test.go": "ea0a6bd3415253af2aa81f1c6a6ed12b21bdfd76",
+      "apps/api-go/internal/httpserver/handler_image_selection.go": "659dd33d2c8db5bda5a2b60129576d749bfacfc2",
+      "apps/api-go/internal/httpserver/handler_image_selection_test.go": "9baf192e49833f1dc04e5b02a5f2731ce13dffaa",
+      "apps/api-go/internal/httpserver/handler_media.go": "7c813f46b70d4f4bf59756ae82ac04b09d212daf",
+      "apps/api-go/internal/httpserver/handler_media_image_cache_test.go": "f87b5ba8cb1371bcb451c00645795729ed63fcbc",
+      "apps/api-go/internal/httpserver/image_search.go": "05d0f9e54117cc5e32e87633aadc00e7a370dcc7",
+      "apps/api-go/internal/httpserver/image_search_durable_cache.go": "9988952437b95c6a41750d26f3cd252b8bf32e98",
+      "apps/api-go/internal/httpserver/image_search_durable_cache_test.go": "f33e50211419624d03f23c7560e80c485ab55c71",
+      "apps/api-go/internal/httpserver/image_search_integration_test.go": "af1e1e282bdc20bde72e0f71daa06ac003690631",
+      "apps/api-go/internal/httpserver/server.go": "7692e41a6d9049c94ad7c0fb11077b7a980c214e",
+      "apps/api-go/internal/imagesearch/search.go": "162c6a075217ee1c71b059215c6a29a2f668d3aa",
+      "apps/api-go/internal/imagesearch/search_test.go": "e1666113e73cc307d9e75b2a7b4de1de0813b839",
+      "apps/api-go/internal/media/store.go": "c653197d4274bdc923ef462c93ec78d4b07d2b58",
+      "apps/web/Dockerfile.staging": "dc789c7b7625535a84551e703c12a818fa9a083a",
+      "apps/web/app/[locale]/flashcards/_components/deck-composer-panel.image-search.test.tsx": "df06ff9c8cd3ccdd673c7f918a858278f86c1d84",
+      "apps/web/app/[locale]/flashcards/_components/deck-composer-panel.tsx": "b784967cbde168338cdaa5157b25e709173ed115",
+      "apps/web/app/[locale]/flashcards/_components/deck-detail-client.tsx": "43dbf3ea94ce3c6a93182cb130a65126ebf72bfd",
+      "apps/web/app/[locale]/flashcards/_components/deck-study-session.theme.test.tsx": "abd289005c94451881867161d42851d452364d11",
+      "apps/web/app/[locale]/flashcards/_components/deck-study-session.tsx": "0a01247c269de4ecf17d3115de0f2c6cb6e6e805",
+      "apps/web/app/[locale]/flashcards/_components/flashcards-client.image.test.tsx": "95f29e48bb26fdc6edb062c0463c604006d8f677",
+      "apps/web/app/[locale]/flashcards/_components/flashcards-client.tsx": "85c99a50b0c8705c2a8b1a720fb3038965ee0f6f",
+      "apps/web/app/[locale]/flashcards/_components/review-session.image.test.tsx": "9fff23b02ef14a2fb92cbedd3995cffbe92a61d8",
+      "apps/web/app/[locale]/flashcards/_components/review-session.tsx": "23b780d833df34c4b184b65dba7b952c3e4d35cf",
+      "apps/web/lib/learner-api.ts": "8ebba8a57d2b1cab9d161dd7769a7c29233ac92e",
+      "apps/web/messages/en.json": "15232c25397a2645f00fcfe007cea8f29f6f81e0",
+      "apps/web/messages/ja.json": "5b6392659d4126800595fdfbcb4f8a9965095bc0",
+      "apps/web/messages/vi.json": "fe3b7c1e139f81e6a4dfee818bb62f544014e6a9",
+      "deploy/linux/Caddyfile": "ff5e4ebcab2e0d2c5502764ee5d146b0db774552",
+      "deploy/linux/caddy_security_test.py": "7ea5a8d868ca839cd698c469ffc2c2d65472617a",
+      "deploy/linux/compose_frontend_test.py": "1db3e8c514d333ba767881a1a967c9a90d3d0abc",
+      "deploy/linux/docker-compose.yml": "79c4efe34884ca8a28be6bdd20c00f8a23c5b126",
+      "docs/api-route-inventory.json": "611ceb528f3b258dad39f7ac5e76853261634e87",
+      "docs/openapi.json": "b0f04b5639246686abfd690269b938e63760fbee",
+      "e2e/flashcard-image-search.spec.ts": "fa117714a3d3c5dd9df9d79edc5a1d2a8f05d258",
+      "e2e/img-301/playwright.config.ts": "ca771fd36c978b3f3069ecb1bc2e7894fd40df87",
+      "e2e/img-301/provider.mjs": "81d3264847b4f1d40f885492e738ddb2c5d19016",
+      "e2e/img-301/proxy.mjs": "739ab7d9460430c3c5771e4aba36256f8d58c229",
+      "e2e/img-301/real-stack.spec.ts": "cf684c87ee7a241cf144b2cc42f038dd0550f76c",
+      "e2e/img-301/run.sh": "17ffbb320ceda57cf267c0511e352c1ef2d2d813",
+      "packages/config/src/index.ts": "7eebd8066a9ebfad7cd6f62c03fc34be976615a9",
+      "packages/database/prisma/migrations/20261031100000_image_search_cache/migration.sql": "b992e96ded1a89412c5da8ee69d09b76225ff40e",
+      "packages/database/prisma/schema.prisma": "64172f7ad819ae1d5b01526a10ca472176219185"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": [
+      {
+        "id": "a9f4314a-7cbd-4365-8977-aa6a101268d6",
+        "task": "IMG-301",
+        "action": {
+          "kind": "external_mutation",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "32ad5502a3f176709b839cf376bce26b074a0ecc2c5a71113915c9a22c414a8b",
+            "environment": "local"
+          },
+          "impact": "Publish or mutate an external service/account",
+          "command": "curl -sS -m 20 -D - -o /dev/null 'https://api.openverse.org/v1/images/?q=cat&page_size=2' 2>&1 | head -15; echo ---; curl -sS -m 20 -A 'KotobaWorks/1.0' 'https://api.openverse.org/v1/images/?q=cat&page_size=1' 2>&1 | head -c 600"
+        },
+        "impact": "Publish or mutate an external service/account",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "32ad5502a3f176709b839cf376bce26b074a0ecc2c5a71113915c9a22c414a8b",
+          "environment": "local"
+        },
+        "digest": "d7c66994b240a285a1b29d3c4578e7482103756cf38ac1290ae87a78505cb04f",
+        "continuation": {
+          "step": "native:toolu_01XhD3T6oNqLdcPfFc4HNoJE",
+          "native_tool_use_id": "toolu_01XhD3T6oNqLdcPfFc4HNoJE"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "native_permission_once",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-29T14:32:41.395Z"
+      },
+      {
+        "id": "9d1f29de-c110-41ff-af23-f0b7a7e1aa7f",
+        "task": "IMG-301",
+        "action": {
+          "kind": "delete_persistent_data",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "120b02a032b81310456306eb6eaa03b1448800d68a25f131de6688de5ef53864",
+            "environment": "local"
+          },
+          "impact": "Destroy potentially persistent data",
+          "command": "sed -n 1,24p e2e/flashcards-themes.visual.spec.ts | grep -n 'goto\\|visual-tests' ; sed -n 56,62p e2e/flashcards-themes.visual.spec.ts; cat > /private/tmp/claude-501/-Users-thanhnguyen-Documents-Projects-nihongo-bjt/436eea3a-1300-4288-a74a-e7b4a3431add/scratchpad/dbg.spec.ts <<'EOF'\nimport { test } from \"@playwright/test\";\ntest(\"dbg\", async ({ page }) => {\n  const logs: string[] = [];\n  page.on(\"console\", (m) => logs.push(m.type() + \": \" + m.text().slice(0, 200)));\n  page.on(\"pageerror\", (e) => logs.push(\"pageerror: \" + e.message.slice(0, 300)));\n  await page.goto(\"/visual-tests/flashcards?theme=ocean-calm\");\n  await page.waitForTimeout(4000);\n  const btn = page.locator(\".flashcard-theme-control[aria-pressed]\").first();\n  console.log(\"before\", await btn.getAttribute(\"aria-pressed\"));\n  await btn.click();\n  await page.waitForTimeout(500);\n  console.log(\"after click\", await btn.getAttribute(\"aria-pressed\"));\n  console.log(logs.slice(0, 10).join(\"\\n\"));\n});\nEOF\ncp /private/tmp/claude-501/-Users-thanhnguyen-Documents-Projects-nihongo-bjt/436eea3a-1300-4288-a74a-e7b4a3431add/scratchpad/dbg.spec.ts e2e/zz-dbg.spec.ts; PLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/zz-dbg.spec.ts --reporter=list 2>&1 | grep -v '^\\s*$' | head -30; rm -f e2e/zz-dbg.spec.ts"
+        },
+        "impact": "Destroy potentially persistent data",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "120b02a032b81310456306eb6eaa03b1448800d68a25f131de6688de5ef53864",
+          "environment": "local"
+        },
+        "digest": "b798edabe566fe01417e4e5c73d1ca2bf097862553ffddea89a20fa955cff565",
+        "continuation": {
+          "step": "native:toolu_015VNxcEsEiUopjxLgpWs72d",
+          "native_tool_use_id": "toolu_015VNxcEsEiUopjxLgpWs72d"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "native_permission_once",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-29T15:16:10.779Z"
+      },
+      {
+        "id": "fe510bd9-aa13-4f74-bfe1-6502b9d366f5",
+        "task": "IMG-301",
+        "action": {
+          "kind": "delete_persistent_data",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "e6ef597045880e816d47d3f4afc4b8803620056cbda320fc338aa6cb08fd9dc1",
+            "environment": "local"
+          },
+          "impact": "Destroy potentially persistent data",
+          "command": "cat > e2e/zz-dbg.spec.ts <<'EOF'\nimport { test } from \"@playwright/test\";\ntest(\"dbg\", async ({ page }) => {\n  page.on(\"pageerror\", (e) => console.log(\"pageerror: \" + e.message.slice(0, 300)));\n  await page.goto(\"/visual-tests/flashcards?theme=ocean-calm\");\n  await page.waitForTimeout(3000);\n  const card = page.getByTestId(\"theme-audit-card\");\n  const btn = card.locator(\".flashcard-theme-control[aria-pressed]\");\n  console.log(\"count\", await btn.count(), \"before\", await btn.getAttribute(\"aria-pressed\"));\n  await btn.click();\n  await page.waitForTimeout(800);\n  console.log(\"after click\", await btn.getAttribute(\"aria-pressed\"));\n  console.log(\"anyInert\", await page.locator(\"[inert]\").count(), \"hydrated?\", await page.evaluate(() => Object.keys(document.querySelector(\"button[aria-pressed]\") ?? {}).join(\",\").slice(0, 120)));\n});\nEOF\nPLAYWRIGHT_SKIP_SERVER=1 pnpm exec playwright test e2e/zz-dbg.spec.ts --reporter=list 2>&1 | grep -E 'count|after|anyInert|pageerror|passed|failed'; rm -f e2e/zz-dbg.spec.ts"
+        },
+        "impact": "Destroy potentially persistent data",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "e6ef597045880e816d47d3f4afc4b8803620056cbda320fc338aa6cb08fd9dc1",
+          "environment": "local"
+        },
+        "digest": "20a7d7588c826b68255ed4b5ba3a16f90c5ea5ed5fe764c46118d0ea1a0c42c3",
+        "continuation": {
+          "step": "native:toolu_01TtVmPQgb6myDdeiB2j8SoN",
+          "native_tool_use_id": "toolu_01TtVmPQgb6myDdeiB2j8SoN"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "native_permission_once",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-10-29T15:16:47.873Z"
+      }
+    ]
+  }
+}

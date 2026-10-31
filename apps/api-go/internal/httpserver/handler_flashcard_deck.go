@@ -70,6 +70,10 @@ func createDeckHandler(store *flashcarddeck.Store, logger *slog.Logger) http.Han
 			return
 		}
 		for _, card := range req.Cards {
+			if card.ImageURL != "" {
+				writeJSONError(w, "direct_image_url_not_supported", http.StatusBadRequest)
+				return
+			}
 			if card.CardID == "" && (strings.TrimSpace(card.FrontText) == "" || strings.TrimSpace(card.BackText) == "") {
 				writeJSONError(w, "card frontText and backText are required", http.StatusBadRequest)
 				return
@@ -84,6 +88,10 @@ func createDeckHandler(store *flashcarddeck.Store, logger *slog.Logger) http.Han
 			Cards:       req.Cards,
 		})
 		if err != nil {
+			if errors.Is(err, flashcarddeck.ErrNotOwner) {
+				writeJSONError(w, "not owner", http.StatusForbidden)
+				return
+			}
 			logger.Error("create deck", "error", err, "user_id", identity.UserID)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
@@ -128,6 +136,10 @@ func updateDeckHandler(store *flashcarddeck.Store, logger *slog.Logger) http.Han
 		}
 		if req.Cards != nil {
 			for _, card := range *req.Cards {
+				if card.ImageURL != "" {
+					writeJSONError(w, "direct_image_url_not_supported", http.StatusBadRequest)
+					return
+				}
 				if card.CardID == "" && (strings.TrimSpace(card.FrontText) == "" || strings.TrimSpace(card.BackText) == "") {
 					writeJSONError(w, "card frontText and backText are required", http.StatusBadRequest)
 					return

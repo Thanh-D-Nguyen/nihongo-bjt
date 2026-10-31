@@ -41,6 +41,7 @@ export const serverEnvSchema = z.object({
     .transform((v) => v !== "false" && v !== "0"),
   UNSPLASH_ACCESS_KEY: z.string().optional(),
   PIXABAY_API_KEY: z.string().optional(),
+  PEXELS_API_KEY: z.string().optional(),
   GOOGLE_CSE_KEY: z.string().optional(),
   GOOGLE_CSE_CX: z.string().optional()
 });

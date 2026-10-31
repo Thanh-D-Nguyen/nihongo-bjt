@@ -5,13 +5,17 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/imagesearch"
 )
 
 // ErrNotFound is returned when a requested deck does not exist.
@@ -71,12 +75,82 @@ type SharedDeckPreviewCard struct {
 }
 
 type DeckCardData struct {
-	ID         string  `json:"id"`
-	FrontText  string  `json:"frontText"`
-	BackText   string  `json:"backText"`
-	Reading    *string `json:"reading"`
-	SourceID   string  `json:"sourceId"`
-	SourceType string  `json:"sourceType"`
+	ID           string         `json:"id"`
+	FrontText    string         `json:"frontText"`
+	BackText     string         `json:"backText"`
+	Reading      *string        `json:"reading"`
+	SourceID     string         `json:"sourceId"`
+	SourceType   string         `json:"sourceType"`
+	PrimaryImage *DeckCardImage `json:"primaryImage"`
+}
+
+type DeckCardImage struct {
+	AssetID    string  `json:"assetId"`
+	MimeType   string  `json:"mimeType"`
+	ReadURL    *string `json:"readUrl"`
+	Provider   string  `json:"provider,omitempty"`
+	SourceURL  string  `json:"sourceUrl,omitempty"`
+	Author     string  `json:"author,omitempty"`
+	AuthorURL  string  `json:"authorUrl,omitempty"`
+	License    string  `json:"license,omitempty"`
+	LicenseURL string  `json:"licenseUrl,omitempty"`
+}
+
+type selectedImageProvenance struct {
+	Provider   string `json:"provider"`
+	Delivery   string `json:"delivery"`
+	ImageURL   string `json:"imageUrl"`
+	SourceURL  string `json:"sourceUrl"`
+	Author     string `json:"author"`
+	AuthorURL  string `json:"authorUrl"`
+	License    string `json:"license"`
+	LicenseURL string `json:"licenseUrl"`
+}
+
+func imageURLAllowed(raw string, hosts ...string) bool {
+	if raw == "" || len(raw) > 4096 {
+		return false
+	}
+	u, err := url.Parse(raw)
+	if err != nil || u.Scheme != "https" || u.User != nil || u.Opaque != "" || u.Fragment != "" || u.Port() != "" {
+		return false
+	}
+	for _, host := range hosts {
+		if u.Host == host {
+			return true
+		}
+	}
+	return false
+}
+
+// PopulateSelectedImage validates provider provenance and fills its display metadata.
+func PopulateSelectedImage(image *DeckCardImage, provider string, raw []byte) {
+	var p selectedImageProvenance
+	if json.Unmarshal(raw, &p) != nil || p.Provider != provider || strings.TrimSpace(p.Author) == "" || len(p.Author) > 512 {
+		return
+	}
+	switch provider {
+	case "unsplash":
+		if p.Delivery != "hotlink" || p.License != "Unsplash License" || !imageURLAllowed(p.ImageURL, "images.unsplash.com") || !imageURLAllowed(p.SourceURL, "unsplash.com") || !imageURLAllowed(p.AuthorURL, "unsplash.com") || (p.LicenseURL != "" && !imageURLAllowed(p.LicenseURL, "unsplash.com")) {
+			return
+		}
+		image.ReadURL = &p.ImageURL
+	case "pixabay":
+		if p.Delivery != "rehosted" || p.License != "Pixabay Content License" || !imageURLAllowed(p.ImageURL, "pixabay.com", "cdn.pixabay.com") || !imageURLAllowed(p.SourceURL, "pixabay.com") || (p.AuthorURL != "" && !imageURLAllowed(p.AuthorURL, "pixabay.com")) || (p.LicenseURL != "" && !imageURLAllowed(p.LicenseURL, "pixabay.com")) {
+			return
+		}
+	case "pexels":
+		if p.Delivery != "rehosted" || p.License != "Pexels License" || !imageURLAllowed(p.ImageURL, "images.pexels.com") || !imageURLAllowed(p.SourceURL, "www.pexels.com") || (p.AuthorURL != "" && !imageURLAllowed(p.AuthorURL, "www.pexels.com")) || (p.LicenseURL != "" && !imageURLAllowed(p.LicenseURL, "www.pexels.com")) {
+			return
+		}
+	case "wikimedia":
+		if p.Delivery != "rehosted" || !imagesearch.LicenseAllowed(p.License, p.LicenseURL) || !imageURLAllowed(p.LicenseURL, "creativecommons.org") || !imageURLAllowed(p.ImageURL, "upload.wikimedia.org", "thumb.wikimedia.org") || !imageURLAllowed(p.SourceURL, "commons.wikimedia.org") || (p.AuthorURL != "" && !imageURLAllowed(p.AuthorURL, "commons.wikimedia.org")) {
+			return
+		}
+	default:
+		return
+	}
+	image.Provider, image.SourceURL, image.Author, image.AuthorURL, image.License, image.LicenseURL = p.Provider, p.SourceURL, p.Author, p.AuthorURL, p.License, p.LicenseURL
 }
 
 // CreateDeckInput contains validated fields for creating a new deck.
@@ -90,10 +164,18 @@ type CreateDeckInput struct {
 }
 
 type DeckCardInput struct {
-	CardID    string  `json:"cardId,omitempty"`
-	FrontText string  `json:"frontText"`
-	BackText  string  `json:"backText"`
-	Reading   *string `json:"reading,omitempty"`
+	CardID              string  `json:"cardId,omitempty"`
+	FrontText           string  `json:"frontText"`
+	BackText            string  `json:"backText"`
+	Reading             *string `json:"reading,omitempty"`
+	ImageURL            string  `json:"imageUrl,omitempty"`
+	PrimaryImageAssetID *string `json:"primaryImageAssetId,omitempty"`
+	RemovePrimaryImage  bool    `json:"removePrimaryImage,omitempty"`
+	retainedImage       bool
+	// forkedFrom is the card this one was copied from during an edit; the
+	// learner's review progress carries over. Never set from a request.
+	forkedFrom       string
+	validatedForDeck bool
 }
 
 // UpdateDeckInput contains validated fields for updating an existing deck.
@@ -223,10 +305,12 @@ func (s *Store) GetDeck(ctx context.Context, userID, deckID string) (*DeckDetail
 	}
 	detail.Count.Cards = detail.CardCount
 	redactForeignDeck(userID, &detail.Deck)
-	const cardsQ = `SELECT dc.id,dc.position,fv.id,fv.front_text,fv.back_text,fv.reading,fv.source_id,fv.source_type
+	const cardsQ = `SELECT dc.id,dc.position,fv.id,fv.front_text,fv.back_text,fv.reading,fv.source_id,fv.source_type,img.id::text,img.mime_type,img.status,img.provider,img.provenance,img.rights_status
 		FROM learning.deck_card dc JOIN learning.flashcard_variant fv ON fv.id=dc.card_id
+		LEFT JOIN LATERAL (SELECT a.id,a.mime_type,a.status,a.provider,a.provenance,a.rights_status FROM learning.card_media_link ml JOIN media.asset a ON a.id=ml.asset_id WHERE ml.card_id=fv.id AND ml.role='primary_image' AND ((a.status='active' AND a.rights_status='cleared') OR (a.status IN ('active','pending_review') AND a.rights_status='pending_review' AND a.owner_user_id=$2)) ORDER BY ml.created_at,ml.id LIMIT 1) img ON true
 		WHERE dc.deck_id=$1 AND fv.status='active' ORDER BY dc.position,dc.id`
-	rows, err := s.db.Query(ctx, cardsQ, deckID)
+	// Pending-review images stay visible only to the user who selected them.
+	rows, err := s.db.Query(ctx, cardsQ, deckID, userID)
 	if err != nil {
 		return nil, fmt.Errorf("flashcarddeck: list deck cards: %w", err)
 	}
@@ -234,8 +318,24 @@ func (s *Store) GetDeck(ctx context.Context, userID, deckID string) (*DeckDetail
 	detail.Cards = []DeckDetailCard{}
 	for rows.Next() {
 		var card DeckDetailCard
-		if err := rows.Scan(&card.ID, &card.Position, &card.Card.ID, &card.Card.FrontText, &card.Card.BackText, &card.Card.Reading, &card.Card.SourceID, &card.Card.SourceType); err != nil {
+		var imageID, mimeType, status, provider, rightsStatus *string
+		var provenance []byte
+		if err := rows.Scan(&card.ID, &card.Position, &card.Card.ID, &card.Card.FrontText, &card.Card.BackText, &card.Card.Reading, &card.Card.SourceID, &card.Card.SourceType, &imageID, &mimeType, &status, &provider, &provenance, &rightsStatus); err != nil {
 			return nil, fmt.Errorf("flashcarddeck: scan deck card: %w", err)
+		}
+		if imageID != nil {
+			card.Card.PrimaryImage = &DeckCardImage{AssetID: *imageID, MimeType: *mimeType}
+			if *status == "active" && *rightsStatus == "cleared" {
+				url := "/api/media/" + *imageID + "/stream"
+				card.Card.PrimaryImage.ReadURL = &url
+			}
+			PopulateSelectedImage(card.Card.PrimaryImage, *provider, provenance)
+			// Rehosted images awaiting rights review are readable only by their
+			// owner (the query above already limits them to the viewer).
+			if *rightsStatus == "pending_review" && *provider != "unsplash" && (*provider == "local" || card.Card.PrimaryImage.Provider != "") {
+				url := "/api/media/" + *imageID + "/private-preview"
+				card.Card.PrimaryImage.ReadURL = &url
+			}
 		}
 		detail.Cards = append(detail.Cards, card)
 	}
@@ -282,15 +382,44 @@ func (s *Store) CreateDeck(ctx context.Context, input CreateDeckInput) (*Deck, e
 }
 
 func insertDeckCards(ctx context.Context, tx pgx.Tx, userID, deckID string, cards []DeckCardInput) error {
+	type fork struct{ from, to string }
+	var forks []fork
 	for i, card := range cards {
 		cardID := card.CardID
+		if cardID != "" && card.PrimaryImageAssetID != nil {
+			original, err := loadDeckCard(ctx, tx, userID, deckID, cardID)
+			if err != nil {
+				return err
+			}
+			if original.PrimaryImage == nil || original.PrimaryImage.AssetID != *card.PrimaryImageAssetID {
+				forkedFrom := cardID
+				cardID = ""
+				if card.FrontText == "" {
+					card.FrontText = original.FrontText
+				}
+				if card.BackText == "" {
+					card.BackText = original.BackText
+				}
+				if card.Reading == nil {
+					card.Reading = original.Reading
+				}
+				if card.FrontText == original.FrontText && card.BackText == original.BackText && equalReading(card.Reading, original.Reading) {
+					card.forkedFrom = forkedFrom
+				}
+			}
+		}
 		if cardID == "" {
 			const createCard = `INSERT INTO learning.flashcard_variant (source_type, source_id, front_text, back_text, reading, status, updated_at)
 				VALUES ('custom', $1, $2, $3, $4, 'active', NOW()) RETURNING id`
 			if err := tx.QueryRow(ctx, createCard, deckID, card.FrontText, card.BackText, card.Reading).Scan(&cardID); err != nil {
 				return fmt.Errorf("flashcarddeck: create custom card: %w", err)
 			}
-		} else {
+			if card.PrimaryImageAssetID != nil {
+				if err := setCardImage(ctx, tx, userID, cardID, *card.PrimaryImageAssetID, card.retainedImage); err != nil {
+					return err
+				}
+			}
+		} else if !card.validatedForDeck {
 			if _, err := loadDeckCard(ctx, tx, userID, deckID, cardID); err != nil {
 				return err
 			}
@@ -298,28 +427,114 @@ func insertDeckCards(ctx context.Context, tx pgx.Tx, userID, deckID string, card
 		if _, err := tx.Exec(ctx, `INSERT INTO learning.deck_card (deck_id,card_id,position) VALUES ($1,$2,$3) ON CONFLICT (deck_id,card_id) DO NOTHING`, deckID, cardID, i); err != nil {
 			return fmt.Errorf("flashcarddeck: link card: %w", err)
 		}
+		if card.forkedFrom != "" {
+			forks = append(forks, fork{from: card.forkedFrom, to: cardID})
+			continue
+		}
 		if _, err := tx.Exec(ctx, `INSERT INTO learning.user_flashcard (user_id,card_id,state,due_at,updated_at) VALUES ($1,$2,'new',NOW(),NOW()) ON CONFLICT (user_id,card_id) DO NOTHING`, userID, cardID); err != nil {
+			return fmt.Errorf("flashcarddeck: create user flashcard: %w", err)
+		}
+	}
+	// Decide after all deck links exist, and never delete a schedule: review
+	// events reference its ID and cascade when the schedule is deleted.
+	moved := make(map[string]string)
+	for _, f := range forks {
+		from := f.from
+		if target, ok := moved[from]; ok {
+			from = target
+		} else {
+			result, err := tx.Exec(ctx, `UPDATE learning.user_flashcard uf SET card_id=$3,updated_at=NOW()
+				WHERE uf.user_id=$1 AND uf.card_id=$2
+				AND NOT EXISTS (SELECT 1 FROM learning.deck_card dc
+					JOIN learning.deck d ON d.id=dc.deck_id
+					WHERE dc.card_id=uf.card_id AND (d.owner_user_id=$1 OR d.visibility='public') AND d.status != 'archived')`, userID, from, f.to)
+			if err != nil {
+				return fmt.Errorf("flashcarddeck: move review progress: %w", err)
+			}
+			if result.RowsAffected() != 0 {
+				moved[f.from] = f.to
+				continue
+			}
+		}
+		if err := copyReviewProgress(ctx, tx, userID, from, f.to); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO learning.user_flashcard (user_id,card_id,state,due_at,updated_at) VALUES ($1,$2,'new',NOW(),NOW()) ON CONFLICT (user_id,card_id) DO NOTHING`, userID, f.to); err != nil {
 			return fmt.Errorf("flashcarddeck: create user flashcard: %w", err)
 		}
 	}
 	return nil
 }
 
+func equalReading(a, b *string) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return *a == *b
+}
+
+// copyReviewProgress seeds the copy with the learner's existing spaced-repetition state.
+func copyReviewProgress(ctx context.Context, tx pgx.Tx, userID, fromCardID, toCardID string) error {
+	// Serialize with SubmitReview so the copy includes any review already in flight.
+	var sourceID string
+	if err := tx.QueryRow(ctx, `SELECT id::text FROM learning.user_flashcard WHERE user_id=$1 AND card_id=$2 FOR UPDATE`, userID, fromCardID).Scan(&sourceID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil
+		}
+		return fmt.Errorf("flashcarddeck: lock review progress: %w", err)
+	}
+	if _, err := tx.Exec(ctx, `INSERT INTO learning.user_flashcard (user_id,card_id,state,due_at,interval_days,ease_factor,repetitions,lapses,leeched,comeback_mode,updated_at)
+		SELECT user_id,$3,state,due_at,interval_days,ease_factor,repetitions,lapses,leeched,comeback_mode,NOW()
+		FROM learning.user_flashcard WHERE user_id=$1 AND card_id=$2
+		ON CONFLICT (user_id,card_id) DO NOTHING`, userID, fromCardID, toCardID); err != nil {
+		return fmt.Errorf("flashcarddeck: carry over review progress: %w", err)
+	}
+	return nil
+}
+
+func setCardImage(ctx context.Context, tx pgx.Tx, userID, cardID, assetID string, retained bool) error {
+	if !retained {
+		var allowed bool
+		if err := tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM media.asset WHERE id::text=$1 AND owner_user_id=$2 AND status IN ('active','pending_review') AND mime_type LIKE 'image/%')`, assetID, userID).Scan(&allowed); err != nil {
+			return fmt.Errorf("flashcarddeck: verify image: %w", err)
+		}
+		if !allowed {
+			return ErrNotOwner
+		}
+	}
+	// Remember the restriction even if the user later removes the card link.
+	if _, err := tx.Exec(ctx, `UPDATE media.asset SET provenance=COALESCE(provenance,'{}'::jsonb) || '{"flashcardPendingRights":true}'::jsonb WHERE id::text=$1 AND owner_user_id=$2 AND provider='local' AND rights_status<>'cleared'`, assetID, userID); err != nil {
+		return fmt.Errorf("flashcarddeck: protect image: %w", err)
+	}
+	if _, err := tx.Exec(ctx, `DELETE FROM learning.card_media_link WHERE card_id=$1 AND role='primary_image'`, cardID); err != nil {
+		return fmt.Errorf("flashcarddeck: replace image: %w", err)
+	}
+	if _, err := tx.Exec(ctx, `INSERT INTO learning.card_media_link (card_id,asset_id,role) VALUES ($1,$2,'primary_image')`, cardID, assetID); err != nil {
+		return fmt.Errorf("flashcarddeck: link image: %w", err)
+	}
+	return nil
+}
+
 func loadDeckCard(ctx context.Context, tx pgx.Tx, userID, deckID, cardID string) (DeckCardData, error) {
-	const q = `SELECT fv.id::text,fv.front_text,fv.back_text,fv.reading,fv.source_id::text,fv.source_type
+	const q = `SELECT fv.id::text,fv.front_text,fv.back_text,fv.reading,fv.source_id::text,fv.source_type,img.id::text,img.mime_type
 		FROM learning.flashcard_variant fv
+		LEFT JOIN LATERAL (SELECT a.id,a.mime_type FROM learning.card_media_link ml JOIN media.asset a ON a.id=ml.asset_id WHERE ml.card_id=fv.id AND ml.role='primary_image' ORDER BY ml.created_at,ml.id LIMIT 1) img ON true
 		WHERE fv.id=$1 AND fv.status='active' AND (
 			(fv.source_type='lexeme' AND EXISTS (SELECT 1 FROM content.lexeme l WHERE l.id=fv.source_id AND l.status='active')) OR
 			(fv.source_type='grammar' AND EXISTS (SELECT 1 FROM content.grammar_point g WHERE g.id=fv.source_id AND g.status='active')) OR
 			(fv.source_type='kanji' AND EXISTS (SELECT 1 FROM content.kanji k WHERE k.id=fv.source_id AND k.status='active')) OR
-			(fv.source_type='custom' AND fv.source_id=$2 AND EXISTS (SELECT 1 FROM learning.deck d WHERE d.id=$2 AND d.owner_user_id=$3 AND d.status='active'))
+			(fv.source_type='custom' AND EXISTS (SELECT 1 FROM learning.deck d WHERE d.id=$2 AND d.owner_user_id=$3 AND d.status='active' AND (fv.source_id=d.id OR EXISTS (SELECT 1 FROM learning.deck_card dc WHERE dc.deck_id=d.id AND dc.card_id=fv.id))))
 		)`
 	var card DeckCardData
-	if err := tx.QueryRow(ctx, q, cardID, deckID, userID).Scan(&card.ID, &card.FrontText, &card.BackText, &card.Reading, &card.SourceID, &card.SourceType); err != nil {
+	var imageID, mimeType *string
+	if err := tx.QueryRow(ctx, q, cardID, deckID, userID).Scan(&card.ID, &card.FrontText, &card.BackText, &card.Reading, &card.SourceID, &card.SourceType, &imageID, &mimeType); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return DeckCardData{}, ErrNotOwner
 		}
 		return DeckCardData{}, fmt.Errorf("flashcarddeck: load accessible card: %w", err)
+	}
+	if imageID != nil {
+		card.PrimaryImage = &DeckCardImage{AssetID: *imageID, MimeType: *mimeType}
 	}
 	return card, nil
 }
@@ -377,6 +592,7 @@ func (s *Store) UpdateDeck(ctx context.Context, userID, deckID string, input Upd
 			if err != nil {
 				return nil, err
 			}
+			cards[i].validatedForDeck = true
 			if strings.TrimSpace(cards[i].FrontText) == "" {
 				cards[i].FrontText = original.FrontText
 			}
@@ -386,6 +602,14 @@ func (s *Store) UpdateDeck(ctx context.Context, userID, deckID string, input Upd
 			if cards[i].Reading == nil {
 				cards[i].Reading = original.Reading
 			}
+			if cards[i].PrimaryImageAssetID == nil && !cards[i].RemovePrimaryImage && original.PrimaryImage != nil {
+				cards[i].PrimaryImageAssetID = &original.PrimaryImage.AssetID
+				cards[i].retainedImage = true
+			}
+			imageChanged := (cards[i].RemovePrimaryImage && cards[i].PrimaryImageAssetID == nil && original.PrimaryImage != nil) || (cards[i].PrimaryImageAssetID != nil && (original.PrimaryImage == nil || *cards[i].PrimaryImageAssetID != original.PrimaryImage.AssetID))
+			if !imageChanged && original.PrimaryImage != nil {
+				cards[i].retainedImage = true
+			}
 			newReading := ""
 			if cards[i].Reading != nil {
 				newReading = *cards[i].Reading
@@ -394,16 +618,30 @@ func (s *Store) UpdateDeck(ctx context.Context, userID, deckID string, input Upd
 			if original.Reading != nil {
 				oldReading = *original.Reading
 			}
-			if original.FrontText == cards[i].FrontText && original.BackText == cards[i].BackText && oldReading == newReading {
+			if original.FrontText == cards[i].FrontText && original.BackText == cards[i].BackText && oldReading == newReading && !imageChanged {
 				continue
 			}
-			if original.SourceType == "custom" && original.SourceID == deckID {
+			var shared bool
+			if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM learning.deck_card WHERE card_id=$1 AND deck_id<>$2)`, cards[i].CardID, deckID).Scan(&shared); err != nil {
+				return nil, fmt.Errorf("flashcarddeck: check shared card: %w", err)
+			}
+			if original.SourceType == "custom" && original.SourceID == deckID && !shared {
 				if _, err := tx.Exec(ctx, `UPDATE learning.flashcard_variant SET front_text=$2,back_text=$3,reading=$4,updated_at=NOW() WHERE id=$1`, cards[i].CardID, cards[i].FrontText, cards[i].BackText, nullIfEmpty(newReading)); err != nil {
 					return nil, fmt.Errorf("flashcarddeck: update custom card: %w", err)
 				}
+				if imageChanged {
+					if cards[i].PrimaryImageAssetID == nil {
+						if _, err := tx.Exec(ctx, `DELETE FROM learning.card_media_link WHERE card_id=$1 AND role='primary_image'`, cards[i].CardID); err != nil {
+							return nil, fmt.Errorf("flashcarddeck: remove image: %w", err)
+						}
+					} else if err := setCardImage(ctx, tx, userID, cards[i].CardID, *cards[i].PrimaryImageAssetID, false); err != nil {
+						return nil, err
+					}
+				}
 				continue
 			}
-			// Keep canonical/shared variants unchanged; create a deck-owned copy for edited text.
+			// Keep canonical/shared variants unchanged and carry the editor's schedule to the copy.
+			cards[i].forkedFrom = cards[i].CardID
 			cards[i].CardID = ""
 		}
 		if _, err := tx.Exec(ctx, `DELETE FROM learning.deck_card WHERE deck_id=$1`, deckID); err != nil {
@@ -576,7 +814,7 @@ func (s *Store) CloneDeck(ctx context.Context, userID, token string) (*Deck, err
 	}
 	defer tx.Rollback(ctx)
 	// Find source deck by token
-	const findQ = `SELECT id, title_vi, description_vi FROM learning.deck WHERE share_token = $1 AND status != 'archived'`
+	const findQ = `SELECT id, title_vi, description_vi FROM learning.deck WHERE share_token = $1 AND status != 'archived' FOR UPDATE`
 	var srcID, srcName string
 	var srcDesc *string
 	if err := tx.QueryRow(ctx, findQ, token).Scan(&srcID, &srcName, &srcDesc); err != nil {

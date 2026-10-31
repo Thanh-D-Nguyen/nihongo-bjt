@@ -11,7 +11,7 @@ import {
   enqueueReview,
   queueSizeForUser
 } from "../../../../lib/offline-review-queue";
-import { learnerApiFetch } from "../../../../lib/learner-api";
+import { learnerApiFetch, learnerMediaUrl } from "../../../../lib/learner-api";
 import { FlashcardInteractiveCard } from "./flashcard-interactive-card";
 
 const allowedMime = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
@@ -26,7 +26,11 @@ interface DueCard {
   };
   cardId: string;
   id: string;
-  primaryImage: { assetId: string; mimeType: string; readUrl: string | null } | null;
+  primaryImage: {
+    assetId: string; mimeType: string; readUrl: string | null;
+    provider?: string; sourceUrl?: string; author?: string; authorUrl?: string;
+    license?: string; licenseUrl?: string;
+  } | null;
   state: string;
 }
 
@@ -739,10 +743,29 @@ export function FlashcardsClient({
                   alt={labels.imageAlt.replace("{front}", currentCard.card.frontText)}
                   className="h-[200px] max-h-[200px] w-full object-contain"
                   height={200}
-                  src={currentCard.primaryImage.readUrl}
+                  src={learnerMediaUrl(currentCard.primaryImage.readUrl)}
                   width={400}
                 />
-                <figcaption className="sr-only">{currentCard.card.frontText}</figcaption>
+                <figcaption className="break-words px-2 py-1 text-xs text-ink/70">
+                  {[
+                    [currentCard.primaryImage.provider, currentCard.primaryImage.sourceUrl],
+                    [currentCard.primaryImage.author, currentCard.primaryImage.authorUrl],
+                    [currentCard.primaryImage.license, currentCard.primaryImage.licenseUrl]
+                  ].filter(([label]) => label).map(([label, url], index) => {
+                    let safeUrl: string | undefined;
+                    try {
+                      if (url && new URL(url).protocol === "https:") safeUrl = url;
+                    } catch {
+                      // Invalid attribution URLs remain plain text.
+                    }
+                    return (
+                      <span key={index}>
+                        {index > 0 ? " · " : null}
+                        {safeUrl ? <a className="underline" href={safeUrl} rel="noopener noreferrer" target="_blank">{label}</a> : label}
+                      </span>
+                    );
+                  })}
+                </figcaption>
               </figure>
             ) : null
           }

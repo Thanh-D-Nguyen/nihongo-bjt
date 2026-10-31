@@ -10,6 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcarddeck"
 )
 
 // ErrNotFound is returned when a user flashcard does not exist.
@@ -17,17 +18,18 @@ var ErrNotFound = errors.New("flashcardreview: not found")
 
 // DueFlashcard represents a flashcard due for review with its SRS metadata.
 type DueFlashcard struct {
-	ID           string         `json:"id"`
-	CardID       string         `json:"cardId"`
-	State        string         `json:"state"`
-	DueAt        time.Time      `json:"dueAt"`
-	IntervalDays int            `json:"intervalDays"`
-	EaseFactor   float64        `json:"easeFactor"`
-	Repetitions  int            `json:"repetitions"`
-	Lapses       int            `json:"lapses"`
-	Leeched      bool           `json:"leeched"`
-	ComebackMode bool           `json:"comebackMode"`
-	Card         DueCardContent `json:"card"`
+	ID           string                       `json:"id"`
+	CardID       string                       `json:"cardId"`
+	State        string                       `json:"state"`
+	DueAt        time.Time                    `json:"dueAt"`
+	IntervalDays int                          `json:"intervalDays"`
+	EaseFactor   float64                      `json:"easeFactor"`
+	Repetitions  int                          `json:"repetitions"`
+	Lapses       int                          `json:"lapses"`
+	Leeched      bool                         `json:"leeched"`
+	ComebackMode bool                         `json:"comebackMode"`
+	Card         DueCardContent               `json:"card"`
+	PrimaryImage *flashcarddeck.DeckCardImage `json:"primaryImage"`
 }
 
 type DueCardContent struct {
@@ -93,9 +95,10 @@ func (s *Store) GetDueFlashcards(ctx context.Context, userID string, limit int) 
 		limit = 50
 	}
 	const q = `SELECT uf.id, uf.card_id, uf.state, uf.due_at, uf.interval_days, uf.ease_factor, uf.repetitions, uf.lapses, uf.leeched, uf.comeback_mode,
-	fv.front_text, fv.back_text, COALESCE(fv.reading, '')
+	fv.front_text, fv.back_text, COALESCE(fv.reading, ''), img.id::text, img.mime_type, img.status, img.provider, img.provenance, img.rights_status
 FROM learning.user_flashcard uf
 JOIN learning.flashcard_variant fv ON fv.id = uf.card_id
+LEFT JOIN LATERAL (SELECT a.id,a.mime_type,a.status,a.provider,a.provenance,a.rights_status FROM learning.card_media_link ml JOIN media.asset a ON a.id=ml.asset_id WHERE ml.card_id=fv.id AND ml.role='primary_image' AND ((a.status='active' AND a.rights_status='cleared') OR (a.status IN ('active','pending_review') AND a.rights_status='pending_review' AND a.owner_user_id=$1)) ORDER BY ml.created_at,ml.id LIMIT 1) img ON true
 WHERE uf.user_id = $1 AND uf.due_at <= NOW() AND fv.status='active'
 	AND EXISTS (
 		SELECT 1 FROM learning.deck_card dc JOIN learning.deck d ON d.id=dc.deck_id
@@ -112,8 +115,22 @@ LIMIT $2`
 	var cards []DueFlashcard
 	for rows.Next() {
 		var c DueFlashcard
-		if err := rows.Scan(&c.ID, &c.CardID, &c.State, &c.DueAt, &c.IntervalDays, &c.EaseFactor, &c.Repetitions, &c.Lapses, &c.Leeched, &c.ComebackMode, &c.Card.FrontText, &c.Card.BackText, &c.Card.Reading); err != nil {
+		var imageID, mimeType, status, provider, rightsStatus *string
+		var provenance []byte
+		if err := rows.Scan(&c.ID, &c.CardID, &c.State, &c.DueAt, &c.IntervalDays, &c.EaseFactor, &c.Repetitions, &c.Lapses, &c.Leeched, &c.ComebackMode, &c.Card.FrontText, &c.Card.BackText, &c.Card.Reading, &imageID, &mimeType, &status, &provider, &provenance, &rightsStatus); err != nil {
 			return nil, fmt.Errorf("flashcardreview: scan due flashcard: %w", err)
+		}
+		if imageID != nil {
+			c.PrimaryImage = &flashcarddeck.DeckCardImage{AssetID: *imageID, MimeType: *mimeType}
+			if *status == "active" && *rightsStatus == "cleared" {
+				url := "/api/media/" + *imageID + "/stream"
+				c.PrimaryImage.ReadURL = &url
+			}
+			flashcarddeck.PopulateSelectedImage(c.PrimaryImage, *provider, provenance)
+			if *rightsStatus == "pending_review" && *provider != "unsplash" && (*provider == "local" || c.PrimaryImage.Provider != "") {
+				url := "/api/media/" + *imageID + "/private-preview"
+				c.PrimaryImage.ReadURL = &url
+			}
 		}
 		c.Card.ID = c.CardID
 		cards = append(cards, c)

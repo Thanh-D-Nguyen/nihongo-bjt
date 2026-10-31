@@ -444,9 +444,18 @@
           "frontText": {
             "type": "string"
           },
+          "primaryImageAssetId": {
+            "description": "Owned image asset to attach; omit to retain the current image.",
+            "format": "uuid",
+            "type": "string"
+          },
           "reading": {
             "nullable": true,
             "type": "string"
+          },
+          "removePrimaryImage": {
+            "description": "Remove the current image when primaryImageAssetId is omitted.",
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -20673,6 +20682,34 @@
         }
       }
     },
+    "/api/media/image-selections": {
+      "post": {
+        "operationId": "postApiMediaImageSelections",
+        "responses": {
+          "default": {
+            "description": "Response schema is not yet verified; see the route inventory."
+          }
+        },
+        "summary": "Source-discovered route handled by selectionHandler",
+        "tags": [
+          "Media"
+        ],
+        "x-contract-verification": {
+          "scope": "route/method/handler coverage only; request and response schemas are unverified",
+          "status": "unverified"
+        },
+        "x-route-source": {
+          "guards": [
+            "learnerGuard",
+            "authn.CSRFGuard(csrfCfg)"
+          ],
+          "handler": "selectionHandler",
+          "runtimeConditions": [
+            "deps.DBPool != nil && deps.SessionStore != nil"
+          ]
+        }
+      }
+    },
     "/api/media/presign-upload": {
       "post": {
         "operationId": "postApiMediaPresignUpload",
@@ -20750,7 +20787,7 @@
             "learnerGuard",
             "authn.CSRFGuard(csrfCfg)"
           ],
-          "handler": "postMediaSearchImagesHandler(deps.DBPool, deps.Logger)",
+          "handler": "searchHandler",
           "runtimeConditions": [
             "deps.DBPool != nil && deps.SessionStore != nil"
           ]
@@ -20856,6 +20893,45 @@
           "handler": "getMediaMetadataHandler(deps.MediaStore, deps.Logger)",
           "runtimeConditions": [
             "deps.MediaStore != nil && deps.MediaBucket != nil"
+          ]
+        }
+      }
+    },
+    "/api/media/{id}/private-preview": {
+      "get": {
+        "operationId": "getApiMediabyIdPrivatePreview",
+        "parameters": [
+          {
+            "description": "Path token; application-level format and validation are unverified.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Response schema is not yet verified; see the route inventory."
+          }
+        },
+        "summary": "Source-discovered route handled by getPrivateImageAssetHandler(deps.DBPool, deps.MediaBucket, deps.Logger)",
+        "tags": [
+          "Media"
+        ],
+        "x-contract-verification": {
+          "scope": "route/method/handler coverage only; request and response schemas are unverified",
+          "status": "unverified"
+        },
+        "x-route-source": {
+          "guards": [
+            "learnerGuard",
+            "authn.CSRFGuard(csrfCfg)"
+          ],
+          "handler": "getPrivateImageAssetHandler(deps.DBPool, deps.MediaBucket, deps.Logger)",
+          "runtimeConditions": [
+            "deps.DBPool != nil && deps.SessionStore != nil"
           ]
         }
       }

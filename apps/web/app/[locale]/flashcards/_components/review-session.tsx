@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { enqueueReview } from "../../../../lib/offline-review-queue";
-import { learnerApiFetch } from "../../../../lib/learner-api";
+import { learnerApiFetch, learnerMediaUrl } from "../../../../lib/learner-api";
 import { speakJapanese } from "../../../../lib/japanese-speech";
 import { flashcardThemeCss } from "./flashcard-theme-css";
 
@@ -25,7 +25,17 @@ interface DueCard {
   examples?: CardExample[];
   id: string;
   primaryAudio: { assetId: string; mimeType: string; readUrl: string | null } | null;
-  primaryImage: { assetId: string; mimeType: string; readUrl: string | null } | null;
+  primaryImage: {
+    assetId: string;
+    mimeType: string;
+    readUrl: string | null;
+    provider?: string;
+    sourceUrl?: string;
+    author?: string;
+    authorUrl?: string;
+    license?: string;
+    licenseUrl?: string;
+  } | null;
   state: string;
 }
 
@@ -344,11 +354,55 @@ function Confetti() {
    Card Image
    ═══════════════════════════════════════════════════════ */
 
-function CardImage({ url, alt }: { url: string; alt: string }) {
+function CardImage({ image, alt, onFlip, flipLabel }: {
+  image: NonNullable<DueCard["primaryImage"]>;
+  alt: string;
+  onFlip?: () => void;
+  flipLabel?: string;
+}) {
+  const credits = [
+    [image.provider, image.sourceUrl],
+    [image.author, image.authorUrl],
+    [image.license, image.licenseUrl]
+  ]
+    .map(([label, url]) => {
+      let safeUrl: string | undefined;
+      try {
+        if (url && ["http:", "https:"].includes(new URL(url).protocol)) safeUrl = url;
+      } catch {
+        // Invalid attribution URLs remain plain text.
+      }
+      return { label: label || safeUrl, url: safeUrl };
+    })
+    .filter((credit) => credit.label);
+  if (!image.readUrl) return null;
+  const picture = (
+    <img src={learnerMediaUrl(image.readUrl)} alt={alt} className="h-full max-h-48 w-full object-contain" loading="lazy" />
+  );
   return (
-    <div className="flashcard-theme-divider mx-auto mb-4 max-h-48 w-full max-w-xs overflow-hidden rounded-2xl border bg-[var(--flashcard-content-surface)]">
-      <img src={url} alt={alt} className="h-full max-h-48 w-full object-contain" loading="lazy" />
-    </div>
+    <figure className="mx-auto mb-4 w-full max-w-xs">
+      <div className="flashcard-theme-divider max-h-48 overflow-hidden rounded-2xl border bg-[var(--flashcard-content-surface)]">
+        {onFlip ? (
+          <button type="button" aria-label={flipLabel} onClick={onFlip} className="flashcard-theme-focus w-full rounded-2xl">
+            {picture}
+          </button>
+        ) : picture}
+      </div>
+      {credits.length > 0 ? (
+        <figcaption className="flashcard-theme-muted mt-1 break-words text-xs">
+          {credits.map((credit, index) => (
+            <span key={index}>
+              {index > 0 ? " · " : null}
+              {credit.url ? (
+                <a className="underline" href={credit.url} rel="noopener noreferrer" target="_blank">
+                  {credit.label}
+                </a>
+              ) : credit.label}
+            </span>
+          ))}
+        </figcaption>
+      ) : null}
+    </figure>
   );
 }
 
@@ -495,6 +549,14 @@ function FlipReview({
   return (
     <ReviewCard cardStyle={cardStyle}>
       <div className="min-h-[200px] flex flex-col items-center justify-center gap-3 text-center">
+        {card.primaryImage?.readUrl ? (
+          <CardImage
+            image={card.primaryImage}
+            alt={card.card.frontText}
+            onFlip={onFlip}
+            flipLabel={flipped ? labels.flipPrompt : labels.tapToReveal}
+          />
+        ) : null}
         <button
           aria-label={flipped ? labels.flipPrompt : labels.tapToReveal}
           aria-pressed={flipped}
@@ -502,9 +564,6 @@ function FlipReview({
           onClick={onFlip}
           type="button"
         >
-          {card.primaryImage?.readUrl ? (
-            <CardImage url={card.primaryImage.readUrl} alt={card.card.frontText} />
-          ) : null}
           <p className="flashcard-theme-primary font-black" lang="ja">
             {card.card.frontText}
           </p>
@@ -577,7 +636,7 @@ function TypeReview({
     <ReviewCard cardStyle={cardStyle}>
       <div className="min-h-[200px] flex flex-col items-center justify-center gap-3 text-center">
         {card.primaryImage?.readUrl ? (
-          <CardImage url={card.primaryImage.readUrl} alt={card.card.frontText} />
+          <CardImage image={card.primaryImage} alt={card.card.frontText} />
         ) : null}
         <p className="flashcard-theme-primary font-black" lang="ja">
           {card.card.frontText}
@@ -683,7 +742,7 @@ function MatchReview({
     <ReviewCard cardStyle={cardStyle}>
       <div className="min-h-[200px] flex flex-col items-center justify-center gap-3 text-center">
         {card.primaryImage?.readUrl ? (
-          <CardImage url={card.primaryImage.readUrl} alt={card.card.frontText} />
+          <CardImage image={card.primaryImage} alt={card.card.frontText} />
         ) : null}
         <p className="flashcard-theme-muted text-sm font-semibold uppercase tracking-wider">
           {labels.matchPrompt}

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { BattleBotAvatar } from "../../../_components/battle-bot-avatar";
 import { cancelJapaneseSpeech, speakJapanese } from "../../../../lib/japanese-speech";
+import { learnerMediaUrl } from "../../../../lib/learner-api";
 import { flashcardThemeCss } from "./flashcard-theme-css";
 
 type StudyMode = "flip" | "shuffle" | "quiz";
@@ -88,10 +89,16 @@ export type DeckStudyCard = {
   reading: string | null;
 };
 
-type DeckStudyMedia = {
+export type DeckStudyMedia = {
   assetId: string;
   mimeType: string;
   readUrl: string | null;
+  provider?: string;
+  sourceUrl?: string;
+  author?: string;
+  authorUrl?: string;
+  license?: string;
+  licenseUrl?: string;
 };
 
 export type DeckStudyExample = {
@@ -237,7 +244,7 @@ export function DeckStudySession({
   const total = activeCards.length;
   const safeIndex = total === 0 ? 0 : Math.min(Math.max(0, index), total - 1);
   const current = total === 0 ? undefined : activeCards[safeIndex];
-  const primaryImageUrl = current?.primaryImage?.readUrl ?? null;
+  const primaryImageUrl = current?.primaryImage?.readUrl ? learnerMediaUrl(current.primaryImage.readUrl) : null;
   const primaryAudioUrl = current?.primaryAudio?.readUrl ?? null;
   const currentCanSpeak = Boolean(current?.frontText);
   const showCardImage = Boolean(primaryImageUrl && imagesVisible);
@@ -778,7 +785,12 @@ export function DeckStudySession({
                           ) : null}
                         </div>
                         {showCardImage && primaryImageUrl ? (
-                          <MediaStage alt={current.frontText} priority src={primaryImageUrl} />
+                          <MediaStage
+                            alt={current.frontText}
+                            image={current.primaryImage}
+                            priority
+                            src={primaryImageUrl}
+                          />
                         ) : null}
                       </div>
                     </div>
@@ -831,7 +843,12 @@ export function DeckStudySession({
                           </div>
                         </div>
                         {showCardImage && primaryImageUrl ? (
-                          <MediaStage alt={current.frontText} compact src={primaryImageUrl} />
+                          <MediaStage
+                            alt={current.frontText}
+                            compact
+                            image={current.primaryImage}
+                            src={primaryImageUrl}
+                          />
                         ) : null}
                       </div>
                     </div>
@@ -1105,50 +1122,91 @@ function ToolButton({
 function MediaStage({
   alt,
   compact,
+  image,
   priority,
   src
 }: {
   alt: string;
   compact?: boolean;
+  image?: DeckStudyMedia | null;
   priority?: boolean;
   src: string;
 }) {
   const [broken, setBroken] = useState(false);
 
+  const credits = [
+    [image?.provider, image?.sourceUrl],
+    [image?.author, image?.authorUrl],
+    [image?.license, image?.licenseUrl]
+  ]
+    .map(([label, url]) => {
+      let safeUrl: string | undefined;
+      try {
+        if (url && ["http:", "https:"].includes(new URL(url).protocol)) safeUrl = url;
+      } catch {
+        // Invalid attribution URLs remain plain text.
+      }
+      return { label: label || safeUrl, url: safeUrl };
+    })
+    .filter((credit) => credit.label);
+
   return (
-    <div
-      className={cn(
-        "flashcard-theme-divider flex w-full items-center justify-center overflow-hidden rounded-2xl border bg-[var(--flashcard-content-surface)] p-2",
-        compact ? "h-[clamp(8rem,24vh,13rem)]" : "h-[clamp(10rem,30vh,16rem)]"
-      )}
-    >
-      {broken ? (
-        <div className="flashcard-theme-muted flex flex-col items-center gap-1">
-          <svg
-            className="h-8 w-8"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={1.5}
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z"
-            />
-          </svg>
-          <span className="text-xs">Image unavailable</span>
-        </div>
-      ) : (
-        <img
-          alt={alt}
-          className="h-full w-full object-contain"
-          loading={priority ? "eager" : "lazy"}
-          onError={() => setBroken(true)}
-          src={src}
-        />
-      )}
-    </div>
+    <figure className="min-w-0 w-full">
+      <div
+        className={cn(
+          "flashcard-theme-divider flex w-full items-center justify-center overflow-hidden rounded-2xl border bg-[var(--flashcard-content-surface)] p-2",
+          compact ? "h-[clamp(8rem,24vh,13rem)]" : "h-[clamp(10rem,30vh,16rem)]"
+        )}
+      >
+        {broken ? (
+          <div className="flashcard-theme-muted flex flex-col items-center gap-1">
+            <svg
+              className="h-8 w-8"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z"
+              />
+            </svg>
+            <span className="text-xs">Image unavailable</span>
+          </div>
+        ) : (
+          <img
+            alt={alt}
+            className="h-full w-full object-contain"
+            loading={priority ? "eager" : "lazy"}
+            onError={() => setBroken(true)}
+            src={src}
+          />
+        )}
+      </div>
+      {credits.length > 0 ? (
+        <figcaption className="flashcard-theme-muted mt-1 break-words text-xs">
+          {credits.map((credit, index) => (
+            <span key={index}>
+              {index > 0 ? " · " : null}
+              {credit.url ? (
+                <a
+                  className="underline"
+                  href={credit.url}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  {credit.label}
+                </a>
+              ) : (
+                credit.label
+              )}
+            </span>
+          ))}
+        </figcaption>
+      ) : null}
+    </figure>
   );
 }
 

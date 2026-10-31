@@ -169,6 +169,7 @@ func New(version string) (*App, error) {
 		PresenceService:       realtime.NewPresenceService(redisClient),
 		PasswordResetQueue:    resetQueue,
 		SearchClient:          searchClient,
+		ImageSearch:           httpserver.NewImageSearchService(redisClient, dbPool, cfg.UnsplashAccessKey, cfg.PixabayAPIKey, cfg.PexelsAPIKey, cfg.ServerWriteTimeout),
 		MediaStore:            mediaStore,
 		MediaBucket:           mediaBucket,
 		OnboardingStore:       onboardingStore,

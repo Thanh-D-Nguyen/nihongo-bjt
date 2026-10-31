@@ -33,14 +33,109 @@ afterEach(() => {
 });
 
 describe("DeckStudySession semantic theme rendering", () => {
+  it("loads relative media URLs from the learner API origin", () => {
+    host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    const path = "/api/media/test/private-preview";
+    act(() => root.render(<DeckStudySession cards={[{ id: "card", frontText: "仕事", backText: "work", reading: null, primaryImage: { assetId: "test", mimeType: "image/jpeg", readUrl: path } }]} labels={labels} />));
+    const base = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
+    expect(host.querySelector("img")?.getAttribute("src")).toBe(`${base}${path}`);
+    act(() => root.unmount());
+  });
+  it("shows safe image attribution on both faces and omits absent credits", () => {
+    host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    const image = {
+      assetId: "image-1",
+      mimeType: "image/jpeg",
+      readUrl: "https://example.com/image.jpg",
+      provider: "Unsplash",
+      sourceUrl: "https://example.com/source",
+      author: "Alice",
+      authorUrl: "https://example.com/alice",
+      license: "CC BY",
+      licenseUrl: "https://example.com/license"
+    };
+    const card = { id: "card", frontText: "仕事", backText: "work", reading: null };
+    act(() =>
+      root.render(<DeckStudySession cards={[{ ...card, primaryImage: image }]} labels={labels} />)
+    );
+    const faces = host.querySelectorAll<HTMLElement>(
+      ".fc-card-shell .flashcard-theme-surface[aria-hidden]"
+    );
+    for (const face of faces) {
+      expect(face.textContent).toContain("Unsplash");
+      for (const [text, href] of [
+        ["Unsplash", image.sourceUrl],
+        ["Alice", image.authorUrl],
+        ["CC BY", image.licenseUrl]
+      ]) {
+        const link = [...face.querySelectorAll("a")].find((item) => item.textContent === text);
+        expect(link?.getAttribute("href")).toBe(href);
+        expect(link?.getAttribute("rel")).toContain("noopener");
+      }
+    }
+    act(() =>
+      root.render(
+        <DeckStudySession
+          cards={[
+            {
+              ...card,
+              primaryImage: {
+                ...image,
+                sourceUrl: "javascript:alert(1)",
+                authorUrl: "//evil.example",
+                licenseUrl: "data:text/html,hi"
+              }
+            }
+          ]}
+          labels={labels}
+        />
+      )
+    );
+    expect(
+      host.querySelectorAll('a[href^="javascript:"], a[href^="//"], a[href^="data:"]')
+    ).toHaveLength(0);
+    expect(host.textContent).toContain("Alice");
+    act(() =>
+      root.render(
+        <DeckStudySession
+          cards={[
+            {
+              ...card,
+              primaryImage: { assetId: "image-1", mimeType: "image/jpeg", readUrl: image.readUrl }
+            }
+          ]}
+          labels={labels}
+        />
+      )
+    );
+    expect(host.textContent).not.toContain("Unsplash");
+    expect(host.querySelectorAll("figcaption")).toHaveLength(0);
+    act(() => root.unmount());
+  });
   it("keeps four preview ratings local and explains that SRS progress is not saved", () => {
     host = document.createElement("div");
     document.body.append(host);
     const root = createRoot(host);
-    act(() => root.render(<DeckStudySession cards={[{ id: "preview", frontText: "仕事", backText: "work", reading: null }]} deckId="preview" labels={labels} />));
+    act(() =>
+      root.render(
+        <DeckStudySession
+          cards={[{ id: "preview", frontText: "仕事", backText: "work", reading: null }]}
+          deckId="preview"
+          labels={labels}
+        />
+      )
+    );
     expect(host.textContent).toContain("deckStudyModeNote");
-    act(() => host?.querySelector<HTMLButtonElement>(".fc-card-shell > button[aria-pressed]")?.click());
-    const easy = [...host.querySelectorAll("button")].find(button => button.textContent?.includes("deckStudyRateEasy"));
+    act(() =>
+      host?.querySelector<HTMLButtonElement>(".fc-card-shell > button[aria-pressed]")?.click()
+    );
+    const easy = [...host.querySelectorAll("button")].find((button) =>
+      button.textContent?.includes("deckStudyRateEasy")
+    );
     expect(easy, "preview must expose easy rating").toBeDefined();
     act(() => easy?.click());
     expect(host.textContent).toContain("deckStudyComplete");

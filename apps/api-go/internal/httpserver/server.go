@@ -60,8 +60,9 @@ type Dependencies struct {
 	PublicReadRateLimiter *authn.RateLimiter // nil disables public catalog reads (fail closed)
 	PresenceService       *realtime.PresenceService
 	PasswordResetQueue    *PasswordResetQueue
-	MediaStore            *media.Store           // nil if DB not configured; media endpoints return 503
-	MediaBucket           *blob.Bucket           // nil if media storage not configured; upload/stream return 503
+	MediaStore            *media.Store // nil if DB not configured; media endpoints return 503
+	MediaBucket           *blob.Bucket // nil if media storage not configured; upload/stream return 503
+	ImageSearch           *ImageSearchService
 	SearchClient          *search.Client         // nil if Meilisearch not configured; search endpoints return 503
 	OnboardingStore       *onboarding.Store      // nil if DB not configured; onboarding endpoints return 503
 	NotificationStore     *notification.Store    // nil if DB not configured; notification endpoints return 503
@@ -1981,7 +1982,10 @@ func NewRouter(deps Dependencies) http.Handler {
 		r.Group(func(lr chi.Router) {
 			lr.Use(learnerGuard)
 			lr.Use(authn.CSRFGuard(csrfCfg))
-			lr.Post("/api/media/search-images", postMediaSearchImagesHandler(deps.DBPool, deps.Logger))
+			searchHandler, selectionHandler := imageSelectionHandlers(deps)
+			lr.Post("/api/media/search-images", searchHandler)
+			lr.Post("/api/media/image-selections", selectionHandler)
+			lr.Get("/api/media/{id}/private-preview", getPrivateImageAssetHandler(deps.DBPool, deps.MediaBucket, deps.Logger))
 			lr.Post("/api/media/proxy-image", postMediaProxyImageHandler(deps.DBPool, deps.MediaBucket, deps.Logger))
 			lr.Post("/api/media/presign-upload", postMediaPresignUploadHandler(deps.DBPool, deps.MediaBucket, deps.RateLimiter, deps.Logger))
 			lr.Post("/api/media/complete-upload", postMediaCompleteUploadHandler(deps.DBPool, deps.MediaBucket, deps.RateLimiter, deps.Logger))
@@ -2122,4 +2126,20 @@ func slogMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 			)
 		})
 	}
+}
+
+// imageSelectionHandlers fail closed unless signing, storage, and shared coordination are configured.
+func imageSelectionHandlers(deps Dependencies) (http.HandlerFunc, http.HandlerFunc) {
+	var signer *imageSelectionSigner
+	if deps.Config != nil && deps.Config.ImageSelectionSigningKey != "" {
+		var err error
+		signer, err = newImageSelectionSigner([]byte(deps.Config.ImageSelectionSigningKey))
+		if err != nil {
+			deps.Logger.Warn("image selection signing key is invalid")
+		}
+	}
+	if signer == nil || deps.ImageSearch == nil || deps.ImageSearch.redis == nil || deps.MediaBucket == nil {
+		return postMediaSearchImagesHandler(deps.DBPool, deps.Logger), postImageSelectionHandler(deps.DBPool, deps.MediaBucket, nil, nil, nil, deps.Logger)
+	}
+	return postImageSelectionSearchHandler(deps.ImageSearch, signer, deps.ImageSearch, deps.Logger), postImageSelectionHandler(deps.DBPool, deps.MediaBucket, deps.ImageSearch, signer, deps.ImageSearch, deps.Logger)
 }

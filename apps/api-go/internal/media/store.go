@@ -19,6 +19,7 @@ type Asset struct {
 	StorageKey       string    `json:"-"`
 	OriginalFilename string    `json:"-"`
 	UploadedBy       *string   `json:"-"`
+	Revocable        bool      `json:"-"`
 	CreatedAt        time.Time `json:"createdAt"`
 }
 
@@ -86,11 +87,15 @@ func (s *Store) GetAsset(ctx context.Context, id string) (*Asset, error) {
 
 	a := &Asset{}
 	err := s.db.QueryRow(ctx,
-		`SELECT id, mime_type, byte_size, object_key, owner_user_id, created_at
+		`SELECT id, mime_type, byte_size, object_key, owner_user_id, created_at,
+		 (COALESCE(provenance->>'flashcardPendingRights','false') = 'true' OR
+		 EXISTS (SELECT 1 FROM learning.card_media_link WHERE asset_id=media.asset.id AND role='primary_image'))
 		 FROM media.asset
-		 WHERE id = $1 AND status = 'active'`,
+		 WHERE id = $1 AND status = 'active' AND (rights_status='cleared' OR
+		 (COALESCE(provenance->>'flashcardPendingRights','false') <> 'true' AND NOT EXISTS
+		 (SELECT 1 FROM learning.card_media_link WHERE asset_id=media.asset.id AND role='primary_image')))`,
 		id,
-	).Scan(&a.ID, &a.ContentType, &a.SizeBytes, &a.StorageKey, &a.UploadedBy, &a.CreatedAt)
+	).Scan(&a.ID, &a.ContentType, &a.SizeBytes, &a.StorageKey, &a.UploadedBy, &a.CreatedAt, &a.Revocable)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil

@@ -24,7 +24,7 @@ import type { DeckLabels } from "./deck-browser";
 import { deckDisplayDesc, deckDisplayTitle } from "./deck-card";
 import type { DeckApiRow } from "./deck-types";
 import { DeckComposerPanel, type DeckComposerInitialData } from "./deck-composer-panel";
-import { DeckStudySession } from "./deck-study-session";
+import { DeckStudySession, type DeckStudyMedia } from "./deck-study-session";
 
 type DeckDetailCardRow = {
   card: {
@@ -42,12 +42,6 @@ type DeckDetailCardRow = {
   position: number;
   primaryAudio?: DeckStudyMedia | null;
   primaryImage?: DeckStudyMedia | null;
-};
-
-type DeckStudyMedia = {
-  assetId: string;
-  mimeType: string;
-  readUrl: string | null;
 };
 
 type DeckStudyExample = {
@@ -117,9 +111,7 @@ export function DeckDetailClient({
     setLoading(true);
     setError(null);
     try {
-      const r = await learnerApiFetch(
-        `/api/flashcards/decks/${encodeURIComponent(deckId)}`
-      );
+      const r = await learnerApiFetch(`/api/flashcards/decks/${encodeURIComponent(deckId)}`);
       if (!r.ok) {
         setDeck(null);
         setError(r.status === 404 ? labels.deckDetailNotFound : labels.error);

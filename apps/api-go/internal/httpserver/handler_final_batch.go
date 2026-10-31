@@ -1324,9 +1324,9 @@ func getPublicDeckHandler(store *flashcarddeck.Store, logger *slog.Logger) http.
 
 // postMediaSearchImagesHandler implements POST /api/media/search-images.
 // Authenticated learner route with CSRF protection.
-func postMediaSearchImagesHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
+func postMediaSearchImagesHandler(db *pgxpool.Pool, logger *slog.Logger, services ...*ImageSearchService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, ok := authn.GetLearnerIdentity(r.Context())
+		identity, ok := authn.GetLearnerIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
@@ -1335,16 +1335,29 @@ func postMediaSearchImagesHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 			Query string `json:"query"`
 			Limit int    `json:"limit"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
 		req.Query = strings.TrimSpace(req.Query)
-		if len([]rune(req.Query)) < 2 {
-			writeJSONError(w, "query must contain at least 2 characters", http.StatusBadRequest)
+		if len([]rune(req.Query)) < 2 || len(req.Query) > 200 || req.Limit < 0 || req.Limit > 10 {
+			writeJSONError(w, "invalid image search query or limit", http.StatusBadRequest)
 			return
 		}
-		logger.Warn("media image search unavailable: Go API provider integration and credentials are missing")
+		if len(services) > 0 && services[0] != nil {
+			allowed, err := services[0].Allow(r.Context(), identity.UserID)
+			if err != nil {
+				writeJSONError(w, "image search unavailable", http.StatusServiceUnavailable)
+				return
+			}
+			if !allowed {
+				writeJSONError(w, "too many requests", http.StatusTooManyRequests)
+				return
+			}
+			writeJSONError(w, "image search selection unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		logger.Warn("media image search unavailable: selection integration is not ready")
 		writeJSONError(w, "image search unavailable: Go API provider integration is missing; configure UNSPLASH_ACCESS_KEY or PIXABAY_API_KEY", http.StatusServiceUnavailable)
 	}
 }
@@ -1544,6 +1557,7 @@ func postMediaPresignUploadHandler(db *pgxpool.Pool, bucket *blob.Bucket, rateLi
 		var req struct {
 			Filename    string `json:"fileName"`
 			ContentType string `json:"mimeType"`
+			Purpose     string `json:"purpose"`
 		}
 		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
@@ -1573,9 +1587,10 @@ func postMediaPresignUploadHandler(db *pgxpool.Pool, bucket *blob.Bucket, rateLi
 		signatureHash := sha256.Sum256([]byte(signature))
 		expiresAt := time.Now().Add(15 * time.Minute).Unix()
 		provenance, _ := json.Marshal(map[string]any{
-			"originalFilename":    filename,
-			"uploadExpiresAt":     expiresAt,
-			"uploadSignatureHash": hex.EncodeToString(signatureHash[:]),
+			"originalFilename":       filename,
+			"uploadExpiresAt":        expiresAt,
+			"uploadSignatureHash":    hex.EncodeToString(signatureHash[:]),
+			"flashcardPendingRights": req.Purpose == "flashcard",
 		})
 		tx, err := db.Begin(r.Context())
 		if err != nil {

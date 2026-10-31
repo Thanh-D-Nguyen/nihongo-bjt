@@ -2,6 +2,10 @@
 
 const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
 
+export function learnerMediaUrl(url: string): string {
+  return url.startsWith("/api/media/") ? `${apiBaseUrl}${url}` : url;
+}
+
 export class LearnerSessionError extends Error {
   constructor(message: string) {
     super(message);

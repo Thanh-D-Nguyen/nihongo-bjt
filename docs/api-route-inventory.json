@@ -1,11 +1,11 @@
 {
   "scope": "Static /api inventory of direct NewRouter registrations (excludes /health and /ws). Conditions do not prove runtime availability.",
-  "sourceRegisteredOperations": 639,
-  "openAPIOperations": 639,
+  "sourceRegisteredOperations": 641,
+  "openAPIOperations": 641,
   "verifiedContracts": 0,
   "testEvidencedContracts": 13,
-  "sourceOnlyContracts": 626,
-  "unverifiedContracts": 639,
+  "sourceOnlyContracts": 628,
+  "unverifiedContracts": 641,
   "runtimeVerifiedOperations": 0,
   "families": {
     "Admin / actors": {
@@ -239,7 +239,7 @@
       "testEvidencedContracts": 3
     },
     "Media": {
-      "routes": 8,
+      "routes": 10,
       "verifiedContracts": 0,
       "testEvidencedContracts": 0
     },
@@ -31282,6 +31282,59 @@
     },
     {
       "method": "POST",
+      "path": "/api/media/image-selections",
+      "handler": "selectionHandler",
+      "family": "Media",
+      "guards": [
+        "learnerGuard",
+        "authn.CSRFGuard(csrfCfg)"
+      ],
+      "runtimeConditions": [
+        "deps.DBPool != nil && deps.SessionStore != nil"
+      ],
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [
+          "learnerGuard",
+          "authn.CSRFGuard(csrfCfg)"
+        ],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [],
+        "status": "unverified",
+        "subject": "handler integration tests"
+      },
+      "contract": {
+        "method": "post",
+        "openAPIPath": "/api/media/image-selections",
+        "status": "unverified"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [
+          "deps.DBPool != nil && deps.SessionStore != nil"
+        ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
+      "method": "POST",
       "path": "/api/media/presign-upload",
       "handler": "postMediaPresignUploadHandler(deps.DBPool, deps.MediaBucket, deps.RateLimiter, deps.Logger)",
       "family": "Media",
@@ -31389,7 +31442,7 @@
     {
       "method": "POST",
       "path": "/api/media/search-images",
-      "handler": "postMediaSearchImagesHandler(deps.DBPool, deps.Logger)",
+      "handler": "searchHandler",
       "family": "Media",
       "guards": [
         "learnerGuard",
@@ -31588,6 +31641,59 @@
       "runtimeAvailability": {
         "sourceConditions": [
           "deps.MediaStore != nil && deps.MediaBucket != nil"
+        ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/media/{id}/private-preview",
+      "handler": "getPrivateImageAssetHandler(deps.DBPool, deps.MediaBucket, deps.Logger)",
+      "family": "Media",
+      "guards": [
+        "learnerGuard",
+        "authn.CSRFGuard(csrfCfg)"
+      ],
+      "runtimeConditions": [
+        "deps.DBPool != nil && deps.SessionStore != nil"
+      ],
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [
+          "learnerGuard",
+          "authn.CSRFGuard(csrfCfg)"
+        ],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [],
+        "status": "unverified",
+        "subject": "handler integration tests"
+      },
+      "contract": {
+        "method": "get",
+        "openAPIPath": "/api/media/{id}/private-preview",
+        "status": "unverified"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [
+          "deps.DBPool != nil && deps.SessionStore != nil"
         ],
         "status": "not-runtime-verified"
       }

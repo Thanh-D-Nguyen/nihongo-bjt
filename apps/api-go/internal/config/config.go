@@ -13,17 +13,21 @@ import (
 
 // Config holds all validated application configuration.
 type Config struct {
-	Port                 string
-	DatabaseURL          string
-	RedisURL             string
-	LogLevel             string
-	ServerReadTimeout    time.Duration
-	ServerWriteTimeout   time.Duration
-	ServerIdleTimeout    time.Duration
-	ShutdownTimeout      time.Duration
-	DBPoolMaxConns       int32
-	DBPoolMinConns       int32
-	DBConnAcquireTimeout time.Duration
+	Port                     string
+	DatabaseURL              string
+	RedisURL                 string
+	UnsplashAccessKey        string
+	PixabayAPIKey            string
+	PexelsAPIKey             string
+	ImageSelectionSigningKey string
+	LogLevel                 string
+	ServerReadTimeout        time.Duration
+	ServerWriteTimeout       time.Duration
+	ServerIdleTimeout        time.Duration
+	ShutdownTimeout          time.Duration
+	DBPoolMaxConns           int32
+	DBPoolMinConns           int32
+	DBConnAcquireTimeout     time.Duration
 
 	// CORSOrigins is the parsed list of trusted origins for CSRF validation.
 	// Sourced from CORS_ORIGINS env var (comma-separated). Empty is valid but
@@ -144,31 +148,35 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		Port:                 port,
-		DatabaseURL:          dbURL,
-		RedisURL:             os.Getenv("REDIS_URL"), // optional; empty = skip Redis in readiness
-		LogLevel:             getEnv("LOG_LEVEL", "info"),
-		ServerReadTimeout:    readTimeout,
-		ServerWriteTimeout:   writeTimeout,
-		ServerIdleTimeout:    idleTimeout,
-		ShutdownTimeout:      shutdownTimeout,
-		DBPoolMaxConns:       maxConns,
-		DBPoolMinConns:       minConns,
-		DBConnAcquireTimeout: acquireTimeout,
-		CORSOrigins:          corsOrigins,
-		TrustedProxyCIDRs:    trustedProxyCIDRs,
-		MediaBasePath:        mediaBasePath,
-		MeilisearchURL:       os.Getenv("MEILISEARCH_URL"),
-		MeilisearchAPIKey:    os.Getenv("MEILISEARCH_API_KEY"),
-		StripeWebhookSecret:  os.Getenv("STRIPE_WEBHOOK_SECRET"),
-		CookieSecure:         strings.ToLower(os.Getenv("COOKIE_SECURE")) != "false",
-		SMTPAddress:          smtpAddress,
-		SMTPFrom:             getEnv("SMTP_FROM", "no-reply@kotobawork.local"),
-		SMTPUsername:         os.Getenv("SMTP_USERNAME"),
-		SMTPPassword:         os.Getenv("SMTP_PASSWORD"),
-		SMTPRequireStartTLS:  smtpRequireStartTLS,
-		WebPublicURL:         webPublicURL,
-		GoogleOAuthClientID:  strings.TrimSpace(os.Getenv("GOOGLE_OAUTH_CLIENT_ID")),
+		Port:                     port,
+		DatabaseURL:              dbURL,
+		RedisURL:                 os.Getenv("REDIS_URL"), // optional; empty = skip Redis in readiness
+		UnsplashAccessKey:        os.Getenv("UNSPLASH_ACCESS_KEY"),
+		PixabayAPIKey:            os.Getenv("PIXABAY_API_KEY"),
+		PexelsAPIKey:             os.Getenv("PEXELS_API_KEY"),
+		ImageSelectionSigningKey: os.Getenv("IMAGE_SELECTION_SIGNING_KEY"),
+		LogLevel:                 getEnv("LOG_LEVEL", "info"),
+		ServerReadTimeout:        readTimeout,
+		ServerWriteTimeout:       writeTimeout,
+		ServerIdleTimeout:        idleTimeout,
+		ShutdownTimeout:          shutdownTimeout,
+		DBPoolMaxConns:           maxConns,
+		DBPoolMinConns:           minConns,
+		DBConnAcquireTimeout:     acquireTimeout,
+		CORSOrigins:              corsOrigins,
+		TrustedProxyCIDRs:        trustedProxyCIDRs,
+		MediaBasePath:            mediaBasePath,
+		MeilisearchURL:           os.Getenv("MEILISEARCH_URL"),
+		MeilisearchAPIKey:        os.Getenv("MEILISEARCH_API_KEY"),
+		StripeWebhookSecret:      os.Getenv("STRIPE_WEBHOOK_SECRET"),
+		CookieSecure:             strings.ToLower(os.Getenv("COOKIE_SECURE")) != "false",
+		SMTPAddress:              smtpAddress,
+		SMTPFrom:                 getEnv("SMTP_FROM", "no-reply@kotobawork.local"),
+		SMTPUsername:             os.Getenv("SMTP_USERNAME"),
+		SMTPPassword:             os.Getenv("SMTP_PASSWORD"),
+		SMTPRequireStartTLS:      smtpRequireStartTLS,
+		WebPublicURL:             webPublicURL,
+		GoogleOAuthClientID:      strings.TrimSpace(os.Getenv("GOOGLE_OAUTH_CLIENT_ID")),
 	}
 	return cfg, nil
 }
