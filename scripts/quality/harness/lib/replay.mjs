@@ -142,11 +142,11 @@ export function replayAll(root, policy, { base, head, tasks, inPlace, env = {} }
       });
       continue;
     }
-    const diffPaths = changedBetween(root, base, commit);
     // RED is "before this task": its own start_head when that is inside the range history, else the range base.
     // Works for PRs behind main: start_head only has to lie between the fork point and the closing commit.
     const forkPoint = git(root, ["merge-base", base, commit], { allowFail: true }).stdout.trim();
     const taskBase = task.start_head && forkPoint && isAncestor(root, forkPoint, task.start_head) && isAncestor(root, task.start_head, commit) ? task.start_head : base;
+    const diffPaths = changedBetween(root, taskBase, commit);
     const replay = (treeRoot) => replayTaskInTree(treeRoot, policy, task, taskBase, diffPaths, env);
     let r;
     if (inPlace && commit === headSha(root)) {

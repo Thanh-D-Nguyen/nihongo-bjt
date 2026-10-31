@@ -1,0 +1,282 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "CI-302",
+  "title": "Replay all task changes from its historical base",
+  "start_head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Replays historical task production changes even when unchanged in the push range"
+      },
+      {
+        "id": "AC2",
+        "text": "Invalid RED remains rejected and existing replay checks remain enforced"
+      }
+    ],
+    "expected_behavior": "Replay reverts task-owned production changes from the selected task base through closing commit",
+    "observed_behavior": "RED replay excludes task production changes already present at the push base",
+    "rollback_plan": "Revert the replay selection fix and investigate failures"
+  },
+  "classification": {
+    "classes": [
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "scripts/quality/harness/replay-range.test.ts",
+      "test": "replays task production changed before the push base",
+      "expect": "red is required but the task changes no revertible production file"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-31T03:25:35.180Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-31T03:25:39.080Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-31T03:25:39.394Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-31T03:26:25.785Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-31T03:27:07.169Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-31T03:29:28.985Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-31T03:29:43.099Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-31T03:32:20.994Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-31T03:32:45.713Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-31T03:32:57.194Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-31T03:26:25.563Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/replay-range.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/replay-range.test.ts::replays task production changed before the push base",
+          "outcome": "FAIL",
+          "excerpt": "✗ FX-1 red: red is required but the task changes no revertible production file — a RED cannot be demonstrated ✓ FX-1 green: 1 target(s) pass on the final code RESULT: VIOLATION — 1 replay step(s) failed — recorded TDD evidence does not hold for the code being merged : expected 1 to be +0 // Object.i…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/replay-range.test.ts::replays task production changed before the push base": "red is required but the task changes no revertible production file"
+      },
+      "fingerprint": "3b8741e39c7c7581b159a7c7c26b9d40d71b7825a4de24dd265e3d89bd3070e6"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-31T03:26:37.055Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/replay-range.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/replay-range.test.ts::replays task production changed before the push base",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "✗ FX-1 red: red is required but the task changes no revertible production file — a RED cannot be demonstrated ✓ FX-1 green: 1 target(s) pass on the final code RESULT: VIOLATION — 1 replay step(s) failed — recorded TDD evidence does not hold for the code being merged : expected 1 to be +0 // Object.i…"
+        }
+      ],
+      "fingerprint": "d1e1af170675cc9160630a4d631755d38dbed87cf19b3a5dcfa92ab88dadabb7"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-31T03:26:57.471Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/replay-range.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/replay-range.test.ts::replays task production changed before the push base",
+          "outcome": "FAIL",
+          "excerpt": "✗ FX-1 red: red is required but the task changes no revertible production file — a RED cannot be demonstrated ✓ FX-1 green: 1 target(s) pass on the final code RESULT: VIOLATION — 1 replay step(s) failed — recorded TDD evidence does not hold for the code being merged : expected 1 to be +0 // Object.i…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/replay-range.test.ts::replays task production changed before the push base": "red is required but the task changes no revertible production file"
+      },
+      "fingerprint": "02990c179710eea48004bf88aeb6e310164f7a1ea79536e5ae6110eb5cc1813f"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-31T03:27:06.850Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/replay-range.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/replay-range.test.ts::replays task production changed before the push base",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "02990c179710eea48004bf88aeb6e310164f7a1ea79536e5ae6110eb5cc1813f"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-31T03:29:28.658Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 1,
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/replay-range.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/replay-range.test.ts::replays task production changed before the push base",
+          "outcome": "FAIL",
+          "excerpt": "✗ FX-1 red: red is required but the task changes no revertible production file — a RED cannot be demonstrated ✓ FX-1 green: 1 target(s) pass on the final code RESULT: VIOLATION — 1 replay step(s) failed — recorded TDD evidence does not hold for the code being merged : expected 1 to be +0 // Object.i…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/replay-range.test.ts::replays task production changed before the push base": "red is required but the task changes no revertible production file"
+      },
+      "fingerprint": "e81cc7756b25bc876942baf4fd1adc7687bc9b6934f0b439cc107da9f91d70d8"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-31T03:29:42.756Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/replay-range.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/replay-range.test.ts::replays task production changed before the push base",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e81cc7756b25bc876942baf4fd1adc7687bc9b6934f0b439cc107da9f91d70d8"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-31T03:32:20.758Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 268,
+        "executed": 268,
+        "passed": 268,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "e81cc7756b25bc876942baf4fd1adc7687bc9b6934f0b439cc107da9f91d70d8"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-31T03:32:45.474Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Avicenna",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "e81cc7756b25bc876942baf4fd1adc7687bc9b6934f0b439cc107da9f91d70d8"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-31T03:32:57.176Z",
+    "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+    "fingerprint": "e81cc7756b25bc876942baf4fd1adc7687bc9b6934f0b439cc107da9f91d70d8",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_harness": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "scripts/quality/harness/lib/replay.mjs": "170dcef2913254a1a38db553c59ff4a389d255e3",
+      "scripts/quality/harness/replay-range.test.ts": "7f59d8c89aecac7feae5cc7c90e806bb36e9204a"
+    }
+  }
+}
