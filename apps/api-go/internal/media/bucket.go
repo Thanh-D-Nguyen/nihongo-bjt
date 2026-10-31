@@ -15,7 +15,8 @@ func OpenBucket(basePath string) (*blob.Bucket, error) {
 	if err := os.MkdirAll(basePath, 0o755); err != nil {
 		return nil, fmt.Errorf("media: create base path %q: %w", basePath, err)
 	}
-	bucket, err := fileblob.OpenBucket(basePath, nil)
+	// Keep temporary files on the bucket filesystem so the final rename is atomic.
+	bucket, err := fileblob.OpenBucket(basePath, &fileblob.Options{NoTempDir: true})
 	if err != nil {
 		return nil, fmt.Errorf("media: open fileblob bucket: %w", err)
 	}

@@ -22,6 +22,16 @@ async function click(text: string) {
 }
 afterEach(() => { if (root) act(() => root.unmount()); host?.remove(); vi.resetAllMocks(); });
 
+it("uses theme-aware backgrounds and text for card fields", async () => {
+  await render();
+  for (const placeholder of ["composerTermPlaceholder", "composerReadingPlaceholder", "composerDefinitionPlaceholder"]) {
+    const field = host.querySelector<HTMLElement>(`[placeholder="${placeholder}"]`);
+    expect(field).not.toBeNull();
+    expect(field!.classList.contains("bg-surface")).toBe(true);
+    expect(field!.classList.contains("text-ink")).toBe(true);
+  }
+});
+
 it("sends an explicit removal when editing a saved image", async () => {
   vi.mocked(learnerApiFetch).mockResolvedValue({ ok: true } as Response);
   await render("edit", "existing-asset");

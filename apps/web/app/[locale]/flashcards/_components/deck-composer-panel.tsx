@@ -1279,7 +1279,7 @@ export function DeckComposerPanel({
                       {labels.composerTermPlaceholder}
                     </label>
                     <textarea
-                      className="min-h-[4.5rem] w-full resize-y rounded-lg border border-accent/20 bg-white/80 px-3 py-2 text-sm text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
+                      className="min-h-[4.5rem] w-full resize-y rounded-lg border border-accent/20 bg-surface px-3 py-2 text-sm text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
                       id={`${formId}-f-${r.id}`}
                       lang="ja"
                       maxLength={500}
@@ -1313,7 +1313,7 @@ export function DeckComposerPanel({
                     </div>
                     {/* Reading / furigana */}
                     <input
-                      className="mt-2 min-h-9 w-full rounded-lg border border-accent/15 bg-white/60 px-3 text-xs text-ink outline-none transition placeholder:text-muted/40 focus:border-accent focus:ring-1 focus:ring-accent"
+                      className="mt-2 min-h-9 w-full rounded-lg border border-accent/15 bg-surface px-3 text-xs text-ink outline-none transition placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent"
                       id={`${formId}-r-${r.id}`}
                       lang="ja"
                       maxLength={300}
@@ -1345,7 +1345,7 @@ export function DeckComposerPanel({
                       {labels.composerDefinitionPlaceholder}
                     </label>
                     <textarea
-                      className="min-h-[4.5rem] w-full resize-y rounded-lg border border-ink/12 bg-white/80 px-3 py-2 text-sm text-ink outline-none transition focus:border-leaf focus:ring-1 focus:ring-leaf"
+                      className="min-h-[4.5rem] w-full resize-y rounded-lg border border-ink/12 bg-surface px-3 py-2 text-sm text-ink outline-none transition focus:border-leaf focus:ring-1 focus:ring-leaf"
                       id={`${formId}-b-${r.id}`}
                       maxLength={2000}
                       onChange={(e) => {
