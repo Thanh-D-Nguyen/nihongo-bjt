@@ -63,8 +63,12 @@ elif name == "docker" and args[:1] == ["compose"]:
         else:
             state["images"] = {app: f"new-{sha}-{app}" for app in state["images"]}
     elif "run" in args:
-        assert args[-1] == "migrations", args
-        state["migrations"] += 1
+        if args[-1] == "migrations":
+            state["migrations"] += 1
+        else:
+            assert args[-4:-1] == ["sh", "api", "-c"] and "mktemp /srv/kotobawork/data/media/" in args[-1], args
+            if mode == "media-unwritable":
+                sys.exit(42)
     elif "build" not in args and args[-2:] != ["config", "--quiet"]:
         raise AssertionError(args)
 elif name == "docker" and args == ["exec", "oci-caddy-1", "cat", "/etc/caddy/Caddyfile"]:
@@ -158,6 +162,9 @@ def check_release(scenario):
             assert state["migrations"] == state["curls"] == 0, detail
             assert not any(call[0:2] == ["docker", "compose"] and "up" in call for call in calls), detail
             assert state["gh"] == (1 if scenario == "superseded" else 2), detail
+        elif scenario == "media-unwritable":
+            assert result.returncode == 42 and state["migrations"] == 0, detail
+            assert state["images"] == OLD_IMAGES and state["reloads"] == [] and state["curls"] == 0, detail
         else:
             assert state["migrations"] == 1 and state["gh"] == 2, detail
             assert state["reloads"] and state["reloads"][0] == "new caddy\n", detail
@@ -166,6 +173,7 @@ def check_release(scenario):
             assert backup.stat().st_mode & 0o077 == 0, "backup must be private"
             if scenario == "success":
                 assert result.returncode == 0 and state["curls"] == 4, detail
+                assert any(call[0:2] == ["docker", "compose"] and "run" in call and "mktemp /srv/kotobawork/data/media/" in call[-1] for call in calls), detail
                 assert state["images"] == {app: f"new-{SHA}-{app}" for app in OLD_IMAGES}, detail
                 assert state["reloads"] == ["new caddy\n"], detail
             else:
@@ -197,6 +205,6 @@ def check_sources():
 if __name__ == "__main__":
     if not __debug__:
         sys.exit("Run without -O: this selfcheck requires assertions")
-    for scenario in ("unbaselined", "superseded", "superseded-during-build", "success", "curl-fails", "public-curl-fails", "term"):
+    for scenario in ("unbaselined", "superseded", "superseded-during-build", "success", "media-unwritable", "curl-fails", "public-curl-fails", "term"):
         check_release(scenario)
     check_sources()

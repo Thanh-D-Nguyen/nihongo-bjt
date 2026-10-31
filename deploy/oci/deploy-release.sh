@@ -79,6 +79,10 @@ if [ "$latest_sha" != "$DEPLOY_SHA" ]; then
   printf 'Release superseded during build; no production mutation.\n'
   exit 0
 fi
+# Verify the new API image can actually create files on the persistent mount
+# before running migrations or switching the serving containers.
+"${compose[@]}" run --rm --no-deps --entrypoint sh api -c \
+  'set -eu; f=$(mktemp /srv/kotobawork/data/media/.deploy-write-check.XXXXXX); rm -- "$f"'
 "${compose[@]}" --profile tools run --rm --no-deps migrations
 switched=1
 cp "$OCI_SOURCE_DIR/deploy/oci/Caddyfile" "$base/deploy/oci/Caddyfile"
