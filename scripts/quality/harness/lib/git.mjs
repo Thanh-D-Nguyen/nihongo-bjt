@@ -1,7 +1,7 @@
 // Git helpers. Artifact identity is always an immutable object id (commit,
 // tree or blob), never a branch name.
 import { spawnSync } from "node:child_process";
-import { existsSync, lstatSync, mkdtempSync, readdirSync, rmSync, symlinkSync } from "node:fs";
+import { existsSync, lstatSync, mkdtempSync, readdirSync, readlinkSync, rmSync, symlinkSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -55,13 +55,36 @@ export function dirtyPaths(root) {
   return zsplit(out).map((entry) => entry.slice(3)).sort();
 }
 
-/** Blob ids of working-tree files (null when the path does not exist as a regular file). */
+/** Inspect a Git path without traversing a symlink in any parent component. */
+export function worktreeStat(root, file) {
+  const parts = file.split("/");
+  let current = root;
+  try {
+    for (let i = 0; i < parts.length; i++) {
+      current = path.join(current, parts[i]);
+      const stat = lstatSync(current);
+      if (i === parts.length - 1) return stat;
+      if (!stat.isDirectory()) return null;
+    }
+  } catch (error) {
+    if (!["ENOENT", "ENOTDIR"].includes(error.code)) throw error;
+  }
+  return null;
+}
+
+/** Blob ids of working-tree files and symlinks (null when absent). */
 export function worktreeBlobs(root, paths) {
   const result = {};
   const present = [];
   for (const p of paths) {
     const abs = path.join(root, p);
-    if (existsSync(abs) && lstatSync(abs).isFile()) present.push(p);
+    const stat = worktreeStat(root, p);
+    if (!stat) {
+      result[p] = null;
+      continue;
+    }
+    if (stat.isSymbolicLink()) result[p] = `symlink:${git(root, ["hash-object", "--stdin"], { input: readlinkSync(abs) }).stdout.trim()}`;
+    else if (stat.isFile()) present.push(p);
     else result[p] = null;
   }
   if (present.length) {
@@ -81,15 +104,15 @@ export function blobsAt(root, rev, paths) {
     const separator = entry.indexOf("\t");
     const meta = entry.slice(0, separator);
     const file = entry.slice(separator + 1);
-    const [, type, id] = meta.split(" ");
-    if (type === "blob" && file in result) result[file] = id;
+    const [mode, type, id] = meta.split(" ");
+    if (type === "blob" && file in result) result[file] = mode === "120000" ? `symlink:${id}` : id;
   }
   return result;
 }
 
 export function showFile(root, rev, file) {
   const id = blobsAt(root, rev, [file])[file];
-  return id === null ? null : git(root, ["cat-file", "blob", id]).stdout;
+  return id === null ? null : git(root, ["cat-file", "blob", id.replace(/^symlink:/u, "")]).stdout;
 }
 
 /** sha256 over sorted `path NUL blob` lines; the content identity of a set of files. */

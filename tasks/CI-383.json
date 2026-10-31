@@ -1,0 +1,257 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "CI-383",
+  "title": "Handle directory symlinks in quality harness",
+  "start_head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Directory symlinks do not crash quality diff scanning and retain Git symlink identity."
+      },
+      {
+        "id": "AC2",
+        "text": "Symlink changes remain subject to ownership, fingerprint and risk checks without reading targets."
+      }
+    ],
+    "expected_behavior": "Scan symlinks using their link content without following targets.",
+    "observed_behavior": "Scanning a changed symlink to a directory throws EISDIR.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "scripts/quality/harness/diffscan.test.ts",
+      "test": "scanDiff > tracks directory and dangling symlinks without following their targets",
+      "expect": "directory symlink must scan without error"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-10-31T03:34:36.789Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-10-31T03:34:47.025Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-10-31T03:34:51.784Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-10-31T03:35:11.988Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-10-31T03:35:31.885Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-10-31T03:42:08.833Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-10-31T05:54:50.379Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-10-31T05:55:01.180Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-10-31T03:35:11.716Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/diffscan.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/diffscan.test.ts::scanDiff > tracks directory and dangling symlinks without following their targets",
+          "outcome": "FAIL",
+          "excerpt": "directory symlink must scan without error: expected 'Error: EISDIR: illegal operation on a…' to be '' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/diffscan.test.ts::scanDiff > tracks directory and dangling symlinks without following their targets": "directory symlink must scan without error"
+      },
+      "fingerprint": "2e3e74429ff17ab41b6907f3cb4974592ddb754617d699ab201b789b22ff11fd"
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-31T03:35:31.450Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/diffscan.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/diffscan.test.ts::scanDiff > tracks directory and dangling symlinks without following their targets",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "2bcd9cb57ec23f0037ff85625c603914fc7e1ac006a1c41083f924b71e9ca8d8"
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-31T03:37:05.898Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/diffscan.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/diffscan.test.ts::scanDiff > tracks directory and dangling symlinks without following their targets",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "cbc371577bc640a8b6fd469ad72ebfefe544ecddafda172f6192253d55187932"
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-31T03:38:21.172Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/diffscan.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/diffscan.test.ts::scanDiff > tracks directory and dangling symlinks without following their targets",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9e22177b1282879cb72cffa959decd74b732e3c90bd997537818d00a0444bfe4"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-31T03:39:11.880Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/diffscan.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/diffscan.test.ts::scanDiff > tracks directory and dangling symlinks without following their targets",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "fe9a8d8a27bfcededb7a39ca07ec3d4434a81428d4a3f7dfce63c88c7e497e37"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-31T03:39:36.475Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/diffscan.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/diffscan.test.ts::scanDiff > tracks directory and dangling symlinks without following their targets",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "86607cd0fd1fe8d4f14fcf90337ebafb2fed7826b5fd55cc97699a56f98b5d83"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-31T03:42:08.484Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 272,
+        "executed": 272,
+        "passed": 272,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "86607cd0fd1fe8d4f14fcf90337ebafb2fed7826b5fd55cc97699a56f98b5d83"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-31T05:54:49.989Z",
+      "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "codex-independent-Gibbs",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "014291bf97d25589bea0ce58cd053d9247d900dd76395837bb2cf229e4e09378",
+      "attested": true,
+      "fingerprint": "86607cd0fd1fe8d4f14fcf90337ebafb2fed7826b5fd55cc97699a56f98b5d83"
+    }
+  ],
+  "closed": {
+    "at": "2026-10-31T05:55:01.160Z",
+    "head": "a94d51b083d46d9e8f3978615ac034ca5ea1eb83",
+    "fingerprint": "86607cd0fd1fe8d4f14fcf90337ebafb2fed7826b5fd55cc97699a56f98b5d83",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_harness": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "scripts/quality/harness/cli.mjs": "8f1b309076d2a4c2452a3e047600ac928a4d191d",
+      "scripts/quality/harness/diffscan.test.ts": "04feb98952343ee493fb157b2b1978b36e0a1f3d",
+      "scripts/quality/harness/lib/diffscan.mjs": "7fb994875fb7992a6ec0492804fef7368256c5f8",
+      "scripts/quality/harness/lib/git.mjs": "63fcce568b137d754367b769d96e6b4cb97d4936"
+    }
+  }
+}

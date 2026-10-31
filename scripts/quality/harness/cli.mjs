@@ -29,7 +29,7 @@ import path from "node:path";
 
 import { lifecycleCheck } from "./lib/check.mjs";
 import { scanDiff } from "./lib/diffscan.mjs";
-import { commitExists, fingerprint, git, headSha, resolveCommit, snapshotWorktree, toplevel, withScratchWorktree } from "./lib/git.mjs";
+import { commitExists, fingerprint, git, headSha, resolveCommit, snapshotWorktree, toplevel, withScratchWorktree, worktreeBlobs } from "./lib/git.mjs";
 import { staleReferences } from "./lib/deletion.mjs";
 import { decidePath } from "./lib/guard.mjs";
 import { checkInvariants } from "./lib/invariants.mjs";
@@ -225,8 +225,7 @@ const commands = {
     const pre = flagList(args, "preexisting");
     if (pre.length) {
       // Adoption: declare exactly which uncommitted changes are someone else's.
-      const blobs = {};
-      for (const p of pre) blobs[p] = existsSync(path.join(ctx.root, p)) ? git(ctx.root, ["hash-object", p]).stdout.trim() : null;
+      const blobs = worktreeBlobs(ctx.root, pre);
       task.preexisting_changes = blobs;
     }
     saveTask(ctx.root, ctx.policy, task);
@@ -452,7 +451,7 @@ const commands = {
     if (!rel || !reason || reason === true) throw violation('usage: pnpm quality disown <path> --reason "<why this change is not part of the task>"');
     if (task.closed) throw violation(`${task.id} is CLOSED`);
     // Safe by construction: a disowned file that is later committed is UNOWNED in CI.
-    const blob = existsSync(path.join(ctx.root, rel)) ? git(ctx.root, ["hash-object", rel]).stdout.trim() : null;
+    const blob = worktreeBlobs(ctx.root, [rel])[rel];
     task.claimed = (task.claimed ?? []).filter((p) => p !== rel);
     task.preexisting_changes = { ...task.preexisting_changes, [rel]: blob };
     task.disowned = [...(task.disowned ?? []), { path: rel, reason: String(reason), at: new Date().toISOString() }];

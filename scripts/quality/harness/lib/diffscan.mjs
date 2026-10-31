@@ -5,10 +5,10 @@
 // Finding identity is line-independent: `<rule>:<path>` (+ `:<detail>` for
 // baselines), so an acknowledgement survives unrelated edits but never covers
 // a different file.
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, readlinkSync } from "node:fs";
 import path from "node:path";
 
-import { git, showFile } from "./git.mjs";
+import { blobsAt, git, showFile, worktreeBlobs, worktreeStat } from "./git.mjs";
 import { pathRule } from "./policy.mjs";
 import { matchesAny, redact } from "./util.mjs";
 
@@ -17,6 +17,8 @@ function fileDiff(root, base, head, file) {
   const args = head ? ["diff", "-U0", "--no-renames", base, head, "--", file] : ["diff", "-U0", "--no-renames", base, "--", file];
   let out = git(root, args).stdout;
   if (!out && !head) {
+    // Git treats directory symlinks as directories in --no-index mode.
+    if (worktreeStat(root, file)?.isSymbolicLink()) return { added: readlinkSync(path.join(root, file)).split("\n"), removed: [] };
     // untracked file: diff against /dev/null
     const r = git(root, ["diff", "-U0", "--no-index", "--", "/dev/null", file], { allowFail: true });
     out = r.stdout;
@@ -34,7 +36,9 @@ function fileDiff(root, base, head, file) {
 function contentAt(root, rev, file) {
   if (rev) return showFile(root, rev, file);
   const abs = path.join(root, file);
-  return existsSync(abs) ? readFileSync(abs, "utf8") : null;
+  const stat = worktreeStat(root, file);
+  if (!stat || (!stat.isFile() && !stat.isSymbolicLink())) return null;
+  return stat.isSymbolicLink() ? readlinkSync(abs) : readFileSync(abs, "utf8");
 }
 
 function ruleApplies(policy, rule, file) {
@@ -71,7 +75,7 @@ export function scanDiff(root, policy, base, head, files) {
         continue;
       }
       if (rule.any_change) {
-        if (before !== after) push(rule, file, "configuration changed");
+        if (before !== after || blobsAt(root, base, [file])[file] !== (head ? blobsAt(root, head, [file])[file] : worktreeBlobs(root, [file])[file])) push(rule, file, "configuration changed");
         continue;
       }
       if (rule.addedLine) {

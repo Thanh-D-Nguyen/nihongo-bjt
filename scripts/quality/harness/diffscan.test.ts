@@ -1,8 +1,11 @@
 // High-risk change scanner against real git diffs.
+import { mkdirSync, rmdirSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { baselineWeakening, scanDiff } from "./lib/diffscan.mjs";
 import { loadPolicy } from "./lib/policy.mjs";
+import { blobsAt, worktreeBlobs } from "./lib/git.mjs";
 import { CALC_GO, CALC_TEST_GO, PATTERNS, makeFixture, type Fixture } from "./fixture";
 
 let fx: Fixture;
@@ -21,6 +24,84 @@ const ids = (changes: Record<string, string | null>) => {
 };
 
 describe("scanDiff", () => {
+  it("tracks directory and dangling symlinks without following their targets", () => {
+    fx = makeFixture();
+    const file = ".claude/skills/link";
+    mkdirSync(path.join(fx.dir, ".claude/skills"), { recursive: true });
+    mkdirSync(path.join(fx.dir, "target"));
+    symlinkSync("../../target", path.join(fx.dir, file));
+    const head = fx.commit("directory symlink");
+    const policy = loadPolicy(fx.dir);
+    let error = "";
+    try { scanDiff(fx.dir, policy, fx.base, null, [file]); } catch (e) { error = String(e); }
+    expect(error, "directory symlink must scan without error").toBe("");
+    expect(worktreeBlobs(fx.dir, [file])[file]).toBe(blobsAt(fx.dir, head, [file])[file]);
+    unlinkSync(path.join(fx.dir, file));
+    symlinkSync("../../missing", path.join(fx.dir, file));
+    expect(worktreeBlobs(fx.dir, [file])[file]).not.toBe(blobsAt(fx.dir, head, [file])[file]);
+    expect(worktreeBlobs(fx.dir, [file])[file]).not.toBeNull();
+    expect(scanDiff(fx.dir, policy, head, null, [file])).toEqual(scanDiff(fx.dir, policy, head, fx.commit("dangling symlink"), [file]));
+  });
+
+  it("distinguishes link type changes and deleted children beneath a replaced directory", () => {
+    fx = makeFixture();
+    const file = "apps/api-go/internal/calc/calc.go";
+    const content = "link-target";
+    fx.write(file, content);
+    const head = fx.commit("regular file");
+    unlinkSync(path.join(fx.dir, file));
+    symlinkSync(content, path.join(fx.dir, file));
+    expect(worktreeBlobs(fx.dir, [file])[file], "file type changes must invalidate evidence").not.toBe(blobsAt(fx.dir, head, [file])[file]);
+    unlinkSync(path.join(fx.dir, file));
+    fx.remove("apps/api-go/internal/calc/calc_test.go");
+    rmdirSync(path.join(fx.dir, "apps/api-go/internal/calc"));
+    writeFileSync(path.join(fx.dir, "apps/api-go/internal/calc"), "replacement");
+    expect(worktreeBlobs(fx.dir, [file])[file]).toBeNull();
+    expect(() => scanDiff(fx.dir, loadPolicy(fx.dir), head, null, [file])).not.toThrow();
+  });
+
+  it("does not follow ancestor links and detects type-only risk changes", () => {
+    fx = makeFixture();
+    const file = "apps/api-go/internal/calc/calc.go";
+    fx.write(file, "link-target");
+    const head = fx.commit("file");
+    unlinkSync(path.join(fx.dir, file));
+    symlinkSync("link-target", path.join(fx.dir, file));
+    const policy = loadPolicy(fx.dir);
+    policy.riskRules.push({ id: "type_probe", severity: "high", regexps: [/calc\.go$/u], any_change: true });
+    expect(scanDiff(fx.dir, policy, head, null, [file]).map((finding: any) => finding.id)).toContain(`type_probe:${file}`);
+    unlinkSync(path.join(fx.dir, file));
+    fx.remove("apps/api-go/internal/calc/calc_test.go");
+    rmdirSync(path.join(fx.dir, "apps/api-go/internal/calc"));
+    mkdirSync(path.join(fx.dir, "other"));
+    writeFileSync(path.join(fx.dir, "other/calc.go"), "link-target");
+    symlinkSync(path.join(fx.dir, "other"), path.join(fx.dir, "apps/api-go/internal/calc"));
+    expect(worktreeBlobs(fx.dir, [file])[file]).toBeNull();
+    expect(scanDiff(fx.dir, policy, head, null, [file]).map((finding: any) => finding.id)).toContain(`type_probe:${file}`);
+  });
+
+  it("checks untracked symlink text against forbidden patterns", () => {
+    fx = makeFixture();
+    const file = "apps/web/linked.test.ts";
+    mkdirSync(path.dirname(path.join(fx.dir, file)), { recursive: true });
+    mkdirSync(path.join(fx.dir, `apps/web/${PATTERNS.only}target`));
+    symlinkSync(`${PATTERNS.only}target`, path.join(fx.dir, file));
+    expect(scanDiff(fx.dir, loadPolicy(fx.dir), fx.base, null, [file]).map((finding: any) => finding.id)).toContain(`test_focus_only:${file}`);
+  });
+
+  it("treats a tracked link replaced by a directory as deleted", () => {
+    fx = makeFixture();
+    const file = "apps/web/linked.test.ts";
+    mkdirSync(path.dirname(path.join(fx.dir, file)), { recursive: true });
+    symlinkSync("missing", path.join(fx.dir, file));
+    const head = fx.commit("link");
+    unlinkSync(path.join(fx.dir, file));
+    mkdirSync(path.join(fx.dir, file));
+    writeFileSync(path.join(fx.dir, file, "child"), "content");
+    expect(() => scanDiff(fx.dir, loadPolicy(fx.dir), head, null, [file])).not.toThrow();
+    expect(worktreeBlobs(fx.dir, [file])[file]).toBeNull();
+  });
+
   it("flags focus, skips and suppressions in the right files only", () => {
     expect(
       ids({
