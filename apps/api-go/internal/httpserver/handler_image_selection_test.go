@@ -180,6 +180,20 @@ func TestImageSelectionFallbackProviderValidation(t *testing.T) {
 	}
 }
 
+func TestDownloadSelectionImageUserAgent(t *testing.T) {
+	client := &http.Client{Transport: selectionTransport(func(r *http.Request) (*http.Response, error) {
+		const want = "KotobaWorks/1.0 (+https://github.com/Thanh-D-Nguyen/nihongo-bjt/issues)"
+		if got := r.UserAgent(); got != want {
+			t.Errorf("downloadSelectionImage User-Agent = %q, want %q", got, want)
+			return &http.Response{StatusCode: http.StatusForbidden, Body: io.NopCloser(strings.NewReader("")), Request: r}, nil
+		}
+		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(mediaAuditFixturePNG)), Request: r}, nil
+	})}
+	if _, _, err := downloadSelectionImage(context.Background(), "wikimedia", "https://upload.wikimedia.org/a.png", client); err != nil {
+		t.Errorf("downloadSelectionImage(wikimedia) error = %v, want success", err)
+	}
+}
+
 func TestDownloadSelectionImageHostsFollowProvider(t *testing.T) {
 	client := &http.Client{Transport: selectionTransport(func(r *http.Request) (*http.Response, error) {
 		return &http.Response{StatusCode: 200, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(mediaAuditFixturePNG)), Request: r}, nil

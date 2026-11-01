@@ -350,6 +350,7 @@ func downloadSelectionImage(ctx context.Context, provider, raw string, client *h
 	if err != nil {
 		return nil, "", err
 	}
+	req.Header.Set("User-Agent", "KotobaWorks/1.0 (+https://github.com/Thanh-D-Nguyen/nihongo-bjt/issues)")
 	response, err := copyClient.Do(req)
 	if err != nil {
 		return nil, "", errors.New("image download failed")
