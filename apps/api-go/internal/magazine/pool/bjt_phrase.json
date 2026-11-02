@@ -1,0 +1,333 @@
+[
+  {
+    "key": "bjt-01",
+    "titleJp": "ビジネス日本語：お世話になっております",
+    "titleVi": "Tiếng Nhật thương mại: お世話になっております",
+    "summaryJp": "ビジネスメールの定番フレーズを学びましょう。",
+    "summaryVi": "Học cụm từ kinh điển trong email công việc.",
+    "contentJson": {
+      "phrase": "お世話になっております",
+      "phraseReading": "おせわになっております",
+      "literalMeaning": "Đang được quý vị chăm sóc (nghĩa gốc)",
+      "usageNote": "ビジネスメールの冒頭で使う定番表現。社外の人に対して使います。",
+      "usageNoteVi": "Biểu hiện mở đầu email kinh doanh. Dùng với người ngoài công ty.",
+      "formality": "formal",
+      "situations": [
+        "ビジネスメールの最初の一文",
+        "電話で社外の人と話す時",
+        "取引先との会話の冒頭"
+      ],
+      "situationsVi": [
+        "Câu đầu tiên trong email công việc",
+        "Khi nói chuyện điện thoại với người ngoài công ty",
+        "Đầu cuộc hội thoại với đối tác"
+      ],
+      "dialogue": [
+        {
+          "speaker": "メール",
+          "text": "株式会社ABC　田中様\n\nいつもお世話になっております。\n株式会社XYZの山田です。",
+          "textVi": "Anh/chị Tanaka, công ty ABC\n\nCảm ơn anh/chị luôn quan tâm.\nTôi là Yamada từ công ty XYZ."
+        }
+      ]
+    },
+    "jlptLevel": "N3",
+    "vocabItems": [
+      {
+        "wordJp": "取引先",
+        "reading": "とりひきさき",
+        "meaningVi": "Đối tác kinh doanh",
+        "pos": "noun",
+        "jlptLevel": "N2",
+        "sentenceJp": "取引先との打ち合わせが午後にあります。",
+        "sentenceVi": "Buổi chiều có buổi họp với đối tác.",
+        "displayOrder": 0
+      },
+      {
+        "wordJp": "ご連絡",
+        "reading": "ごれんらく",
+        "meaningVi": "Liên lạc (kính ngữ)",
+        "pos": "noun",
+        "jlptLevel": "N3",
+        "sentenceJp": "ご連絡いただきありがとうございます。",
+        "sentenceVi": "Cảm ơn đã liên lạc.",
+        "displayOrder": 1
+      },
+      {
+        "wordJp": "ご確認",
+        "reading": "ごかくにん",
+        "meaningVi": "Xác nhận (kính ngữ)",
+        "pos": "noun",
+        "jlptLevel": "N3",
+        "sentenceJp": "添付資料をご確認ください。",
+        "sentenceVi": "Xin hãy xác nhận tài liệu đính kèm.",
+        "displayOrder": 2
+      },
+      {
+        "wordJp": "ご検討",
+        "reading": "ごけんとう",
+        "meaningVi": "Xem xét (kính ngữ)",
+        "pos": "noun",
+        "jlptLevel": "N2",
+        "sentenceJp": "ご検討のほど、よろしくお願いいたします。",
+        "sentenceVi": "Mong được quý vị xem xét.",
+        "displayOrder": 3
+      }
+    ],
+    "quizzes": [
+      {
+        "questionJp": "ビジネスメールの最初に社外の人に書く定番の一文は？",
+        "questionVi": "Câu mở đầu kinh điển trong email gửi người ngoài công ty?",
+        "quizType": "multiple_choice",
+        "options": [
+          "お世話になっております",
+          "お疲れ様です",
+          "おはようございます",
+          "こんにちは"
+        ],
+        "correctAnswer": "お世話になっております",
+        "explanationJp": "「お世話になっております」は社外の人へのビジネスメール冒頭の定番です。社内の人には「お疲れ様です」を使います。",
+        "explanationVi": "「お世話になっております」là mở đầu email kinh doanh gửi người ngoài công ty. Với người trong công ty dùng「お疲れ様です」.",
+        "displayOrder": 0
+      },
+      {
+        "questionJp": "「ご確認ください」の「ご」はなぜ付いていますか？",
+        "questionVi": "Tại sao「ご確認ください」có chữ「ご」?",
+        "quizType": "multiple_choice",
+        "options": [
+          "Kính ngữ, thể hiện sự tôn trọng",
+          "Nhấn mạnh ý nghĩa",
+          "Phủ định",
+          "Số nhiều"
+        ],
+        "correctAnswer": "Kính ngữ, thể hiện sự tôn trọng",
+        "explanationJp": "「ご」は尊敬を表す接頭語です。相手の動作に付けて丁寧にします。漢語には「ご」、和語には「お」を使います。",
+        "explanationVi": "「ご」là tiền tố kính ngữ. Gắn vào hành động của đối phương để lịch sự hơn. Từ Hán dùng「ご」, từ thuần Nhật dùng「お」.",
+        "displayOrder": 1
+      }
+    ]
+  },
+  {
+    "key": "bjt-02",
+    "titleJp": "ビジネス日本語：承知いたしました",
+    "titleVi": "Tiếng Nhật thương mại: 承知いたしました",
+    "summaryJp": "「わかりました」のビジネス版を学びましょう。",
+    "summaryVi": "Học phiên bản lịch sự của \"tôi hiểu rồi\" trong kinh doanh.",
+    "contentJson": {
+      "phrase": "承知いたしました",
+      "phraseReading": "しょうちいたしました",
+      "literalMeaning": "Tôi đã nhận biết / hiểu rồi (cực kính ngữ)",
+      "usageNote": "上司やクライアントからの依頼を受ける時に使う。「了解しました」より丁寧。",
+      "usageNoteVi": "Dùng khi nhận yêu cầu từ cấp trên hoặc khách hàng. Lịch sự hơn「了解しました」.",
+      "formality": "very_formal",
+      "situations": [
+        "上司からの指示を受けた時",
+        "クライアントからのリクエストに応える時",
+        "メールで依頼を受諾する時"
+      ],
+      "situationsVi": [
+        "Khi nhận chỉ thị từ cấp trên",
+        "Khi đáp ứng yêu cầu từ khách hàng",
+        "Khi chấp nhận yêu cầu trong email"
+      ],
+      "dialogue": [
+        {
+          "speaker": "上司",
+          "text": "この報告書、明日の朝までに仕上げてくれる？",
+          "textVi": "Bản báo cáo này, hoàn thành trước sáng mai được không?"
+        },
+        {
+          "speaker": "部下",
+          "text": "承知いたしました。明日の9時までにお送りします。",
+          "textVi": "Vâng, tôi hiểu rồi. Tôi sẽ gửi trước 9 giờ sáng mai."
+        }
+      ]
+    },
+    "jlptLevel": "N2",
+    "vocabItems": [
+      {
+        "wordJp": "承知",
+        "reading": "しょうち",
+        "meaningVi": "Nhận biết, hiểu, chấp nhận",
+        "pos": "noun",
+        "jlptLevel": "N2",
+        "sentenceJp": "ご要望を承知いたしました。",
+        "sentenceVi": "Tôi đã hiểu yêu cầu của quý khách.",
+        "displayOrder": 0
+      },
+      {
+        "wordJp": "了解",
+        "reading": "りょうかい",
+        "meaningVi": "Hiểu, rõ (thông thường hơn)",
+        "pos": "noun",
+        "jlptLevel": "N3",
+        "sentenceJp": "了解です。すぐに対応します。",
+        "sentenceVi": "Tôi hiểu rồi. Sẽ xử lý ngay.",
+        "displayOrder": 1
+      },
+      {
+        "wordJp": "かしこまりました",
+        "reading": "かしこまりました",
+        "meaningVi": "Vâng, tôi hiểu (cực kính — dùng trong dịch vụ)",
+        "pos": "expression",
+        "jlptLevel": "N2",
+        "sentenceJp": "かしこまりました。すぐにお持ちします。",
+        "sentenceVi": "Vâng ạ. Tôi sẽ mang đến ngay.",
+        "displayOrder": 2
+      },
+      {
+        "wordJp": "依頼",
+        "reading": "いらい",
+        "meaningVi": "Yêu cầu, nhờ cậy",
+        "pos": "noun",
+        "jlptLevel": "N2",
+        "sentenceJp": "翻訳の依頼を受けました。",
+        "sentenceVi": "Tôi nhận được yêu cầu dịch thuật.",
+        "displayOrder": 3
+      }
+    ],
+    "quizzes": [
+      {
+        "questionJp": "丁寧さの順番で正しいのはどれですか？",
+        "questionVi": "Thứ tự từ lịch sự nhất đến ít lịch sự nhất?",
+        "quizType": "multiple_choice",
+        "options": [
+          "かしこまりました > 承知いたしました > 了解しました > わかった",
+          "わかった > 了解しました > 承知いたしました > かしこまりました",
+          "了解しました > 承知いたしました > わかった > かしこまりました",
+          "全部同じ"
+        ],
+        "correctAnswer": "かしこまりました > 承知いたしました > 了解しました > わかった",
+        "explanationJp": "「かしこまりました」が最も丁寧で接客で使います。「わかった」は友達同士のカジュアルな表現です。",
+        "explanationVi": "「かしこまりました」lịch sự nhất, dùng trong phục vụ khách. 「わかった」là biểu hiện thân mật giữa bạn bè.",
+        "displayOrder": 0
+      },
+      {
+        "questionJp": "上司に「明日までにやって」と言われたら、何と答えますか？",
+        "questionVi": "Sếp nói \"làm xong trước ngày mai\", bạn trả lời gì?",
+        "quizType": "multiple_choice",
+        "options": [
+          "承知いたしました",
+          "了解",
+          "うん、わかった",
+          "OK〜"
+        ],
+        "correctAnswer": "承知いたしました",
+        "explanationJp": "上司に対しては「承知いたしました」が適切です。「了解」だけだと少し失礼に感じる上司もいます。",
+        "explanationVi": "Với cấp trên,「承知いたしました」là phù hợp. Chỉ nói「了解」có thể bị coi là thiếu lịch sự.",
+        "displayOrder": 1
+      }
+    ]
+  },
+  {
+    "key": "bjt-03",
+    "titleJp": "ビジネス日本語：申し訳ございません",
+    "titleVi": "Tiếng Nhật thương mại: 申し訳ございません",
+    "summaryJp": "ビジネスでの謝罪表現を学びましょう。",
+    "summaryVi": "Học biểu hiện xin lỗi trong kinh doanh.",
+    "contentJson": {
+      "phrase": "申し訳ございません",
+      "phraseReading": "もうしわけございません",
+      "literalMeaning": "Không có lời nào để biện minh (nghĩa gốc)",
+      "usageNote": "「すみません」よりずっと丁寧な謝罪表現。ビジネスシーンでミスをした時に使います。",
+      "usageNoteVi": "Biểu hiện xin lỗi lịch sự hơn nhiều so với「すみません」. Dùng khi mắc lỗi trong công việc.",
+      "formality": "very_formal",
+      "situations": [
+        "仕事でミスをした時",
+        "納期に遅れた時",
+        "お客様にご迷惑をおかけした時"
+      ],
+      "situationsVi": [
+        "Khi mắc lỗi trong công việc",
+        "Khi trễ deadline",
+        "Khi gây phiền cho khách hàng"
+      ],
+      "dialogue": [
+        {
+          "speaker": "社員",
+          "text": "申し訳ございません。確認不足でミスが発生しました。すぐに修正いたします。",
+          "textVi": "Tôi vô cùng xin lỗi. Do thiếu kiểm tra nên đã xảy ra lỗi. Tôi sẽ sửa ngay."
+        },
+        {
+          "speaker": "上司",
+          "text": "次から気をつけてね。",
+          "textVi": "Lần sau chú ý hơn nhé."
+        }
+      ]
+    },
+    "jlptLevel": "N2",
+    "vocabItems": [
+      {
+        "wordJp": "不手際",
+        "reading": "ふてぎわ",
+        "meaningVi": "Sai sót, xử lý kém",
+        "pos": "noun",
+        "jlptLevel": "N1",
+        "sentenceJp": "私の不手際でご迷惑をおかけしました。",
+        "sentenceVi": "Do sai sót của tôi đã gây phiền cho quý khách.",
+        "displayOrder": 0
+      },
+      {
+        "wordJp": "お詫び",
+        "reading": "おわび",
+        "meaningVi": "Lời xin lỗi (kính ngữ)",
+        "pos": "noun",
+        "jlptLevel": "N2",
+        "sentenceJp": "心よりお詫び申し上げます。",
+        "sentenceVi": "Tôi thành tâm xin lỗi.",
+        "displayOrder": 1
+      },
+      {
+        "wordJp": "改善",
+        "reading": "かいぜん",
+        "meaningVi": "Cải thiện, khắc phục",
+        "pos": "noun",
+        "jlptLevel": "N2",
+        "sentenceJp": "再発防止のため、改善策を講じます。",
+        "sentenceVi": "Để phòng ngừa tái phát, chúng tôi sẽ thực hiện biện pháp cải thiện.",
+        "displayOrder": 2
+      },
+      {
+        "wordJp": "再発防止",
+        "reading": "さいはつぼうし",
+        "meaningVi": "Phòng ngừa tái phát",
+        "pos": "noun",
+        "jlptLevel": "N1",
+        "sentenceJp": "再発防止に努めてまいります。",
+        "sentenceVi": "Chúng tôi sẽ nỗ lực phòng ngừa tái phát.",
+        "displayOrder": 3
+      }
+    ],
+    "quizzes": [
+      {
+        "questionJp": "ビジネスで一番丁寧な謝り方は？",
+        "questionVi": "Cách xin lỗi lịch sự nhất trong kinh doanh?",
+        "quizType": "multiple_choice",
+        "options": [
+          "申し訳ございません",
+          "すみません",
+          "ごめんなさい",
+          "悪い！"
+        ],
+        "correctAnswer": "申し訳ございません",
+        "explanationJp": "「申し訳ございません」はビジネスで最も丁寧な謝罪です。「ごめんなさい」は親しい人向け、「悪い」は友達同士です。",
+        "explanationVi": "「申し訳ございません」là lời xin lỗi lịch sự nhất trong kinh doanh. 「ごめんなさい」dùng với người thân, 「悪い」giữa bạn bè.",
+        "displayOrder": 0
+      },
+      {
+        "questionJp": "謝罪メールで「もう同じミスをしない」と伝えたい時は？",
+        "questionVi": "Trong email xin lỗi, muốn nói \"sẽ không lặp lại lỗi\" thì dùng gì?",
+        "quizType": "multiple_choice",
+        "options": [
+          "再発防止に努めます",
+          "気にしないでください",
+          "忘れてください",
+          "仕方がないです"
+        ],
+        "correctAnswer": "再発防止に努めます",
+        "explanationJp": "「再発防止に努めます」は「同じ問題が起こらないように頑張ります」という意味で、謝罪後の定番表現です。",
+        "explanationVi": "「再発防止に努めます」nghĩa là \"sẽ cố gắng không để vấn đề tương tự xảy ra\", là biểu hiện kinh điển sau lời xin lỗi.",
+        "displayOrder": 1
+      }
+    ]
+  }
+]

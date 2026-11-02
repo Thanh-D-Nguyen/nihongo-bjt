@@ -1,0 +1,190 @@
+[
+  {
+    "key": "weather-01",
+    "titleJp": "梅雨入り宣言",
+    "titleVi": "Tuyên bố vào mùa mưa",
+    "summaryJp": "梅雨の始まりに関する天気用語を学びましょう。",
+    "summaryVi": "Học thuật ngữ thời tiết về đầu mùa mưa.",
+    "contentJson": {
+      "city": "東京",
+      "weatherIcon": "rain",
+      "highTemp": 26,
+      "lowTemp": 20,
+      "humidity": 90,
+      "description": "梅雨入り・終日雨",
+      "descriptionVi": "Bắt đầu mùa mưa - mưa cả ngày",
+      "uvIndex": 2,
+      "recommendation": "折りたたみ傘は必須。洗濯物は室内干しにしましょう。",
+      "recommendationVi": "Ô gấp là bắt buộc. Hãy phơi đồ trong nhà."
+    },
+    "jlptLevel": "N4",
+    "vocabItems": [
+      {
+        "wordJp": "梅雨入り",
+        "reading": "つゆいり",
+        "meaningVi": "Bắt đầu mùa mưa",
+        "pos": "noun",
+        "jlptLevel": "N3",
+        "sentenceJp": "関東地方が梅雨入りしました。",
+        "sentenceVi": "Vùng Kanto đã chính thức vào mùa mưa.",
+        "displayOrder": 0
+      },
+      {
+        "wordJp": "湿気",
+        "reading": "しっけ",
+        "meaningVi": "Độ ẩm, hơi ẩm",
+        "pos": "noun",
+        "jlptLevel": "N3",
+        "sentenceJp": "湿気が多くてカビが生えやすいです。",
+        "sentenceVi": "Độ ẩm cao nên dễ bị mốc.",
+        "displayOrder": 1
+      },
+      {
+        "wordJp": "除湿",
+        "reading": "じょしつ",
+        "meaningVi": "Hút ẩm",
+        "pos": "noun",
+        "jlptLevel": "N2",
+        "sentenceJp": "エアコンを除湿モードにしました。",
+        "sentenceVi": "Đã bật chế độ hút ẩm trên điều hòa.",
+        "displayOrder": 2
+      },
+      {
+        "wordJp": "カビ",
+        "reading": "かび",
+        "meaningVi": "Nấm mốc",
+        "pos": "noun",
+        "jlptLevel": "N3",
+        "sentenceJp": "浴室にカビが生えないよう換気しましょう。",
+        "sentenceVi": "Hãy thông gió phòng tắm để không bị mốc.",
+        "displayOrder": 3
+      }
+    ],
+    "quizzes": [
+      {
+        "questionJp": "梅雨の時期に家で気をつけるべきことは？",
+        "questionVi": "Trong mùa mưa nên chú ý gì ở nhà?",
+        "quizType": "multiple_choice",
+        "options": [
+          "カビが生えないよう換気する",
+          "エアコンを暖房にする",
+          "窓を全部開ける",
+          "水を止める"
+        ],
+        "correctAnswer": "カビが生えないよう換気する",
+        "explanationJp": "梅雨は湿度が高いのでカビが発生しやすくなります。換気と除湿が大切です。",
+        "explanationVi": "Mùa mưa độ ẩm cao nên dễ phát sinh nấm mốc. Thông gió và hút ẩm là quan trọng.",
+        "displayOrder": 0
+      },
+      {
+        "questionJp": "「除湿」の「除」はどんな意味ですか？",
+        "questionVi": "「除」trong「除湿」nghĩa là gì?",
+        "quizType": "multiple_choice",
+        "options": [
+          "Loại bỏ, trừ đi",
+          "Thêm vào",
+          "Giữ lại",
+          "Đo lường"
+        ],
+        "correctAnswer": "Loại bỏ, trừ đi",
+        "explanationJp": "「除」は「取り除く」という意味です。「除湿」は湿気を取り除くこと、「除菌」は菌を取り除くことです。",
+        "explanationVi": "「除」nghĩa là \"loại bỏ\". 「除湿」là loại bỏ ẩm, 「除菌」là loại bỏ vi khuẩn.",
+        "displayOrder": 1
+      }
+    ]
+  },
+  {
+    "key": "weather-02",
+    "titleJp": "真夏日の猛暑対策",
+    "titleVi": "Đối phó ngày nóng cực điểm",
+    "summaryJp": "暑い日に使える天気・健康の言葉を学びましょう。",
+    "summaryVi": "Học từ thời tiết và sức khỏe cho ngày nóng.",
+    "contentJson": {
+      "city": "東京",
+      "weatherIcon": "sunny_hot",
+      "highTemp": 36,
+      "lowTemp": 27,
+      "humidity": 65,
+      "description": "猛暑日・熱中症に注意",
+      "descriptionVi": "Ngày nóng cực điểm - cảnh báo say nắng",
+      "uvIndex": 9,
+      "recommendation": "外出は控えめに。水分と塩分をこまめに補給してください。",
+      "recommendationVi": "Hạn chế ra ngoài. Bổ sung nước và muối khoáng thường xuyên."
+    },
+    "jlptLevel": "N3",
+    "vocabItems": [
+      {
+        "wordJp": "熱中症",
+        "reading": "ねっちゅうしょう",
+        "meaningVi": "Say nắng, say nóng",
+        "pos": "noun",
+        "jlptLevel": "N2",
+        "sentenceJp": "真夏は熱中症に気をつけてください。",
+        "sentenceVi": "Giữa mùa hè hãy cẩn thận say nắng.",
+        "displayOrder": 0
+      },
+      {
+        "wordJp": "水分補給",
+        "reading": "すいぶんほきゅう",
+        "meaningVi": "Bổ sung nước",
+        "pos": "noun",
+        "jlptLevel": "N2",
+        "sentenceJp": "のどが渇く前に水分補給をしましょう。",
+        "sentenceVi": "Hãy uống nước trước khi khát.",
+        "displayOrder": 1
+      },
+      {
+        "wordJp": "日焼け",
+        "reading": "ひやけ",
+        "meaningVi": "Cháy nắng",
+        "pos": "noun",
+        "jlptLevel": "N3",
+        "sentenceJp": "日焼け止めを塗ってから外出しましょう。",
+        "sentenceVi": "Hãy thoa kem chống nắng trước khi ra ngoài.",
+        "displayOrder": 2
+      },
+      {
+        "wordJp": "冷房",
+        "reading": "れいぼう",
+        "meaningVi": "Điều hòa mát (cooling)",
+        "pos": "noun",
+        "jlptLevel": "N3",
+        "sentenceJp": "冷房を28度に設定しています。",
+        "sentenceVi": "Tôi đặt điều hòa ở 28 độ.",
+        "displayOrder": 3
+      }
+    ],
+    "quizzes": [
+      {
+        "questionJp": "暑い日に体調が悪くなる症状を何と言いますか？",
+        "questionVi": "Triệu chứng khó chịu vì nóng gọi là gì?",
+        "quizType": "multiple_choice",
+        "options": [
+          "熱中症",
+          "花粉症",
+          "風邪",
+          "腰痛"
+        ],
+        "correctAnswer": "熱中症",
+        "explanationJp": "「熱中症」は暑さで体温調節ができなくなる病気です。めまい、頭痛、吐き気などの症状が出ます。",
+        "explanationVi": "「熱中症」là bệnh khi cơ thể không điều hòa được thân nhiệt do nóng. Triệu chứng: chóng mặt, đau đầu, buồn nôn.",
+        "displayOrder": 0
+      },
+      {
+        "questionJp": "「日焼け止め」は何のために使いますか？",
+        "questionVi": "「日焼け止め」dùng để làm gì?",
+        "quizType": "multiple_choice",
+        "options": [
+          "Ngăn da bị cháy nắng",
+          "Trị đau đầu",
+          "Giữ ấm",
+          "Rửa mặt"
+        ],
+        "correctAnswer": "Ngăn da bị cháy nắng",
+        "explanationJp": "「日焼け止め」は紫外線から肌を守るクリームです。「日焼け」は太陽で肌が焼けること、「止め」は防ぐことです。",
+        "explanationVi": "「日焼け止め」là kem bảo vệ da khỏi tia UV. 「日焼け」= da bị cháy nắng, 「止め」= ngăn chặn.",
+        "displayOrder": 1
+      }
+    ]
+  }
+]

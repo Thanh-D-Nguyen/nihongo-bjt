@@ -1,0 +1,1958 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "MAG-001",
+  "title": "Dedupe magazine content and daily rotation",
+  "start_head": "e893959a25f6ee8737753169067fd5e3bd855878",
+  "preexisting_changes": {
+    ".claude/skills/go-code-review": "symlink:df17f792e897e0a908b949705ff7cf57b58beeda",
+    ".claude/skills/go-concurrency": "symlink:4c965cda14aabb8f6483e771215162ced5ec3f08",
+    ".claude/skills/go-context": "symlink:bb9b8fbcc0649bb811cd95d724fa5c4831e4ed8c",
+    ".claude/skills/go-control-flow": "symlink:0b7ba0924a3a822bc5a51435862bc83bd567e211",
+    ".claude/skills/go-data-structures": "symlink:d937a1e88f64f6840f884d3d5877bdabeaa968b2",
+    ".claude/skills/go-declarations": "symlink:47a646e3f4c9c9d966c5cf4d5b9078cd4d9eab5f",
+    ".claude/skills/go-defensive": "symlink:d120e47f737a289eb9346ea9ec3ed989e415fd36",
+    ".claude/skills/go-documentation": "symlink:90b59882705559d67e34a621c1ed417906fa9e8a",
+    ".claude/skills/go-error-handling": "symlink:9cc07f694dfaa6e96b46f270bfdd604923188eb9",
+    ".claude/skills/go-functional-options": "symlink:f6713171796c21b1a1ac209a229fbfcbd12b83bf",
+    ".claude/skills/go-functions": "symlink:98ccedbece48944fef3eea3155fa20ac7450f836",
+    ".claude/skills/go-generics": "symlink:b48e6507799c92ccb98979f86af969eb8cf8599a",
+    ".claude/skills/go-interfaces": "symlink:e12a8b90cec0755ace19bd52aabbc30f29c18e45",
+    ".claude/skills/go-linting": "symlink:cebf8a42b7820cd9a45460c929d80512b396635a",
+    ".claude/skills/go-logging": "symlink:7166d1a1c1a6c0f2728ebf6b0f03abee3d59eb46",
+    ".claude/skills/go-naming": "symlink:e6c85395995ec1d949c11e38975adcb4de9178a7",
+    ".claude/skills/go-packages": "symlink:255f0e0bfd9351697b3417757eccc8518e26f97a",
+    ".claude/skills/go-performance": "symlink:eb4e1a4aca7004115afe80aec29a86ad05265672",
+    ".claude/skills/go-style-core": "symlink:0f58b341efb8655d08c8e38b4be3f1f34a0e33ed",
+    ".claude/skills/go-testing": "symlink:0df9f87892ed12843203767efe09e8bc80519894",
+    "data/skills/go-code-review": "symlink:df17f792e897e0a908b949705ff7cf57b58beeda",
+    "data/skills/go-concurrency": "symlink:4c965cda14aabb8f6483e771215162ced5ec3f08",
+    "data/skills/go-context": "symlink:bb9b8fbcc0649bb811cd95d724fa5c4831e4ed8c",
+    "data/skills/go-control-flow": "symlink:0b7ba0924a3a822bc5a51435862bc83bd567e211",
+    "data/skills/go-data-structures": "symlink:d937a1e88f64f6840f884d3d5877bdabeaa968b2",
+    "data/skills/go-declarations": "symlink:47a646e3f4c9c9d966c5cf4d5b9078cd4d9eab5f",
+    "data/skills/go-defensive": "symlink:d120e47f737a289eb9346ea9ec3ed989e415fd36",
+    "data/skills/go-documentation": "symlink:90b59882705559d67e34a621c1ed417906fa9e8a",
+    "data/skills/go-error-handling": "symlink:9cc07f694dfaa6e96b46f270bfdd604923188eb9",
+    "data/skills/go-functional-options": "symlink:f6713171796c21b1a1ac209a229fbfcbd12b83bf",
+    "data/skills/go-functions": "symlink:98ccedbece48944fef3eea3155fa20ac7450f836",
+    "data/skills/go-generics": "symlink:b48e6507799c92ccb98979f86af969eb8cf8599a",
+    "data/skills/go-interfaces": "symlink:e12a8b90cec0755ace19bd52aabbc30f29c18e45",
+    "data/skills/go-linting": "symlink:cebf8a42b7820cd9a45460c929d80512b396635a",
+    "data/skills/go-logging": "symlink:7166d1a1c1a6c0f2728ebf6b0f03abee3d59eb46",
+    "data/skills/go-naming": "symlink:e6c85395995ec1d949c11e38975adcb4de9178a7",
+    "data/skills/go-packages": "symlink:255f0e0bfd9351697b3417757eccc8518e26f97a",
+    "data/skills/go-performance": "symlink:eb4e1a4aca7004115afe80aec29a86ad05265672",
+    "data/skills/go-style-core": "symlink:0f58b341efb8655d08c8e38b4be3f1f34a0e33ed",
+    "data/skills/go-testing": "symlink:0df9f87892ed12843203767efe09e8bc80519894",
+    ".agents/skills/go-code-review/SKILL.md": "7fe964fc46fa0f83c5a6782aea8afa9d42c8e120",
+    ".agents/skills/go-code-review/assets/review-template.md": "8a9783efd0ec1c76628410657774b598a2907293",
+    ".agents/skills/go-code-review/references/WEB-SERVER.md": "4fcdde6babb435d50f6282abb384740a5ee408a9",
+    ".agents/skills/go-code-review/scripts/pre-review.sh": "e0b1334be59928788c20d7faeaf24a8510eeab34",
+    ".agents/skills/go-concurrency/SKILL.md": "417bb46ef3c1f7c23a8f5e8fc88cd1e0bc9cab2d",
+    ".agents/skills/go-concurrency/references/ADVANCED-PATTERNS.md": "5e9d68fedc50fcfdd51f8d8de18f0080a05e04c5",
+    ".agents/skills/go-concurrency/references/BUFFER-POOLING.md": "64bcc0b563bbe469118e7c71add00aabc9315da1",
+    ".agents/skills/go-concurrency/references/GOROUTINE-PATTERNS.md": "a3f6541f7c6f2e575e83cf3a2384a43c4a28e691",
+    ".agents/skills/go-concurrency/references/SYNC-PRIMITIVES.md": "ad2a14c5f066f6600af62fb42daef449fc7312d4",
+    ".agents/skills/go-context/SKILL.md": "514123426d4c5927d9cf9ccd209b4e669799d5ea",
+    ".agents/skills/go-context/references/PATTERNS.md": "e4562cf4f26a70586fd2e40eaf12bd0f00a3e5b3",
+    ".agents/skills/go-control-flow/SKILL.md": "beeb46ceca8596e0b7ceb08f9d0409991f7fadb2",
+    ".agents/skills/go-control-flow/references/BLANK-IDENTIFIER.md": "29ab4f1ababbeb6c3f7cd6db61a144e0f95e90d3",
+    ".agents/skills/go-control-flow/references/SWITCH-PATTERNS.md": "931d9ab97cfbac5a7c7afde29bb3e9597510834c",
+    ".agents/skills/go-data-structures/SKILL.md": "bd35416b3eb9245c0da81e03dbc9291915008ce1",
+    ".agents/skills/go-data-structures/references/SLICES.md": "ac88d798c3170a72293c61f56b0a1e97a2196d01",
+    ".agents/skills/go-declarations/SKILL.md": "0764413ec0110a4f1afe841f25923778fa1dff27",
+    ".agents/skills/go-declarations/references/INITIALIZATION.md": "cdd5ee0180c903587cfa90800bf0a4f8804ede9e",
+    ".agents/skills/go-declarations/references/IOTA.md": "1a9181deff7d79f9736489325548d8a2980e335c",
+    ".agents/skills/go-declarations/references/LITERALS.md": "1295afd2606710f26f0dde0471e008a4849c6c23",
+    ".agents/skills/go-declarations/references/SCOPE.md": "9f0a7fed185877c6069328b0d3c6cbee446064ac",
+    ".agents/skills/go-declarations/references/SHADOWING.md": "6e7a8c579ac3820a9782bf6c89030fcade46c74d",
+    ".agents/skills/go-declarations/references/STRUCTS.md": "c60e484bc666b193781cdd258598b4eea00008cf",
+    ".agents/skills/go-defensive/SKILL.md": "22ca0d797d3a5ddfa8fb7a1e4c26a89863b4d6d4",
+    ".agents/skills/go-defensive/references/BOUNDARY-COPYING.md": "f7c0110221233525c04db16750fbc754057cd3d9",
+    ".agents/skills/go-defensive/references/GLOBAL-STATE.md": "56379e0373d1749dd3bc4b638c3971bb4a0bc69d",
+    ".agents/skills/go-defensive/references/MUST-FUNCTIONS.md": "a8f7f0341af60535aa8632aa05e90d6eeb27afce",
+    ".agents/skills/go-defensive/references/PANIC-RECOVER.md": "9f3457aa3ee717118ffce6fde640fd01e4624b8e",
+    ".agents/skills/go-defensive/references/TIME-ENUMS-TAGS.md": "e381cd5c10d99bdab07d61a991a27567ed06d34e",
+    ".agents/skills/go-documentation/SKILL.md": "eeca8e8a5e8133b4ef43e77dcbd83c48d0635c11",
+    ".agents/skills/go-documentation/assets/doc-template.go": "a2c54b85855d15d364238297dcf47de0c721ffc8",
+    ".agents/skills/go-documentation/references/CONVENTIONS.md": "12b8df0bd055c11bdc044e2a5e20cc4b829763cf",
+    ".agents/skills/go-documentation/references/EXAMPLES.md": "0b2b3879b19125593417e52d9f1d4a8f42a8be75",
+    ".agents/skills/go-documentation/references/FORMATTING.md": "4977008a67dfe01cde2fe05c8915511113b97bc1",
+    ".agents/skills/go-documentation/scripts/check-docs-ast.go": "ff1564b1d5f7bd97a6bdd6167830f3ce4b657042",
+    ".agents/skills/go-documentation/scripts/check-docs.sh": "de69f135fe4cb5850101108a9d7bbcb70f68c8b9",
+    ".agents/skills/go-error-handling/SKILL.md": "275a1a65cc6c02d4a611b7bd83ec73c5d493792a",
+    ".agents/skills/go-error-handling/references/ERROR-FLOW.md": "182827f4235397d8d7b837153351ba4443cbb78a",
+    ".agents/skills/go-error-handling/references/ERROR-TYPES.md": "e0d3ef3fb7f61daa2a65b5e356543d0160a5c048",
+    ".agents/skills/go-error-handling/references/WRAPPING.md": "954cd6dabf682ebe1a6485fca463903418454d5a",
+    ".agents/skills/go-error-handling/scripts/check-errors-ast.go": "d68d6e91e8a6e2ed110b7682a3deebc7f865904c",
+    ".agents/skills/go-error-handling/scripts/check-errors.sh": "40c5be771e6b8ff91a54097f4d1ef39fbd04d6f4",
+    ".agents/skills/go-functional-options/SKILL.md": "aa249b24abfef30bcdc4199aeab4974b7f63ced5",
+    ".agents/skills/go-functional-options/references/OPTIONS-VS-STRUCTS.md": "6b323dc0b8f166fb228c8bff86e43a6003890a29",
+    ".agents/skills/go-functions/SKILL.md": "906fa01432c3aa6899ced2a490558a9a4784d45e",
+    ".agents/skills/go-functions/references/PRINTF-STRINGER.md": "1c348839d960dfe0732266ce975cd334c3349387",
+    ".agents/skills/go-functions/references/SIGNATURES.md": "d1ae7ca3b7bec091a7840450c3ee8370538431eb",
+    ".agents/skills/go-generics/SKILL.md": "0cfa9811a90ca9d76137bfd6dc96d2cd0faee8ea",
+    ".agents/skills/go-generics/references/CONSTRAINTS.md": "16a871fc474137f11234ba1b52b711c36eee89cd",
+    ".agents/skills/go-interfaces/SKILL.md": "358cab26d71de1fbd788855fbb312425bca86022",
+    ".agents/skills/go-interfaces/references/EMBEDDING.md": "e65e34b28910406614ad1afb6c65e3f64d78d0c3",
+    ".agents/skills/go-interfaces/references/RECEIVER-TYPE.md": "3c0c1ef6eca9521d7e449a28eb5d30a1cd3d86a5",
+    ".agents/skills/go-interfaces/scripts/check-interface-compliance.go": "69870981bc6f7e28115aa3fedf2aa816ff48385c",
+    ".agents/skills/go-interfaces/scripts/check-interface-compliance.sh": "bbd0472539cabf40df1a43a4e8a6017ea4e7498f",
+    ".agents/skills/go-linting/SKILL.md": "9c1964f70a0fadfe9df78836596468c13466798a",
+    ".agents/skills/go-linting/assets/golangci.yml": "3a50744b8efb33c6c75cf487f74abca3dc330d74",
+    ".agents/skills/go-linting/scripts/setup-lint.sh": "7ae0c10e9ddf6d2ed5dba97157d7d8a645ac2482",
+    ".agents/skills/go-logging/SKILL.md": "2db7104d437e1b52774b85a9512749831c88e83c",
+    ".agents/skills/go-logging/references/LEVELS-AND-CONTEXT.md": "b5c3e9518dc7960e58f3253120fd3b786a055d8e",
+    ".agents/skills/go-logging/references/LOGGING-PATTERNS.md": "e96f6da3d61366fcfd000aa348e51e96624b3aca",
+    ".agents/skills/go-naming/SKILL.md": "22cd09ecd7f1ec994e95c5721cb5417cba5b6e35",
+    ".agents/skills/go-naming/references/IDENTIFIERS.md": "45fed1977addffe5e798ee8d22a7fd3abcad961a",
+    ".agents/skills/go-naming/references/REPETITION.md": "cac938e443d28684dc06b1cba6fffba0afbefd43",
+    ".agents/skills/go-naming/references/VARIABLES.md": "a53492626e166a540b232210fba35f19eb6c9ccd",
+    ".agents/skills/go-naming/scripts/check-naming.sh": "229fd02ea1d97cbd554c1c188c098390c68807d7",
+    ".agents/skills/go-packages/SKILL.md": "2dbb93b4ba4e6272fce380f248f0bd90f122f353",
+    ".agents/skills/go-packages/references/IMPORTS.md": "e8a78251cc55f4a0ee2cede26ec8380cd47c4b1c",
+    ".agents/skills/go-packages/references/PACKAGE-SIZE.md": "1eb3e8198d594ab4d74f347d321301923f70b244",
+    ".agents/skills/go-performance/SKILL.md": "377e4707284c09c29e38383906f0c86cbb32013d",
+    ".agents/skills/go-performance/references/BENCHMARKS.md": "7598daa22af80a1041e4cd664f4880ee8b4da961",
+    ".agents/skills/go-performance/references/STRING-OPTIMIZATION.md": "c938bb9b7ee1969abb0efb32250ceabf0cb2e9d1",
+    ".agents/skills/go-performance/scripts/bench-compare.sh": "47f03925514e874f41e0f1c060ec2ee340599fba",
+    ".agents/skills/go-style-core/SKILL.md": "24d8c9308c077057fee6dba6b2e819296efc6c0a",
+    ".agents/skills/go-style-core/references/FORMATTING.md": "57150714c9c4823e3eaad5697d47ee60a9148ef9",
+    ".agents/skills/go-style-core/references/PRINCIPLES.md": "ac3882e1c383a49d4d1119987b0da5fabf7856e8",
+    ".agents/skills/go-testing/SKILL.md": "151955b5e5c11231f95c4963de0b60b701d2613f",
+    ".agents/skills/go-testing/assets/table-test-template.go": "35ca80331a034f24b2c0303bf7899aafa3e8f76b",
+    ".agents/skills/go-testing/references/INTEGRATION.md": "908d12fda7a455f65a6f010daa08d7bca64b5edb",
+    ".agents/skills/go-testing/references/TABLE-DRIVEN-TESTS.md": "37c05d34880c1ca9082793cb9e01ed3a946bab3a",
+    ".agents/skills/go-testing/references/TEST-HELPERS.md": "68c1be3799f2e9034ac44c91671c7e3188461da5",
+    ".agents/skills/go-testing/references/TEST-ORGANIZATION.md": "3f550d6b5acc8342d67bcefa1e29f50f92dc2aa3",
+    ".agents/skills/go-testing/references/VALIDATION-APIS.md": "1174baeadf7bab191254539f427812af691e63d5",
+    ".agents/skills/go-testing/scripts/gen-table-test.sh": "bd4aff5c775c73e1cd08c95eca6b8fcf5105a248",
+    ".claude/settings.local.json": "6f5f8c1b02179af4f269ccdf3f9adb17ff6614b3",
+    "agent/skills/go-code-review/SKILL.md": "38e1370af3709e0dacef67208f4740421e0c819a",
+    "agent/skills/go-code-review/assets/review-template.md": "8a9783efd0ec1c76628410657774b598a2907293",
+    "agent/skills/go-code-review/references/WEB-SERVER.md": "4fcdde6babb435d50f6282abb384740a5ee408a9",
+    "agent/skills/go-code-review/scripts/pre-review.sh": "e0b1334be59928788c20d7faeaf24a8510eeab34",
+    "agent/skills/go-concurrency/SKILL.md": "ae151dd07e18ec8d50624e59aea42289766a9bb7",
+    "agent/skills/go-concurrency/references/ADVANCED-PATTERNS.md": "5e9d68fedc50fcfdd51f8d8de18f0080a05e04c5",
+    "agent/skills/go-concurrency/references/BUFFER-POOLING.md": "64bcc0b563bbe469118e7c71add00aabc9315da1",
+    "agent/skills/go-concurrency/references/GOROUTINE-PATTERNS.md": "a3f6541f7c6f2e575e83cf3a2384a43c4a28e691",
+    "agent/skills/go-concurrency/references/SYNC-PRIMITIVES.md": "ad2a14c5f066f6600af62fb42daef449fc7312d4",
+    "agent/skills/go-context/SKILL.md": "dc510e8b08fbf09e81d776bb0dace5d60571a10a",
+    "agent/skills/go-context/references/PATTERNS.md": "e4562cf4f26a70586fd2e40eaf12bd0f00a3e5b3",
+    "agent/skills/go-control-flow/SKILL.md": "d4f7488b330c62731fa189c201e76a4d7de4c320",
+    "agent/skills/go-control-flow/references/BLANK-IDENTIFIER.md": "29ab4f1ababbeb6c3f7cd6db61a144e0f95e90d3",
+    "agent/skills/go-control-flow/references/SWITCH-PATTERNS.md": "931d9ab97cfbac5a7c7afde29bb3e9597510834c",
+    "agent/skills/go-data-structures/SKILL.md": "ccfb7dc53efd7f31a25db1c1f890949f9f44e3e8",
+    "agent/skills/go-data-structures/references/SLICES.md": "ac88d798c3170a72293c61f56b0a1e97a2196d01",
+    "agent/skills/go-declarations/SKILL.md": "778ada6895ce51c1ca450c97c78a8d48067d02b9",
+    "agent/skills/go-declarations/references/INITIALIZATION.md": "cdd5ee0180c903587cfa90800bf0a4f8804ede9e",
+    "agent/skills/go-declarations/references/IOTA.md": "1a9181deff7d79f9736489325548d8a2980e335c",
+    "agent/skills/go-declarations/references/LITERALS.md": "1295afd2606710f26f0dde0471e008a4849c6c23",
+    "agent/skills/go-declarations/references/SCOPE.md": "9f0a7fed185877c6069328b0d3c6cbee446064ac",
+    "agent/skills/go-declarations/references/SHADOWING.md": "6e7a8c579ac3820a9782bf6c89030fcade46c74d",
+    "agent/skills/go-declarations/references/STRUCTS.md": "c60e484bc666b193781cdd258598b4eea00008cf",
+    "agent/skills/go-defensive/SKILL.md": "74b548c880442d44d8c397f170ebb01f579138d0",
+    "agent/skills/go-defensive/references/BOUNDARY-COPYING.md": "f7c0110221233525c04db16750fbc754057cd3d9",
+    "agent/skills/go-defensive/references/GLOBAL-STATE.md": "56379e0373d1749dd3bc4b638c3971bb4a0bc69d",
+    "agent/skills/go-defensive/references/MUST-FUNCTIONS.md": "a8f7f0341af60535aa8632aa05e90d6eeb27afce",
+    "agent/skills/go-defensive/references/PANIC-RECOVER.md": "9f3457aa3ee717118ffce6fde640fd01e4624b8e",
+    "agent/skills/go-defensive/references/TIME-ENUMS-TAGS.md": "e381cd5c10d99bdab07d61a991a27567ed06d34e",
+    "agent/skills/go-documentation/SKILL.md": "5a6f8e99fcb94c022b9da10af2db5b76bcbd68a6",
+    "agent/skills/go-documentation/assets/doc-template.go": "a2c54b85855d15d364238297dcf47de0c721ffc8",
+    "agent/skills/go-documentation/references/CONVENTIONS.md": "12b8df0bd055c11bdc044e2a5e20cc4b829763cf",
+    "agent/skills/go-documentation/references/EXAMPLES.md": "0b2b3879b19125593417e52d9f1d4a8f42a8be75",
+    "agent/skills/go-documentation/references/FORMATTING.md": "4977008a67dfe01cde2fe05c8915511113b97bc1",
+    "agent/skills/go-documentation/scripts/check-docs-ast.go": "ff1564b1d5f7bd97a6bdd6167830f3ce4b657042",
+    "agent/skills/go-documentation/scripts/check-docs.sh": "de69f135fe4cb5850101108a9d7bbcb70f68c8b9",
+    "agent/skills/go-error-handling/SKILL.md": "4e2e7e00e6c1e62b79b0a9a0e92c4f9a227f4478",
+    "agent/skills/go-error-handling/references/ERROR-FLOW.md": "182827f4235397d8d7b837153351ba4443cbb78a",
+    "agent/skills/go-error-handling/references/ERROR-TYPES.md": "e0d3ef3fb7f61daa2a65b5e356543d0160a5c048",
+    "agent/skills/go-error-handling/references/WRAPPING.md": "954cd6dabf682ebe1a6485fca463903418454d5a",
+    "agent/skills/go-error-handling/scripts/check-errors-ast.go": "d68d6e91e8a6e2ed110b7682a3deebc7f865904c",
+    "agent/skills/go-error-handling/scripts/check-errors.sh": "40c5be771e6b8ff91a54097f4d1ef39fbd04d6f4",
+    "agent/skills/go-functional-options/SKILL.md": "ac1f6b91390d8606e8476aa22bb0ea9d6b39d85d",
+    "agent/skills/go-functional-options/references/OPTIONS-VS-STRUCTS.md": "6b323dc0b8f166fb228c8bff86e43a6003890a29",
+    "agent/skills/go-functions/SKILL.md": "ed1cff83b92245295252c85998142ff2eb4e8eaa",
+    "agent/skills/go-functions/references/PRINTF-STRINGER.md": "1c348839d960dfe0732266ce975cd334c3349387",
+    "agent/skills/go-functions/references/SIGNATURES.md": "d1ae7ca3b7bec091a7840450c3ee8370538431eb",
+    "agent/skills/go-generics/SKILL.md": "079e81d17cd4f657207d6fcdd3f84e0525e79b88",
+    "agent/skills/go-generics/references/CONSTRAINTS.md": "16a871fc474137f11234ba1b52b711c36eee89cd",
+    "agent/skills/go-interfaces/SKILL.md": "582a1c6355c88cd021528826fa211daf1a88ff3e",
+    "agent/skills/go-interfaces/references/EMBEDDING.md": "e65e34b28910406614ad1afb6c65e3f64d78d0c3",
+    "agent/skills/go-interfaces/references/RECEIVER-TYPE.md": "3c0c1ef6eca9521d7e449a28eb5d30a1cd3d86a5",
+    "agent/skills/go-interfaces/scripts/check-interface-compliance.go": "69870981bc6f7e28115aa3fedf2aa816ff48385c",
+    "agent/skills/go-interfaces/scripts/check-interface-compliance.sh": "bbd0472539cabf40df1a43a4e8a6017ea4e7498f",
+    "agent/skills/go-linting/SKILL.md": "283c456cb27919b0ae3df92c4bfb6534c073b3f0",
+    "agent/skills/go-linting/assets/golangci.yml": "3a50744b8efb33c6c75cf487f74abca3dc330d74",
+    "agent/skills/go-linting/scripts/setup-lint.sh": "7ae0c10e9ddf6d2ed5dba97157d7d8a645ac2482",
+    "agent/skills/go-logging/SKILL.md": "c8d6f92a88553f852f71d48f18f4cc3535a98a0c",
+    "agent/skills/go-logging/references/LEVELS-AND-CONTEXT.md": "b5c3e9518dc7960e58f3253120fd3b786a055d8e",
+    "agent/skills/go-logging/references/LOGGING-PATTERNS.md": "e96f6da3d61366fcfd000aa348e51e96624b3aca",
+    "agent/skills/go-naming/SKILL.md": "401bf66254da686d3ff094d7ff5cfac378d1e788",
+    "agent/skills/go-naming/references/IDENTIFIERS.md": "45fed1977addffe5e798ee8d22a7fd3abcad961a",
+    "agent/skills/go-naming/references/REPETITION.md": "cac938e443d28684dc06b1cba6fffba0afbefd43",
+    "agent/skills/go-naming/references/VARIABLES.md": "a53492626e166a540b232210fba35f19eb6c9ccd",
+    "agent/skills/go-naming/scripts/check-naming.sh": "229fd02ea1d97cbd554c1c188c098390c68807d7",
+    "agent/skills/go-packages/SKILL.md": "c59032518d91b5d0725a5b6a2b8a9cd2393b8ca3",
+    "agent/skills/go-packages/references/IMPORTS.md": "e8a78251cc55f4a0ee2cede26ec8380cd47c4b1c",
+    "agent/skills/go-packages/references/PACKAGE-SIZE.md": "1eb3e8198d594ab4d74f347d321301923f70b244",
+    "agent/skills/go-performance/SKILL.md": "230475c02e37af5d59c39b261582ab9633f10b3e",
+    "agent/skills/go-performance/references/BENCHMARKS.md": "7598daa22af80a1041e4cd664f4880ee8b4da961",
+    "agent/skills/go-performance/references/STRING-OPTIMIZATION.md": "c938bb9b7ee1969abb0efb32250ceabf0cb2e9d1",
+    "agent/skills/go-performance/scripts/bench-compare.sh": "47f03925514e874f41e0f1c060ec2ee340599fba",
+    "agent/skills/go-style-core/SKILL.md": "dbdd41acbe868abd361fa9809b1a2c22d48b2837",
+    "agent/skills/go-style-core/references/FORMATTING.md": "57150714c9c4823e3eaad5697d47ee60a9148ef9",
+    "agent/skills/go-style-core/references/PRINCIPLES.md": "ac3882e1c383a49d4d1119987b0da5fabf7856e8",
+    "agent/skills/go-testing/SKILL.md": "76051ea4e579817abb8196767c170a93657f14d9",
+    "agent/skills/go-testing/assets/table-test-template.go": "35ca80331a034f24b2c0303bf7899aafa3e8f76b",
+    "agent/skills/go-testing/references/INTEGRATION.md": "908d12fda7a455f65a6f010daa08d7bca64b5edb",
+    "agent/skills/go-testing/references/TABLE-DRIVEN-TESTS.md": "37c05d34880c1ca9082793cb9e01ed3a946bab3a",
+    "agent/skills/go-testing/references/TEST-HELPERS.md": "68c1be3799f2e9034ac44c91671c7e3188461da5",
+    "agent/skills/go-testing/references/TEST-ORGANIZATION.md": "3f550d6b5acc8342d67bcefa1e29f50f92dc2aa3",
+    "agent/skills/go-testing/references/VALIDATION-APIS.md": "1174baeadf7bab191254539f427812af691e63d5",
+    "agent/skills/go-testing/scripts/gen-table-test.sh": "bd4aff5c775c73e1cd08c95eca6b8fcf5105a248",
+    "apps/admin/app/[locale]/magazine/loto-lab/_components/loto-lab-admin-client.tsx": "abbe90d0cbd1a978b0670421a5dbaed2a2a7ab2f",
+    "apps/admin/messages/en.json": "309d27ed73c83a4c0d332d46ad5ec4c0ab1e38ce",
+    "apps/admin/messages/ja.json": "a67b85546b1ca70dbfc5ed5e54a371ebf303c87d",
+    "apps/admin/messages/vi.json": "296484a0a169efd8b4992ab57d0e8ab6dadbaaf2",
+    "apps/admin/next-env.d.ts": "ce4e94a6b10f160ee021fe18939af160d2927dcf",
+    "apps/admin/tsconfig.tsbuildinfo": "d5500d423a86e67de4a43b428be60242bb68ff44",
+    "apps/api-go/internal/loto/engine.go": "c8288cd0c87e8eacd41664b088270bef9572bb6e",
+    "apps/api-go/internal/loto/engine_test.go": "81a65bdc00c4e3d60414c3366e40a0be27e27e4e",
+    "apps/api-go/internal/loto/service.go": "2365952325c0845e197a7d209b3952de19b3df1a",
+    "apps/web/next-env.d.ts": "ce4e94a6b10f160ee021fe18939af160d2927dcf",
+    "apps/web/tsconfig.tsbuildinfo": "a77df216bf72096155615d97739baacb0a9e3e0e",
+    "skills-lock.json": "df5b1109db0d0231747f4561543fea4abaa34327"
+  },
+  "spec": {
+    "problem": "Production magazine shows many duplicate articles: seed scripts repeat one pool entry across consecutive days (vocab per week, BJT per week, weather alternating two entries, identical horoscope/sample content). This task adds the building blocks only (rotation engine, embedded content pools, generator, reversible dedupe command). Out of scope, as separate follow-up tasks: wiring the cron plus the /today ICT date fix (MAG-002) and the seed scripts that cause the duplicates, which stay unchanged here (MAG-003; until then re-running seed:magazine on a later day republishes the same entries under new dates).",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Pick selects the least-recently-used pool entry and never repeats an entry while an unused one exists"
+      },
+      {
+        "id": "AC2",
+        "text": "Pick reports pool exhaustion (repeat) so the cron can warn instead of silently duplicating"
+      },
+      {
+        "id": "AC3",
+        "text": "Pool JSON entries have unique keys and valid vocab/quiz shape"
+      },
+      {
+        "id": "AC4",
+        "text": "magazine.Generator publishes one rotated article per scheduled kind (vocab daily, BJT phrase weekdays; weather excluded until a seasonal pool exists), idempotent per (kind,date,locale); when the pool has no unused entry it publishes nothing and logs a WARN instead of creating a duplicate"
+      },
+      {
+        "id": "AC5",
+        "text": "cmd/magazine-dedupe (magazine.ArchiveDuplicates) defaults to dry-run and, with -apply, archives (never deletes) all but one published article per group of identical kind+locale+title+content_json, ignoring drafts and other locales/contents, restorable via the documented UPDATE; covered by a PostgreSQL integration test in the Go suite"
+      }
+    ],
+    "expected_behavior": "The generator publishes an unused pool entry per scheduled kind and never a duplicate (it skips with a WARN once the pool is exhausted, which is already the case on seeded environments until content is added), and dedupe tooling can archive existing duplicates reversibly.",
+    "observed_behavior": "Same article shown on consecutive dates; no generator or dedupe tooling exists.",
+    "rollback_plan": "No schema change. Nothing calls the generator yet (cron wiring is MAG-002), so reverting the commit removes the package; any rows it created are hidden with UPDATE daily.magazine_article SET status='archived' WHERE ai_model='content-pool' (never DELETE: ON DELETE CASCADE would destroy daily.magazine_user_read history and quiz scores). The dedupe script only sets status='archived' (reversible with UPDATE ... SET status='published', source_data_json = source_data_json - 'dedupedAt' WHERE status='archived' AND source_data_json ? 'dedupedAt') and defaults to dry-run; it is never run by the application."
+  },
+  "classification": {
+    "classes": [
+      "DOMAIN_LOGIC",
+      "DATABASE"
+    ],
+    "change_kind": "add",
+    "rationale": ""
+  },
+  "red_exception": {
+    "category": "new_component",
+    "reason": "Brand-new internal/magazine package and cmd/magazine-dedupe; tests cannot compile against the base. Machine evidence is one DB-backed sensitivity mutation (generator repeat guard, run under with-test-db.sh); the other behaviour (Pick LRU, dedupe grouping, title fallback) is covered by tests that passed against real PostgreSQL but is not mutation-evidenced (the harness records one mutation per task). Existing-behaviour changes are split into separate tasks.",
+    "declared_before_red": true
+  },
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/magazine",
+      "test": "TestPickPrefersUnusedEntryOverRecent",
+      "expect": "Pick and Entry are undefined until the rotation engine exists"
+    }
+  ],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/api-go/internal/magazine/generator.go",
+      "find": "if repeat {",
+      "replace": "if repeat && false {"
+    },
+    "targets": [
+      {
+        "runner": "go",
+        "package": "./internal/magazine",
+        "test": "TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat",
+        "expect": "want no repeat"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [
+    {
+      "finding": "test_skip_added:apps/api-go/internal/magazine/generator_test.go",
+      "reason": "Same TEST_DATABASE_URL convention as internal/loto and internal/session tests. CI provisions the canonical schema and runs the skip audit (scripts/quality/check-go-test-report.mjs), and this test was executed for real against throwaway PostgreSQL 17 via scripts/quality/with-test-db.sh (PASS)."
+    }
+  ],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-02T02:23:39.332Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-02T02:24:12.090Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-02T02:24:34.270Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-11-02T02:24:58.828Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-02T02:27:21.993Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-11-02T02:29:23.644Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-02T02:29:26.856Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-02T02:33:27.134Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-11-02T02:45:27.580Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-02T02:45:31.061Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-02T02:50:09.296Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-11-02T03:01:30.698Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-02T03:01:34.316Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-02T03:06:10.187Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-11-02T04:02:22.522Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-02T04:02:26.305Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-11-02T04:06:20.464Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-02T04:11:48.771Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-11-02T04:28:39.788Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-02T04:28:43.980Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-02T04:32:52.147Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-11-02T04:48:39.857Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-02T04:49:03.981Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-02T04:56:15.196Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-11-02T05:09:12.740Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-02T05:09:16.421Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-02T05:13:23.647Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-11-02T05:25:17.519Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-02T05:27:01.723Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-02T05:31:05.064Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "EXCEPTION_APPROVED",
+      "at": "2026-11-02T05:42:13.688Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-02T05:42:26.719Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-02T02:24:52.944Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 3,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickPrefersUnusedEntryOverRecent)$ ./apps/api-go/internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/magazine:TestPickPrefersUnusedEntryOverRecent",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# ./apps/api-go/internal/magazine stat /private/var/folders/zn/qn8sqwzn18g34ddftsxgyz6r0000gn/T/quality-wt-12vI2g/tree/apps/api-go/apps/api-go/internal/magazine: directory not found FAIL ./apps/api-go/internal/magazine [setup failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./apps/api-go/internal/magazine:TestPickPrefersUnusedEntryOverRecent": "Pick and Entry are undefined until the rotation engine exists"
+      },
+      "fingerprint": "36a39a47b089eb780e6a95989e9d95e9239914dd90ab164c332f1fa04c957485"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-02T02:26:50.269Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "sensitivity",
+      "outcome": "INSENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/magazine/rotation.go",
+        "find": "r > oldestRank",
+        "replace": "r < oldestRank"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "PASS",
+          "excerpt": "=== RUN TestPickReusesLeastRecentlyUsedWhenPoolExhausted --- PASS: TestPickReusesLeastRecentlyUsedWhenPoolExhausted (0.00s)",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        }
+      ],
+      "expects": {
+        "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted": "want a / true"
+      },
+      "fingerprint": "b0d7fe0f83e9f9c76527414412d960d1de3d05cdd332db9015947d69f160616a"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-02T02:26:53.570Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickPrefersUnusedEntryOverRecent)$ ./apps/api-go/internal/magazine",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./apps/api-go/internal/magazine:TestPickPrefersUnusedEntryOverRecent",
+          "outcome": "BUILD_FAIL",
+          "valid": false,
+          "excerpt": "# ./apps/api-go/internal/magazine stat /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/api-go/apps/api-go/internal/magazine: directory not found FAIL ./apps/api-go/internal/magazine [setup failed]"
+        },
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "b0d7fe0f83e9f9c76527414412d960d1de3d05cdd332db9015947d69f160616a"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-02T02:27:16.979Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/magazine/rotation.go",
+        "find": "r > oldestRank",
+        "replace": "r < oldestRank"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPickReusesLeastRecentlyUsedWhenPoolExhausted rotation_test.go:43: Pick = \"a\" repeat=true, want b / true --- FAIL: TestPickReusesLeastRecentlyUsedWhenPoolExhausted (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted": "want b / true"
+      },
+      "fingerprint": "5fcdbaf35e0d3c1b897906421e8eb19855479f39f81fa066b84fc64729858aed"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-02T02:27:20.454Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickPrefersUnusedEntryOverRecent|TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickPrefersUnusedEntryOverRecent",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "5fcdbaf35e0d3c1b897906421e8eb19855479f39f81fa066b84fc64729858aed"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-02T02:29:22.085Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/magazine/rotation.go",
+        "find": "r > oldestRank",
+        "replace": "r < oldestRank"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPickReusesLeastRecentlyUsedWhenPoolExhausted rotation_test.go:43: Pick = \"a\" repeat=true, want b / true --- FAIL: TestPickReusesLeastRecentlyUsedWhenPoolExhausted (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted": "want b / true"
+      },
+      "fingerprint": "fd6dec84decfdbe4ecd3eab2a96ea4a95698ea6026f2eeb8439397ac4cf04b1e"
+    },
+    {
+      "seq": 7,
+      "at": "2026-11-02T02:29:25.316Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickPrefersUnusedEntryOverRecent|TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickPrefersUnusedEntryOverRecent",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "fd6dec84decfdbe4ecd3eab2a96ea4a95698ea6026f2eeb8439397ac4cf04b1e"
+    },
+    {
+      "seq": 8,
+      "at": "2026-11-02T02:33:25.550Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1800,
+        "executed": 1800,
+        "passed": 1800,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1800 passed, 0 allowed skip(s)",
+      "fingerprint": "fd6dec84decfdbe4ecd3eab2a96ea4a95698ea6026f2eeb8439397ac4cf04b1e"
+    },
+    {
+      "seq": 9,
+      "at": "2026-11-02T02:43:07.614Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 4,
+      "findings": [
+        {
+          "severity": "blocker",
+          "file": "tasks/MAG-001.json",
+          "summary": "The risk acknowledgement is keyed as 'id — detail', but the harness looks up the bare id test_skip_added:apps/api-go/internal/magazine/generator_test.go (task.mjs:324-327). quality status therefore re…"
+        },
+        {
+          "severity": "blocker",
+          "file": "apps/api-go/internal/magazine/generator_test.go",
+          "summary": "AC4 rotation is not pinned: if recentKeys returned nil, Pick would use seed%12 and three consecutive days would still give three different articles, so the test passes. The legacy title_vi fallback, t…"
+        },
+        {
+          "severity": "blocker",
+          "file": "database/scripts/tools/dedupe-magazine.mjs",
+          "summary": "AC5 says later duplicates are archived, but the default --keep latest keeps the newest row and archives the earlier ones. AC5 also has no test and no recorded run against PostgreSQL. Reconcile the AC …"
+        },
+        {
+          "severity": "blocker",
+          "file": "apps/api-go/internal/magazine/pool/weather.json",
+          "summary": "The daily job has only two weather entries, rainy-season onset and midsummer heat, and no season logic. From the first run they alternate all year under Hôm nay > Thời tiết in the home widget, where t…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/jobs/handlers.go",
+          "summary": "AC4's ICT date is unpinned: no test calls magazineToday or MagazineGeneration. The job runs at 22:30 UTC the previous day, so a UTC slip would shift every article back a day with all tests green. Add …"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/magazine/pool_test.go",
+          "summary": "AC3 claims valid vocab shape, but TestEmbeddedPoolsAreWellFormed never inspects VocabItems. A misspelled JSON key decodes to an empty string, which TEXT NOT NULL accepts, so blank vocab rows would pub…"
+        },
+        {
+          "severity": "major",
+          "file": "database/scripts/seeds/content/seed-magazine.mjs",
+          "summary": "pnpm seed:magazine still runs this unchanged seed first, and it writes the same SAMPLE_CONTENT for each kind on each of 7 days, so re-seeding recreates the duplicates this task targets. The magazine_l…"
+        },
+        {
+          "severity": "major",
+          "file": "tasks/MAG-001.json",
+          "summary": "The rollback_plan step DELETE ... WHERE ai_model='content-pool' cascades to daily.magazine_user_read through ON DELETE CASCADE, destroying learners' read history and quiz scores, and the plan does not…"
+        },
+        {
+          "severity": "minor",
+          "file": "tasks/MAG-001.json",
+          "summary": "The new_component reason says no prior symbols exist, but Handlers.MagazineGeneration and the seed loop already existed. change_kind add with an empty problem also hides the seed's bugfix, and the sol…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/generator.go",
+          "summary": "Once seeded, history already uses every pool entry, so repeat is true from the first run and the WARN fires for every kind each day, which makes it non-actionable. GenerateForDate also stops at the fi…"
+        }
+      ],
+      "package_sha256": "c6ca93858aa90c40431de0cbcb19b6dfe479dd1aa19f03eb1c1940c68cecda51",
+      "fingerprint": "fd6dec84decfdbe4ecd3eab2a96ea4a95698ea6026f2eeb8439397ac4cf04b1e"
+    },
+    {
+      "seq": 10,
+      "at": "2026-11-02T02:45:25.860Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/magazine/rotation.go",
+        "find": "r > oldestRank",
+        "replace": "r < oldestRank"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPickReusesLeastRecentlyUsedWhenPoolExhausted rotation_test.go:43: Pick = \"a\" repeat=true, want b / true --- FAIL: TestPickReusesLeastRecentlyUsedWhenPoolExhausted (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted": "want b / true"
+      },
+      "fingerprint": "0a9c3e1c49135aeb7f4a787ee50483e06224a00f70a8eedc8bd8aef1e5df9907"
+    },
+    {
+      "seq": 11,
+      "at": "2026-11-02T02:45:29.315Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickPrefersUnusedEntryOverRecent|TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickPrefersUnusedEntryOverRecent",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0a9c3e1c49135aeb7f4a787ee50483e06224a00f70a8eedc8bd8aef1e5df9907"
+    },
+    {
+      "seq": 12,
+      "at": "2026-11-02T02:50:07.577Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1803,
+        "executed": 1803,
+        "passed": 1803,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1803 passed, 0 allowed skip(s)",
+      "fingerprint": "0a9c3e1c49135aeb7f4a787ee50483e06224a00f70a8eedc8bd8aef1e5df9907"
+    },
+    {
+      "seq": 13,
+      "at": "2026-11-02T02:59:38.743Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 2,
+      "findings": [
+        {
+          "severity": "blocker",
+          "file": "scripts/magazine-dedupe.test.ts",
+          "summary": "The CI checks job (.github/workflows/ci.yml) has no TEST_DATABASE_URL, so all 3 tests skip there. vitest.config.ts collects scripts/**, known_skipped in frontend-debt-baseline.json is empty, and check…"
+        },
+        {
+          "severity": "blocker",
+          "file": "apps/api-go/internal/httpserver/handler_audit159_wave9a_test.go",
+          "summary": "TestAudit159Wave9AMagazineTodayGET (line 377) still dates its fixture with time.Now().Format, while the handler now queries magazine.Today. On the UTC CI runner the dates differ from 17:00 to 23:59 UT…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/magazine/generator_test.go",
+          "summary": "AC4's BJT half is not pinned at generator level. The tests assert only vocab rows and run only on weekdays, so removing KindBJTPhrase from ScheduledKinds or dropping the ShouldGenerate check in Genera…"
+        },
+        {
+          "severity": "major",
+          "file": "scripts/magazine-dedupe.test.ts",
+          "summary": "Every fixture row has the same content_json, so removing md5(content_json::text) from PARTITION BY keeps all 3 tests green, although that regression would archive same-title articles with different co…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_career_content_gamification_misc.go",
+          "summary": "The magazine.Today call sites are unpinned: the table test covers only the pure function, so reverting this handler or Handlers.MagazineGeneration to server time passes every test. Correcting the fixt…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/jobs/handlers.go",
+          "summary": "The MagazineGeneration doc comment still lists weather, which contradicts ScheduledKinds and AC4."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/pool_test.go",
+          "summary": "TestEmbeddedPoolsAreWellFormed iterates only ScheduledKinds, so weather.json is never validated although AC3 covers pool entries, LoadPools decodes it and the code plans to schedule it later. The data…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/generator.go",
+          "summary": "History already holds every pool entry wherever the seeds ran, and recentKeys counts archived rows, so repeat is true from the first run and the WARN fires for both kinds daily, which makes it non-act…"
+        },
+        {
+          "severity": "minor",
+          "file": "database/scripts/seeds/content/seed-magazine-3months.mjs",
+          "summary": "SEED_DAYS is not used for the start date or loop bound, 83 and 90 stay hard-coded, and logs still say 3-month seed. The header's claim that a re-seed never recreates duplicates is false when it runs o…"
+        },
+        {
+          "severity": "minor",
+          "file": "database/scripts/tools/dedupe-magazine.mjs",
+          "summary": "Already-seeded magazine_loto rows share title, vocab and quizzes but differ in luckyNumbers, so the content_json grouping never matches them and they stay published, even though the seed change now tr…"
+        }
+      ],
+      "package_sha256": "d73194dd0c11b396093ac5c2d6a3662f8bf1d7cfa76c357fbdca09f73e6c7331",
+      "fingerprint": "0a9c3e1c49135aeb7f4a787ee50483e06224a00f70a8eedc8bd8aef1e5df9907"
+    },
+    {
+      "seq": 14,
+      "at": "2026-11-02T03:01:28.766Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/magazine/rotation.go",
+        "find": "r > oldestRank",
+        "replace": "r < oldestRank"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPickReusesLeastRecentlyUsedWhenPoolExhausted rotation_test.go:43: Pick = \"a\" repeat=true, want b / true --- FAIL: TestPickReusesLeastRecentlyUsedWhenPoolExhausted (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted": "want b / true"
+      },
+      "fingerprint": "5ea7efc98a37b3a794e9335cea21042da8bd05f9d5d480c6c9e1b598cc27b17b"
+    },
+    {
+      "seq": 15,
+      "at": "2026-11-02T03:01:32.394Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickPrefersUnusedEntryOverRecent|TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickPrefersUnusedEntryOverRecent",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "5ea7efc98a37b3a794e9335cea21042da8bd05f9d5d480c6c9e1b598cc27b17b"
+    },
+    {
+      "seq": 16,
+      "at": "2026-11-02T03:06:08.092Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1804,
+        "executed": 1804,
+        "passed": 1804,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1804 passed, 0 allowed skip(s)",
+      "fingerprint": "5ea7efc98a37b3a794e9335cea21042da8bd05f9d5d480c6c9e1b598cc27b17b"
+    },
+    {
+      "seq": 17,
+      "at": "2026-11-02T03:18:18.859Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 2,
+      "findings": [
+        {
+          "severity": "blocker",
+          "file": "apps/api-go/internal/jobs/handlers.go",
+          "summary": "AC4's cron entrypoint is unpinned: no test calls Handlers.MagazineGeneration (only register.go references it), so reverting it to the stub or to time.Now() keeps all tests green. At 05:30 ICT a UTC pr…"
+        },
+        {
+          "severity": "blocker",
+          "file": "apps/api-go/internal/httpserver/handler_audit159_wave9a_test.go",
+          "summary": "AC4's /today ICT clause is pinned only by time of day: the fixture date comes from the same magazine.Today helper, so reverting the handler to time.Now() passes from 00:00 to 16:59 UTC (including suit…"
+        },
+        {
+          "severity": "major",
+          "file": "tasks/MAG-001.json",
+          "summary": "new_component covers entirely new code whose tests cannot compile at base, but Handlers.MagazineGeneration and getMagazineTodayHandler already exist. The job can have a VALID_RED (the stub fails an as…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/api-go/internal/magazine/rotation_test.go",
+          "summary": "AC1's LRU is never tested with repeated keys, though real history has them: no test exercises the first-occurrence branch in Pick. Modelling the base seed's 90-day history, the current code picks them…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/pool_test.go",
+          "summary": "AC3 quiz shape checks only that correctAnswer is in options. A misspelled questionJp decodes to an empty string (unknown JSON keys are ignored), TEXT NOT NULL accepts it, and a blank question publishe…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/dedupe_test.go",
+          "summary": "Every fixture row has title_jp='x', but seeded vocab rows carry date-labelled title_jp, so adding title_jp to PARTITION BY would make dedupe miss all vocab duplicates with tests green. Nothing pins th…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/dedupe.go",
+          "summary": "The documented restore has no status guard and leaves dedupedAt set, so re-running it republishes rows an admin later rejected or reset to draft. Add AND status='archived' and remove the key. The Spri…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/cmd/magazine-dedupe/main.go",
+          "summary": "The Docker image builds only api-server, bootstrap-admin and life-feed-sync, and the application never runs this tool, so production duplicates stay published until an operator runs go run against a r…"
+        },
+        {
+          "severity": "minor",
+          "file": "database/scripts/seeds/content/seed-magazine-3months.mjs",
+          "summary": "Still open from review #13: the header's claim that a re-seed never recreates duplicates is false, because a re-seed days later maps the pool onto newer dates and repeats entries there. 90 and 83 stay…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/generator.go",
+          "summary": "Still open: with 12 vocab and 3 BJT entries and seeded history, repeat is true from the first run and the WARN fires daily, so it is not actionable, and no test asserts it. A single daily firing with …"
+        }
+      ],
+      "package_sha256": "e31b70de8e7a58686a871048c7157594e77b2c40fb06b4db7e6e88ecd51cbe24",
+      "fingerprint": "5ea7efc98a37b3a794e9335cea21042da8bd05f9d5d480c6c9e1b598cc27b17b"
+    },
+    {
+      "seq": 18,
+      "at": "2026-11-02T04:02:20.476Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/magazine/rotation.go",
+        "find": "r > oldestRank",
+        "replace": "r < oldestRank"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPickReusesLeastRecentlyUsedWhenPoolExhausted rotation_test.go:43: Pick = \"a\" repeat=true, want b / true --- FAIL: TestPickReusesLeastRecentlyUsedWhenPoolExhausted (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted": "want b / true"
+      },
+      "fingerprint": "152fe0cf213e751cb0602e0c000cd17d647b5110157714f4c71581174b81dfe5"
+    },
+    {
+      "seq": 19,
+      "at": "2026-11-02T04:02:24.199Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickPrefersUnusedEntryOverRecent|TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickPrefersUnusedEntryOverRecent",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "152fe0cf213e751cb0602e0c000cd17d647b5110157714f4c71581174b81dfe5"
+    },
+    {
+      "seq": 20,
+      "at": "2026-11-02T04:03:41.253Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 1807,
+        "executed": 1807,
+        "passed": 1806,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "152fe0cf213e751cb0602e0c000cd17d647b5110157714f4c71581174b81dfe5"
+    },
+    {
+      "seq": 21,
+      "at": "2026-11-02T04:04:56.384Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 1807,
+        "executed": 1807,
+        "passed": 1806,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "152fe0cf213e751cb0602e0c000cd17d647b5110157714f4c71581174b81dfe5"
+    },
+    {
+      "seq": 22,
+      "at": "2026-11-02T04:06:18.271Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 1807,
+        "executed": 1807,
+        "passed": 1806,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "go test failed (exit 1; 1 failing test(s), 1 failing package(s))",
+      "fingerprint": "262f553bac1d73101b75da07c4c76d50451c9b5bc3e2077c916b0e89779e2d09"
+    },
+    {
+      "seq": 23,
+      "at": "2026-11-02T04:11:12.007Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1807,
+        "executed": 1807,
+        "passed": 1807,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1807 passed, 0 allowed skip(s)",
+      "fingerprint": "262f553bac1d73101b75da07c4c76d50451c9b5bc3e2077c916b0e89779e2d09"
+    },
+    {
+      "seq": 24,
+      "at": "2026-11-02T04:11:41.048Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/magazine/rotation.go",
+        "find": "r > oldestRank",
+        "replace": "r < oldestRank"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPickReusesLeastRecentlyUsedWhenPoolExhausted rotation_test.go:43: Pick = \"a\" repeat=true, want b / true --- FAIL: TestPickReusesLeastRecentlyUsedWhenPoolExhausted (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted": "want b / true"
+      },
+      "fingerprint": "262f553bac1d73101b75da07c4c76d50451c9b5bc3e2077c916b0e89779e2d09"
+    },
+    {
+      "seq": 25,
+      "at": "2026-11-02T04:11:46.372Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickPrefersUnusedEntryOverRecent|TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickPrefersUnusedEntryOverRecent",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "262f553bac1d73101b75da07c4c76d50451c9b5bc3e2077c916b0e89779e2d09"
+    },
+    {
+      "seq": 26,
+      "at": "2026-11-02T04:28:08.183Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 2,
+      "findings": [
+        {
+          "severity": "blocker",
+          "file": "tasks/MAG-001.json",
+          "summary": "red_exception.reason says the jobs and httpserver clock tests fail at base, but neither compiles there (h.now, 3-arg handler), which policy calls INVALID_RED, and no RED or sensitivity evidence names …"
+        },
+        {
+          "severity": "blocker",
+          "file": "tasks/MAG-001.json",
+          "summary": "Suite #22 failed 1 test and #23 passed on the same fingerprint with no code change between them. The test name was lost to tail -2 and nobody diagnosed it. Re-run with logs kept, name any failure, and…"
+        },
+        {
+          "severity": "major",
+          "file": "docs/ops/magazine-dedupe.md",
+          "summary": "History already holds all 12 vocab and 3 BJT entries, so every cron article is a repeat from day one and the WARN fires daily. The runbook's 'after that many days' and the spec's 'fresh' are wrong. Th…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/httpserver/handler_career_content_gamification_misc.go",
+          "summary": "/today now rolls over at 00:00 ICT but the cron publishes at 05:30, so it returns [] for 5.5 hours daily and the home widget hides."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/generator.go",
+          "summary": "The existing-row check ignores status, so a draft or archived row for that date blocks publishing with no log, and a missed 05:30 run has no catch-up."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/cmd/magazine-dedupe/main.go",
+          "summary": "No test pins the CLI dry-run default named by AC5, and no test asserts the exhaustion WARN named by AC2 (the test logger is discarded)."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/dedupe.go",
+          "summary": "The comment that a dry run reports exactly what an apply would change is false, since they are separate transactions. RowsAffected is ignored, so APPLIED counts can overstate."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/pool/vocab.json",
+          "summary": "Every quiz in all three pools lists the correct answer first and neither web nor mobile shuffles, so always picking the first option scores full marks. Inherited from the seeds, now republished daily."
+        },
+        {
+          "severity": "minor",
+          "file": "docs/ops/magazine-dedupe.md",
+          "summary": "Seeded magazine_loto rows share title, vocab and quizzes but differ in luckyNumbers, so dedupe never matches them and they stay published. The runbook does not say so."
+        },
+        {
+          "severity": "minor",
+          "file": "database/scripts/seeds/content/seed-magazine.mjs",
+          "summary": "The header still says 7 days and the loop now runs once. seed-magazine-3months.mjs keeps hard-coded 90 and 83 and says idempotent beside run ONCE."
+        }
+      ],
+      "package_sha256": "65e3b0721f9e25362b1861074a4eff989caec0ea6411c1b2aa65cc5d233f6287",
+      "fingerprint": "262f553bac1d73101b75da07c4c76d50451c9b5bc3e2077c916b0e89779e2d09"
+    },
+    {
+      "seq": 27,
+      "at": "2026-11-02T04:28:37.558Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/magazine/rotation.go",
+        "find": "r > oldestRank",
+        "replace": "r < oldestRank"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPickReusesLeastRecentlyUsedWhenPoolExhausted rotation_test.go:43: Pick = \"a\" repeat=true, want b / true --- FAIL: TestPickReusesLeastRecentlyUsedWhenPoolExhausted (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted": "want b / true"
+      },
+      "fingerprint": "3364cc41b4a7fce13122eb18d7fd1aeab4695d6eb84a2858a424083ff7ef1db2"
+    },
+    {
+      "seq": 28,
+      "at": "2026-11-02T04:28:41.787Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickPrefersUnusedEntryOverRecent|TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickPrefersUnusedEntryOverRecent",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3364cc41b4a7fce13122eb18d7fd1aeab4695d6eb84a2858a424083ff7ef1db2"
+    },
+    {
+      "seq": 29,
+      "at": "2026-11-02T04:32:49.946Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1807,
+        "executed": 1807,
+        "passed": 1807,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1807 passed, 0 allowed skip(s)",
+      "fingerprint": "3364cc41b4a7fce13122eb18d7fd1aeab4695d6eb84a2858a424083ff7ef1db2"
+    },
+    {
+      "seq": 30,
+      "at": "2026-11-02T04:47:14.116Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 2,
+      "findings": [
+        {
+          "severity": "blocker",
+          "file": "tasks/MAG-001.json",
+          "summary": "red_exception.reason says suite run #22 failed only TestGeneratedContractMatchesRouter and regeneration fixed it. That failure was run #21. The contract was regenerated at 04:05:05Z, #22 started at 04…"
+        },
+        {
+          "severity": "blocker",
+          "file": "tasks/MAG-001.json",
+          "summary": "The same reason claims magazine.Today sensitivity is pinned, but all 8 recorded sensitivity runs use one mutation, r > oldestRank in rotation.go, targeting only TestPickReusesLeastRecentlyUsedWhenPool…"
+        },
+        {
+          "severity": "major",
+          "file": "tasks/MAG-001.json",
+          "summary": "expected_behavior says each day publishes a fresh article, but the code and runbook say otherwise. Pool titles match the seeds exactly (12 of 12 vocab, 3 of 3 BJT), so on every seeded environment each…"
+        },
+        {
+          "severity": "minor",
+          "file": "database/scripts/seeds/content/seed-magazine.mjs",
+          "summary": "This seed builds slug date-bjt_phrase-vi but the cron writes date-bjt-phrase-vi. After the cron has run on a weekday, findUnique misses and create hits uq_magazine_kind_date_locale. P2002 is not caugh…"
+        },
+        {
+          "severity": "minor",
+          "file": "tasks/MAG-001.json",
+          "summary": "rollback_plan still gives the unguarded restore, UPDATE ... SET status='published' WHERE source_data_json ? 'dedupedAt', which would republish rows an admin later moved to draft or rejected. dedupe.go…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/cmd/magazine-dedupe/main.go",
+          "summary": "No test pins the CLI dry-run default named in AC5, and no test asserts the exhaustion WARN that AC2 and the runbook rely on (generator tests discard logs). Flipping the -apply default or deleting the …"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/dedupe.go",
+          "summary": "RowsAffected from the archive UPDATE is ignored and the CLI prints the lookup count as APPLIED, so the reported count can overstate what changed. Still open from review #26."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/generator.go",
+          "summary": "The existing-row check ignores status, so a draft placeholder from POST /api/admin/magazine/generate silently blocks that kind for the day with no log. A missed 05:30 run also has no catch-up, unlike …"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/pool/vocab.json",
+          "summary": "All 36 quizzes in the scheduled pools list the correct answer first (all 40 including weather). The runbook documents this and says clients do not shuffle, so choosing the first option always scores f…"
+        }
+      ],
+      "package_sha256": "b2d97e21e94b964fbde5487b2a09b993a29b81fec5d434913901048a844145df",
+      "fingerprint": "3364cc41b4a7fce13122eb18d7fd1aeab4695d6eb84a2858a424083ff7ef1db2"
+    },
+    {
+      "seq": 31,
+      "at": "2026-11-02T04:48:57.986Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/magazine/rotation.go",
+        "find": "r > oldestRank",
+        "replace": "r < oldestRank"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPickReusesLeastRecentlyUsedWhenPoolExhausted rotation_test.go:43: Pick = \"a\" repeat=true, want b / true --- FAIL: TestPickReusesLeastRecentlyUsedWhenPoolExhausted (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted": "want b / true"
+      },
+      "fingerprint": "816de5f7932606a160b60c68f93b129903523ea65b18a61ebff6458e11e95901"
+    },
+    {
+      "seq": 32,
+      "at": "2026-11-02T04:49:01.947Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickPrefersUnusedEntryOverRecent|TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickPrefersUnusedEntryOverRecent",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "816de5f7932606a160b60c68f93b129903523ea65b18a61ebff6458e11e95901"
+    },
+    {
+      "seq": 33,
+      "at": "2026-11-02T04:56:13.472Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1805,
+        "executed": 1805,
+        "passed": 1805,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1805 passed, 0 allowed skip(s)",
+      "fingerprint": "816de5f7932606a160b60c68f93b129903523ea65b18a61ebff6458e11e95901"
+    },
+    {
+      "seq": 34,
+      "at": "2026-11-02T05:08:25.840Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "blocker",
+          "file": "tasks/MAG-001.json",
+          "summary": "new_component is applied to production edits of two existing seed scripts (policy path rule production:true, both present at start_head). red_exception.reason says existing-behaviour changes are split…"
+        },
+        {
+          "severity": "major",
+          "file": "docs/ops/magazine-dedupe.md",
+          "summary": "The runbook describes MAG-002 as live: line 5 says the job now rotates but handlers.go:51-55 is a stub, the WARN at line 30 cannot fire because nothing calls the generator, and the /today ICT rollover…"
+        },
+        {
+          "severity": "major",
+          "file": "tasks/MAG-001.json",
+          "summary": "The only sensitivity mutation (r > oldestRank in rotation.go) selects the LRU entry on an exhausted pool, and generator.go:93-100 discards that entry. generator.go and dedupe.go, the writes behind AC4…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/generator.go",
+          "summary": "recentKeys filters content_date<$3, so an out-of-order GenerateForDate run ignores later rows and can repeat the next day's article. Dropping the predicate fixes it; no caller does this today."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/dedupe.go",
+          "summary": "RowsAffected from the archive UPDATE is ignored, so the CLI prints the lookup count as APPLIED."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/cmd/magazine-dedupe/main.go",
+          "summary": "The dry run prints only per-kind counts, so Slug and ContentDate are never shown for operator review. It also uses raw pgxpool.New and context.Background with no timeout or signal handling, unlike pos…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/dedupe_test.go",
+          "summary": "No fixture has duplicates in a second kind, so removing the Kind predicate would keep the test green on a clean database."
+        },
+        {
+          "severity": "minor",
+          "file": "tasks/MAG-001.json",
+          "summary": "rollback_plan still gives the unguarded restore that lacks status='archived', one risk acknowledgement cites a test file no longer in the diff, and the failing test in suite #22 was never named."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/pool.go",
+          "summary": "Today has no production caller although the /today date fix is declared out of scope; move it to the task that uses it."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/admin/app/[locale]/magazine/magazine-admin-client.tsx",
+          "summary": "Any non-published status renders as Draft, so archived duplicates look like drafts in admin and the runbook does not mention it."
+        }
+      ],
+      "package_sha256": "81382abbb7e4d66592c52a8fadd876c747efedf59a4f6ba50b8979831b59c9f4",
+      "fingerprint": "816de5f7932606a160b60c68f93b129903523ea65b18a61ebff6458e11e95901"
+    },
+    {
+      "seq": 35,
+      "at": "2026-11-02T05:09:11.108Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/magazine/rotation.go",
+        "find": "r > oldestRank",
+        "replace": "r < oldestRank"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPickReusesLeastRecentlyUsedWhenPoolExhausted rotation_test.go:43: Pick = \"a\" repeat=true, want b / true --- FAIL: TestPickReusesLeastRecentlyUsedWhenPoolExhausted (0.00s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted": "want b / true"
+      },
+      "fingerprint": "2cbfb5931f817394e801b64567a6251b8cd6b613c15a4463ca3623a79c2fa18a"
+    },
+    {
+      "seq": 36,
+      "at": "2026-11-02T05:09:14.754Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickPrefersUnusedEntryOverRecent|TestPickReusesLeastRecentlyUsedWhenPoolExhausted)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickPrefersUnusedEntryOverRecent",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "2cbfb5931f817394e801b64567a6251b8cd6b613c15a4463ca3623a79c2fa18a"
+    },
+    {
+      "seq": 37,
+      "at": "2026-11-02T05:13:21.959Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1804,
+        "executed": 1804,
+        "passed": 1804,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1804 passed, 0 allowed skip(s)",
+      "fingerprint": "2cbfb5931f817394e801b64567a6251b8cd6b613c15a4463ca3623a79c2fa18a"
+    },
+    {
+      "seq": 38,
+      "at": "2026-11-02T05:24:47.802Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "blocker",
+          "file": "tasks/MAG-001.json",
+          "summary": "spec.problem lists 'seed fixes' as part of this task, but no seed file is in the diff: database/scripts/seeds/content/seed-magazine.mjs and seed-magazine-3months.mjs are unchanged. They are the root c…"
+        },
+        {
+          "severity": "major",
+          "file": "tasks/MAG-001.json",
+          "summary": "red_exception.reason says the tests are proven by sensitivity mutation, but the only recorded mutation (r > oldestRank in rotation.go) targets one test and changes only the entry returned when repeat …"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/dedupe_test.go",
+          "summary": "The grouping SQL exists twice in dedupe.go, and only findDuplicatesKeepLatest has its grouping fully pinned. After the KeepEarliest apply, the test checks only vi-2099-10-02 and vi-2099-10-10 and igno…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/cmd/magazine-dedupe/main.go",
+          "summary": "AC5 names the CLI dry-run default, but no test covers this command, so changing the -apply default to true keeps the suite green. Still open from earlier reviews."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/generator.go",
+          "summary": "The historyLimit comment compares 500 with pool size, but the limit counts rows per kind, including rows that match no pool entry. Once a kind passes 500 rows, older keys look unused and the generator…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/pool.go",
+          "summary": "The Entry comment and the runbook forbid changing a key, but TitleVi is the only link to seeded rows that have no poolKey. Editing a seeded entry's titleVi, for example to fix a typo, makes that entry…"
+        },
+        {
+          "severity": "minor",
+          "file": "docs/ops/magazine-dedupe.md",
+          "summary": "apps/admin/app/[locale]/magazine/magazine-admin-client.tsx:358-360 renders every non-published status as Draft, so archived duplicates look like drafts in admin, and the runbook does not say so."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/pool/vocab.json",
+          "summary": "All 40 pool quizzes list the correct answer first and the web and mobile magazine code has no shuffle, so choosing the first option always scores full marks. This is inherited from the seeds and docum…"
+        },
+        {
+          "severity": "minor",
+          "file": "tasks/MAG-001.json",
+          "summary": "AC4 and expected_behavior accept that seeded environments publish nothing from the generator until content is added, yet execution.decisions is empty. Nothing ships that behaviour here, but a human sh…"
+        }
+      ],
+      "package_sha256": "1c9b59bb2145681fb05d2b08b6a46b1204103a47874e0b06e175731b6185e927",
+      "fingerprint": "2cbfb5931f817394e801b64567a6251b8cd6b613c15a4463ca3623a79c2fa18a"
+    },
+    {
+      "seq": 39,
+      "at": "2026-11-02T05:25:15.844Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "sensitivity",
+      "outcome": "INSENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/magazine/generator.go",
+        "find": "if repeat {",
+        "replace": "if false {"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickReusesLeastRecentlyUsedWhenPoolExhausted|TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/magazine [github.com/kotobawork/nihongo-bjt/api-go/internal/magazine.test] internal/magazine/generator.go:94:9: declared and not used: repeat FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/magazine [build failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/magazine:TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/magazine [github.com/kotobawork/nihongo-bjt/api-go/internal/magazine.test] internal/magazine/generator.go:94:9: declared and not used: repeat FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/magazine [build failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted": "want b / true",
+        "go:./internal/magazine:TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat": "want no repeat"
+      },
+      "fingerprint": "1125be1da0b38115e55e8493e6fb9bcc1c32a197e951de5691751cccb1385e88"
+    },
+    {
+      "seq": 40,
+      "at": "2026-11-02T05:25:32.751Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "sensitivity",
+      "outcome": "INSENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/magazine/generator.go",
+        "find": "if repeat {",
+        "replace": "if false {"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickReusesLeastRecentlyUsedWhenPoolExhausted|TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/magazine [github.com/kotobawork/nihongo-bjt/api-go/internal/magazine.test] internal/magazine/generator.go:94:9: declared and not used: repeat FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/magazine [build failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "go:./internal/magazine:TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "# github.com/kotobawork/nihongo-bjt/api-go/internal/magazine [github.com/kotobawork/nihongo-bjt/api-go/internal/magazine.test] internal/magazine/generator.go:94:9: declared and not used: repeat FAIL github.com/kotobawork/nihongo-bjt/api-go/internal/magazine [build failed]",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        }
+      ],
+      "expects": {
+        "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted": "want b / true",
+        "go:./internal/magazine:TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat": "want no repeat"
+      },
+      "fingerprint": "1125be1da0b38115e55e8493e6fb9bcc1c32a197e951de5691751cccb1385e88"
+    },
+    {
+      "seq": 41,
+      "at": "2026-11-02T05:25:59.400Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "sensitivity",
+      "outcome": "INSENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/magazine/generator.go",
+        "find": "if repeat {",
+        "replace": "if repeat && false {"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickReusesLeastRecentlyUsedWhenPoolExhausted|TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "PASS",
+          "excerpt": "=== RUN TestPickReusesLeastRecentlyUsedWhenPoolExhausted --- PASS: TestPickReusesLeastRecentlyUsedWhenPoolExhausted (0.00s)",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        },
+        {
+          "id": "go:./internal/magazine:TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat generator_test.go:99: published \"vocab-office\" after the pool was exhausted; want no repeat --- FAIL: TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat (0.05s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted": "want b / true",
+        "go:./internal/magazine:TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat": "want no repeat"
+      },
+      "fingerprint": "1125be1da0b38115e55e8493e6fb9bcc1c32a197e951de5691751cccb1385e88"
+    },
+    {
+      "seq": 42,
+      "at": "2026-11-02T05:26:17.430Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "sensitivity",
+      "outcome": "INSENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/magazine/generator.go",
+        "find": "if repeat {",
+        "replace": "if repeat && false {"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickReusesLeastRecentlyUsedWhenPoolExhausted|TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted",
+          "outcome": "PASS",
+          "excerpt": "=== RUN TestPickReusesLeastRecentlyUsedWhenPoolExhausted --- PASS: TestPickReusesLeastRecentlyUsedWhenPoolExhausted (0.00s)",
+          "valid": false,
+          "reason": "test passes before the change: behavior already exists (characterization, not TDD) or the test does not exercise it"
+        },
+        {
+          "id": "go:./internal/magazine:TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat generator_test.go:99: published \"vocab-office\" after the pool was exhausted; want no repeat --- FAIL: TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat (0.04s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/magazine:TestPickReusesLeastRecentlyUsedWhenPoolExhausted": "want b / true",
+        "go:./internal/magazine:TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat": "want no repeat"
+      },
+      "fingerprint": "1125be1da0b38115e55e8493e6fb9bcc1c32a197e951de5691751cccb1385e88"
+    },
+    {
+      "seq": 43,
+      "at": "2026-11-02T05:26:41.264Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/api-go/internal/magazine/generator.go",
+        "find": "if repeat {",
+        "replace": "if repeat && false {"
+      },
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat generator_test.go:99: published \"vocab-office\" after the pool was exhausted; want no repeat --- FAIL: TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat (0.05s)",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/magazine:TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat": "want no repeat"
+      },
+      "fingerprint": "1125be1da0b38115e55e8493e6fb9bcc1c32a197e951de5691751cccb1385e88"
+    },
+    {
+      "seq": 44,
+      "at": "2026-11-02T05:27:00.124Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPickPrefersUnusedEntryOverRecent|TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat)$ ./internal/magazine"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/magazine:TestPickPrefersUnusedEntryOverRecent",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/magazine:TestGenerateForDateContinuesLegacyHistoryThenReportsRepeat",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1125be1da0b38115e55e8493e6fb9bcc1c32a197e951de5691751cccb1385e88"
+    },
+    {
+      "seq": 45,
+      "at": "2026-11-02T05:31:03.429Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1804,
+        "executed": 1804,
+        "passed": 1804,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1804 passed, 0 allowed skip(s)",
+      "fingerprint": "1125be1da0b38115e55e8493e6fb9bcc1c32a197e951de5691751cccb1385e88"
+    },
+    {
+      "seq": 46,
+      "at": "2026-11-02T05:42:12.130Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [
+        {
+          "severity": "minor",
+          "file": "apps/api-go/cmd/magazine-dedupe/main.go",
+          "summary": "AC5 names the CLI dry-run default, but no test runs this command, so changing the -apply default to true stays green. Only the zero value of DedupeOptions.Apply is pinned. Open since review #26."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/generator_test.go",
+          "summary": "The exhaustion check matches only the message text, so it still passes if the log drops to Info, although AC4 requires a WARN. Assert level=WARN as well."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/pool.go",
+          "summary": "The Entry comment and the runbook protect only key, but titleVi is the only link to seeded rows without a poolKey. Editing a seeded entry's titleVi makes it look unused, and the generator republishes …"
+        },
+        {
+          "severity": "minor",
+          "file": "docs/ops/magazine-dedupe.md",
+          "summary": "apps/admin/app/[locale]/magazine/magazine-admin-client.tsx:358-360 shows every non-published status as Draft, so archived duplicates look like drafts in admin. The runbook does not say so."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/generator.go",
+          "summary": "The generator's slug ends -bjt-phrase-vi, but seed-magazine.mjs builds -bjt_phrase-vi. Once MAG-002 publishes a BJT article inside the seed's 7-day window, findUnique misses, the unguarded create hits…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/api-go/internal/magazine/pool/vocab.json",
+          "summary": "All 40 pool quizzes list the correct answer first, the API keeps stored order and neither the web nor mobile magazine code shuffles, so always choosing the first option scores full marks. This is inhe…"
+        },
+        {
+          "severity": "minor",
+          "file": "tasks/MAG-001.json",
+          "summary": "expected_behavior accepts that seeded environments publish nothing until content is added, which by the spec's own account includes production, yet execution.decisions is empty. Nothing ships this her…"
+        }
+      ],
+      "package_sha256": "58f5a2db1d0da4035888204c9b6498bb7923a7c0a7e73569f34f58ba499947e4",
+      "fingerprint": "1125be1da0b38115e55e8493e6fb9bcc1c32a197e951de5691751cccb1385e88"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-02T05:42:26.700Z",
+    "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+    "fingerprint": "1125be1da0b38115e55e8493e6fb9bcc1c32a197e951de5691751cccb1385e88",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "green": "PASS",
+      "sensitivity": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/cmd/magazine-dedupe/main.go": "4ff4a50321a00b9c35679ace40b05af457fed467",
+      "apps/api-go/internal/magazine/dedupe.go": "ab29b440d583221b92fa867dfac6a2e446049814",
+      "apps/api-go/internal/magazine/dedupe_test.go": "bbcb417982f1473b32c9e3d7dbfe76fd05b3f0e4",
+      "apps/api-go/internal/magazine/generator.go": "b0b3bb6b4a2d815ff9acc9e0cc85d6482f97df7e",
+      "apps/api-go/internal/magazine/generator_test.go": "1cf3cc2d8d1773b376cc57fa3b4e368a7e2b5bd6",
+      "apps/api-go/internal/magazine/pool.go": "a56bd6390401fa59229c0a53d1ffa2be8870e1a1",
+      "apps/api-go/internal/magazine/pool/bjt_phrase.json": "a769dc278bf02acc87ec4956181c5283351f6aa3",
+      "apps/api-go/internal/magazine/pool/vocab.json": "1fbfebe628ee8e8181423f9ae253a936b56ecd58",
+      "apps/api-go/internal/magazine/pool/weather.json": "af18bc1a12fdf3e133f5a41ae9ee92ed6c843580",
+      "apps/api-go/internal/magazine/pool_test.go": "9a4ce30e8ee5628d9984c41d47058dc051905da2",
+      "apps/api-go/internal/magazine/rotation.go": "7596a699148233460d2b46bafa834c460bcb5117",
+      "apps/api-go/internal/magazine/rotation_test.go": "161c4c0402fcd12d487425853c9c37f38bd71f5a",
+      "docs/ops/magazine-dedupe.md": "78a2cf1e0252bcbcdc2ad672a002501966f4f73b"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}
