@@ -1,0 +1,5 @@
+# Pixel March: Ant Puzzle - authorized digital sellers (IAB app-ads.txt)
+# AdMob publisher ID from the AdMob dashboard (docs/HUONG-DAN-PHAT-HANH-APP-STORE.md, section 8).
+google.com, pub-1186350298493783, DIRECT, f08c47fec0942fa0
+# TODO(owner): LevelPlay mediates only the AdMob network in 1.0 (4); if another LevelPlay network is enabled,
+# add its seller line from that network's official documentation before enabling it.

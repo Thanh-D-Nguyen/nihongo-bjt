@@ -1,0 +1,132 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "PIX-001",
+  "title": "Publish Pixel March support and privacy pages",
+  "start_head": "e893959a25f6ee8737753169067fd5e3bd855878",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Publish accessible Pixel March support, privacy and terms pages and app-ads.txt on kiokoto.com."
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "add",
+    "rationale": ""
+  },
+  "red_exception": {
+    "category": "visual_only",
+    "reason": "Static support and legal documents and seller text; verify content, links and HTTP responses without introducing a permanent implementation-mirroring test.",
+    "declared_before_red": true
+  },
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-05T01:59:45.480Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-05T02:00:02.524Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-05T02:00:07.776Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-11-05T02:03:44.221Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-05T02:05:06.343Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "EXCEPTION_APPROVED",
+      "at": "2026-11-05T02:08:00.812Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-05T02:08:05.813Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-05T02:05:05.811Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 633,
+        "executed": 633,
+        "passed": 633,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 867,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "1f62ad286db7561925023b510a13cac033a8cf738a587e07cde05806f266756f"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-05T02:08:00.447Z",
+      "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "Peirce",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "fb7d0e1aebfbf594cce7d64d33befc5766a52d0d9e4e49b8323ada0609435c69",
+      "attested": true,
+      "fingerprint": "1f62ad286db7561925023b510a13cac033a8cf738a587e07cde05806f266756f"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-05T02:08:05.793Z",
+    "head": "e893959a25f6ee8737753169067fd5e3bd855878",
+    "fingerprint": "1f62ad286db7561925023b510a13cac033a8cf738a587e07cde05806f266756f",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/web/public/app-ads.txt": "71efef3bcc136da1f70d9a628d702b1d492d004d",
+      "apps/web/public/pixelmarch/index.html": "93adf32ebfa05c681c0131eb727f0d638ee465ac",
+      "apps/web/public/pixelmarch/privacy.html": "be2a452f4347bfacaa71b28c3cde015cf2f2be0a",
+      "apps/web/public/pixelmarch/terms.html": "a56226724b210275fc1c2dbf12d0d011c2965f7a"
+    }
+  }
+}
