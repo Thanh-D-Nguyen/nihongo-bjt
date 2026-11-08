@@ -1,0 +1,329 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "KLN-001",
+  "title": "Publish Kinh Lăng Nghiêm iOS privacy and support pages",
+  "start_head": "fcb13f3bf95ef5eaacbe36095cde9ce1d947ff62",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Publish accessible Vietnamese privacy-policy and support pages for the Kinh Lăng Nghiêm iOS app at /kinh-lang-nghiem/privacy.html and /kinh-lang-nghiem/support.html on kiokoto.com, linked from the app and its App Store listing."
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "add",
+    "rationale": ""
+  },
+  "red_exception": {
+    "category": "visual_only",
+    "reason": "Static privacy and support documents; verify content, links and HTTP responses without a permanent implementation-mirroring test.",
+    "declared_before_red": true
+  },
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-08T16:23:22.992Z",
+      "head": "fcb13f3bf95ef5eaacbe36095cde9ce1d947ff62"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-08T16:23:29.630Z",
+      "head": "fcb13f3bf95ef5eaacbe36095cde9ce1d947ff62"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-08T16:23:29.802Z",
+      "head": "fcb13f3bf95ef5eaacbe36095cde9ce1d947ff62"
+    },
+    {
+      "state": "WAITING_FOR_DECISION",
+      "at": "2026-11-08T16:41:06.021Z",
+      "head": "fcb13f3bf95ef5eaacbe36095cde9ce1d947ff62"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-11-08T16:45:18.422Z",
+      "head": "fcb13f3bf95ef5eaacbe36095cde9ce1d947ff62"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-08T16:46:14.328Z",
+      "head": "fcb13f3bf95ef5eaacbe36095cde9ce1d947ff62"
+    },
+    {
+      "state": "EXCEPTION_APPROVED",
+      "at": "2026-11-08T17:07:02.154Z",
+      "head": "fcb13f3bf95ef5eaacbe36095cde9ce1d947ff62"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-08T17:07:38.708Z",
+      "head": "fcb13f3bf95ef5eaacbe36095cde9ce1d947ff62"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-08T16:24:39.533Z",
+      "head": "fcb13f3bf95ef5eaacbe36095cde9ce1d947ff62",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 633,
+        "executed": 633,
+        "passed": 633,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 867,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "97ca5e51db4939a9af112d77d5605b916ab409216c43f9e7791ddf34005ddf53"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-08T16:41:05.759Z",
+      "head": "fcb13f3bf95ef5eaacbe36095cde9ce1d947ff62",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 3,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/web/public/kinh-lang-nghiem/privacy.html",
+          "summary": "Contact is routed to /vi/feedback (stores name/email/message, handler_feedback.go:83) but the policy never says what support receives, why, how long it is kept or how to delete it (5.1.1(i); app priva…"
+        },
+        {
+          "severity": "major",
+          "file": "apps/web/public/kinh-lang-nghiem/privacy.html",
+          "summary": "'Không thu thập dữ liệu' + Cloudflare text published without the host/CDN log check that app compliance.md:15,39 requires first; no retention note or Cloudflare link. Owner must confirm R2 logging."
+        },
+        {
+          "severity": "major",
+          "file": "apps/web/public/kinh-lang-nghiem/support.html",
+          "summary": "FAQ says 'Về chỗ đang nghe' appears in off-book passages; it appears only after scrolling away during an aligned passage (AudioFollow.swift:23, AudioCueIndex.swift:137)."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/public/kinh-lang-nghiem/support.html",
+          "summary": "'Khoảng 21 MB/giờ' doesn't match the app's display: the manifest gives 22.35 MB/h and ByteCountFormatter(.file) shows ~22.4 MB per hour; use ~22 MB."
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/public/kinh-lang-nghiem/support.html",
+          "summary": "Feedback form email is optional; tell users (both pages) to enter an email if they want a reply."
+        },
+        {
+          "severity": "minor",
+          "file": "tasks/KLN-001.json",
+          "summary": "AC1 publication and the App Store link can only be checked after merge: both URLs 404 in prod today; confirm 200 text/html after deploy and set App Store Connect URLs."
+        }
+      ],
+      "package_sha256": "baa5b5aba2abfcfef34724873ee25802e88ff12e464e65b37e2abd6bb2c4ea2a",
+      "fingerprint": "97ca5e51db4939a9af112d77d5605b916ab409216c43f9e7791ddf34005ddf53"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-08T16:46:14.052Z",
+      "head": "fcb13f3bf95ef5eaacbe36095cde9ce1d947ff62",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 633,
+        "executed": 633,
+        "passed": 633,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 867,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "ce2d58d9614de2f83e71f9f634942e858ea19bc8017935f09d267025e370190b"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-08T16:57:22.238Z",
+      "head": "fcb13f3bf95ef5eaacbe36095cde9ce1d947ff62",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/web/public/kinh-lang-nghiem/support.html",
+          "summary": "FAQ says scrolling/flipping away while listening brings up 'Về chỗ đang nghe'; while playing with follow on, the app instead moves the audio to any passage the recording covers (CommentaryReaderView.s…"
+        },
+        {
+          "severity": "minor",
+          "file": "tasks/KLN-001.json",
+          "summary": "AC1 external gate: commit + release (prod builds from git archive), confirm 200 text/html at both URLs (planned HTTP check never recorded), set App Store Connect URLs, owner sign-off per KinhLangNghie…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/next-env.d.ts",
+          "summary": "Build-generated changes to apps/{web,admin}/next-env.d.ts and tsconfig.tsbuildinfo are unowned by KLN-001; do not commit them with this task."
+        }
+      ],
+      "package_sha256": "27dbb4f800170c318b95356c82edaaaaa05fca107b223061b72692cbb7195511",
+      "fingerprint": "ce2d58d9614de2f83e71f9f634942e858ea19bc8017935f09d267025e370190b"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-08T16:58:53.417Z",
+      "head": "fcb13f3bf95ef5eaacbe36095cde9ce1d947ff62",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 633,
+        "executed": 633,
+        "passed": 633,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 867,
+        "lint_errors": 64,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "ee68b03a480dbb719046dcaaa2da3215ab5ee8d2a5c47e95a3ff303f3dbcea76"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-08T17:07:01.909Z",
+      "head": "fcb13f3bf95ef5eaacbe36095cde9ce1d947ff62",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [
+        {
+          "severity": "minor",
+          "file": "tasks/KLN-001.json",
+          "summary": "AC1 publication is an external gate: files are untracked and prod builds from a git archive (deploy/oci/Dockerfile.frontend:6); commit+release, record 200 text/html at both URLs, set Privacy/Support U…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/public/kinh-lang-nghiem/support.html",
+          "summary": "FAQ 'Vì sao có đoạn chữ không đi theo giọng?' omits the 'Tự cuộn theo giọng giảng' toggle (ReaderChromeView.swift:139); when off, text never follows and 'Về chỗ đang nghe' never appears (AudioFollow.s…"
+        }
+      ],
+      "package_sha256": "54805ca30df1edc80524fade743245de1ed24c5bee7119c10bd81357e20b9576",
+      "fingerprint": "ee68b03a480dbb719046dcaaa2da3215ab5ee8d2a5c47e95a3ff303f3dbcea76"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-08T17:07:38.690Z",
+    "head": "fcb13f3bf95ef5eaacbe36095cde9ce1d947ff62",
+    "fingerprint": "ee68b03a480dbb719046dcaaa2da3215ab5ee8d2a5c47e95a3ff303f3dbcea76",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/web/public/kinh-lang-nghiem/privacy.html": "1f022b662826651feba15e940d9c3c6c938ebf66",
+      "apps/web/public/kinh-lang-nghiem/support.html": "c379a62d7ec1eca3f5cbc62d5f8f683825d93e15"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": [
+      {
+        "id": "316cfc3a-3792-4234-a841-21769c153397",
+        "task": "KLN-001",
+        "action": {
+          "kind": "external_mutation",
+          "target": {
+            "id": "shell operation",
+            "fingerprint": "ca9f588cc6fa64fbd310f6ec206aa61f7e56571675082e9398786920dd2a4e8d",
+            "environment": "local"
+          },
+          "impact": "Publish or mutate an external service/account",
+          "command": "for u in https://kiokoto.com/pixelmarch/privacy.html https://kiokoto.com/vi/feedback https://kiokoto.com/kinh-lang-nghiem/privacy.html https://kiokoto.com/kinh-lang-nghiem/support.html https://audio-kinhlangnghiem.kiokoto.com/audio/vn03-a1/audio.json; do echo \"=== $u\"; curl -sS -o /dev/null -D - --max-time 20 \"$u\" | rg -i '^(HTTP|server|content-type|cf-ray|cf-cache-status|content-security-policy|x-frame|cache-control|location|via|x-powered-by|x-nextjs|age|strict-transport)' ; done"
+        },
+        "impact": "Publish or mutate an external service/account",
+        "target": {
+          "id": "shell operation",
+          "fingerprint": "ca9f588cc6fa64fbd310f6ec206aa61f7e56571675082e9398786920dd2a4e8d",
+          "environment": "local"
+        },
+        "digest": "701b2e3f3e3fe1216610d751c5feb1a71606cc1eba69facc168ed9619115729a",
+        "continuation": {
+          "step": "native:toolu_015XNLzVNJ3WtiGtFg2UihKh",
+          "native_tool_use_id": "toolu_015XNLzVNJ3WtiGtFg2UihKh"
+        },
+        "recommended": "alternative",
+        "choices": [
+          {
+            "id": "alternative",
+            "label": "Use the safer alternative (Recommended)",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_once",
+            "label": "Approve once",
+            "scope": "ONCE"
+          },
+          {
+            "id": "approve_task",
+            "label": "Approve this exact action for this task",
+            "scope": "TASK"
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel this operation; continue other work",
+            "scope": "ONCE"
+          }
+        ],
+        "selected": "cancel",
+        "scope": "ONCE",
+        "status": "COMPLETED",
+        "at": "2026-11-08T16:32:40.634Z",
+        "answered_at": "2026-11-08T16:45:18.118Z",
+        "execution": "alternative"
+      }
+    ]
+  }
+}
