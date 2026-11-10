@@ -647,10 +647,9 @@ func disableAccountHandler(
 }
 
 // deleteAccountHandler implements POST /api/auth/delete.
-// Hard deletes user, CASCADE removes sessions/credentials. Requires session cookie.
+// Hard deletes user, CASCADE removes sessions/credentials. Requires a guarded learner identity.
 func deleteAccountHandler(
 	db *pgxpool.Pool,
-	sessionStore *session.Store,
 	rateLimiter *authn.RateLimiter,
 	logger *slog.Logger,
 ) http.HandlerFunc {
@@ -666,24 +665,15 @@ func deleteAccountHandler(
 			return
 		}
 
-		// Extract session from cookie.
-		cookie, err := r.Cookie(learnerCookieName)
-		if err != nil {
-			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
-			return
-		}
-
 		ctx := r.Context()
-
-		// Lookup session.
-		sess, err := sessionStore.LookupLearnerSession(ctx, cookie.Value)
-		if err != nil {
+		identity, ok := authn.GetLearnerIdentity(ctx)
+		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
 
 		// Delete user (CASCADE handles sessions/credentials).
-		if err := deleteUserProfile(ctx, db, sess.UserID); err != nil {
+		if err := deleteUserProfile(ctx, db, identity.UserID); err != nil {
 			logger.Error("delete-account: delete failed", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return

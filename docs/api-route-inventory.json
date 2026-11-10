@@ -1,11 +1,11 @@
 {
   "scope": "Static /api inventory of direct NewRouter registrations (excludes /health and /ws). Conditions do not prove runtime availability.",
-  "sourceRegisteredOperations": 641,
-  "openAPIOperations": 641,
+  "sourceRegisteredOperations": 642,
+  "openAPIOperations": 642,
   "verifiedContracts": 0,
   "testEvidencedContracts": 13,
-  "sourceOnlyContracts": 628,
-  "unverifiedContracts": 641,
+  "sourceOnlyContracts": 629,
+  "unverifiedContracts": 642,
   "runtimeVerifiedOperations": 0,
   "families": {
     "Admin / actors": {
@@ -199,7 +199,7 @@
       "testEvidencedContracts": 0
     },
     "Authentication": {
-      "routes": 17,
+      "routes": 18,
       "verifiedContracts": 0,
       "testEvidencedContracts": 4
     },
@@ -23613,6 +23613,56 @@
     },
     {
       "method": "POST",
+      "path": "/api/auth/apple",
+      "handler": "appleLoginHandler(\n\tdeps.DBPool, deps.SessionStore, deps.RateLimiter, deps.Logger,\n\tdeps.Config.CookieSecure, deps.Config.AppleOAuthClientIDs,\n\tnewAppleJWTVerifier(\"https://appleid.apple.com/auth/keys\", &http.Client{Timeout: 5 * time.Second}).Verify,\n)",
+      "family": "Authentication",
+      "guards": null,
+      "runtimeConditions": [
+        "deps.DBPool != nil && deps.SessionStore != nil"
+      ],
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [],
+        "status": "unverified",
+        "subject": "handler integration tests",
+        "unverifiedSourceReferences": [
+          "apps/api-go/internal/httpserver/handler_apple_login_test.go"
+        ]
+      },
+      "contract": {
+        "method": "post",
+        "openAPIPath": "/api/auth/apple",
+        "status": "unverified"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [
+          "deps.DBPool != nil && deps.SessionStore != nil"
+        ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
+      "method": "POST",
       "path": "/api/auth/change-password",
       "handler": "changePasswordHandler(\n\tdeps.DBPool, deps.CredentialStore, deps.SessionStore, deps.RateLimiter, deps.Logger,\n)",
       "family": "Authentication",
@@ -23665,10 +23715,11 @@
     {
       "method": "POST",
       "path": "/api/auth/delete",
-      "handler": "deleteAccountHandler(\n\tdeps.DBPool, deps.SessionStore, deps.RateLimiter, deps.Logger,\n)",
+      "handler": "deleteAccountHandler(\n\tdeps.DBPool, deps.RateLimiter, deps.Logger,\n)",
       "family": "Authentication",
       "guards": [
-        "authn.CSRFGuard(csrfCfg)"
+        "authn.CSRFGuard(csrfCfg)",
+        "authn.LearnerGuard(deps.SessionStore, guardCfg)"
       ],
       "runtimeConditions": [
         "deps.CredentialStore != nil && deps.ProfileStore != nil && deps.SessionStore != nil"
@@ -23676,7 +23727,8 @@
       "sourceRegistrationCount": 1,
       "authentication": {
         "guards": [
-          "authn.CSRFGuard(csrfCfg)"
+          "authn.CSRFGuard(csrfCfg)",
+          "authn.LearnerGuard(deps.SessionStore, guardCfg)"
         ],
         "status": "source-inferred"
       },

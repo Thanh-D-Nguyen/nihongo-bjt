@@ -179,6 +179,11 @@ func NewRouter(deps Dependencies) http.Handler {
 			deps.DBPool, deps.SessionStore, deps.RateLimiter, deps.Logger,
 			deps.Config.CookieSecure, deps.Config.GoogleOAuthClientID, idtoken.Validate,
 		))
+		r.Post("/api/auth/apple", appleLoginHandler(
+			deps.DBPool, deps.SessionStore, deps.RateLimiter, deps.Logger,
+			deps.Config.CookieSecure, deps.Config.AppleOAuthClientIDs,
+			newAppleJWTVerifier("https://appleid.apple.com/auth/keys", &http.Client{Timeout: 5 * time.Second}).Verify,
+		))
 	}
 	if deps.CredentialStore != nil && deps.RBACStore != nil && deps.SessionStore != nil {
 		r.Group(func(ar chi.Router) {
@@ -212,8 +217,8 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Post("/api/auth/disable", disableAccountHandler(
 				deps.DBPool, deps.SessionStore, deps.RateLimiter, deps.Logger,
 			))
-			lr.Post("/api/auth/delete", deleteAccountHandler(
-				deps.DBPool, deps.SessionStore, deps.RateLimiter, deps.Logger,
+			lr.With(authn.LearnerGuard(deps.SessionStore, guardCfg)).Post("/api/auth/delete", deleteAccountHandler(
+				deps.DBPool, deps.RateLimiter, deps.Logger,
 			))
 		})
 	}

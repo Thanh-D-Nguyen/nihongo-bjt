@@ -192,6 +192,7 @@ def check_sources():
     assert "cancel-in-progress: false" in workflow, "deploy cancellation must not interrupt rollback"
     assert workflow.count("github.event.workflow_run.head_sha || github.sha") >= 2, "checkout and deploy must pin the validated SHA"
     assert "GOOGLE_OAUTH_CLIENT_ID: ${{ vars.GOOGLE_OAUTH_CLIENT_ID }}" in workflow, "production deploy must supply the Google OAuth client ID"
+    assert "APPLE_OAUTH_CLIENT_IDS: ${{ vars.APPLE_OAUTH_CLIENT_IDS }}" in workflow, "production deploy must supply native Apple bundle IDs"
     dockerfile = (HERE / "Dockerfile.frontend").read_text()
     assert 'chown -R node:node "apps/$APP_NAME/.next"' in dockerfile, "Next cache must be writable by runtime user"
     assert "USER node" in dockerfile, "frontend must run unprivileged"
@@ -199,6 +200,7 @@ def check_sources():
     compose = (HERE / "docker-compose.oci.yml").read_text()
     assert "NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:?required}" in compose, "Oracle web build must receive the configured Google OAuth client ID"
     assert "GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:?required}" in compose, "Oracle API must validate tokens against the configured Google OAuth client ID"
+    assert "APPLE_OAUTH_CLIENT_IDS: ${APPLE_OAUTH_CLIENT_IDS:?required}" in compose, "Oracle API must validate tokens against configured Apple bundle IDs"
     print("PASS workflow SHA pinning and frontend cache ownership (source checks)")
 
 

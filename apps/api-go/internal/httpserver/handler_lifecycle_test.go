@@ -40,7 +40,8 @@ func lifecycleTestServer(t *testing.T) *httptest.Server {
 	mux.HandleFunc("/api/auth/reset-password", resetPasswordHandler(pool, credStore, sessionStore, rateLimiter, logger))
 	mux.HandleFunc("/api/auth/change-password", changePasswordHandler(pool, credStore, sessionStore, rateLimiter, logger))
 	mux.HandleFunc("/api/auth/disable", disableAccountHandler(pool, sessionStore, rateLimiter, logger))
-	mux.HandleFunc("/api/auth/delete", deleteAccountHandler(pool, sessionStore, rateLimiter, logger))
+	mux.Handle("/api/auth/delete", authn.LearnerGuard(sessionStore, authn.DefaultGuardConfig(logger))(
+		deleteAccountHandler(pool, rateLimiter, logger)))
 
 	return httptest.NewServer(mux)
 }

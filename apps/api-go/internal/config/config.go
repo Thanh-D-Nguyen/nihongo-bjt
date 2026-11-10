@@ -65,6 +65,7 @@ type Config struct {
 	SMTPRequireStartTLS bool
 	WebPublicURL        string
 	GoogleOAuthClientID string
+	AppleOAuthClientIDs []string
 }
 
 // Load reads configuration from environment variables and validates required fields.
@@ -177,6 +178,7 @@ func Load() (*Config, error) {
 		SMTPRequireStartTLS:      smtpRequireStartTLS,
 		WebPublicURL:             webPublicURL,
 		GoogleOAuthClientID:      strings.TrimSpace(os.Getenv("GOOGLE_OAUTH_CLIENT_ID")),
+		AppleOAuthClientIDs:      splitAppleClientIDs(os.Getenv("APPLE_OAUTH_CLIENT_IDS")),
 	}
 	return cfg, nil
 }
@@ -302,4 +304,15 @@ func validatePort(port string) error {
 		return fmt.Errorf("port %d out of range [1, 65535]", n)
 	}
 	return nil
+}
+
+// Empty config disables Apple sign-in; bundle IDs are public OAuth client audiences.
+func splitAppleClientIDs(raw string) []string {
+	var ids []string
+	for _, id := range strings.Split(raw, ",") {
+		if id = strings.TrimSpace(id); id != "" {
+			ids = append(ids, id)
+		}
+	}
+	return ids
 }

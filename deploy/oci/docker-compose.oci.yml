@@ -65,6 +65,7 @@ services:
       CORS_ORIGINS: https://${OCI_PUBLIC_HOST:?required}
       WEB_PUBLIC_URL: https://${OCI_PUBLIC_HOST:?required}
       GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:?required}
+      APPLE_OAUTH_CLIENT_IDS: ${APPLE_OAUTH_CLIENT_IDS:?required}
       COOKIE_SECURE: "true"
       # Caddy and the web BFF reach the API from the Docker bridge network. Only
       # these private ranges may supply X-Forwarded-For; the API port is bound to

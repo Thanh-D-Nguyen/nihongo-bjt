@@ -195,6 +195,49 @@ func TestAudit159Wave6LearnerDeleteAccountRealSession(t *testing.T) {
 	}
 }
 
+func TestNativeBearerDeleteAccountPreservesCSRFAndSessionScope(t *testing.T) {
+	db := testPool(t)
+	router := audit159w6Router(t, db)
+	userID, cookie := audit159w6SeedLearner(t, db, router, "native-delete")
+	request := func(token, origin string) *httptest.ResponseRecorder {
+		t.Helper()
+		r := httptest.NewRequest(http.MethodPost, "/api/auth/delete", nil)
+		r.Header.Set("Origin", origin)
+		if token != "" {
+			r.Header.Set("Authorization", "Bearer "+token)
+		}
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, r)
+		return w
+	}
+	for _, tc := range []struct {
+		token, origin string
+		status        int
+	}{
+		{"", audit159w6Origin, http.StatusUnauthorized},
+		{"invalid-session", audit159w6Origin, http.StatusUnauthorized},
+		{cookie.Value, "https://attacker.example.test", http.StatusForbidden},
+	} {
+		if got := request(tc.token, tc.origin); got.Code != tc.status {
+			t.Fatalf("reject token=%t origin=%s: status=%d want=%d", tc.token != "", tc.origin, got.Code, tc.status)
+		}
+		var exists bool
+		if err := db.QueryRow(context.Background(), `SELECT EXISTS(SELECT 1 FROM profile.user_profile WHERE id=$1)`, userID).Scan(&exists); err != nil || !exists {
+			t.Fatalf("rejected request removed account exists=%v err=%v", exists, err)
+		}
+	}
+	if got := request(cookie.Value, audit159w6Origin); got.Code != http.StatusOK {
+		t.Fatalf("native bearer delete status=%d body=%s", got.Code, got.Body.String())
+	}
+	var exists bool
+	if err := db.QueryRow(context.Background(), `SELECT EXISTS(SELECT 1 FROM profile.user_profile WHERE id=$1)`, userID).Scan(&exists); err != nil || exists {
+		t.Fatalf("native bearer delete did not remove account exists=%v err=%v", exists, err)
+	}
+	if got := request(cookie.Value, audit159w6Origin); got.Code != http.StatusUnauthorized {
+		t.Fatalf("deleted session still accepted: %d", got.Code)
+	}
+}
+
 func TestAudit159Wave6AuthLinkExchangeIsCSRFProtectedAndSingleUse(t *testing.T) {
 	db := testPool(t)
 	router := audit159w6Router(t, db)

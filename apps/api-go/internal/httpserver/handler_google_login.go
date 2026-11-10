@@ -111,15 +111,22 @@ func googleLoginHandler(db *pgxpool.Pool, sessions *session.Store, limiter *auth
 var errGoogleEmailCollision = errors.New("google email belongs to another learner")
 
 func googleLearnerIdentity(ctx context.Context, db *pgxpool.Pool, subject, email, name string) (string, string, error) {
+	return providerLearnerIdentity(ctx, db, "google", subject, email, name)
+}
+
+func providerLearnerIdentity(ctx context.Context, db *pgxpool.Pool, provider, subject, email, name string) (string, string, error) {
 	var id, status string
 	err := db.QueryRow(ctx, `SELECT p.id, p.status FROM auth.identity_provider_account a
 		JOIN profile.user_profile p ON p.id=a.user_id
-		WHERE a.provider='google' AND a.provider_subject=$1`, subject).Scan(&id, &status)
+		WHERE a.provider=$2 AND a.provider_subject=$1`, subject, provider).Scan(&id, &status)
 	if err == nil {
 		return id, status, nil
 	}
 	if !errors.Is(err, pgx.ErrNoRows) {
 		return "", "", err
+	}
+	if email == "" {
+		return "", "", pgx.ErrNoRows
 	}
 
 	// Create profile and identity atomically. An email collision never links accounts.
@@ -138,7 +145,7 @@ func googleLearnerIdentity(ctx context.Context, db *pgxpool.Pool, subject, email
 	}
 	var identityID string
 	err = tx.QueryRow(ctx, `INSERT INTO auth.identity_provider_account (user_id, provider, provider_subject, email_at_link)
-		VALUES ($1, 'google', $2, $3) ON CONFLICT (provider, provider_subject) DO NOTHING RETURNING id`, id, subject, email).Scan(&identityID)
+		VALUES ($1, $4, $2, $3) ON CONFLICT (provider, provider_subject) DO NOTHING RETURNING id`, id, subject, email, provider).Scan(&identityID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", "", errGoogleEmailCollision
 	}

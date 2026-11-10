@@ -33,6 +33,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       OCI_PUBLIC_HOST: ${{ vars.OCI_PUBLIC_HOST }}
       GOOGLE_OAUTH_CLIENT_ID: ${{ vars.GOOGLE_OAUTH_CLIENT_ID }}
+      APPLE_OAUTH_CLIENT_IDS: ${{ vars.APPLE_OAUTH_CLIENT_IDS }}
     steps:
       - uses: actions/checkout@v4
         with:
