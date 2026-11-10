@@ -39,7 +39,7 @@ func TestGenerateIsDeterministicPerSeedAndProducesValidUniqueSets(t *testing.T) 
 	for _, game := range Games() {
 		spec := SpecFor(game)
 		draws := syntheticDraws(t, game, 80)
-		in := GenerateInput{Game: game, TargetDateKey: "2026-11-02", SetCount: 3, Seed: "alpha"}
+		in := GenerateInput{Game: game, TargetDateKey: "2026-11-02", SetCount: 3, Seed: "alpha", Weights: map[string]float64{"randomEntropy": 0.1}}
 		first, err := Generate(in, draws)
 		if err != nil {
 			t.Fatalf("%s generate: %v", game, err)
@@ -90,6 +90,40 @@ func TestGenerateIsDeterministicPerSeedAndProducesValidUniqueSets(t *testing.T) 
 	}
 }
 
+func TestGenerateDefaultUniformIgnoresHistoryAndAllowsExtremeShapes(t *testing.T) {
+	for _, game := range Games() {
+		in := GenerateInput{Game: game, TargetDateKey: "2026-11-02", SetCount: 1, Seed: "uniform", PinnedNumbers: []int{1, 3, 5, 7, 9}}
+		spec := SpecFor(game)
+		for n := 2; n <= spec.MaxNumber; n += 2 {
+			in.ExcludedNumber = append(in.ExcludedNumber, n)
+		}
+		without, err := Generate(in, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		with, err := Generate(in, syntheticDraws(t, game, 80))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(without, with) {
+			t.Fatalf("Generate(%s) depends on history in default uniform mode", game)
+		}
+		in.Weights = map[string]float64{"randomEntropy": 1}
+		maximum, err := Generate(in, syntheticDraws(t, game, 80))
+		if err != nil || !reflect.DeepEqual(without, maximum) {
+			t.Fatalf("Generate(%s) at maximum randomness = %+v, want uniform %+v (err=%v)", game, maximum, without, err)
+		}
+		if len(with) != 1 || with[0].Explanation["mode"] != "uniform_seeded" {
+			t.Fatalf("Generate(%s) = %+v, want one uniform set", game, with)
+		}
+		for _, n := range with[0].Main {
+			if n%2 == 0 {
+				t.Fatalf("Generate(%s) = %v, want all odd", game, with[0].Main)
+			}
+		}
+	}
+}
+
 func TestGenerateHonoursPinnedAndExcludedNumbers(t *testing.T) {
 	draws := syntheticDraws(t, Loto6, 60)
 	sets, err := Generate(GenerateInput{
@@ -115,15 +149,16 @@ func TestGenerateRejectsInvalidInput(t *testing.T) {
 	draws := syntheticDraws(t, Loto6, 30)
 	base := GenerateInput{Game: Loto6, TargetDateKey: "2026-11-02", SetCount: 1}
 	bad := map[string]GenerateInput{
-		"unknown game":     {Game: "loto5", TargetDateKey: "2026-11-02", SetCount: 1},
-		"zero sets":        {Game: Loto6, TargetDateKey: "2026-11-02"},
-		"six sets":         {Game: Loto6, TargetDateKey: "2026-11-02", SetCount: 6},
-		"bad date":         {Game: Loto6, TargetDateKey: "02/11/2026", SetCount: 1},
-		"pinned range":     {Game: Loto6, TargetDateKey: "2026-11-02", SetCount: 1, PinnedNumbers: []int{44}},
-		"pinned+excluded":  {Game: Loto6, TargetDateKey: "2026-11-02", SetCount: 1, PinnedNumbers: []int{5}, ExcludedNumber: []int{5}},
-		"too many pinned":  {Game: Loto6, TargetDateKey: "2026-11-02", SetCount: 1, PinnedNumbers: []int{1, 2, 3, 4, 5, 6}},
-		"negative weight":  {Game: Loto6, TargetDateKey: "2026-11-02", SetCount: 1, Weights: map[string]float64{"overdue": -1}},
-		"excluded too big": {Game: Loto6, TargetDateKey: "2026-11-02", SetCount: 1, ExcludedNumber: seq(1, 40)},
+		"unknown game":         {Game: "loto5", TargetDateKey: "2026-11-02", SetCount: 1},
+		"zero sets":            {Game: Loto6, TargetDateKey: "2026-11-02"},
+		"six sets":             {Game: Loto6, TargetDateKey: "2026-11-02", SetCount: 6},
+		"bad date":             {Game: Loto6, TargetDateKey: "02/11/2026", SetCount: 1},
+		"pinned range":         {Game: Loto6, TargetDateKey: "2026-11-02", SetCount: 1, PinnedNumbers: []int{44}},
+		"pinned+excluded":      {Game: Loto6, TargetDateKey: "2026-11-02", SetCount: 1, PinnedNumbers: []int{5}, ExcludedNumber: []int{5}},
+		"too many pinned":      {Game: Loto6, TargetDateKey: "2026-11-02", SetCount: 1, PinnedNumbers: []int{1, 2, 3, 4, 5, 6}},
+		"negative weight":      {Game: Loto6, TargetDateKey: "2026-11-02", SetCount: 1, Weights: map[string]float64{"overdue": -1}},
+		"excluded too big":     {Game: Loto6, TargetDateKey: "2026-11-02", SetCount: 1, ExcludedNumber: seq(1, 40)},
+		"too few combinations": {Game: Loto6, TargetDateKey: "2026-11-02", SetCount: 2, ExcludedNumber: seq(7, 43)},
 	}
 	for name, in := range bad {
 		if _, err := Generate(in, draws); err == nil {

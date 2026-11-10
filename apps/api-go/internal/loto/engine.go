@@ -1,11 +1,13 @@
 package loto
 
 import (
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"hash/fnv"
 	"math"
-	"math/rand"
+	legacyrand "math/rand"
+	rand "math/rand/v2"
 	"sort"
 	"strings"
 	"unicode"
@@ -229,8 +231,18 @@ func hashString(value string) uint32 {
 	return h.Sum32()
 }
 
-func newRNG(seed string) *rand.Rand {
-	return rand.New(rand.NewSource(int64(hashString(seed)) + 1))
+type randomSource interface {
+	Float64() float64
+	IntN(int) int
+}
+
+type legacyRNG struct{ *legacyrand.Rand }
+
+func (r legacyRNG) IntN(n int) int { return r.Intn(n) }
+
+func newRNG(seed string) randomSource {
+	digest := sha256.Sum256([]byte(seed))
+	return rand.New(rand.NewChaCha8(digest))
 }
 
 // textNumbers maps free text (weather, dreams, lucky words) onto 1..max.
@@ -364,12 +376,23 @@ func Generate(in GenerateInput, draws []Draw) ([]GeneratedSet, error) {
 	if spec.MaxNumber-len(excluded) < spec.MainCount {
 		return nil, fmt.Errorf("%w: too many excluded numbers", ErrInvalidInput)
 	}
+	available := spec.MaxNumber - len(excluded) - len(pinned)
+	choose := spec.MainCount - len(pinned)
+	combinations := 1
+	for i := 1; i <= choose; i++ {
+		combinations = combinations * (available - choose + i) / i
+	}
+	if combinations < in.SetCount {
+		return nil, fmt.Errorf("%w: not enough distinct combinations for setCount", ErrInvalidInput)
+	}
 
 	sorted := SortDraws(draws)
-	rng := newRNG(fmt.Sprintf("%s:%s:%s", in.Seed, in.Game, in.TargetDateKey))
-	if len(sorted) < MinHistoryForHeuristics {
+	seed := fmt.Sprintf("%s:%s:%s", in.Seed, in.Game, in.TargetDateKey)
+	rng := newRNG(seed)
+	if len(in.Weights) == 0 || weights.RandomEntropy == 1 || len(sorted) < MinHistoryForHeuristics {
 		return rankUniform(generateUniform(spec, in, pinned, excluded, rng, map[string]struct{}{}, in.SetCount, "uniform_seeded")), nil
 	}
+	rng = legacyRNG{legacyrand.New(legacyrand.NewSource(int64(hashString(seed)) + 1))}
 
 	summary := Summarize(spec, sorted)
 	hotNorm := normalize(summary.Frequency)
@@ -510,39 +533,31 @@ func Generate(in GenerateInput, draws []Draw) ([]GeneratedSet, error) {
 	return sets, nil
 }
 
-// generateUniform draws seeded uniform combinations until want sets exist,
-// skipping the combinations already in seen. It first insists on the odd/even
-// and low/high shape filter, then relaxes it when constraints make that
-// impossible, so a request is always filled.
-func generateUniform(spec Spec, in GenerateInput, pinned []int, excluded map[int]struct{}, rng *rand.Rand, seen map[string]struct{}, want int, mode string) []GeneratedSet {
+// generateUniform draws seeded uniform combinations, skipping duplicates.
+func generateUniform(spec Spec, in GenerateInput, pinned []int, excluded map[int]struct{}, rng randomSource, seen map[string]struct{}, want int, mode string) []GeneratedSet {
 	sets := make([]GeneratedSet, 0, want)
-	for _, requireShape := range []bool{true, false} {
-		for attempts := 0; len(sets) < want && attempts < 600; attempts++ {
-			selected := append([]int(nil), pinned...)
-			for len(selected) < spec.MainCount {
-				n := rng.Intn(spec.MaxNumber) + 1
-				if _, bad := excluded[n]; bad || containsInt(selected, n) {
-					continue
-				}
-				selected = append(selected, n)
-			}
-			sort.Ints(selected)
-			if requireShape && !passesShape(spec, selected, nil) {
+	for attempts := 0; len(sets) < want && attempts < 600; attempts++ {
+		selected := append([]int(nil), pinned...)
+		for len(selected) < spec.MainCount {
+			n := rng.IntN(spec.MaxNumber) + 1
+			if _, bad := excluded[n]; bad || containsInt(selected, n) {
 				continue
 			}
-			key := fmt.Sprint(selected)
-			if _, dup := seen[key]; dup {
-				continue
-			}
-			seen[key] = struct{}{}
-			sets = append(sets, GeneratedSet{
-				Main: selected, Bonus: []int{}, Score: 0.5,
-				Explanation: map[string]any{
-					"mode": mode, "shape": shapeOf(spec, selected),
-					"note": "not enough official history for the heuristic; every combination is equally likely",
-				},
-			})
+			selected = append(selected, n)
 		}
+		sort.Ints(selected)
+		key := fmt.Sprint(selected)
+		if _, dup := seen[key]; dup {
+			continue
+		}
+		seen[key] = struct{}{}
+		sets = append(sets, GeneratedSet{
+			Main: selected, Bonus: []int{}, Score: 0.5,
+			Explanation: map[string]any{
+				"mode": mode, "shape": shapeOf(spec, selected),
+				"note": "uniform sampling; every eligible combination is equally likely",
+			},
+		})
 	}
 	return sets
 }

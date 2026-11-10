@@ -130,6 +130,9 @@ func generateRunFromDraws(ctx context.Context, db DBTX, req GenerateRequest, his
 	if err != nil {
 		return Run{}, err
 	}
+	if len(req.Weights) == 0 || weights.RandomEntropy == 1 || len(history) < MinHistoryForHeuristics {
+		weights = Weights{RandomEntropy: 1}
+	}
 	run := Run{Game: req.Game, TargetDateKey: req.TargetDateKey, Status: status, Seed: req.Seed, Sentence: SentenceFor(req.Game, req.TargetDateKey)}
 	return InsertRun(ctx, db, run, sets, weights,
 		map[string]any{"pinnedNumbers": nonNilInts(req.Pinned), "excludedNumbers": nonNilInts(req.Excluded)},
@@ -265,7 +268,7 @@ func PublishRun(ctx context.Context, tx DBTX, runID string, setIDs []string, adm
 		"drawDayJp": DayJP(dateKey), "drawTime": spec.DrawTime,
 		"scheduleJp": spec.LabelJP, "scheduleVi": spec.LabelVI, "scheduleEn": spec.LabelEN,
 		"sets": sets, "japaneseSentence": json.RawMessage(sentenceJSON), "algorithmWeights": json.RawMessage(weightsJSON),
-		"methodology": "historical_heuristic_equal_odds",
+		"methodology": "reference_combinations_equal_odds",
 		"riskDisclaimer": map[string]string{
 			"vi": "Mọi tổ hợp hợp lệ đều có xác suất trúng như nhau. Nội dung chỉ dùng để học xác suất và tiếng Nhật, không phải lời khuyên mua xổ số.",
 			"ja": "有効な数字の組み合わせの当せん確率はすべて同じです。本内容は確率と日本語の学習用であり、宝くじの購入を勧めるものではありません。",

@@ -195,7 +195,7 @@ const DEFAULT_WEIGHTS = {
   weatherBias: 0.05,
   dreamTextBias: 0.04,
   dateNumerology: 0.03,
-  randomEntropy: 0.04,
+  randomEntropy: 1,
 };
 
 function parseNumberList(value: string): number[] {
@@ -435,6 +435,17 @@ function GenerationTab({ game, labels }: { game: LotoGame; labels: AdminCopyLabe
               </div>
             </div>
 
+            <label className="mt-4 block text-sm font-medium">
+              <span className="flex justify-between gap-2">
+                <span>{labels.lotoRandomness ?? "Randomness"}</span>
+                <span>{Math.round(weights.randomEntropy * 100)}%</span>
+              </span>
+              <input type="range" min={0} max={1} step={0.01} value={weights.randomEntropy}
+                onChange={(e) => setWeights((prev) => ({ ...prev, randomEntropy: Number(e.target.value) }))}
+                className="mt-2 w-full accent-primary" />
+              <span className="block text-xs text-muted-foreground">{labels.lotoRandomnessHint ?? "At 100%, all eligible combinations are sampled uniformly. This does not increase the chance of winning."}</span>
+            </label>
+
             {/* Advanced: Weight Tuning */}
             <div className="mt-4">
               <button
@@ -453,8 +464,9 @@ function GenerationTab({ game, labels }: { game: LotoGame; labels: AdminCopyLabe
                       Reset mặc định
                     </button>
                   </div>
+                  {weights.randomEntropy === 1 && <p className="mb-3 text-xs text-muted-foreground">{labels.lotoRandomnessAdvancedHint}</p>}
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {Object.entries(weights).map(([key, value]) => (
+                    {Object.entries(weights).filter(([key]) => key !== "randomEntropy").map(([key, value]) => (
                       <label key={key} className="text-[11px] font-medium text-muted-foreground">
                         <span className="flex justify-between gap-2">
                           <span>{weightLabel(key)}</span>
