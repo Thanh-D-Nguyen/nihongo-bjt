@@ -78,8 +78,7 @@
   --duration-slow: 400ms;
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out: cubic-bezier(0, 0, 0.2, 1);
-  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-expo: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -566,20 +565,6 @@
 :is(.dark) .from-blue-50 {
   --tw-gradient-from: rgba(96, 165, 250, 0.08) !important;
 }
-:is(.dark) .from-indigo-50 {
-  --tw-gradient-from: rgba(129, 140, 248, 0.08) !important;
-}
-:is(.dark) .from-violet-50 {
-  --tw-gradient-from: rgba(167, 139, 250, 0.08) !important;
-}
-:is(.dark) .to-indigo-100,
-:is(.dark) .to-indigo-50 {
-  --tw-gradient-to: rgba(129, 140, 248, 0.08) !important;
-}
-:is(.dark) .to-violet-50,
-:is(.dark) .to-violet-100 {
-  --tw-gradient-to: rgba(167, 139, 250, 0.08) !important;
-}
 :is(.dark) .to-slate-100,
 :is(.dark) .to-slate-200 {
   --tw-gradient-to: var(--color-border) !important;
@@ -793,12 +778,6 @@
 :is(.dark) .battle-scope :is([class*=" bg-violet-50/"], [class^="bg-violet-50/"]) {
   background-color: rgba(167, 139, 250, 0.08) !important;
 }
-:is(.dark) .battle-scope :is([class*=" from-violet-50/"], [class^="from-violet-50/"]) {
-  --tw-gradient-from: rgba(167, 139, 250, 0.08) !important;
-}
-:is(.dark) .battle-scope :is([class*=" to-violet-50/"], [class^="to-violet-50/"]) {
-  --tw-gradient-to: rgba(167, 139, 250, 0.08) !important;
-}
 :is(.dark) .battle-scope :is([class~="hover:bg-violet-50"], [class~="hover:bg-violet-100"], [class*=" hover:bg-violet-50/"], [class^="hover:bg-violet-50/"]):hover {
   background-color: rgba(167, 139, 250, 0.14) !important;
 }
@@ -813,12 +792,6 @@
 }
 :is(.dark) .battle-scope :is([class*=" bg-indigo-50/"], [class^="bg-indigo-50/"]) {
   background-color: rgba(129, 140, 248, 0.08) !important;
-}
-:is(.dark) .battle-scope :is([class*=" from-indigo-50/"], [class^="from-indigo-50/"]) {
-  --tw-gradient-from: rgba(129, 140, 248, 0.08) !important;
-}
-:is(.dark) .battle-scope :is([class*=" to-indigo-50/"], [class^="to-indigo-50/"]) {
-  --tw-gradient-to: rgba(129, 140, 248, 0.08) !important;
 }
 :is(.dark) .battle-scope :is([class~="hover:bg-indigo-50"], [class~="hover:bg-indigo-100"], [class*=" hover:bg-indigo-50/"], [class^="hover:bg-indigo-50/"]):hover {
   background-color: rgba(129, 140, 248, 0.14) !important;
@@ -1595,33 +1568,33 @@ button.primary:disabled {
   background: linear-gradient(to left, #f8fafc, transparent);
 }
 
-/* Category accent borders for preview cards */
+/* Category subtle borders for preview cards */
 .card-accent-weather {
-  border-left: 3px solid #38bdf8;
+  border-color: rgba(56, 189, 248, 0.35);
 }
 .card-accent-business {
-  border-left: 3px solid #2563eb;
+  border-color: rgba(37, 99, 235, 0.35);
 }
 .card-accent-seasonal {
-  border-left: 3px solid #ec4899;
+  border-color: rgba(236, 72, 153, 0.35);
 }
 .card-accent-life {
-  border-left: 3px solid #8b5cf6;
+  border-color: rgba(27, 42, 74, 0.35);
 }
 .card-accent-housing {
-  border-left: 3px solid #d97706;
+  border-color: rgba(217, 119, 6, 0.35);
 }
 .card-accent-banking {
-  border-left: 3px solid #16a34a;
+  border-color: rgba(22, 163, 74, 0.35);
 }
 .card-accent-tax {
-  border-left: 3px solid #ea580c;
+  border-color: rgba(234, 88, 12, 0.35);
 }
 .card-accent-greeting {
-  border-left: 3px solid #6366f1;
+  border-color: rgba(37, 99, 235, 0.35);
 }
 .card-accent-news {
-  border-left: 3px solid #e11d48;
+  border-color: rgba(225, 29, 72, 0.35);
 }
 
 /* Daily phrase card reveal animation */
@@ -2946,7 +2919,7 @@ button.primary:disabled {
   }
 }
 .fc-card-reveal {
-  animation: fc-reveal-lift 500ms var(--ease-spring) both;
+  animation: fc-reveal-lift 500ms var(--ease-expo) both;
 }
 
 /* Answer section entrance */
@@ -2961,7 +2934,7 @@ button.primary:disabled {
   }
 }
 .fc-answer-enter {
-  animation: fc-answer-in 400ms var(--ease-spring) both;
+  animation: fc-answer-in 400ms var(--ease-expo) both;
   animation-delay: 120ms;
 }
 
@@ -2993,7 +2966,7 @@ button.primary:disabled {
   }
 }
 .fc-card-enter {
-  animation: fc-slide-in 350ms var(--ease-spring) both;
+  animation: fc-slide-in 350ms var(--ease-expo) both;
   animation-delay: 80ms;
 }
 
@@ -3012,7 +2985,7 @@ button.primary:disabled {
   }
 }
 .fc-mentor-enter {
-  animation: fc-mentor-in 400ms var(--ease-bounce) both;
+  animation: fc-mentor-in 400ms var(--ease-expo) both;
   animation-delay: 100ms;
 }
 
@@ -3043,7 +3016,7 @@ button.primary:disabled {
   }
 }
 .fc-btn-stagger > * {
-  animation: fc-btn-in 300ms var(--ease-spring) both;
+  animation: fc-btn-in 300ms var(--ease-expo) both;
 }
 .fc-btn-stagger > *:nth-child(1) {
   animation-delay: 50ms;
@@ -3070,7 +3043,7 @@ button.primary:disabled {
   }
 }
 .fc-streak-pop {
-  animation: fc-streak-pop 400ms var(--ease-bounce) both;
+  animation: fc-streak-pop 400ms var(--ease-expo) both;
 }
 
 /* Streak milestone burst */
@@ -3092,7 +3065,7 @@ button.primary:disabled {
   }
 }
 .fc-milestone-burst {
-  animation: fc-milestone-burst 600ms var(--ease-bounce) both;
+  animation: fc-milestone-burst 600ms var(--ease-expo) both;
 }
 
 /* Mini confetti particles */
@@ -3209,7 +3182,7 @@ button.primary:disabled {
   }
 }
 .fc-shiba-enter {
-  animation: fc-shiba-in 450ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: fc-shiba-in 450ms var(--ease-expo) both;
 }
 
 @keyframes fc-shiba-out {
@@ -3251,7 +3224,7 @@ button.primary:disabled {
   }
 }
 .fc-shiba-bubble {
-  animation: fc-shiba-bubble-in 300ms var(--ease-spring) both;
+  animation: fc-shiba-bubble-in 300ms var(--ease-expo) both;
   animation-delay: 150ms;
 }
 
@@ -3428,13 +3401,20 @@ button.primary:disabled {
 }
 
 /* Japanese text treatment — apply to Japanese-dominant content blocks */
-.jp {
+.jp,
+.jp-text {
   font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
   line-height: 1.8;
   letter-spacing: 0.01em;
   word-break: keep-all;
   overflow-wrap: break-word;
   line-break: strict;
+}
+
+/* Browser surface polish */
+::selection {
+  background-color: rgba(59, 130, 246, 0.18);
+  color: var(--color-ink);
 }
 
 /* Japanese heading variant — proportional spacing */

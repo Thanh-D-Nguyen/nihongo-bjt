@@ -46,17 +46,17 @@ interface Announcement {
 const NOTICE_TONE: Record<AnnouncementType, string> = {
   event: "bg-amber-100 text-amber-700",
   info: "bg-accent/10 text-accent",
-  promo: "bg-violet-100 text-violet-700"
+  promo: "bg-accent/10 text-accent"
 };
 
 const COPY: Record<Locale, { promo: string; event: string; info: string; close: string; later: string; more: string }> = {
-  vi: { promo: "🎁 Khuyến mãi", event: "📅 Sự kiện", info: "ℹ️ Thông báo", close: "Đóng", later: "Để sau", more: "Xem thêm →" },
-  en: { promo: "🎁 Promotion", event: "📅 Event", info: "ℹ️ Notice", close: "Close", later: "Later", more: "Learn more →" },
-  ja: { promo: "🎁 キャンペーン", event: "📅 イベント", info: "ℹ️ お知らせ", close: "閉じる", later: "後で", more: "詳しく見る →" }
+  vi: { promo: "Khuyến mãi", event: "Sự kiện", info: "Thông báo", close: "Đóng", later: "Để sau", more: "Xem thêm →" },
+  en: { promo: "Promotion", event: "Event", info: "Notice", close: "Close", later: "Later", more: "Learn more →" },
+  ja: { promo: "キャンペーン", event: "イベント", info: "お知らせ", close: "閉じる", later: "後で", more: "詳しく見る →" }
 };
 
 /* ── API + LocalStorage dismiss ── */
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/u, "");
 
 const STORAGE_KEY = "nihongo-dismissed-announcements";
 const ROTATE_MS = 8_000;
@@ -127,10 +127,10 @@ function resolveText(ann: Announcement, field: "title" | "body", locale: Locale)
 
 /* ── Background preset classes ── */
 const BG_CLASSES: Record<BgPreset, string> = {
-  default: "bg-white",
-  "gradient-blue": "bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-500",
-  "gradient-violet": "bg-gradient-to-br from-violet-600 via-purple-600 to-pink-500",
-  "gradient-warm": "bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500",
+  default: "bg-surface",
+  "gradient-blue": "bg-gradient-to-br from-[#1B2A4A] via-blue-900 to-slate-900",
+  "gradient-violet": "bg-gradient-to-br from-[#1B2A4A] via-[#243560] to-slate-900",
+  "gradient-warm": "bg-gradient-to-br from-amber-700 via-amber-800 to-slate-900",
   "gradient-dark": "bg-gradient-to-br from-gray-900 via-slate-900 to-zinc-800",
   "image-only": "bg-black"
 };
@@ -138,92 +138,7 @@ const BG_CLASSES: Record<BgPreset, string> = {
 const isDarkBg = (bg: BgPreset) =>
   ["gradient-blue", "gradient-violet", "gradient-warm", "gradient-dark", "image-only"].includes(bg);
 
-/* ── Effect renderers ── */
-function EffectLayer({ effect, bg }: { effect: EffectPreset; bg: BgPreset }) {
-  if (effect === "none") return null;
-  const dark = isDarkBg(bg);
-
-  if (effect === "confetti") {
-    return (
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        {[...Array(24)].map((_, i) => (
-          <span
-            key={i}
-            className="absolute ann-confetti-piece"
-            style={{
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${2.5 + Math.random() * 2}s`,
-              color: ["#F59E0B", "#3B82F6", "#EC4899", "#10B981", "#8B5CF6", "#F97316"][i % 6],
-              fontSize: `${10 + Math.random() * 8}px`
-            }}
-          >
-            {["●", "■", "▲", "★", "♦", "✦"][i % 6]}
-          </span>
-        ))}
-      </div>
-    );
-  }
-
-  if (effect === "particles") {
-    return (
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        {[...Array(16)].map((_, i) => (
-          <span
-            key={i}
-            className={`absolute ann-particle rounded-full ${dark ? "bg-white/20" : "bg-ink/10"}`}
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              width: `${4 + Math.random() * 8}px`,
-              height: `${4 + Math.random() * 8}px`,
-              animationDelay: `${Math.random() * 4}s`,
-              animationDuration: `${4 + Math.random() * 4}s`
-            }}
-          />
-        ))}
-      </div>
-    );
-  }
-
-  if (effect === "shimmer") {
-    return <div className="pointer-events-none absolute inset-0 ann-shimmer-sweep" aria-hidden />;
-  }
-
-  if (effect === "aurora") {
-    return (
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        <div className="absolute -inset-[50%] ann-aurora opacity-30" />
-      </div>
-    );
-  }
-
-  if (effect === "sakura") {
-    return (
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        {[...Array(12)].map((_, i) => (
-          <span
-            key={i}
-            className="absolute ann-sakura-petal"
-            style={{
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${4 + Math.random() * 3}s`,
-              fontSize: `${14 + Math.random() * 10}px`,
-              opacity: 0.6 + Math.random() * 0.4
-            }}
-          >
-            🌸
-          </span>
-        ))}
-      </div>
-    );
-  }
-
-  return null;
-}
-
-/* ── Modal Component — Full-viewport world-class design ── */
+/* ── Modal Component — Non-blocking floating card ── */
 function AnnouncementModal({ ann, locale, onDismiss }: { ann: Announcement; locale: Locale; onDismiss: () => void }) {
   const [visible, setVisible] = useState(false);
   const [canClose, setCanClose] = useState((ann.dismissDelay ?? 0) === 0);
@@ -232,7 +147,6 @@ function AnnouncementModal({ ann, locale, onDismiss }: { ann: Announcement; loca
   const body = resolveText(ann, "body", locale);
   const copy = COPY[locale];
   const bgPreset = (ann.bgPreset ?? "default") as BgPreset;
-  const effect = (ann.effect ?? "none") as EffectPreset;
   const dark = isDarkBg(bgPreset);
   const showClose = ann.allowCloseButton !== false;
   const clickOutside = ann.allowClickOutside !== false;
@@ -290,79 +204,45 @@ function AnnouncementModal({ ann, locale, onDismiss }: { ann: Announcement; loca
 
   const modalContent = (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 transition-all duration-400 ${
-        visible ? "bg-black/60 backdrop-blur-xl" : "bg-black/0 backdrop-blur-none"
-      }`}
+      className="pointer-events-none fixed inset-x-0 bottom-20 z-[60] flex justify-end p-3 sm:bottom-6 sm:p-5"
       onClick={handleBackdropClick}
       role="dialog"
-      aria-modal="true"
+      aria-modal="false"
       aria-label={title ?? ann.message}
     >
       <div
-        className={`relative flex w-full flex-col overflow-hidden rounded-3xl shadow-2xl transition-all duration-600 ease-out ${BG_CLASSES[bgPreset]} ${
-          visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-12 scale-90 opacity-0"
+        className={`pointer-events-auto relative flex w-full max-w-sm flex-col overflow-hidden rounded-2xl border border-white/10 shadow-lg transition-all duration-300 ease-out ${BG_CLASSES[bgPreset]} ${
+          visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
         }`}
-        style={{
-          maxWidth: "min(560px, 95vw)",
-          maxHeight: "90vh",
-          boxShadow: visible
-            ? "0 40px 80px -16px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.1)"
-            : undefined
-        }}
       >
-        {/* Effects layer */}
-        <EffectLayer effect={effect} bg={bgPreset} />
-
-        {/* Hero image */}
-        {ann.imageUrl && (
-          <div className="relative w-full shrink-0 overflow-hidden" style={{ maxHeight: "45vh" }}>
-            <img
-              src={ann.imageUrl}
-              alt=""
-              className={`w-full object-cover transition-transform duration-700 ${visible ? "scale-100" : "scale-110"}`}
-              style={{ maxHeight: "45vh" }}
-            />
-            {bgPreset !== "image-only" && (
-              <div
-                className={`absolute inset-0 bg-gradient-to-t ${dark ? "from-black/80 via-transparent" : "from-white via-transparent"}`}
-              />
-            )}
-          </div>
-        )}
-
         {/* Close button */}
         {showClose && (
           <button
-            aria-label="Close"
-            className={`absolute right-3 top-3 z-10 flex items-center justify-center rounded-full backdrop-blur-sm transition-all ${closeBtnClass} ${
-              canClose ? "opacity-100 hover:scale-110" : "opacity-40 cursor-not-allowed"
+            aria-label={copy.close}
+            className={`absolute right-2.5 top-2.5 z-10 flex size-9 items-center justify-center rounded-full transition-colors ${closeBtnClass} ${
+              canClose ? "opacity-100" : "opacity-40 cursor-not-allowed"
             }`}
             onClick={canClose ? handleDismiss : undefined}
             disabled={!canClose}
             type="button"
-            style={{ width: 40, height: 40 }}
           >
             {canClose ? (
-              <IconClose aria-hidden size={18} />
+              <IconClose aria-hidden size={16} />
             ) : (
               <span className="text-xs font-bold tabular-nums">{countdown}</span>
             )}
           </button>
         )}
 
-        {/* Content area — scrollable */}
-        <div className="relative flex flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-8 sm:px-10 sm:py-10 text-center">
+        {/* Content area — compact non-blocking card */}
+        <div className="relative flex flex-col items-start px-5 py-4 pr-12 text-left">
           {/* Type badge */}
-          <div className="mb-4">
+          <div className="mb-1.5">
             <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider ${
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${
                 dark
                   ? "bg-white/15 text-white/90"
-                  : ann.type === "promo"
-                    ? "bg-violet-100 text-violet-700"
-                    : ann.type === "event"
-                      ? "bg-amber-100 text-amber-700"
-                      : "bg-blue-100 text-blue-700"
+                  : "bg-accent/10 text-accent"
               }`}
             >
               {ann.type === "promo" ? copy.promo : ann.type === "event" ? copy.event : copy.info}
@@ -371,7 +251,7 @@ function AnnouncementModal({ ann, locale, onDismiss }: { ann: Announcement; loca
 
           {/* Title */}
           <h2
-            className={`mb-3 text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl ${dark ? "text-white" : "text-ink"}`}
+            className={`text-base font-bold leading-snug ${dark ? "text-white" : "text-ink"}`}
           >
             {title ?? (locale === "vi" ? ann.message : "")}
           </h2>
@@ -379,17 +259,17 @@ function AnnouncementModal({ ann, locale, onDismiss }: { ann: Announcement; loca
           {/* Body */}
           {body && (
             <p
-              className={`mb-6 max-w-md text-base leading-relaxed sm:text-lg ${dark ? "text-white/75" : "text-ink/65"}`}
+              className={`mt-1 text-xs leading-relaxed ${dark ? "text-white/75" : "text-muted"}`}
             >
               {body}
             </p>
           )}
 
           {/* CTA + dismiss */}
-          <div className="flex flex-col items-center gap-3 sm:flex-row">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             {ann.ctaUrl && (
               <a
-                className={`inline-flex min-h-14 items-center justify-center rounded-2xl px-8 text-base font-bold shadow-lg transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:shadow-md sm:min-h-12 sm:text-sm ${ctaClass}`}
+                className={`inline-flex min-h-9 items-center justify-center rounded-xl px-4 text-xs font-semibold transition-colors ${ctaClass}`}
                 href={ann.ctaUrl}
                 rel="noopener noreferrer"
                 target={ann.ctaUrl.startsWith("http") ? "_blank" : undefined}
@@ -399,7 +279,7 @@ function AnnouncementModal({ ann, locale, onDismiss }: { ann: Announcement; loca
             )}
             {canClose && (
               <button
-                className={`inline-flex min-h-14 items-center justify-center rounded-2xl border-2 px-6 text-base font-semibold transition-all duration-200 sm:min-h-12 sm:text-sm ${dismissBtnClass}`}
+                className={`inline-flex min-h-9 items-center justify-center rounded-xl border px-3.5 text-xs font-semibold transition-colors ${dismissBtnClass}`}
                 onClick={handleDismiss}
                 type="button"
               >
@@ -552,7 +432,7 @@ export function AnnouncementStrip() {
           {/* Dismiss button */}
           <button
             aria-label={copy.close}
-            className="ml-1 shrink-0 rounded p-0.5 text-muted/60 transition-colors hover:text-ink"
+            className="ml-1 inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-muted/70 transition-colors hover:bg-ink/5 hover:text-ink"
             onClick={() => dismiss(current.id)}
             type="button"
           >

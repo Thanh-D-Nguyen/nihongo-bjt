@@ -16,6 +16,7 @@ import { RevengeModeWidget } from "./revenge-mode-widget";
 import { FocusTimerWidget } from "./focus-timer-widget";
 import { AmbientModeWidget } from "./ambient-mode-widget";
 import { LotoTeaserWidget } from "./loto-teaser-widget";
+import { StudyGoalWidget } from "./study-goal-widget";
 import type { HomepageLabels, LearnerAnalytics, NewsType, NhkArticle } from "./types";
 
 export type HomepageTabKey = "today" | "progress" | "rewards" | "focus";
@@ -90,11 +91,11 @@ export function HomepageSectionsTabs({
     }
   }, [active, hydrated]);
 
-  const tabs: { key: HomepageTabKey; label: string; emoji: string; sub: string }[] = [
-    { key: "today", label: tabsLabels.today, emoji: "🔥", sub: tabsLabels.todaySub },
-    { key: "progress", label: tabsLabels.progress, emoji: "📊", sub: tabsLabels.progressSub },
-    { key: "rewards", label: tabsLabels.rewards, emoji: "🎁", sub: tabsLabels.rewardsSub },
-    { key: "focus", label: tabsLabels.focus, emoji: "🧘", sub: tabsLabels.focusSub }
+  const tabs: { key: HomepageTabKey; label: string; sub: string }[] = [
+    { key: "today", label: tabsLabels.today, sub: tabsLabels.todaySub },
+    { key: "progress", label: tabsLabels.progress, sub: tabsLabels.progressSub },
+    { key: "rewards", label: tabsLabels.rewards, sub: tabsLabels.rewardsSub },
+    { key: "focus", label: tabsLabels.focus, sub: tabsLabels.focusSub }
   ];
 
   return (
@@ -111,14 +112,13 @@ export function HomepageSectionsTabs({
               aria-controls={`homepage-tab-panel-${t.key}`}
               id={`homepage-tab-${t.key}`}
               onClick={() => setActive(t.key)}
-              className="min-h-11 min-w-fit snap-start whitespace-nowrap px-3.5"
+              className="min-h-11 min-w-fit snap-start whitespace-nowrap px-4"
             >
-              <span aria-hidden className="mr-1.5">{t.emoji}</span>
               {t.label}
             </TabButton>
           ))}
         </TabsList>
-        <p className="hidden text-xs text-[#6B7280] sm:block">
+        <p className="hidden text-xs text-muted sm:block">
           {tabs.find((t) => t.key === active)?.sub}
         </p>
       </div>
@@ -132,8 +132,8 @@ export function HomepageSectionsTabs({
           id="homepage-tab-panel-today"
           role="tabpanel"
         >
+          <StudyGoalWidget locale={locale} />
           <ForYouFeedWidget locale={locale} refreshKey={onboardingJustCompleted ? 1 : 0} />
-          <LotoTeaserWidget locale={locale} />
           <DailyRadarSection labels={labels.dailyRadar} locale={locale} />
           <FeaturedNewsSection
             articlesByType={nhkArticlesByType}
@@ -144,6 +144,7 @@ export function HomepageSectionsTabs({
             onRetry={onNhkRetry}
             onTabChange={onNhkTabChange}
           />
+          <LotoTeaserWidget locale={locale} />
         </div>
       )}
 
@@ -213,13 +214,17 @@ export function HomepageSectionsTabs({
 
 function GuestRewardsCta({ title, subtitle, cta, locale }: { title: string; subtitle: string; cta: string; locale: string }) {
   return (
-    <div className="flex flex-col items-center gap-4 rounded-2xl border border-ink/8 bg-surface p-8 text-center shadow-sm">
-      <span className="text-4xl" aria-hidden>🎁</span>
-      <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+    <div className="flex flex-col items-center gap-4 rounded-2xl border border-border bg-surface p-8 text-center shadow-xs">
+      <div className="flex size-12 items-center justify-center rounded-2xl bg-accent/10 text-accent" aria-hidden>
+        <svg className="size-6" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+        </svg>
+      </div>
+      <h3 className="text-lg font-semibold text-ink">{title}</h3>
       <p className="max-w-xs text-sm text-muted">{subtitle}</p>
       <Link
         href={`/${locale}/login`}
-        className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-sakura)] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:brightness-110 active:scale-95"
+        className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#1B2A4A] px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-[#243560]"
       >
         {cta}
       </Link>

@@ -5,7 +5,12 @@ import reactHooks from "eslint-plugin-react-hooks";
 export default [
   {
     ignores: [
+      ".agents/skills/**",
+      ".claude/skills/**",
+      ".cursor/skills/**",
+      ".github/skills/**",
       ".turbo/**",
+      "agent/skills/**",
       "apps/*/.next/**",
       "apps/*/dist/**",
       "apps/web/public/sw.js",

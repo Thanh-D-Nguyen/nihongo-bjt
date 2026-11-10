@@ -72,7 +72,7 @@ function ActionCard({
 }) {
   return (
     <Link
-      className="group flex min-h-[92px] items-center gap-4 rounded-xl bg-surface p-4 text-ink shadow-sm ring-1 ring-border transition-[transform,box-shadow] duration-300 ease-[var(--ease-spring)] hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus active:translate-y-0 sm:p-5"
+      className="group flex min-h-[92px] items-center gap-4 rounded-xl bg-surface p-4 text-ink shadow-sm ring-1 ring-border transition-[transform,box-shadow] duration-300 ease-[var(--ease-expo)] hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus active:translate-y-0 sm:p-5"
       href={href}
     >
       <span aria-hidden="true" className={cn("h-10 w-1 shrink-0 rounded-full", accentClassName)} />
@@ -82,7 +82,7 @@ function ActionCard({
       </span>
       <span
         aria-hidden="true"
-        className="grid size-9 shrink-0 place-items-center rounded-full bg-paper text-muted transition-transform duration-300 ease-[var(--ease-spring)] group-hover:translate-x-0.5 group-hover:text-ink"
+        className="grid size-9 shrink-0 place-items-center rounded-full bg-paper text-muted transition-transform duration-300 ease-[var(--ease-expo)] group-hover:translate-x-0.5 group-hover:text-ink"
       >
         <ArrowIcon className="size-4" />
       </span>
@@ -309,11 +309,11 @@ export function TodayPlanHub({
                   {copy.primarySub}
                 </p>
                 <Link
-                  className="group mt-7 inline-flex min-h-12 items-center gap-3 rounded-full bg-white py-1.5 pl-5 pr-1.5 text-sm font-bold text-[#1B2A4A] shadow-[0_8px_24px_rgba(4,11,27,0.18)] transition-[transform,box-shadow] duration-300 ease-[var(--ease-spring)] hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(4,11,27,0.24)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1B2A4A] active:translate-y-0 dark:bg-white dark:text-[#1B2A4A]"
+                  className="group mt-7 inline-flex min-h-12 items-center gap-3 rounded-full bg-white py-1.5 pl-5 pr-1.5 text-sm font-bold text-[#1B2A4A] shadow-[0_8px_24px_rgba(4,11,27,0.18)] transition-[transform,box-shadow] duration-300 ease-[var(--ease-expo)] hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(4,11,27,0.24)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1B2A4A] active:translate-y-0 dark:bg-white dark:text-[#1B2A4A]"
                   href={`/${locale}/levels`}
                 >
                   {copy.primaryCta}
-                  <span className="grid size-9 place-items-center rounded-full bg-[#1B2A4A] text-white transition-transform duration-300 ease-[var(--ease-spring)] group-hover:translate-x-0.5">
+                  <span className="grid size-9 place-items-center rounded-full bg-[#1B2A4A] text-white transition-transform duration-300 ease-[var(--ease-expo)] group-hover:translate-x-0.5">
                     <ArrowIcon className="size-4" />
                   </span>
                 </Link>
@@ -390,16 +390,37 @@ export function TodayPlanHub({
             <p className="mt-2 text-xs leading-relaxed text-muted">{copy.dailyPhraseMeaning}</p>
           </SnapshotRow>
 
-          <SnapshotRow className="border-t border-border" label={copy.streakLabel}>
-            <div className="mt-2 flex items-baseline gap-2">
-              {analyticsReady ? (
-                <span className="text-3xl font-bold tabular-nums text-ink">
-                  {analyticsError ? "—" : streak}
-                </span>
-              ) : (
-                <SkeletonLine className="h-8 w-12" />
-              )}
-              <span className="text-sm font-medium text-muted">{copy.streakUnit}</span>
+          <SnapshotRow
+            className="border-t border-border"
+            label={locale === "ja" ? "クイック辞書" : locale === "en" ? "Quick Reference" : "Tra cứu nhanh"}
+          >
+            <div className="mt-2.5 flex flex-wrap gap-2">
+              {[
+                {
+                  href: `/${locale}/dictionary`,
+                  label: locale === "ja" ? "辞書" : locale === "en" ? "Dictionary" : "Từ điển"
+                },
+                {
+                  href: `/${locale}/kanji`,
+                  label: "Kanji"
+                },
+                {
+                  href: `/${locale}/grammar`,
+                  label: locale === "ja" ? "文法" : locale === "en" ? "Grammar" : "Ngữ pháp"
+                },
+                {
+                  href: `/${locale}/saved`,
+                  label: locale === "ja" ? "保存済み" : locale === "en" ? "Saved" : "Đã lưu"
+                }
+              ].map((refItem) => (
+                <Link
+                  className="inline-flex min-h-9 items-center rounded-lg border border-border bg-paper px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-accent/40 hover:bg-surface hover:text-accent"
+                  href={refItem.href}
+                  key={refItem.href}
+                >
+                  {refItem.label}
+                </Link>
+              ))}
             </div>
           </SnapshotRow>
         </aside>

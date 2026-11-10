@@ -129,7 +129,7 @@ function ContentBody({ content }: { content: Record<string, unknown> }) {
         {zodiacFortunes.map((z) => (
           <div
             key={z.sign}
-            className="group rounded-2xl border border-border/30 bg-gradient-to-br from-violet-500/5 to-transparent p-4 transition-all duration-200 hover:border-border/60 hover:shadow-sm"
+            className="group rounded-2xl border border-border/30 bg-gradient-to-br from-primary/5 to-transparent p-4 transition-all duration-200 hover:border-border/60 hover:shadow-sm"
           >
             <span className="text-sm font-bold text-primary">{z.sign}</span>
             <p className="mt-2 text-sm leading-[1.8] text-foreground">{z.fortuneJp}</p>

@@ -1,7 +1,7 @@
 "use client";
 
 import { companionHintResponseSchema, type BattleBotAnimationState, type CompanionEventKind, type CompanionHintResponse, type CompanionReasonCode } from "@nihongo-bjt/shared";
-import { Component, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Component, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 
 import { useGoAuth } from "../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../lib/learner-api";
@@ -77,9 +77,9 @@ const IDLE_MOOD_CYCLE: CompanionMood[] = ["idle", "wave", "idle", "happy", "idle
 
 /* ── Layout constants ── */
 
-const HOME_BOTTOM = 80;
-const HOME_RIGHT = 16;
-const MASCOT_SIZE = 80;
+const HOME_BOTTOM = 24;
+const HOME_RIGHT = 20;
+const MASCOT_SIZE = 48;
 
 class CompanionBoundary extends Component<{ children: ReactNode; onClose: () => void; labels: CompanionBotLabels }, { failed: boolean }> {
   state = { failed: false };
@@ -103,9 +103,8 @@ export function CompanionBot({ base, labels, locale }: { base: string; labels: C
   const [hint, setHint] = useState<CompanionHintResponse | null>(null);
   const [hintLoading, setHintLoading] = useState(false);
   const [hintError, setHintError] = useState(false);
-  const [showBubble, setShowBubble] = useState(false);
   const [moodIndex, setMoodIndex] = useState(0);
-  const bubbleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showBubble = false;
 
   // ── Engine ──
   const engine = useCompanionEngine({
@@ -131,23 +130,6 @@ export function CompanionBot({ base, labels, locale }: { base: string; labels: C
     }, 6000);
     return () => clearInterval(t);
   }, [open, engine.sleeping]);
-
-  // ── Auto speech bubble (context-aware from engine) ──
-  useEffect(() => {
-    if (open || engine.memory.memory.bubbleMuted) { setShowBubble(false); return; }
-    const show = () => {
-      setShowBubble(true);
-      bubbleTimer.current = setTimeout(() => {
-        setShowBubble(false);
-        bubbleTimer.current = setTimeout(show, 20000);
-      }, 6000);
-    };
-    const initial = setTimeout(show, 3000);
-    return () => {
-      clearTimeout(initial);
-      if (bubbleTimer.current) clearTimeout(bubbleTimer.current);
-    };
-  }, [open, engine.memory.memory.bubbleMuted]);
 
   // ── Hint API ──
   const loadHint = useCallback(async () => {
@@ -226,7 +208,7 @@ export function CompanionBot({ base, labels, locale }: { base: string; labels: C
   return (
     <aside
       aria-label={labels.ariaLabel}
-      className="pointer-events-none fixed inset-0 z-30 hidden md:block"
+      className="pointer-events-none fixed inset-0 z-30 hidden lg:block"
     >
       {/* Celebration overlay */}
       <CompanionCelebrationOverlay emoji={engine.celebrationEmoji} visible={engine.showCelebration} />
@@ -287,7 +269,7 @@ export function CompanionBot({ base, labels, locale }: { base: string; labels: C
 
         {/* Mascot */}
         <div
-          className={`cursor-pointer transition-[opacity,filter,transform] duration-300 ${engine.sleeping ? "opacity-50 grayscale-[40%]" : "opacity-100"} ${open ? "scale-110" : "hover:scale-110 active:scale-95"} ${engine.showCelebration ? "motion-safe:animate-[bounce_0.5s_ease-in-out_2]" : ""}`}
+          className={`cursor-pointer transition-[opacity,filter,transform] duration-200 ${engine.sleeping ? "opacity-60 grayscale-[30%]" : "opacity-90 hover:opacity-100"} ${open ? "scale-105" : "hover:scale-105 active:scale-95"}`}
           onClick={handleTap}
           tabIndex={0}
           aria-label={open ? labels.close : labels.collapsedLabel}

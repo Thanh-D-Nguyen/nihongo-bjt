@@ -79,8 +79,8 @@ const SECTIONS = [
     key: "kanji",
     href: (l: string) => `/${l}/kanji`,
     icon: "漢",
-    gradient: "from-violet-50 to-violet-50/50 dark:from-violet-950/20 dark:to-violet-950/10",
-    border: "border-violet-200/40 hover:border-violet-300/60 dark:border-violet-800/30 dark:hover:border-violet-700/50",
+    gradient: "from-slate-50 to-slate-50/50 dark:from-slate-900/40 dark:to-slate-900/20",
+    border: "border-slate-200/60 hover:border-slate-300/80 dark:border-slate-800/40 dark:hover:border-slate-700/60",
     hero: false,
   },
   {
@@ -173,7 +173,8 @@ export function ExploreClient({ labels, locale }: { labels: ExploreLabels; local
               <span
                 className={`mb-3 flex items-center justify-center rounded-xl bg-white/70 shadow-sm dark:bg-gray-800/50 ${
                   isHero ? "size-14 text-2xl" : "size-11 text-xl"
-                } ${section.key === "kanji" ? "font-bold text-violet-600" : ""}`}
+                } ${section.key === "kanji" ? "jp-text font-bold text-ink" : ""}`}
+                lang={section.key === "kanji" ? "ja" : undefined}
               >
                 {section.icon}
               </span>

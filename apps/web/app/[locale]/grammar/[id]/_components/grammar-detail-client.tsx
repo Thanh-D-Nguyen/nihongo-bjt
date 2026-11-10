@@ -69,9 +69,9 @@ export function GrammarDetailClient({
   if (loading) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-8">
-        <div className="h-8 w-48 animate-pulse rounded bg-[#F3F4F6]" />
+        <div className="h-8 w-48 animate-pulse rounded bg-surface-subtle" />
         <div className="mt-4 space-y-3">
-          {[1, 2].map((i) => <div className="h-24 animate-pulse rounded-xl bg-[#F3F4F6]" key={i} />)}
+          {[1, 2].map((i) => <div className="h-24 animate-pulse rounded-xl bg-surface-subtle" key={i} />)}
         </div>
       </div>
     );
@@ -80,8 +80,8 @@ export function GrammarDetailClient({
   if (error || !item) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-8 text-center">
-        <p className="text-sm text-[#6B7280]">{error ? labels.error : labels.notFound}</p>
-        <Link className="mt-2 inline-block text-sm font-medium text-[#8B5CF6]" href={`/${locale}/grammar`}>
+        <p className="text-sm text-muted">{error ? labels.error : labels.notFound}</p>
+        <Link className="mt-2 inline-block text-sm font-medium text-accent hover:underline" href={`/${locale}/grammar`}>
           ← {labels.back}
         </Link>
       </div>
@@ -90,24 +90,24 @@ export function GrammarDetailClient({
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
-      <Link className="text-sm font-medium text-[#8B5CF6] hover:underline" href={`/${locale}/grammar`}>
+      <Link className="text-sm font-medium text-accent hover:underline" href={`/${locale}/grammar`}>
         ← {labels.back}
       </Link>
 
       <div className="mt-4">
-        <div className="flex items-baseline gap-3">
-          <h1 className="text-2xl font-bold text-[#111827]">{item.pattern}</h1>
+        <div className="flex flex-wrap items-baseline gap-3">
+          <h1 className="jp-text text-2xl font-bold text-ink" lang="ja">{item.pattern}</h1>
           {item.jlptLevel ? (
-            <span className="rounded-full bg-[#F5F3FF] px-2.5 py-0.5 text-xs font-semibold text-[#7C3AED]">
+            <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-semibold text-accent">
               {item.jlptLevel}
             </span>
           ) : null}
           {item.category ? (
-            <span className="text-xs text-[#9CA3AF]">{item.category}</span>
+            <span className="text-xs text-muted">{item.category}</span>
           ) : null}
         </div>
         {item.meaningVi ? (
-          <p className="mt-2 text-base text-[#4B5563]">{item.meaningVi}</p>
+          <p className="mt-2 text-base text-muted">{item.meaningVi}</p>
         ) : null}
       </div>
 
@@ -124,31 +124,31 @@ export function GrammarDetailClient({
 
       {item.details.length > 0 ? (
         <section className="mt-6 space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-[#6B7280]">{labels.details}</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">{labels.details}</h2>
           {item.details.map((d, idx) => (
-            <div className="rounded-xl border border-[#E5E7EB] bg-white p-4 shadow-sm" key={d.id}>
-              <div className="flex items-baseline gap-2">
-                <span className="text-xs font-bold text-[#9CA3AF]">{idx + 1}</span>
+            <div className="rounded-xl border border-border bg-surface p-4 shadow-sm" key={d.id}>
+              <div className="flex flex-wrap items-baseline gap-2">
+                <span className="text-xs font-bold tabular-nums text-muted">{idx + 1}</span>
                 {d.meaningVi ? (
-                  <span className="text-sm font-medium text-[#111827]">{d.meaningVi}</span>
+                  <span className="text-sm font-medium text-ink">{d.meaningVi}</span>
                 ) : null}
               </div>
               {d.explanation ? (
                 <div className="mt-2">
-                  <p className="text-[10px] font-semibold uppercase text-[#9CA3AF]">{labels.explanation}</p>
-                  <GrammarRichText className="mt-0.5 text-[#4B5563]" html={d.explanation} />
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{labels.explanation}</p>
+                  <GrammarRichText className="mt-0.5 text-muted" html={d.explanation} />
                 </div>
               ) : null}
               {d.note ? (
-                <div className="mt-2 rounded-lg bg-[#FFFBEB] p-2">
-                  <p className="text-[10px] font-semibold uppercase text-[#92400E]">{labels.note}</p>
-                  <p className="mt-0.5 text-sm text-[#78350F]">{d.note}</p>
+                <div className="mt-2 rounded-lg border border-warning/25 bg-warning-bg p-2.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-warning">{labels.note}</p>
+                  <p className="mt-0.5 text-sm text-ink">{d.note}</p>
                 </div>
               ) : null}
               {d.synopsis ? (
                 <div className="mt-2">
-                  <p className="text-[10px] font-semibold uppercase text-[#9CA3AF]">{labels.synopsis}</p>
-                  <p className="mt-0.5 text-sm text-[#6B7280]">{d.synopsis}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{labels.synopsis}</p>
+                  <p className="mt-0.5 text-sm text-muted">{d.synopsis}</p>
                 </div>
               ) : null}
             </div>
@@ -157,12 +157,12 @@ export function GrammarDetailClient({
       ) : null}
 
       {/* Cross-links */}
-      <nav className="mt-8 flex flex-wrap gap-2 border-t border-[#E5E7EB] pt-4">
-        <Link className="rounded-lg bg-[#F3F4F6] px-3 py-1.5 text-xs font-medium text-[#4B5563] hover:bg-[#E5E7EB]" href={`/${locale}/dictionary`}>
-          📖 Từ điển →
+      <nav className="mt-8 flex flex-wrap gap-2 border-t border-border pt-4">
+        <Link className="inline-flex min-h-9 items-center rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-accent/30 hover:text-ink" href={`/${locale}/dictionary`}>
+          {locale === "ja" ? "辞書 →" : locale === "en" ? "Dictionary →" : "Từ điển →"}
         </Link>
-        <Link className="rounded-lg bg-[#F3F4F6] px-3 py-1.5 text-xs font-medium text-[#4B5563] hover:bg-[#E5E7EB]" href={`/${locale}/kanji`}>
-          漢 Kanji →
+        <Link className="inline-flex min-h-9 items-center rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-accent/30 hover:text-ink" href={`/${locale}/kanji`}>
+          {locale === "ja" ? "漢字 →" : "Kanji →"}
         </Link>
       </nav>
     </div>

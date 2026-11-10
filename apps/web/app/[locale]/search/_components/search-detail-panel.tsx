@@ -205,9 +205,9 @@ export function SearchDetailPanel({
                 </span>
               ) : null}
             </div>
-            <div className="mt-1 flex flex-wrap gap-2 text-[11px] font-semibold text-muted">
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-muted">
               {result.jlptLevel ? <span>{result.jlptLevel}</span> : null}
-              <span className="rounded-md bg-ink/5 px-1.5 py-0.5 text-ink/80">
+              <span className="whitespace-nowrap rounded-md bg-ink/5 px-1.5 py-0.5 text-ink/80">
                 {labels.detailProductBadge}
               </span>
             </div>

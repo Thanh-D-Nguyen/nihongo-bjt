@@ -179,8 +179,8 @@ export function LearnerAppFrame({
   useEffect(() => {
     if (!isAuthenticated) return;
     let cancelled = false;
-    fetch("/api/review/next?limit=100", { credentials: "same-origin" })
-      .then((r) => (r.ok ? r.json() : []))
+    learnerApiFetchOptional("/api/review/next?limit=100")
+      .then((r) => (r && r.ok ? r.json() : []))
       .then((data: unknown) => {
         if (!cancelled) setDueCount(Array.isArray(data) ? data.length : 0);
       })
@@ -233,17 +233,17 @@ export function LearnerAppFrame({
     [base, nav]
   );
 
-  /* ── "Explore" dropdown: secondary learning features ── */
+  /* ── "Explore" dropdown: reference lookup & secondary learning modules (no duplicates of primaryNavItems) ── */
   const exploreNavItems = useMemo(
     () =>
       [
-        { href: `${base}/magazine`, icon: IconMagazine, label: nav.magazine },
-        { href: `${base}/exercises`, icon: IconExercise, label: nav.exercises },
-        { href: `${base}/battle`, icon: IconBattle, label: nav.battle },
         { href: `${base}/dictionary`, icon: IconDictionary, label: nav.dictionary },
         { href: `${base}/kanji`, icon: IconKanji, label: nav.kanjiNav },
         { href: `${base}/grammar`, icon: IconGrammar, label: nav.grammarNav },
-        { href: `${base}/levels`, icon: IconLevels, label: nav.levelsNav }
+        { href: `${base}/saved`, icon: IconDocument, label: nav.saved },
+        { href: `${base}/magazine`, icon: IconMagazine, label: nav.magazine },
+        { href: `${base}/quiz`, icon: IconExercise, label: nav.quiz },
+        { href: `${base}/battle`, icon: IconBattle, label: nav.battle }
       ] satisfies NavItem[],
     [base, nav]
   );
@@ -255,7 +255,7 @@ export function LearnerAppFrame({
           { href: base, icon: IconHome, label: nav.home },
           { href: `${base}/flashcards`, icon: IconReview, label: nav.review },
           { href: `${base}/exercises`, icon: IconExercise, label: nav.exercises },
-          { href: `${base}/me?tab=progress`, icon: IconAnalytics, label: nav.analytics }
+          { href: `${base}/analytics`, icon: IconAnalytics, label: nav.analytics }
         ],
         title: nav.footerLearning
       },
@@ -330,7 +330,7 @@ export function LearnerAppFrame({
           {/* Brand */}
           <Link
             aria-label={nav.brand}
-            className="group inline-flex min-w-0 shrink-0 items-center rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+            className="group inline-flex min-h-10 min-w-0 shrink-0 items-center rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
             href={base}
           >
             <BrandFull
@@ -565,7 +565,7 @@ export function LearnerAppFrame({
                 aria-autocomplete="list"
                 aria-expanded={globalSearchOpen}
                 autoComplete="off"
-                className="learner-topbar-search min-w-0 flex-1 bg-transparent pr-3 text-sm text-ink outline-none placeholder:text-muted/70"
+                className="learner-topbar-search h-full min-w-0 flex-1 bg-transparent pr-3 text-sm text-ink outline-none placeholder:text-muted/70"
                 id="learner-global-search"
                 placeholder={nav.searchPlaceholder}
                 type="search"
@@ -620,7 +620,7 @@ export function LearnerAppFrame({
                 aria-autocomplete="list"
                 aria-expanded={globalSearchOpen}
                 autoComplete="off"
-                className="learner-topbar-search min-w-0 flex-1 bg-transparent pr-2 text-sm text-ink outline-none placeholder:text-muted/70"
+                className="learner-topbar-search h-full min-w-0 flex-1 bg-transparent pr-2 text-sm text-ink outline-none placeholder:text-muted/70"
                 id="learner-mobile-search"
                 placeholder={nav.searchPlaceholder}
                 type="search"
@@ -771,11 +771,11 @@ export function LearnerAppFrame({
         <AnnouncementStrip />
       </header>
       <div className="flex-1">{children}</div>
-      <footer className="mt-14 border-t border-ink/10 py-8 sm:py-10">
+      <footer className="mt-14 border-t border-ink/10 py-8 pb-24 sm:py-10 lg:pb-10">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,2fr)]">
           <div className="max-w-sm space-y-3">
             <Link
-              className="inline-flex w-fit rounded-xl focus-visible:ring-2 focus-visible:ring-accent/40"
+              className="inline-flex min-h-10 w-fit items-center rounded-xl focus-visible:ring-2 focus-visible:ring-accent/40"
               href={base}
             >
               <BrandFull className="opacity-95" />
@@ -809,6 +809,48 @@ export function LearnerAppFrame({
           <p>{nav.brand}</p>
         </div>
       </footer>
+      {/* Mobile / Tablet Bottom Navigation Bar */}
+      <nav
+        aria-label={nav.ariaMain}
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
+      >
+        <div className="mx-auto grid max-w-lg grid-cols-5 items-center">
+          {[
+            { href: base, icon: IconHome, label: nav.home, active: linkActive(base) },
+            { href: `${base}/levels`, icon: IconLevels, label: nav.levelsNav, active: linkActive(`${base}/levels`) },
+            { href: `${base}/exercises`, icon: IconExercise, label: nav.exercises, active: linkActive(`${base}/exercises`) },
+            { href: `${base}/flashcards`, icon: IconReview, label: nav.review, active: linkActive(`${base}/flashcards`), badge: dueCount },
+            {
+              href: `${base}/explore`,
+              icon: IconExplore,
+              label: nav.explore,
+              active:
+                linkActive(`${base}/explore`) ||
+                exploreNavItems.some((item) => linkActive(item.href))
+            }
+          ].map((item) => (
+            <Link
+              aria-current={item.active ? "page" : undefined}
+              className={cn(
+                "relative flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 text-[11px] font-semibold transition-colors",
+                item.active ? "text-accent" : "text-muted hover:text-ink"
+              )}
+              href={item.href}
+              key={item.href}
+            >
+              <span className="relative inline-flex items-center justify-center">
+                <item.icon aria-hidden size={20} />
+                {item.badge && item.badge > 0 ? (
+                  <span className="absolute -right-2.5 -top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-accent px-1 py-0.5 text-[9px] font-bold leading-none text-white">
+                    {item.badge > 99 ? "99+" : item.badge}
+                  </span>
+                ) : null}
+              </span>
+              <span className="max-w-full truncate">{item.label}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
       <CompanionBot base={base} labels={companionLabels} locale={locale} />
     </AppShell>
   );

@@ -120,16 +120,16 @@ const kindIcons: Record<string, string> = {
 const kindGradients: Record<string, string> = {
   magazine_vocab: "from-pink-500/10 to-rose-500/5",
   magazine_weather: "from-amber-500/10 to-orange-500/5",
-  magazine_horoscope: "from-violet-500/10 to-purple-500/5",
+  magazine_horoscope: "from-slate-500/10 to-amber-500/5",
   magazine_loto: "from-emerald-500/10 to-teal-500/5",
   magazine_loto6: "from-emerald-500/10 to-teal-500/5",
   magazine_loto7: "from-cyan-500/10 to-sky-500/5",
-  magazine_bjt_phrase: "from-blue-500/10 to-indigo-500/5",
+  magazine_bjt_phrase: "from-blue-500/10 to-slate-500/5",
   vocab: "from-pink-500/10 to-rose-500/5",
   weather: "from-amber-500/10 to-orange-500/5",
-  horoscope: "from-violet-500/10 to-purple-500/5",
+  horoscope: "from-slate-500/10 to-amber-500/5",
   loto: "from-emerald-500/10 to-teal-500/5",
-  bjt_phrase: "from-blue-500/10 to-indigo-500/5",
+  bjt_phrase: "from-blue-500/10 to-slate-500/5",
 };
 
 const dateLocales: Record<string, string> = { vi: "vi-VN", en: "en-US", ja: "ja-JP" };

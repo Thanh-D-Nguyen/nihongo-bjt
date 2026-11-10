@@ -74,13 +74,14 @@ export function HomepageClient({
       })
       .finally(() => setHubReady(true));
 
-    void Promise.allSettled((["easy", "normal", "business", "livedoor"] as const).map(async (type) => {
-      const response = await learnerApiFetchOptional(`/api/nhk-news?type=${type}&limit=8&locale=${locale}`);
-      if (!response?.ok) throw new Error("News request failed");
-      const articles = await response.json();
-      setNhkArticlesByType((prev) => ({ ...prev, [type]: Array.isArray(articles) ? articles : [] }));
-    }))
-      .then((results) => setNhkError(results.every((result) => result.status === "rejected")))
+    void learnerApiFetchOptional(`/api/nhk-news?type=easy&limit=8&locale=${locale}`)
+      .then(async (response) => {
+        if (!response?.ok) throw new Error("News request failed");
+        const articles = await response.json();
+        setNhkArticlesByType((prev) => ({ ...prev, easy: Array.isArray(articles) ? articles : [] }));
+        setNhkError(false);
+      })
+      .catch(() => setNhkError(true))
       .finally(() => setNhkReady(true));
 
     if (userId) {

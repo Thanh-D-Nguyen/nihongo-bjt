@@ -84,17 +84,17 @@ export interface SearchLabels extends SearchDetailLabels {
   voiceGenericError?: string;
 }
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "";
 const kinds = ["lexeme", "kanji", "grammar", "example", "lesson"] as const;
 type KindFilter = "all" | (typeof kinds)[number];
 const levels = ["N1", "N2", "N3", "N4", "N5"] as const;
 
-const kindConfig: Record<string, { border: string; icon: string; bg: string }> = {
-  lexeme: { border: "border-l-accent", icon: "文", bg: "bg-accent/8 text-accent" },
-  kanji: { border: "border-l-sakura", icon: "漢", bg: "bg-sakura/8 text-sakura" },
-  grammar: { border: "border-l-leaf", icon: "法", bg: "bg-leaf/8 text-leaf" },
-  example: { border: "border-l-amber-400", icon: "例", bg: "bg-amber-100 text-amber-700" },
-  lesson: { border: "border-l-sky-500", icon: "課", bg: "bg-sky-100 text-sky-700" }
+const kindConfig: Record<string, { icon: string; bg: string }> = {
+  lexeme: { icon: "文", bg: "bg-accent/8 text-accent" },
+  kanji: { icon: "漢", bg: "bg-sakura/8 text-sakura" },
+  grammar: { icon: "法", bg: "bg-leaf/8 text-leaf" },
+  example: { icon: "例", bg: "bg-amber-100 text-amber-700" },
+  lesson: { icon: "課", bg: "bg-sky-100 text-sky-700" }
 };
 
 function useIsMobileMd(): boolean {
@@ -686,6 +686,7 @@ export function SearchClient({
 
   return (
     <main className={cn("mx-auto w-full max-w-6xl pb-24 md:pb-16", showMobileDetailBar && "pb-32")}>
+      <h1 className="sr-only">{labels.title}</h1>
       <p className="sr-only" aria-live="polite" aria-atomic="true">
         {searchStatusAnnouncement}
       </p>
@@ -1262,15 +1263,10 @@ function ResultEntry({
     <li style={style}>
       <button
         className={cn(
-          "search-result-btn group flex w-full gap-3 border-l-[3px] py-3.5 pl-4 pr-3 text-left transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/30",
-          config.border,
+          "search-result-btn group flex w-full gap-3 py-3.5 pl-4 pr-3 text-left transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/30",
           selected
-            ? "bg-accent/[0.04] shadow-[inset_0_0_0_1px_rgba(59,130,246,0.12)]"
-            : "bg-surface hover:bg-ink/[0.02]",
-          /* Kind-specific selected tint */
-          selected && result.kind === "kanji" && "bg-sakura/[0.04]",
-          selected && result.kind === "grammar" && "bg-leaf/[0.04]",
-          selected && result.kind === "example" && "bg-amber-50/50"
+            ? "bg-accent/[0.06] shadow-[inset_0_0_0_1px_rgba(27,42,74,0.16)]"
+            : "bg-surface hover:bg-ink/[0.02]"
         )}
         type="button"
         onClick={onSelect}

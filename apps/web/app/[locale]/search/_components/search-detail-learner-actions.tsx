@@ -146,7 +146,16 @@ export function SearchBookmarkToggle({
   }, [busy, loadState, targetId, targetType, userId]);
 
   if (!userId) {
-    return <p className="text-[11px] leading-relaxed text-muted">{labels.signIn}</p>;
+    return (
+      <span
+        aria-label={labels.signIn}
+        className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border border-ink/10 bg-paper/60 text-muted/60"
+        title={labels.signIn}
+      >
+        <IconBookmarkOutline className="opacity-60" />
+        <span className="sr-only">{labels.signIn}</span>
+      </span>
+    );
   }
   if (loadState === "loading") {
     return (

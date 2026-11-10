@@ -97,4 +97,55 @@ describe("KanjiDetailClient API contract", () => {
     expect(host.textContent).toContain("冘");
     expect(host.textContent).not.toContain(labels.error);
   });
+
+  it("links kanji examples to dictionary entries and components to kanji detail pages", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: "kanji-1",
+          character: "会",
+          meaningVi: "HỘI, CỐI",
+          onyomi: "カイ エ",
+          kunyomi: "あ.う",
+          strokeCount: 6,
+          level: 4,
+          frequency: 4,
+          examples: [
+            {
+              id: "example-1",
+              word: "町内",
+              reading: "ちょうない",
+              meaningVi: "trong khu phố",
+              hanViet: "đinh nội"
+            }
+          ],
+          components: [{ id: "component-1", character: "冘", hanViet: "DU", position: 1 }]
+        }),
+        { status: 200 }
+      )
+    );
+    host = document.createElement("div");
+    document.body.append(host);
+    root = createRoot(host);
+
+    await act(async () => {
+      root?.render(
+        createElement(KanjiDetailClient, {
+          actionLabels: {} as never,
+          id: "kanji-1",
+          labels,
+          locale: "vi"
+        })
+      );
+    });
+
+    expect(
+      host.querySelector('a[href="/vi/dictionary/example-1"]'),
+      "kanji example word links to dictionary detail"
+    ).not.toBeNull();
+    expect(
+      host.querySelector('a[href="/vi/kanji/component-1"]'),
+      "kanji component links to kanji detail"
+    ).not.toBeNull();
+  });
 });

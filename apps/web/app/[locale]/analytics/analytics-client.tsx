@@ -517,7 +517,7 @@ export function LearnerAnalyticsClient({
                         label={labels.dueCardsLabel}
                         value={analytics.dueFlashcards}
                         icon={<span>📚</span>}
-                        accentClass="from-purple-500/10 to-purple-500/5 dark:from-purple-500/20 dark:to-purple-500/10"
+                        accentClass="from-accent/10 to-accent/5 dark:from-accent/20 dark:to-accent/10"
                       />
                     )}
                   </div>

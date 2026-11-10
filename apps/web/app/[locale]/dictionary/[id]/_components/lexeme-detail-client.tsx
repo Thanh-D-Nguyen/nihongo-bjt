@@ -33,6 +33,12 @@ interface LexemeDetail {
   senses: Sense[];
 }
 
+interface KanjiInWord {
+  id: string;
+  character: string;
+  meaningVi?: string | null;
+}
+
 interface Labels {
   title: string;
   back: string;
@@ -78,6 +84,7 @@ export function LexemeDetailClient({
   const auth = useGoAuth();
   const userId = auth.userId ?? "";
   const [item, setItem] = useState<LexemeDetail | null>(null);
+  const [kanjiList, setKanjiList] = useState<KanjiInWord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -85,8 +92,16 @@ export function LexemeDetailClient({
     void (async () => {
       try {
         const res = await learnerApiFetchOptional(`/api/content/lexemes/${id}`);
-        if (res.ok) setItem(await res.json());
-        else setError(true);
+        if (res.ok) {
+          setItem(await res.json());
+          const kanjiRes = await learnerApiFetchOptional(`/api/kanji/by-word/${encodeURIComponent(id)}`);
+          if (kanjiRes?.ok) {
+            const kData: unknown = await kanjiRes.json();
+            if (Array.isArray(kData)) setKanjiList(kData as KanjiInWord[]);
+          }
+        } else {
+          setError(true);
+        }
       } catch {
         setError(true);
       } finally {
@@ -98,9 +113,9 @@ export function LexemeDetailClient({
   if (loading) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-8">
-        <div className="h-8 w-48 animate-pulse rounded bg-[#F3F4F6]" />
+        <div className="h-8 w-48 animate-pulse rounded bg-surface-subtle" />
         <div className="mt-4 space-y-3">
-          {[1, 2, 3].map((i) => <div className="h-16 animate-pulse rounded-xl bg-[#F3F4F6]" key={i} />)}
+          {[1, 2, 3].map((i) => <div className="h-16 animate-pulse rounded-xl bg-surface-subtle" key={i} />)}
         </div>
       </div>
     );
@@ -109,8 +124,8 @@ export function LexemeDetailClient({
   if (error || !item) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-8 text-center">
-        <p className="text-sm text-[#6B7280]">{error ? labels.error : labels.notFound}</p>
-        <Link className="mt-2 inline-block text-sm font-medium text-[#3B82F6]" href={`/${locale}/dictionary`}>
+        <p className="text-sm text-muted">{error ? labels.error : labels.notFound}</p>
+        <Link className="mt-2 inline-block text-sm font-medium text-accent hover:underline" href={`/${locale}/dictionary`}>
           ← {labels.back}
         </Link>
       </div>
@@ -119,22 +134,22 @@ export function LexemeDetailClient({
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
-      <Link className="text-sm font-medium text-[#3B82F6] hover:underline" href={`/${locale}/dictionary`}>
+      <Link className="text-sm font-medium text-accent hover:underline" href={`/${locale}/dictionary`}>
         ← {labels.back}
       </Link>
 
       <div className="mt-4">
-        <div className="flex items-baseline gap-3">
-          <h1 className="text-3xl font-bold text-[#111827]">{item.headword}</h1>
-          {item.reading ? <span className="text-lg text-[#6B7280]">{item.reading}</span> : null}
+        <div className="flex flex-wrap items-baseline gap-3">
+          <h1 className="jp-text text-3xl font-bold text-ink" lang="ja">{item.headword}</h1>
+          {item.reading ? <span className="jp-text text-lg text-muted" lang="ja">{item.reading}</span> : null}
           {item.jlptLevel ? (
-            <span className="rounded-full bg-[#EFF6FF] px-2.5 py-0.5 text-xs font-semibold text-[#1D4ED8]">
+            <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-semibold text-accent">
               {item.jlptLevel}
             </span>
           ) : null}
         </div>
         {item.shortMeaningVi ? (
-          <p className="mt-1 text-sm text-[#4B5563]">{item.shortMeaningVi}</p>
+          <p className="mt-1 text-sm text-muted">{item.shortMeaningVi}</p>
         ) : null}
       </div>
 
@@ -149,22 +164,42 @@ export function LexemeDetailClient({
         />
       </div>
 
+      {kanjiList.length > 0 ? (
+        <section className="mt-6">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">
+            {locale === "ja" ? "構成漢字" : locale === "en" ? "Kanji in this word" : "Chữ Hán trong từ"}
+          </h2>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {kanjiList.map((k) => (
+              <Link
+                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-border bg-surface px-3 py-1.5 transition-colors hover:border-accent/40 hover:bg-surface-subtle"
+                href={`/${locale}/kanji/${k.id}`}
+                key={k.id}
+              >
+                <span className="jp-text text-lg font-bold text-ink" lang="ja">{k.character}</span>
+                {k.meaningVi ? <span className="text-xs text-muted">{k.meaningVi}</span> : null}
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {item.senses.length > 0 ? (
         <section className="mt-6 space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-[#6B7280]">{labels.senses}</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">{labels.senses}</h2>
           {item.senses.map((sense, idx) => (
-            <div className="rounded-xl border border-[#E5E7EB] bg-white p-4 shadow-sm" key={sense.id}>
-              <div className="flex items-baseline gap-2">
-                <span className="text-xs font-bold text-[#9CA3AF]">{idx + 1}</span>
+            <div className="rounded-xl border border-border bg-surface p-4 shadow-sm" key={sense.id}>
+              <div className="flex flex-wrap items-baseline gap-2">
+                <span className="text-xs font-bold tabular-nums text-muted">{idx + 1}</span>
                 {sense.partOfSpeech ? (
-                  <span className="rounded bg-[#F3F4F6] px-1.5 py-0.5 text-[10px] font-medium text-[#4B5563]">
+                  <span className="rounded bg-surface-subtle px-1.5 py-0.5 text-[10px] font-medium text-muted">
                     {sense.partOfSpeech}
                   </span>
                 ) : null}
-                <span className="text-sm text-[#111827]">{sense.meaningVi}</span>
+                <span className="text-sm text-ink">{sense.meaningVi}</span>
               </div>
               {sense.exampleLinks.length > 0 ? (
-                <ul className="mt-3 space-y-2 border-l-2 border-[#E5E7EB] pl-3">
+                <ul className="mt-3 space-y-2 border-l border-border pl-3">
                   {sense.exampleLinks.map((el) =>
                     el.exampleSentence ? (
                       <li className="text-sm" key={el.exampleSentence.id}>
@@ -178,13 +213,13 @@ export function LexemeDetailClient({
                             userId={userId}
                           />
                         ) : (
-                          <p className="font-medium text-[#111827]">{el.exampleSentence.japaneseText}</p>
+                          <p className="jp-text font-medium text-ink" lang="ja">{el.exampleSentence.japaneseText}</p>
                         )}
                         {el.exampleSentence.reading ? (
-                          <p className="text-xs text-[#9CA3AF]">{el.exampleSentence.reading}</p>
+                          <p className="jp-text text-xs text-muted" lang="ja">{el.exampleSentence.reading}</p>
                         ) : null}
                         {el.exampleSentence.translationVi ? (
-                          <p className="text-xs text-[#6B7280]">{el.exampleSentence.translationVi}</p>
+                          <p className="text-xs text-muted">{el.exampleSentence.translationVi}</p>
                         ) : null}
                       </li>
                     ) : null
@@ -197,12 +232,12 @@ export function LexemeDetailClient({
       ) : null}
 
       {/* Cross-links */}
-      <nav className="mt-8 flex flex-wrap gap-2 border-t border-[#E5E7EB] pt-4">
-        <Link className="rounded-lg bg-[#F3F4F6] px-3 py-1.5 text-xs font-medium text-[#4B5563] hover:bg-[#E5E7EB]" href={`/${locale}/kanji`}>
-          漢字 Kanji →
+      <nav className="mt-8 flex flex-wrap gap-2 border-t border-border pt-4">
+        <Link className="inline-flex min-h-9 items-center rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-accent/30 hover:text-ink" href={`/${locale}/kanji`}>
+          {locale === "ja" ? "漢字 →" : "Kanji →"}
         </Link>
-        <Link className="rounded-lg bg-[#F3F4F6] px-3 py-1.5 text-xs font-medium text-[#4B5563] hover:bg-[#E5E7EB]" href={`/${locale}/grammar`}>
-          📝 Ngữ pháp →
+        <Link className="inline-flex min-h-9 items-center rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-accent/30 hover:text-ink" href={`/${locale}/grammar`}>
+          {locale === "ja" ? "文法 →" : locale === "en" ? "Grammar →" : "Ngữ pháp →"}
         </Link>
       </nav>
     </div>

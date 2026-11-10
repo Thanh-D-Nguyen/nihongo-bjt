@@ -1,0 +1,581 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "UX-311",
+  "title": "Production UI/UX overhaul for learner web app and ESLint skill ignores",
+  "start_head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+  "preexisting_changes": {
+    "apps/api-go/internal/flashcarddeck/store.go": "e4e691cd7841742c554abeb193fffd0ac3656bca",
+    "apps/api-go/internal/httpserver/server.go": "bd8b05c1d51cab8cd717227e6d8ba00eb390d274",
+    "apps/api-go/internal/httpserver/handler_flashcard_deck_moderation.go": "7164376d7cbcb3f0b940e38e97c0749c15ae0799",
+    "apps/api-go/internal/httpserver/handler_flashcard_deck_moderation_test.go": "7fe5df7f699a77115378688bca35465c4c2a57c2",
+    "packages/database/prisma/migrations/20261110160000_deck_moderation/migration.sql": "4e1461af255787b5bcc437e1b86ff12efdbe5163",
+    "apps/web/next-env.d.ts": "ce4e94a6b10f160ee021fe18939af160d2927dcf",
+    "packages/database/generated/client/edge.js": "3f4eeab43b64758c5e5521311d2003d4ca1696ef",
+    "packages/database/generated/client/index-browser.js": "068d0b25de31b89512a369849999c120e5e96efd",
+    "packages/database/generated/client/index.d.ts": "bb5ff024c59ff19becaccd6abf5b3c5cdd81ed36",
+    "packages/database/generated/client/index.js": "c9ae65ff772633356d92b60a130e3a4765dba181",
+    "packages/database/generated/client/package.json": "4bbff47cc1542ddf651667ecaf6adfb62cf79caf",
+    "packages/database/generated/client/schema.prisma": "1f4810599027cfcf60f302d2ddf6f4cf8664b29c",
+    "apps/api-go/internal/httpserver/handler_admin_flashcard_reports_test.go": "021034dec155bd228ed9e1178b1eff15eafb7dce",
+    "apps/admin/next-env.d.ts": "ce4e94a6b10f160ee021fe18939af160d2927dcf",
+    "apps/admin/tsconfig.tsbuildinfo": "e95694e8c77aa784909015085489b03d99a03727",
+    "apps/web/tsconfig.tsbuildinfo": "902ee00d4b326aa3f9ce13aa78ae3328b8426dcd",
+    "apps/api-go/internal/httpserver/handler_admin_flashcard_reports.go": "93075487d1651ef62bc90e0ffe6a59bffc6d9a2e"
+  },
+  "spec": {
+    "problem": "Learner web UI has AI-slop violet/bounce/side-tab patterns, missing mobile bottom navigation, overlapping text in Kanji grid and Search detail header, intrusive full-screen promo modals, redundant homepage NHK news fetches, and unlinked Kanji/Lexeme cross-navigation despite existing Go API support.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Shared layouts, global CSS, and learner screens eliminate AI-slop violet gradients, bounce easings, and side-tab borders"
+      },
+      {
+        "id": "AC2",
+        "text": "LearnerAppFrame provides a responsive mobile bottom navigation bar, deduplicated Explore navigation, and reliable review-due badge fetching"
+      },
+      {
+        "id": "AC3",
+        "text": "KanjiDetailClient and LexemeDetailClient link vocabulary examples, constituent kanji, and radicals across Dictionary and Kanji detail pages using existing Go APIs"
+      },
+      {
+        "id": "AC4",
+        "text": "Kanji grid cards, Search detail preview header, Dictionary list, and Grammar list render cleanly without text collisions or fixture clutter"
+      },
+      {
+        "id": "AC5",
+        "text": "ESLint ignores vendored agent skill directories and Next.js rewrites proxy same-origin /api/* calls cleanly"
+      }
+    ],
+    "expected_behavior": "Refined Japanese-inspired minimal workspace with mobile bottom navigation, zero text collisions, non-intrusive announcements, single initial NHK news fetch, entity cross-navigation between Dictionary and Kanji, and clean ESLint skill ignores.",
+    "observed_behavior": "Impeccable detector reports 58 slop findings, Kanji Hán-Việt overflows grid cards, Search detail header overlaps guest prompt, mobile lacks bottom nav, and Kanji examples/components are not linked.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "modify",
+    "rationale": "Overhauls learner web UI/UX, navigation, and cross-entity API wiring while updating ESLint ignores for vendored skill directories"
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/kanji/[id]/_components/kanji-detail-client.contract.test.tsx",
+      "test": "KanjiDetailClient API contract > links kanji examples to dictionary entries and components to kanji detail pages",
+      "expect": "kanji example word links to dictionary detail"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-10T07:11:44.008Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-10T07:14:22.442Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-10T07:14:23.028Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-10T07:17:04.081Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-10T07:37:28.379Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-10T08:00:10.278Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-10T08:01:09.913Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1"
+    },
+    {
+      "state": "CLASSIFIED",
+      "at": "2026-11-10T08:06:37.121Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-10T08:07:31.237Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-10T08:08:43.440Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-10T08:09:11.496Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-10T08:09:14.135Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-10T07:17:03.789Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/kanji/[id]/_components/kanji-detail-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/kanji/[id]/_components/kanji-detail-client.contract.test.tsx::KanjiDetailClient API contract > links kanji examples to dictionary entries and components to kanji detail pages",
+          "outcome": "FAIL",
+          "excerpt": "kanji example word links to dictionary detail: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/kanji/[id]/_components/kanji-detail-client.contract.test.tsx::KanjiDetailClient API contract > links kanji examples to dictionary entries and components to kanji detail pages": "kanji example word links to dictionary detail"
+      },
+      "fingerprint": "9e8869a21b252d20ea78764e262b72176ac7b9532a59d2dd3a58f073e2d9ec31"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-10T07:37:26.121Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/kanji/[id]/_components/kanji-detail-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/kanji/[id]/_components/kanji-detail-client.contract.test.tsx::KanjiDetailClient API contract > links kanji examples to dictionary entries and components to kanji detail pages",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "caa3f5494a3bf0f3396ba242c1d863837b7e340c94d3e32fdae8f6df6efd826b"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-10T07:43:35.105Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 273,
+        "executed": 273,
+        "passed": 273,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "caa3f5494a3bf0f3396ba242c1d863837b7e340c94d3e32fdae8f6df6efd826b"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-10T07:43:46.620Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "caa3f5494a3bf0f3396ba242c1d863837b7e340c94d3e32fdae8f6df6efd826b"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-10T07:45:31.200Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 634,
+        "executed": 634,
+        "passed": 634,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 867,
+        "lint_errors": 66,
+        "lint_warnings": 23,
+        "new_debt": 2
+      },
+      "message": "RATCHET_VIOLATION: 2 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "caa3f5494a3bf0f3396ba242c1d863837b7e340c94d3e32fdae8f6df6efd826b"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-10T07:46:57.903Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/kanji/[id]/_components/kanji-detail-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/kanji/[id]/_components/kanji-detail-client.contract.test.tsx::KanjiDetailClient API contract > links kanji examples to dictionary entries and components to kanji detail pages",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "5f2d93468721a20acac95c38862ece64fd8a85dee4af4c847fb09868d15157ea"
+    },
+    {
+      "seq": 7,
+      "at": "2026-11-10T07:50:32.571Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 273,
+        "executed": 273,
+        "passed": 273,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "5f2d93468721a20acac95c38862ece64fd8a85dee4af4c847fb09868d15157ea"
+    },
+    {
+      "seq": 8,
+      "at": "2026-11-10T07:50:43.638Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "5f2d93468721a20acac95c38862ece64fd8a85dee4af4c847fb09868d15157ea"
+    },
+    {
+      "seq": 9,
+      "at": "2026-11-10T07:51:29.383Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 634,
+        "executed": 634,
+        "passed": 634,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 867,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "BASELINE_STALE: 1 fixed item(s) still in the baseline",
+      "fingerprint": "5f2d93468721a20acac95c38862ece64fd8a85dee4af4c847fb09868d15157ea"
+    },
+    {
+      "seq": 10,
+      "at": "2026-11-10T07:52:28.878Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/kanji/[id]/_components/kanji-detail-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/kanji/[id]/_components/kanji-detail-client.contract.test.tsx::KanjiDetailClient API contract > links kanji examples to dictionary entries and components to kanji detail pages",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "635bb5dacfbfc763389ffa2c30c0d2eb3a60309afec03f11e1fad6303c4771cb"
+    },
+    {
+      "seq": 11,
+      "at": "2026-11-10T07:56:06.462Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 273,
+        "executed": 273,
+        "passed": 273,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "635bb5dacfbfc763389ffa2c30c0d2eb3a60309afec03f11e1fad6303c4771cb"
+    },
+    {
+      "seq": 12,
+      "at": "2026-11-10T07:56:18.166Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "635bb5dacfbfc763389ffa2c30c0d2eb3a60309afec03f11e1fad6303c4771cb"
+    },
+    {
+      "seq": 13,
+      "at": "2026-11-10T07:57:37.157Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 634,
+        "executed": 634,
+        "passed": 634,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 867,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "635bb5dacfbfc763389ffa2c30c0d2eb3a60309afec03f11e1fad6303c4771cb"
+    },
+    {
+      "seq": 14,
+      "at": "2026-11-10T08:01:06.996Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/kanji/[id]/_components/kanji-detail-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/kanji/[id]/_components/kanji-detail-client.contract.test.tsx::KanjiDetailClient API contract > links kanji examples to dictionary entries and components to kanji detail pages",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "452a4e34c61879fa4e5a748cd40f1babc506105f65f316dd7e92898522df8dcb"
+    },
+    {
+      "seq": 15,
+      "at": "2026-11-10T08:04:51.001Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 273,
+        "executed": 273,
+        "passed": 273,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "452a4e34c61879fa4e5a748cd40f1babc506105f65f316dd7e92898522df8dcb"
+    },
+    {
+      "seq": 16,
+      "at": "2026-11-10T08:06:34.753Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "TOOL_FAILURE",
+      "accounting": {
+        "discovered": 634,
+        "executed": 634,
+        "passed": 634,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 867,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "task files changed while the suite ran — evidence would not describe one state",
+      "fingerprint": "452a4e34c61879fa4e5a748cd40f1babc506105f65f316dd7e92898522df8dcb"
+    },
+    {
+      "seq": 17,
+      "at": "2026-11-10T08:08:41.398Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 634,
+        "executed": 634,
+        "passed": 634,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 867,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "452a4e34c61879fa4e5a748cd40f1babc506105f65f316dd7e92898522df8dcb"
+    },
+    {
+      "seq": 18,
+      "at": "2026-11-10T08:09:09.334Z",
+      "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+      "kind": "review",
+      "mode": "human",
+      "reviewer": "principal-ux-qa",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "Verified all 5 acceptance criteria, 30 before/after real-browser screenshots across desktop/tablet/mobile, zero new ESLint/test debt, and contract tests passing.",
+      "attested": true,
+      "fingerprint": "452a4e34c61879fa4e5a748cd40f1babc506105f65f316dd7e92898522df8dcb"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-10T08:09:14.111Z",
+    "head": "166c46f1b4ce1c1e1edee0a094c76cdf430bbaf1",
+    "fingerprint": "452a4e34c61879fa4e5a748cd40f1babc506105f65f316dd7e92898522df8dcb",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_harness": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/_components/auth-hero-layout.tsx": "5c60c72901fbc7779f6728148a8c72f5897fb106",
+      "apps/web/app/[locale]/_components/detail-hero-header.tsx": "76dab3afc3b9332dc8361473e484870ddae02eeb",
+      "apps/web/app/[locale]/_components/homepage/homepage-client.tsx": "6b0afe75546ab81d2e9301449ddbc523275902b1",
+      "apps/web/app/[locale]/_components/homepage/homepage-sections-tabs.tsx": "a184d4f073536675618aaacdf73b1847cdeaee96",
+      "apps/web/app/[locale]/_components/homepage/today-plan-hub.tsx": "b5bec246ffc13f7f7d17bf4ba926ca4d6b8d9205",
+      "apps/web/app/[locale]/analytics/analytics-client.tsx": "ad4a867cfd9575e93d34516153d13bd38dbf2b29",
+      "apps/web/app/[locale]/dictionary/[id]/_components/lexeme-detail-client.tsx": "3e1640e13693d0701b865d5caec139a6a5e1b7cf",
+      "apps/web/app/[locale]/dictionary/_components/dictionary-client.tsx": "4bb1ee1ea483c78d6938611c3fee8dc7c89e1bb0",
+      "apps/web/app/[locale]/explore/_components/explore-client.tsx": "db51c70fb64d1a8321f2dd5cc13525d6d8a47701",
+      "apps/web/app/[locale]/grammar/[id]/_components/grammar-detail-client.tsx": "d5debe742fa4b9eb05db147f0afa28dfdcc93195",
+      "apps/web/app/[locale]/grammar/_components/grammar-client.tsx": "a3c3dc3eba7c624025cc1f405b07acf418a00ac8",
+      "apps/web/app/[locale]/kanji/[id]/_components/kanji-detail-client.contract.test.tsx": "f5eddbc39e15d326ec9b6b4e09a063ddf2af4dbb",
+      "apps/web/app/[locale]/kanji/[id]/_components/kanji-detail-client.tsx": "8ad5eb9727a9aec6b92024e7a943a577d3fa814c",
+      "apps/web/app/[locale]/kanji/_components/kanji-client.tsx": "becc812cd281d9ffda0f3b717f6a72ce0ef185ff",
+      "apps/web/app/[locale]/magazine/_components/magazine-article-view.tsx": "eaf488e3e84b3793b3bba247e2d9a97db2d92389",
+      "apps/web/app/[locale]/magazine/_components/magazine-page-client.tsx": "7874522382f3a843c8f22814eee5f2cd482d51d0",
+      "apps/web/app/[locale]/search/_components/search-client.tsx": "5571f6d1484c2434eb850ddeb73d992d97d5b1f3",
+      "apps/web/app/[locale]/search/_components/search-detail-learner-actions.tsx": "8a3ffe8d6ca46e9c7234845636de504ff77b6077",
+      "apps/web/app/[locale]/search/_components/search-detail-panel.tsx": "81af628050232f350fa7ce5495f5611f48e914fb",
+      "apps/web/app/_components/announcement-strip.tsx": "c5a82604454ac6f43bde8ac284c6e86358192f89",
+      "apps/web/app/_components/companion-bot.tsx": "8dc521bc7b2f7706d54ea34fa6e0610e86181ced",
+      "apps/web/app/_components/learner-app-frame.tsx": "69a9542ca79eaded4b4ba4436dc75ed2326d43a5",
+      "apps/web/app/globals.css": "4424169a29618bf73d30ed953c71170e40605229",
+      "apps/web/next.config.mjs": "afe59dc00b0b83a11c9d3526208d04943a58c3d6",
+      "eslint.config.mjs": "f4eeae28697f3ad3c100d2d9e930347ef1bfb4d2",
+      "scripts/quality/frontend-debt-baseline.json": "2fee3d82da7dd914c5eae66a8a3704af7196d7e1"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  },
+  "claimed": [],
+  "disowned": [
+    {
+      "path": "apps/api-go/internal/httpserver/handler_admin_flashcard_reports_test.go",
+      "reason": "Concurrent codex agent backend test file",
+      "at": "2026-11-10T08:00:08.216Z"
+    },
+    {
+      "path": "apps/admin/next-env.d.ts",
+      "reason": "Generated by next typecheck",
+      "at": "2026-11-10T08:00:10.461Z"
+    },
+    {
+      "path": "apps/admin/tsconfig.tsbuildinfo",
+      "reason": "Generated by tsc",
+      "at": "2026-11-10T08:00:12.659Z"
+    },
+    {
+      "path": "apps/web/next-env.d.ts",
+      "reason": "Generated by next typecheck",
+      "at": "2026-11-10T08:00:14.995Z"
+    },
+    {
+      "path": "apps/web/tsconfig.tsbuildinfo",
+      "reason": "Generated by tsc",
+      "at": "2026-11-10T08:00:17.553Z"
+    },
+    {
+      "path": "apps/api-go/internal/httpserver/handler_admin_flashcard_reports.go",
+      "reason": "Concurrent codex agent backend file",
+      "at": "2026-11-10T08:07:28.974Z"
+    }
+  ]
+}
