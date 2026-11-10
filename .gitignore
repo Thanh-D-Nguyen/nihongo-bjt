@@ -115,3 +115,6 @@ OPERATOR_LOGIN_READ_ONCE.txt
 tasks/.active
 tasks/.logs/
 tasks/.review/
+
+# Impeccable prebuilt platform binaries (18MB each, re-installed by the skill installer)
+**/impeccable/scripts/bin/

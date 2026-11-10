@@ -62,7 +62,57 @@
       "Bash(cd /Users/thanhnguyen/.codex/worktrees/oci-content-import/nihongo-bjt && cat docs/deployment/oci-content-import.md | cut -c1-400)"
     ]
   },
-  "enabledPlugins": {
-    "harness@harness-marketplace": true
-  }
+  "skillOverrides": {
+    "flutter-add-integration-test": "name-only",
+    "flutter-add-widget-preview": "name-only",
+    "flutter-add-widget-test": "name-only",
+    "flutter-apply-architecture-best-practices": "name-only",
+    "flutter-build-responsive-layout": "name-only",
+    "flutter-fix-layout-issues": "name-only",
+    "flutter-implement-json-serialization": "name-only",
+    "flutter-setup-declarative-routing": "name-only",
+    "flutter-use-http-package": "name-only",
+    "flutter-setup-localization": "name-only"
+  },
+  "enabledPlugins": {},
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ ! -f \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" ] || \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" hook",
+            "timeout": 5,
+            "statusMessage": "Preparing build session"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ ! -f \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" ] || \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" hook",
+            "timeout": 5,
+            "statusMessage": "Checking UI changes"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ ! -f \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" ] || \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" hook",
+            "timeout": 30,
+            "statusMessage": "Design deep pass"
+          }
+        ]
+      }
+    ]
+  },
+  "description": "Impeccable design detector: immediate-tier checks after Edit/Write on UI files, full-rule deep pass on Stop."
 }
