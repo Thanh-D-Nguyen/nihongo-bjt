@@ -35,7 +35,7 @@ jobs:
       # The immutable commit being released (never a branch name).
       DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # Deploy exactly the commit CI validated. Without this, a workflow_run
           # job checks out main's *current* HEAD, which may be a newer commit

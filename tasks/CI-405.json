@@ -1,0 +1,234 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "CI-405",
+  "title": "Bump GitHub Actions to Node 24 majors (checkout v5, setup-node v5, setup-go v6)",
+  "start_head": "751d9f697c39c16e763d05aa61c2b7d71da05670",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "no workflow references actions/checkout@v4, actions/setup-node@v4 or actions/setup-go@v5"
+      },
+      {
+        "id": "AC2",
+        "text": "all workflows use actions/checkout@v5, actions/setup-node@v5 and actions/setup-go@v6, which run natively on Node 24"
+      },
+      {
+        "id": "AC3",
+        "text": "the number of action usages is unchanged (5 checkout, 3 setup-node, 2 setup-go); only the version tags move"
+      },
+      {
+        "id": "AC4",
+        "text": "no other workflow content changes"
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "modify",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "scripts/quality/harness/action-versions.test.ts",
+      "test": "GitHub Action versions > pins Node 24 majors for checkout, setup-node and setup-go in every workflow",
+      "expect": "must use actions/checkout@v5 (Node 24) instead of @v4"
+    }
+  ],
+  "sensitivity": {
+    "mutation": {
+      "file": ".github/workflows/deploy-oci.yml",
+      "find": "actions/checkout@v5",
+      "replace": "actions/checkout@v4"
+    },
+    "targets": [
+      {
+        "runner": "vitest",
+        "file": "scripts/quality/harness/action-versions.test.ts",
+        "test": "GitHub Action versions > pins Node 24 majors for checkout, setup-node and setup-go in every workflow",
+        "expect": "must use actions/checkout@v5 (Node 24) instead of @v4"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-12T10:21:12.844Z",
+      "head": "751d9f697c39c16e763d05aa61c2b7d71da05670"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-12T10:21:13.098Z",
+      "head": "751d9f697c39c16e763d05aa61c2b7d71da05670"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-12T10:21:13.371Z",
+      "head": "751d9f697c39c16e763d05aa61c2b7d71da05670"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-12T10:21:30.089Z",
+      "head": "751d9f697c39c16e763d05aa61c2b7d71da05670"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-12T10:21:35.701Z",
+      "head": "751d9f697c39c16e763d05aa61c2b7d71da05670"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-12T10:25:04.966Z",
+      "head": "751d9f697c39c16e763d05aa61c2b7d71da05670"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-12T10:25:53.792Z",
+      "head": "751d9f697c39c16e763d05aa61c2b7d71da05670"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-12T10:25:54.330Z",
+      "head": "751d9f697c39c16e763d05aa61c2b7d71da05670"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-12T10:21:29.884Z",
+      "head": "751d9f697c39c16e763d05aa61c2b7d71da05670",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/action-versions.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/action-versions.test.ts::GitHub Action versions > pins Node 24 majors for checkout, setup-node and setup-go in every workflow",
+          "outcome": "FAIL",
+          "excerpt": "ci.yml must use actions/checkout@v5 (Node 24) instead of @v4: expected '4' to be '5' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/action-versions.test.ts::GitHub Action versions > pins Node 24 majors for checkout, setup-node and setup-go in every workflow": "must use actions/checkout@v5 (Node 24) instead of @v4"
+      },
+      "fingerprint": "d204b2c79d3c405120dd44dce9c2ffcad0f48eb29362046307ff305b3bc33d18"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-12T10:21:35.470Z",
+      "head": "751d9f697c39c16e763d05aa61c2b7d71da05670",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/action-versions.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/action-versions.test.ts::GitHub Action versions > pins Node 24 majors for checkout, setup-node and setup-go in every workflow",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "f56f7f4389d55da000f8030ed60d05d13061fb6c59c730470fd0774ec06d6909"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-12T10:22:08.739Z",
+      "head": "751d9f697c39c16e763d05aa61c2b7d71da05670",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": ".github/workflows/deploy-oci.yml",
+        "find": "actions/checkout@v5",
+        "replace": "actions/checkout@v4"
+      },
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/action-versions.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/action-versions.test.ts::GitHub Action versions > pins Node 24 majors for checkout, setup-node and setup-go in every workflow",
+          "outcome": "FAIL",
+          "excerpt": "deploy-oci.yml must use actions/checkout@v5 (Node 24) instead of @v4: expected '4' to be '5' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/action-versions.test.ts::GitHub Action versions > pins Node 24 majors for checkout, setup-node and setup-go in every workflow": "must use actions/checkout@v5 (Node 24) instead of @v4"
+      },
+      "fingerprint": "f56f7f4389d55da000f8030ed60d05d13061fb6c59c730470fd0774ec06d6909"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-12T10:25:04.743Z",
+      "head": "751d9f697c39c16e763d05aa61c2b7d71da05670",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 285,
+        "executed": 285,
+        "passed": 285,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "f56f7f4389d55da000f8030ed60d05d13061fb6c59c730470fd0774ec06d6909"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-12T10:25:53.585Z",
+      "head": "751d9f697c39c16e763d05aa61c2b7d71da05670",
+      "kind": "review",
+      "mode": "human",
+      "reviewer": "independent-reviewer",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "attested": true,
+      "fingerprint": "f56f7f4389d55da000f8030ed60d05d13061fb6c59c730470fd0774ec06d6909"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-12T10:25:54.322Z",
+    "head": "751d9f697c39c16e763d05aa61c2b7d71da05670",
+    "fingerprint": "f56f7f4389d55da000f8030ed60d05d13061fb6c59c730470fd0774ec06d6909",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_harness": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      ".github/workflows/ci.yml": "1882d642c50a3ff3c8588aed59a3ed9948f6803d",
+      ".github/workflows/deploy-gcp.yml": "b2ec37c8610cc5eccd29257e9cd86d20ed49d9bb",
+      ".github/workflows/deploy-oci.yml": "83b8271134616e8bcaad2ed7b15fbc51713ae3e3",
+      "scripts/quality/harness/action-versions.test.ts": "58ead31763da9993fb729294217466c0c4002405"
+    }
+  }
+}

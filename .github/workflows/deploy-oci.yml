@@ -35,7 +35,7 @@ jobs:
       GOOGLE_OAUTH_CLIENT_ID: ${{ vars.GOOGLE_OAUTH_CLIENT_ID }}
       APPLE_OAUTH_CLIENT_IDS: ${{ vars.APPLE_OAUTH_CLIENT_IDS }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           persist-credentials: false
