@@ -16961,6 +16961,34 @@
         }
       }
     },
+    "/api/companion/chat": {
+      "post": {
+        "operationId": "postApiCompanionChat",
+        "responses": {
+          "default": {
+            "description": "Response schema is not yet verified; see the route inventory."
+          }
+        },
+        "summary": "Source-discovered route handled by postCompanionChatHandler(shibaSvc, deps.Logger)",
+        "tags": [
+          "companion"
+        ],
+        "x-contract-verification": {
+          "scope": "route/method/handler coverage only; request and response schemas are unverified",
+          "status": "unverified"
+        },
+        "x-route-source": {
+          "guards": [
+            "learnerGuard",
+            "authn.CSRFGuard(csrfCfg)"
+          ],
+          "handler": "postCompanionChatHandler(shibaSvc, deps.Logger)",
+          "runtimeConditions": [
+            "deps.DBPool != nil && deps.SessionStore != nil"
+          ]
+        }
+      }
+    },
     "/api/companion/hint": {
       "get": {
         "operationId": "getApiCompanionHint",

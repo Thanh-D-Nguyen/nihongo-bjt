@@ -41,6 +41,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/scenario"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/search"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/shiballm"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/studyplan"
 	"google.golang.org/api/idtoken"
 )
@@ -1942,6 +1943,16 @@ func NewRouter(deps Dependencies) http.Handler {
 		r.Group(func(lr chi.Router) {
 			lr.Use(learnerGuard)
 			lr.Get("/api/companion/hint", getCompanionHintHandler(deps.DBPool, deps.Logger))
+		})
+		// SHIBA-401: LLM-backed companion chat. The service is built from
+		// server-side config only; when SHIBA_LLM_BASE_URL is unset the
+		// handler answers 503 and the web companion uses its rule-based
+		// replies instead.
+		shibaSvc := shiballm.NewService(shibaLLMConfig(deps.Config))
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/companion/chat", postCompanionChatHandler(shibaSvc, deps.Logger))
 		})
 	}
 

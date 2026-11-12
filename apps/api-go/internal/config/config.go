@@ -66,6 +66,25 @@ type Config struct {
 	WebPublicURL        string
 	GoogleOAuthClientID string
 	AppleOAuthClientIDs []string
+
+	// ShibaLLMBaseURL is the OpenAI-compatible base URL of the
+	// self-hosted LLM used by the Shiba companion chat (SHIBA_LLM_BASE_URL).
+	// Empty disables the chat endpoint (503); the web companion then
+	// falls back to its built-in rule-based replies.
+	ShibaLLMBaseURL string
+	// ShibaLLMAPIKey is an optional bearer key for the endpoint
+	// (SHIBA_LLM_API_KEY). Never logged or returned to clients.
+	ShibaLLMAPIKey string
+	// ShibaLLMModel is the upstream model name (SHIBA_LLM_MODEL).
+	ShibaLLMModel string
+	// ShibaLLMTimeout bounds one upstream chat call (SHIBA_LLM_TIMEOUT).
+	ShibaLLMTimeout time.Duration
+	// ShibaLLMCFAccessClientID / ShibaLLMCFAccessClientSecret carry an
+	// optional Cloudflare Access service token used when the endpoint
+	// sits behind a Cloudflare Tunnel + Access application
+	// (SHIBA_LLM_CF_ACCESS_CLIENT_ID / SHIBA_LLM_CF_ACCESS_CLIENT_SECRET).
+	ShibaLLMCFAccessClientID     string
+	ShibaLLMCFAccessClientSecret string
 }
 
 // Load reads configuration from environment variables and validates required fields.
@@ -130,6 +149,29 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("config: TRUSTED_PROXY_CIDRS %w", err)
 	}
 
+	shibaLLMTimeout, err := durEnv("SHIBA_LLM_TIMEOUT", 120*time.Second)
+	if err != nil {
+		return nil, fmt.Errorf("config: SHIBA_LLM_TIMEOUT %w", err)
+	}
+	shibaLLMBaseURL := strings.TrimSpace(os.Getenv("SHIBA_LLM_BASE_URL"))
+	if shibaLLMBaseURL != "" {
+		u, err := url.Parse(shibaLLMBaseURL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return nil, fmt.Errorf("config: SHIBA_LLM_BASE_URL must be a valid http(s) URL")
+		}
+		if u.User != nil {
+			return nil, fmt.Errorf("config: SHIBA_LLM_BASE_URL must not contain credentials; use SHIBA_LLM_API_KEY")
+		}
+		if strings.TrimSpace(os.Getenv("SHIBA_LLM_MODEL")) == "" {
+			return nil, fmt.Errorf("config: SHIBA_LLM_MODEL is required when SHIBA_LLM_BASE_URL is set")
+		}
+	}
+	shibaLLMCFAccessID := strings.TrimSpace(os.Getenv("SHIBA_LLM_CF_ACCESS_CLIENT_ID"))
+	shibaLLMCFAccessSecret := os.Getenv("SHIBA_LLM_CF_ACCESS_CLIENT_SECRET")
+	if (shibaLLMCFAccessID == "") != (shibaLLMCFAccessSecret == "") {
+		return nil, fmt.Errorf("config: SHIBA_LLM_CF_ACCESS_CLIENT_ID and SHIBA_LLM_CF_ACCESS_CLIENT_SECRET must be set together")
+	}
+
 	mediaBasePath := getEnv("MEDIA_BASE_PATH", "/srv/kotobawork/data/media")
 	smtpAddress := os.Getenv("SMTP_ADDRESS")
 	webPublicURL := strings.TrimSpace(os.Getenv("WEB_PUBLIC_URL"))
@@ -149,36 +191,42 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		Port:                     port,
-		DatabaseURL:              dbURL,
-		RedisURL:                 os.Getenv("REDIS_URL"), // optional; empty = skip Redis in readiness
-		UnsplashAccessKey:        os.Getenv("UNSPLASH_ACCESS_KEY"),
-		PixabayAPIKey:            os.Getenv("PIXABAY_API_KEY"),
-		PexelsAPIKey:             os.Getenv("PEXELS_API_KEY"),
-		ImageSelectionSigningKey: os.Getenv("IMAGE_SELECTION_SIGNING_KEY"),
-		LogLevel:                 getEnv("LOG_LEVEL", "info"),
-		ServerReadTimeout:        readTimeout,
-		ServerWriteTimeout:       writeTimeout,
-		ServerIdleTimeout:        idleTimeout,
-		ShutdownTimeout:          shutdownTimeout,
-		DBPoolMaxConns:           maxConns,
-		DBPoolMinConns:           minConns,
-		DBConnAcquireTimeout:     acquireTimeout,
-		CORSOrigins:              corsOrigins,
-		TrustedProxyCIDRs:        trustedProxyCIDRs,
-		MediaBasePath:            mediaBasePath,
-		MeilisearchURL:           os.Getenv("MEILISEARCH_URL"),
-		MeilisearchAPIKey:        os.Getenv("MEILISEARCH_API_KEY"),
-		StripeWebhookSecret:      os.Getenv("STRIPE_WEBHOOK_SECRET"),
-		CookieSecure:             strings.ToLower(os.Getenv("COOKIE_SECURE")) != "false",
-		SMTPAddress:              smtpAddress,
-		SMTPFrom:                 getEnv("SMTP_FROM", "no-reply@kotobawork.local"),
-		SMTPUsername:             os.Getenv("SMTP_USERNAME"),
-		SMTPPassword:             os.Getenv("SMTP_PASSWORD"),
-		SMTPRequireStartTLS:      smtpRequireStartTLS,
-		WebPublicURL:             webPublicURL,
-		GoogleOAuthClientID:      strings.TrimSpace(os.Getenv("GOOGLE_OAUTH_CLIENT_ID")),
-		AppleOAuthClientIDs:      splitAppleClientIDs(os.Getenv("APPLE_OAUTH_CLIENT_IDS")),
+		Port:                         port,
+		DatabaseURL:                  dbURL,
+		RedisURL:                     os.Getenv("REDIS_URL"), // optional; empty = skip Redis in readiness
+		UnsplashAccessKey:            os.Getenv("UNSPLASH_ACCESS_KEY"),
+		PixabayAPIKey:                os.Getenv("PIXABAY_API_KEY"),
+		PexelsAPIKey:                 os.Getenv("PEXELS_API_KEY"),
+		ImageSelectionSigningKey:     os.Getenv("IMAGE_SELECTION_SIGNING_KEY"),
+		LogLevel:                     getEnv("LOG_LEVEL", "info"),
+		ServerReadTimeout:            readTimeout,
+		ServerWriteTimeout:           writeTimeout,
+		ServerIdleTimeout:            idleTimeout,
+		ShutdownTimeout:              shutdownTimeout,
+		DBPoolMaxConns:               maxConns,
+		DBPoolMinConns:               minConns,
+		DBConnAcquireTimeout:         acquireTimeout,
+		CORSOrigins:                  corsOrigins,
+		TrustedProxyCIDRs:            trustedProxyCIDRs,
+		MediaBasePath:                mediaBasePath,
+		MeilisearchURL:               os.Getenv("MEILISEARCH_URL"),
+		MeilisearchAPIKey:            os.Getenv("MEILISEARCH_API_KEY"),
+		StripeWebhookSecret:          os.Getenv("STRIPE_WEBHOOK_SECRET"),
+		CookieSecure:                 strings.ToLower(os.Getenv("COOKIE_SECURE")) != "false",
+		SMTPAddress:                  smtpAddress,
+		SMTPFrom:                     getEnv("SMTP_FROM", "no-reply@kotobawork.local"),
+		SMTPUsername:                 os.Getenv("SMTP_USERNAME"),
+		SMTPPassword:                 os.Getenv("SMTP_PASSWORD"),
+		SMTPRequireStartTLS:          smtpRequireStartTLS,
+		WebPublicURL:                 webPublicURL,
+		GoogleOAuthClientID:          strings.TrimSpace(os.Getenv("GOOGLE_OAUTH_CLIENT_ID")),
+		AppleOAuthClientIDs:          splitAppleClientIDs(os.Getenv("APPLE_OAUTH_CLIENT_IDS")),
+		ShibaLLMBaseURL:              shibaLLMBaseURL,
+		ShibaLLMAPIKey:               os.Getenv("SHIBA_LLM_API_KEY"),
+		ShibaLLMModel:                strings.TrimSpace(os.Getenv("SHIBA_LLM_MODEL")),
+		ShibaLLMTimeout:              shibaLLMTimeout,
+		ShibaLLMCFAccessClientID:     shibaLLMCFAccessID,
+		ShibaLLMCFAccessClientSecret: shibaLLMCFAccessSecret,
 	}
 	return cfg, nil
 }

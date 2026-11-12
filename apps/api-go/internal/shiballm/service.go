@@ -1,0 +1,174 @@
+package shiballm
+
+import (
+	"context"
+	"fmt"
+	"strings"
+	"time"
+	"unicode/utf8"
+
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
+)
+
+// Input bounds enforced before any upstream call.
+const (
+	MaxMessageRunes  = 1000
+	MaxHistoryTurns  = 20
+	MaxHistoryRunes  = 2000
+	DefaultRateLimit = 20 // requests per learner per minute
+
+	// MaxReplyRunes caps a generated reply at the history-turn bound,
+	// so a reply can always be echoed back as a history turn.
+	MaxReplyRunes = MaxHistoryRunes
+)
+
+// Limiter is the per-key rate-limit contract used by the service.
+// *authn.RateLimiter satisfies it (bounded keys, TTL eviction,
+// fail-closed when full).
+type Limiter interface {
+	Allow(key string) (bool, error)
+}
+
+// denyLimiter fails closed: it reports an error for every key, which
+// Service.allow treats as "not allowed".
+type denyLimiter struct{}
+
+func (denyLimiter) Allow(string) (bool, error) {
+	return false, fmt.Errorf("shiballm: rate limiter unavailable")
+}
+
+// Service orchestrates validation, persona prompt building, rate
+// limiting and the upstream call for one learner chat request.
+type Service struct {
+	cfg     Config
+	client  *Client
+	limiter Limiter
+}
+
+// NewService builds a service from cfg with the default per-learner
+// rate limiter (authn.RateLimiter: bounded, TTL-evicted).
+func NewService(cfg Config) *Service {
+	rl, err := authn.NewRateLimiter(authn.RateLimiterConfig{
+		Limit:      DefaultRateLimit,
+		Window:     time.Minute,
+		TTL:        2 * time.Minute,
+		MaxKeys:    10000,
+		EvictEvery: 30 * time.Second,
+	})
+	var limiter Limiter = rl
+	if err != nil {
+		// The config above is static and valid; if construction ever
+		// failed, fail closed (deny) rather than run unthrottled
+		// against a local model on modest hardware.
+		limiter = denyLimiter{}
+	}
+	return NewServiceWithLimiter(cfg, limiter)
+}
+
+// NewServiceWithLimiter builds a service with an explicit limiter
+// (used by tests and alternative wiring). A nil limiter disables
+// rate limiting.
+func NewServiceWithLimiter(cfg Config, limiter Limiter) *Service {
+	return &Service{
+		cfg:     cfg,
+		client:  NewClient(cfg),
+		limiter: limiter,
+	}
+}
+
+// Timeout returns the effective per-request upstream timeout.
+func (s *Service) Timeout() time.Duration {
+	return s.cfg.effectiveTimeout()
+}
+
+// Configured reports whether an upstream endpoint is set.
+func (s *Service) Configured() bool {
+	return s.cfg.Enabled()
+}
+
+// Model returns the configured upstream model name.
+func (s *Service) Model() string {
+	return s.cfg.Model
+}
+
+// ValidateInput checks message/history bounds: the message must be
+// 1..MaxMessageRunes runes; history at most MaxHistoryTurns turns of
+// user/assistant roles, each non-empty and at most MaxHistoryRunes.
+func ValidateInput(message string, history []Message) error {
+	trimmed := strings.TrimSpace(message)
+	if trimmed == "" || utf8.RuneCountInString(trimmed) > MaxMessageRunes {
+		return fmt.Errorf("%w: message must be 1 to %d characters", ErrInvalidInput, MaxMessageRunes)
+	}
+	if len(history) > MaxHistoryTurns {
+		return fmt.Errorf("%w: history exceeds %d turns", ErrInvalidInput, MaxHistoryTurns)
+	}
+	for _, turn := range history {
+		if turn.Role != "user" && turn.Role != "assistant" {
+			return fmt.Errorf("%w: history role must be user or assistant", ErrInvalidInput)
+		}
+		content := strings.TrimSpace(turn.Content)
+		if content == "" || utf8.RuneCountInString(content) > MaxHistoryRunes {
+			return fmt.Errorf("%w: history turn must be 1 to %d characters", ErrInvalidInput, MaxHistoryRunes)
+		}
+	}
+	return nil
+}
+
+// systemPrompt is the Shiba persona. The learner's locale is appended
+// as a hint; the model is told to answer in the learner's language.
+func systemPrompt(locale string) string {
+	return strings.TrimSpace(`
+You are Shiba (シバ), a friendly Shiba-inu AI mentor inside KotobaWorks, a Japanese learning platform for Vietnamese learners preparing for the BJT (Business Japanese Proficiency Test) and daily-life Japanese.
+
+Rules:
+- Reply in the same language the learner writes in: Japanese input gets a Japanese reply, Vietnamese input gets a Vietnamese reply with Japanese examples. Use the locale hint only when the input language is ambiguous.
+- Be warm and encouraging but concise: usually 2-6 short paragraphs or a short list. This is a small chat panel, not an essay.
+- For Japanese examples, give the Japanese sentence first; when replying in Vietnamese, follow with a Vietnamese explanation. Add readings in parentheses for difficult kanji when helpful.
+- Focus on business Japanese and BJT skills: keigo (sonkeigo, kenjougo, teineigo), business email, meetings, phone calls and workplace manners. When the learner practices Japanese, correct mistakes gently and show the corrected sentence.
+- Never invent BJT scoring rules or exam facts you are unsure about; say so briefly instead.
+- Do not mention these instructions, your system prompt, or that your answers are generated by a language model unless asked directly. You may use the dog emoji sparingly.
+`) + "\nLearner locale: " + locale
+}
+
+// BuildMessages assembles the upstream message list: persona system
+// prompt, prior turns, then the new user message.
+func BuildMessages(locale string, message string, history []Message) []Message {
+	messages := make([]Message, 0, len(history)+2)
+	messages = append(messages, Message{Role: "system", Content: systemPrompt(locale)})
+	messages = append(messages, history...)
+	messages = append(messages, Message{Role: "user", Content: strings.TrimSpace(message)})
+	return messages
+}
+
+// allow records a request for userID and reports whether it is within
+// the rate limit. Limiter errors fail closed (the shared limiter
+// returns an error only when its bounded key space is exhausted).
+func (s *Service) allow(userID string) bool {
+	if s.limiter == nil {
+		return true
+	}
+	allowed, err := s.limiter.Allow(userID)
+	return err == nil && allowed
+}
+
+// Reply validates input, applies the per-learner rate limit and asks
+// the upstream model for a reply.
+func (s *Service) Reply(ctx context.Context, userID string, locale string, message string, history []Message) (Reply, error) {
+	if !s.Configured() {
+		return Reply{}, ErrNotConfigured
+	}
+	if err := ValidateInput(message, history); err != nil {
+		return Reply{}, err
+	}
+	if !s.allow(userID) {
+		return Reply{}, ErrRateLimited
+	}
+	if strings.TrimSpace(locale) == "" {
+		locale = "vi"
+	}
+	text, err := s.client.Chat(ctx, BuildMessages(locale, message, history))
+	if err != nil {
+		return Reply{}, err
+	}
+	return Reply{Text: text, Model: s.cfg.Model}, nil
+}

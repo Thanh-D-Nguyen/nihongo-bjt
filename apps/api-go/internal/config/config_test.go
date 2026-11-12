@@ -316,3 +316,61 @@ func TestLoad_TrustedProxyCIDRs(t *testing.T) {
 		t.Fatalf("trusted proxy configuration not loaded: %v", cfg.TrustedProxyCIDRs)
 	}
 }
+
+func TestLoad_ShibaLLMValidConfig(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://localhost/test")
+	t.Setenv("SHIBA_LLM_BASE_URL", "https://llm.example.com/v1")
+	t.Setenv("SHIBA_LLM_MODEL", "qwen2.5:7b")
+	t.Setenv("SHIBA_LLM_TIMEOUT", "45s")
+	t.Setenv("SHIBA_LLM_CF_ACCESS_CLIENT_ID", "id.access")
+	t.Setenv("SHIBA_LLM_CF_ACCESS_CLIENT_SECRET", "cf-secret")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.ShibaLLMBaseURL != "https://llm.example.com/v1" || cfg.ShibaLLMModel != "qwen2.5:7b" {
+		t.Fatalf("shiba llm config not loaded: %+v", cfg)
+	}
+	if cfg.ShibaLLMTimeout != 45*time.Second {
+		t.Fatalf("timeout = %v, want 45s", cfg.ShibaLLMTimeout)
+	}
+	if cfg.ShibaLLMCFAccessClientID != "id.access" || cfg.ShibaLLMCFAccessClientSecret != "cf-secret" {
+		t.Fatalf("cf access pair not loaded: %+v", cfg)
+	}
+}
+
+func TestLoad_ShibaLLMRequiresModel(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://localhost/test")
+	t.Setenv("SHIBA_LLM_BASE_URL", "https://llm.example.com/v1")
+	t.Setenv("SHIBA_LLM_MODEL", "")
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "SHIBA_LLM_MODEL is required") {
+		t.Fatalf("expected model-required error, got: %v", err)
+	}
+}
+
+func TestLoad_ShibaLLMRejectsBadBaseURLs(t *testing.T) {
+	for _, raw := range []string{
+		"ftp://llm.example.com/v1",
+		"https://user:pass@llm.example.com/v1",
+		"://missing-scheme",
+	} {
+		t.Setenv("DATABASE_URL", "postgres://localhost/test")
+		t.Setenv("SHIBA_LLM_BASE_URL", raw)
+		t.Setenv("SHIBA_LLM_MODEL", "qwen2.5:7b")
+		if _, err := Load(); err == nil {
+			t.Fatalf("expected error for base URL %q", raw)
+		}
+	}
+}
+
+func TestLoad_ShibaLLMCFAccessPairMustBeComplete(t *testing.T) {
+	for _, pair := range [][2]string{{"id.access", ""}, {"", "cf-secret"}} {
+		t.Setenv("DATABASE_URL", "postgres://localhost/test")
+		t.Setenv("SHIBA_LLM_BASE_URL", "")
+		t.Setenv("SHIBA_LLM_CF_ACCESS_CLIENT_ID", pair[0])
+		t.Setenv("SHIBA_LLM_CF_ACCESS_CLIENT_SECRET", pair[1])
+		if _, err := Load(); err == nil || !strings.Contains(err.Error(), "must be set together") {
+			t.Fatalf("expected pair error for %q/%q, got: %v", pair[0], pair[1], err)
+		}
+	}
+}

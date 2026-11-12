@@ -1,11 +1,11 @@
 {
   "scope": "Static /api inventory of direct NewRouter registrations (excludes /health and /ws). Conditions do not prove runtime availability.",
-  "sourceRegisteredOperations": 642,
-  "openAPIOperations": 642,
+  "sourceRegisteredOperations": 643,
+  "openAPIOperations": 643,
   "verifiedContracts": 0,
   "testEvidencedContracts": 13,
-  "sourceOnlyContracts": 629,
-  "unverifiedContracts": 642,
+  "sourceOnlyContracts": 630,
+  "unverifiedContracts": 643,
   "runtimeVerifiedOperations": 0,
   "families": {
     "Admin / actors": {
@@ -279,7 +279,7 @@
       "testEvidencedContracts": 0
     },
     "companion": {
-      "routes": 1,
+      "routes": 2,
       "verifiedContracts": 0,
       "testEvidencedContracts": 0
     },
@@ -25513,6 +25513,59 @@
       "runtimeAvailability": {
         "sourceConditions": [
           "deps.CareerStore != nil && deps.SessionStore != nil"
+        ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/companion/chat",
+      "handler": "postCompanionChatHandler(shibaSvc, deps.Logger)",
+      "family": "companion",
+      "guards": [
+        "learnerGuard",
+        "authn.CSRFGuard(csrfCfg)"
+      ],
+      "runtimeConditions": [
+        "deps.DBPool != nil && deps.SessionStore != nil"
+      ],
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [
+          "learnerGuard",
+          "authn.CSRFGuard(csrfCfg)"
+        ],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [],
+        "status": "unverified",
+        "subject": "handler integration tests"
+      },
+      "contract": {
+        "method": "post",
+        "openAPIPath": "/api/companion/chat",
+        "status": "unverified"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [
+          "deps.DBPool != nil && deps.SessionStore != nil"
         ],
         "status": "not-runtime-verified"
       }

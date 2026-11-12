@@ -9,6 +9,7 @@ import type {
 } from "@nihongo-bjt/shared";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import enMessages from "../../messages/en.json";
+import { buildCompanionChatRequest, requestCompanionChat } from "../../lib/companion-chat";
 import { usePathname } from "next/navigation";
 
 import type { CompanionMood } from "../_components/companion-speech-bubble";
@@ -432,28 +433,57 @@ export function useCompanionEngine({
     // We don't push hint messages here — the chat panel will render them from the hint data
   }, [hint]);
 
-  // Handle user message (rule-based reply)
+  // Latest messages snapshot for building LLM history without making
+  // handleUserMessage depend on the messages state itself.
+  const messagesRef = useRef<CompanionMessage[]>([]);
+  messagesRef.current = messages;
+
+  // Handle user message: ask the LLM-backed chat API first (logged-in
+  // learners only); on any failure, answer with the built-in
+  // rule-based replies exactly as before.
   const handleUserMessage = useCallback((text: string) => {
     wakeUp();
-    const trimmed = text.trim().slice(0, 200);
+    const trimmed = text.trim().slice(0, 1000);
     if (!trimmed) return;
+
+    // History excludes the new turn; it travels as the request message.
+    const historySource = messagesRef.current;
 
     // Push user message
     pushMessage(createMessage("context_aware", trimmed, trimmed, { sender: "user", en: trimmed }));
 
-    // Brief "thinking" delay
+    // Brief "thinking" delay before a rule-based reply.
     setOverrideMood("think");
-    setTimeout(() => {
-      const reply = getRuleBasedReply(trimmed, base);
+    const ruleBasedReply = () => {
+      setTimeout(() => {
+        const reply = getRuleBasedReply(trimmed, base);
+        if (reply) {
+          pushMessage(createMessage("hint", reply.ja, reply.vi, { emoji: reply.emoji, en: reply.en, action: reply.action ? { ...reply.action, label: locale === "en" ? (reply.action.href.endsWith("/battle") ? english.actionBattle : english.actionReview) : reply.action.label } : undefined }));
+        } else {
+          const fb = FALLBACK_REPLIES[Math.floor(Math.random() * FALLBACK_REPLIES.length)];
+          pushMessage(createMessage("hint", fb.ja, fb.vi, { emoji: "🤔", en: english.fallback }));
+        }
+        setOverrideMood(null);
+      }, 600 + Math.random() * 400);
+    };
+
+    if (!isLoggedIn) {
+      ruleBasedReply();
+      return;
+    }
+
+    void (async () => {
+      const reply = await requestCompanionChat(
+        buildCompanionChatRequest(historySource, locale, trimmed),
+      );
       if (reply) {
-        pushMessage(createMessage("hint", reply.ja, reply.vi, { emoji: reply.emoji, en: reply.en, action: reply.action ? { ...reply.action, label: locale === "en" ? (reply.action.href.endsWith("/battle") ? english.actionBattle : english.actionReview) : reply.action.label } : undefined }));
+        pushMessage(createMessage("hint", reply, reply, { emoji: "🐕", en: reply }));
+        setOverrideMood(null);
       } else {
-        const fb = FALLBACK_REPLIES[Math.floor(Math.random() * FALLBACK_REPLIES.length)];
-        pushMessage(createMessage("hint", fb.ja, fb.vi, { emoji: "🤔", en: english.fallback }));
+        ruleBasedReply();
       }
-      setOverrideMood(null);
-    }, 600 + Math.random() * 400);
-  }, [wakeUp, pushMessage, base, locale]);
+    })();
+  }, [wakeUp, pushMessage, base, locale, isLoggedIn]);
 
   // Handle quick reply chip
   const handleQuickReply = useCallback((chipId: string) => {
