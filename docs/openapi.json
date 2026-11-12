@@ -7073,6 +7073,74 @@
         }
       }
     },
+    "/api/admin/flashcards/reports": {
+      "get": {
+        "operationId": "getApiAdminFlashcardsReports",
+        "responses": {
+          "default": {
+            "description": "Response schema is not yet verified; see the route inventory."
+          }
+        },
+        "summary": "Source-discovered route handled by adminFlashcardReportsListHandler(deps.DBPool, deps.Logger)",
+        "tags": [
+          "Admin / flashcards"
+        ],
+        "x-contract-verification": {
+          "scope": "route/method/handler coverage only; request and response schemas are unverified",
+          "status": "unverified"
+        },
+        "x-route-source": {
+          "guards": [
+            "adminGuard",
+            "authz.RequirePermission(deps.RBACStore, \"admin.content.read\")"
+          ],
+          "handler": "adminFlashcardReportsListHandler(deps.DBPool, deps.Logger)",
+          "runtimeConditions": [
+            "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+          ]
+        }
+      }
+    },
+    "/api/admin/flashcards/reports/{id}/review": {
+      "post": {
+        "operationId": "postApiAdminFlashcardsReportsbyIdReview",
+        "parameters": [
+          {
+            "description": "Path token; application-level format and validation are unverified.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Response schema is not yet verified; see the route inventory."
+          }
+        },
+        "summary": "Source-discovered route handled by adminFlashcardReportReviewHandler(deps.DBPool, deps.Logger)",
+        "tags": [
+          "Admin / flashcards"
+        ],
+        "x-contract-verification": {
+          "scope": "route/method/handler coverage only; request and response schemas are unverified",
+          "status": "unverified"
+        },
+        "x-route-source": {
+          "guards": [
+            "adminGuard",
+            "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")",
+            "authn.CSRFGuard(csrfCfg)"
+          ],
+          "handler": "adminFlashcardReportReviewHandler(deps.DBPool, deps.Logger)",
+          "runtimeConditions": [
+            "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+          ]
+        }
+      }
+    },
     "/api/admin/flashcards/styles": {
       "get": {
         "operationId": "getApiAdminFlashcardsStyles",
@@ -18252,6 +18320,84 @@
             "authn.CSRFGuard(csrfCfg)"
           ],
           "handler": "archiveDeckHandler(deps.FlashcardDeckStore, deps.Logger)",
+          "runtimeConditions": [
+            "deps.FlashcardDeckStore != nil && deps.SessionStore != nil"
+          ]
+        }
+      }
+    },
+    "/api/flashcards/decks/{deckId}/block-author": {
+      "post": {
+        "operationId": "postApiFlashcardsDecksbyDeckIdBlockAuthor",
+        "parameters": [
+          {
+            "description": "Path token; application-level format and validation are unverified.",
+            "in": "path",
+            "name": "deckId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Response schema is not yet verified; see the route inventory."
+          }
+        },
+        "summary": "Source-discovered route handled by blockDeckAuthorHandler(deps.FlashcardDeckStore, deps.Logger)",
+        "tags": [
+          "Flashcards"
+        ],
+        "x-contract-verification": {
+          "scope": "route/method/handler coverage only; request and response schemas are unverified",
+          "status": "unverified"
+        },
+        "x-route-source": {
+          "guards": [
+            "learnerGuard",
+            "authn.CSRFGuard(csrfCfg)"
+          ],
+          "handler": "blockDeckAuthorHandler(deps.FlashcardDeckStore, deps.Logger)",
+          "runtimeConditions": [
+            "deps.FlashcardDeckStore != nil && deps.SessionStore != nil"
+          ]
+        }
+      }
+    },
+    "/api/flashcards/decks/{deckId}/report": {
+      "post": {
+        "operationId": "postApiFlashcardsDecksbyDeckIdReport",
+        "parameters": [
+          {
+            "description": "Path token; application-level format and validation are unverified.",
+            "in": "path",
+            "name": "deckId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Response schema is not yet verified; see the route inventory."
+          }
+        },
+        "summary": "Source-discovered route handled by reportDeckHandler(deps.FlashcardDeckStore, deps.Logger)",
+        "tags": [
+          "Flashcards"
+        ],
+        "x-contract-verification": {
+          "scope": "route/method/handler coverage only; request and response schemas are unverified",
+          "status": "unverified"
+        },
+        "x-route-source": {
+          "guards": [
+            "learnerGuard",
+            "authn.CSRFGuard(csrfCfg)"
+          ],
+          "handler": "reportDeckHandler(deps.FlashcardDeckStore, deps.Logger)",
           "runtimeConditions": [
             "deps.FlashcardDeckStore != nil && deps.SessionStore != nil"
           ]

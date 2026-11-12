@@ -203,4 +203,17 @@ func TestAdminFlashcardReportsListAndDismiss(t *testing.T) {
 	if deckStatus != "active" {
 		t.Fatalf("dismiss changed deck to %s", deckStatus)
 	}
+	var reportStatus, reviewNote string
+	var reviewedBy *string
+	var reviewedAtSet bool
+	if err := db.QueryRow(context.Background(), `SELECT status, reviewed_by::text, reviewed_at IS NOT NULL, COALESCE(review_note,'') FROM ops.deck_report WHERE id=$1`, reportID).Scan(&reportStatus, &reviewedBy, &reviewedAtSet, &reviewNote); err != nil {
+		t.Fatal(err)
+	}
+	if reportStatus != "dismissed" || reviewedBy == nil || *reviewedBy != actor || !reviewedAtSet || reviewNote != "reviewed and safe" {
+		t.Fatalf("dismissed report: status=%s reviewedBy=%v reviewedAtSet=%v note=%q", reportStatus, reviewedBy, reviewedAtSet, reviewNote)
+	}
+	var audits int
+	if err := db.QueryRow(context.Background(), `SELECT count(*) FROM ops.admin_audit_log WHERE action='admin.flashcards.report.dismissed' AND target_type='ops.deck_report' AND target_id=$1 AND actor_id=$2`, reportID, actor).Scan(&audits); err != nil || audits != 1 {
+		t.Fatalf("dismiss audit count=%d err=%v", audits, err)
+	}
 }

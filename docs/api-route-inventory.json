@@ -1,11 +1,11 @@
 {
   "scope": "Static /api inventory of direct NewRouter registrations (excludes /health and /ws). Conditions do not prove runtime availability.",
-  "sourceRegisteredOperations": 643,
-  "openAPIOperations": 643,
+  "sourceRegisteredOperations": 647,
+  "openAPIOperations": 647,
   "verifiedContracts": 0,
   "testEvidencedContracts": 13,
-  "sourceOnlyContracts": 630,
-  "unverifiedContracts": 643,
+  "sourceOnlyContracts": 634,
+  "unverifiedContracts": 647,
   "runtimeVerifiedOperations": 0,
   "families": {
     "Admin / actors": {
@@ -64,7 +64,7 @@
       "testEvidencedContracts": 0
     },
     "Admin / flashcards": {
-      "routes": 15,
+      "routes": 17,
       "verifiedContracts": 0,
       "testEvidencedContracts": 0
     },
@@ -224,7 +224,7 @@
       "testEvidencedContracts": 0
     },
     "Flashcards": {
-      "routes": 21,
+      "routes": 23,
       "verifiedContracts": 0,
       "testEvidencedContracts": 0
     },
@@ -9464,6 +9464,118 @@
       "contract": {
         "method": "post",
         "openAPIPath": "/api/admin/flashcards/decks/{id}/transition",
+        "status": "unverified"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [
+          "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+        ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/flashcards/reports",
+      "handler": "adminFlashcardReportsListHandler(deps.DBPool, deps.Logger)",
+      "family": "Admin / flashcards",
+      "guards": [
+        "adminGuard",
+        "authz.RequirePermission(deps.RBACStore, \"admin.content.read\")"
+      ],
+      "runtimeConditions": [
+        "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+      ],
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [
+          "adminGuard",
+          "authz.RequirePermission(deps.RBACStore, \"admin.content.read\")"
+        ],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [
+          "authz.RequirePermission(deps.RBACStore, \"admin.content.read\")"
+        ],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [],
+        "status": "unverified",
+        "subject": "handler integration tests"
+      },
+      "contract": {
+        "method": "get",
+        "openAPIPath": "/api/admin/flashcards/reports",
+        "status": "unverified"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [
+          "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+        ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/flashcards/reports/{id}/review",
+      "handler": "adminFlashcardReportReviewHandler(deps.DBPool, deps.Logger)",
+      "family": "Admin / flashcards",
+      "guards": [
+        "adminGuard",
+        "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")",
+        "authn.CSRFGuard(csrfCfg)"
+      ],
+      "runtimeConditions": [
+        "deps.DBPool != nil && deps.SessionStore != nil && deps.RBACStore != nil"
+      ],
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [
+          "adminGuard",
+          "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")",
+          "authn.CSRFGuard(csrfCfg)"
+        ],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [
+          "authz.RequirePermission(deps.RBACStore, \"admin.content.write\")"
+        ],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [],
+        "status": "unverified",
+        "subject": "handler integration tests"
+      },
+      "contract": {
+        "method": "post",
+        "openAPIPath": "/api/admin/flashcards/reports/{id}/review",
         "status": "unverified"
       },
       "runtimeAvailability": {
@@ -27316,6 +27428,112 @@
       "contract": {
         "method": "post",
         "openAPIPath": "/api/flashcards/decks/{deckId}/archive",
+        "status": "unverified"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [
+          "deps.FlashcardDeckStore != nil && deps.SessionStore != nil"
+        ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/flashcards/decks/{deckId}/block-author",
+      "handler": "blockDeckAuthorHandler(deps.FlashcardDeckStore, deps.Logger)",
+      "family": "Flashcards",
+      "guards": [
+        "learnerGuard",
+        "authn.CSRFGuard(csrfCfg)"
+      ],
+      "runtimeConditions": [
+        "deps.FlashcardDeckStore != nil && deps.SessionStore != nil"
+      ],
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [
+          "learnerGuard",
+          "authn.CSRFGuard(csrfCfg)"
+        ],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [],
+        "status": "unverified",
+        "subject": "handler integration tests"
+      },
+      "contract": {
+        "method": "post",
+        "openAPIPath": "/api/flashcards/decks/{deckId}/block-author",
+        "status": "unverified"
+      },
+      "runtimeAvailability": {
+        "sourceConditions": [
+          "deps.FlashcardDeckStore != nil && deps.SessionStore != nil"
+        ],
+        "status": "not-runtime-verified"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/flashcards/decks/{deckId}/report",
+      "handler": "reportDeckHandler(deps.FlashcardDeckStore, deps.Logger)",
+      "family": "Flashcards",
+      "guards": [
+        "learnerGuard",
+        "authn.CSRFGuard(csrfCfg)"
+      ],
+      "runtimeConditions": [
+        "deps.FlashcardDeckStore != nil && deps.SessionStore != nil"
+      ],
+      "sourceRegistrationCount": 1,
+      "authentication": {
+        "guards": [
+          "learnerGuard",
+          "authn.CSRFGuard(csrfCfg)"
+        ],
+        "status": "source-inferred"
+      },
+      "authorization": {
+        "rbacGuards": [],
+        "status": "source-inferred"
+      },
+      "request": {
+        "status": "unverified",
+        "subject": "request DTO and headers"
+      },
+      "response": {
+        "status": "unverified",
+        "subject": "response DTO and status codes"
+      },
+      "validation": {
+        "status": "unverified",
+        "subject": "handler validation"
+      },
+      "tests": {
+        "evidence": [],
+        "status": "unverified",
+        "subject": "handler integration tests"
+      },
+      "contract": {
+        "method": "post",
+        "openAPIPath": "/api/flashcards/decks/{deckId}/report",
         "status": "unverified"
       },
       "runtimeAvailability": {

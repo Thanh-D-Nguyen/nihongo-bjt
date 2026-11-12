@@ -509,11 +509,44 @@ model Deck {
   createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
   cards         DeckCard[]
+  reports       DeckReport[]
 
   @@index([ownerUserId, createdAt], map: "idx_deck_owner_created_at")
   @@index([visibility, status], map: "idx_deck_visibility_status")
   @@map("deck")
   @@schema("learning")
+}
+
+model DeckReport {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reporterUserId String        @map("reporter_user_id") @db.Uuid
+  deckId         String        @map("deck_id") @db.Uuid
+  reason         String        @db.VarChar(16)
+  status         String        @default("pending") @db.VarChar(16)
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  reviewedBy     String?       @map("reviewed_by") @db.Uuid
+  reviewedAt     DateTime?     @map("reviewed_at") @db.Timestamptz(6)
+  reviewNote     String?       @map("review_note")
+  reporter       UserProfile   @relation(fields: [reporterUserId], references: [id], onDelete: Cascade)
+  deck           Deck          @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  reviewer       AdminActor?   @relation(fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@unique([reporterUserId, deckId, reason])
+  @@index([status, createdAt], map: "idx_deck_report_review_queue")
+  @@map("deck_report")
+  @@schema("ops")
+}
+
+model DeckAuthorBlock {
+  blockerUserId String      @map("blocker_user_id") @db.Uuid
+  blockedUserId String      @map("blocked_user_id") @db.Uuid
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  blocker       UserProfile @relation("DeckAuthorBlocker", fields: [blockerUserId], references: [id], onDelete: Cascade)
+  blocked       UserProfile @relation("DeckAuthorBlocked", fields: [blockedUserId], references: [id], onDelete: Cascade)
+
+  @@id([blockerUserId, blockedUserId])
+  @@map("deck_author_block")
+  @@schema("ops")
 }
 
 model FlashcardVariant {
@@ -1072,6 +1105,7 @@ model AdminActor {
   adminPasswordCredentials AdminPasswordCredential[]
   adminSessions            AdminSession[]
   contentImportOperationRequests ContentImportOperationRequest[]
+  reviewedDeckReports      DeckReport[]
 
   @@index([status], map: "idx_admin_actor_status")
   @@map("admin_actor")
@@ -1239,6 +1273,9 @@ model UserProfile {
   receivedSocialConnections UserSocialConnection[]    @relation("SocialConnectionAddressee")
   userReviewDecks           UserReviewDeck[]
   exerciseReviewQueue       ExerciseReviewQueue[]
+  deckReports               DeckReport[]
+  blockedDeckAuthors        DeckAuthorBlock[]         @relation("DeckAuthorBlocker")
+  deckAuthorBlockedBy       DeckAuthorBlock[]         @relation("DeckAuthorBlocked")
 
   @@index([status, createdAt], map: "idx_user_profile_status_created_at")
   @@index([accountType], map: "idx_user_profile_account_type")

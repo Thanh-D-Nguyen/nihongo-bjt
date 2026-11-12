@@ -114,3 +114,63 @@ func TestDeckModerationRejectsOwnAndPrivateDecks(t *testing.T) {
 		})
 	}
 }
+
+func TestDeckModerationHandlersRejectInvalidDeckID(t *testing.T) {
+	db := testPool(t)
+	store := flashcarddeck.NewStore(db)
+	viewer, _ := cardgenAuthenticatedRequest(t, db, http.MethodGet, "/api/flashcards/decks", "")
+	for name, handler := range map[string]http.Handler{
+		"report":       reportDeckHandler(store, testLogger()),
+		"block-author": blockDeckAuthorHandler(store, testLogger()),
+	} {
+		rr := httptest.NewRecorder()
+		handler.ServeHTTP(rr, deckRequestAsUser(t, db, viewer, http.MethodPost, "/api/flashcards/decks/not-a-uuid/"+name, `{"reason":"spam"}`))
+		if rr.Code != http.StatusBadRequest {
+			t.Fatalf("%s invalid deckId status=%d body=%s", name, rr.Code, rr.Body.String())
+		}
+	}
+}
+
+func TestDeckModerationHandlersSucceedOverHTTP(t *testing.T) {
+	db := testPool(t)
+	viewer, _ := cardgenAuthenticatedRequest(t, db, http.MethodGet, "/api/flashcards/decks", "")
+	author := newUUID(t)
+	seedActiveUser(t, db, author, "HTTP moderation author", fmt.Sprintf("http-moderation-%s@example.test", author), "")
+	var deckID string
+	if err := db.QueryRow(context.Background(), `INSERT INTO learning.deck(owner_user_id,title_vi,visibility,status,updated_at) VALUES ($1,'HTTP moderation fixture','public','active',NOW()) RETURNING id::text`, author).Scan(&deckID); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_, _ = db.Exec(context.Background(), `DELETE FROM ops.deck_report WHERE reporter_user_id=$1`, viewer)
+		_, _ = db.Exec(context.Background(), `DELETE FROM ops.deck_author_block WHERE blocker_user_id=$1`, viewer)
+		_, _ = db.Exec(context.Background(), `DELETE FROM learning.deck WHERE id=$1`, deckID)
+	})
+	store := flashcarddeck.NewStore(db)
+	report := reportDeckHandler(store, testLogger())
+	block := blockDeckAuthorHandler(store, testLogger())
+
+	// Repeating each request must stay 200: both operations are idempotent.
+	for i := 0; i < 2; i++ {
+		rr := httptest.NewRecorder()
+		report.ServeHTTP(rr, deckRequestAsUser(t, db, viewer, http.MethodPost, "/api/flashcards/decks/"+deckID+"/report", `{"reason":"abuse"}`))
+		if rr.Code != http.StatusOK {
+			t.Fatalf("report #%d status=%d body=%s", i+1, rr.Code, rr.Body.String())
+		}
+	}
+	var reports int
+	if err := db.QueryRow(context.Background(), `SELECT count(*) FROM ops.deck_report WHERE reporter_user_id=$1 AND deck_id=$2 AND reason='abuse' AND status='pending'`, viewer, deckID).Scan(&reports); err != nil || reports != 1 {
+		t.Fatalf("report rows=%d err=%v", reports, err)
+	}
+
+	for i := 0; i < 2; i++ {
+		rr := httptest.NewRecorder()
+		block.ServeHTTP(rr, deckRequestAsUser(t, db, viewer, http.MethodPost, "/api/flashcards/decks/"+deckID+"/block-author", ""))
+		if rr.Code != http.StatusOK {
+			t.Fatalf("block-author #%d status=%d body=%s", i+1, rr.Code, rr.Body.String())
+		}
+	}
+	var blocks int
+	if err := db.QueryRow(context.Background(), `SELECT count(*) FROM ops.deck_author_block WHERE blocker_user_id=$1 AND blocked_user_id=$2`, viewer, author).Scan(&blocks); err != nil || blocks != 1 {
+		t.Fatalf("block rows=%d err=%v", blocks, err)
+	}
+}
