@@ -77,7 +77,9 @@ const IDLE_MOOD_CYCLE: CompanionMood[] = ["idle", "wave", "idle", "happy", "idle
 
 /* ── Layout constants ── */
 
-const HOME_BOTTOM = 24;
+/* The mascot's bottom offset lives in responsive classes on the container:
+   below lg it must clear the ~57px mobile bottom navigation plus a gap,
+   on lg it keeps the original 24px offset. Both add the safe-area inset. */
 const HOME_RIGHT = 20;
 const MASCOT_SIZE = 48;
 
@@ -208,16 +210,15 @@ export function CompanionBot({ base, labels, locale }: { base: string; labels: C
   return (
     <aside
       aria-label={labels.ariaLabel}
-      className="pointer-events-none fixed inset-0 z-30 hidden lg:block"
+      className="pointer-events-none fixed inset-0 z-30"
     >
       {/* Celebration overlay */}
       <CompanionCelebrationOverlay emoji={engine.celebrationEmoji} visible={engine.showCelebration} />
 
       {/* Mascot container */}
       <div
-        className="pointer-events-auto absolute"
+        className="pointer-events-auto absolute bottom-[calc(69px_+_env(safe-area-inset-bottom))] lg:bottom-[max(24px,calc(24px_+_env(safe-area-inset-bottom)))]"
         style={{
-          bottom: `max(${HOME_BOTTOM}px, calc(${HOME_BOTTOM}px + env(safe-area-inset-bottom)))`,
           right: `${HOME_RIGHT}px`,
           width: `${MASCOT_SIZE}px`,
         }}

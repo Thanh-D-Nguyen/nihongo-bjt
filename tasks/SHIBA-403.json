@@ -1,0 +1,235 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "SHIBA-403",
+  "title": "Restore Shiba companion bot on mobile and tablet viewports",
+  "start_head": "a369d96738a5db15b5cf567cf0252bf3638190ac",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "the companion bot renders at every viewport width (its root is not hidden below the lg breakpoint)"
+      },
+      {
+        "id": "AC2",
+        "text": "on screens below lg the mascot sits above the mobile bottom navigation bar (bottom offset covers the ~57px bar plus a gap and the safe-area inset) and stays tappable"
+      },
+      {
+        "id": "AC3",
+        "text": "on lg screens and up the mascot keeps its previous position (24px bottom offset plus safe-area inset, 20px right)"
+      },
+      {
+        "id": "AC4",
+        "text": "the chat panel and onboarding panel keep their viewport-safe widths on small screens"
+      },
+      {
+        "id": "AC5",
+        "text": "no behavior changes besides visibility and mascot placement"
+      }
+    ],
+    "expected_behavior": "the companion bot renders at every viewport width; below lg the mascot floats above the mobile bottom navigation, on lg it keeps its previous 24px offset",
+    "observed_behavior": "since the UX-311 overhaul (2ed75948) the companion root carries 'hidden lg:block', so on viewports below 1024px the Shiba bot never renders and no other mobile entry point opens the companion chat",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/companion-bot.test.tsx",
+      "test": "CompanionBot API boundary > renders the bot at mobile widths and clears the bottom navigation",
+      "expect": "companion root must not be hidden below the lg breakpoint"
+    }
+  ],
+  "sensitivity": {
+    "mutation": {
+      "file": "apps/web/app/_components/companion-bot.tsx",
+      "find": "className=\"pointer-events-none fixed inset-0 z-30\"",
+      "replace": "className=\"pointer-events-none fixed inset-0 z-30 hidden lg:block\""
+    },
+    "targets": [
+      {
+        "runner": "vitest",
+        "file": "apps/web/app/_components/companion-bot.test.tsx",
+        "test": "CompanionBot API boundary > renders the bot at mobile widths and clears the bottom navigation",
+        "expect": "companion root must not be hidden below the lg breakpoint"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-12T10:26:06.244Z",
+      "head": "a369d96738a5db15b5cf567cf0252bf3638190ac"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-12T10:26:06.504Z",
+      "head": "a369d96738a5db15b5cf567cf0252bf3638190ac"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-12T10:26:06.767Z",
+      "head": "a369d96738a5db15b5cf567cf0252bf3638190ac"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-12T10:26:32.565Z",
+      "head": "a369d96738a5db15b5cf567cf0252bf3638190ac"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-12T10:26:49.490Z",
+      "head": "a369d96738a5db15b5cf567cf0252bf3638190ac"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-12T10:32:13.522Z",
+      "head": "a369d96738a5db15b5cf567cf0252bf3638190ac"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-12T10:33:10.294Z",
+      "head": "a369d96738a5db15b5cf567cf0252bf3638190ac"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-12T10:26:32.294Z",
+      "head": "a369d96738a5db15b5cf567cf0252bf3638190ac",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/companion-bot.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > renders the bot at mobile widths and clears the bottom navigation",
+          "outcome": "FAIL",
+          "excerpt": "companion root must not be hidden below the lg breakpoint: expected 'pointer-events-none fixed inset-0 z-3…' not to contain 'hidden'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > renders the bot at mobile widths and clears the bottom navigation": "companion root must not be hidden below the lg breakpoint"
+      },
+      "fingerprint": "a02c772155504a30a13e85552a4e47cecf3d3227a4fce04dc7986670d4fbfce7"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-12T10:26:49.333Z",
+      "head": "a369d96738a5db15b5cf567cf0252bf3638190ac",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/companion-bot.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > renders the bot at mobile widths and clears the bottom navigation",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "13a7b76af7d92454782fe3fb76547c8d6eabbe58526d40aecdca8fda953d7778"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-12T10:27:10.184Z",
+      "head": "a369d96738a5db15b5cf567cf0252bf3638190ac",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "apps/web/app/_components/companion-bot.tsx",
+        "find": "className=\"pointer-events-none fixed inset-0 z-30\"",
+        "replace": "className=\"pointer-events-none fixed inset-0 z-30 hidden lg:block\""
+      },
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/companion-bot.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > renders the bot at mobile widths and clears the bottom navigation",
+          "outcome": "FAIL",
+          "excerpt": "companion root must not be hidden below the lg breakpoint: expected 'pointer-events-none fixed inset-0 z-3…' not to contain 'hidden'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > renders the bot at mobile widths and clears the bottom navigation": "companion root must not be hidden below the lg breakpoint"
+      },
+      "fingerprint": "13a7b76af7d92454782fe3fb76547c8d6eabbe58526d40aecdca8fda953d7778"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-12T10:32:13.266Z",
+      "head": "a369d96738a5db15b5cf567cf0252bf3638190ac",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 644,
+        "executed": 644,
+        "passed": 644,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 872,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "13a7b76af7d92454782fe3fb76547c8d6eabbe58526d40aecdca8fda953d7778"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-12T10:33:09.722Z",
+      "head": "a369d96738a5db15b5cf567cf0252bf3638190ac",
+      "kind": "review",
+      "mode": "human",
+      "reviewer": "independent-reviewer",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "attested": true,
+      "fingerprint": "13a7b76af7d92454782fe3fb76547c8d6eabbe58526d40aecdca8fda953d7778"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-12T10:33:10.288Z",
+    "head": "a369d96738a5db15b5cf567cf0252bf3638190ac",
+    "fingerprint": "13a7b76af7d92454782fe3fb76547c8d6eabbe58526d40aecdca8fda953d7778",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/_components/companion-bot.test.tsx": "6499fa3432b499a23fc8750e72947536bdf764c1",
+      "apps/web/app/_components/companion-bot.tsx": "a4ac5ad76543a3e19d7b4a5b6b60094160298796"
+    }
+  }
+}

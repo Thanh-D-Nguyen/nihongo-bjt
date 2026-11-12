@@ -39,6 +39,19 @@ describe("CompanionBot API boundary", () => {
     expect(container.querySelector("input")).not.toBeNull();
   });
 
+  it("renders the bot at mobile widths and clears the bottom navigation", async () => {
+    root = createRoot(container);
+    await act(() => root.render(<PageBoundary><CompanionBot base="/en" locale="en" labels={messages.nav.companion} /></PageBoundary>));
+    const aside = container.querySelector("aside");
+    expect(aside, "companion root must be rendered").not.toBeNull();
+    expect(aside!.className, "companion root must not be hidden below the lg breakpoint").not.toContain("hidden");
+    const mascot = aside!.querySelector<HTMLElement>('[style*="width"]');
+    expect(mascot, "mascot container must be rendered").not.toBeNull();
+    expect(mascot!.className, "mascot must clear the mobile bottom navigation bar").toContain("bottom-[calc(69px_+_env(safe-area-inset-bottom))]");
+    expect(mascot!.className, "mascot must keep its desktop offset on lg screens").toContain("lg:bottom-[max(24px,calc(24px_+_env(safe-area-inset-bottom)))]");
+    expect(mascot!.style.bottom, "mascot bottom must come from the responsive classes, not an inline style").toBe("");
+  });
+
   it("uses English messages and bubbles on the English route", () => {
     const text = { ja: "こんにちは", vi: "Xin chào", en: "Hello learner" };
     const html = renderToStaticMarkup(<>
