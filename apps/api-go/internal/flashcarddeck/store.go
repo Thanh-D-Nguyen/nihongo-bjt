@@ -263,6 +263,7 @@ func (s *Store) ListDecks(ctx context.Context, userID string, limit int) ([]Deck
 		(SELECT COUNT(*) FROM learning.deck_card dc WHERE dc.deck_id = d.id) as card_count
 	FROM learning.deck d
 	WHERE d.status != 'archived' AND (d.owner_user_id = $1 OR d.visibility = 'public')
+	AND NOT EXISTS (SELECT 1 FROM ops.deck_author_block b WHERE b.blocker_user_id=$1 AND b.blocked_user_id=d.owner_user_id)
 	ORDER BY (d.owner_user_id = $1) DESC, d.updated_at DESC
 	LIMIT $2`
 	rows, err := s.db.Query(ctx, q, userID, limit)
@@ -295,7 +296,8 @@ func (s *Store) GetDeck(ctx context.Context, userID, deckID string) (*DeckDetail
 	const deckQ = `SELECT d.id,d.owner_user_id::text,d.title_vi,d.title_ja,d.description_vi,d.description_ja,d.visibility,d.status,d.share_token,d.created_at,d.updated_at,
 		(SELECT COUNT(*) FROM learning.deck_card dc WHERE dc.deck_id=d.id)
 		FROM learning.deck d WHERE d.id=$1 AND d.status!='archived'
-		AND (d.owner_user_id=$2 OR d.visibility='public')`
+		AND (d.owner_user_id=$2 OR d.visibility='public')
+		AND NOT EXISTS (SELECT 1 FROM ops.deck_author_block b WHERE b.blocker_user_id=$2 AND b.blocked_user_id=d.owner_user_id)`
 	detail := &DeckDetail{}
 	if err := s.db.QueryRow(ctx, deckQ, deckID, userID).Scan(&detail.ID, &detail.UserID, &detail.Name, &detail.TitleJa, &detail.Description, &detail.DescriptionJa, &detail.Visibility, &detail.Status, &detail.ShareToken, &detail.CreatedAt, &detail.UpdatedAt, &detail.CardCount); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -343,6 +345,65 @@ func (s *Store) GetDeck(ctx context.Context, userID, deckID string) (*DeckDetail
 		return nil, fmt.Errorf("flashcarddeck: iterate deck cards: %w", err)
 	}
 	return detail, nil
+}
+
+// ReportDeck queues a public deck for moderation without exposing its author to the reporter.
+func (s *Store) ReportDeck(ctx context.Context, reporterID, deckID, reason string) error {
+	if reason != "spam" && reason != "abuse" && reason != "sexual" && reason != "other" {
+		return fmt.Errorf("flashcarddeck: invalid report reason")
+	}
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	const q = `INSERT INTO ops.deck_report (reporter_user_id, deck_id, reason)
+		SELECT $1::uuid, d.id, $3 FROM learning.deck d
+		WHERE d.id=$2 AND d.visibility='public' AND d.status!='archived'
+		AND d.owner_user_id IS NOT NULL AND d.owner_user_id<>$1
+		FOR SHARE OF d
+		ON CONFLICT (reporter_user_id, deck_id, reason) DO NOTHING`
+	result, err := s.db.Exec(ctx, q, reporterID, deckID, reason)
+	if err != nil {
+		return fmt.Errorf("flashcarddeck: report deck: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		// An already-reported deck is an expected idempotent success.
+		var exists bool
+		err = s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM ops.deck_report WHERE reporter_user_id=$1 AND deck_id=$2 AND reason=$3)`, reporterID, deckID, reason).Scan(&exists)
+		if err != nil {
+			return fmt.Errorf("flashcarddeck: check deck report: %w", err)
+		}
+		if !exists {
+			return ErrNotFound
+		}
+	}
+	return nil
+}
+
+// BlockDeckAuthor hides every public deck by the author from this learner.
+func (s *Store) BlockDeckAuthor(ctx context.Context, blockerID, deckID string) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	const q = `INSERT INTO ops.deck_author_block (blocker_user_id, blocked_user_id)
+		SELECT $1::uuid, d.owner_user_id FROM learning.deck d
+		WHERE d.id=$2 AND d.visibility='public' AND d.status!='archived'
+		AND d.owner_user_id IS NOT NULL AND d.owner_user_id<>$1
+		ON CONFLICT (blocker_user_id, blocked_user_id) DO NOTHING`
+	result, err := s.db.Exec(ctx, q, blockerID, deckID)
+	if err != nil {
+		return fmt.Errorf("flashcarddeck: block deck author: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		var exists bool
+		err = s.db.QueryRow(ctx, `SELECT EXISTS (
+			SELECT 1 FROM learning.deck d JOIN ops.deck_author_block b ON b.blocked_user_id=d.owner_user_id
+			WHERE d.id=$2 AND b.blocker_user_id=$1 AND d.visibility='public' AND d.status!='archived')`, blockerID, deckID).Scan(&exists)
+		if err != nil {
+			return fmt.Errorf("flashcarddeck: check blocked author: %w", err)
+		}
+		if !exists {
+			return ErrNotFound
+		}
+	}
+	return nil
 }
 
 // CreateDeck inserts a new flashcard deck.

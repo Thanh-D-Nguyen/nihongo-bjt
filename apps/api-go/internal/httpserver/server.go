@@ -1333,6 +1333,10 @@ func NewRouter(deps Dependencies) http.Handler {
 			// P1-A12: Admin Flashcards — Decks + Variants + Styles (15 routes)
 			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
 				Get("/api/admin/flashcards/decks", adminFlashcardDecksListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
+				Get("/api/admin/flashcards/reports", adminFlashcardReportsListHandler(deps.DBPool, deps.Logger))
+			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
+				Post("/api/admin/flashcards/reports/{id}/review", adminFlashcardReportReviewHandler(deps.DBPool, deps.Logger))
 			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.write"), authn.CSRFGuard(csrfCfg)).
 				Post("/api/admin/flashcards/decks/generate", adminFlashcardDeckGenerateHandler(deps.DBPool, deps.Logger))
 			ar.With(authz.RequirePermission(deps.RBACStore, "admin.content.read")).
@@ -1684,6 +1688,8 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Patch("/api/flashcards/decks/{deckId}", updateDeckHandler(deps.FlashcardDeckStore, deps.Logger))
 			lr.Delete("/api/flashcards/decks/{deckId}", archiveDeckHandler(deps.FlashcardDeckStore, deps.Logger))
 			lr.Post("/api/flashcards/decks/{deckId}/archive", archiveDeckHandler(deps.FlashcardDeckStore, deps.Logger))
+			lr.Post("/api/flashcards/decks/{deckId}/report", reportDeckHandler(deps.FlashcardDeckStore, deps.Logger))
+			lr.Post("/api/flashcards/decks/{deckId}/block-author", blockDeckAuthorHandler(deps.FlashcardDeckStore, deps.Logger))
 			lr.Post("/api/flashcards/decks/{deckId}/share", shareDeckHandler(deps.FlashcardDeckStore, deps.Logger))
 			lr.Delete("/api/flashcards/decks/{deckId}/share", unshareDeckHandler(deps.FlashcardDeckStore, deps.Logger))
 			lr.Post("/api/flashcards/decks/clone/{token}", cloneDeckHandler(deps.FlashcardDeckStore, deps.Logger))

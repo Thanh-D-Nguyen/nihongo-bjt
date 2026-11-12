@@ -108,6 +108,7 @@ export const ADMIN_NAV_DATA: AdminNavGroupDefinition[] = [
       item({ href: "/decks", icon: "book", id: "ln.decks", labelKey: "shell.navItems.decks", permissions: ["admin.content.read"], status: "implemented" }),
       item({ href: "/flashcards/templates", icon: "book", id: "ln.templates", labelKey: "shell.navItems.flashcardTemplates", permissions: ["admin.content.read"], status: "implemented" }),
       item({ href: "/flashcards/generated", icon: "book", id: "ln.generated", labelKey: "shell.navItems.generatedCards", permissions: ["admin.content.read"], status: "implemented" }),
+      item({ href: "/flashcards/reports", icon: "shield", id: "ln.deckReports", labelKey: "shell.navItems.deckReports", permissions: ["admin.content.read"], status: "implemented" }),
       item({ href: "/flashcards/styles", icon: "cog", id: "ln.styles", labelKey: "shell.navItems.flashcardStyles", permissions: ["admin.content.read"], status: "implemented" }),
       item({ href: "/reading-assist", icon: "search", id: "ln.reading", labelKey: "shell.navItems.readingAssist", permissions: ["admin.content.read"], status: "implemented" }),
       item({ href: "/learning/paths", icon: "academic", id: "ln.paths", labelKey: "shell.navItems.learningPaths", permissions: ["admin.content.read"], status: "implemented" }),
