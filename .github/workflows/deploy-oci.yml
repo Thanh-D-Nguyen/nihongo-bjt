@@ -43,5 +43,12 @@ jobs:
         run: |
           test "$(git rev-parse HEAD)" = "$DEPLOY_SHA"
           bash scripts/quality/verify-ci-passed.sh "$DEPLOY_SHA"
+      - name: Sync Shiba LLM settings into the production env file
+        env:
+          SHIBA_LLM_BASE_URL: ${{ vars.SHIBA_LLM_BASE_URL }}
+          SHIBA_LLM_MODEL: ${{ vars.SHIBA_LLM_MODEL }}
+          SHIBA_LLM_CF_ACCESS_CLIENT_ID: ${{ secrets.SHIBA_LLM_CF_ACCESS_CLIENT_ID }}
+          SHIBA_LLM_CF_ACCESS_CLIENT_SECRET: ${{ secrets.SHIBA_LLM_CF_ACCESS_CLIENT_SECRET }}
+        run: bash deploy/oci/sync-shiba-llm-env.sh "/srv/kotobawork/deploy/oci/.env.production"
       - name: Release validated source to Oracle
         run: bash deploy/oci/deploy-release.sh

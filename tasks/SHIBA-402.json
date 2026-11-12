@@ -1,0 +1,423 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "SHIBA-402",
+  "title": "Sync Shiba LLM env from GitHub vars/secrets in OCI deploy",
+  "start_head": "c3751306a05017b06313c6cac4c385dec9597b5b",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "deploy-oci workflow syncs SHIBA_LLM_BASE_URL, SHIBA_LLM_MODEL, SHIBA_LLM_CF_ACCESS_CLIENT_ID and SHIBA_LLM_CF_ACCESS_CLIENT_SECRET from GitHub vars/secrets into the OCI .env.production before releasing"
+      },
+      {
+        "id": "AC2",
+        "text": "empty or unset values never modify the env file for that key (no key is ever blanked)"
+      },
+      {
+        "id": "AC3",
+        "text": "only the four SHIBA_LLM keys are touched; all other lines and values are preserved byte-for-byte"
+      },
+      {
+        "id": "AC4",
+        "text": "sync is idempotent: a second run with the same inputs changes nothing"
+      },
+      {
+        "id": "AC5",
+        "text": "secret values are never printed to stdout, stderr or logs"
+      },
+      {
+        "id": "AC6",
+        "text": "sync is atomic (temp file + rename) and keeps a single rolling backup of the previous env file"
+      },
+      {
+        "id": "AC7",
+        "text": "the sync script ships with a shell test that exercises update, append, empty-skip, idempotency and no-leak behavior"
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "INFRASTRUCTURE",
+      "CI_QUALITY_SYSTEM"
+    ],
+    "change_kind": "add",
+    "rationale": ""
+  },
+  "red_exception": {
+    "category": "new_component",
+    "reason": "New standalone deploy-time script; behavior is pinned by its own shell test suite rather than Go/vitest targets",
+    "declared_before_red": true
+  },
+  "red_targets": [],
+  "sensitivity": {
+    "mutation": {
+      "file": "deploy/oci/sync-shiba-llm-env.sh",
+      "find": "if [[ -z \"$value\" ]]; then",
+      "replace": "if [[ -n \"$value\" ]]; then"
+    },
+    "targets": [
+      {
+        "runner": "vitest",
+        "file": "scripts/quality/harness/shiba-llm-deploy.test.ts",
+        "test": "Shiba LLM production env sync > skips empty values without blanking existing settings",
+        "expect": "must never blank"
+      }
+    ]
+  },
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-12T08:38:52.715Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-12T08:38:52.894Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-11-12T08:38:53.075Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-12T08:40:25.060Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-12T08:42:25.754Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-11-12T08:44:58.830Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-12T08:45:00.237Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-11-12T08:49:16.830Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-12T08:51:14.669Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-12T08:53:17.806Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b"
+    },
+    {
+      "state": "EXCEPTION_APPROVED",
+      "at": "2026-11-12T08:54:16.215Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-12T08:54:16.483Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-12T08:40:16.302Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "deploy/oci/sync-shiba-llm-env.sh",
+        "find": "if [[ -z \"$value\" ]]; then",
+        "replace": "if [[ -n \"$value\" ]]; then"
+      },
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/shiba-llm-deploy.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/shiba-llm-deploy.test.ts::Shiba LLM production env sync > skips empty values without blanking existing settings",
+          "outcome": "FAIL",
+          "excerpt": "an empty incoming value must never blank an existing setting: expected 'SHIBA_LLM_MODEL=\\nSHIBA_LLM_BASE_URL=…' to be 'SHIBA_LLM_MODEL=old-model\\n' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/shiba-llm-deploy.test.ts::Shiba LLM production env sync > skips empty values without blanking existing settings": "must never blank"
+      },
+      "fingerprint": "84943a4376fba0401e152a1f9c14d2ef8f1efef9570334b63a9df956306423e8"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-12T08:40:24.950Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/shiba-llm-deploy.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/shiba-llm-deploy.test.ts::Shiba LLM production env sync > skips empty values without blanking existing settings",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "84943a4376fba0401e152a1f9c14d2ef8f1efef9570334b63a9df956306423e8"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-12T08:40:25.322Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -c set -e; bash -n deploy/oci/sync-shiba-llm-env.sh; d=$(mktemp -d); printf \"SHIBA_LLM_MODEL=old\\nKEEP=1\\n\" > \"$d/env\"; SHIBA_LLM_MODEL=qwen3-1.7b SHIBA_LLM_BASE_URL=https://llm.kiokoto.com/v1 bash deploy/oci/sync-shiba-llm-env.sh \"$d/env\"; grep -qx \"SHIBA_LLM_MODEL=qwen3-1.7b\" \"$d/env\"; grep -qx \"KEEP=1\" \"$d/env\"; test -f \"$d/env.bak-shiba-llm\"; echo DRY-RUN-OK",
+      "exit_code": 0,
+      "fingerprint": "84943a4376fba0401e152a1f9c14d2ef8f1efef9570334b63a9df956306423e8"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-12T08:42:25.639Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 279,
+        "executed": 279,
+        "passed": 279,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "84943a4376fba0401e152a1f9c14d2ef8f1efef9570334b63a9df956306423e8"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-12T08:44:58.581Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "deploy/oci/sync-shiba-llm-env.sh",
+        "find": "if [[ -z \"$value\" ]]; then",
+        "replace": "if [[ -n \"$value\" ]]; then"
+      },
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/shiba-llm-deploy.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/shiba-llm-deploy.test.ts::Shiba LLM production env sync > skips empty values without blanking existing settings",
+          "outcome": "FAIL",
+          "excerpt": "an empty incoming value must never blank an existing setting: expected 'SHIBA_LLM_MODEL=\\nSHIBA_LLM_BASE_URL=…' to be 'SHIBA_LLM_MODEL=old-model\\n' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/shiba-llm-deploy.test.ts::Shiba LLM production env sync > skips empty values without blanking existing settings": "must never blank"
+      },
+      "fingerprint": "469ee8f3ad6970d7812031beade4e628d754bf4a9d7451e5603085dedd10f2d8"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-12T08:45:00.125Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/shiba-llm-deploy.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/shiba-llm-deploy.test.ts::Shiba LLM production env sync > skips empty values without blanking existing settings",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "469ee8f3ad6970d7812031beade4e628d754bf4a9d7451e5603085dedd10f2d8"
+    },
+    {
+      "seq": 7,
+      "at": "2026-11-12T08:45:00.492Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -c set -e; bash -n deploy/oci/sync-shiba-llm-env.sh; d=$(mktemp -d); printf \"OTHER=important\" > \"$d/env\"; SHIBA_LLM_MODEL=qwen3-1.7b bash deploy/oci/sync-shiba-llm-env.sh \"$d/env\" >/dev/null; test \"$(cat \"$d/env\")\" = \"OTHER=important SHIBA_LLM_MODEL=qwen3-1.7b\"; echo DRY-RUN-OK",
+      "exit_code": 0,
+      "fingerprint": "469ee8f3ad6970d7812031beade4e628d754bf4a9d7451e5603085dedd10f2d8"
+    },
+    {
+      "seq": 8,
+      "at": "2026-11-12T08:47:03.121Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 284,
+        "executed": 284,
+        "passed": 283,
+        "failed": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "failed: scripts/quality/harness/shiba-llm-deploy.test.ts > Shiba LLM production env sync > wires the sync step into the Oracle deploy before the release step",
+      "fingerprint": "469ee8f3ad6970d7812031beade4e628d754bf4a9d7451e5603085dedd10f2d8"
+    },
+    {
+      "seq": 9,
+      "at": "2026-11-12T08:49:16.693Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 284,
+        "executed": 284,
+        "passed": 284,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "bc186e408666c582fe16d6be5c3a8ca27aaeeffd69f691b9f69bcd3a250d9e95"
+    },
+    {
+      "seq": 10,
+      "at": "2026-11-12T08:51:13.044Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b",
+      "kind": "sensitivity",
+      "outcome": "SENSITIVE",
+      "mutation": {
+        "file": "deploy/oci/sync-shiba-llm-env.sh",
+        "find": "if [[ -z \"$value\" ]]; then",
+        "replace": "if [[ -n \"$value\" ]]; then"
+      },
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/shiba-llm-deploy.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/shiba-llm-deploy.test.ts::Shiba LLM production env sync > skips empty values without blanking existing settings",
+          "outcome": "FAIL",
+          "excerpt": "an empty incoming value must never blank an existing setting: expected 'SHIBA_LLM_MODEL=\\nSHIBA_LLM_BASE_URL=…' to be 'SHIBA_LLM_MODEL=old-model\\n' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:scripts/quality/harness/shiba-llm-deploy.test.ts::Shiba LLM production env sync > skips empty values without blanking existing settings": "must never blank"
+      },
+      "fingerprint": "649366accd10359b8910efbf258030a8fabac6f0442712955f83009f17570a89"
+    },
+    {
+      "seq": 11,
+      "at": "2026-11-12T08:51:14.559Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run scripts/quality/harness/shiba-llm-deploy.test.ts --config scripts/quality/harness/vitest.config.mjs --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:scripts/quality/harness/shiba-llm-deploy.test.ts::Shiba LLM production env sync > skips empty values without blanking existing settings",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "649366accd10359b8910efbf258030a8fabac6f0442712955f83009f17570a89"
+    },
+    {
+      "seq": 12,
+      "at": "2026-11-12T08:51:14.923Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b",
+      "kind": "command",
+      "gate": "infra_validation",
+      "command": "bash -c set -e; bash -n deploy/oci/sync-shiba-llm-env.sh; d=$(mktemp -d); printf \"OTHER=important\" > \"$d/env\"; SHIBA_LLM_MODEL=qwen3-1.7b bash deploy/oci/sync-shiba-llm-env.sh \"$d/env\" >/dev/null; test \"$(cat \"$d/env\")\" = \"OTHER=important SHIBA_LLM_MODEL=qwen3-1.7b\"; echo DRY-RUN-OK",
+      "exit_code": 0,
+      "fingerprint": "649366accd10359b8910efbf258030a8fabac6f0442712955f83009f17570a89"
+    },
+    {
+      "seq": 13,
+      "at": "2026-11-12T08:53:17.674Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b",
+      "kind": "suite",
+      "gate": "suite_harness",
+      "command": "bash scripts/quality/verify-harness.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 284,
+        "executed": 284,
+        "passed": 284,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0
+      },
+      "message": "",
+      "fingerprint": "649366accd10359b8910efbf258030a8fabac6f0442712955f83009f17570a89"
+    },
+    {
+      "seq": 14,
+      "at": "2026-11-12T08:54:16.110Z",
+      "head": "c3751306a05017b06313c6cac4c385dec9597b5b",
+      "kind": "review",
+      "mode": "human",
+      "reviewer": "independent-reviewer",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "attested": true,
+      "fingerprint": "649366accd10359b8910efbf258030a8fabac6f0442712955f83009f17570a89"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-12T08:54:16.479Z",
+    "head": "c3751306a05017b06313c6cac4c385dec9597b5b",
+    "fingerprint": "649366accd10359b8910efbf258030a8fabac6f0442712955f83009f17570a89",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "green": "PASS",
+      "sensitivity": "PASS",
+      "suite_harness": "PASS",
+      "infra_validation": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      ".github/workflows/deploy-oci.yml": "5b28f9f324db8d3fb87eb1e8acf50c05488c9288",
+      "deploy/oci/sync-shiba-llm-env.sh": "d154e529daec81ae78d3acf3e0c44b707d7498e6",
+      "scripts/quality/harness/shiba-llm-deploy.test.ts": "2dd810eabedf90c68db2dabe468ae22809ce4039"
+    }
+  }
+}
