@@ -17,8 +17,8 @@ import (
 	"gocloud.dev/blob"
 	"gocloud.dev/gcerrors"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authn"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/media"
 )
 
 const (

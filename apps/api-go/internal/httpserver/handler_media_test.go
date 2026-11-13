@@ -16,11 +16,11 @@ import (
 
 	"time"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authn"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/config"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/media"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/profile"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/session"
 )
 
 // testRateLimiter creates a permissive rate limiter for tests.

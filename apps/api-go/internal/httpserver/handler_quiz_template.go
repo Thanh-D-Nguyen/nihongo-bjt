@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/quiztemplate"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authn"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/quiztemplate"
 )
 
 // listTemplatesHandler implements GET /api/quiz/templates.

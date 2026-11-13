@@ -17,7 +17,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authn"
 )
 
 // ── P1-A6: Admin Analytics — Generic Domain Dispatch (40 routes) ────────────

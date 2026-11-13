@@ -13,8 +13,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/privacy"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authn"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/privacy"
 )
 
 // Admin privacy request APIs use the profile.privacy_request schema, which is

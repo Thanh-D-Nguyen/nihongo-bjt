@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/loto"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/loto"
 )
 
 // lotoGameParam reads and validates the ?game= query parameter (default loto6).

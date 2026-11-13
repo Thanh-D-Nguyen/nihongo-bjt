@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/app"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/app"
 )
 
 // version is set at build time via -ldflags.

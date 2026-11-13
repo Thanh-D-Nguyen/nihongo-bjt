@@ -15,7 +15,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/imagesearch"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/imagesearch"
 )
 
 // ErrNotFound is returned when a requested deck does not exist.

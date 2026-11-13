@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcarddeck"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/flashcarddeck"
 )
 
 func TestDueImageMatchesDeckPrivacy(t *testing.T) {

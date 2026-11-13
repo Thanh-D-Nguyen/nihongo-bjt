@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/credential"
 )
 
 // genadminhash prints the Argon2id PHC hash of the password given as the only

@@ -12,10 +12,10 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/config"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/media"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/profile"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/session"
 )
 
 const wave9Origin = "https://app.example.test"

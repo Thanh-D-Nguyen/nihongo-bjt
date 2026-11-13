@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/session"
 )
 
 func postSubscriptionCancel(t *testing.T, router http.Handler, userID, origin string) *httptest.ResponseRecorder {

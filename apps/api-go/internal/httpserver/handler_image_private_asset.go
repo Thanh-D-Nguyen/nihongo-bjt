@@ -12,7 +12,7 @@ import (
 	"gocloud.dev/blob"
 	"gocloud.dev/gcerrors"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authn"
 )
 
 // getPrivateImageAssetHandler implements GET /api/media/{id}/private-preview.

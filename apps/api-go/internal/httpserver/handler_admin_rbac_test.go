@@ -19,11 +19,11 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authz"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authn"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authz"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/config"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/credential"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/session"
 )
 
 // adminRBACTestServer creates a test server with all M6 admin RBAC routes wired

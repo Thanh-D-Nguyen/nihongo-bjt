@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcarddeck"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/flashcarddeck"
 )
 
 // A share token is a bearer credential for preview and clone. Only the owner

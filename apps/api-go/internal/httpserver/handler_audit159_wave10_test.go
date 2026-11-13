@@ -11,14 +11,14 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authz"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/onboarding"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/quiztemplate"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/search"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authn"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authz"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/config"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/credential"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/onboarding"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/quiztemplate"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/search"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/session"
 )
 
 func audit159Wave10Router(t *testing.T, db *pgxpool.Pool, meiliURL string) (http.Handler, *session.Store) {

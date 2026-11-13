@@ -127,7 +127,7 @@ export function makeFixture(): Fixture {
   write("scripts/quality/go-test-skips-baseline.json", `${JSON.stringify({ note: "fixture", min_passed_tests: 1, allowed_skips: {} }, null, 2)}\n`);
   write("scripts/fixture-suite-go.mjs", FIXTURE_SUITE_GO);
   write("scripts/fixture-suite-harness.mjs", FIXTURE_SUITE_HARNESS);
-  write("apps/api-go/go.mod", "module github.com/kotobawork/nihongo-bjt/api-go\n\ngo 1.21\n");
+  write("apps/api-go/go.mod", "module github.com/kiokoto/nihongo-bjt/api-go\n\ngo 1.21\n");
   write("apps/api-go/internal/calc/calc.go", CALC_GO);
   write("apps/api-go/internal/calc/calc_test.go", CALC_TEST_GO);
   write("docs/README.md", "# Fixture\n\nThe LegacyHandler endpoint is documented here.\n");

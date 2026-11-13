@@ -14,10 +14,10 @@ import (
 
 	"log/slog"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authn"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/config"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/profile"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/session"
 )
 
 // seedFullProfileUser creates a user with all M5 profile fields populated for testing.

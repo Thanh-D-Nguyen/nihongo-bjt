@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 import { writeSuiteSummary } from "./harness/lib/summary.mjs";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const modulePrefix = "github.com/kotobawork/nihongo-bjt/api-go/";
+const modulePrefix = "github.com/kiokoto/nihongo-bjt/api-go/";
 let accounting = null;
 
 function fail(code, message) {

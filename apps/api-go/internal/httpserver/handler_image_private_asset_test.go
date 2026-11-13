@@ -9,10 +9,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcarddeck"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authn"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/flashcarddeck"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/media"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/session"
 )
 
 type privateAssetSessions struct{ userID string }

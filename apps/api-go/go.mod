@@ -1,4 +1,4 @@
-module github.com/kotobawork/nihongo-bjt/api-go
+module github.com/kiokoto/nihongo-bjt/api-go
 
 go 1.23.0
 

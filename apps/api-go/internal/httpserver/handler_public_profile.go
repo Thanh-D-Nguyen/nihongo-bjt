@@ -7,9 +7,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/realtime"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authn"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/profile"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/realtime"
 )
 
 func publicProfileHandler(store *profile.Store, presence *realtime.PresenceService, logger *slog.Logger) http.HandlerFunc {

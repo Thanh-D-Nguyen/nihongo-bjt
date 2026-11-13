@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/config"
 )
 
 func TestGetAnnouncementsReturnsPublishedAnnouncements(t *testing.T) {

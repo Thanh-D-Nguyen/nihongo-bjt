@@ -12,8 +12,8 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/routecontract"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/config"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/routecontract"
 )
 
 func TestOpenAPIHasEverySourceRegisteredAPIRoute(t *testing.T) {

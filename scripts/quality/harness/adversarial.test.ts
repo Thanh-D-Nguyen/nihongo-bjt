@@ -132,7 +132,7 @@ describe("BYPASS-03 unexpected skipped test", () => {
     const dir = mkdtempSync(path.join(os.tmpdir(), "go-audit-"));
     try {
       mkdirSync(path.join(dir, "internal/x"), { recursive: true });
-      writeFileSync(path.join(dir, "go.mod"), "module github.com/kotobawork/nihongo-bjt/api-go\n\ngo 1.21\n");
+      writeFileSync(path.join(dir, "go.mod"), "module github.com/kiokoto/nihongo-bjt/api-go\n\ngo 1.21\n");
       writeFileSync(path.join(dir, "internal/x/x_test.go"), `package x\nimport "testing"\nfunc TestA(t *testing.T) {}\nfunc TestB(t *testing.T) { ${PATTERNS.goSkip}"no db") }\n`);
       const go = spawnSync("go", ["test", "-json", "-count=1", "./..."], { cwd: dir, encoding: "utf8" });
       writeFileSync(path.join(dir, "report.json"), go.stdout);

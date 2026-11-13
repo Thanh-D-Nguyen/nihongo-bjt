@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/routecontract"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/routecontract"
 )
 
 // go test ./... in the canonical Go CI gate must also reject stale generated files.

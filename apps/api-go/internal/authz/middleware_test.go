@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authn"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/session"
 )
 
 // mockSessionLookup implements authn.SessionLookup for composed guard+RBAC tests.

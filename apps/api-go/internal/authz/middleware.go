@@ -7,7 +7,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authn"
 )
 
 // contextKey is an unexported type for context keys to prevent cross-package fabrication.

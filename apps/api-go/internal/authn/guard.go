@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/session"
 )
 
 // Context keys for authenticated identity. Unexported to prevent cross-package collision.
