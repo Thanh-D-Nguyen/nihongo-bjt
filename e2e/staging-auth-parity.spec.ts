@@ -33,7 +33,7 @@ test.describe("anonymous", () => {
     await page.goto(`${STAGING}/vi`, { waitUntil: "networkidle", timeout: 30_000 });
 
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.locator("body")).toContainText(/KotobaWorks|Học tiếng Nhật/i);
+    await expect(page.locator("body")).toContainText(/Kiokoto|Học tiếng Nhật/i);
 
     // No unexpected errors on public page (401 from /api/auth/me is expected for anonymous)
     const critical = errors.filter(

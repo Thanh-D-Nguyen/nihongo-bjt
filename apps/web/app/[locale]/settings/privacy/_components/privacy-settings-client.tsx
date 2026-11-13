@@ -147,7 +147,7 @@ export function PrivacySettingsClient({ labels }: { labels: PrivacyLabels }) {
       const url = URL.createObjectURL(await response.blob());
       const link = document.createElement("a");
       link.href = url;
-      link.download = `kotobaworks-export-${id}.json`;
+      link.download = `kiokoto-export-${id}.json`;
       document.body.append(link);
       link.click();
       link.remove();

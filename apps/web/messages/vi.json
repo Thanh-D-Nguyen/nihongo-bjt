@@ -12,7 +12,7 @@
       "configuration": "Đăng nhập chưa được bật trên môi trường này. Bạn vẫn có thể dùng trang chủ; hãy thử lại sau hoặc liên hệ quản trị viên."
     },
     "login": {
-      "metaTitle": "Đăng nhập — KotobaWorks",
+      "metaTitle": "Đăng nhập — Kiokoto",
       "backHome": "Về trang chủ",
       "brandTagline": "Học BJT và tiếng Nhật đời sống",
       "primaryCta": "Đăng nhập",
@@ -46,7 +46,7 @@
       "termsAnd": "và"
     },
     "register": {
-      "metaTitle": "Đăng ký — KotobaWorks",
+      "metaTitle": "Đăng ký — Kiokoto",
       "backHome": "Về trang chủ",
       "brandTagline": "Học BJT và tiếng Nhật đời sống",
       "eyebrow": "Tài khoản",
@@ -76,7 +76,7 @@
     },
     "forgotPassword": {
       "languageLabel": "Ngôn ngữ",
-      "metaTitle": "Quên mật khẩu — KotobaWorks",
+      "metaTitle": "Quên mật khẩu — Kiokoto",
       "title": "Quên mật khẩu",
       "subtitle": "Nhập email đã đăng ký, chúng tôi sẽ gửi link đặt lại mật khẩu.",
       "emailLabel": "Email",
@@ -90,7 +90,7 @@
     },
     "resetPassword": {
       "languageLabel": "Ngôn ngữ",
-      "metaTitle": "Đặt lại mật khẩu — KotobaWorks",
+      "metaTitle": "Đặt lại mật khẩu — Kiokoto",
       "title": "Đặt mật khẩu mới",
       "subtitle": "Chọn mật khẩu mới để tiếp tục học tập.",
       "passwordLabel": "Mật khẩu mới",
@@ -112,7 +112,7 @@
     "analytics": "Tiến độ",
     "ariaMain": "Điều hướng chính",
     "battle": "Đấu trí",
-    "brand": "KotobaWorks",
+    "brand": "Kiokoto",
     "cardgen": "Tạo thẻ",
     "exercises": "Luyện tập",
     "explore": "Khám phá",
@@ -141,11 +141,11 @@
     "footerLegal": "Pháp lý",
     "footerLearning": "Học tập",
     "footerPrivacy": "Quyền riêng tư",
-    "footerProductSummary": "KotobaWorks giúp bạn luyện tiếng Nhật công sở, ôn BJT và giữ nhịp học mỗi ngày bằng tra cứu, thẻ nhớ và bài luyện có cấu trúc.",
+    "footerProductSummary": "Kiokoto giúp bạn luyện tiếng Nhật công sở, ôn BJT và giữ nhịp học mỗi ngày bằng tra cứu, thẻ nhớ và bài luyện có cấu trúc.",
     "footerSupport": "Hỗ trợ",
     "footerTerms": "Điều khoản",
     "footerFeedback": "Góp ý",
-    "footerCopyright": "© 2026 KotobaWorks",
+    "footerCopyright": "© 2026 Kiokoto",
     "dailyStandup": "Đi làm ở Nhật",
     "searchPlaceholder": "Tìm từ vựng, ngữ pháp, bài học...",
     "companion": {
@@ -154,7 +154,7 @@
       "actionDaily": "Hôm nay",
       "actionQuiz": "Luyện BJT",
       "actionReview": "Ôn thẻ",
-      "ariaLabel": "Bot đồng hành KotobaWorks",
+      "ariaLabel": "Bot đồng hành Kiokoto",
       "close": "Ẩn bot đồng hành",
       "collapsedLabel": "Mở bot đồng hành",
       "guestCta": "Đăng nhập để bắt đầu học",
@@ -205,7 +205,7 @@
   },
   "home": {
     "actionsLabel": "Hành động chính",
-    "eyebrow": "KotobaWorks",
+    "eyebrow": "Kiokoto",
     "primaryAction": "Bắt đầu học",
     "quizAction": "Luyện BJT",
     "battleAction": "Đấu trí BJT",
@@ -486,7 +486,7 @@
     "commandCenterDescription": "Một hành động chính rõ ràng, tiến độ nhìn thấy được, không bị quá tải.",
     "commandCenterEyebrow": "Hôm nay",
     "commandCenterTitle": "Trung tâm điều phối học tập",
-    "compactBrand": "KotobaWorks",
+    "compactBrand": "Kiokoto",
     "compactHeaderTitle": "Trang chủ học tập",
     "demoStatsCaption": "Ví dụ minh họa — đăng nhập để xem số liệu thật.",
     "demoStatReviews": "12",
@@ -706,7 +706,7 @@
     "openDetail": "Xem chi tiết",
     "detailActionsFootnote": "Các lựa chọn ôn luyện dùng tài khoản của bạn; quản lý hạn mức trong Cài đặt.",
     "bjtSectionTitle": "Góc BJT & công sở",
-    "bjtSectionIntro": "KotobaWorks kết nối tra cứu với luyện đề và thẻ: ưu tiên ngữ cảnh công ty, lịch, báo cáo, đối thoại trang trọng.",
+    "bjtSectionIntro": "Kiokoto kết nối tra cứu với luyện đề và thẻ: ưu tiên ngữ cảnh công ty, lịch, báo cáo, đối thoại trang trọng.",
     "bjtTopicsLabel": "Gợi ý ngữ cảnh",
     "bjtTopicsBody": "Với 「{headword}」, hãy luyện trong tình huống họp, trao đổi nội bộ và báo cáo — phù hợp chuẩn BJT.",
     "bjtPhrasesLabel": "Cụm thường gặp",
@@ -1331,7 +1331,7 @@
     "formatGuideBullet3": "Ba phần chính: Nghe hiểu, Nghe-đọc hiểu, Đọc hiểu.",
     "formatGuideBullet4": "Mỗi câu là trắc nghiệm 4 lựa chọn; điểm chính thức xử lý bằng IRT, không chỉ cộng số câu đúng.",
     "formatGuideBullet5": "Trong app, điểm và band là ước lượng để theo dõi tiến bộ, không phải kết quả thi chính thức.",
-    "formatGuideDisclaimer": "KotobaWorks là công cụ luyện tập độc lập. Cấu trúc trên được tóm tắt từ thông tin chính thức của BJT/Pearson VUE; hãy đối chiếu nguồn chính thức trước khi đăng ký thi.",
+    "formatGuideDisclaimer": "Kiokoto là công cụ luyện tập độc lập. Cấu trúc trên được tóm tắt từ thông tin chính thức của BJT/Pearson VUE; hãy đối chiếu nguồn chính thức trước khi đăng ký thi.",
     "formatGuideHelpLink": "Trợ giúp",
     "heroPrimaryMetric": "80|câu trong đề thật",
     "heroSecondaryMetric": "0–800|thang điểm scale",
@@ -1345,7 +1345,7 @@
     "officialSection1": "Nhận diện tình huống, nắm ý phát ngôn, hiểu hội thoại/tình huống tổng hợp qua audio.",
     "officialSection2": "Kết hợp âm thanh với tài liệu, hình ảnh hoặc chữ để suy luận hành động phù hợp trong công việc.",
     "officialSection3": "Từ vựng-ngữ pháp, đọc biểu đạt, đọc hiểu tổng hợp với văn bản và tài liệu công sở.",
-    "officialStrategyTitle": "Nên luyện thế nào trên KotobaWorks",
+    "officialStrategyTitle": "Nên luyện thế nào trên Kiokoto",
     "officialStrategy1": "J5–J4: ưu tiên từ vựng-ngữ pháp và câu ngắn để tăng độ chắc.",
     "officialStrategy2": "J3–J2: luyện tình huống mail, họp, báo cáo; xem lại giải thích từng câu sau khi làm.",
     "officialStrategy3": "J1/J1+: làm đề timed, in đề để review lỗi và theo dõi điểm scale qua nhiều lần.",
@@ -1499,7 +1499,7 @@
       "back": "Quay lại",
       "showAnswers": "Hiện đáp án",
       "printButton": "In đề thi",
-      "coverKicker": "KotobaWorks · Đề luyện tập",
+      "coverKicker": "Kiokoto · Đề luyện tập",
       "practiceTitle": "Đề luyện tập",
       "level": "Trình độ",
       "questionCount": "Tổng số câu",
@@ -1511,7 +1511,7 @@
       "total": "Tổng cộng",
       "instructions": "Hướng dẫn",
       "chooseAnswer": "Chọn phương án phù hợp nhất trong các lựa chọn.",
-      "independentNotice": "Đây là đề luyện tập độc lập của KotobaWorks, không phải đề thi chính thức.",
+      "independentNotice": "Đây là đề luyện tập độc lập của Kiokoto, không phải đề thi chính thức.",
       "listeningNotice": "Phần nghe được in dưới dạng kịch bản văn bản; bản in không phát audio.",
       "answerSheet": "Phiếu trả lời",
       "answerSheetHint": "Chọn đáp án trên phiếu, rồi bật “Hiện đáp án” để tự đối chiếu.",
@@ -1520,7 +1520,7 @@
       "rank": "Cấp độ",
       "scoreRange": "Khoảng điểm",
       "description": "Mô tả",
-      "footerTitle": "KotobaWorks · Tài liệu luyện tập độc lập",
+      "footerTitle": "Kiokoto · Tài liệu luyện tập độc lập",
       "footerDisclaimer": "Không phải đề thi chính thức của BJT. Kết quả luyện tập không dự đoán điểm thi thật.",
       "levelDescriptions": {
         "J1+": "Năng lực giao tiếp kinh doanh xuất sắc",
@@ -1602,7 +1602,7 @@
     "load": "Tải danh sách"
   },
   "profilePage": {
-    "metaTitle": "Hồ sơ — KotobaWorks",
+    "metaTitle": "Hồ sơ — Kiokoto",
     "title": "Hồ sơ của tôi",
     "eyebrow": "Người học",
     "subtitle": "Xem thành tích, thống kê và hành trình học tập",
@@ -1799,12 +1799,12 @@
     "trendVsPrevious": "So với {n} ngày trước đó"
   },
   "helpPage": {
-    "metaTitle": "Trợ giúp — KotobaWorks",
+    "metaTitle": "Trợ giúp — Kiokoto",
     "title": "Trung tâm trợ giúp",
     "subtitle": "Bạn cần hỗ trợ? Hãy tìm câu trả lời tại đây.",
     "faqTitle": "Câu hỏi thường gặp",
-    "faq1q": "KotobaWorks là gì?",
-    "faq1a": "KotobaWorks là nền tảng học tiếng Nhật và luyện thi BJT (Business Japanese Proficiency Test) dành cho người Việt.",
+    "faq1q": "Kiokoto là gì?",
+    "faq1a": "Kiokoto là nền tảng học tiếng Nhật và luyện thi BJT (Business Japanese Proficiency Test) dành cho người Việt.",
     "faq2q": "Tôi có thể dùng miễn phí không?",
     "faq2a": "Có. Các tính năng cốt lõi như ôn flashcard, tra cứu từ điển và bài luyện BJT cơ bản đều miễn phí.",
     "faq3q": "Làm sao để bắt đầu ôn BJT?",
@@ -1816,22 +1816,22 @@
     "contactLink": "Gửi góp ý"
   },
   "termsPage": {
-    "metaTitle": "Điều khoản sử dụng — KotobaWorks",
+    "metaTitle": "Điều khoản sử dụng — Kiokoto",
     "title": "Điều khoản sử dụng",
     "subtitle": "Cập nhật lần cuối: 01/05/2026",
     "section1Title": "1. Chấp nhận điều khoản",
-    "section1Body": "Bằng việc truy cập và sử dụng KotobaWorks, bạn đồng ý tuân thủ các điều khoản được nêu tại đây.",
+    "section1Body": "Bằng việc truy cập và sử dụng Kiokoto, bạn đồng ý tuân thủ các điều khoản được nêu tại đây.",
     "section2Title": "2. Tài khoản người dùng",
     "section2Body": "Bạn chịu trách nhiệm bảo mật tài khoản và mật khẩu của mình. Không chia sẻ thông tin đăng nhập với người khác.",
     "section3Title": "3. Nội dung học tập",
-    "section3Body": "Nội dung trên KotobaWorks chỉ dành cho mục đích học tập. Không sao chép, phân phối lại nội dung mà không có sự cho phép.",
+    "section3Body": "Nội dung trên Kiokoto chỉ dành cho mục đích học tập. Không sao chép, phân phối lại nội dung mà không có sự cho phép.",
     "section4Title": "4. Quyền riêng tư",
     "section4Body": "Chúng tôi tôn trọng quyền riêng tư của bạn. Xem chi tiết tại trang Chính sách Quyền riêng tư.",
     "section5Title": "5. Thay đổi điều khoản",
     "section5Body": "Chúng tôi có thể cập nhật điều khoản này. Thay đổi sẽ được thông báo trên nền tảng."
   },
   "privacyPolicyPage": {
-    "metaTitle": "Chính sách quyền riêng tư — KotobaWorks",
+    "metaTitle": "Chính sách quyền riêng tư — Kiokoto",
     "title": "Chính sách quyền riêng tư",
     "subtitle": "Cập nhật lần cuối: 01/05/2026",
     "section1Title": "1. Thu thập dữ liệu",
@@ -1848,9 +1848,9 @@
     "feedbackLink": "Gửi góp ý"
   },
   "feedbackPage": {
-    "metaTitle": "Góp ý — KotobaWorks",
+    "metaTitle": "Góp ý — Kiokoto",
     "title": "Gửi góp ý",
-    "subtitle": "Ý kiến của bạn giúp chúng tôi cải thiện KotobaWorks mỗi ngày.",
+    "subtitle": "Ý kiến của bạn giúp chúng tôi cải thiện Kiokoto mỗi ngày.",
     "nameLabel": "Tên (tùy chọn)",
     "namePlaceholder": "Tên của bạn",
     "emailLabel": "Email (tùy chọn)",
@@ -2637,7 +2637,7 @@
     "lotoPromoCta": "Xem ngay"
   },
   "mePage": {
-    "metaTitle": "Tôi — KotobaWorks",
+    "metaTitle": "Tôi — Kiokoto",
     "title": "Tôi",
     "eyebrow": "Hồ sơ & Tiến độ",
     "tabs": {
@@ -2780,9 +2780,9 @@
     "fallbackChallenger": "Một người học"
   },
   "publicProfile": {
-    "metaTitle": "Hồ sơ {name} — KotobaWorks",
-    "metaTitleFallback": "Hồ sơ người dùng — KotobaWorks",
-    "metaDescription": "Hồ sơ học viên công khai trên KotobaWorks",
+    "metaTitle": "Hồ sơ {name} — Kiokoto",
+    "metaTitleFallback": "Hồ sơ người dùng — Kiokoto",
+    "metaDescription": "Hồ sơ học viên công khai trên Kiokoto",
     "notFound": "Không tìm thấy người dùng",
     "notFoundDesc": "Người dùng không tồn tại hoặc đã bị xóa.",
     "home": "Trang chủ",
@@ -2908,6 +2908,6 @@
     "home": "Về trang chủ",
     "notFoundTitle": "Không tìm thấy trang",
     "notFoundDescription": "Trang này không tồn tại. Chọn liên kết bên dưới để tiếp tục học.",
-    "notFoundMetaTitle": "Không tìm thấy trang — KotobaWorks"
+    "notFoundMetaTitle": "Không tìm thấy trang — Kiokoto"
   }
 }

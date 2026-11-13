@@ -1,6 +1,6 @@
-/** KotobaWorks brand mark — a minimal 言 frame with a work-path accent. */
+/** Kiokoto brand mark — a minimal 言 frame with a work-path accent. */
 
-const brandName = "KotobaWorks";
+const brandName = "Kiokoto";
 
 export function BrandLogo({ className, size = 28 }: { className?: string; size?: number }) {
   return (
@@ -53,8 +53,8 @@ export function BrandFull({
           labelClassName ? ` ${labelClassName}` : ""
         }`}
       >
-        Kotoba
-        <span className={tone === "light" ? "text-white/80" : "text-blue-700"}>Works</span>
+        Kio
+        <span className={tone === "light" ? "text-white/80" : "text-blue-700"}>koto</span>
       </span>
     </span>
   );

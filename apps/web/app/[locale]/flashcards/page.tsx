@@ -15,7 +15,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
-  return { title: `${t.flashcards.title} — KotobaWorks` };
+  return { title: `${t.flashcards.title} — Kiokoto` };
 }
 
 export default async function FlashcardsPage({

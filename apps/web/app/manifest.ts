@@ -13,8 +13,8 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/svg+xml"
       }
     ],
-    name: "KotobaWorks",
-    short_name: "KotobaWorks",
+    name: "Kiokoto",
+    short_name: "Kiokoto",
     start_url: "/",
     theme_color: "#0f172a"
   };

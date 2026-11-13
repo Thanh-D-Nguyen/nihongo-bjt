@@ -1,0 +1,189 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "BRAND-410",
+  "title": "Rebrand learner web app from KotobaWorks to Kiokoto",
+  "start_head": "b129b77ae0df84bd14fc1d8a06ce7e4dd797037a",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "No KotobaWorks/kotobaworks string remains in apps/web user-visible source: page metadata titles, i18n messages (vi/ja/en), root layout title, PWA manifest name/short_name, brand logo, share surfaces, push-notification fallback title, PWA icon aria-labels, auth hero copy (one deliberate exception: a quiz test fixture content string that simulates authored lesson content)"
+      },
+      {
+        "id": "AC2",
+        "text": "Brand wordmark renders Kiokoto (two-tone Kio/koto split preserved) and the logo aria brand name is Kiokoto"
+      },
+      {
+        "id": "AC3",
+        "text": "Generated download/export filenames use the kiokoto- prefix (share postcard PNG, privacy data export JSON)"
+      },
+      {
+        "id": "AC4",
+        "text": "suite_frontend passes with no new lint/test debt; the staging e2e brand assertion expects Kiokoto"
+      },
+      {
+        "id": "AC5",
+        "text": "No functional identifiers change: no routes, storage keys, cookie names, or API contracts are touched"
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "modify",
+    "rationale": ""
+  },
+  "red_exception": {
+    "category": "visual_only",
+    "reason": "Pure brand copy/wordmark rename in presentation surfaces and i18n strings; no assertable behavior changes (same components, routes and contracts). Verified by suite_frontend staying green with no new debt and by a post-change grep audit of the old brand string.",
+    "declared_before_red": true
+  },
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-13T02:19:17.129Z",
+      "head": "b129b77ae0df84bd14fc1d8a06ce7e4dd797037a"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-13T02:19:17.575Z",
+      "head": "b129b77ae0df84bd14fc1d8a06ce7e4dd797037a"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-13T02:19:17.818Z",
+      "head": "b129b77ae0df84bd14fc1d8a06ce7e4dd797037a"
+    },
+    {
+      "state": "EXCEPTION_APPROVED",
+      "at": "2026-11-13T02:24:11.136Z",
+      "head": "b129b77ae0df84bd14fc1d8a06ce7e4dd797037a"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-13T02:24:12.366Z",
+      "head": "b129b77ae0df84bd14fc1d8a06ce7e4dd797037a"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-13T02:23:54.147Z",
+      "head": "b129b77ae0df84bd14fc1d8a06ce7e4dd797037a",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 644,
+        "executed": 644,
+        "passed": 644,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 872,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "df2f4621c7427c98bb9c5b044b273747963f041cff90886afce28731f808b366"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-13T02:24:10.172Z",
+      "head": "b129b77ae0df84bd14fc1d8a06ce7e4dd797037a",
+      "kind": "review",
+      "mode": "human",
+      "reviewer": "independent-reviewer",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "attested": true,
+      "fingerprint": "df2f4621c7427c98bb9c5b044b273747963f041cff90886afce28731f808b366"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-13T02:24:12.362Z",
+    "head": "b129b77ae0df84bd14fc1d8a06ce7e4dd797037a",
+    "fingerprint": "df2f4621c7427c98bb9c5b044b273747963f041cff90886afce28731f808b366",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/web/.env.example": "08690c91de57423d29c2acece4c31151b9f67c16",
+      "apps/web/app/[locale]/_components/auth-hero-layout.tsx": "b2925f1732a2aa981d9dfd8b606b98c9df2d5f0b",
+      "apps/web/app/[locale]/_components/share-drawer.tsx": "198dade309ad7700bb9d4885a83c82a865949712",
+      "apps/web/app/[locale]/battle/match/page.tsx": "b473c6ad84bffe8b17f035d6b276192957de70b1",
+      "apps/web/app/[locale]/battle/page.tsx": "1344d6026b340ea5466feac8e4996043874d7456",
+      "apps/web/app/[locale]/cardgen/page.tsx": "0d3c21f353b3e5aab730973d5b7f53e370a09477",
+      "apps/web/app/[locale]/career/page.tsx": "bad16995cad9d5c7cb7802b3519a3f7152166750",
+      "apps/web/app/[locale]/daily-standup/page.tsx": "c68d48b080ab2a31fceea417c6f8632a0a632248",
+      "apps/web/app/[locale]/decks/shared/[token]/page.tsx": "d5578d3340293058b096c5812d101754ad1e1ada",
+      "apps/web/app/[locale]/dictionary/[id]/page.tsx": "e963a2bd217482d899a1ec1ce3abbae0d2b56923",
+      "apps/web/app/[locale]/dictionary/page.tsx": "7fc33801089e83f53b873678797e1a645b7fb719",
+      "apps/web/app/[locale]/exercises/page.tsx": "188c8d6d4496f75bc7aa76210fcb954a2910e22e",
+      "apps/web/app/[locale]/explore/page.tsx": "38b2a99675c26dd44e30e9ba820a0e34cf0deb39",
+      "apps/web/app/[locale]/flashcards/decks/[deckId]/page.tsx": "740172b4be87843a0c6e3574d2f62e53be049b43",
+      "apps/web/app/[locale]/flashcards/page.tsx": "49b190a6a438f6cb31daa123f1245ad5c0025d70",
+      "apps/web/app/[locale]/grammar/[id]/page.tsx": "beea4dbd438f6ce1bda8f8b9820c747ad137f12e",
+      "apps/web/app/[locale]/grammar/page.tsx": "b1b8fc489016f58b39ceffed7507f26c1192d3ea",
+      "apps/web/app/[locale]/kanji/[id]/page.tsx": "f5f0c848c8b13a8242cd9897b9878f8ca7343445",
+      "apps/web/app/[locale]/kanji/page.tsx": "addf91ed3b40ba874c38d78f4acfd9e6d983edc9",
+      "apps/web/app/[locale]/levels/[level]/lessons/[slug]/page.tsx": "737b2d6f2887922fa053dafae077987a6b4bc98e",
+      "apps/web/app/[locale]/levels/[level]/page.tsx": "7fb251da70accc60045ebd58666763e79d21b725",
+      "apps/web/app/[locale]/levels/page.tsx": "812f04bd9f9fc8a00b2e53ee68e9fd9b44bec7fc",
+      "apps/web/app/[locale]/magazine/[slug]/page.tsx": "2ad493feb47823a4bfa852cbaae895d1ea318925",
+      "apps/web/app/[locale]/magazine/loto/page.tsx": "bf529a5dc85716d7acda88f9da01077aadd5517f",
+      "apps/web/app/[locale]/magazine/page.tsx": "e1e7b361cd108f1a4aa108df847d4e569a35cd27",
+      "apps/web/app/[locale]/news/[id]/page.tsx": "28861dfaa76beb6212f4965203fbf26539df91ce",
+      "apps/web/app/[locale]/news/page.tsx": "891e6b14e354c294e315d8d9909da45c4c5d2e19",
+      "apps/web/app/[locale]/page.tsx": "23f5ffbb6df3965817e19a0d97acdbaf67666479",
+      "apps/web/app/[locale]/pricing/page.tsx": "f81a8d9e19b996102ad5d2678784d760f80a5b7f",
+      "apps/web/app/[locale]/quiz/page.tsx": "31b72dd74b8ed010912862dd91106eabf9f58785",
+      "apps/web/app/[locale]/quiz/print/[id]/page.tsx": "2a9900927ac59a68af2a86045186d6076628fdc3",
+      "apps/web/app/[locale]/quiz/session/page.tsx": "cf57908004bccab9ff5834c9303ced78b43f65bd",
+      "apps/web/app/[locale]/radar/[slug]/page.tsx": "b05464078f82a339b482d2cb755c2c4c29004ff3",
+      "apps/web/app/[locale]/review-inbox-preview/page.tsx": "521d3697ba8b7600b67ca5a61c8472638a59be4d",
+      "apps/web/app/[locale]/saved/page.tsx": "2b71ac52d6ef50d45dce7676c1c5aeb23713ec9b",
+      "apps/web/app/[locale]/search/history/page.tsx": "0eadcaa656b718a4074c074950ad6213062aeb19",
+      "apps/web/app/[locale]/search/page.tsx": "bbc39621d98df35a97c289fd55c3f2d9753049e6",
+      "apps/web/app/[locale]/settings/appearance/page.tsx": "b7344a70f8ba991e289c1abf9f22ae2507279ad1",
+      "apps/web/app/[locale]/settings/privacy/_components/privacy-settings-client.tsx": "d635971a2d1eec94f2f91a7c4001b0c95ca32d3a",
+      "apps/web/app/[locale]/settings/subscription/page.tsx": "21370ff9b1908aab535fd3f14f41273a5b992186",
+      "apps/web/app/[locale]/share/[token]/page.tsx": "d9e03f2ec889ad683a6f84f116b061db4cc32062",
+      "apps/web/app/[locale]/story/arcs/[slug]/page.tsx": "1a9268761f3686b8f6ac93f2f111511f55b71187",
+      "apps/web/app/[locale]/story/arcs/page.tsx": "926d5a9eb4b751a903b5b13eba0608ba0a7894f7",
+      "apps/web/app/[locale]/story/chapters/[id]/page.tsx": "640ab8a0cda2ee5e316c39cb761de707e4e85034",
+      "apps/web/app/_components/brand-logo.tsx": "494f13a536c7d61bb9aa2a3ad047fab658f82e73",
+      "apps/web/app/_hooks/use-share-postcard.ts": "16b5ba7b72acf48c5127919529af2be2588fdb26",
+      "apps/web/app/layout.tsx": "ba65cd57e2a88a152e4d59fd2fdf1b062ae3af3f",
+      "apps/web/app/manifest.ts": "c7c6954e2e5cb172b9df68343a238d242616c12e",
+      "apps/web/app/not-found.tsx": "cc3047d3e1d3c7ba6f1d5eb84c147397073651e9",
+      "apps/web/messages/en.json": "59c242fad76adcb727b04438df8168e73c4474e0",
+      "apps/web/messages/ja.json": "9efa7df93e44465084ac18635515f28c2b62e205",
+      "apps/web/messages/vi.json": "e1f0c48aabafd92058948d610f42f0c01758d3fd",
+      "apps/web/public/pwa-icon.min.svg": "469f6243d44b0c734e6314ba0f7dac531f9e96e7",
+      "apps/web/public/pwa-icon.svg": "6283e7f7d042d9a3cf697fcd21ef4b1293291e95",
+      "apps/web/public/sw-push.js": "392886800c59f3f6d47cd115be5906ff8295d633",
+      "e2e/staging-auth-parity.spec.ts": "dcbd125803e2a2c043787127d446c8cad1336b10"
+    }
+  }
+}

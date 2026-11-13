@@ -10,7 +10,7 @@ const messages = { en, ja, vi };
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = messages[locale as keyof typeof messages] ?? vi;
-  return { title: `${t.quiz.print.printButton} — KotobaWorks`, robots: "noindex" };
+  return { title: `${t.quiz.print.printButton} — Kiokoto`, robots: "noindex" };
 }
 
 export default async function PrintExamPage({

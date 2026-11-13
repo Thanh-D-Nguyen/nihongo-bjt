@@ -32,7 +32,7 @@ export async function generateMetadata({
   if (!article) return { title: "Not Found" };
 
   return {
-    title: `${article.titleJp} — KotobaWorks Magazine`,
+    title: `${article.titleJp} — Kiokoto Magazine`,
     description: article.seoDescription ?? article.summaryVi ?? "",
     openGraph: {
       title: `${article.titleJp} | ${article.titleVi}`,
