@@ -16,9 +16,9 @@ func TestPasswordResetDeliveryGeneratesLocalizedLink(t *testing.T) {
 		path   string
 		copy   string
 	}{
-		{locale: "en", path: "/en/reset-password#token=opaque", copy: "Use this link to reset your KotobaWorks password."},
-		{locale: "vi", path: "/vi/reset-password#token=opaque", copy: "Dùng liên kết này để đặt lại mật khẩu KotobaWorks."},
-		{locale: "ja", path: "/ja/reset-password#token=opaque", copy: "次のリンクから KotobaWorks のパスワードを再設定してください。"},
+		{locale: "en", path: "/en/reset-password#token=opaque", copy: "Use this link to reset your Kiokoto password."},
+		{locale: "vi", path: "/vi/reset-password#token=opaque", copy: "Dùng liên kết này để đặt lại mật khẩu Kiokoto."},
+		{locale: "ja", path: "/ja/reset-password#token=opaque", copy: "次のリンクから Kiokoto のパスワードを再設定してください。"},
 	}
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {

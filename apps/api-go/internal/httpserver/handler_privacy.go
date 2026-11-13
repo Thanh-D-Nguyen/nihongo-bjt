@@ -282,7 +282,7 @@ func learnerPrivacyExportDownloadHandler(db *pgxpool.Pool, logger *slog.Logger) 
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.Header().Set("Content-Disposition", `attachment; filename="kotobaworks-export-`+id+`.json"`)
+		w.Header().Set("Content-Disposition", `attachment; filename="kiokoto-export-`+id+`.json"`)
 		w.Header().Set("Cache-Control", "private, no-store")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.WriteHeader(http.StatusOK)

@@ -14,7 +14,7 @@ import (
 // GeographyTemplate is the source scope and Japanese template approved by the operator.
 const GeographyTemplate = "wikidata-geography-v1"
 
-const geographyAttribution = "Geographic facts from Wikidata, CC0 (https://creativecommons.org/publicdomain/zero/1.0/). Japanese learning material adapted by KotobaWorks; " + GeographyTemplate + "."
+const geographyAttribution = "Geographic facts from Wikidata, CC0 (https://creativecommons.org/publicdomain/zero/1.0/). Japanese learning material adapted by Kiokoto; " + GeographyTemplate + "."
 
 var geographyPlaces = []struct{ city, entity, english string }{
 	{"tokyo", "Q1490", "Tokyo"}, {"yokohama", "Q38283", "Yokohama"},

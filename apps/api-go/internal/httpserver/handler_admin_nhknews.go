@@ -550,7 +550,7 @@ func fetchNHKFeed(ctx context.Context, client *http.Client, feedURL string) ([]b
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", "KotobaWorks-NHK-Feed/1.0")
+	req.Header.Set("User-Agent", "Kiokoto-NHK-Feed/1.0")
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err

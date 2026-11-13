@@ -1,4 +1,4 @@
-// Package main is the entry point for the KotobaWork Go API service.
+// Package main is the entry point for the Kiokoto Go API service.
 package main
 
 import (

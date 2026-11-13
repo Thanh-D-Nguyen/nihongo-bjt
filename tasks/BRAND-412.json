@@ -1,0 +1,272 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "BRAND-412",
+  "title": "Rebrand API user-visible copy from KotobaWorks to Kiokoto",
+  "start_head": "8d62854d14229bbd5468bbc30420a6db3b477fe9",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Password-reset emails say Kiokoto in all three locales (en/vi/ja subjects and body copy), proven by the existing localized-delivery test updated to the new copy"
+      },
+      {
+        "id": "AC2",
+        "text": "Outbound product identity strings use the new brand: image-download and image-search User-Agent Kiokoto/1.0, NHK feed and LotoLab User-Agent tokens, Unsplash utm_source=kiokoto (with the asserting tests updated to the new contract)"
+      },
+      {
+        "id": "AC3",
+        "text": "User-facing attribution lines in life-feed content (weather, geography) credit Kiokoto; the privacy data-export download filename uses the kiokoto-export- prefix, matching the web client"
+      },
+      {
+        "id": "AC4",
+        "text": "The Shiba mentor system prompt introduces the platform as Kiokoto"
+      },
+      {
+        "id": "AC5",
+        "text": "Infrastructure defaults are NOT renamed: /srv/kotobawork paths and the no-reply@kotobawork.local fallback in config stay untouched; stored-data test fixtures keep the old string"
+      },
+      {
+        "id": "AC6",
+        "text": "go build ./... passes and suite_go is green"
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "DOMAIN_LOGIC"
+    ],
+    "change_kind": "modify",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/email",
+      "test": "TestPasswordResetDeliveryGeneratesLocalizedLink",
+      "expect": "must produce localized message and reset URL"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestDownloadSelectionImageUserAgent",
+      "expect": "Kiokoto/1.0"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-13T02:28:45.908Z",
+      "head": "8d62854d14229bbd5468bbc30420a6db3b477fe9"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-13T02:28:46.123Z",
+      "head": "8d62854d14229bbd5468bbc30420a6db3b477fe9"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-13T02:28:46.354Z",
+      "head": "8d62854d14229bbd5468bbc30420a6db3b477fe9"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-13T02:28:55.881Z",
+      "head": "8d62854d14229bbd5468bbc30420a6db3b477fe9"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-13T02:30:47.723Z",
+      "head": "8d62854d14229bbd5468bbc30420a6db3b477fe9"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-13T02:38:56.772Z",
+      "head": "8d62854d14229bbd5468bbc30420a6db3b477fe9"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-13T02:39:04.135Z",
+      "head": "8d62854d14229bbd5468bbc30420a6db3b477fe9"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-13T02:28:55.777Z",
+      "head": "8d62854d14229bbd5468bbc30420a6db3b477fe9",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetDeliveryGeneratesLocalizedLink)$ ./internal/email"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/email:TestPasswordResetDeliveryGeneratesLocalizedLink",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPasswordResetDeliveryGeneratesLocalizedLink smtp_test.go:102: locale \"en\" must produce localized message and reset URL smtp_test.go:102: locale \"vi\" must produce localized message and reset URL smtp_test.go:102: locale \"ja\" must produce localized message and reset URL --- FAIL: TestPassw…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/email:TestPasswordResetDeliveryGeneratesLocalizedLink": "must produce localized message and reset URL"
+      },
+      "fingerprint": "1c9e4f48539bc77de4a556be13bfb5b448d5ff5efcd3a9e8db5237dbffca03cd"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-13T02:29:34.886Z",
+      "head": "8d62854d14229bbd5468bbc30420a6db3b477fe9",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetDeliveryGeneratesLocalizedLink)$ ./internal/email",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDownloadSelectionImageUserAgent)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/email:TestPasswordResetDeliveryGeneratesLocalizedLink",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPasswordResetDeliveryGeneratesLocalizedLink smtp_test.go:102: locale \"en\" must produce localized message and reset URL smtp_test.go:102: locale \"vi\" must produce localized message and reset URL smtp_test.go:102: locale \"ja\" must produce localized message and reset URL --- FAIL: TestPassw…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestDownloadSelectionImageUserAgent",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestDownloadSelectionImageUserAgent handler_image_selection_test.go:187: downloadSelectionImage User-Agent = \"KotobaWorks/1.0 (+https://github.com/Thanh-D-Nguyen/nihongo-bjt/issues)\", want \"Kiokoto/1.0 (+https://github.com/Thanh-D-Nguyen/nihongo-bjt/issues)\" handler_image_selection_test.go:1…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/email:TestPasswordResetDeliveryGeneratesLocalizedLink": "must produce localized message and reset URL",
+        "go:./internal/httpserver:TestDownloadSelectionImageUserAgent": "Kiokoto/1.0"
+      },
+      "fingerprint": "1c9e4f48539bc77de4a556be13bfb5b448d5ff5efcd3a9e8db5237dbffca03cd"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-13T02:30:47.252Z",
+      "head": "8d62854d14229bbd5468bbc30420a6db3b477fe9",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestPasswordResetDeliveryGeneratesLocalizedLink)$ ./internal/email",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestDownloadSelectionImageUserAgent)$ ./internal/httpserver"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/email:TestPasswordResetDeliveryGeneratesLocalizedLink",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestDownloadSelectionImageUserAgent",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d6cb17482634c28dcf50743147365f003f9b6ccb4f54b2c19507ef191e1b52f8"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-13T02:31:58.557Z",
+      "head": "8d62854d14229bbd5468bbc30420a6db3b477fe9",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 1281,
+        "executed": 1281,
+        "passed": 616,
+        "failed": 665,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "go test failed (exit 1; 665 failing test(s), 21 failing package(s))",
+      "fingerprint": "d6cb17482634c28dcf50743147365f003f9b6ccb4f54b2c19507ef191e1b52f8"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-13T02:38:56.227Z",
+      "head": "8d62854d14229bbd5468bbc30420a6db3b477fe9",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1839,
+        "executed": 1839,
+        "passed": 1839,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1839 passed, 0 allowed skip(s)",
+      "fingerprint": "d6cb17482634c28dcf50743147365f003f9b6ccb4f54b2c19507ef191e1b52f8"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-13T02:39:03.406Z",
+      "head": "8d62854d14229bbd5468bbc30420a6db3b477fe9",
+      "kind": "review",
+      "mode": "human",
+      "reviewer": "independent-reviewer",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "attested": true,
+      "fingerprint": "d6cb17482634c28dcf50743147365f003f9b6ccb4f54b2c19507ef191e1b52f8"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-13T02:39:04.131Z",
+    "head": "8d62854d14229bbd5468bbc30420a6db3b477fe9",
+    "fingerprint": "d6cb17482634c28dcf50743147365f003f9b6ccb4f54b2c19507ef191e1b52f8",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS"
+    },
+    "files": {
+      "apps/api-go/cmd/api/main.go": "21d6275e910727ff07cc18d006f5ed2ab0ca035d",
+      "apps/api-go/internal/email/smtp.go": "cfa524fa6718d9b55e1efa954c4766060b085b0a",
+      "apps/api-go/internal/email/smtp_test.go": "bf71534a4dea3b92098d4fc4942f7afc4401f247",
+      "apps/api-go/internal/httpserver/handler_admin_nhknews.go": "77d5b7eb0b50846e5c6362f1fb769f14c14c2032",
+      "apps/api-go/internal/httpserver/handler_image_selection.go": "18a6088aa7a3faf389b9b160105e0e56bc1fe23a",
+      "apps/api-go/internal/httpserver/handler_image_selection_test.go": "91bffad3a3204670d9269d8fe53fad1bc8604223",
+      "apps/api-go/internal/httpserver/handler_privacy.go": "9c624a2db3b3cdb47b6bae9f3da2d02ccb8855b9",
+      "apps/api-go/internal/imagesearch/search.go": "f14f3fb471bf7502a3e32802446fceb79a8a923a",
+      "apps/api-go/internal/lifefeed/weather.go": "fab4b4c91edfbb4bef80410dc4963807fb55a195",
+      "apps/api-go/internal/lifefeed/wikidata.go": "581516f4bab9956e5e3b7d78b0c6a190ec18db26",
+      "apps/api-go/internal/loto/fetch.go": "b8a496950c6a5ed8ce54ea9a1427b7f813033051",
+      "apps/api-go/internal/shiballm/service.go": "0a7af83c3b6b45e13b8ad847755119734c7f0262"
+    }
+  }
+}

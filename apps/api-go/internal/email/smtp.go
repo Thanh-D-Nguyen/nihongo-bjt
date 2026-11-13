@@ -28,12 +28,12 @@ type SMTP struct {
 type message struct{ from, to, content string }
 
 func passwordResetMessage(locale, resetURL string) string {
-	subject, instructions, expiry, ignore := "KotobaWorks password reset", "Use this link to reset your KotobaWorks password.", "It expires in one hour:", "If you did not request this, ignore this email."
+	subject, instructions, expiry, ignore := "Kiokoto password reset", "Use this link to reset your Kiokoto password.", "It expires in one hour:", "If you did not request this, ignore this email."
 	switch locale {
 	case "vi":
-		subject, instructions, expiry, ignore = "Đặt lại mật khẩu KotobaWorks", "Dùng liên kết này để đặt lại mật khẩu KotobaWorks.", "Liên kết sẽ hết hạn sau một giờ:", "Nếu bạn không yêu cầu thao tác này, hãy bỏ qua email."
+		subject, instructions, expiry, ignore = "Đặt lại mật khẩu Kiokoto", "Dùng liên kết này để đặt lại mật khẩu Kiokoto.", "Liên kết sẽ hết hạn sau một giờ:", "Nếu bạn không yêu cầu thao tác này, hãy bỏ qua email."
 	case "ja":
-		subject, instructions, expiry, ignore = "KotobaWorks パスワード再設定", "次のリンクから KotobaWorks のパスワードを再設定してください。", "このリンクは 1 時間で期限切れになります。", "お心当たりがない場合は、このメールを無視してください。"
+		subject, instructions, expiry, ignore = "Kiokoto パスワード再設定", "次のリンクから Kiokoto のパスワードを再設定してください。", "このリンクは 1 時間で期限切れになります。", "お心当たりがない場合は、このメールを無視してください。"
 	}
 	return "Subject: " + mime.QEncoding.Encode("UTF-8", subject) + "\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n" + instructions + "\r\n" + expiry + "\r\n" + resetURL + "\r\n\r\n" + ignore + "\r\n"
 }
