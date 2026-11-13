@@ -13,7 +13,7 @@
       "configuration": "Đăng nhập chưa được bật trên môi trường này. Hãy thử lại sau hoặc liên hệ quản trị viên."
     },
     "login": {
-      "metaTitle": "Đăng nhập quản trị — KotobaWorks",
+      "metaTitle": "Đăng nhập quản trị — Kiokoto",
       "backHome": "Về tổng quan admin",
       "brandTagline": "Không gian vận hành",
       "primaryCta": "Đăng nhập",
@@ -55,7 +55,7 @@
     "eyebrow": "Quản trị viên",
     "navigationLabel": "Khu vực quản trị",
     "subtitle": "Nền admin bắt đầu với shell có định hướng RBAC, sẵn sàng nối vào CMS, audit log, media rights và analytics ở các phase tiếp theo.",
-    "title": "Trung tâm vận hành KotobaWorks",
+    "title": "Trung tâm vận hành Kiokoto",
     "growthLink": "Growth & chia sẻ",
     "iamLink": "IAM",
     "usersLink": "Người dùng",
@@ -175,7 +175,7 @@
     "ads": "Quảng cáo",
     "audit": "Nhật ký kiểm toán",
     "bjt": "BJT Questions",
-    "brand": "KotobaWorks Admin",
+    "brand": "Kiokoto Admin",
     "content": "Tổng quan nội dung",
     "daily": "Trung tâm hàng ngày",
     "decks": "Deck học",

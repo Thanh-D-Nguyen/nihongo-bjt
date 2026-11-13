@@ -504,7 +504,7 @@ export function GrowthPostcardsClient({
             brandBgEnd: form.brandBgEnd,
             brandFg: form.brandFg,
             brandAccent: form.brandAccent,
-            badgeKey: "KotobaWorks",
+            badgeKey: "Kiokoto",
             pattern: form.pattern !== "none" ? form.pattern : undefined
           }
         })
