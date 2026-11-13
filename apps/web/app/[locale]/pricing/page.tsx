@@ -14,7 +14,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
-  return { title: `${t.pricing.title} — KotobaWorks` };
+  return { title: `${t.pricing.title} — Kiokoto` };
 }
 
 export default async function PricingPage({

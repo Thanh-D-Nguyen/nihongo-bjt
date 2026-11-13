@@ -11,9 +11,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/scenario"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/config"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/scenario"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/session"
 )
 
 const scenarioTestOrigin = "http://localhost:3000"

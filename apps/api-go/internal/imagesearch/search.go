@@ -122,7 +122,7 @@ func (c *Client) get(ctx context.Context, endpoint string, params url.Values, au
 	if err != nil {
 		return errors.New("invalid request")
 	}
-	req.Header.Set("User-Agent", "KotobaWorks/1.0 (+https://github.com/Thanh-D-Nguyen/nihongo-bjt/issues)")
+	req.Header.Set("User-Agent", "Kiokoto/1.0 (+https://github.com/Thanh-D-Nguyen/nihongo-bjt/issues)")
 	if authorization != "" {
 		req.Header.Set("Authorization", authorization)
 	}

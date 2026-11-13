@@ -34,14 +34,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { token } = await params;
   const preview = await fetchPreview(token);
   if (!preview) {
-    return { title: "Shared Deck — KotobaWorks" };
+    return { title: "Shared Deck — Kiokoto" };
   }
   return {
-    title: `${preview.titleVi} — KotobaWorks`,
+    title: `${preview.titleVi} — Kiokoto`,
     description: preview.descriptionVi ?? `Bộ thẻ ${preview.cardCount} thẻ`,
     openGraph: {
       title: preview.titleVi,
-      description: preview.descriptionVi ?? `Bộ thẻ ${preview.cardCount} thẻ từ KotobaWorks`,
+      description: preview.descriptionVi ?? `Bộ thẻ ${preview.cardCount} thẻ từ Kiokoto`,
       type: "website",
     },
   };
@@ -137,7 +137,7 @@ export default async function SharedDeckPage({ params }: PageProps) {
           href={`/${locale}`}
           className="text-sm font-semibold text-accent hover:underline"
         >
-          Khám phá KotobaWorks →
+          Khám phá Kiokoto →
         </Link>
       </footer>
     </main>

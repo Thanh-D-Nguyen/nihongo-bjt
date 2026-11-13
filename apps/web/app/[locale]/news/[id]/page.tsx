@@ -29,7 +29,7 @@ export async function generateMetadata({
       : articleId.startsWith("livedoor")
         ? (t.homepage.newsLivedoor ?? t.homepage.newsNormal)
         : t.nhkDetail.title;
-  return { title: `${pageTitle} — KotobaWorks` };
+  return { title: `${pageTitle} — Kiokoto` };
 }
 
 export default async function NhkArticlePage({

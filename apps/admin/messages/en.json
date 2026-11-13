@@ -13,7 +13,7 @@
       "configuration": "Sign-in is not enabled on this environment. Try again later or contact an administrator."
     },
     "login": {
-      "metaTitle": "Admin sign-in — KotobaWorks",
+      "metaTitle": "Admin sign-in — Kiokoto",
       "backHome": "Back to admin overview",
       "brandTagline": "Operations console",
       "primaryCta": "Sign in",
@@ -176,7 +176,7 @@
     "ads": "Ads",
     "audit": "Audit log",
     "bjt": "BJT questions",
-    "brand": "KotobaWorks Admin",
+    "brand": "Kiokoto Admin",
     "content": "Content overview",
     "daily": "Daily Hub",
     "decks": "Decks",

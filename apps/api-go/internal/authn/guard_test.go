@@ -10,7 +10,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/session"
 )
 
 // mockSessionLookup implements SessionLookup for unit testing without a database.

@@ -12,7 +12,7 @@
       "configuration": "Sign-in isn't enabled in this environment. You can still use the home page—try again later or contact an administrator."
     },
     "login": {
-      "metaTitle": "Login — KotobaWorks",
+      "metaTitle": "Login — Kiokoto",
       "backHome": "Return to home",
       "brandTagline": "BJT prep and everyday Japanese",
       "primaryCta": "Sign in",
@@ -46,7 +46,7 @@
       "termsAnd": "and"
     },
     "register": {
-      "metaTitle": "Create account — KotobaWorks",
+      "metaTitle": "Create account — Kiokoto",
       "backHome": "Return to home",
       "brandTagline": "BJT prep and everyday Japanese",
       "eyebrow": "Account",
@@ -76,7 +76,7 @@
     },
     "forgotPassword": {
       "languageLabel": "Language",
-      "metaTitle": "Forgot your password? — KotobaWorks",
+      "metaTitle": "Forgot your password? — Kiokoto",
       "title": "Forgot your password?",
       "subtitle": "Enter the email you registered with and we'll send a password reset link.",
       "emailLabel": "Email",
@@ -90,7 +90,7 @@
     },
     "resetPassword": {
       "languageLabel": "Language",
-      "metaTitle": "Reset your password — KotobaWorks",
+      "metaTitle": "Reset your password — Kiokoto",
       "title": "Set a new password",
       "subtitle": "Choose a new password to continue learning.",
       "passwordLabel": "New password",
@@ -112,7 +112,7 @@
     "analytics": "Progress",
     "ariaMain": "main navigation",
     "battle": "Battle",
-    "brand": "KotobaWorks",
+    "brand": "Kiokoto",
     "cardgen": "Create cards",
     "exercises": "Practice",
     "explore": "Explore",
@@ -141,11 +141,11 @@
     "footerLegal": "Legal",
     "footerLearning": "Learning",
     "footerPrivacy": "Privacy",
-    "footerProductSummary": "KotobaWorks supports business Japanese, BJT practice, and daily review through search, flashcards, and structured exercises.",
+    "footerProductSummary": "Kiokoto supports business Japanese, BJT practice, and daily review through search, flashcards, and structured exercises.",
     "footerSupport": "Support",
     "footerTerms": "Terms of use",
     "footerFeedback": "feedback",
-    "footerCopyright": "© 2026 KotobaWorks",
+    "footerCopyright": "© 2026 Kiokoto",
     "dailyStandup": "Clock in",
     "searchPlaceholder": "Search words, grammar, lessons…",
     "companion": {
@@ -154,7 +154,7 @@
       "actionDaily": "today",
       "actionQuiz": "BJT practice",
       "actionReview": "card review",
-      "ariaLabel": "KotobaWorks Companion Bot",
+      "ariaLabel": "Kiokoto Companion Bot",
       "close": "Close companion",
       "collapsedLabel": "Open companion",
       "guestCta": "Sign in to start learning",
@@ -277,7 +277,7 @@
   },
   "home": {
     "actionsLabel": "Quick actions",
-    "eyebrow": "KotobaWorks",
+    "eyebrow": "Kiokoto",
     "primaryAction": "Start learning",
     "quizAction": "BJT practice",
     "battleAction": "BJT Battle",
@@ -558,7 +558,7 @@
     "commandCenterDescription": "The screen makes your next step clear, allows you to see your progress, and doesn't feel overwhelming.",
     "commandCenterEyebrow": "today",
     "commandCenterTitle": "learning command center",
-    "compactBrand": "KotobaWorks",
+    "compactBrand": "Kiokoto",
     "compactHeaderTitle": "Learning home",
     "demoStatsCaption": "This is a display example. When you log in, you will see the actual data.",
     "demoStatReviews": "12",
@@ -778,7 +778,7 @@
     "openDetail": "View details",
     "detailActionsFootnote": "Practice actions use your account; manage quotas in Settings.",
     "bjtSectionTitle": "BJT & workplace corner",
-    "bjtSectionIntro": "KotobaWorks links lookup with drills and cards—prioritizing meetings, schedules, reports, and polite dialogue.",
+    "bjtSectionIntro": "Kiokoto links lookup with drills and cards—prioritizing meetings, schedules, reports, and polite dialogue.",
     "bjtTopicsLabel": "Context ideas",
     "bjtTopicsBody": "With 「{headword}」, practice meetings, internal updates, and reports—aligned with BJT-style tasks.",
     "bjtPhrasesLabel": "Common phrases",
@@ -1403,7 +1403,7 @@
     "formatGuideBullet3": "The main structure consists of three parts: listening comprehension, listening comprehension, and reading comprehension.",
     "formatGuideBullet4": "Each question is multiple-choice and official scores are processed based on IRT.",
     "formatGuideBullet5": "Scores and bands in the app are estimates of your learning progress and are not official results.",
-    "formatGuideDisclaimer": "KotobaWorks is a learning product that is not affiliated with the organizer. The above is a summary of BJT/Pearson VUE official information, so please check the official information before taking the exam.",
+    "formatGuideDisclaimer": "Kiokoto is a learning product that is not affiliated with the organizer. The above is a summary of BJT/Pearson VUE official information, so please check the official information before taking the exam.",
     "formatGuideHelpLink": "help",
     "heroPrimaryMetric": "80|Number of official exam questions",
     "heroSecondaryMetric": "0–800|Scale score",
@@ -1417,7 +1417,7 @@
     "officialSection1": "Understanding the scene, understanding what is being said, and comprehensive listening comprehension. Understand the situation and intent from audio.",
     "officialSection2": "Make work-related decisions by combining audio with materials, charts, and text information.",
     "officialSection3": "Vocabulary/grammar, expressive reading comprehension, comprehensive reading comprehension. Read and judge documents and materials.",
-    "officialStrategyTitle": "How to use with KotobaWorks",
+    "officialStrategyTitle": "How to use with Kiokoto",
     "officialStrategy1": "J5-J4: Solidify the foundation with vocabulary, grammar, and short contexts.",
     "officialStrategy2": "J3-J2: Review situational problems such as emails, meetings, and reports with explanations.",
     "officialStrategy3": "J1/J1+: Solve with a time limit and see print reviews and estimated score trends.",
@@ -1571,7 +1571,7 @@
       "back": "Go back",
       "showAnswers": "Show answers",
       "printButton": "Print exam",
-      "coverKicker": "KotobaWorks · Practice material",
+      "coverKicker": "Kiokoto · Practice material",
       "practiceTitle": "Practice exam",
       "level": "Level",
       "questionCount": "Questions",
@@ -1583,7 +1583,7 @@
       "total": "Total",
       "instructions": "Instructions",
       "chooseAnswer": "Choose the best answer from the options.",
-      "independentNotice": "This is independent KotobaWorks practice material, not an official exam.",
+      "independentNotice": "This is independent Kiokoto practice material, not an official exam.",
       "listeningNotice": "Listening questions print as text scripts; audio does not play on paper.",
       "answerSheet": "Answer sheet",
       "answerSheetHint": "Mark your choices, then select “Show answers” to check them.",
@@ -1592,7 +1592,7 @@
       "rank": "Level",
       "scoreRange": "Score range",
       "description": "Description",
-      "footerTitle": "KotobaWorks · Independent practice material",
+      "footerTitle": "Kiokoto · Independent practice material",
       "footerDisclaimer": "This is not an official BJT exam. Practice results do not predict an official score.",
       "levelDescriptions": {
         "J1+": "Outstanding business communication ability",
@@ -1674,7 +1674,7 @@
     "load": "Load list"
   },
   "profilePage": {
-    "metaTitle": "Profile — KotobaWorks",
+    "metaTitle": "Profile — Kiokoto",
     "title": "My Profile",
     "eyebrow": "Learner",
     "subtitle": "View your achievements, stats and learning journey",
@@ -1871,12 +1871,12 @@
     "trendVsPrevious": "Compared to previous {n} days"
   },
   "helpPage": {
-    "metaTitle": "Help — KotobaWorks",
+    "metaTitle": "Help — Kiokoto",
     "title": "Help center",
     "subtitle": "Need help? Find the answer here.",
     "faqTitle": "Frequently asked questions",
-    "faq1q": "What is KotobaWorks?",
-    "faq1a": "KotobaWorks is a Japanese learning and BJT (Business Japanese Test) prep platform.",
+    "faq1q": "What is Kiokoto?",
+    "faq1a": "Kiokoto is a Japanese learning and BJT (Business Japanese Test) prep platform.",
     "faq2q": "Can I use it for free?",
     "faq2a": "Yes. Flashcard reviews, dictionary searches, and basic BJT practice questions are free.",
     "faq3q": "How to start BJT preparation?",
@@ -1888,22 +1888,22 @@
     "contactLink": "Send feedback"
   },
   "termsPage": {
-    "metaTitle": "Terms of Use — KotobaWorks",
+    "metaTitle": "Terms of Use — Kiokoto",
     "title": "Terms of use",
     "subtitle": "Last updated: May 1, 2026",
     "section1Title": "1. Acceptance of terms and conditions",
-    "section1Body": "By accessing and using KotobaWorks, you are deemed to have agreed to these Terms.",
+    "section1Body": "By accessing and using Kiokoto, you are deemed to have agreed to these Terms.",
     "section2Title": "2. User account",
     "section2Body": "You are responsible for managing your account and password. Do not share your login information with third parties.",
     "section3Title": "3. Learning content",
-    "section3Body": "KotobaWorks content may be used for learning purposes only. Please do not copy or redistribute without permission.",
+    "section3Body": "Kiokoto content may be used for learning purposes only. Please do not copy or redistribute without permission.",
     "section4Title": "4. Privacy",
     "section4Body": "We respect your privacy. Please see our privacy policy for details.",
     "section5Title": "5. Changes to terms and conditions",
     "section5Body": "These Terms may be updated from time to time. Changes will be notified on the Platform."
   },
   "privacyPolicyPage": {
-    "metaTitle": "Privacy Policy — KotobaWorks",
+    "metaTitle": "Privacy Policy — Kiokoto",
     "title": "Privacy policy",
     "subtitle": "Last updated: May 1, 2026",
     "section1Title": "1. Data collection",
@@ -1920,9 +1920,9 @@
     "feedbackLink": "Send feedback"
   },
   "feedbackPage": {
-    "metaTitle": "Feedback — KotobaWorks",
+    "metaTitle": "Feedback — Kiokoto",
     "title": "send feedback",
-    "subtitle": "Your feedback will help us improve KotobaWorks.",
+    "subtitle": "Your feedback will help us improve Kiokoto.",
     "nameLabel": "Name (optional)",
     "namePlaceholder": "name",
     "emailLabel": "Email (optional)",
@@ -2709,7 +2709,7 @@
     "lotoPromoCta": "View now"
   },
   "mePage": {
-    "metaTitle": "Me — KotobaWorks",
+    "metaTitle": "Me — Kiokoto",
     "title": "Me",
     "eyebrow": "Profile & Progress",
     "tabs": {
@@ -2852,9 +2852,9 @@
     "fallbackChallenger": "Someone"
   },
   "publicProfile": {
-    "metaTitle": "{name}'s Profile — KotobaWorks",
-    "metaTitleFallback": "User Profile — KotobaWorks",
-    "metaDescription": "Public learner profile on KotobaWorks",
+    "metaTitle": "{name}'s Profile — Kiokoto",
+    "metaTitleFallback": "User Profile — Kiokoto",
+    "metaDescription": "Public learner profile on Kiokoto",
     "notFound": "User not found",
     "notFoundDesc": "This user does not exist or has been deleted.",
     "home": "Home",
@@ -2980,6 +2980,6 @@
     "home": "Return to home",
     "notFoundTitle": "Page not found",
     "notFoundDescription": "This page is unavailable. Choose a link below to keep learning.",
-    "notFoundMetaTitle": "Page not found — KotobaWorks"
+    "notFoundMetaTitle": "Page not found — Kiokoto"
   }
 }

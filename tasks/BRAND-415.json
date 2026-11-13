@@ -1,0 +1,174 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "BRAND-415",
+  "title": "Reconcile kiokoto branch with main after module rename",
+  "start_head": "0bf5f715cb1258bd277dad7269e1f74a508499cc",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "PR #4 (kiokoto -> main) fails CI: GitHub tests the merge of kiokoto into current main (7ee92f8a). After the branch point, main gained FLASH-431, whose Go files import the pre-rename module path github.com/kotobawork/nihongo-bjt/api-go/... while BRAND-414 renamed the module to github.com/kiokoto/nihongo-bjt/api-go, so the merged tree does not build (go-checks) and the lifecycle check flags the merge-touched files whose content no closed task verified.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "origin/main (7ee92f8a, FLASH-431) is merged into kiokoto with no unresolved conflicts; FLASH-431 content is preserved intact except for Go module import paths"
+      },
+      {
+        "id": "AC2",
+        "text": "No .go file in the merged tree references the old module path github.com/kotobawork/nihongo-bjt (grep count 0); the four FLASH-431 httpserver handler files import github.com/kiokoto/nihongo-bjt/api-go/...; go build ./... passes"
+      },
+      {
+        "id": "AC3",
+        "text": "bash scripts/quality/verify-go.sh passes on the merged tree against the canonical test schema (including the FLASH-431 deck_moderation migration), and the CI lifecycle check (cli.mjs check --ci --base origin/main --head HEAD) reports no UNOWNED or STALE files for the PR range"
+      },
+      {
+        "id": "AC4",
+        "text": "No behavior change beyond merge + import reconciliation: merged flashcarddeck/store.go, httpserver/server.go and admin messages equal the union of both parents; route-contract check (go run ./cmd/route-contract -check) passes without regenerating docs/openapi.json or docs/api-route-inventory.json"
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": "Revert the merge commit and the import-fix commit on kiokoto (git revert -m 1 <merge> + git revert <fix>); the branch returns to 0bf5f715 (BRAND-413) and main is never touched. The FLASH-431 deck_moderation migration is additive (new tables only, owned by FLASH-431 on main) and is not altered by this task, so no database rollback is required; if the branch were ever deployed merged (it is not - PR is draft, deploy runs from main), rollback is the same revert plus redeploy of the previous main SHA."
+  },
+  "classification": {
+    "classes": [
+      "DOMAIN_LOGIC",
+      "API_CONTRACT",
+      "DATABASE",
+      "UI_ONLY"
+    ],
+    "change_kind": "refactor",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-13T08:34:28.073Z",
+      "head": "0bf5f715cb1258bd277dad7269e1f74a508499cc"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-13T08:34:34.571Z",
+      "head": "0bf5f715cb1258bd277dad7269e1f74a508499cc"
+    },
+    {
+      "state": "IMPLEMENTING",
+      "at": "2026-11-13T08:34:34.989Z",
+      "head": "0bf5f715cb1258bd277dad7269e1f74a508499cc"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-13T08:48:08.884Z",
+      "head": "6f92875f978d7ac09adb285e971444fde1d4e08b"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-13T08:48:38.438Z",
+      "head": "6f92875f978d7ac09adb285e971444fde1d4e08b"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-13T08:48:49.996Z",
+      "head": "6f92875f978d7ac09adb285e971444fde1d4e08b"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-13T08:43:15.870Z",
+      "head": "6f92875f978d7ac09adb285e971444fde1d4e08b",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1848,
+        "executed": 1848,
+        "passed": 1848,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1848 passed, 0 allowed skip(s)",
+      "fingerprint": "6154ac36faab3cb28df980850247017bad5611ac06d80fceb7f917ad09a4cc3f"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-13T08:48:08.370Z",
+      "head": "6f92875f978d7ac09adb285e971444fde1d4e08b",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 647,
+        "executed": 647,
+        "passed": 647,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 875,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "6154ac36faab3cb28df980850247017bad5611ac06d80fceb7f917ad09a4cc3f"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-13T08:48:38.056Z",
+      "head": "6f92875f978d7ac09adb285e971444fde1d4e08b",
+      "kind": "review",
+      "mode": "human",
+      "reviewer": "independent-reviewer",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "attested": true,
+      "fingerprint": "6154ac36faab3cb28df980850247017bad5611ac06d80fceb7f917ad09a4cc3f"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-13T08:48:49.991Z",
+    "head": "6f92875f978d7ac09adb285e971444fde1d4e08b",
+    "fingerprint": "6154ac36faab3cb28df980850247017bad5611ac06d80fceb7f917ad09a4cc3f",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "rollback_analysis": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/admin/app/[locale]/flashcards/reports/flashcard-reports-admin-client.test.tsx": "05d76d549c12bee8a6ebbb8fe681182b7b79a252",
+      "apps/admin/app/[locale]/flashcards/reports/flashcard-reports-admin-client.tsx": "a75a6da4c8693090c53bdd403c3d68089b844cb4",
+      "apps/admin/app/[locale]/flashcards/reports/page.tsx": "d9207b684a1ef54f458146f33ab2c0ded774c803",
+      "apps/admin/lib/admin-nav-data.ts": "9a67dc5471d624386acb7445e242ff06cdec116f",
+      "apps/admin/messages/en.json": "7726e9eee77b77f540f1c98d53ddcb4c0eeda176",
+      "apps/admin/messages/ja.json": "78e30b9be270326c284e577b657a6a41eaf72d3c",
+      "apps/admin/messages/vi.json": "f0bc8ba5be027e69ae6b7f68be75299d3938eeef",
+      "apps/api-go/internal/flashcarddeck/store.go": "07b5ad894e5eff89520cbb5cf1ccaafd8d2c85f3",
+      "apps/api-go/internal/httpserver/handler_admin_flashcard_reports.go": "5d4da00e581fc6b1759e1cf34661057f0c14afac",
+      "apps/api-go/internal/httpserver/handler_admin_flashcard_reports_test.go": "255a8e829a591e0886ab2a01c465337ce9c3b729",
+      "apps/api-go/internal/httpserver/handler_flashcard_deck_moderation.go": "7e94703988ca03e869a3316953ca25cd30473cac",
+      "apps/api-go/internal/httpserver/handler_flashcard_deck_moderation_test.go": "59e1e1637e88b27f46c4389559bbdc865eb08a39",
+      "apps/api-go/internal/httpserver/server.go": "a4a8a12229fbc0b39f14a851393a5c05aa6b7fbc",
+      "docs/api-route-inventory.json": "c0cd5bb59dc67ee3c4a07d3e2fb69b590b914a9a",
+      "docs/openapi.json": "9641941affa230d37940b084cf557300eb492aab",
+      "packages/database/prisma/migrations/20261110160000_deck_moderation/migration.sql": "1e72e82a24864115b8096063dd00a4fc1f635602",
+      "packages/database/prisma/schema.prisma": "9af23108336f30c8d2c478cac13a575f801e1849"
+    }
+  }
+}

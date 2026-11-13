@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authlink"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authlink"
 )
 
 // exchangeLinkCodeRequest is the JSON body for POST /api/auth/link/exchange.

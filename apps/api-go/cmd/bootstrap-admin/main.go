@@ -11,7 +11,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/credential"
 )
 
 const minPasswordLen = 12

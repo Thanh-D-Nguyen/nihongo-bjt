@@ -14,7 +14,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
-  return { title: `${t.decks.deckDetailPageTitle} — KotobaWorks` };
+  return { title: `${t.decks.deckDetailPageTitle} — Kiokoto` };
 }
 
 export default async function DeckDetailPage({

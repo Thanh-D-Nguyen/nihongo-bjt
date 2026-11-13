@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/session"
 )
 
 func TestAdminLexemeExampleCreateUsesCanonicalSchemaAndAppearsInList(t *testing.T) {

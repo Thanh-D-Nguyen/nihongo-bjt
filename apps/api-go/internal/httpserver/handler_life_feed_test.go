@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/lifefeed"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/lifefeed"
 )
 
 func lifeEditorialFixture(now time.Time) lifefeed.Card {

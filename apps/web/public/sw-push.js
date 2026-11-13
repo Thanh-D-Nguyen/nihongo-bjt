@@ -1,6 +1,6 @@
 self.addEventListener("push", (event) => {
   const data = event.data?.json() ?? {};
-  const title = data.title || "KotobaWorks";
+  const title = data.title || "Kiokoto";
   const options = {
     body: data.body || "",
     icon: data.icon || "/icons/icon-192x192.png",

@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardreview"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authn"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/flashcardreview"
 )
 
 // getDueFlashcardsHandler implements GET /api/flashcards/reviews/due.

@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/lifefeed"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/lifefeed"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/postgres"
 )
 
 func main() {

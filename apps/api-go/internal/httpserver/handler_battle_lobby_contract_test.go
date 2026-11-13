@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/config"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/session"
 )
 
 func TestBattleLobbyCanonicalContracts(t *testing.T) {

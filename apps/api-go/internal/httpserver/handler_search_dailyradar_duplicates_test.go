@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/search"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/search"
 )
 
 func TestBUG264SearchDeduplicatesContentIdentity(t *testing.T) {

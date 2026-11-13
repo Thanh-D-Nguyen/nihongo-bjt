@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/media"
 )
 
 func TestIMG301MediaStreamCacheAndRevocation(t *testing.T) {

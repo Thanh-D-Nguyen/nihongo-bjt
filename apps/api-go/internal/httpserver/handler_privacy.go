@@ -13,8 +13,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/privacy"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authn"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/privacy"
 )
 
 // Admin privacy request APIs use the profile.privacy_request schema, which is
@@ -282,7 +282,7 @@ func learnerPrivacyExportDownloadHandler(db *pgxpool.Pool, logger *slog.Logger) 
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.Header().Set("Content-Disposition", `attachment; filename="kotobaworks-export-`+id+`.json"`)
+		w.Header().Set("Content-Disposition", `attachment; filename="kiokoto-export-`+id+`.json"`)
 		w.Header().Set("Cache-Control", "private, no-store")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.WriteHeader(http.StatusOK)

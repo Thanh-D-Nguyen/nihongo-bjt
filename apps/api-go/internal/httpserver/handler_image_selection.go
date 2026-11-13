@@ -20,8 +20,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"gocloud.dev/blob"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/imagesearch"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authn"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/imagesearch"
 )
 
 // imageSelectionSigner must use the same secret on all API instances.
@@ -66,7 +66,7 @@ func selectionAttribution(image imagesearch.Image) imagesearch.Image {
 	addReferral := func(raw string) string {
 		u, _ := url.Parse(raw)
 		q := u.Query()
-		q.Set("utm_source", "kotobaworks")
+		q.Set("utm_source", "kiokoto")
 		q.Set("utm_medium", "referral")
 		u.RawQuery = q.Encode()
 		return u.String()
@@ -350,7 +350,7 @@ func downloadSelectionImage(ctx context.Context, provider, raw string, client *h
 	if err != nil {
 		return nil, "", err
 	}
-	req.Header.Set("User-Agent", "KotobaWorks/1.0 (+https://github.com/Thanh-D-Nguyen/nihongo-bjt/issues)")
+	req.Header.Set("User-Agent", "Kiokoto/1.0 (+https://github.com/Thanh-D-Nguyen/nihongo-bjt/issues)")
 	response, err := copyClient.Do(req)
 	if err != nil {
 		return nil, "", errors.New("image download failed")

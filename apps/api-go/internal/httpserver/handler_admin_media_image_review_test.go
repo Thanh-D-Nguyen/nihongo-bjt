@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcarddeck"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/flashcarddeck"
 )
 
 func TestIMG301AdminImageRightsReview(t *testing.T) {

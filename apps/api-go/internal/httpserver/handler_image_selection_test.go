@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/imagesearch"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authn"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/imagesearch"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/media"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/session"
 )
 
 type selectionTracker struct {
@@ -182,7 +182,7 @@ func TestImageSelectionFallbackProviderValidation(t *testing.T) {
 
 func TestDownloadSelectionImageUserAgent(t *testing.T) {
 	client := &http.Client{Transport: selectionTransport(func(r *http.Request) (*http.Response, error) {
-		const want = "KotobaWorks/1.0 (+https://github.com/Thanh-D-Nguyen/nihongo-bjt/issues)"
+		const want = "Kiokoto/1.0 (+https://github.com/Thanh-D-Nguyen/nihongo-bjt/issues)"
 		if got := r.UserAgent(); got != want {
 			t.Errorf("downloadSelectionImage User-Agent = %q, want %q", got, want)
 			return &http.Response{StatusCode: http.StatusForbidden, Body: io.NopCloser(strings.NewReader("")), Request: r}, nil
@@ -255,7 +255,7 @@ func TestImageSelectionPersistence(t *testing.T) {
 	if err := db.QueryRow(context.Background(), `SELECT owner_user_id::text,status,rights_status,provenance::text FROM media.asset WHERE id=$1`, id).Scan(&owner, &status, &rights, &provenance); err != nil {
 		t.Fatal(err)
 	}
-	if owner != userID || status != "pending_review" || rights != "pending_review" || !strings.Contains(provenance, image.URL) || !strings.Contains(provenance, image.Author) || !strings.Contains(provenance, "utm_source=kotobaworks") || !strings.Contains(provenance, `"delivery": "hotlink"`) || strings.Contains(provenance, "download_location") {
+	if owner != userID || status != "pending_review" || rights != "pending_review" || !strings.Contains(provenance, image.URL) || !strings.Contains(provenance, image.Author) || !strings.Contains(provenance, "utm_source=kiokoto") || !strings.Contains(provenance, `"delivery": "hotlink"`) || strings.Contains(provenance, "download_location") {
 		t.Fatalf("invalid asset owner=%s status=%s rights=%s provenance=%s", owner, status, rights, provenance)
 	}
 	claims.Nonce = strings.Repeat("b", 32)

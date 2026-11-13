@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/realtime"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/config"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/realtime"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/session"
 	"github.com/redis/go-redis/v9"
 	"nhooyr.io/websocket"
 )

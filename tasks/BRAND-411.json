@@ -1,0 +1,133 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "BRAND-411",
+  "title": "Rebrand admin app from KotobaWorks to Kiokoto",
+  "start_head": "4e03dc4aefc9a940a6cf78b82ecdb2f9667d836c",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "No KotobaWorks string remains in apps/admin: layout metadata title/description, i18n messages (vi/ja/en), access-denied title, announcement placeholder copy, growth postcard default badge text, PWA icon aria-label"
+      },
+      {
+        "id": "AC2",
+        "text": "suite_frontend passes with no new lint/test debt"
+      },
+      {
+        "id": "AC3",
+        "text": "No admin routes, RBAC, or API contracts change"
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "modify",
+    "rationale": ""
+  },
+  "red_exception": {
+    "category": "visual_only",
+    "reason": "Pure brand copy rename in admin presentation surfaces and i18n strings; no assertable behavior changes. Verified by suite_frontend staying green and a post-change grep audit.",
+    "declared_before_red": true
+  },
+  "red_targets": [],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-13T02:24:24.402Z",
+      "head": "4e03dc4aefc9a940a6cf78b82ecdb2f9667d836c"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-13T02:24:24.653Z",
+      "head": "4e03dc4aefc9a940a6cf78b82ecdb2f9667d836c"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-13T02:24:24.877Z",
+      "head": "4e03dc4aefc9a940a6cf78b82ecdb2f9667d836c"
+    },
+    {
+      "state": "EXCEPTION_APPROVED",
+      "at": "2026-11-13T02:28:20.929Z",
+      "head": "4e03dc4aefc9a940a6cf78b82ecdb2f9667d836c"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-13T02:28:21.464Z",
+      "head": "4e03dc4aefc9a940a6cf78b82ecdb2f9667d836c"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-13T02:28:17.333Z",
+      "head": "4e03dc4aefc9a940a6cf78b82ecdb2f9667d836c",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 644,
+        "executed": 644,
+        "passed": 644,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 872,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "4cd9267f405aa778ed69aa31b5421ecb51021729ccafb0a5fa5a08edec34958b"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-13T02:28:20.701Z",
+      "head": "4e03dc4aefc9a940a6cf78b82ecdb2f9667d836c",
+      "kind": "review",
+      "mode": "human",
+      "reviewer": "independent-reviewer",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "attested": true,
+      "fingerprint": "4cd9267f405aa778ed69aa31b5421ecb51021729ccafb0a5fa5a08edec34958b"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-13T02:28:21.460Z",
+    "head": "4e03dc4aefc9a940a6cf78b82ecdb2f9667d836c",
+    "fingerprint": "4cd9267f405aa778ed69aa31b5421ecb51021729ccafb0a5fa5a08edec34958b",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/admin/app/[locale]/access-denied/page.tsx": "ecc841666645076e88d8cd426abd39f069d33167",
+      "apps/admin/app/[locale]/announcements/announcements-client.tsx": "07243bcb24dd2d958247632d64666b6ef2782270",
+      "apps/admin/app/[locale]/growth/postcards/growth-postcards-client.tsx": "1792e957eb8226ae1d00d164555c651ab4d58217",
+      "apps/admin/app/layout.tsx": "197c0bbdd6b31c28706c448a04e6fd7f64bfd452",
+      "apps/admin/messages/en.json": "d431cc20c8299adacc62dc577fbf4c571f2c57ec",
+      "apps/admin/messages/ja.json": "bf696d05f7a76e3da925dc0868ad59ed4ffdddca",
+      "apps/admin/messages/vi.json": "b01479b536ad094d9537ca84a61ef97aa9479e24",
+      "apps/admin/public/pwa-icon.svg": "16f20ee45bd77b6d2ddbb9ea4bab3210eaae32db"
+    }
+  }
+}

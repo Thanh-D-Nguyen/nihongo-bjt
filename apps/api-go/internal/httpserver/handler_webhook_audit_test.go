@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/config"
 )
 
 func TestAudit165ShareImageRouteIsPublicAndReportsMissingProvider(t *testing.T) {

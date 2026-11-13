@@ -17,7 +17,7 @@ export async function generateMetadata({
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
   return {
-    title: `${t.lotoHub?.title ?? "Loto & xác suất"} — KotobaWorks`,
+    title: `${t.lotoHub?.title ?? "Loto & xác suất"} — Kiokoto`,
     description: t.lotoHub?.subtitle ?? "Học xác suất và tiếng Nhật qua dữ liệu Loto"
   };
 }

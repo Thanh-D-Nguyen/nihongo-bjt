@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authz"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authz"
 )
 
 // ── P1-A1.11: Admin Operations — Import Batches Sub-Domain (1 route) ────────

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcarddeck"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/flashcarddeck"
 )
 
 func TestDeckModerationReportAndBlockAuthor(t *testing.T) {

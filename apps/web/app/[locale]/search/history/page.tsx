@@ -21,7 +21,7 @@ const historyLabels = {
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const labels = historyLabels[locale as keyof typeof historyLabels] ?? historyLabels.vi;
-  return { title: `${labels.title} — KotobaWorks` };
+  return { title: `${labels.title} — Kiokoto` };
 }
 
 export default async function SearchHistoryPage({

@@ -101,7 +101,7 @@ func (f *Fetcher) Fetch(ctx context.Context, game Game) ([]Draw, string, error) 
 		return nil, "", err
 	}
 	req.Header.Set("Accept", "text/csv,application/octet-stream;q=0.9")
-	req.Header.Set("User-Agent", "KotobaWorks-LotoLab/1.0 (+https://kiokoto.com)")
+	req.Header.Set("User-Agent", "Kiokoto-LotoLab/1.0 (+https://kiokoto.com)")
 	resp, err := f.Client.Do(req)
 	if err != nil {
 		return nil, "", fmt.Errorf("download %s CSV: %w", game, err)

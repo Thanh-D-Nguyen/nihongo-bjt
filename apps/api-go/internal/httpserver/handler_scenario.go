@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/scenario"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/authn"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/scenario"
 )
 
 // listScenariosHandler implements GET /api/scenarios.

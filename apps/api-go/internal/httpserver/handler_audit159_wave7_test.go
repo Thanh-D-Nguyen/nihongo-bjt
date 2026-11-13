@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/exercisereview"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcarddeck"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardreview"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/config"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/exercisereview"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/flashcarddeck"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/flashcardreview"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/session"
 )
 
 const audit159Wave7Origin = "http://localhost:3000"

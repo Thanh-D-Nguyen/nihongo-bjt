@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/session"
 )
 
 // AuthenticatedUser holds identity extracted from a session cookie.

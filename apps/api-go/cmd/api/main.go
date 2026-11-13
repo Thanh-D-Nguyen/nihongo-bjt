@@ -1,4 +1,4 @@
-// Package main is the entry point for the KotobaWork Go API service.
+// Package main is the entry point for the Kiokoto Go API service.
 package main
 
 import (
@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/app"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/app"
 )
 
 // version is set at build time via -ldflags.

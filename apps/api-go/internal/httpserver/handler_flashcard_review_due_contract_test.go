@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardreview"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/flashcardreview"
 )
 
 func TestDueFlashcardsIncludeCanonicalCardContent(t *testing.T) {
