@@ -64,7 +64,7 @@ function WidgetCard({ card, locale, labels }: { card: DailyRadarCard; locale: st
           <p className="mt-3 text-xl font-semibold leading-relaxed text-ink" lang="ja">{card.japaneseText}</p>
         )}
         {card.readingText && (
-          <p className="mt-1 text-xs font-medium text-slate-400" lang="ja">{card.readingText}</p>
+          <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400" lang="ja">{card.readingText}</p>
         )}
         {card.descriptionVi && (
           <p className="mt-3 text-xs leading-relaxed text-slate-500 line-clamp-2">{card.descriptionVi}</p>
@@ -222,7 +222,7 @@ function CategoryRail({
           <span className={`radar-badge rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${theme.badge}`}>
             {categoryLabel(category, labels)}
           </span>
-          <span className="text-xs font-medium text-slate-400">{cards.length}</span>
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{cards.length}</span>
         </div>
         <div className="flex items-center gap-2">
           {visible.length > 2 ? (

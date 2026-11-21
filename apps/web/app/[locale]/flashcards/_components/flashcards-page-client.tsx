@@ -419,7 +419,7 @@ export function FlashcardsPageClient({
           >
             {main === "review" ? (
               <div className="mx-auto flex max-w-lg flex-col items-center gap-5 px-3 py-10 text-center sm:py-14">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-leaf/20 bg-leaf-soft text-leaf">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-leaf/20 bg-leaf-soft text-leaf-strong">
                   <IconReview aria-hidden size={30} />
                 </div>
                 <div>

@@ -201,7 +201,9 @@
     "localeSwitcherAria": "Đổi ngôn ngữ hiển thị",
     "localeVi": "Tiếng Việt",
     "localeJa": "日本語",
-    "localeEn": "English"
+    "localeEn": "English",
+    "themeToggleToDark": "Chuyển sang giao diện tối",
+    "themeToggleToLight": "Chuyển sang giao diện sáng"
   },
   "home": {
     "actionsLabel": "Hành động chính",
@@ -2537,6 +2539,7 @@
     "perMonth": "/tháng",
     "unlimited": "Không giới hạn",
     "quotaFormat": "{limit}/{window}",
+    "quotaLine": "{label}: {value}",
     "loading": "Đang tải...",
     "error": "Không thể tải thông tin gói. Vui lòng thử lại.",
     "backHome": "← Về trang chủ",

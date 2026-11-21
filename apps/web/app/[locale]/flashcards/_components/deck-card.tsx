@@ -144,7 +144,7 @@ export function DeckCard({
     <span
       className={
         deck.visibility === "public"
-          ? "shrink-0 rounded-full border border-leaf/25 bg-leaf-soft px-2 py-0.5 text-[10px] font-bold text-leaf"
+          ? "shrink-0 rounded-full border border-leaf/25 bg-leaf-soft px-2 py-0.5 text-[10px] font-bold text-leaf-strong"
           : "shrink-0 rounded-full border border-ink/10 bg-paper px-2 py-0.5 text-[10px] font-bold text-muted"
       }
     >

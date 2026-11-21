@@ -179,7 +179,7 @@ export function AutoGenDialog({ open, onClose, locale, labels }: Props) {
                     onClick={() => setLevel(l)}
                     className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
                       level === l
-                        ? "bg-accent text-white shadow-sm"
+                        ? "bg-action text-white shadow-sm"
                         : "bg-paper text-muted hover:bg-ink/5"
                     }`}
                   >
@@ -202,7 +202,7 @@ export function AutoGenDialog({ open, onClose, locale, labels }: Props) {
                     onClick={() => toggleSource(s)}
                     className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
                       sourceTypes.has(s)
-                        ? "bg-accent text-white shadow-sm"
+                        ? "bg-action text-white shadow-sm"
                         : "bg-paper text-muted hover:bg-ink/5"
                     }`}
                   >
@@ -225,7 +225,7 @@ export function AutoGenDialog({ open, onClose, locale, labels }: Props) {
                     onClick={() => setDirection(d)}
                     className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
                       direction === d
-                        ? "bg-accent text-white shadow-sm"
+                        ? "bg-action text-white shadow-sm"
                         : "bg-paper text-muted hover:bg-ink/5"
                     }`}
                   >

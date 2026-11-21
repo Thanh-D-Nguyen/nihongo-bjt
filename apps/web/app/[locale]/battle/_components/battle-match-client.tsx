@@ -457,7 +457,7 @@ export function BattleMatchClient() {
             <div className="p-4 sm:p-5">
               {error ? (
                 <p
-                  className="mb-4 rounded-xl border border-sakura/20 bg-sakura-soft px-3 py-2 text-sm font-bold text-sakura"
+                  className="mb-4 rounded-xl border border-sakura/20 bg-sakura-soft px-3 py-2 text-sm font-bold text-sakura-strong"
                   role="alert"
                 >
                   {error}
@@ -523,8 +523,8 @@ export function BattleMatchClient() {
                     <p
                       className={`rounded-xl border px-3 py-2 text-sm font-black ${
                         answerResult?.userCorrect
-                          ? "border-leaf/20 bg-leaf-soft text-leaf"
-                          : "border-sakura/20 bg-sakura-soft text-sakura"
+                          ? "border-leaf/20 bg-leaf-soft text-leaf-strong"
+                          : "border-sakura/20 bg-sakura-soft text-sakura-strong"
                       }`}
                       role="status"
                     >

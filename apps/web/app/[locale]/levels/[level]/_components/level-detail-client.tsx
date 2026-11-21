@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
 import { learnerApiFetchOptional } from "../../../../../lib/learner-api";
+import { levelNameWithoutCode } from "../../../../../lib/level-display";
 
 type Tab = "lessons" | "vocabulary" | "kanji" | "grammar";
 
@@ -198,7 +199,9 @@ export function LevelDetailClient({
           <div>
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-4xl font-black tracking-tight text-[#111827]">{level.code}</h1>
-              <span className="text-sm font-bold text-[#475569]">{level.nameVi}</span>
+              {levelNameWithoutCode(level.nameVi, level.code) ? (
+                <span className="text-sm font-bold text-[#475569]">{levelNameWithoutCode(level.nameVi, level.code)}</span>
+              ) : null}
               <span className="rounded-full bg-[#F8FAFC] px-2.5 py-1 text-[10px] font-bold text-[#64748B] ring-1 ring-[#E2E8F0]">
                 {level.scoreMin}–{level.scoreMax} · ≈ {level.jlptEquiv}
               </span>

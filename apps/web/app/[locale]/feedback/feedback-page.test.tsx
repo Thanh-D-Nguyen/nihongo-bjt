@@ -4,15 +4,19 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../messages/en.json";
+import ja from "../../../messages/ja.json";
+import vietnamese from "../../../messages/vi.json";
 import FeedbackPage from "./page";
 
-vi.mock("next/navigation", () => ({ useParams: () => ({ locale: "vi" }) }));
+const navMocks = vi.hoisted(() => ({ locale: "vi" }));
+vi.mock("next/navigation", () => ({ useParams: () => ({ locale: navMocks.locale }) }));
 
 let root: Root;
 let container: HTMLDivElement;
 
 beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  navMocks.locale = "vi";
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
@@ -27,6 +31,18 @@ afterEach(async () => {
 describe("learner feedback form", () => {
   it("uses clear English success copy", () => {
     expect(en.feedbackPage.success, "English feedback confirmation should be grammatical").toBe("Thank you for your feedback! We'll review it soon.");
+  });
+
+  it("sets document.title from feedbackPage.metaTitle across all locales", async () => {
+    for (const [locale, copy] of [["vi", vietnamese], ["ja", ja], ["en", en]] as const) {
+      document.title = "Kiokoto";
+      navMocks.locale = locale;
+      await act(async () => root.render(<FeedbackPage />));
+      expect(
+        document.title,
+        "feedback page must set document.title from feedbackPage.metaTitle",
+      ).toBe(copy.feedbackPage.metaTitle);
+    }
   });
 
   it("associates every localized field label and prevents duplicate submits while saving", async () => {

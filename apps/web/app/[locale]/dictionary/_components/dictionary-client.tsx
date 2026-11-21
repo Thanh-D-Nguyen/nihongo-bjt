@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
+import { displayLexemeReading } from "../../../../lib/dictionary-display";
 import { learnerApiFetchOptional } from "../../../../lib/learner-api";
 
 interface LexemeItem {
@@ -148,7 +149,7 @@ export function DictionaryClient({ labels, locale }: { labels: Labels; locale: s
                   <div className="flex flex-wrap items-baseline gap-2">
                     <span className="jp-text text-lg font-semibold text-ink" lang="ja">{item.headword}</span>
                     {item.reading ? (
-                      <span className="jp-text text-sm text-muted" lang="ja">{item.reading}</span>
+                      <span className="jp-text text-sm text-muted" lang="ja">{displayLexemeReading(item.reading)}</span>
                     ) : null}
                     {item.jlptLevel ? (
                       <span className="ml-auto rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent">

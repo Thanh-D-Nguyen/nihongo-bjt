@@ -15,7 +15,7 @@ export function CategoryFilter({ categories, selected, onSelect, allLabel }: Cat
         aria-selected={selected === null}
         className={`min-h-[36px] rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-200 ${
           selected === null
-            ? "bg-accent text-white shadow-md shadow-accent/20 scale-105"
+            ? "bg-action text-white shadow-md shadow-accent/20 scale-105"
             : "bg-surface text-ink/60 hover:bg-surface-hover active:scale-95 dark:bg-gray-800 dark:text-ink/50"
         }`}
         onClick={() => onSelect(null)}
@@ -29,7 +29,7 @@ export function CategoryFilter({ categories, selected, onSelect, allLabel }: Cat
           aria-selected={selected === key}
           className={`min-h-[36px] rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-200 ${
             selected === key
-              ? "bg-accent text-white shadow-md shadow-accent/20 scale-105"
+              ? "bg-action text-white shadow-md shadow-accent/20 scale-105"
               : "bg-surface text-ink/60 hover:bg-surface-hover active:scale-95 dark:bg-gray-800 dark:text-ink/50"
           }`}
           onClick={() => onSelect(key)}

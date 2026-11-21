@@ -84,3 +84,17 @@ export function saveAppearance(state: AppearanceState) {
     window.dispatchEvent(new CustomEvent<AppearanceState>(APPEARANCE_CHANGE_EVENT, { detail: state }));
   }
 }
+
+/** Persists a signed-in learner's appearance to their profile (same contract the settings page uses). */
+export function persistAppearanceToServer(state: AppearanceState): Promise<Response> {
+  return fetch("/api/auth/me", {
+    method: "PUT",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      themeMode: state.theme,
+      fontSizePreference: state.fontSize,
+      densityPreference: state.density,
+    }),
+  });
+}

@@ -169,7 +169,7 @@ export function FlashcardStyleGrid({
                   ) : null}
                 </span>
                 {isActive ? (
-                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-accent px-2 py-1 text-[10px] font-black text-white">
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-action px-2 py-1 text-[10px] font-black text-white">
                     <span aria-hidden>✓</span>
                     {labels.stylePickerActive}
                   </span>

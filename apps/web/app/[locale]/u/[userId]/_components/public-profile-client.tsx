@@ -293,7 +293,7 @@ function ProfileNotFound({ labels, locale }: { labels: PublicProfileLabels; loca
         <p className="text-sm text-muted mt-2">{labels.notFoundDesc}</p>
         <a
           href={`/${locale}`}
-          className="inline-flex items-center gap-2 mt-6 px-5 py-2.5 rounded-xl bg-accent text-white font-semibold text-sm shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-150"
+          className="inline-flex items-center gap-2 mt-6 px-5 py-2.5 rounded-xl bg-action text-white font-semibold text-sm shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-150"
         >
           {labels.home}
         </a>

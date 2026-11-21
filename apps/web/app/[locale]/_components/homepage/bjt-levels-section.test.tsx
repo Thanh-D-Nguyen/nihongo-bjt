@@ -67,4 +67,14 @@ describe("BjtLevelsSection", () => {
 
     expect(host.textContent).toContain(labels.error);
   });
+
+  it("renders each level code once per card when the API name already starts with the code", async () => {
+    apiFetch.mockResolvedValue(new Response(JSON.stringify([{ ...levels[0], nameVi: "J5 — Sơ cấp", nameEn: "J5 — Lower beginner" }])));
+    await act(async () => root.render(<BjtLevelsSection labels={labels} locale="vi" />));
+    await act(async () => { await Promise.resolve(); });
+
+    const card = host.querySelector('a[href="/vi/levels/J5"]');
+    expect(card?.textContent?.match(/J5/g)?.length, "level code must render once per card").toBe(1);
+    expect(card?.textContent).toContain("Sơ cấp");
+  });
 });

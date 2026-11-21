@@ -201,7 +201,9 @@
     "localeSwitcherAria": "表示言語を切り替える",
     "localeVi": "Tiếng Việt",
     "localeJa": "日本語",
-    "localeEn": "English"
+    "localeEn": "English",
+    "themeToggleToDark": "ダークテーマに切り替える",
+    "themeToggleToLight": "ライトテーマに切り替える"
   },
   "home": {
     "actionsLabel": "主な操作",
@@ -2537,6 +2539,7 @@
     "perMonth": "/月",
     "unlimited": "無制限",
     "quotaFormat": "{limit}/{window}",
+    "quotaLine": "{label}: {value}",
     "loading": "読み込み中...",
     "error": "プラン情報を読み込めませんでした。再度お試しください。",
     "backHome": "← ホームに戻る",

@@ -1,0 +1,420 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-432",
+  "title": "Fix production audit findings: sitemap, favicon, web security headers, page titles, Shiba button clipping, auth-guard blank flash",
+  "start_head": "af387e4b7fd0acbc99a8c50075ded2a141c88e8d",
+  "preexisting_changes": {},
+  "spec": {
+    "problem": "Production audit of kiokoto.com (af387e4b) identified six web issues: missing /sitemap.xml, missing /favicon.ico rewrite, absent web security headers, missing register/feedback page titles, clipped Shiba companion mascot button on mobile, and blank main flash on auth-guarded pages.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "AC1: apps/web/app/sitemap.ts exists, typechecks, and lists the public routes x 3 locales; robots.ts references the sitemap."
+      },
+      {
+        "id": "AC2",
+        "text": "AC2: apps/web/next.config.mjs rewrites /favicon.ico -> /pwa-icon.svg and the existing /api rewrite still works."
+      },
+      {
+        "id": "AC3",
+        "text": "AC3: apps/web/next.config.mjs headers() returns the five admin-mirrored security headers for /(.*) and no CSP/HSTS."
+      },
+      {
+        "id": "AC4",
+        "text": "AC4: register and feedback pages set document.title from i18n metaTitle (keys present in vi/ja/en for both)."
+      },
+      {
+        "id": "AC5",
+        "text": "AC5: companion mascot markup/styles give the avatar an explicit square box with no clipping overflow; existing companion-bot tests still pass."
+      },
+      {
+        "id": "AC6",
+        "text": "AC6: flashcards, quiz and battle pages render a loading state while auth is loading instead of blank/protected content; redirect behavior unchanged; existing related tests pass."
+      },
+      {
+        "id": "AC7",
+        "text": "AC7: pnpm quality verify passes, task WEB-432 is CLOSED via the harness, and git status shows only the intended files changed."
+      }
+    ],
+    "expected_behavior": "sitemap.ts lists 17 public routes across vi/ja/en and robots.ts references the sitemap; next.config.mjs rewrites /favicon.ico to /pwa-icon.svg while keeping /api proxy and sets the 5 admin-mirrored security headers without CSP/HSTS; register and feedback set document.title (and metadata) from i18n metaTitle; companion mascot uses an explicit 48px square box with non-clipping overflow; RequireAuth renders a loading state while auth is loading/redirecting without exposing protected content.",
+    "observed_behavior": "/sitemap.xml and /favicon.ico return 404; apps/web sends no security headers; /vi/register and /vi/feedback keep generic Kiokoto title; companion mascot container lacks explicit height and BattleBotAvatar clips with overflow-hidden; RequireAuth returns null while auth is loading causing blank main flash on /flashcards, /quiz, and /battle.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Web-only UI, metadata, and Next.js config bugfixes; no DB, API contract, or Go changes."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/robots.test.ts",
+      "test": "robots metadata > declares the canonical sitemap URL",
+      "expect": "robots.ts must advertise the canonical sitemap.xml URL"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/next-config.test.ts",
+      "test": "web next.config.mjs > rewrites /favicon.ico to /pwa-icon.svg while preserving the /api proxy rewrite",
+      "expect": "web rewrites must rewrite /favicon.ico to /pwa-icon.svg"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/next-config.test.ts",
+      "test": "web next.config.mjs > sets the five admin-mirrored security headers without CSP or HSTS",
+      "expect": "web next.config.mjs must define headers() with security headers"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/login/auth-pages.regression.test.tsx",
+      "test": "learner auth pages regression > sets document.title from auth.register.metaTitle across all locales",
+      "expect": "register page must set document.title from auth.register.metaTitle"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/feedback/feedback-page.test.tsx",
+      "test": "learner feedback form > sets document.title from feedbackPage.metaTitle across all locales",
+      "expect": "feedback page must set document.title from feedbackPage.metaTitle"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/companion-bot.test.tsx",
+      "test": "CompanionBot API boundary > gives the companion mascot an explicit square box with non-clipping overflow",
+      "expect": "mascot container must declare an explicit square height"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/battle-bot-avatar.test.tsx",
+      "test": "BattleBotAvatar > uses non-clipping overflow for companion variant while keeping framed variants clipped",
+      "expect": "companion avatar must use overflow-visible so animated edges are not sliced"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/require-auth.test.tsx",
+      "test": "RequireAuth > renders a loading state while auth is loading instead of blank or protected content",
+      "expect": "RequireAuth must render a loading status while auth is loading instead of blank content"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-21T11:07:09.870Z",
+      "head": "af387e4b7fd0acbc99a8c50075ded2a141c88e8d"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-21T11:07:10.424Z",
+      "head": "af387e4b7fd0acbc99a8c50075ded2a141c88e8d"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-21T11:07:10.678Z",
+      "head": "af387e4b7fd0acbc99a8c50075ded2a141c88e8d"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-21T11:09:09.619Z",
+      "head": "af387e4b7fd0acbc99a8c50075ded2a141c88e8d"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-21T13:40:43.024Z",
+      "head": "af387e4b7fd0acbc99a8c50075ded2a141c88e8d"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-21T13:59:39.150Z",
+      "head": "af387e4b7fd0acbc99a8c50075ded2a141c88e8d"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-21T14:07:08.063Z",
+      "head": "af387e4b7fd0acbc99a8c50075ded2a141c88e8d"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-21T11:09:09.291Z",
+      "head": "af387e4b7fd0acbc99a8c50075ded2a141c88e8d",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/robots.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/next-config.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/login/auth-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/feedback/feedback-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/_components/companion-bot.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/_components/battle-bot-avatar.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/require-auth.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/robots.test.ts::robots metadata > declares the canonical sitemap URL",
+          "outcome": "FAIL",
+          "excerpt": "robots.ts must advertise the canonical sitemap.xml URL: expected undefined to be 'https://kiokoto.com/sitemap.xml' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/next-config.test.ts::web next.config.mjs > rewrites /favicon.ico to /pwa-icon.svg while preserving the /api proxy rewrite",
+          "outcome": "FAIL",
+          "excerpt": "web rewrites must rewrite /favicon.ico to /pwa-icon.svg: expected [ { source: '/api/:path*', …(1) } ] to deep equally contain { source: '/favicon.ico', …(1) }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/next-config.test.ts::web next.config.mjs > sets the five admin-mirrored security headers without CSP or HSTS",
+          "outcome": "FAIL",
+          "excerpt": "web next.config.mjs must define headers() with security headers: expected 'undefined' to be 'function' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > sets document.title from auth.register.metaTitle across all locales",
+          "outcome": "FAIL",
+          "excerpt": "register page must set document.title from auth.register.metaTitle: expected 'Kiokoto' to be 'Đăng ký — Kiokoto' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > sets document.title from feedbackPage.metaTitle across all locales",
+          "outcome": "FAIL",
+          "excerpt": "feedback page must set document.title from feedbackPage.metaTitle: expected 'Kiokoto' to be 'Góp ý — Kiokoto' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > gives the companion mascot an explicit square box with non-clipping overflow",
+          "outcome": "FAIL",
+          "excerpt": "mascot container must declare an explicit square height: expected '' to be '48px' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/battle-bot-avatar.test.tsx::BattleBotAvatar > uses non-clipping overflow for companion variant while keeping framed variants clipped",
+          "outcome": "FAIL",
+          "excerpt": "companion avatar must use overflow-visible so animated edges are not sliced: expected 'relative grid aspect-square place-ite…' to contain 'overflow-visible'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/require-auth.test.tsx::RequireAuth > renders a loading state while auth is loading instead of blank or protected content",
+          "outcome": "FAIL",
+          "excerpt": "RequireAuth must render a loading status while auth is loading instead of blank content: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/robots.test.ts::robots metadata > declares the canonical sitemap URL": "robots.ts must advertise the canonical sitemap.xml URL",
+        "vitest:apps/web/app/next-config.test.ts::web next.config.mjs > rewrites /favicon.ico to /pwa-icon.svg while preserving the /api proxy rewrite": "web rewrites must rewrite /favicon.ico to /pwa-icon.svg",
+        "vitest:apps/web/app/next-config.test.ts::web next.config.mjs > sets the five admin-mirrored security headers without CSP or HSTS": "web next.config.mjs must define headers() with security headers",
+        "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > sets document.title from auth.register.metaTitle across all locales": "register page must set document.title from auth.register.metaTitle",
+        "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > sets document.title from feedbackPage.metaTitle across all locales": "feedback page must set document.title from feedbackPage.metaTitle",
+        "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > gives the companion mascot an explicit square box with non-clipping overflow": "mascot container must declare an explicit square height",
+        "vitest:apps/web/app/_components/battle-bot-avatar.test.tsx::BattleBotAvatar > uses non-clipping overflow for companion variant while keeping framed variants clipped": "companion avatar must use overflow-visible so animated edges are not sliced",
+        "vitest:apps/web/app/require-auth.test.tsx::RequireAuth > renders a loading state while auth is loading instead of blank or protected content": "RequireAuth must render a loading status while auth is loading instead of blank content"
+      },
+      "fingerprint": "0f75c1c9518cbc360dae5fedd1176bd84050d9bb5c44b76d64b14b18505114a5"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-21T13:40:42.305Z",
+      "head": "af387e4b7fd0acbc99a8c50075ded2a141c88e8d",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/robots.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/next-config.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/login/auth-pages.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/feedback/feedback-page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/_components/companion-bot.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/_components/battle-bot-avatar.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/require-auth.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/robots.test.ts::robots metadata > declares the canonical sitemap URL",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/next-config.test.ts::web next.config.mjs > rewrites /favicon.ico to /pwa-icon.svg while preserving the /api proxy rewrite",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/next-config.test.ts::web next.config.mjs > sets the five admin-mirrored security headers without CSP or HSTS",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/login/auth-pages.regression.test.tsx::learner auth pages regression > sets document.title from auth.register.metaTitle across all locales",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/feedback/feedback-page.test.tsx::learner feedback form > sets document.title from feedbackPage.metaTitle across all locales",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot API boundary > gives the companion mascot an explicit square box with non-clipping overflow",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/battle-bot-avatar.test.tsx::BattleBotAvatar > uses non-clipping overflow for companion variant while keeping framed variants clipped",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/require-auth.test.tsx::RequireAuth > renders a loading state while auth is loading instead of blank or protected content",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "da7a7fd38e5747ab3d3d05cf6ff6d6e6cd040b2d5ad495366270bb685034cb83"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-21T13:43:58.871Z",
+      "head": "af387e4b7fd0acbc99a8c50075ded2a141c88e8d",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 650,
+        "executed": 650,
+        "passed": 650,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 875,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "da7a7fd38e5747ab3d3d05cf6ff6d6e6cd040b2d5ad495366270bb685034cb83"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-21T13:46:07.026Z",
+      "head": "af387e4b7fd0acbc99a8c50075ded2a141c88e8d",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 650,
+        "executed": 650,
+        "passed": 650,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 875,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "da7a7fd38e5747ab3d3d05cf6ff6d6e6cd040b2d5ad495366270bb685034cb83"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-21T13:59:37.342Z",
+      "head": "af387e4b7fd0acbc99a8c50075ded2a141c88e8d",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 650,
+        "executed": 650,
+        "passed": 650,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 875,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "da7a7fd38e5747ab3d3d05cf6ff6d6e6cd040b2d5ad495366270bb685034cb83"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-21T14:07:06.661Z",
+      "head": "af387e4b7fd0acbc99a8c50075ded2a141c88e8d",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "fresh-research-subagent:adccc8f4",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "011bc51504873bfec9031079df44c34f6f44ab99d19ec8a67791ed02eb74eedd",
+      "attested": true,
+      "fingerprint": "da7a7fd38e5747ab3d3d05cf6ff6d6e6cd040b2d5ad495366270bb685034cb83"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-21T14:07:08.055Z",
+    "head": "af387e4b7fd0acbc99a8c50075ded2a141c88e8d",
+    "fingerprint": "da7a7fd38e5747ab3d3d05cf6ff6d6e6cd040b2d5ad495366270bb685034cb83",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/feedback/feedback-page.test.tsx": "36bfdbf5e8afb317378a18e56f3f7efbdbf9941d",
+      "apps/web/app/[locale]/feedback/layout.tsx": "a95618e8e96a710064e2f8e50a74df2d61e7d005",
+      "apps/web/app/[locale]/feedback/page.tsx": "6d364fbbb26fbab79abdd5b7a943d37dfc3d8bd9",
+      "apps/web/app/[locale]/login/auth-pages.regression.test.tsx": "6bcf5b40bbdc30bda61cf09a7cd348e9c5460064",
+      "apps/web/app/[locale]/register/layout.tsx": "2be5e37321b888342af25eeb18816b249e3612f9",
+      "apps/web/app/[locale]/register/page.tsx": "fa574e16e0f63782e9eb7c48a2f437149b2d9822",
+      "apps/web/app/_components/battle-bot-avatar.test.tsx": "51486ba561b3ae8025ad9b5383699444c3ea602b",
+      "apps/web/app/_components/battle-bot-avatar.tsx": "1b9a053c62e880047cf619c53a0d486007f08095",
+      "apps/web/app/_components/companion-bot.test.tsx": "f1c1b01591a075f5dcea6e8dfe458714bcae851c",
+      "apps/web/app/_components/companion-bot.tsx": "e4489c18218007e0777c0b189137683304e3bc4e",
+      "apps/web/app/next-config.test.ts": "e3fd368db094dcf8c783fcdef9b24d336bd0e26d",
+      "apps/web/app/require-auth.test.tsx": "3b008b9721624245f91426137a55c618e79db827",
+      "apps/web/app/robots.test.ts": "491bf7b92502098835c77e1e5475d819c136448e",
+      "apps/web/app/robots.ts": "91bfa6e2c863daaab5480ecda6222436a239e0c4",
+      "apps/web/app/sitemap.test.ts": "3624e5504d6b01e27c9e0c80df09cac9eb2dd4c1",
+      "apps/web/app/sitemap.ts": "a0f4b160eb3bc4bd062eb1415784cc3e0616488b",
+      "apps/web/components/auth/require-auth.tsx": "27039449abbeaa6a84b0acb39bfc9b84ffdefe1e",
+      "apps/web/lib/site-url.ts": "0da94902b25c4a2ae36ec025a496a07a41110617",
+      "apps/web/next.config.mjs": "d4acf7c64a8321c3aae33b7ae779d48d958049e1"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

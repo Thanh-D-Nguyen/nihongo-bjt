@@ -946,9 +946,9 @@ function ExerciseCard({
                   className={`exercise-answer-btn group flex w-full items-center gap-3 rounded-xl border-2 px-4 py-3.5 text-left text-sm font-bold leading-6 ${
                     answerResult
                       ? isCorrectChoice
-                        ? "exercise-answer-correct border-leaf/30 bg-leaf-soft text-leaf shadow-sm shadow-leaf/10"
+                        ? "exercise-answer-correct border-leaf/30 bg-leaf-soft text-leaf-strong shadow-sm shadow-leaf/10"
                         : isWrong
-                          ? "exercise-answer-wrong border-sakura/30 bg-sakura-soft text-sakura"
+                          ? "exercise-answer-wrong border-sakura/30 bg-sakura-soft text-sakura-strong"
                           : "border-transparent bg-paper/60 text-ink/50"
                       : isSelected
                         ? "border-accent/30 bg-accent/8 text-ink shadow-sm shadow-accent/10"

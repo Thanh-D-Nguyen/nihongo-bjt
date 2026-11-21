@@ -227,7 +227,7 @@ function StreakBadge({ label, streak }: { label: string; streak: number }) {
         streak >= 10
           ? "bg-gradient-to-r from-leaf/90 to-leaf text-white ring-leaf/30"
           : streak >= 5
-            ? "bg-leaf-soft/70 text-leaf ring-leaf/25"
+            ? "bg-leaf-soft/70 text-leaf-strong ring-leaf/25"
             : "bg-paper text-muted ring-ink/10"
       )}
       key={streak}

@@ -615,7 +615,7 @@ export function AchievementsPageClient({
                     key={b.id}
                     className={`min-h-[44px] rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200 ${
                       selectedBoard?.leaderboard.id === b.id
-                        ? "bg-accent text-white shadow-md shadow-accent/20 scale-105"
+                        ? "bg-action text-white shadow-md shadow-accent/20 scale-105"
                         : "bg-surface text-ink/70 hover:bg-surface-hover active:scale-95 dark:bg-gray-800"
                     }`}
                     onClick={() => loadLeaderboard(b.id)}
@@ -628,7 +628,7 @@ export function AchievementsPageClient({
               {/* My rank highlight */}
               {myRank && (
                 <div className="flex items-center gap-4 rounded-2xl border-2 border-accent/30 bg-accent/5 p-4 dark:bg-accent/10">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-lg font-bold text-white">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-action text-lg font-bold text-white">
                     #{myRank.rank}
                   </div>
                   <div>

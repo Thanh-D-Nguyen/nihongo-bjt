@@ -159,7 +159,7 @@ export function OnboardingDiagnostic({
             <button
               type="button"
               onClick={proceed}
-              className="rounded-lg bg-accent px-3.5 py-1.5 text-xs font-bold text-white hover:bg-accent/90"
+              className="rounded-lg bg-action px-3.5 py-1.5 text-xs font-bold text-white hover:bg-action-hover"
             >
               {isLast ? "Xem gợi ý trình độ" : "Câu tiếp →"}
             </button>

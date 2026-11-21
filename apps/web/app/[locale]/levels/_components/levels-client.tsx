@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import { learnerApiFetchOptional } from "../../../../lib/learner-api";
+import { levelNameWithoutCode } from "../../../../lib/level-display";
 
 interface LevelItem {
   code: string;
@@ -159,7 +160,7 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
         <div className="space-y-0">
           {levels.filter(lv => lv.vocabCount + lv.kanjiCount + lv.grammarCount > 0 || lv.publishedLessonCount > 0).map((lv, index, availableLevels) => {
             const isLast = index === availableLevels.length - 1;
-            const name = locale === "ja" ? lv.nameJa : locale === "en" ? lv.nameEn : lv.nameVi;
+            const name = levelNameWithoutCode(locale === "ja" ? lv.nameJa : locale === "en" ? lv.nameEn : lv.nameVi, lv.code);
             const description = locale === "ja" ? lv.descriptionJa : locale === "en" ? lv.descriptionEn : lv.descriptionVi;
 
             return (
@@ -167,8 +168,8 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
                 className={`roadmap-node relative flex gap-4 pb-8 sm:gap-5 ${isLast ? "pb-0" : ""}`}
                 key={lv.code}
               >
-                {/* Timeline Dot — neutral state */}
-                <div className="relative z-10 shrink-0">
+                {/* Timeline Dot — neutral state; decorative repeat of the card heading */}
+                <div aria-hidden="true" className="relative z-10 shrink-0">
                   <div
                     className="flex size-12 items-center justify-center rounded-full border-2 border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-subtle)] transition-colors sm:size-14"
                   >
@@ -184,7 +185,7 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h2 className="text-h3 text-ink">{lv.code}</h2>
-                      <p className="text-body-sm mt-1 text-muted">{name}</p>
+                      {name ? <p className="text-body-sm mt-1 text-muted">{name}</p> : null}
                     </div>
                     <span className="shrink-0 rounded-full bg-[var(--color-paper)] px-2.5 py-1 text-[10px] font-semibold tabular-nums text-muted ring-1 ring-[var(--color-border)]">
                       {lv.scoreMin}–{lv.scoreMax}

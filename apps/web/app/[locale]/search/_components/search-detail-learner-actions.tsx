@@ -200,7 +200,7 @@ export function SearchBookmarkToggle({
       className={cn(
         "inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border p-0 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 active:scale-95",
         bookmarked
-          ? "border-sakura/30 bg-sakura-soft/40 text-sakura hover:bg-sakura-soft/60"
+          ? "border-sakura/30 bg-sakura-soft/40 text-sakura-strong hover:bg-sakura-soft/60"
           : "border-ink/12 bg-paper text-ink/85 hover:bg-ink/5",
         busy && "opacity-70"
       )}
@@ -261,7 +261,7 @@ export function SearchReadAloudButton({
           <button
             aria-label={labels.stop}
             className={cn(
-              "inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border border-sakura/25 bg-sakura-soft/30 text-sakura transition-all duration-150 hover:bg-sakura-soft/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 active:scale-95",
+              "inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border border-sakura/25 bg-sakura-soft/30 text-sakura-strong transition-all duration-150 hover:bg-sakura-soft/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 active:scale-95",
               compact && "min-h-9 min-w-9"
             )}
             onClick={stop}

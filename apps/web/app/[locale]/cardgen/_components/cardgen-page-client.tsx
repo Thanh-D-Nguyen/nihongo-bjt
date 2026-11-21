@@ -154,7 +154,7 @@ export function CardgenPageClient({ labels, locale }: { labels: CardgenLabels; l
                   key={m}
                   className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                     mode === m
-                      ? "bg-accent text-white"
+                      ? "bg-action text-white"
                       : "bg-surface text-ink/70 hover:bg-surface-hover"
                   }`}
                   onClick={() => setMode(m)}
@@ -177,7 +177,7 @@ export function CardgenPageClient({ labels, locale }: { labels: CardgenLabels; l
                     key={s}
                     className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                       sourceType === s
-                        ? "bg-accent text-white"
+                        ? "bg-action text-white"
                         : "bg-surface text-ink/70 hover:bg-surface-hover"
                     }`}
                     onClick={() => setSourceType(s)}
@@ -216,7 +216,7 @@ export function CardgenPageClient({ labels, locale }: { labels: CardgenLabels; l
                     key={l}
                     className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                       level === l
-                        ? "bg-accent text-white"
+                        ? "bg-action text-white"
                         : "bg-surface text-ink/70 hover:bg-surface-hover"
                     }`}
                     onClick={() => setLevel(l)}
@@ -237,7 +237,7 @@ export function CardgenPageClient({ labels, locale }: { labels: CardgenLabels; l
                   key={d}
                   className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                     direction === d
-                      ? "bg-accent text-white"
+                      ? "bg-action text-white"
                       : "bg-surface text-ink/70 hover:bg-surface-hover"
                   }`}
                   onClick={() => setDirection(d)}

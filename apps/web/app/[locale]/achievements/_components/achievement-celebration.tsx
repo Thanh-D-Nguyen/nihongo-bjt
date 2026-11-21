@@ -85,7 +85,7 @@ export function AchievementCelebration({ show, achievementName, tier, onDismiss,
           {tier}
         </div>
         <button
-          className="mt-6 min-h-[48px] rounded-xl bg-accent px-6 py-2.5 text-sm font-medium text-white transition-transform active:scale-95"
+          className="mt-6 min-h-[48px] rounded-xl bg-action px-6 py-2.5 text-sm font-medium text-white transition-transform active:scale-95"
           onClick={(e) => { e.stopPropagation(); onDismiss(); }}
         >
           {labels.celebrationCta}

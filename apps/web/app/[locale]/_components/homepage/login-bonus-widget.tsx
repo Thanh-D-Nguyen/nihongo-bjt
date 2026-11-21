@@ -104,7 +104,7 @@ export function LoginBonusWidget() {
           <button
             disabled={claiming}
             onClick={() => void claim()}
-            className="inline-flex min-h-8 items-center rounded-lg bg-accent px-3 text-xs font-bold text-white transition hover:opacity-90 active:scale-[0.95] disabled:opacity-50"
+            className="inline-flex min-h-8 items-center rounded-lg bg-action px-3 text-xs font-bold text-white transition hover:opacity-90 active:scale-[0.95] disabled:opacity-50"
           >
             {claiming ? "…" : "Nhận"}
           </button>
