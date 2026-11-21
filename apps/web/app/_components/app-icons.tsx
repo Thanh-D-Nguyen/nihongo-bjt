@@ -185,3 +185,11 @@ export function IconExplore(props: AppIconProps) {
 export function IconMagazine(props: AppIconProps) {
   return path("M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z M7 8h4 M7 12h10 M7 16h10", props);
 }
+
+export function IconSun(props: AppIconProps) {
+  return path("M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z M12 2v2 M12 20v2 M4.93 4.93l1.41 1.41 M17.66 17.66l1.41 1.41 M2 12h2 M20 12h2 M4.93 19.07l1.41-1.41 M17.66 6.34l1.41-1.41", props);
+}
+
+export function IconMoon(props: AppIconProps) {
+  return path("M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z", props);
+}

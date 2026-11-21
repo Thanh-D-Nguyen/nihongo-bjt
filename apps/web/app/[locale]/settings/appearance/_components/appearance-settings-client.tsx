@@ -12,6 +12,7 @@ import {
   appearanceFromProfile,
   applyTheme,
   loadCachedAppearance,
+  persistAppearanceToServer,
   saveAppearance
 } from "../../../../../lib/appearance";
 
@@ -78,16 +79,7 @@ export function AppearanceSettingsClient({
         const save = async () => {
           if (revision === saveRevisionRef.current) setSaving(true);
           try {
-            const response = await fetch("/api/auth/me", {
-              method: "PUT",
-              credentials: "same-origin",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                themeMode: next.theme,
-                fontSizePreference: next.fontSize,
-                densityPreference: next.density,
-              }),
-            });
+            const response = await persistAppearanceToServer(next);
             if (revision !== saveRevisionRef.current) return;
             if (!response.ok) {
               setSaveError(true);

@@ -150,7 +150,7 @@ function FeaturedNewsCard({
 
         {/* Content half */}
         <div className="flex flex-col justify-center p-6 md:p-8">
-          <div className="flex items-center gap-2 text-xs text-slate-400">
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             <span>{timeAgo(article.publishedAt, labels)}</span>
             {article.difficulty && (
@@ -231,7 +231,7 @@ function CompactNewsCard({
 
       {/* Content */}
       <div className="flex flex-col p-4">
-        <p className="text-[11px] font-medium text-slate-400">
+        <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
           {timeAgo(article.publishedAt, labels)}
         </p>
 
@@ -293,7 +293,7 @@ function NewsEmptyState({ labels, type }: { labels: HomepageLabels; type: NewsTy
       </div>
       <div className="text-center">
         <p className="text-sm font-bold text-slate-600">{sourceLabel(type, labels)}</p>
-        <p className="mt-1 text-sm text-slate-400">{labels.newsEmpty}</p>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{labels.newsEmpty}</p>
       </div>
     </div>
   );

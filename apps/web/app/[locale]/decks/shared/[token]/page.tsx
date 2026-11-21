@@ -124,7 +124,7 @@ export default async function SharedDeckPage({ params }: PageProps) {
         <p className="text-sm text-muted mb-3">Thêm bộ thẻ này vào thư viện của bạn</p>
         <Link
           href={`/${locale}/flashcards?cloneToken=${encodeURIComponent(token)}`}
-          className="inline-flex min-h-12 items-center justify-center rounded-xl bg-accent px-6 text-sm font-bold text-white shadow-md transition hover:opacity-90 active:scale-[0.97]"
+          className="inline-flex min-h-12 items-center justify-center rounded-xl bg-action px-6 text-sm font-bold text-white shadow-md transition hover:opacity-90 active:scale-[0.97]"
         >
           Clone vào thư viện
         </Link>

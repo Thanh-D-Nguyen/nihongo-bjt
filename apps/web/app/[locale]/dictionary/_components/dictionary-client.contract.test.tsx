@@ -76,4 +76,31 @@ describe("DictionaryClient API contract", () => {
     expect(host.textContent).toContain("cuộc họp");
     expect(host.textContent).not.toContain(labels.error);
   });
+
+  it("collapses a reading that repeats itself inside a parenthesized prefix", async () => {
+    vi.useFakeTimers();
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          { id: "lexeme-2", headword: "(-)平小ねじ", reading: "(たいらしょうねじ-)たいらしょうねじ", jlptLevel: null, shortMeaningVi: "vít nhỏ phẳng" },
+          { id: "lexeme-3", headword: "(ベクトルの)成分", reading: "(ベクトルの)せーぶん", jlptLevel: null, shortMeaningVi: "thành phần" }
+        ]),
+        { status: 200 }
+      )
+    );
+    host = document.createElement("div");
+    document.body.append(host);
+    root = createRoot(host);
+
+    await act(async () => {
+      root?.render(createElement(DictionaryClient, { labels, locale: "vi" }));
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
+
+    expect(host.textContent, "duplicated parenthesized reading prefix must not be rendered").not.toContain("(たいらしょうねじ-)");
+    expect(host.textContent).toContain("たいらしょうねじ");
+    expect(host.textContent, "legitimate parenthesized context stays intact").toContain("(ベクトルの)せーぶん");
+  });
 });

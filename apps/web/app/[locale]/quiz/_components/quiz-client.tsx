@@ -994,7 +994,7 @@ export function QuizClient({
                 typeFilter === "practice" ? (
                   <div className="flex flex-wrap justify-center gap-2">
                     <Link
-                      className="inline-flex min-h-12 items-center justify-center rounded-full bg-accent px-5 text-sm font-bold text-white outline-none ring-offset-2 transition-[transform,background-color] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-accent/90 focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.98]"
+                      className="inline-flex min-h-12 items-center justify-center rounded-full bg-action px-5 text-sm font-bold text-white outline-none ring-offset-2 transition-[transform,background-color] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-action-hover focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.98]"
                       href={`/${locale}`}
                     >
                       {labels.emptyCtaHome}
@@ -1246,7 +1246,7 @@ export function QuizModeSelector({
                   <span
                     aria-hidden
                     className={`grid size-8 place-items-center rounded-full text-xs font-bold tabular-nums transition-[transform,background-color] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 ${
-                      active ? "bg-accent text-white" : "bg-ink/5 text-muted"
+                      active ? "bg-action text-white" : "bg-ink/5 text-muted"
                     }`}
                   >
                     0{index + 1}
@@ -1838,7 +1838,7 @@ export function QuizQuestionPanel({
                       rounded-full text-xs font-bold transition
                       ${
                         isSelected
-                          ? "bg-accent text-white"
+                          ? "bg-action text-white"
                           : "border border-ink/15 bg-paper text-muted group-hover/opt:border-accent/30 group-hover/opt:text-accent"
                       }
                     `}
@@ -2254,7 +2254,7 @@ function RecommendedNext({
       </div>
       <div className="border-t border-accent/10 px-4 py-3">
         <button
-          className="inline-flex min-h-9 items-center justify-center rounded-xl bg-accent px-4 text-sm font-bold text-white outline-none ring-offset-2 transition hover:bg-accent/90 focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.98]"
+          className="inline-flex min-h-9 items-center justify-center rounded-xl bg-action px-4 text-sm font-bold text-white outline-none ring-offset-2 transition hover:bg-action-hover focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.98]"
           onClick={onRetry}
           type="button"
         >

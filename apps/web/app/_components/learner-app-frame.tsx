@@ -21,6 +21,7 @@ import { AnnouncementStrip } from "./announcement-strip";
 import { BrandFull } from "./brand-logo";
 import { CompanionBot, type CompanionBotLabels } from "./companion-bot";
 import { LocaleSwitcher, type LocaleSwitcherLabels } from "./locale-switcher";
+import { ThemeToggle } from "./theme-toggle";
 import {
   IconAnalytics,
   IconBattle,
@@ -102,6 +103,8 @@ export type LearnerNavLabels = {
   localeVi: string;
   localeJa: string;
   localeEn: string;
+  themeToggleToDark: string;
+  themeToggleToLight: string;
 };
 
 type NavItem = {
@@ -657,6 +660,8 @@ export function LearnerAppFrame({
               </Badge>
             ) : null}
 
+            {mounted ? <ThemeToggle isAuthenticated={isAuthenticated} labels={nav} /> : null}
+
             {mounted && isAuthenticated ? (
               <div className="relative" ref={userMenuRef}>
                 <button
@@ -841,7 +846,7 @@ export function LearnerAppFrame({
               <span className="relative inline-flex items-center justify-center">
                 <item.icon aria-hidden size={20} />
                 {item.badge && item.badge > 0 ? (
-                  <span className="absolute -right-2.5 -top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-accent px-1 py-0.5 text-[9px] font-bold leading-none text-white">
+                  <span className="absolute -right-2.5 -top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-action px-1 py-0.5 text-[9px] font-bold leading-none text-white">
                     {item.badge > 99 ? "99+" : item.badge}
                   </span>
                 ) : null}

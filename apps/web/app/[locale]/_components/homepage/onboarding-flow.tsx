@@ -346,7 +346,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                   "rounded-xl px-5 py-2.5 text-sm font-bold transition",
                   "shadow-sm active:scale-[0.97]",
                   canProceed() && !saving
-                    ? "bg-accent text-white hover:bg-accent/90"
+                    ? "bg-action text-white hover:bg-action-hover"
                     : "bg-ink/10 text-muted cursor-not-allowed",
                 )}
               >

@@ -25,6 +25,7 @@ type Labels = {
   perMonth: string;
   unlimited: string;
   quotaFormat: string;
+  quotaLine: string;
   loading: string;
   error: string;
   backHome: string;
@@ -204,24 +205,26 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
                 {displayName ?? plan.slug}
               </h3>
               <div className="mt-2">
-                {isFree ? (
-                  <span className="text-2xl font-bold text-ink">{labels.free}</span>
-                ) : (
-                  <span className="text-2xl font-bold text-ink">
-                    {price.toLocaleString()}đ
-                    <span className="text-sm font-normal text-muted">{labels.perMonth}</span>
-                  </span>
-                )}
+                <span className="text-2xl font-bold text-ink">
+                  {price.toLocaleString()}đ
+                  <span className="text-sm font-normal text-muted">{labels.perMonth}</span>
+                </span>
               </div>
 
               <div className="mt-4 flex-1 space-y-2 text-sm text-muted">
                 <p className="font-medium text-ink">{labels.features}:</p>
-                {(plan.quotas ?? []).map((q) => (
-                  <p key={q.key} className="flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
-                    {quotaLabel(q.key)}: {q.limit >= 999999 ? labels.unlimited : `${q.limit}/${windowLabel(q.window)}`}
-                  </p>
-                ))}
+                {(plan.quotas ?? []).map((q) => {
+                  const value = q.limit >= 999999
+                    ? labels.unlimited
+                    : labels.quotaFormat.replace("{limit}", () => String(q.limit)).replace("{window}", () => windowLabel(q.window));
+                  const line = labels.quotaLine.replace("{label}", () => quotaLabel(q.key)).replace("{value}", () => value);
+                  return (
+                    <p key={q.key} className="flex items-center gap-1.5">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400" />
+                      <span>{line}</span>
+                    </p>
+                  );
+                })}
                 {(plan.entitlements ?? []).map((e) => (
                   <p key={e} className="flex items-center gap-1.5">
                     <span className="h-1.5 w-1.5 rounded-full bg-green-400" />

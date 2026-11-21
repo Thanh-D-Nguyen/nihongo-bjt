@@ -39,7 +39,7 @@ const moodStyle: Record<
   },
   draw: {
     aura: "bg-accent/18",
-    badge: "bg-accent text-white",
+    badge: "bg-action text-white",
     motion: "scale-100",
     ring: "border-accent/30"
   },
@@ -57,7 +57,7 @@ const moodStyle: Record<
   },
   matched: {
     aura: "bg-accent/20",
-    badge: "bg-accent text-white",
+    badge: "bg-action text-white",
     motion: "scale-105",
     ring: "border-accent/35"
   },

@@ -683,7 +683,7 @@ function DetailActions({
     <section className="mt-6 space-y-3 border-t border-ink/8 pt-4">
       <div className="flex flex-wrap gap-2">
         <Link
-          className="search-detail-cta inline-flex min-h-10 flex-1 items-center justify-center rounded-xl bg-accent px-3 text-xs font-bold text-white shadow-sm shadow-accent/20 transition-all duration-150 hover:bg-accent-hover hover:shadow-md active:scale-95 sm:flex-none sm:px-4"
+          className="search-detail-cta inline-flex min-h-10 flex-1 items-center justify-center rounded-xl bg-action px-3 text-xs font-bold text-white shadow-sm shadow-accent/20 transition-all duration-150 hover:bg-action-hover hover:shadow-md active:scale-95 sm:flex-none sm:px-4"
           href={`/${locale}/quiz`}
         >
           {labels.bjtCtaQuiz}

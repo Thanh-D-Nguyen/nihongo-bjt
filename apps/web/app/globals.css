@@ -21,10 +21,13 @@
   --color-accent-soft: #dbeafe;
   --color-leaf: #059669;
   --color-leaf-soft: #ecfdf5;
+  /* Text on leaf-soft/sakura-soft chips (AA on the soft tint in both themes) */
+  --color-leaf-strong: #047857;
   --color-success: #059669;
   --color-success-soft: #ecfdf5;
   --color-sakura: #dc2626;
   --color-sakura-soft: #fef2f2;
+  --color-sakura-strong: #b91c1c;
   --color-danger: #dc2626;
   --color-danger-soft: #fef2f2;
   --color-amber: #d97706;
@@ -131,10 +134,12 @@
   /* Semantic colors (adjusted for dark bg) */
   --color-leaf: #34d399;
   --color-leaf-soft: #064e3b;
+  --color-leaf-strong: #34d399;
   --color-success: #34d399;
   --color-success-soft: #064e3b;
   --color-sakura: #f87171;
   --color-sakura-soft: #7f1d1d;
+  --color-sakura-strong: #fca5a5;
   --color-danger: #f87171;
   --color-danger-soft: #7f1d1d;
   --color-amber: #fbbf24;
@@ -214,10 +219,12 @@
     --color-accent-soft: #1e3a5f;
     --color-leaf: #34d399;
     --color-leaf-soft: #064e3b;
+    --color-leaf-strong: #34d399;
     --color-success: #34d399;
     --color-success-soft: #064e3b;
     --color-sakura: #f87171;
     --color-sakura-soft: #7f1d1d;
+    --color-sakura-strong: #fca5a5;
     --color-danger: #f87171;
     --color-danger-soft: #7f1d1d;
     --color-amber: #fbbf24;

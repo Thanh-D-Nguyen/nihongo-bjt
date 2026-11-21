@@ -169,7 +169,7 @@ function ExpressionCard({
                 )}
                 {expression.exampleMeaning && (
                   <p className="mt-1 text-sm text-slate-700 italic">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 not-italic mr-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 not-italic mr-2">
                       {labels.exampleMeaning}
                     </span>
                     {expression.exampleMeaning}

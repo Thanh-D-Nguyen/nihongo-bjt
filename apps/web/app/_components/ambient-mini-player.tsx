@@ -121,7 +121,7 @@ export function AmbientMiniPlayer({ labels }: { labels: AmbientMiniPlayerLabels 
           </label>
 
           {error ? (
-            <p className="mt-2 rounded-lg bg-sakura-soft px-2 py-1 text-[10px] font-bold text-sakura">
+            <p className="mt-2 rounded-lg bg-sakura-soft px-2 py-1 text-[10px] font-bold text-sakura-strong">
               {labels.error}
             </p>
           ) : null}

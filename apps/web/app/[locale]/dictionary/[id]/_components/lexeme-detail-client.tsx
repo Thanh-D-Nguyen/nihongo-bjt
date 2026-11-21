@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useGoAuth } from "../../../../../lib/go-auth-provider";
 import { AnnotatedJapaneseText } from "../../../../../components/reading-assist/annotated-japanese-text";
 import { learnerApiFetchOptional } from "../../../../../lib/learner-api";
+import { displayLexemeReading } from "../../../../../lib/dictionary-display";
 import { ContentActions, type ContentActionLabels } from "../../../_components/content-actions";
 
 interface Sense {
@@ -141,7 +142,7 @@ export function LexemeDetailClient({
       <div className="mt-4">
         <div className="flex flex-wrap items-baseline gap-3">
           <h1 className="jp-text text-3xl font-bold text-ink" lang="ja">{item.headword}</h1>
-          {item.reading ? <span className="jp-text text-lg text-muted" lang="ja">{item.reading}</span> : null}
+          {item.reading ? <span className="jp-text text-lg text-muted" lang="ja">{displayLexemeReading(item.reading)}</span> : null}
           {item.jlptLevel ? (
             <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-semibold text-accent">
               {item.jlptLevel}

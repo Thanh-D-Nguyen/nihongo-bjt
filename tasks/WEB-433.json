@@ -1,0 +1,2372 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-433",
+  "title": "Fix UI and contrast audit findings (header theme toggle, accent-button contrast, slate-400 labels, leaf chips, duplicate level codes, pricing card, dictionary reading duplication)",
+  "start_head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+  "preexisting_changes": {
+    ".build/.buildSystem_debug": "c337257139e569398ce8bf081a54dbc7d1e0267d",
+    ".build/CACHEDIR.TAG": "b7ab0d883e974d20c05898291a6218954e18e5ef"
+  },
+  "spec": {
+    "problem": "2026-11-21 Kiokoto production audit found UI/contrast defects in apps/web: no header theme toggle (dark theme only reachable from post-login settings), white text on bg-accent small buttons (3.68 light / 2.54 dark), light-mode text-slate-400 tiny labels (3.0), text-leaf on bg-leaf-soft chips (3.58) and text-sakura on bg-sakura-soft (4.41), duplicated BJT level codes (J5J5 — Sơ cấp), pricing feature lines without a space after the colon and a free card repeating its name as price, and a dictionary reading rendered as (たいらしょうねじ-)たいらしょうねじ.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "AC1: Header shows a working theme toggle for guests (and signed-in users); toggling switches .dark/data-theme and persists via the existing appearance mechanism; covered by a test."
+      },
+      {
+        "id": "AC2",
+        "text": "AC2: No bg-accent text-white small-text occurrence below 4.5 in either theme; the extended contrast regression test scans all tsx and passes."
+      },
+      {
+        "id": "AC3",
+        "text": "AC3: The identified slate-400 text labels are >=4.5 in light mode (slate-500 or equivalent), unchanged in dark."
+      },
+      {
+        "id": "AC4",
+        "text": "AC4: leaf-on-leaf-soft chips >=4.5 in light mode, unchanged in dark (same treatment for sakura-on-sakura-soft chips)."
+      },
+      {
+        "id": "AC5",
+        "text": "AC5: Levels UI shows each level code once per heading/tab."
+      },
+      {
+        "id": "AC6",
+        "text": "AC6: Pricing feature lines render with a space after the colon in vi/ja/en; free card no longer duplicates its name as price."
+      },
+      {
+        "id": "AC7",
+        "text": "AC7: Dictionary list no longer duplicates readings for the affected pattern, and the data-affected count is reported."
+      },
+      {
+        "id": "AC8",
+        "text": "AC8: pnpm quality verify passes; WEB-433 CLOSED via the harness; git status shows only intended files."
+      }
+    ],
+    "expected_behavior": "A sun/moon header toggle (guests and signed-in users) switches .dark/data-theme via lib/appearance saveAppearance and, when signed in, persists through the same PUT /api/auth/me call the settings page uses; filled accent controls use bg-action (>=4.5 in both themes) and the contrast regression scans all tsx; the identified slate-400 labels use slate-500 in light (dark unchanged); soft leaf/sakura chips use new leaf-strong/sakura-strong text tokens (light #047857/#b91c1c, dark = existing leaf/sakura); each level code renders once per heading/card; pricing quota lines render as one i18n-formatted run \"{label}: {value}\" in vi/ja/en and the free card shows 0đ instead of repeating its name; the dictionary list/detail collapse the duplicated parenthesized reading prefix (data count reported, data untouched).",
+    "observed_behavior": "Header has only the language switcher; 27 bg-accent+text-white controls fail AA; homepage level/news labels use slate-400 in light mode; leaf/sakura soft chips use the base token text; levels home card, /levels card and level detail render the code next to an API name that already starts with the code; pricing quota lines split label, \": \" and value into separate flex text runs and the free card shows \"Miễn phí\" twice; one dictionary entry ((-)平小ねじ) has a source reading with a duplicated parenthesized prefix.",
+    "rollback_plan": "Revert the WEB-433 web-only commit; no data, API or schema changes."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx",
+      "test": "LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+      "expect": "header must render a light/dark theme toggle for guests"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx",
+      "test": "LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+      "expect": "header toggle must reflect the resolved system dark theme"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx",
+      "test": "LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+      "expect": "header must render the theme toggle for signed-in learners"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx",
+      "test": "LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en",
+      "expect": "theme toggle labels must exist in every locale"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes",
+      "expect": "white on filled accent/action controls must reach 4.5:1"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels",
+      "expect": "light-mode slate-400 text labels (3.0:1) must use slate-500"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes",
+      "expect": "soft chip text must reach 4.5:1"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback",
+      "expect": "leaf-strong dark must equal the existing dark leaf"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx",
+      "test": "BjtLevelsSection > renders each level code once per card when the API name already starts with the code",
+      "expect": "level code must render once per card"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/levels/_components/levels-client.test.tsx",
+      "test": "LevelsClient > renders each level code once per roadmap card when the API name already starts with the code",
+      "expect": "level code must render once per heading"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx",
+      "test": "LevelDetailClient > renders the level code once in the level header when the API name already starts with the code",
+      "expect": "level code must render once per heading"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx",
+      "test": "PricingClient contracts > renders vi quota feature lines as one run with a space after the colon",
+      "expect": "each quota feature line must render as one text run with a space after the colon"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx",
+      "test": "PricingClient contracts > renders en quota feature lines as one run with a space after the colon",
+      "expect": "each quota feature line must render as one text run with a space after the colon"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx",
+      "test": "PricingClient contracts > renders ja quota feature lines as one run with a space after the colon",
+      "expect": "each quota feature line must render as one text run with a space after the colon"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx",
+      "test": "PricingClient contracts > does not repeat the free plan name as its price",
+      "expect": "free plan card must show its name once, not again as the price"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/dictionary/_components/dictionary-client.contract.test.tsx",
+      "test": "DictionaryClient API contract > collapses a reading that repeats itself inside a parenthesized prefix",
+      "expect": "duplicated parenthesized reading prefix must not be rendered"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-21T14:17:25.384Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-21T14:23:49.577Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-21T14:23:49.906Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-21T14:26:56.194Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-21T14:28:05.837Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-21T14:34:19.707Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-21T14:35:22.131Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-21T14:37:54.200Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-21T14:38:49.942Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-21T14:26:55.383Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "FAIL",
+          "excerpt": "header must render a light/dark theme toggle for guests: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store": "header must render a light/dark theme toggle for guests"
+      },
+      "fingerprint": "ea8f375a7abb04a8d0a0fde30758217f24e620f3ffe1118731a4ff917b2f5ed6"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-21T14:26:58.338Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "FAIL",
+          "excerpt": "header must render a light/dark theme toggle for guests: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "FAIL",
+          "excerpt": "header toggle must reflect the resolved system dark theme: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store": "header must render a light/dark theme toggle for guests",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice": "header toggle must reflect the resolved system dark theme"
+      },
+      "fingerprint": "ea8f375a7abb04a8d0a0fde30758217f24e620f3ffe1118731a4ff917b2f5ed6"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-21T14:27:01.266Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "FAIL",
+          "excerpt": "header must render a light/dark theme toggle for guests: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "FAIL",
+          "excerpt": "header toggle must reflect the resolved system dark theme: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+          "outcome": "FAIL",
+          "excerpt": "header must render the theme toggle for signed-in learners: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store": "header must render a light/dark theme toggle for guests",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice": "header toggle must reflect the resolved system dark theme",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint": "header must render the theme toggle for signed-in learners"
+      },
+      "fingerprint": "ea8f375a7abb04a8d0a0fde30758217f24e620f3ffe1118731a4ff917b2f5ed6"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-21T14:27:04.101Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "FAIL",
+          "excerpt": "header must render a light/dark theme toggle for guests: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "FAIL",
+          "excerpt": "header toggle must reflect the resolved system dark theme: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+          "outcome": "FAIL",
+          "excerpt": "header must render the theme toggle for signed-in learners: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en",
+          "outcome": "FAIL",
+          "excerpt": "theme toggle labels must exist in every locale: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store": "header must render a light/dark theme toggle for guests",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice": "header toggle must reflect the resolved system dark theme",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint": "header must render the theme toggle for signed-in learners",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en": "theme toggle labels must exist in every locale"
+      },
+      "fingerprint": "ea8f375a7abb04a8d0a0fde30758217f24e620f3ffe1118731a4ff917b2f5ed6"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-21T14:27:07.773Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "FAIL",
+          "excerpt": "header must render a light/dark theme toggle for guests: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "FAIL",
+          "excerpt": "header toggle must reflect the resolved system dark theme: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+          "outcome": "FAIL",
+          "excerpt": "header must render the theme toggle for signed-in learners: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en",
+          "outcome": "FAIL",
+          "excerpt": "theme toggle labels must exist in every locale: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes",
+          "outcome": "FAIL",
+          "excerpt": "white on filled accent/action controls must reach 4.5:1: expected [ …(62) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store": "header must render a light/dark theme toggle for guests",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice": "header toggle must reflect the resolved system dark theme",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint": "header must render the theme toggle for signed-in learners",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en": "theme toggle labels must exist in every locale",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes": "white on filled accent/action controls must reach 4.5:1"
+      },
+      "fingerprint": "ea8f375a7abb04a8d0a0fde30758217f24e620f3ffe1118731a4ff917b2f5ed6"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-21T14:27:11.676Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "FAIL",
+          "excerpt": "header must render a light/dark theme toggle for guests: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "FAIL",
+          "excerpt": "header toggle must reflect the resolved system dark theme: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+          "outcome": "FAIL",
+          "excerpt": "header must render the theme toggle for signed-in learners: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en",
+          "outcome": "FAIL",
+          "excerpt": "theme toggle labels must exist in every locale: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes",
+          "outcome": "FAIL",
+          "excerpt": "white on filled accent/action controls must reach 4.5:1: expected [ …(62) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels",
+          "outcome": "FAIL",
+          "excerpt": "light-mode slate-400 text labels (3.0:1) must use slate-500: expected [ …(9) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store": "header must render a light/dark theme toggle for guests",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice": "header toggle must reflect the resolved system dark theme",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint": "header must render the theme toggle for signed-in learners",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en": "theme toggle labels must exist in every locale",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes": "white on filled accent/action controls must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels": "light-mode slate-400 text labels (3.0:1) must use slate-500"
+      },
+      "fingerprint": "ea8f375a7abb04a8d0a0fde30758217f24e620f3ffe1118731a4ff917b2f5ed6"
+    },
+    {
+      "seq": 7,
+      "at": "2026-11-21T14:27:15.237Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "FAIL",
+          "excerpt": "header must render a light/dark theme toggle for guests: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "FAIL",
+          "excerpt": "header toggle must reflect the resolved system dark theme: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+          "outcome": "FAIL",
+          "excerpt": "header must render the theme toggle for signed-in learners: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en",
+          "outcome": "FAIL",
+          "excerpt": "theme toggle labels must exist in every locale: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes",
+          "outcome": "FAIL",
+          "excerpt": "white on filled accent/action controls must reach 4.5:1: expected [ …(62) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels",
+          "outcome": "FAIL",
+          "excerpt": "light-mode slate-400 text labels (3.0:1) must use slate-500: expected [ …(9) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes",
+          "outcome": "FAIL",
+          "excerpt": "soft chip text must reach 4.5:1: expected [ …(18) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store": "header must render a light/dark theme toggle for guests",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice": "header toggle must reflect the resolved system dark theme",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint": "header must render the theme toggle for signed-in learners",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en": "theme toggle labels must exist in every locale",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes": "white on filled accent/action controls must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels": "light-mode slate-400 text labels (3.0:1) must use slate-500",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes": "soft chip text must reach 4.5:1"
+      },
+      "fingerprint": "ea8f375a7abb04a8d0a0fde30758217f24e620f3ffe1118731a4ff917b2f5ed6"
+    },
+    {
+      "seq": 8,
+      "at": "2026-11-21T14:27:18.615Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "FAIL",
+          "excerpt": "header must render a light/dark theme toggle for guests: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "FAIL",
+          "excerpt": "header toggle must reflect the resolved system dark theme: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+          "outcome": "FAIL",
+          "excerpt": "header must render the theme toggle for signed-in learners: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en",
+          "outcome": "FAIL",
+          "excerpt": "theme toggle labels must exist in every locale: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes",
+          "outcome": "FAIL",
+          "excerpt": "white on filled accent/action controls must reach 4.5:1: expected [ …(62) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels",
+          "outcome": "FAIL",
+          "excerpt": "light-mode slate-400 text labels (3.0:1) must use slate-500: expected [ …(9) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes",
+          "outcome": "FAIL",
+          "excerpt": "soft chip text must reach 4.5:1: expected [ …(18) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback",
+          "outcome": "FAIL",
+          "excerpt": "leaf-strong dark must equal the existing dark leaf: expected undefined to be '#34d399' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store": "header must render a light/dark theme toggle for guests",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice": "header toggle must reflect the resolved system dark theme",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint": "header must render the theme toggle for signed-in learners",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en": "theme toggle labels must exist in every locale",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes": "white on filled accent/action controls must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels": "light-mode slate-400 text labels (3.0:1) must use slate-500",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes": "soft chip text must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback": "leaf-strong dark must equal the existing dark leaf"
+      },
+      "fingerprint": "ea8f375a7abb04a8d0a0fde30758217f24e620f3ffe1118731a4ff917b2f5ed6"
+    },
+    {
+      "seq": 9,
+      "at": "2026-11-21T14:27:25.693Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "FAIL",
+          "excerpt": "header must render a light/dark theme toggle for guests: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "FAIL",
+          "excerpt": "header toggle must reflect the resolved system dark theme: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+          "outcome": "FAIL",
+          "excerpt": "header must render the theme toggle for signed-in learners: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en",
+          "outcome": "FAIL",
+          "excerpt": "theme toggle labels must exist in every locale: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes",
+          "outcome": "FAIL",
+          "excerpt": "white on filled accent/action controls must reach 4.5:1: expected [ …(62) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels",
+          "outcome": "FAIL",
+          "excerpt": "light-mode slate-400 text labels (3.0:1) must use slate-500: expected [ …(9) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes",
+          "outcome": "FAIL",
+          "excerpt": "soft chip text must reach 4.5:1: expected [ …(18) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback",
+          "outcome": "FAIL",
+          "excerpt": "leaf-strong dark must equal the existing dark leaf: expected undefined to be '#34d399' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per card: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store": "header must render a light/dark theme toggle for guests",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice": "header toggle must reflect the resolved system dark theme",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint": "header must render the theme toggle for signed-in learners",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en": "theme toggle labels must exist in every locale",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes": "white on filled accent/action controls must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels": "light-mode slate-400 text labels (3.0:1) must use slate-500",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes": "soft chip text must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback": "leaf-strong dark must equal the existing dark leaf",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code": "level code must render once per card"
+      },
+      "fingerprint": "ea8f375a7abb04a8d0a0fde30758217f24e620f3ffe1118731a4ff917b2f5ed6"
+    },
+    {
+      "seq": 10,
+      "at": "2026-11-21T14:27:35.291Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "FAIL",
+          "excerpt": "header must render a light/dark theme toggle for guests: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "FAIL",
+          "excerpt": "header toggle must reflect the resolved system dark theme: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+          "outcome": "FAIL",
+          "excerpt": "header must render the theme toggle for signed-in learners: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en",
+          "outcome": "FAIL",
+          "excerpt": "theme toggle labels must exist in every locale: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes",
+          "outcome": "FAIL",
+          "excerpt": "white on filled accent/action controls must reach 4.5:1: expected [ …(62) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels",
+          "outcome": "FAIL",
+          "excerpt": "light-mode slate-400 text labels (3.0:1) must use slate-500: expected [ …(9) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes",
+          "outcome": "FAIL",
+          "excerpt": "soft chip text must reach 4.5:1: expected [ …(18) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback",
+          "outcome": "FAIL",
+          "excerpt": "leaf-strong dark must equal the existing dark leaf: expected undefined to be '#34d399' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per card: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per heading: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store": "header must render a light/dark theme toggle for guests",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice": "header toggle must reflect the resolved system dark theme",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint": "header must render the theme toggle for signed-in learners",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en": "theme toggle labels must exist in every locale",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes": "white on filled accent/action controls must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels": "light-mode slate-400 text labels (3.0:1) must use slate-500",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes": "soft chip text must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback": "leaf-strong dark must equal the existing dark leaf",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code": "level code must render once per card",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code": "level code must render once per heading"
+      },
+      "fingerprint": "ea8f375a7abb04a8d0a0fde30758217f24e620f3ffe1118731a4ff917b2f5ed6"
+    },
+    {
+      "seq": 11,
+      "at": "2026-11-21T14:27:49.434Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "FAIL",
+          "excerpt": "header must render a light/dark theme toggle for guests: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "FAIL",
+          "excerpt": "header toggle must reflect the resolved system dark theme: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+          "outcome": "FAIL",
+          "excerpt": "header must render the theme toggle for signed-in learners: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en",
+          "outcome": "FAIL",
+          "excerpt": "theme toggle labels must exist in every locale: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes",
+          "outcome": "FAIL",
+          "excerpt": "white on filled accent/action controls must reach 4.5:1: expected [ …(62) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels",
+          "outcome": "FAIL",
+          "excerpt": "light-mode slate-400 text labels (3.0:1) must use slate-500: expected [ …(9) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes",
+          "outcome": "FAIL",
+          "excerpt": "soft chip text must reach 4.5:1: expected [ …(18) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback",
+          "outcome": "FAIL",
+          "excerpt": "leaf-strong dark must equal the existing dark leaf: expected undefined to be '#34d399' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per card: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per heading: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per heading: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store": "header must render a light/dark theme toggle for guests",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice": "header toggle must reflect the resolved system dark theme",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint": "header must render the theme toggle for signed-in learners",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en": "theme toggle labels must exist in every locale",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes": "white on filled accent/action controls must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels": "light-mode slate-400 text labels (3.0:1) must use slate-500",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes": "soft chip text must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback": "leaf-strong dark must equal the existing dark leaf",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code": "level code must render once per card",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code": "level code must render once per heading",
+        "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code": "level code must render once per heading"
+      },
+      "fingerprint": "ea8f375a7abb04a8d0a0fde30758217f24e620f3ffe1118731a4ff917b2f5ed6"
+    },
+    {
+      "seq": 12,
+      "at": "2026-11-21T14:28:04.319Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "FAIL",
+          "excerpt": "header must render a light/dark theme toggle for guests: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "FAIL",
+          "excerpt": "header toggle must reflect the resolved system dark theme: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+          "outcome": "FAIL",
+          "excerpt": "header must render the theme toggle for signed-in learners: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en",
+          "outcome": "FAIL",
+          "excerpt": "theme toggle labels must exist in every locale: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes",
+          "outcome": "FAIL",
+          "excerpt": "white on filled accent/action controls must reach 4.5:1: expected [ …(62) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels",
+          "outcome": "FAIL",
+          "excerpt": "light-mode slate-400 text labels (3.0:1) must use slate-500: expected [ …(9) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes",
+          "outcome": "FAIL",
+          "excerpt": "soft chip text must reach 4.5:1: expected [ …(18) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback",
+          "outcome": "FAIL",
+          "excerpt": "leaf-strong dark must equal the existing dark leaf: expected undefined to be '#34d399' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per card: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per heading: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per heading: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders vi quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'Ôn thẻ flashcard:30/ngày' to be 'Ôn thẻ flashcard: 30/ngày' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store": "header must render a light/dark theme toggle for guests",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice": "header toggle must reflect the resolved system dark theme",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint": "header must render the theme toggle for signed-in learners",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en": "theme toggle labels must exist in every locale",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes": "white on filled accent/action controls must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels": "light-mode slate-400 text labels (3.0:1) must use slate-500",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes": "soft chip text must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback": "leaf-strong dark must equal the existing dark leaf",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code": "level code must render once per card",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code": "level code must render once per heading",
+        "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code": "level code must render once per heading",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders vi quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon"
+      },
+      "fingerprint": "ea8f375a7abb04a8d0a0fde30758217f24e620f3ffe1118731a4ff917b2f5ed6"
+    },
+    {
+      "seq": 13,
+      "at": "2026-11-21T14:28:15.110Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "FAIL",
+          "excerpt": "header must render a light/dark theme toggle for guests: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "FAIL",
+          "excerpt": "header toggle must reflect the resolved system dark theme: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+          "outcome": "FAIL",
+          "excerpt": "header must render the theme toggle for signed-in learners: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en",
+          "outcome": "FAIL",
+          "excerpt": "theme toggle labels must exist in every locale: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes",
+          "outcome": "FAIL",
+          "excerpt": "white on filled accent/action controls must reach 4.5:1: expected [ …(62) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels",
+          "outcome": "FAIL",
+          "excerpt": "light-mode slate-400 text labels (3.0:1) must use slate-500: expected [ …(9) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes",
+          "outcome": "FAIL",
+          "excerpt": "soft chip text must reach 4.5:1: expected [ …(18) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback",
+          "outcome": "FAIL",
+          "excerpt": "leaf-strong dark must equal the existing dark leaf: expected undefined to be '#34d399' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per card: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per heading: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per heading: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders vi quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'Ôn thẻ flashcard:30/ngày' to be 'Ôn thẻ flashcard: 30/ngày' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders en quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'Flashcard reviews:30/day' to be 'Flashcard reviews: 30/day' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store": "header must render a light/dark theme toggle for guests",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice": "header toggle must reflect the resolved system dark theme",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint": "header must render the theme toggle for signed-in learners",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en": "theme toggle labels must exist in every locale",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes": "white on filled accent/action controls must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels": "light-mode slate-400 text labels (3.0:1) must use slate-500",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes": "soft chip text must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback": "leaf-strong dark must equal the existing dark leaf",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code": "level code must render once per card",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code": "level code must render once per heading",
+        "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code": "level code must render once per heading",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders vi quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders en quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon"
+      },
+      "fingerprint": "ea8f375a7abb04a8d0a0fde30758217f24e620f3ffe1118731a4ff917b2f5ed6"
+    },
+    {
+      "seq": 14,
+      "at": "2026-11-21T14:28:25.884Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "FAIL",
+          "excerpt": "header must render a light/dark theme toggle for guests: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "FAIL",
+          "excerpt": "header toggle must reflect the resolved system dark theme: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+          "outcome": "FAIL",
+          "excerpt": "header must render the theme toggle for signed-in learners: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en",
+          "outcome": "FAIL",
+          "excerpt": "theme toggle labels must exist in every locale: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes",
+          "outcome": "FAIL",
+          "excerpt": "white on filled accent/action controls must reach 4.5:1: expected [ …(62) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels",
+          "outcome": "FAIL",
+          "excerpt": "light-mode slate-400 text labels (3.0:1) must use slate-500: expected [ …(9) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes",
+          "outcome": "FAIL",
+          "excerpt": "soft chip text must reach 4.5:1: expected [ …(18) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback",
+          "outcome": "FAIL",
+          "excerpt": "leaf-strong dark must equal the existing dark leaf: expected undefined to be '#34d399' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per card: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per heading: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per heading: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders vi quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'Ôn thẻ flashcard:30/ngày' to be 'Ôn thẻ flashcard: 30/ngày' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders en quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'Flashcard reviews:30/day' to be 'Flashcard reviews: 30/day' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders ja quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'フラッシュカード復習:30/日' to be 'フラッシュカード復習: 30/日' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store": "header must render a light/dark theme toggle for guests",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice": "header toggle must reflect the resolved system dark theme",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint": "header must render the theme toggle for signed-in learners",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en": "theme toggle labels must exist in every locale",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes": "white on filled accent/action controls must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels": "light-mode slate-400 text labels (3.0:1) must use slate-500",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes": "soft chip text must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback": "leaf-strong dark must equal the existing dark leaf",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code": "level code must render once per card",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code": "level code must render once per heading",
+        "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code": "level code must render once per heading",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders vi quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders en quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders ja quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon"
+      },
+      "fingerprint": "ea8f375a7abb04a8d0a0fde30758217f24e620f3ffe1118731a4ff917b2f5ed6"
+    },
+    {
+      "seq": 15,
+      "at": "2026-11-21T14:28:38.340Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "FAIL",
+          "excerpt": "header must render a light/dark theme toggle for guests: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "FAIL",
+          "excerpt": "header toggle must reflect the resolved system dark theme: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+          "outcome": "FAIL",
+          "excerpt": "header must render the theme toggle for signed-in learners: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en",
+          "outcome": "FAIL",
+          "excerpt": "theme toggle labels must exist in every locale: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes",
+          "outcome": "FAIL",
+          "excerpt": "white on filled accent/action controls must reach 4.5:1: expected [ …(62) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels",
+          "outcome": "FAIL",
+          "excerpt": "light-mode slate-400 text labels (3.0:1) must use slate-500: expected [ …(9) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes",
+          "outcome": "FAIL",
+          "excerpt": "soft chip text must reach 4.5:1: expected [ …(18) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback",
+          "outcome": "FAIL",
+          "excerpt": "leaf-strong dark must equal the existing dark leaf: expected undefined to be '#34d399' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per card: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per heading: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per heading: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders vi quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'Ôn thẻ flashcard:30/ngày' to be 'Ôn thẻ flashcard: 30/ngày' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders en quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'Flashcard reviews:30/day' to be 'Flashcard reviews: 30/day' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders ja quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'フラッシュカード復習:30/日' to be 'フラッシュカード復習: 30/日' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > does not repeat the free plan name as its price",
+          "outcome": "FAIL",
+          "excerpt": "free plan card must show its name once, not again as the price: expected 3 to be 2 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store": "header must render a light/dark theme toggle for guests",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice": "header toggle must reflect the resolved system dark theme",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint": "header must render the theme toggle for signed-in learners",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en": "theme toggle labels must exist in every locale",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes": "white on filled accent/action controls must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels": "light-mode slate-400 text labels (3.0:1) must use slate-500",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes": "soft chip text must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback": "leaf-strong dark must equal the existing dark leaf",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code": "level code must render once per card",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code": "level code must render once per heading",
+        "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code": "level code must render once per heading",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders vi quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders en quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders ja quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > does not repeat the free plan name as its price": "free plan card must show its name once, not again as the price"
+      },
+      "fingerprint": "ea8f375a7abb04a8d0a0fde30758217f24e620f3ffe1118731a4ff917b2f5ed6"
+    },
+    {
+      "seq": 16,
+      "at": "2026-11-21T14:28:51.009Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/dictionary/_components/dictionary-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "FAIL",
+          "excerpt": "header must render a light/dark theme toggle for guests: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "FAIL",
+          "excerpt": "header toggle must reflect the resolved system dark theme: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+          "outcome": "FAIL",
+          "excerpt": "header must render the theme toggle for signed-in learners: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en",
+          "outcome": "FAIL",
+          "excerpt": "theme toggle labels must exist in every locale: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes",
+          "outcome": "FAIL",
+          "excerpt": "white on filled accent/action controls must reach 4.5:1: expected [ …(62) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels",
+          "outcome": "FAIL",
+          "excerpt": "light-mode slate-400 text labels (3.0:1) must use slate-500: expected [ …(9) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes",
+          "outcome": "FAIL",
+          "excerpt": "soft chip text must reach 4.5:1: expected [ …(18) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback",
+          "outcome": "FAIL",
+          "excerpt": "leaf-strong dark must equal the existing dark leaf: expected undefined to be '#34d399' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per card: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per heading: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per heading: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders vi quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'Ôn thẻ flashcard:30/ngày' to be 'Ôn thẻ flashcard: 30/ngày' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders en quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'Flashcard reviews:30/day' to be 'Flashcard reviews: 30/day' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders ja quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'フラッシュカード復習:30/日' to be 'フラッシュカード復習: 30/日' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > does not repeat the free plan name as its price",
+          "outcome": "FAIL",
+          "excerpt": "free plan card must show its name once, not again as the price: expected 3 to be 2 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/dictionary/_components/dictionary-client.contract.test.tsx::DictionaryClient API contract > collapses a reading that repeats itself inside a parenthesized prefix",
+          "outcome": "FAIL",
+          "excerpt": "duplicated parenthesized reading prefix must not be rendered: expected 'DictionaryTừ điểnKanjiNgữ phápĐã lưu敬…' not to contain '(たいらしょうねじ-)'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store": "header must render a light/dark theme toggle for guests",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice": "header toggle must reflect the resolved system dark theme",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint": "header must render the theme toggle for signed-in learners",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en": "theme toggle labels must exist in every locale",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes": "white on filled accent/action controls must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels": "light-mode slate-400 text labels (3.0:1) must use slate-500",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes": "soft chip text must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback": "leaf-strong dark must equal the existing dark leaf",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code": "level code must render once per card",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code": "level code must render once per heading",
+        "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code": "level code must render once per heading",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders vi quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders en quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders ja quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > does not repeat the free plan name as its price": "free plan card must show its name once, not again as the price",
+        "vitest:apps/web/app/[locale]/dictionary/_components/dictionary-client.contract.test.tsx::DictionaryClient API contract > collapses a reading that repeats itself inside a parenthesized prefix": "duplicated parenthesized reading prefix must not be rendered"
+      },
+      "fingerprint": "ea8f375a7abb04a8d0a0fde30758217f24e620f3ffe1118731a4ff917b2f5ed6"
+    },
+    {
+      "seq": 17,
+      "at": "2026-11-21T14:32:57.237Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/dictionary/_components/dictionary-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders vi quota feature lines as one run with a space after the colon",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders en quota feature lines as one run with a space after the colon",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders ja quota feature lines as one run with a space after the colon",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > does not repeat the free plan name as its price",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/dictionary/_components/dictionary-client.contract.test.tsx::DictionaryClient API contract > collapses a reading that repeats itself inside a parenthesized prefix",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "016ec90769f43ce2f7179ebdba8cf1bfe9f9d3734b48f1ab5fe30f99657588a8"
+    },
+    {
+      "seq": 18,
+      "at": "2026-11-21T14:34:15.702Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 43,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/dictionary/_components/dictionary-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "FAIL",
+          "excerpt": "header must render a light/dark theme toggle for guests: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "FAIL",
+          "excerpt": "header toggle must reflect the resolved system dark theme: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+          "outcome": "FAIL",
+          "excerpt": "header must render the theme toggle for signed-in learners: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en",
+          "outcome": "FAIL",
+          "excerpt": "theme toggle labels must exist in every locale: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes",
+          "outcome": "FAIL",
+          "excerpt": "white on filled accent/action controls must reach 4.5:1: expected [ …(63) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels",
+          "outcome": "FAIL",
+          "excerpt": "light-mode slate-400 text labels (3.0:1) must use slate-500: expected [ …(9) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes",
+          "outcome": "FAIL",
+          "excerpt": "soft chip text must reach 4.5:1: expected [ …(18) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback",
+          "outcome": "FAIL",
+          "excerpt": "leaf-strong dark must equal the existing dark leaf: expected undefined to be '#34d399' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per card: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per heading: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per heading: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders vi quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'Ôn thẻ flashcard:30/ngày' to be 'Ôn thẻ flashcard: 30/ngày' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders en quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'Flashcard reviews:30/day' to be 'Flashcard reviews: 30/day' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders ja quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'フラッシュカード復習:30/日' to be 'フラッシュカード復習: 30/日' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > does not repeat the free plan name as its price",
+          "outcome": "FAIL",
+          "excerpt": "free plan card must show its name once, not again as the price: expected 3 to be 2 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/dictionary/_components/dictionary-client.contract.test.tsx::DictionaryClient API contract > collapses a reading that repeats itself inside a parenthesized prefix",
+          "outcome": "FAIL",
+          "excerpt": "duplicated parenthesized reading prefix must not be rendered: expected 'DictionaryTừ điểnKanjiNgữ phápĐã lưu敬…' not to contain '(たいらしょうねじ-)'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store": "header must render a light/dark theme toggle for guests",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice": "header toggle must reflect the resolved system dark theme",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint": "header must render the theme toggle for signed-in learners",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en": "theme toggle labels must exist in every locale",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes": "white on filled accent/action controls must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels": "light-mode slate-400 text labels (3.0:1) must use slate-500",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes": "soft chip text must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback": "leaf-strong dark must equal the existing dark leaf",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code": "level code must render once per card",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code": "level code must render once per heading",
+        "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code": "level code must render once per heading",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders vi quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders en quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders ja quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > does not repeat the free plan name as its price": "free plan card must show its name once, not again as the price",
+        "vitest:apps/web/app/[locale]/dictionary/_components/dictionary-client.contract.test.tsx::DictionaryClient API contract > collapses a reading that repeats itself inside a parenthesized prefix": "duplicated parenthesized reading prefix must not be rendered"
+      },
+      "fingerprint": "2d97d33603bd3bbd899598e8b94f1fdfaa4d9cf0a85ea4f302b9e3e1bb4d8c30"
+    },
+    {
+      "seq": 19,
+      "at": "2026-11-21T14:34:37.602Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 43,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/dictionary/_components/dictionary-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "FAIL",
+          "excerpt": "header must render a light/dark theme toggle for guests: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "FAIL",
+          "excerpt": "header toggle must reflect the resolved system dark theme: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+          "outcome": "FAIL",
+          "excerpt": "header must render the theme toggle for signed-in learners: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en",
+          "outcome": "FAIL",
+          "excerpt": "theme toggle labels must exist in every locale: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes",
+          "outcome": "FAIL",
+          "excerpt": "white on filled accent/action controls must reach 4.5:1: expected [ …(63) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels",
+          "outcome": "FAIL",
+          "excerpt": "light-mode slate-400 text labels (3.0:1) must use slate-500: expected [ …(9) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes",
+          "outcome": "FAIL",
+          "excerpt": "soft chip text must reach 4.5:1: expected [ …(18) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback",
+          "outcome": "FAIL",
+          "excerpt": "leaf-strong dark must equal the existing dark leaf: expected undefined to be '#34d399' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per card: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per heading: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per heading: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders vi quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'Ôn thẻ flashcard:30/ngày' to be 'Ôn thẻ flashcard: 30/ngày' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders en quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'Flashcard reviews:30/day' to be 'Flashcard reviews: 30/day' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders ja quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'フラッシュカード復習:30/日' to be 'フラッシュカード復習: 30/日' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > does not repeat the free plan name as its price",
+          "outcome": "FAIL",
+          "excerpt": "free plan card must show its name once, not again as the price: expected 3 to be 2 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/dictionary/_components/dictionary-client.contract.test.tsx::DictionaryClient API contract > collapses a reading that repeats itself inside a parenthesized prefix",
+          "outcome": "FAIL",
+          "excerpt": "duplicated parenthesized reading prefix must not be rendered: expected 'DictionaryTừ điểnKanjiNgữ phápĐã lưu敬…' not to contain '(たいらしょうねじ-)'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store": "header must render a light/dark theme toggle for guests",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice": "header toggle must reflect the resolved system dark theme",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint": "header must render the theme toggle for signed-in learners",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en": "theme toggle labels must exist in every locale",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes": "white on filled accent/action controls must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels": "light-mode slate-400 text labels (3.0:1) must use slate-500",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes": "soft chip text must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback": "leaf-strong dark must equal the existing dark leaf",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code": "level code must render once per card",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code": "level code must render once per heading",
+        "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code": "level code must render once per heading",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders vi quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders en quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders ja quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > does not repeat the free plan name as its price": "free plan card must show its name once, not again as the price",
+        "vitest:apps/web/app/[locale]/dictionary/_components/dictionary-client.contract.test.tsx::DictionaryClient API contract > collapses a reading that repeats itself inside a parenthesized prefix": "duplicated parenthesized reading prefix must not be rendered"
+      },
+      "fingerprint": "2d97d33603bd3bbd899598e8b94f1fdfaa4d9cf0a85ea4f302b9e3e1bb4d8c30"
+    },
+    {
+      "seq": 20,
+      "at": "2026-11-21T14:35:03.953Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "reverted_files": 43,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/dictionary/_components/dictionary-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "FAIL",
+          "excerpt": "header must render a light/dark theme toggle for guests: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "FAIL",
+          "excerpt": "header toggle must reflect the resolved system dark theme: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+          "outcome": "FAIL",
+          "excerpt": "header must render the theme toggle for signed-in learners: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en",
+          "outcome": "FAIL",
+          "excerpt": "theme toggle labels must exist in every locale: expected false to be true // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes",
+          "outcome": "FAIL",
+          "excerpt": "white on filled accent/action controls must reach 4.5:1: expected [ …(63) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels",
+          "outcome": "FAIL",
+          "excerpt": "light-mode slate-400 text labels (3.0:1) must use slate-500: expected [ …(9) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes",
+          "outcome": "FAIL",
+          "excerpt": "soft chip text must reach 4.5:1: expected [ …(18) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback",
+          "outcome": "FAIL",
+          "excerpt": "leaf-strong dark must equal the existing dark leaf: expected undefined to be '#34d399' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per card: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per heading: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code",
+          "outcome": "FAIL",
+          "excerpt": "level code must render once per heading: expected 2 to be 1 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders vi quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'Ôn thẻ flashcard:30/ngày' to be 'Ôn thẻ flashcard: 30/ngày' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders en quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'Flashcard reviews:30/day' to be 'Flashcard reviews: 30/day' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders ja quota feature lines as one run with a space after the colon",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'フラッシュカード復習:30/日' to be 'フラッシュカード復習: 30/日' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > does not repeat the free plan name as its price",
+          "outcome": "FAIL",
+          "excerpt": "free plan card must show its name once, not again as the price: expected 3 to be 2 // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/dictionary/_components/dictionary-client.contract.test.tsx::DictionaryClient API contract > collapses a reading that repeats itself inside a parenthesized prefix",
+          "outcome": "FAIL",
+          "excerpt": "duplicated parenthesized reading prefix must not be rendered: expected 'DictionaryTừ điểnKanjiNgữ phápĐã lưu敬…' not to contain '(たいらしょうねじ-)'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store": "header must render a light/dark theme toggle for guests",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice": "header toggle must reflect the resolved system dark theme",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint": "header must render the theme toggle for signed-in learners",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en": "theme toggle labels must exist in every locale",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes": "white on filled accent/action controls must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels": "light-mode slate-400 text labels (3.0:1) must use slate-500",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes": "soft chip text must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback": "leaf-strong dark must equal the existing dark leaf",
+        "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code": "level code must render once per card",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code": "level code must render once per heading",
+        "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code": "level code must render once per heading",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders vi quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders en quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders ja quota feature lines as one run with a space after the colon": "each quota feature line must render as one text run with a space after the colon",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > does not repeat the free plan name as its price": "free plan card must show its name once, not again as the price",
+        "vitest:apps/web/app/[locale]/dictionary/_components/dictionary-client.contract.test.tsx::DictionaryClient API contract > collapses a reading that repeats itself inside a parenthesized prefix": "duplicated parenthesized reading prefix must not be rendered"
+      },
+      "fingerprint": "2d97d33603bd3bbd899598e8b94f1fdfaa4d9cf0a85ea4f302b9e3e1bb4d8c30"
+    },
+    {
+      "seq": 21,
+      "at": "2026-11-21T14:35:17.528Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/dictionary/_components/dictionary-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > lets guests switch between explicit light and dark themes through the appearance store",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > overrides a dark system preference with an explicit light choice",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > persists a signed-in learner's toggle through the settings profile endpoint",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > ships localized accessible labels for the toggle in vi, ja and en",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps white labels on filled accent/action controls at 4.5:1 in both themes",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > uses slate-500 instead of light-mode slate-400 for the audited small text labels",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf and sakura text readable on their soft chip backgrounds in both themes",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::light and dark contrast across all learner components > keeps leaf chips unchanged in dark mode and the strong chip tokens in sync with the system fallback",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx::BjtLevelsSection > renders each level code once per card when the API name already starts with the code",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders each level code once per roadmap card when the API name already starts with the code",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx::LevelDetailClient > renders the level code once in the level header when the API name already starts with the code",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders vi quota feature lines as one run with a space after the colon",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders en quota feature lines as one run with a space after the colon",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders ja quota feature lines as one run with a space after the colon",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > does not repeat the free plan name as its price",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/dictionary/_components/dictionary-client.contract.test.tsx::DictionaryClient API contract > collapses a reading that repeats itself inside a parenthesized prefix",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "2d97d33603bd3bbd899598e8b94f1fdfaa4d9cf0a85ea4f302b9e3e1bb4d8c30"
+    },
+    {
+      "seq": 22,
+      "at": "2026-11-21T14:37:47.266Z",
+      "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 677,
+        "executed": 677,
+        "passed": 677,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 888,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "2d97d33603bd3bbd899598e8b94f1fdfaa4d9cf0a85ea4f302b9e3e1bb4d8c30"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-21T14:38:49.917Z",
+    "head": "af323bb3232e9c835af50b4c7a72c2476281b347",
+    "fingerprint": "2d97d33603bd3bbd899598e8b94f1fdfaa4d9cf0a85ea4f302b9e3e1bb4d8c30",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/_components/homepage/bjt-levels-section.test.tsx": "203f004a04fd65945943fa5e9d1f145628735e77",
+      "apps/web/app/[locale]/_components/homepage/bjt-levels-section.tsx": "e9685e96e5d5471535d1bdb676a273c31786bfa8",
+      "apps/web/app/[locale]/_components/homepage/featured-news-section.tsx": "8ef63b4f80e93cfa37529832c56d8e00714fe31e",
+      "apps/web/app/[locale]/_components/homepage/login-bonus-widget.tsx": "c5a3ca3c6a58fff0ab6ce006b67427bf275ff313",
+      "apps/web/app/[locale]/_components/homepage/onboarding-diagnostic.tsx": "d3ae3903de252cc0d8c914d111ad6f9ab43a6d48",
+      "apps/web/app/[locale]/_components/homepage/onboarding-flow.tsx": "cfb8f5894232d97419f4a6d95280e20f5256e781",
+      "apps/web/app/[locale]/_components/vocab-expression-list.tsx": "cf6e74d7ec2e4e8ae123ffc7235fc4ea51dba3a8",
+      "apps/web/app/[locale]/achievements/_components/achievement-celebration.tsx": "523a22e60de27c3c362a0fbd6b83ade000bb4aeb",
+      "apps/web/app/[locale]/achievements/_components/achievements-page-client.tsx": "497d1fcce5e7bb242b2472f30d8a3408a8ff92fc",
+      "apps/web/app/[locale]/achievements/_components/category-filter.tsx": "198de3fc759ffb4b05dd61363d48ae301d5c278d",
+      "apps/web/app/[locale]/battle/_components/battle-match-client.tsx": "a5eff61a0173612430e57cf46d89b34bafc9fcd2",
+      "apps/web/app/[locale]/cardgen/_components/cardgen-page-client.tsx": "1f54d3ae1e0753f9bc457cf454c71a39e156f6b3",
+      "apps/web/app/[locale]/decks/shared/[token]/page.tsx": "a87c31612655e509242b95719a9cb3d132239d4a",
+      "apps/web/app/[locale]/dictionary/[id]/_components/lexeme-detail-client.tsx": "307594fec28bf1c2c1e1bc89ce632b7967c5a089",
+      "apps/web/app/[locale]/dictionary/_components/dictionary-client.contract.test.tsx": "4094fe8b7437f77f6d9d760e8174df2edc48af10",
+      "apps/web/app/[locale]/dictionary/_components/dictionary-client.tsx": "dd4e9b1cabead04016daac3b365a52b476f0e0f3",
+      "apps/web/app/[locale]/exercises/_components/exercises-page-client.tsx": "44ae43a039aa2db7ca4de6d832b1f3ab5e919e52",
+      "apps/web/app/[locale]/flashcards/_components/auto-gen-dialog.tsx": "da65c9e1e1636265b2e64c0b0a4a96927bef919c",
+      "apps/web/app/[locale]/flashcards/_components/deck-card.tsx": "33e3e066e56f0b62d088bb0b3d1a21a7b1559e29",
+      "apps/web/app/[locale]/flashcards/_components/deck-composer-panel.tsx": "0e92bd61ecf39e6f5ccc0801eec3e1cb279ccee4",
+      "apps/web/app/[locale]/flashcards/_components/deck-study-session.tsx": "2258dee820e1feca609d1d41b0f205748811f43b",
+      "apps/web/app/[locale]/flashcards/_components/flashcard-interactive-card.tsx": "f7b83ee62d868649f368004637ba7765ad641f9a",
+      "apps/web/app/[locale]/flashcards/_components/flashcard-style-picker.tsx": "60c572a0f06a8431e199a2bf602a882205be4020",
+      "apps/web/app/[locale]/flashcards/_components/flashcards-page-client.tsx": "6eec1b7228c5a92705e20711b64901d19baef9c7",
+      "apps/web/app/[locale]/levels/[level]/_components/level-detail-client.test.tsx": "d2dbc9b869904bfb2ef771bf6eb2bce23ccda07a",
+      "apps/web/app/[locale]/levels/[level]/_components/level-detail-client.tsx": "11f748c77c0875730084f42c6dab7ebb557c6825",
+      "apps/web/app/[locale]/levels/_components/levels-client.test.tsx": "7c2033fdc9e0bceca67d4e89ad3a9df0418b1bab",
+      "apps/web/app/[locale]/levels/_components/levels-client.tsx": "7a2a6ef3b4d45f0899006d72042aa7a3ba793ade",
+      "apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx": "9c72e723e7a4c0443fd63fa169ce1536f81278a8",
+      "apps/web/app/[locale]/pricing/_components/pricing-client.tsx": "68c669e779f1dfa477ee99d4dcd127b13b63c2f1",
+      "apps/web/app/[locale]/quiz/_components/quiz-client.tsx": "c7d593c7ef5b78a3ac0bb93e2cbdda41442100ee",
+      "apps/web/app/[locale]/search/_components/search-detail-learner-actions.tsx": "0d242a2498f0737f83bfcaff1048ac48dc23b286",
+      "apps/web/app/[locale]/search/_components/search-detail-panel.tsx": "945b6501a4eedb9cdc429322b253ad4fd4e8169c",
+      "apps/web/app/[locale]/settings/appearance/_components/appearance-settings-client.tsx": "7ce850dc971adec50601b8cfc7c2bb8d964b34fc",
+      "apps/web/app/[locale]/u/[userId]/_components/public-profile-client.tsx": "2e4245283d34ead5b292ad91dc190a9a54893232",
+      "apps/web/app/_components/ambient-mini-player.tsx": "ea9e74b0425d61fe5b10760a002d8378e80a9b15",
+      "apps/web/app/_components/app-icons.tsx": "e8c51903ec6deba423d08abf53b66fa42e77f4a1",
+      "apps/web/app/_components/battle-bot-avatar.tsx": "e3d174fb54a5ed4ea13fd7584f134e262a1a0716",
+      "apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx": "694eb3bbc6b480cd9478497fd25bd0db658bad6b",
+      "apps/web/app/_components/learner-app-frame.tsx": "626a8a731edb71a21859343b97fb977f662ca8a2",
+      "apps/web/app/_components/theme-toggle.tsx": "3cdc8a03a7d9d92f33d7b47630cf62c9fda2bc3c",
+      "apps/web/app/globals.css": "43152fd6b990711f5f02f7238ddc20d1f5f2f75e",
+      "apps/web/app/theme-contrast.regression.test.ts": "f338c530b8fe3389fdb5e2ab2e7b6d6fc1b474f2",
+      "apps/web/lib/appearance.ts": "3347954b194cb41c19e9d21cff863cdfb762548e",
+      "apps/web/lib/dictionary-display.ts": "f3f031a1632db656b037627405dfa2f75f23bb96",
+      "apps/web/lib/level-display.ts": "13d92ab06ade8f20d47790ca6bb22064de3dad2b",
+      "apps/web/messages/en.json": "9cec8301bbd52768e4ac4578b7c45946ae18ca0c",
+      "apps/web/messages/ja.json": "3c7b4d76272dc58d651e1c1dc30ce9ab8b66461f",
+      "apps/web/messages/vi.json": "dd9ba969c574b9cc8afb44211870395e906fc35c",
+      "apps/web/src/features/daily-radar/daily-radar-section.tsx": "5c6250a2ab2dce13639064b685a75dde3e9c9db0"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

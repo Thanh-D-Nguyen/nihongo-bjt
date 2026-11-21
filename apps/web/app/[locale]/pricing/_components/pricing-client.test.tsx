@@ -134,6 +134,38 @@ describe("PricingClient contracts", () => {
     expect(host.querySelector('button:disabled')?.textContent).toBe(viMessages.pricing.checkoutPendingShort);
   });
 
+  async function expectQuotaLine(locale: string, labels: typeof viMessages.pricing, expected: string) {
+    apiFetchMock.mockResolvedValue(response([plan]));
+    const host = await renderPricing(locale, labels);
+    const line = Array.from(host.querySelectorAll("p")).find((p) => p.textContent?.includes(expected.split(":")[0]));
+    // Each child node is a separate flex item / accessibility text run; a separator living in its own
+    // whitespace-only-trimmed run collapses to "label:value".
+    const runs = Array.from(line?.childNodes ?? []).map((node) => (node.textContent ?? "").trim()).filter(Boolean);
+    expect(runs.join(""), "each quota feature line must render as one text run with a space after the colon").toBe(expected);
+  }
+
+  it("renders vi quota feature lines as one run with a space after the colon", () =>
+    expectQuotaLine("vi", viMessages.pricing, "Ôn thẻ flashcard: 30/ngày"));
+  it("renders en quota feature lines as one run with a space after the colon", () =>
+    expectQuotaLine("en", enMessages.pricing, "Flashcard reviews: 30/day"));
+  it("renders ja quota feature lines as one run with a space after the colon", () =>
+    expectQuotaLine("ja", jaMessages.pricing, "フラッシュカード復習: 30/日"));
+
+  it("does not repeat the free plan name as its price", async () => {
+    const freePlan = {
+      ...plan,
+      id: "33333333-3333-4333-8333-333333333333",
+      slug: "free",
+      config: { displayName: "Free", displayNameVi: "Miễn phí", displayNameJa: "無料", price: 0 },
+      entitlements: ["learner.basic"]
+    };
+    apiFetchMock.mockResolvedValue(response([freePlan, plan]));
+    const host = await renderPricing("vi", viMessages.pricing);
+    const card = Array.from(host.querySelectorAll("h3")).find((heading) => heading.textContent === "Miễn phí")?.parentElement;
+    expect(card?.textContent?.split("Miễn phí").length, "free plan card must show its name once, not again as the price").toBe(2);
+    expect(card?.textContent).toContain("0đ");
+  });
+
   it("reports API failures and gives the learner a retry action", async () => {
     apiFetchMock.mockResolvedValueOnce(response({ message: "unavailable" }, 503)).mockResolvedValue(response([plan]));
     const host = await renderPricing("vi", viMessages.pricing);

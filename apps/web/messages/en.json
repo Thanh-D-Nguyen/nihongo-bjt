@@ -273,7 +273,9 @@
     "localeSwitcherAria": "Change display language",
     "localeVi": "Tiếng Việt",
     "localeJa": "日本語",
-    "localeEn": "English"
+    "localeEn": "English",
+    "themeToggleToDark": "Switch to dark theme",
+    "themeToggleToLight": "Switch to light theme"
   },
   "home": {
     "actionsLabel": "Quick actions",
@@ -2652,6 +2654,7 @@
     "perMonth": "/month",
     "unlimited": "Unlimited",
     "quotaFormat": "{limit}/{window}",
+    "quotaLine": "{label}: {value}",
     "loading": "Loading...",
     "error": "Could not load plan info. Please try again.",
     "backHome": "← Back to home",

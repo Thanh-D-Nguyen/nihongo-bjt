@@ -79,6 +79,14 @@ describe("LevelsClient", () => {
   await act(async () => root.render(<LevelsClient labels={labels.vi} locale="vi" />));
   expect(host.querySelector('a[href="/vi/levels/J1+"]')).toBeNull();
  });
+ it("renders each level code once per roadmap card when the API name already starts with the code", async () => {
+  apiFetch.mockImplementation((path: string) => Promise.resolve(new Response(JSON.stringify(path === "/api/levels" ? [{ ...level, nameVi: "J5 — Sơ cấp" }] : { totals: {} }))));
+  await act(async () => root.render(<LevelsClient labels={labels.vi} locale="vi" />));
+  await act(async () => { await Promise.resolve(); });
+  const card = host.querySelector('a[href="/vi/levels/J5"]');
+  expect(card?.textContent?.match(/J5/g)?.length, "level code must render once per heading").toBe(1);
+  expect(card?.textContent).toContain("Sơ cấp");
+ });
 	const renderLocale = async (locale: "vi" | "en" | "ja") => {
 		await act(async () => root.render(<LevelsClient labels={labels[locale]} locale={locale} />));
 		await act(async () => { await Promise.resolve(); });

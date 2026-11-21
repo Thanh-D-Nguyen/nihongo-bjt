@@ -929,7 +929,7 @@ export function DeckComposerPanel({
                         <button
                           className={`rounded-xl px-4 py-2 text-xs font-bold transition-all active:scale-95 ${
                             suggestLevel === lv
-                              ? "bg-accent text-white shadow-md shadow-accent/25"
+                              ? "bg-action text-white shadow-md shadow-accent/25"
                               : "bg-ink/6 text-muted hover:bg-ink/12 hover:shadow-sm"
                           }`}
                           key={lv}

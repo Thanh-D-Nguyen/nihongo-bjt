@@ -64,4 +64,22 @@ describe("LevelDetailClient", () => {
     expect(host.textContent).toContain("1 of 1");
     expect(host.querySelector("ol li a")?.className).toContain("bg-[#F0FDF4]");
   });
+
+  it("renders the level code once in the level header when the API name already starts with the code", async () => {
+    apiFetch
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        code: "J1", nameJa: "J1 — 上級", nameVi: "J1 — Cao cấp", scoreMin: 530, scoreMax: 599, jlptEquiv: "N1",
+        descriptionVi: "description", descriptionJa: "説明", color: "#EF4444", vocabCount: 1, kanjiCount: 1, grammarCount: 1
+      })))
+      .mockResolvedValueOnce(new Response(JSON.stringify([])));
+
+    await act(async () => {
+      root.render(<LevelDetailClient code="J1" labels={labels} locale="vi" />);
+    });
+    await act(async () => { await Promise.resolve(); });
+
+    const heading = host.querySelector("h1")?.parentElement;
+    expect(heading?.textContent?.match(/J1/g)?.length, "level code must render once per heading").toBe(1);
+    expect(heading?.textContent).toContain("Cao cấp");
+  });
 });
