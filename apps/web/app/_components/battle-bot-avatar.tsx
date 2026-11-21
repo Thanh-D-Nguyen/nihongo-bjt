@@ -208,7 +208,7 @@ export function BattleBotAvatar({
   return (
     <span
       aria-label={label}
-      className={`relative grid aspect-square place-items-center overflow-hidden ${isCompanion ? "rounded-full" : `rounded-[1.65rem] border bg-surface/90 shadow-sm ${style.ring}`} ${pad} ${className}`}
+      className={`relative grid aspect-square place-items-center ${isCompanion ? "overflow-visible rounded-full" : `overflow-hidden rounded-[1.65rem] border bg-surface/90 shadow-sm ${style.ring}`} ${pad} ${className}`}
       role={label ? "img" : undefined}
       style={{ containerType: "inline-size" }}
     >
@@ -217,7 +217,7 @@ export function BattleBotAvatar({
         className={`absolute inset-[12%] rounded-full blur-2xl transition-colors duration-300 ${style.aura}`}
       />
       <span
-        className={`relative z-10 grid h-full w-full place-items-center transition-transform duration-300 ${style.motion}`}
+        className={`relative z-10 grid h-full w-full min-h-0 min-w-0 place-items-center transition-transform duration-300 ${style.motion}`}
       >
         {rive.src ? (
           <RiveBoundary fallback={fallbackNode}>

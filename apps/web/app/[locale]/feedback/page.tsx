@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
@@ -12,6 +12,10 @@ export default function FeedbackPage() {
   const params = useParams();
   const locale = (params?.locale as string) ?? "vi";
   const t = messages[locale]?.feedbackPage ?? messages.vi.feedbackPage;
+
+  useEffect(() => {
+    document.title = t.metaTitle;
+  }, [t.metaTitle]);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

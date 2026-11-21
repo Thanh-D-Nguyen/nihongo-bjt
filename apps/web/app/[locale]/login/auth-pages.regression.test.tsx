@@ -94,6 +94,17 @@ describe("learner auth pages regression", () => {
   expect(container.querySelector('a[href="/vi"]')?.textContent).toContain(vietnamese.nav.home);
   expect(document.title).toBe(vietnamese.auth.login.metaTitle);
  });
+ it("sets document.title from auth.register.metaTitle across all locales", async () => {
+  for (const [locale, messages] of [["vi", vietnamese], ["ja", ja], ["en", en]] as const) {
+   document.title = "Kiokoto";
+   mocks.locale = locale;
+   await render(RegisterPage);
+   expect(
+    document.title,
+    "register page must set document.title from auth.register.metaTitle",
+   ).toBe(messages.auth.register.metaTitle);
+  }
+ });
   it.each([
     ["/vi/learn?tab=due#list", "/vi/learn?tab=due#list"],
     ["https://attacker.example/", "/vi"],

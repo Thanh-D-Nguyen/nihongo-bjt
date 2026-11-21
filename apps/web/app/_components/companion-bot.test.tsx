@@ -52,6 +52,21 @@ describe("CompanionBot API boundary", () => {
     expect(mascot!.style.bottom, "mascot bottom must come from the responsive classes, not an inline style").toBe("");
   });
 
+  it("gives the companion mascot an explicit square box with non-clipping overflow", async () => {
+    root = createRoot(container);
+    await act(() => root.render(<PageBoundary><CompanionBot base="/en" locale="en" labels={messages.nav.companion} /></PageBoundary>));
+    const aside = container.querySelector("aside");
+    const mascot = aside!.querySelector<HTMLElement>('[style*="width"]');
+    expect(mascot, "mascot container must be rendered").not.toBeNull();
+    expect(mascot!.style.width).toBe("48px");
+    expect(mascot!.style.height, "mascot container must declare an explicit square height").toBe("48px");
+    const trigger = mascot!.querySelector<HTMLElement>("[tabindex]");
+    expect(trigger, "mascot interactive trigger must be rendered").not.toBeNull();
+    expect(trigger!.className, "mascot trigger must fill its square box without clipping").toContain("h-full");
+    expect(trigger!.className).toContain("w-full");
+    expect(trigger!.className).toContain("overflow-visible");
+  });
+
   it("uses English messages and bubbles on the English route", () => {
     const text = { ja: "こんにちは", vi: "Xin chào", en: "Hello learner" };
     const html = renderToStaticMarkup(<>

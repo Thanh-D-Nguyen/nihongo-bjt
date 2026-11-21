@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, type FormEvent } from "react";
+import { useState, useCallback, useEffect, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -25,6 +25,10 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const googleError = useCallback((status: number) => setError(status === 409 ? t.userExists : t.registrationFailed), [t.userExists, t.registrationFailed]);
+
+  useEffect(() => {
+    document.title = t.metaTitle;
+  }, [t.metaTitle]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

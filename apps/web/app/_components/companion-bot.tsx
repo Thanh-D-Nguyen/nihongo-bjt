@@ -219,6 +219,7 @@ export function CompanionBot({ base, labels, locale }: { base: string; labels: C
       <div
         className="pointer-events-auto absolute bottom-[calc(69px_+_env(safe-area-inset-bottom))] lg:bottom-[max(24px,calc(24px_+_env(safe-area-inset-bottom)))]"
         style={{
+          height: `${MASCOT_SIZE}px`,
           right: `${HOME_RIGHT}px`,
           width: `${MASCOT_SIZE}px`,
         }}
@@ -270,7 +271,7 @@ export function CompanionBot({ base, labels, locale }: { base: string; labels: C
 
         {/* Mascot */}
         <div
-          className={`cursor-pointer transition-[opacity,filter,transform] duration-200 ${engine.sleeping ? "opacity-60 grayscale-[30%]" : "opacity-90 hover:opacity-100"} ${open ? "scale-105" : "hover:scale-105 active:scale-95"}`}
+          className={`h-full w-full cursor-pointer overflow-visible transition-[opacity,filter,transform] duration-200 ${engine.sleeping ? "opacity-60 grayscale-[30%]" : "opacity-90 hover:opacity-100"} ${open ? "scale-105" : "hover:scale-105 active:scale-95"}`}
           onClick={handleTap}
           tabIndex={0}
           aria-label={open ? labels.close : labels.collapsedLabel}
