@@ -1,0 +1,634 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-439",
+  "title": "Scenarios answer-flow contrast sweep and --color-matcha-strong token",
+  "start_head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd",
+  "preexisting_changes": {
+    ".build/.buildSystem_debug": "c337257139e569398ce8bf081a54dbc7d1e0267d",
+    ".build/CACHEDIR.TAG": "b7ab0d883e974d20c05898291a6218954e18e5ef"
+  },
+  "spec": {
+    "problem": "The learner scenarios feature (apps/web/app/[locale]/scenarios) has multiple WCAG 2.1 AA contrast failures in light and dark modes across primary buttons, choice key prefixes, difficulty badges (including undefined --color-gold fallback #f59e0b), selected-choice and feedback state borders, borderline error text, unpinned feedback verdict and summary row text, progress bar fill, summary score readout, and unstyled error retry controls.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "AC1: globals.css defines --color-matcha-strong (#15803d light, #15853e dark and system fallback) while leaving --color-matcha (#22c55e light, #4ade80 dark) untouched; white text on matcha-strong >= 4.5:1 and matcha-strong border on dark paper/inner tint >= 3.0:1 in both themes."
+      },
+      {
+        "id": "AC2",
+        "text": "AC2: scenario-play-client.tsx fixes primary CTAs (bg-matcha-strong text-white), choice key (text-ink/70), selected-choice and feedback borders (border-matcha-strong / border-sakura-strong), error text (text-sakura-strong), feedback verdict (explicit text-ink), progress fill (bg-matcha-strong dark:bg-matcha), summary score (text-matcha-strong dark:text-matcha), summary step rows (explicit text-ink + state borders), load-error/retry styling, and disabled choice hover/state without contrast washout."
+      },
+      {
+        "id": "AC3",
+        "text": "AC3: scenario-list-client.tsx migrates all three difficulty badges (beginner matcha-soft + matcha-strong/dark:matcha, intermediate amber-soft + amber-strong removing undefined --color-gold, advanced sakura-soft + sakura-strong) to >= 4.5:1 in both themes, and styles load-error/retry with explicit high-contrast tokens."
+      },
+      {
+        "id": "AC4",
+        "text": "AC4: Regression tests in apps/web/app/theme-contrast.regression.test.ts and scenario component/contract tests pin all computed before/after WCAG ratios (both modes) and rendered token classes; pnpm quality verify passes; WEB-439 closes VERIFIED with only owned files staged (no .build/, no tsconfig.tsbuildinfo)."
+      }
+    ],
+    "expected_behavior": "Add --color-matcha-strong (#15803d light, #15853e dark + prefers-color-scheme fallback) in apps/web/app/globals.css without modifying --color-matcha. All text in scenario-play-client and scenario-list-client reaches >= 4.5:1 and all state/progress indicators reach >= 3.0:1 in both themes: primary CTAs 5.02:1/4.71:1; choice key text-ink/70 6.44:1/8.41:1 (paper) and >=5.97:1 (tints); level badges beginner matcha-strong/matcha on matcha-soft 4.79:1/8.48:1, intermediate amber-strong on amber-soft 6.84:1/10.39:1, advanced sakura-strong on sakura-soft 5.91:1/8.51:1; selected-choice and feedback borders matcha-strong 4.79:1/3.79:1 (inner 4.43:1/3.13:1) and sakura-strong 6.18:1/9.41:1; error text sakura-strong 6.18:1/9.41:1; feedback verdict explicit text-ink >=13.45:1; progress fill matcha-strong/dark:matcha 3.90:1/7.88:1; summary score matcha-strong/dark:matcha 5.02:1/8.40:1; summary rows explicit text-ink >=10.82:1 with matcha-strong/dark:matcha and sakura-strong borders >=4.61:1; retry buttons explicit text-ink on bg-surface >=13.45:1. Intentionally left subtle/decorative: loading pulse skeletons (bg-ink/10, bg-ink/5), speaker avatar circle (bg-ink/10 behind emoji), and subtle structural card borders (border-border) on cards/unselected choices.",
+    "observed_behavior": "In light/dark modes: (1) primary Next/Show Result and Replay buttons use bg-[var(--color-matcha)] text-white (2.28:1 light, 1.74:1 dark); (2) choice key A. uses text-ink/40 (2.52:1 light, 3.58:1 dark on paper); (3) level badges in scenario-list-client use matcha on matcha/15 (2.00:1 light), undefined --color-gold/#f59e0b on /15 (1.91:1 light), and sakura on sakura/15 (3.81:1 light, 4.26:1 dark); (4) selected-choice optimal border uses base matcha (2.18:1 light vs paper, 2.01:1 vs tint); (5) inline error uses base sakura (4.62:1 borderline light); (6) feedback verdict lacks explicit text-ink and panel borders use /20 (1.18:1-1.55:1); (7) progress fill uses base matcha on ink/10 track (1.77:1 light); (8) summary score uses base matcha on surface (2.28:1 light); (9) summary result rows lack explicit text-ink and state borders (1.09:1-1.24:1 tint vs surface); (10) list/play load-error retry buttons lack explicit text/border tokens and disabled choices retain hover.",
+    "rollback_plan": "Revert apps/web/app/globals.css (removing --color-matcha-strong), apps/web/app/[locale]/scenarios/**, and the WEB-439 describe block in apps/web/app/theme-contrast.regression.test.ts; no other features, API, DB, admin, or deploy files are affected."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Presentation-only WCAG contrast token addition (--color-matcha-strong) and scenario list/play client token migration in apps/web; no API, database, admin, or domain logic changes."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "WEB-439 scenarios answer-flow contrast sweep > defines --color-matcha-strong for both themes without changing --color-matcha and meets WCAG AA ratios across all scenario token pairs",
+      "expect": "matcha-strong must be defined in light, dark, and system fallback themes"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "WEB-439 scenarios answer-flow contrast sweep > migrates scenario-play-client.tsx off low-contrast base tokens and pins explicit verdict, error, progress, and summary contrast",
+      "expect": "scenario-play-client.tsx must not retain sub-AA matcha/sakura base tokens or text-ink/40"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "WEB-439 scenarios answer-flow contrast sweep > migrates scenario-list-client.tsx difficulty badges and error retry controls to WCAG AA theme tokens",
+      "expect": "scenario-list-client.tsx must not retain low-contrast badge tokens or undefined --color-gold"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx",
+      "test": "scenario list > renders WCAG AA contrast tokens on beginner, intermediate, advanced badges and load-error retry controls",
+      "expect": "beginner badge must use WCAG AA matcha tokens"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx",
+      "test": "scenario play API contract > applies WCAG AA contrast tokens across choices, feedback, progress fill, inline errors, and summary controls",
+      "expect": "progress bar fill must use bg-matcha-strong dark:bg-matcha"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx",
+      "test": "scenario play API contract > uses sakura-strong borders for suboptimal choice selection, feedback panel, and summary rows",
+      "expect": "suboptimal selected choice must use border-sakura-strong"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-22T09:06:38.279Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-22T09:06:38.511Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-22T09:06:38.739Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-22T09:11:40.782Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-22T09:15:19.654Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-22T09:33:15.726Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-22T09:42:57.611Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-22T09:47:42.638Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-22T09:49:34.462Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-22T09:10:59.548Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > defines --color-matcha-strong for both themes without changing --color-matcha and meets WCAG AA ratios across all scenario token pairs",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "Transform failed with 1 error: \u001b[31m[PARSE_ERROR] Error:\u001b[0m Expected `,` or `)` but found `;` \u001b[38;5;246m╭\u001b[0m\u001b[38;5;246m─\u001b[0m\u001b[38;5;246m[\u001b[0m apps/web/app/theme-contrast.regression.test.ts:676:163 \u001b[38;5;246m]\u001b[0m \u001b[38;5;246m│\u001b[0m \u001b[38;5;246m676 │\u001b[0m \u001b[38;5;249m \u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249me\u001b[…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-play-client.tsx off low-contrast base tokens and pins explicit verdict, error, progress, and summary contrast",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "Transform failed with 1 error: \u001b[31m[PARSE_ERROR] Error:\u001b[0m Expected `,` or `)` but found `;` \u001b[38;5;246m╭\u001b[0m\u001b[38;5;246m─\u001b[0m\u001b[38;5;246m[\u001b[0m apps/web/app/theme-contrast.regression.test.ts:676:163 \u001b[38;5;246m]\u001b[0m \u001b[38;5;246m│\u001b[0m \u001b[38;5;246m676 │\u001b[0m \u001b[38;5;249m \u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249me\u001b[…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-list-client.tsx difficulty badges and error retry controls to WCAG AA theme tokens",
+          "outcome": "BUILD_FAIL",
+          "excerpt": "Transform failed with 1 error: \u001b[31m[PARSE_ERROR] Error:\u001b[0m Expected `,` or `)` but found `;` \u001b[38;5;246m╭\u001b[0m\u001b[38;5;246m─\u001b[0m\u001b[38;5;246m[\u001b[0m apps/web/app/theme-contrast.regression.test.ts:676:163 \u001b[38;5;246m]\u001b[0m \u001b[38;5;246m│\u001b[0m \u001b[38;5;246m676 │\u001b[0m \u001b[38;5;249m \u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249me\u001b[…",
+          "valid": false,
+          "reason": "compile/import failure is not a valid RED (use red_exception new_component + sensitivity for brand-new code)"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > renders WCAG AA contrast tokens on beginner, intermediate, advanced badges and load-error retry controls",
+          "outcome": "FAIL",
+          "excerpt": "beginner badge must use WCAG AA matcha tokens: expected 'rounded-full px-2 py-0.5 text-[10px] …' to contain 'bg-matcha-soft'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > applies WCAG AA contrast tokens across choices, feedback, progress fill, inline errors, and summary controls",
+          "outcome": "FAIL",
+          "excerpt": "progress bar fill must use bg-matcha-strong dark:bg-matcha: expected 'h-full rounded-full bg-[var(--color-m…' to contain 'bg-matcha-strong'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses sakura-strong borders for suboptimal choice selection, feedback panel, and summary rows",
+          "outcome": "FAIL",
+          "excerpt": "suboptimal selected choice must use border-sakura-strong: expected 'min-h-12 w-full rounded-xl border p-3…' to contain 'border-sakura-strong'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > defines --color-matcha-strong for both themes without changing --color-matcha and meets WCAG AA ratios across all scenario token pairs": "true",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-play-client.tsx off low-contrast base tokens and pins explicit verdict, error, progress, and summary contrast": "scenario-play-client.tsx must not retain sub-AA matcha/sakura base tokens or text-ink/40",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-list-client.tsx difficulty badges and error retry controls to WCAG AA theme tokens": "scenario-list-client.tsx must not retain low-contrast badge tokens or undefined --color-gold",
+        "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > renders WCAG AA contrast tokens on beginner, intermediate, advanced badges and load-error retry controls": "beginner badge must use WCAG AA matcha tokens",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > applies WCAG AA contrast tokens across choices, feedback, progress fill, inline errors, and summary controls": "progress bar fill must use bg-matcha-strong dark:bg-matcha",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses sakura-strong borders for suboptimal choice selection, feedback panel, and summary rows": "suboptimal selected choice must use border-sakura-strong"
+      },
+      "fingerprint": "c34136d4291f36da931f8c17dca32d9d9a8f28ad846f195287bbf70010d41346"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-22T09:11:27.233Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > defines --color-matcha-strong for both themes without changing --color-matcha and meets WCAG AA ratios across all scenario token pairs",
+          "outcome": "FAIL",
+          "excerpt": "--color-matcha-strong must be defined in light, dark, and system fallback themes: expected undefined to be '#15803d' // Object.is equality",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"true\""
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-play-client.tsx off low-contrast base tokens and pins explicit verdict, error, progress, and summary contrast",
+          "outcome": "FAIL",
+          "excerpt": "scenario-play-client.tsx must not retain sub-AA matcha/sakura base tokens or text-ink/40: expected [ …(10) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-list-client.tsx difficulty badges and error retry controls to WCAG AA theme tokens",
+          "outcome": "FAIL",
+          "excerpt": "scenario-list-client.tsx must not retain low-contrast badge tokens or undefined --color-gold: expected [ …(3) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > renders WCAG AA contrast tokens on beginner, intermediate, advanced badges and load-error retry controls",
+          "outcome": "FAIL",
+          "excerpt": "beginner badge must use WCAG AA matcha tokens: expected 'rounded-full px-2 py-0.5 text-[10px] …' to contain 'bg-matcha-soft'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > applies WCAG AA contrast tokens across choices, feedback, progress fill, inline errors, and summary controls",
+          "outcome": "FAIL",
+          "excerpt": "progress bar fill must use bg-matcha-strong dark:bg-matcha: expected 'h-full rounded-full bg-[var(--color-m…' to contain 'bg-matcha-strong'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses sakura-strong borders for suboptimal choice selection, feedback panel, and summary rows",
+          "outcome": "FAIL",
+          "excerpt": "suboptimal selected choice must use border-sakura-strong: expected 'min-h-12 w-full rounded-xl border p-3…' to contain 'border-sakura-strong'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > defines --color-matcha-strong for both themes without changing --color-matcha and meets WCAG AA ratios across all scenario token pairs": "true",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-play-client.tsx off low-contrast base tokens and pins explicit verdict, error, progress, and summary contrast": "scenario-play-client.tsx must not retain sub-AA matcha/sakura base tokens or text-ink/40",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-list-client.tsx difficulty badges and error retry controls to WCAG AA theme tokens": "scenario-list-client.tsx must not retain low-contrast badge tokens or undefined --color-gold",
+        "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > renders WCAG AA contrast tokens on beginner, intermediate, advanced badges and load-error retry controls": "beginner badge must use WCAG AA matcha tokens",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > applies WCAG AA contrast tokens across choices, feedback, progress fill, inline errors, and summary controls": "progress bar fill must use bg-matcha-strong dark:bg-matcha",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses sakura-strong borders for suboptimal choice selection, feedback panel, and summary rows": "suboptimal selected choice must use border-sakura-strong"
+      },
+      "fingerprint": "add9a5746fee7c3895ae7402d9cdb8491a6a16c59d2836d06372b9465d42ce9e"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-22T09:11:40.605Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > defines --color-matcha-strong for both themes without changing --color-matcha and meets WCAG AA ratios across all scenario token pairs",
+          "outcome": "FAIL",
+          "excerpt": "--color-matcha-strong must be defined in light, dark, and system fallback themes: expected undefined to be '#15803d' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-play-client.tsx off low-contrast base tokens and pins explicit verdict, error, progress, and summary contrast",
+          "outcome": "FAIL",
+          "excerpt": "scenario-play-client.tsx must not retain sub-AA matcha/sakura base tokens or text-ink/40: expected [ …(10) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-list-client.tsx difficulty badges and error retry controls to WCAG AA theme tokens",
+          "outcome": "FAIL",
+          "excerpt": "scenario-list-client.tsx must not retain low-contrast badge tokens or undefined --color-gold: expected [ …(3) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > renders WCAG AA contrast tokens on beginner, intermediate, advanced badges and load-error retry controls",
+          "outcome": "FAIL",
+          "excerpt": "beginner badge must use WCAG AA matcha tokens: expected 'rounded-full px-2 py-0.5 text-[10px] …' to contain 'bg-matcha-soft'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > applies WCAG AA contrast tokens across choices, feedback, progress fill, inline errors, and summary controls",
+          "outcome": "FAIL",
+          "excerpt": "progress bar fill must use bg-matcha-strong dark:bg-matcha: expected 'h-full rounded-full bg-[var(--color-m…' to contain 'bg-matcha-strong'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses sakura-strong borders for suboptimal choice selection, feedback panel, and summary rows",
+          "outcome": "FAIL",
+          "excerpt": "suboptimal selected choice must use border-sakura-strong: expected 'min-h-12 w-full rounded-xl border p-3…' to contain 'border-sakura-strong'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > defines --color-matcha-strong for both themes without changing --color-matcha and meets WCAG AA ratios across all scenario token pairs": "matcha-strong must be defined in light, dark, and system fallback themes",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-play-client.tsx off low-contrast base tokens and pins explicit verdict, error, progress, and summary contrast": "scenario-play-client.tsx must not retain sub-AA matcha/sakura base tokens or text-ink/40",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-list-client.tsx difficulty badges and error retry controls to WCAG AA theme tokens": "scenario-list-client.tsx must not retain low-contrast badge tokens or undefined --color-gold",
+        "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > renders WCAG AA contrast tokens on beginner, intermediate, advanced badges and load-error retry controls": "beginner badge must use WCAG AA matcha tokens",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > applies WCAG AA contrast tokens across choices, feedback, progress fill, inline errors, and summary controls": "progress bar fill must use bg-matcha-strong dark:bg-matcha",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses sakura-strong borders for suboptimal choice selection, feedback panel, and summary rows": "suboptimal selected choice must use border-sakura-strong"
+      },
+      "fingerprint": "add9a5746fee7c3895ae7402d9cdb8491a6a16c59d2836d06372b9465d42ce9e"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-22T09:13:48.432Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > defines --color-matcha-strong for both themes without changing --color-matcha and meets WCAG AA ratios across all scenario token pairs",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-play-client.tsx off low-contrast base tokens and pins explicit verdict, error, progress, and summary contrast",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-list-client.tsx difficulty badges and error retry controls to WCAG AA theme tokens",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "retry button must specify explicit text-ink and surface/border tokens: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > renders WCAG AA contrast tokens on beginner, intermediate, advanced badges and load-error retry controls",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > applies WCAG AA contrast tokens across choices, feedback, progress fill, inline errors, and summary controls",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses sakura-strong borders for suboptimal choice selection, feedback panel, and summary rows",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "755ab75c40eaaae43428bcf7465f340b2d4e8dd8ec12597a4d1f59b46007a83d"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-22T09:14:56.784Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd",
+      "kind": "red",
+      "outcome": "TOOL_FAILURE",
+      "mode": "replay_worktree",
+      "production_at_base": true,
+      "message": "git add -A -- . failed (exit 128): error: unable to create temporary file: Operation not permitted error: .agents/skills/bjt-deck-flashcard-management/SKILL.md: failed to insert into database error: unable to index file '.agents/skills/bjt-deck-flashcard-management/SKILL.md' fatal: updating files failed",
+      "expects": {
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > defines --color-matcha-strong for both themes without changing --color-matcha and meets WCAG AA ratios across all scenario token pairs": "matcha-strong must be defined in light, dark, and system fallback themes",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-play-client.tsx off low-contrast base tokens and pins explicit verdict, error, progress, and summary contrast": "scenario-play-client.tsx must not retain sub-AA matcha/sakura base tokens or text-ink/40",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-list-client.tsx difficulty badges and error retry controls to WCAG AA theme tokens": "scenario-list-client.tsx must not retain low-contrast badge tokens or undefined --color-gold",
+        "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > renders WCAG AA contrast tokens on beginner, intermediate, advanced badges and load-error retry controls": "beginner badge must use WCAG AA matcha tokens",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > applies WCAG AA contrast tokens across choices, feedback, progress fill, inline errors, and summary controls": "progress bar fill must use bg-matcha-strong dark:bg-matcha",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses sakura-strong borders for suboptimal choice selection, feedback panel, and summary rows": "suboptimal selected choice must use border-sakura-strong"
+      },
+      "fingerprint": "8446625f5f8b00e55a096cf40a4ecb62043bbdf786f422d375463e351ef658eb"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-22T09:15:19.403Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > defines --color-matcha-strong for both themes without changing --color-matcha and meets WCAG AA ratios across all scenario token pairs",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-play-client.tsx off low-contrast base tokens and pins explicit verdict, error, progress, and summary contrast",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-list-client.tsx difficulty badges and error retry controls to WCAG AA theme tokens",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > renders WCAG AA contrast tokens on beginner, intermediate, advanced badges and load-error retry controls",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > applies WCAG AA contrast tokens across choices, feedback, progress fill, inline errors, and summary controls",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses sakura-strong borders for suboptimal choice selection, feedback panel, and summary rows",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8446625f5f8b00e55a096cf40a4ecb62043bbdf786f422d375463e351ef658eb"
+    },
+    {
+      "seq": 7,
+      "at": "2026-11-22T09:16:32.214Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 705,
+        "executed": 705,
+        "passed": 705,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 890,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "8446625f5f8b00e55a096cf40a4ecb62043bbdf786f422d375463e351ef658eb"
+    },
+    {
+      "seq": 8,
+      "at": "2026-11-22T09:27:12.299Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 705,
+        "executed": 705,
+        "passed": 705,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 890,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "8446625f5f8b00e55a096cf40a4ecb62043bbdf786f422d375463e351ef658eb"
+    },
+    {
+      "seq": 9,
+      "at": "2026-11-22T09:33:15.339Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 705,
+        "executed": 705,
+        "passed": 705,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 890,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "8446625f5f8b00e55a096cf40a4ecb62043bbdf786f422d375463e351ef658eb"
+    },
+    {
+      "seq": 10,
+      "at": "2026-11-22T09:42:57.350Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > defines --color-matcha-strong for both themes without changing --color-matcha and meets WCAG AA ratios across all scenario token pairs",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-play-client.tsx off low-contrast base tokens and pins explicit verdict, error, progress, and summary contrast",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-439 scenarios answer-flow contrast sweep > migrates scenario-list-client.tsx difficulty badges and error retry controls to WCAG AA theme tokens",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > renders WCAG AA contrast tokens on beginner, intermediate, advanced badges and load-error retry controls",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > applies WCAG AA contrast tokens across choices, feedback, progress fill, inline errors, and summary controls",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx::scenario play API contract > uses sakura-strong borders for suboptimal choice selection, feedback panel, and summary rows",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "1e17ffc877c90cd597ef155cad3fff8a37e350a648d0ff0d0fd40bfea4201d5d"
+    },
+    {
+      "seq": 11,
+      "at": "2026-11-22T09:47:42.264Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 706,
+        "executed": 706,
+        "passed": 706,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 890,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "1e17ffc877c90cd597ef155cad3fff8a37e350a648d0ff0d0fd40bfea4201d5d"
+    },
+    {
+      "seq": 12,
+      "at": "2026-11-22T09:49:33.758Z",
+      "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "independent-research-subagent",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "3ef71cb0490c25761415c8f4c12fa8a8bbdf31f98dbf5d0f48ca47903fbf7b34",
+      "attested": true,
+      "fingerprint": "1e17ffc877c90cd597ef155cad3fff8a37e350a648d0ff0d0fd40bfea4201d5d"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-22T09:49:34.447Z",
+    "head": "758d7c72ffb35ddf4f239c4fc79117c24fab80dd",
+    "fingerprint": "1e17ffc877c90cd597ef155cad3fff8a37e350a648d0ff0d0fd40bfea4201d5d",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx": "18d45e7bce47b520af269d4ae87cdccca4e0bd6c",
+      "apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.tsx": "fcff15cb51019477587b741b53b8fcebcc9c31f6",
+      "apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx": "e1aed5d507b4f57d369391a495b7836c98de554c",
+      "apps/web/app/[locale]/scenarios/_components/scenario-list-client.tsx": "8b75d1f3634869252d50d903afb0ddc9ccd6e81a",
+      "apps/web/app/globals.css": "3421ebc1f16b70a70ace6af5caabcbf172cf7291",
+      "apps/web/app/theme-contrast.regression.test.ts": "8fb5acc5e88187dd7226470554721fe7197264a2"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}
