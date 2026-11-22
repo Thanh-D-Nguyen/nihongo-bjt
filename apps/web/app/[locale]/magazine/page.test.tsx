@@ -93,3 +93,84 @@ it("renders a retryable operational error instead of the empty-catalog state", a
   expect(markup).not.toContain("Chưa có bài viết nào");
   expect(mockMagazinePageClient).not.toHaveBeenCalled();
 });
+
+it("normalizes legacy ?kind=bjt URLs to bjt_phrase for the API request, client state, and retry link", async () => {
+  vi.stubEnv("API_URL", "http://api.test");
+  const article = {
+    id: "magazine-bjt-1",
+    slug: "2026-10-26-bjt_phrase-vi",
+    widgetKind: "magazine_bjt_phrase",
+    titleJp: "恐れ入りますが",
+    titleVi: "Xin phép làm phiền",
+    summaryVi: "Cách mở đầu lịch sự trong kinh doanh.",
+    jlptLevel: "N2",
+    publishDate: "2026-10-26",
+    vocabWords: [],
+  };
+  const fetchMock = vi.fn(async (_url: string | URL | Request, _init?: RequestInit) => new Response(JSON.stringify({
+    data: [article], total: 1, page: 1, limit: 12,
+  }), { status: 200 }));
+  vi.stubGlobal("fetch", fetchMock);
+
+  const { default: page } = await import("./page");
+  const tree = await page({
+    params: Promise.resolve({ locale: "vi" }),
+    searchParams: Promise.resolve({ kind: "bjt" }),
+  });
+  renderToStaticMarkup(tree);
+
+  expect(
+    fetchMock.mock.calls[0]?.[0],
+    "legacy ?kind=bjt must normalize to API kind bjt_phrase",
+  ).toBe("http://api.test/api/magazine?kind=bjt_phrase&page=1&limit=12");
+  expect(mockMagazinePageClient).toHaveBeenCalledWith(expect.objectContaining({
+    articles: [article],
+    kind: "bjt_phrase",
+    page: 1,
+    totalPages: 1,
+  }), undefined);
+
+  // Also verify retry link uses normalized bjt_phrase when API fails.
+  vi.stubGlobal("fetch", vi.fn(async () => new Response("unavailable", { status: 503 })));
+  const errorTree = await page({
+    params: Promise.resolve({ locale: "vi" }),
+    searchParams: Promise.resolve({ kind: "bjt", page: "2" }),
+  });
+  const errorMarkup = renderToStaticMarkup(errorTree);
+  expect(errorMarkup).toContain('href="/vi/magazine?kind=bjt_phrase&amp;page=2"');
+});
+
+it("normalizes widgetKind aliases such as magazine_bjt_phrase and magazine_loto6 to canonical API kinds", async () => {
+  vi.stubEnv("API_URL", "http://api.test");
+  const fetchMock = vi.fn(async (_url: string | URL | Request, _init?: RequestInit) => new Response(JSON.stringify({
+    data: [], total: 0, page: 1, limit: 12,
+  }), { status: 200 }));
+  vi.stubGlobal("fetch", fetchMock);
+
+  const { default: page } = await import("./page");
+  const cases = [
+    ["BJT", "bjt_phrase"],
+    ["magazine_bjt_phrase", "bjt_phrase"],
+    ["magazine_vocab", "vocab"],
+    ["magazine_weather", "weather"],
+    ["magazine_horoscope", "horoscope"],
+    ["magazine_loto6", "loto"],
+  ] as const;
+
+  for (const [input, expected] of cases) {
+    fetchMock.mockClear();
+    mockMagazinePageClient.mockClear();
+    const tree = await page({
+      params: Promise.resolve({ locale: "vi" }),
+      searchParams: Promise.resolve({ kind: input }),
+    });
+    renderToStaticMarkup(tree);
+    expect(
+      fetchMock.mock.calls[0]?.[0],
+      `alias ?kind=${input} must normalize to API kind ${expected}`,
+    ).toBe(`http://api.test/api/magazine?kind=${expected}&page=1&limit=12`);
+    expect(mockMagazinePageClient).toHaveBeenCalledWith(expect.objectContaining({
+      kind: expected,
+    }), undefined);
+  }
+});

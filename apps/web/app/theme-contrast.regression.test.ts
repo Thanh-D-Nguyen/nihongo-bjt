@@ -450,3 +450,94 @@ describe("WEB-436 hardcoded light-palette to theme-token regressions", () => {
   expect(failures, "audited sweep files must not retain unmapped light-palette dark-mode defects or undefined CSS vars").toEqual([]);
  });
 });
+
+describe("WEB-437 companion mascot dark-mode luminance and hue calibration", () => {
+ type Rgb = [number, number, number];
+ const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+ const parseHex = (hex: string): Rgb => {
+  const parts = hex.match(/[a-f\d]{2}/gi)!.map((v) => parseInt(v, 16) / 255);
+  return [parts[0], parts[1], parts[2]];
+ };
+ const toHex = ([r, g, b]: Rgb) =>
+  `#${[r, g, b].map((v) => Math.round(clamp01(v) * 255).toString(16).padStart(2, "0")).join("")}`;
+ const rgbLuminance = ([r, g, b]: Rgb) => {
+  const lin = (v: number) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+ };
+ const rgbContrast = (a: Rgb, b: Rgb) => {
+  const [hi, lo] = [rgbLuminance(a), rgbLuminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+ };
+ const rgbToHsl = ([r, g, b]: Rgb): [number, number, number] => {
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  let h = 0;
+  let s = 0;
+  if (max !== min) {
+   const d = max - min;
+   s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+   if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
+   else if (max === g) h = ((b - r) / d + 2) * 60;
+   else h = ((r - g) / d + 4) * 60;
+  }
+  return [h, s * 100, l * 100];
+ };
+ // W3C Filter Effects Level 1 sRGB pipeline in Tailwind v4 order: brightness -> contrast -> saturate.
+ const applyFilterRaw = ([r0, g0, b0]: Rgb, B: number, C: number, S: number) => {
+  const r = clamp01((clamp01(r0 * B) - 0.5) * C + 0.5);
+  const g = clamp01((clamp01(g0 * B) - 0.5) * C + 0.5);
+  const b = clamp01((clamp01(b0 * B) - 0.5) * C + 0.5);
+  const raw: Rgb = [
+   (0.213 + 0.787 * S) * r + (0.715 - 0.715 * S) * g + (0.072 - 0.072 * S) * b,
+   (0.213 - 0.213 * S) * r + (0.715 + 0.285 * S) * g + (0.072 - 0.072 * S) * b,
+   (0.213 - 0.213 * S) * r + (0.715 - 0.715 * S) * g + (0.072 + 0.928 * S) * b,
+  ];
+  return { raw, clamped: raw.map(clamp01) as Rgb };
+ };
+
+ it("keeps the baked #E0E0E0 artboard at <= 0.22 luminance in dark mode while preserving coral #EC5264 hue and cream face readability", () => {
+  const source = readFileSync(new URL("_components/battle-bot-avatar.tsx", import.meta.url), "utf8");
+  const B = Number(source.match(/dark:brightness-\[([\d.]+)\]/)?.[1]);
+  const C = Number(source.match(/dark:contrast-\[([\d.]+)\]/)?.[1]);
+  const S = Number(source.match(/dark:saturate-\[([\d.]+)\]/)?.[1]);
+  expect(Number.isFinite(B) && Number.isFinite(C) && Number.isFinite(S), "dark canvas filter values must be declared").toBe(true);
+
+  const bg = applyFilterRaw(parseHex("#E0E0E0"), B, C, S).clamped;
+  const coralRes = applyFilterRaw(parseHex("#EC5264"), B, C, S);
+  const coral = coralRes.clamped;
+  const face = applyFilterRaw(parseHex("#F5F3F1"), B, C, S).clamped;
+  const shade = applyFilterRaw(parseHex("#CEC3B8"), B, C, S).clamped;
+  const white = applyFilterRaw(parseHex("#FFFFFF"), B, C, S).clamped;
+  const outline = applyFilterRaw(parseHex("#141414"), B, C, S).clamped;
+
+  const bgLum = rgbLuminance(bg);
+  expect(
+   bgLum,
+   `baked #E0E0E0 artboard rendered luminance (${toHex(bg)}, L=${bgLum.toFixed(4)}) must be <= 0.22 in dark mode`,
+  ).toBeLessThanOrEqual(0.22);
+  expect(
+   bgLum,
+   `baked #E0E0E0 artboard rendered luminance (${toHex(bg)}, L=${bgLum.toFixed(4)}) should be <= #6b7280 (0.1672)`,
+  ).toBeLessThanOrEqual(luminance("#6b7280"));
+
+  const [origCoralH] = rgbToHsl(parseHex("#EC5264"));
+  const [coralH, coralS] = rgbToHsl(coral);
+  const rawDelta = Math.abs(coralH - origCoralH);
+  const hueDelta = rawDelta > 180 ? 360 - rawDelta : rawDelta;
+  expect(coralH >= 345 || coralH <= 10, `coral #EC5264 hue (${coralH.toFixed(1)}°) must stay in red-coral family`).toBe(true);
+  expect(hueDelta, `coral hue drift (${hueDelta.toFixed(1)}°) must stay <= 5°`).toBeLessThanOrEqual(5);
+  expect(coralS, `coral saturation (${coralS.toFixed(1)}%) must remain vibrant (>= 60%)`).toBeGreaterThanOrEqual(60);
+  expect(
+   coralRes.raw.every((channel) => channel > 0 && channel < 1),
+   `coral RGB channels (${coralRes.raw.map((v) => v.toFixed(3)).join(",")}) must not clip`,
+  ).toBe(true);
+
+  expect(rgbLuminance(face), "cream face must remain brighter than artboard background").toBeGreaterThan(bgLum);
+  expect(rgbContrast(face, bg), "cream face vs artboard background contrast").toBeGreaterThanOrEqual(1.15);
+  expect(rgbContrast(face, coral), "cream face vs coral body contrast").toBeGreaterThanOrEqual(2.0);
+  expect(rgbContrast(face, shade), "cream face vs face shade contrast").toBeGreaterThanOrEqual(1.45);
+  expect(rgbContrast(white, bg), "white sclera vs artboard background contrast").toBeGreaterThanOrEqual(1.25);
+  expect(rgbContrast(bg, outline), "artboard background vs dark outline contrast").toBeGreaterThanOrEqual(3.5);
+ });
+});

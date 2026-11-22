@@ -224,14 +224,14 @@ export function BattleBotAvatar({
         className={`absolute inset-[12%] rounded-full blur-2xl transition-colors duration-300 ${style.aura}`}
       />
       <span
-        className={`relative z-10 grid h-full w-full min-h-0 min-w-0 place-items-center transition-transform duration-300 ${isCompanion ? "dark:overflow-hidden dark:rounded-full dark:bg-surface dark:ring-1 dark:ring-border-hover dark:shadow-md " : ""}${style.motion}`}
+        className={`relative z-10 grid h-full w-full min-h-0 min-w-0 place-items-center transition-transform duration-300 ${isCompanion ? "dark:overflow-hidden dark:rounded-full dark:bg-paper dark:ring-1 dark:ring-border dark:shadow-md " : ""}${style.motion}`}
       >
         {rive.src ? (
           <RiveBoundary fallback={fallbackNode}>
             <RiveBotCanvas
               canvasClassName={
                 isCompanion
-                  ? "dark:scale-[1.26] dark:brightness-[0.80] dark:contrast-[1.06] dark:saturate-[1.12]"
+                  ? "dark:scale-[1.26] dark:brightness-[0.50] dark:contrast-[1.18] dark:saturate-[1.28]"
                   : undefined
               }
               fallback={fallback}
@@ -242,6 +242,12 @@ export function BattleBotAvatar({
         ) : (
           fallbackNode
         )}
+        {isCompanion ? (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-10 hidden rounded-full dark:block dark:shadow-[inset_0_0_10px_2px_rgba(15,23,42,0.55)]"
+          />
+        ) : null}
       </span>
       {showSignal ? (
         <span

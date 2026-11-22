@@ -1,0 +1,403 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-438",
+  "title": "Normalize magazine kind filter and pin chip kinds to API contract",
+  "start_head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae",
+  "preexisting_changes": {
+    ".build/.buildSystem_debug": "c337257139e569398ce8bf081a54dbc7d1e0267d",
+    ".build/CACHEDIR.TAG": "b7ab0d883e974d20c05898291a6218954e18e5ef",
+    "apps/web/app/_components/battle-bot-avatar.test.tsx": "4aad87be1c5c979a07cbcc1b2a8f7002f28dff60",
+    "apps/web/app/_components/battle-bot-avatar.tsx": "03dc05fe0257b0576cb1cd74ebb88854eed6fbff",
+    "apps/web/app/theme-contrast.regression.test.ts": "c40653016f85cc07a9aa75aa614bfc5adcc44f11",
+    "apps/web/tsconfig.tsbuildinfo": "8f9bb692244cb90132a159d474e8ad0889f35bbb"
+  },
+  "spec": {
+    "problem": "Visiting /vi/magazine?kind=bjt (the legacy BJT filter URL) passes raw kind=bjt directly to GET /api/magazine?kind=bjt, where listMagazineHandler (apps/api-go/internal/httpserver/handler_career_content_gamification_misc.go) expects kind=bjt_phrase (mapping to widget_kind magazine_bjt_phrase) and falls through to default widget_kind='bjt', returning 0 articles. MagazinePageClient also does not normalize legacy/widgetKind aliases for active-chip matching or pagination URLs, emits a trailing '?' when resetting to All, and has no regression test pinning its filter chip values to the Go API kind set {vocab, weather, horoscope, loto, bjt_phrase}.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "AC1: /vi/magazine BJT filter chip sends kind=bjt_phrase with user-visible label 'BJT' unchanged, and every non-all chip key matches the Go API listMagazineHandler kind set {vocab, weather, horoscope, loto, bjt_phrase} with documented provenance."
+      },
+      {
+        "id": "AC2",
+        "text": "AC2: Direct visits to legacy /vi/magazine?kind=bjt (and widgetKind aliases such as magazine_bjt_phrase, magazine_loto6) normalize at the web layer to canonical API kinds for API fetching, active chip highlighting, retry links, and pagination hrefs."
+      },
+      {
+        "id": "AC3",
+        "text": "AC3: Regression tests in page.test.tsx and magazine-page-client.test.tsx pin the API kind set and legacy ?kind=bjt normalization; pnpm quality verify passes; WEB-438 closes VERIFIED via harness."
+      }
+    ],
+    "expected_behavior": "MagazinePage normalizes kind via shared normalizeMagazineKind (mapping bjt and magazine_bjt_phrase -> bjt_phrase, plus magazine_vocab/weather/horoscope/loto/loto6/loto7 -> canonical API kinds) before calling GET /api/magazine, building retryHref, and passing kind to MagazinePageClient. MagazinePageClient types all filter chip keys against the canonical API kind set {vocab, weather, horoscope, loto, bjt_phrase} (keeping label 'BJT'), normalizes active-chip matching, pagination hrefs, and metadata lookups, and omits stray trailing '?' on All. Regression tests pin both filter chip values and legacy ?kind=bjt resolution.",
+    "observed_behavior": "apps/web/app/[locale]/magazine/page.tsx reads sp.kind ?? 'all' without normalization, sending GET /api/magazine?kind=bjt&page=1&limit=12 and rendering empty catalog state ('Chưa có bài viết nào') on /vi/magazine?kind=bjt; MagazinePageClient leaves the BJT chip inactive and emits ?kind=bjt pagination links when given kind='bjt', and no test pins filter chip keys against the API kind set.",
+    "rollback_plan": "Revert apps/web/app/[locale]/magazine/{magazine-kinds.ts,page.tsx,page.test.tsx,_components/magazine-page-client.tsx,_components/magazine-page-client.test.tsx}; no API, DB, admin, or deploy files are modified."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY",
+      "API_CONTRACT"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Web-layer magazine filter kind normalization, pagination/chip URL handling, and API query contract alignment in apps/web/app/[locale]/magazine; no Go API or database changes."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/magazine/page.test.tsx",
+      "test": "normalizes legacy ?kind=bjt URLs to bjt_phrase for the API request, client state, and retry link",
+      "expect": "legacy ?kind=bjt must normalize to API kind bjt_phrase"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/magazine/page.test.tsx",
+      "test": "normalizes widgetKind aliases such as magazine_bjt_phrase and magazine_loto6 to canonical API kinds",
+      "expect": "must normalize to API kind bjt_phrase"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx",
+      "test": "MagazinePageClient filter and pagination kind contract > pins filter chip kinds to the Go API listMagazineHandler kind set and keeps the BJT label unchanged",
+      "expect": "clicking All filter must navigate to clean /vi/magazine without a trailing"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx",
+      "test": "MagazinePageClient filter and pagination kind contract > normalizes legacy kind=bjt in active chip state, pagination hrefs, and card metadata",
+      "expect": "BJT chip must be marked active"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-22T07:20:32.658Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-22T07:20:33.115Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-22T07:20:33.453Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-22T07:23:38.924Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-22T07:25:15.691Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-22T07:31:37.755Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-22T07:32:11.833Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-22T07:22:08.991Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::normalizes legacy ?kind=bjt URLs to bjt_phrase for the API request, client state, and retry link",
+          "outcome": "FAIL",
+          "excerpt": "legacy ?kind=bjt must normalize to API kind bjt_phrase: expected 'http://api.test/api/magazine?kind=bjt…' to be 'http://api.test/api/magazine?kind=bjt…' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::normalizes widgetKind aliases such as magazine_bjt_phrase and magazine_loto6 to canonical API kinds",
+          "outcome": "FAIL",
+          "excerpt": "alias ?kind=BJT must normalize to API kind bjt_phrase: expected 'http://api.test/api/magazine?kind=BJT…' to be 'http://api.test/api/magazine?kind=bjt…' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx::MagazinePageClient filter and pagination kind contract > pins filter chip kinds to the Go API listMagazineHandler kind set and keeps the BJT label unchanged",
+          "outcome": "FAIL",
+          "excerpt": "clicking All filter must navigate to clean /vi/magazine without a trailing '?': expected '/vi/magazine?' to be '/vi/magazine' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx::MagazinePageClient filter and pagination kind contract > normalizes legacy kind=bjt in active chip selection, pagination links, and card metadata",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"MagazinePageClient filter and pagination kind contract > normalizes legacy kind=bjt in active chip selection, pagination links, and card metadata\" in apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/magazine/page.test.tsx::normalizes legacy ?kind=bjt URLs to bjt_phrase for the API request, client state, and retry link": "legacy ?kind=bjt must normalize to API kind bjt_phrase",
+        "vitest:apps/web/app/[locale]/magazine/page.test.tsx::normalizes widgetKind aliases such as magazine_bjt_phrase and magazine_loto6 to canonical API kinds": "must normalize to API kind bjt_phrase",
+        "vitest:apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx::MagazinePageClient filter and pagination kind contract > pins filter chip kinds to the Go API listMagazineHandler kind set and keeps the BJT label unchanged": "clicking All filter must navigate to clean /vi/magazine without a trailing",
+        "vitest:apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx::MagazinePageClient filter and pagination kind contract > normalizes legacy kind=bjt in active chip selection, pagination links, and card metadata": "BJT chip must be marked active"
+      },
+      "fingerprint": "c718b34271a0bdb3176b3a87fadbe62fb82292d65e8f0ef47dda8a42906a82ff"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-22T07:22:37.858Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::normalizes legacy ?kind=bjt URLs to bjt_phrase for the API request, client state, and retry link",
+          "outcome": "FAIL",
+          "excerpt": "legacy ?kind=bjt must normalize to API kind bjt_phrase: expected 'http://api.test/api/magazine?kind=bjt…' to be 'http://api.test/api/magazine?kind=bjt…' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::normalizes widgetKind aliases such as magazine_bjt_phrase and magazine_loto6 to canonical API kinds",
+          "outcome": "FAIL",
+          "excerpt": "alias ?kind=BJT must normalize to API kind bjt_phrase: expected 'http://api.test/api/magazine?kind=BJT…' to be 'http://api.test/api/magazine?kind=bjt…' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx::MagazinePageClient filter and pagination kind contract > pins filter chip kinds to the Go API listMagazineHandler kind set and keeps the BJT label unchanged",
+          "outcome": "FAIL",
+          "excerpt": "clicking All filter must navigate to clean /vi/magazine without a trailing '?': expected '/vi/magazine?' to be '/vi/magazine' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx::MagazinePageClient filter and pagination kind contract > normalizes legacy kind=bjt in active chip selection, pagination links, and card metadata",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"MagazinePageClient filter and pagination kind contract > normalizes legacy kind=bjt in active chip selection, pagination links, and card metadata\" in apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx::MagazinePageClient filter and pagination kind contract > normalizes legacy kind=bjt in active chip state, pagination hrefs, and card metadata",
+          "outcome": "FAIL",
+          "excerpt": "BJT chip must be marked active when legacy kind='bjt' is supplied: expected 'flex min-h-[48px] shrink-0 items-cent…' to contain 'bg-action'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/magazine/page.test.tsx::normalizes legacy ?kind=bjt URLs to bjt_phrase for the API request, client state, and retry link": "legacy ?kind=bjt must normalize to API kind bjt_phrase",
+        "vitest:apps/web/app/[locale]/magazine/page.test.tsx::normalizes widgetKind aliases such as magazine_bjt_phrase and magazine_loto6 to canonical API kinds": "must normalize to API kind bjt_phrase",
+        "vitest:apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx::MagazinePageClient filter and pagination kind contract > pins filter chip kinds to the Go API listMagazineHandler kind set and keeps the BJT label unchanged": "clicking All filter must navigate to clean /vi/magazine without a trailing",
+        "vitest:apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx::MagazinePageClient filter and pagination kind contract > normalizes legacy kind=bjt in active chip selection, pagination links, and card metadata": "BJT chip must be marked active",
+        "vitest:apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx::MagazinePageClient filter and pagination kind contract > normalizes legacy kind=bjt in active chip state, pagination hrefs, and card metadata": "BJT chip must be marked active"
+      },
+      "fingerprint": "c718b34271a0bdb3176b3a87fadbe62fb82292d65e8f0ef47dda8a42906a82ff"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-22T07:23:38.677Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::normalizes legacy ?kind=bjt URLs to bjt_phrase for the API request, client state, and retry link",
+          "outcome": "FAIL",
+          "excerpt": "legacy ?kind=bjt must normalize to API kind bjt_phrase: expected 'http://api.test/api/magazine?kind=bjt…' to be 'http://api.test/api/magazine?kind=bjt…' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::normalizes widgetKind aliases such as magazine_bjt_phrase and magazine_loto6 to canonical API kinds",
+          "outcome": "FAIL",
+          "excerpt": "alias ?kind=BJT must normalize to API kind bjt_phrase: expected 'http://api.test/api/magazine?kind=BJT…' to be 'http://api.test/api/magazine?kind=bjt…' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx::MagazinePageClient filter and pagination kind contract > pins filter chip kinds to the Go API listMagazineHandler kind set and keeps the BJT label unchanged",
+          "outcome": "FAIL",
+          "excerpt": "clicking All filter must navigate to clean /vi/magazine without a trailing '?': expected '/vi/magazine?' to be '/vi/magazine' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx::MagazinePageClient filter and pagination kind contract > normalizes legacy kind=bjt in active chip state, pagination hrefs, and card metadata",
+          "outcome": "FAIL",
+          "excerpt": "BJT chip must be marked active when legacy kind='bjt' is supplied: expected 'flex min-h-[48px] shrink-0 items-cent…' to contain 'bg-action'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/magazine/page.test.tsx::normalizes legacy ?kind=bjt URLs to bjt_phrase for the API request, client state, and retry link": "legacy ?kind=bjt must normalize to API kind bjt_phrase",
+        "vitest:apps/web/app/[locale]/magazine/page.test.tsx::normalizes widgetKind aliases such as magazine_bjt_phrase and magazine_loto6 to canonical API kinds": "must normalize to API kind bjt_phrase",
+        "vitest:apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx::MagazinePageClient filter and pagination kind contract > pins filter chip kinds to the Go API listMagazineHandler kind set and keeps the BJT label unchanged": "clicking All filter must navigate to clean /vi/magazine without a trailing",
+        "vitest:apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx::MagazinePageClient filter and pagination kind contract > normalizes legacy kind=bjt in active chip state, pagination hrefs, and card metadata": "BJT chip must be marked active"
+      },
+      "fingerprint": "c718b34271a0bdb3176b3a87fadbe62fb82292d65e8f0ef47dda8a42906a82ff"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-22T07:25:15.338Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::normalizes legacy ?kind=bjt URLs to bjt_phrase for the API request, client state, and retry link",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::normalizes widgetKind aliases such as magazine_bjt_phrase and magazine_loto6 to canonical API kinds",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx::MagazinePageClient filter and pagination kind contract > pins filter chip kinds to the Go API listMagazineHandler kind set and keeps the BJT label unchanged",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx::MagazinePageClient filter and pagination kind contract > normalizes legacy kind=bjt in active chip state, pagination hrefs, and card metadata",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "3a8d0662b52bdaffa4081c250c60a137eda5859de8bff89547f9626a3581f9f3"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-22T07:28:23.488Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "3a8d0662b52bdaffa4081c250c60a137eda5859de8bff89547f9626a3581f9f3"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-22T07:29:15.332Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::normalizes legacy ?kind=bjt URLs to bjt_phrase for the API request, client state, and retry link",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::normalizes widgetKind aliases such as magazine_bjt_phrase and magazine_loto6 to canonical API kinds",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx::MagazinePageClient filter and pagination kind contract > pins filter chip kinds to the Go API listMagazineHandler kind set and keeps the BJT label unchanged",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx::MagazinePageClient filter and pagination kind contract > normalizes legacy kind=bjt in active chip state, pagination hrefs, and card metadata",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "09a36b9c6d117cd6ac74a7f93e6624d1067142e46ba6612045acc659e437d107"
+    },
+    {
+      "seq": 7,
+      "at": "2026-11-22T07:31:37.138Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 699,
+        "executed": 699,
+        "passed": 699,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 890,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "09a36b9c6d117cd6ac74a7f93e6624d1067142e46ba6612045acc659e437d107"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-22T07:32:11.825Z",
+    "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae",
+    "fingerprint": "09a36b9c6d117cd6ac74a7f93e6624d1067142e46ba6612045acc659e437d107",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/magazine/_components/magazine-page-client.test.tsx": "2dcb70d7ec532f744545674ec346974cef7ffe85",
+      "apps/web/app/[locale]/magazine/_components/magazine-page-client.tsx": "bd07017f30f5a371d9c4672a670fea6d753d80a4",
+      "apps/web/app/[locale]/magazine/magazine-kinds.ts": "0f30391d3cab43894cd61b1ac157ab9c2af09318",
+      "apps/web/app/[locale]/magazine/page.test.tsx": "59c96c8e8da13bd0d9af37fb31e22a64d7146681",
+      "apps/web/app/[locale]/magazine/page.tsx": "467e12f3312c77bf678bd828b68ef5ef051735cc"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}
