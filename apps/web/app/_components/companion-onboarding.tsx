@@ -43,7 +43,7 @@ export function CompanionOnboarding({
       className="pointer-events-auto motion-safe:animate-[panelSlideUp_0.3s_ease-out_both] absolute bottom-full right-0 z-10 mb-3 w-[min(20rem,calc(100vw-2rem))]"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="rounded-2xl border border-amber-200/60 bg-gradient-to-br from-amber-50 to-orange-50 p-4 shadow-2xl">
+      <div className="rounded-2xl border border-border bg-surface p-4 shadow-2xl">
         {/* Step indicator */}
         <div className="mb-3 flex items-center justify-between">
           <div className="flex gap-1.5">
@@ -54,7 +54,7 @@ export function CompanionOnboarding({
                     ? "w-6 bg-amber-500"
                     : i < currentStep
                       ? "w-1.5 bg-amber-400"
-                      : "w-1.5 bg-amber-200"
+                      : "w-1.5 bg-border"
                 }`}
                 key={i}
               />
@@ -71,7 +71,7 @@ export function CompanionOnboarding({
 
         {/* Content */}
         <div className="mb-4 flex gap-3">
-          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-xl shadow-sm">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-paper text-xl shadow-sm">
             {STEP_EMOJIS[currentStep]}
           </span>
           <div>
@@ -82,7 +82,7 @@ export function CompanionOnboarding({
 
         {/* Action */}
         <button
-          className="flex min-h-9 w-full items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-3 text-xs font-bold text-white shadow-md transition hover:shadow-lg active:scale-[0.98]"
+          className="flex min-h-9 w-full items-center justify-center rounded-xl bg-action px-3 text-xs font-bold text-white shadow-md transition hover:bg-action-hover hover:shadow-lg active:scale-[0.98]"
           onClick={onAdvance}
           type="button"
         >
@@ -90,7 +90,7 @@ export function CompanionOnboarding({
         </button>
 
         {/* Tail */}
-        <div className="absolute -bottom-[6px] right-8 h-3 w-3 rotate-45 border-b border-r border-amber-200/60 bg-gradient-to-br from-amber-50 to-orange-50" />
+        <div className="absolute -bottom-[6px] right-8 h-3 w-3 rotate-45 border-b border-r border-border bg-surface" />
       </div>
     </div>
   );

@@ -3,14 +3,14 @@
 import type { CompanionMessage as CompanionMessageData } from "@nihongo-bjt/shared";
 
 const TYPE_STYLES: Record<string, { bg: string; icon: string }> = {
-  greeting: { bg: "bg-amber-50", icon: "👋" },
-  hint: { bg: "bg-blue-50", icon: "💡" },
-  celebration: { bg: "bg-gradient-to-r from-amber-50 to-orange-50", icon: "🎉" },
-  tip: { bg: "bg-emerald-50", icon: "📚" },
-  nudge: { bg: "bg-sky-50", icon: "💡" },
-  onboarding: { bg: "bg-violet-50", icon: "🐕" },
-  reaction: { bg: "bg-rose-50", icon: "✨" },
-  context_aware: { bg: "bg-slate-50", icon: "💬" },
+  greeting: { bg: "bg-amber-soft/70", icon: "👋" },
+  hint: { bg: "bg-accent-soft/70", icon: "💡" },
+  celebration: { bg: "bg-amber-soft/80 border border-amber/20", icon: "🎉" },
+  tip: { bg: "bg-leaf-soft/70", icon: "📚" },
+  nudge: { bg: "bg-accent-soft/60", icon: "💡" },
+  onboarding: { bg: "bg-paper border border-border", icon: "🐕" },
+  reaction: { bg: "bg-sakura-soft/60", icon: "✨" },
+  context_aware: { bg: "bg-paper border border-border", icon: "💬" },
 };
 
 function timeAgo(ts: number, locale: string): string {
@@ -55,7 +55,7 @@ export function CompanionMessageItem({
 
   return (
     <div className="flex gap-2 motion-safe:animate-[bubblePop_0.3s_ease-out_both]">
-      <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-[10px]">
+      <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-soft text-[10px]">
         {icon}
       </span>
       <div className="max-w-[85%] space-y-1">

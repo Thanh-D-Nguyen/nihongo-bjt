@@ -100,7 +100,7 @@ export function QuickActionsStrip({
         />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className={`animate-pulse rounded-2xl bg-slate-100 ${i <= 2 ? "sm:row-span-2 min-h-[200px]" : "min-h-[110px]"}`} />
+            <div key={i} className={`animate-pulse rounded-2xl border border-border/50 bg-surface ${i <= 2 ? "sm:row-span-2 min-h-[200px]" : "min-h-[110px]"}`} />
           ))}
         </div>
         <p className="sr-only">{labels.sectionLoadingHint}</p>

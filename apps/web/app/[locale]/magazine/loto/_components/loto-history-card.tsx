@@ -33,7 +33,7 @@ function KindBadge({ kind, labels }: { kind: LotoFeedItem["kind"]; labels: LotoL
   }
   if (kind === "published") {
     return (
-      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+      <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent">
         {labels.kindPublished ?? "Đã công bố"}
       </span>
     );
@@ -59,7 +59,7 @@ export function LotoHistoryCard({
     <article className="overflow-hidden rounded-2xl border border-border/30 bg-surface/60 shadow-sm transition-all duration-200 hover:shadow-md">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/20 px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-lg bg-primary/10 px-2 py-0.5 text-xs font-semibold tabular-nums text-primary">
+          <span className="rounded-lg bg-accent/10 px-2 py-0.5 text-xs font-semibold tabular-nums text-accent">
             {item.drawNumber ? `#${item.drawNumber}` : item.drawDate}
           </span>
           <span className="text-xs text-muted">
@@ -145,7 +145,7 @@ export function LotoHistoryCard({
                 <p className="mt-0.5 text-xs text-ink/70">→ {item.jpSentence.textVi}</p>
                 {item.jpSentence.grammar && (
                   <p className="mt-1.5 text-[11px] text-ink/70">
-                    <span className="font-semibold text-primary">
+                    <span className="font-semibold text-accent">
                       {labels.grammar ?? "Ngữ pháp"}:
                     </span>{" "}
                     {item.jpSentence.grammar}
@@ -156,7 +156,7 @@ export function LotoHistoryCard({
                     {item.jpSentence.vocabItems.map((v) => (
                       <li
                         key={`${v.wordJp}-${v.reading}`}
-                        className="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] text-primary"
+                        className="rounded bg-accent/10 px-1.5 py-0.5 text-[11px] text-accent"
                       >
                         {v.wordJp}（{v.reading}）· {v.meaningVi}
                       </li>
@@ -173,7 +173,7 @@ export function LotoHistoryCard({
             type="button"
             onClick={() => setExpanded(!expanded)}
             aria-expanded={expanded}
-            className="flex min-h-10 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-primary transition-all duration-150 hover:bg-primary/10 active:scale-95"
+            className="flex min-h-10 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-accent transition-all duration-150 hover:bg-accent/10 active:scale-95"
           >
             {expanded
               ? `${labels.collapse ?? "Thu gọn"} ↑`

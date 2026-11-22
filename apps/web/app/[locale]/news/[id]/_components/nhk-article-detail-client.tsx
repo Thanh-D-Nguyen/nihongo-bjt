@@ -243,11 +243,11 @@ export function NhkArticleDetailClient({
   if (loading) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
-        <div className="h-6 w-32 animate-pulse rounded bg-gray-100" />
-        <div className="mt-4 h-56 animate-pulse rounded-2xl bg-gray-100" />
+        <div className="h-6 w-32 animate-pulse rounded bg-border/60" />
+        <div className="mt-4 h-56 animate-pulse rounded-2xl bg-surface" />
         <div className="mt-4 space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-4 animate-pulse rounded bg-gray-100" />
+            <div key={i} className="h-4 animate-pulse rounded bg-border/60" />
           ))}
         </div>
       </main>
@@ -260,8 +260,8 @@ export function NhkArticleDetailClient({
         <Link href={`/${locale}/news`} className="text-sm text-muted hover:text-ink">
           {labels.backToNews}
         </Link>
-        <div className="mt-8 rounded-2xl bg-red-50 p-6 text-center">
-          <p className="text-red-700">{error ?? labels.errorNotFound}</p>
+        <div className="mt-8 rounded-2xl border border-sakura/25 bg-sakura-soft p-6 text-center">
+          <p className="text-sakura-strong">{error ?? labels.errorNotFound}</p>
         </div>
       </main>
     );
@@ -287,7 +287,7 @@ export function NhkArticleDetailClient({
 
       {/* Hero image */}
       {article.imageUrl && (
-        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-gray-100">
+        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-surface">
           <img
             alt={article.title}
             className="h-full w-full object-cover"
@@ -301,7 +301,7 @@ export function NhkArticleDetailClient({
       <div className="mt-6">
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
           {article.difficulty && (
-            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
+            <span className="rounded-full bg-leaf-soft px-2.5 py-0.5 text-xs font-bold text-leaf-strong">
               {labels.difficulty}: {article.difficulty}
             </span>
           )}
@@ -357,7 +357,7 @@ export function NhkArticleDetailClient({
                 className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border px-4 text-sm font-semibold transition disabled:opacity-50 ${
                   bookmarked
                     ? "border-accent bg-accent-soft text-accent"
-                    : "border-gray-200 bg-surface text-muted hover:border-accent hover:text-accent"
+                    : "border-border bg-surface text-muted hover:border-accent hover:text-accent"
                 }`}
                 disabled={togglingBookmark}
                 onClick={handleToggleBookmark}
@@ -373,14 +373,14 @@ export function NhkArticleDetailClient({
           ) : (
             <span className="text-sm font-medium text-muted">{labels.signInToAdd}</span>
           )}
-          {deckStatus ? <span className="text-sm font-semibold text-emerald-700">{deckStatus}</span> : null}
+          {deckStatus ? <span className="text-sm font-semibold text-leaf-strong">{deckStatus}</span> : null}
         </div>
         {!article.canGenerateCards && <p className="mt-2 text-sm text-muted">{labels.cardsUnavailable}</p>}
 
         {/* Ruby title */}
         {article.titleWithRuby && showFurigana && (
           <div className="mt-2 text-sm text-muted" lang="ja">
-            <span className="rounded bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
+            <span className="rounded bg-amber-soft px-2 py-1 text-xs font-medium text-amber-800 dark:text-amber">
               {labels.readingTitle}
             </span>
             <p
@@ -393,8 +393,8 @@ export function NhkArticleDetailClient({
 
       {/* Audio player */}
       {article.audioUrl && (
-        <div className="mt-5 flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/50 p-3">
-          <svg className="h-5 w-5 shrink-0 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+        <div className="mt-5 flex items-center gap-3 rounded-xl border border-accent/20 bg-accent-soft/50 p-3">
+          <svg className="h-5 w-5 shrink-0 text-accent" fill="currentColor" viewBox="0 0 20 20">
             <path d="M18 3.25a.75.75 0 00-1.154-.632L10 7.133V4.25a.75.75 0 00-1.154-.632l-7.5 4.75a.75.75 0 000 1.264l7.5 4.75A.75.75 0 0010 13.75v-2.883l6.846 4.515A.75.75 0 0018 14.75V3.25z" />
           </svg>
           <audio
@@ -452,7 +452,7 @@ export function NhkArticleDetailClient({
           href={article.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-6 inline-flex items-center gap-1 rounded-lg bg-gray-50 px-4 py-2 text-sm font-medium text-muted hover:bg-gray-100 hover:text-ink transition-colors"
+          className="mt-6 inline-flex items-center gap-1 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-muted hover:border-border-hover hover:bg-paper hover:text-ink transition-colors"
         >
           {labels.originalArticle}
         </a>
@@ -462,7 +462,7 @@ export function NhkArticleDetailClient({
       {article.vocabulary.length > 0 && (
         <section className="mt-10">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-ink">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-leaf-soft text-leaf-strong">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -470,10 +470,10 @@ export function NhkArticleDetailClient({
             {labels.vocabTitle}
           </h2>
 
-          <div className="overflow-hidden rounded-xl ring-1 ring-ink/8">
+          <div className="overflow-hidden rounded-xl ring-1 ring-border">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 text-left text-xs font-medium uppercase tracking-wider text-muted">
+                <tr className="bg-surface text-left text-xs font-medium uppercase tracking-wider text-muted">
                   <th className="px-4 py-3">{labels.vocabWord}</th>
                   <th className="px-4 py-3">{labels.vocabReading}</th>
                   <th className="px-4 py-3 hidden sm:table-cell">{labels.vocabMeaning}</th>
@@ -481,9 +481,9 @@ export function NhkArticleDetailClient({
                   {auth.userId && <th className="px-4 py-3 w-10" />}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-ink/5">
+              <tbody className="divide-y divide-border/60">
                 {article.vocabulary.map((v) => (
-                  <tr key={v.word} className="hover:bg-gray-50/60 transition-colors">
+                  <tr key={v.word} className="hover:bg-surface/80 transition-colors">
                     <td className="px-4 py-3 font-semibold text-ink" lang="ja">
                       {v.word}
                     </td>
@@ -499,7 +499,7 @@ export function NhkArticleDetailClient({
                     {auth.userId && (
                       <td className="px-2 py-3 text-center">
                         {savedWords.has(v.word) ? (
-                          <span className="text-xs text-emerald-600">✓</span>
+                          <span className="text-xs text-leaf-strong">✓</span>
                         ) : (
                           <button
                             type="button"
@@ -524,7 +524,7 @@ export function NhkArticleDetailClient({
           {/* Mobile vocab cards (shown below sm) */}
           <div className="mt-4 space-y-3 sm:hidden">
             {article.vocabulary.map((v) => (
-              <div key={`m-${v.word}`} className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-ink/5">
+              <div key={`m-${v.word}`} className="rounded-xl bg-surface p-4 shadow-sm ring-1 ring-border">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-base font-semibold text-ink" lang="ja">{v.word}</p>
@@ -532,11 +532,11 @@ export function NhkArticleDetailClient({
                   </div>
                   <div className="flex items-center gap-2">
                     {v.pos && (
-                      <span className="rounded bg-gray-100 px-2 py-0.5 text-[10px] text-muted" lang="ja">{v.pos}</span>
+                      <span className="rounded border border-border bg-paper px-2 py-0.5 text-[10px] text-muted" lang="ja">{v.pos}</span>
                     )}
                     {auth.userId && (
                       savedWords.has(v.word) ? (
-                        <span className="text-xs text-emerald-600">✓</span>
+                        <span className="text-xs text-leaf-strong">✓</span>
                       ) : (
                         <button
                           type="button"

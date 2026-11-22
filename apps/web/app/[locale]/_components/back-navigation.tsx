@@ -9,7 +9,7 @@ export function BackNavigation({ href, label }: BackNavigationProps) {
   return (
     <nav className="mb-6">
       <Link
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 transition hover:text-slate-900"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-muted transition hover:text-ink"
         href={href}
       >
         <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">

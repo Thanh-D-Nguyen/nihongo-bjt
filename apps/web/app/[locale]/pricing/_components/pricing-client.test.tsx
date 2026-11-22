@@ -180,4 +180,25 @@ describe("PricingClient contracts", () => {
     });
     expect(host.textContent).toContain("Nâng cao");
   });
+
+  it("themes standard and recommended plan card borders for dark mode while preserving light styling", async () => {
+    const recommendedPlan = {
+      ...secondPaidPlan,
+      config: { ...secondPaidPlan.config, displayNameVi: "Chuyên nghiệp", recommended: true }
+    };
+    apiFetchMock.mockResolvedValue(response([plan, recommendedPlan]));
+    const host = await renderPricing("vi", viMessages.pricing);
+
+    const standardCard = Array.from(host.querySelectorAll("h3")).find((h) => h.textContent === "Nâng cao")?.parentElement;
+    const recommendedCard = Array.from(host.querySelectorAll("h3")).find((h) => h.textContent === "Chuyên nghiệp")?.parentElement;
+
+    expect(standardCard?.className, "standard pricing card must use theme border tokens for dark visibility").toContain("border-border");
+    expect(standardCard?.className).toContain("dark:border-border-hover");
+    expect(standardCard?.className).toContain("bg-surface");
+    expect(standardCard?.className).not.toContain("border-slate-200");
+
+    expect(recommendedCard?.className, "recommended pricing card must use dark accent border/ring tokens").toContain("dark:border-accent");
+    expect(recommendedCard?.className).toContain("dark:ring-accent/30");
+    expect(recommendedCard?.className).toContain("bg-surface");
+  });
 });

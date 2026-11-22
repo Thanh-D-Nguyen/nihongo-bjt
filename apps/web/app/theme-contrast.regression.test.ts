@@ -161,3 +161,179 @@ describe("light and dark contrast across all learner components", () => {
   }
  });
 });
+
+describe("WEB-434 dark-mode contrast and token regressions", () => {
+ it("uses only defined app color tokens across magazine pages and components", () => {
+  const magazineFiles = (readdirSync(new URL("[locale]/magazine/", import.meta.url), { recursive: true }) as string[])
+   .filter((file) => /\.(ts|tsx)$/.test(file) && !/\.(test|spec)\.(ts|tsx)$/.test(file))
+   .map((file) => `app/[locale]/magazine/${file}`);
+  expect(magazineFiles.length, "magazine directory must have source files").toBeGreaterThan(5);
+
+  const undefinedToken = /(?<![\w-])(?:bg|text|border|ring|from|to|via|shadow)-(?:card|foreground|primary-foreground|primary|muted-foreground|background|accent-foreground|destructive)(?:\/\d+)?(?![\w-])/;
+  const shadcnAccentMisuse = /(?<![\w:-])(?:bg-muted(?:\/\d+)?|hover:bg-accent(?![\w-/])|bg-accent\/60)(?![\w-])/;
+  const failures: string[] = [];
+
+  for (const file of magazineFiles) {
+   sourceLines(file).forEach((line, index) => {
+    const match = line.match(undefinedToken) ?? line.match(shadcnAccentMisuse);
+    if (match) failures.push(`${file}:${index + 1} (${match[0]})`);
+   });
+  }
+  expect(failures, "magazine components must not use undefined shadcn tokens or mismatched shadcn accents").toEqual([]);
+ });
+
+ it("themes the explore stats ribbon and loading shimmer with dark-readable tokens", () => {
+  expect(css, "explore skeleton shimmer must define a visible dark-mode variant").toMatch(
+   /\.dark\s+\.explore-skeleton-shimmer\s*\{[^}]*rgba\(\s*255\s*,\s*255\s*,\s*255/s
+  );
+  const exploreSource = readFileSync(new URL("[locale]/explore/_components/explore-client.tsx", import.meta.url), "utf8");
+  const ribbonLine = exploreSource.split("\n").find((line) => line.includes("explore-stats-ribbon"));
+  expect(ribbonLine, "explore stats ribbon must use theme border-border token").toContain("border-border");
+  expect(ribbonLine).toContain("from-paper");
+  expect(ribbonLine).toContain("to-surface");
+  expect(exploreSource).toContain("tabular-nums text-ink");
+  expect(exploreSource).toContain("text-xs text-muted");
+
+  const darkPaper = tokenIn(darkBlock, "paper")!;
+  const darkSurface = tokenIn(darkBlock, "surface")!;
+  const darkInk = tokenIn(darkBlock, "ink")!;
+  const darkMuted = tokenIn(darkBlock, "muted")!;
+  for (const bg of [darkPaper, darkSurface]) {
+   expect(contrast(darkInk, bg), "explore stat number contrast in dark").toBeGreaterThanOrEqual(4.5);
+   expect(contrast(darkMuted, bg), "explore stat label contrast in dark").toBeGreaterThanOrEqual(4.5);
+  }
+ });
+
+ it("uses flipping theme tokens for the Kiokoto brand wordmark and mark", () => {
+  const brandSource = readFileSync(new URL("_components/brand-logo.tsx", import.meta.url), "utf8");
+  expect(brandSource, "brand wordmark must use a flipping token instead of hardcoded text-blue-700").not.toContain("text-blue-700");
+  expect(brandSource).toContain("text-ink");
+  expect(brandSource).toContain("text-brand-accent");
+  expect(brandSource, "brand mark must use var(--color-brand-panel) instead of hardcoded #1B2A4A").not.toContain('fill="#1B2A4A"');
+
+  const lightAccent = tokenIn(lightBlock, "brand-accent");
+  const darkAccent = tokenIn(darkBlock, "brand-accent");
+  const fallbackAccent = tokenIn(fallbackBlock, "brand-accent");
+  expect(lightAccent, "light --color-brand-accent must be defined").toBeTruthy();
+  expect(darkAccent, "dark --color-brand-accent must be defined").toBeTruthy();
+  expect(fallbackAccent, "system fallback --color-brand-accent must match dark").toBe(darkAccent);
+  expect(contrast(lightAccent!, tokenIn(lightBlock, "paper")!), "brand-accent on light paper").toBeGreaterThanOrEqual(4.5);
+  expect(contrast(darkAccent!, tokenIn(darkBlock, "paper")!), "brand-accent on dark paper").toBeGreaterThanOrEqual(4.5);
+ });
+
+ it("themes companion widget surfaces without hardcoded white, slate-50, or light amber gradients", () => {
+  const companionFiles = [
+   "app/_components/companion-bot.tsx",
+   "app/_components/companion-message.tsx",
+   "app/_components/companion-chat-panel.tsx",
+   "app/_components/companion-onboarding.tsx"
+  ];
+  const forbidden = /(?<![\w:-])(?:bg-white|bg-slate-50|from-amber-50|to-orange-50|bg-amber-50|bg-amber-100|bg-amber-200|preserve-white-bg)(?![\w/-])/;
+  const failures: string[] = [];
+  for (const file of companionFiles) {
+   sourceLines(file).forEach((line, index) => {
+    const match = line.match(forbidden);
+    if (match) failures.push(`${file}:${index + 1} (${match[0]})`);
+   });
+  }
+  expect(failures, "companion widget surfaces must use theme tokens in dark mode").toEqual([]);
+ });
+
+ it("keeps dark muted and subtle text at 4.5:1 on every *-soft surface without changing light tokens", () => {
+  const softTokens = [
+   "accent-soft",
+   "leaf-soft",
+   "success-soft",
+   "matcha-soft",
+   "sakura-soft",
+   "danger-soft",
+   "amber-soft",
+   "warning-soft"
+  ] as const;
+
+  const failures: string[] = [];
+  for (const fg of ["muted", "subtle", "ink"] as const) {
+   const fgHex = tokenIn(darkBlock, fg)!;
+   for (const bg of ["paper", "surface", ...softTokens] as const) {
+    const bgHex = tokenIn(darkBlock, bg)!;
+    const ratio = contrast(fgHex, bgHex);
+    if (ratio < 4.5) failures.push(`dark ${fg}(${fgHex}) on ${bg}(${bgHex}) = ${ratio.toFixed(2)}`);
+   }
+  }
+  expect(failures, "dark muted/subtle text on *-soft surfaces must reach 4.5:1").toEqual([]);
+
+  const semanticPairs: Array<[string, string]> = [
+   ["accent", "accent-soft"],
+   ["leaf", "leaf-soft"],
+   ["leaf-strong", "leaf-soft"],
+   ["success", "success-soft"],
+   ["matcha", "matcha-soft"],
+   ["sakura", "sakura-soft"],
+   ["sakura-strong", "sakura-soft"],
+   ["danger", "danger-soft"],
+   ["amber", "amber-soft"],
+   ["warning", "warning-soft"]
+  ];
+  for (const [fg, bg] of semanticPairs) {
+   expect(contrast(tokenIn(darkBlock, fg)!, tokenIn(darkBlock, bg)!), `dark ${fg} on ${bg}`).toBeGreaterThanOrEqual(4.5);
+  }
+  for (const token of ["muted", "subtle", ...softTokens] as const) {
+   expect(tokenIn(fallbackBlock, token), `${token} system fallback must match .dark`).toBe(tokenIn(darkBlock, token));
+  }
+
+  // Light-mode tokens must remain untouched.
+  expect(tokenIn(lightBlock, "muted")).toBe("#4b5563");
+  expect(tokenIn(lightBlock, "subtle")).toBe("#9ca3af");
+  expect(tokenIn(lightBlock, "accent-soft")).toBe("#dbeafe");
+  expect(tokenIn(lightBlock, "leaf-soft")).toBe("#ecfdf5");
+  expect(tokenIn(lightBlock, "sakura-soft")).toBe("#fef2f2");
+  expect(tokenIn(lightBlock, "amber-soft")).toBe("#fffbeb");
+ });
+
+ it("migrates small-text sakura-on-soft usages to sakura-strong in the four audited files", () => {
+  const audited = [
+   "app/_components/ambient-mini-player.tsx",
+   "app/[locale]/search/_components/search-detail-learner-actions.tsx",
+   "app/[locale]/exercises/_components/exercises-page-client.tsx",
+   "app/[locale]/battle/_components/battle-match-client.tsx"
+  ];
+  const failures: string[] = [];
+  for (const file of audited) {
+   const lines = sourceLines(file);
+   lines.forEach((line, index) => {
+    if (/(?<![\w:-])bg-sakura-soft(?:\/\d+)?(?![\w-])/.test(line) && /(?<![\w:-])text-sakura(?![\w-])/.test(line)) {
+     failures.push(`${file}:${index + 1}`);
+    }
+   });
+  }
+  const exercisesSource = readFileSync(new URL("[locale]/exercises/_components/exercises-page-client.tsx", import.meta.url), "utf8");
+  const wrongBlock = exercisesSource.match(/exercise-answer-wrong[\s\S]*?<\/button>/)?.[0] ?? "";
+  if (/(?<![\w:-])text-sakura(?![\w-])/.test(wrongBlock)) {
+   failures.push("app/[locale]/exercises/_components/exercises-page-client.tsx: nested text-sakura inside bg-sakura-soft button");
+  }
+  expect(failures, "sakura-on-soft text in audited files must use text-sakura-strong").toEqual([]);
+ });
+
+ it("replaces unthemed light slate/gray/white surfaces and broken hsl vars in the nine audited files", () => {
+  const audited = [
+   "app/_components/companion-message.tsx",
+   "app/[locale]/radar/[slug]/page.tsx",
+   "app/[locale]/pricing/_components/pricing-client.tsx",
+   "app/[locale]/news/[id]/_components/nhk-article-detail-client.tsx",
+   "app/[locale]/modules/[moduleKey]/page.tsx",
+   "app/[locale]/battle/_components/game-types/custom-round.tsx",
+   "app/[locale]/_components/share-drawer.tsx",
+   "app/[locale]/_components/homepage/quick-actions-strip.tsx",
+   "app/[locale]/_components/back-navigation.tsx"
+  ];
+  const unthemed = /(?<![\w:-])(?:bg-slate-(?:50|100|200|300)(?:\/\d+)?|bg-gray-(?:50|100)(?:\/\d+)?|bg-white(?![\w/-])|border-slate-(?:200|300)|border-gray-200|text-slate-(?:600|700|800|900|950))(?![\w-])|hsl\(var\(--/;
+  const failures: string[] = [];
+  for (const file of audited) {
+   sourceLines(file).forEach((line, index) => {
+    const match = line.match(unthemed);
+    if (match) failures.push(`${file}:${index + 1} (${match[0]})`);
+   });
+  }
+  expect(failures, "audited files must not keep unthemed light slate/gray/white classes or nonexistent hsl vars").toEqual([]);
+ });
+});

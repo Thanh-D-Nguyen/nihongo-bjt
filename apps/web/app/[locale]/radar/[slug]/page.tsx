@@ -115,15 +115,15 @@ export default async function RadarCardPage({
   if (!card) {
     return (
       <main className="mx-auto flex min-h-[60vh] max-w-3xl flex-col items-center justify-center px-4 py-16 text-center">
-        <div className="rounded-full bg-slate-100 p-4">
-          <svg className="h-8 w-8 text-slate-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <div className="rounded-full bg-surface p-4 ring-1 ring-border">
+          <svg className="h-8 w-8 text-muted" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
             <path d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <h1 className="mt-4 text-xl font-semibold text-slate-900">{detail.notFound}</h1>
-        <p className="mt-2 text-sm text-slate-600">{detail.notFoundDesc}</p>
+        <h1 className="mt-4 text-xl font-semibold text-ink">{detail.notFound}</h1>
+        <p className="mt-2 text-sm text-muted">{detail.notFoundDesc}</p>
         <Link
-          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 active:scale-95"
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-ink px-5 py-2.5 text-sm font-semibold text-surface transition hover:bg-ink/90 active:scale-95"
           href={`/${locale}`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -176,7 +176,7 @@ export default async function RadarCardPage({
                 </span>
               )}
               {card.badgeTextVi && (
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-900">
+                <span className="rounded-full bg-surface px-3 py-1 text-xs font-bold text-ink">
                   {card.badgeTextVi}
                 </span>
               )}
@@ -208,43 +208,43 @@ export default async function RadarCardPage({
 
         {/* Disclaimer */}
         {card.module.disclaimerVi && (
-          <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3.5">
-            <svg className="h-5 w-5 shrink-0 text-amber-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <div className="flex items-start gap-3 rounded-2xl border border-amber/25 bg-amber-soft px-4 py-3.5">
+            <svg className="h-5 w-5 shrink-0 text-amber" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <p className="text-sm font-medium text-amber-900">{card.module.disclaimerVi}</p>
+            <p className="text-sm font-medium text-ink">{card.module.disclaimerVi}</p>
           </div>
         )}
 
         {/* Content goal */}
         {contentGoal && (
-          <section className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-sky-50 p-5">
-            <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-700">
+          <section className="rounded-2xl border border-accent/20 bg-accent-soft/60 p-5">
+            <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-action dark:text-accent">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               {detail.objective}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-blue-900 font-medium">{contentGoal}</p>
+            <p className="mt-2 text-sm leading-relaxed text-ink font-medium">{contentGoal}</p>
           </section>
         )}
 
         {/* Description */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-base font-semibold text-slate-900">{detail.content}</h2>
-          <p className="mt-2 text-sm leading-relaxed text-slate-700">{card.descriptionVi}</p>
+        <section className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
+          <h2 className="text-base font-semibold text-ink">{detail.content}</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted">{card.descriptionVi}</p>
         </section>
 
         {/* Usage note (general context) */}
         {usageNote && (
-          <section className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5">
-            <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-700">
+          <section className="rounded-2xl border border-leaf/20 bg-leaf-soft/60 p-5">
+            <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-leaf-strong">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               {detail.usageNote}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-emerald-900">{usageNote}</p>
+            <p className="mt-2 text-sm leading-relaxed text-ink">{usageNote}</p>
           </section>
         )}
 
@@ -252,8 +252,8 @@ export default async function RadarCardPage({
         {expressions.length > 0 && (
           <section>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-900">{detail.expressions}</h2>
-              <span className="text-xs font-medium text-slate-500">{detail.tapToExpand}</span>
+              <h2 className="text-lg font-bold text-ink">{detail.expressions}</h2>
+              <span className="text-xs font-medium text-muted">{detail.tapToExpand}</span>
             </div>
             <VocabExpressionList
               expressions={expressions}
@@ -265,25 +265,25 @@ export default async function RadarCardPage({
 
         {/* Recommendation reason */}
         {card.recommendationReasonVi && (
-          <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-            <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-600">
+          <section className="rounded-2xl border border-border bg-paper p-5">
+            <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               {detail.whyLearn}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-slate-700">{card.recommendationReasonVi}</p>
+            <p className="mt-2 text-sm leading-relaxed text-muted">{card.recommendationReasonVi}</p>
           </section>
         )}
 
         {/* Skills */}
         {skills.length > 0 && (
           <section>
-            <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">{detail.skills}</h2>
+            <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted">{detail.skills}</h2>
             <div className="flex flex-wrap gap-2">
               {skills.map((skill) => (
                 <span
-                  className="rounded-full bg-gradient-to-r from-slate-100 to-slate-50 px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200"
+                  className="rounded-full bg-surface px-3.5 py-1.5 text-xs font-semibold text-ink shadow-sm ring-1 ring-border"
                   key={skill}
                 >
                   {skill.replace(/_/gu, " ")}
@@ -294,9 +294,9 @@ export default async function RadarCardPage({
         )}
 
         {/* Footer navigation */}
-        <footer className="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-6">
+        <footer className="flex flex-wrap items-center gap-3 border-t border-border pt-6">
           <Link
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 active:scale-95"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-ink px-5 text-sm font-semibold text-surface shadow-sm transition hover:bg-ink/90 active:scale-95"
             href={`/${locale}`}
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">

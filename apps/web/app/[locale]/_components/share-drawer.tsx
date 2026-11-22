@@ -268,36 +268,36 @@ export function ShareDrawer({
 
       <div className="relative z-10 px-5 pb-8 pt-4">
         {/* drag handle */}
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-slate-300" />
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border-hover" />
 
         {/* title */}
-        <h2 className="mb-4 text-lg font-semibold text-[hsl(var(--ink))]">{labels.title}</h2>
+        <h2 className="mb-4 text-lg font-semibold text-ink">{labels.title}</h2>
 
         {/* ---- CONSENT STEP ---- */}
         {!consented && (
           <div className="space-y-4">
-            <h3 className="text-base font-semibold text-[hsl(var(--ink))]">
+            <h3 className="text-base font-semibold text-ink">
               {labels.consentTitle}
             </h3>
-            <p className="text-sm leading-relaxed text-[hsl(var(--muted))]">
+            <p className="text-sm leading-relaxed text-muted">
               {labels.consentMessage}
             </p>
             {inlineError && (
-              <p className="text-sm text-red-600">{inlineError}</p>
+              <p className="text-sm text-sakura">{inlineError}</p>
             )}
             <div className="flex gap-3">
               <button
                 type="button"
                 disabled={consentLoading}
                 onClick={handleConsentAccept}
-                className="flex-1 rounded-xl bg-[hsl(var(--accent))] min-h-[48px] px-4 font-semibold text-white transition-transform active:scale-[0.97] disabled:opacity-60"
+                className="flex-1 rounded-xl bg-action min-h-[48px] px-4 font-semibold text-white transition-transform hover:bg-action-hover active:scale-[0.97] disabled:opacity-60"
               >
                 {consentLoading ? labels.loading : labels.consentAccept}
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 rounded-xl border border-[hsl(var(--border))] min-h-[48px] px-4 font-semibold text-[hsl(var(--ink))] transition-transform active:scale-[0.97]"
+                className="flex-1 rounded-xl border border-border min-h-[48px] px-4 font-semibold text-ink transition-transform hover:border-border-hover active:scale-[0.97]"
               >
                 {labels.consentDecline}
               </button>
@@ -310,7 +310,7 @@ export function ShareDrawer({
           <div className="space-y-5">
             {/* template picker */}
             <div>
-              <p className="mb-2 text-sm font-medium text-[hsl(var(--muted))]">
+              <p className="mb-2 text-sm font-medium text-muted">
                 {labels.selectTemplate}
               </p>
 
@@ -319,7 +319,7 @@ export function ShareDrawer({
                   {[0, 1, 2].map((i) => (
                     <div
                       key={i}
-                      className="h-[63px] w-[120px] flex-shrink-0 animate-pulse rounded-lg bg-slate-200"
+                      className="h-[63px] w-[120px] flex-shrink-0 animate-pulse rounded-lg bg-border"
                     />
                   ))}
                 </div>
@@ -327,11 +327,11 @@ export function ShareDrawer({
 
               {templatesError && (
                 <div className="flex items-center gap-3">
-                  <p className="text-sm text-red-600">{labels.error}</p>
+                  <p className="text-sm text-sakura">{labels.error}</p>
                   <button
                     type="button"
                     onClick={fetchTemplates}
-                    className="text-sm font-medium text-[hsl(var(--accent))] underline active:scale-[0.97] transition-transform"
+                    className="text-sm font-medium text-accent underline active:scale-[0.97] transition-transform"
                   >
                     {labels.retry || "Retry"}
                   </button>
@@ -340,14 +340,14 @@ export function ShareDrawer({
 
               {!templatesLoading && !templatesError && templates.length === 0 && (
                 <div className="space-y-3 py-6 text-center">
-                  <svg className="mx-auto h-10 w-10 text-[hsl(var(--muted)/0.5)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg className="mx-auto h-10 w-10 text-muted/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
                   </svg>
-                  <p className="text-sm text-[hsl(var(--muted))]">{labels.noTemplates}</p>
+                  <p className="text-sm text-muted">{labels.noTemplates}</p>
                   <button
                     type="button"
                     onClick={onClose}
-                    className="text-sm font-medium text-[hsl(var(--accent))] active:scale-[0.97] transition-transform"
+                    className="text-sm font-medium text-accent active:scale-[0.97] transition-transform"
                   >
                     {labels.cancel}
                   </button>
@@ -361,11 +361,11 @@ export function ShareDrawer({
                       key={t.id}
                       type="button"
                       onClick={() => setSelectedId(t.id)}
-                      className={`relative flex h-[63px] w-[120px] flex-shrink-0 items-center justify-center rounded-lg border-2 transition-all cursor-pointer text-xs font-medium text-[hsl(var(--ink))] active:scale-[0.97] overflow-hidden ${
+                      className={`relative flex h-[63px] w-[120px] flex-shrink-0 items-center justify-center rounded-lg border-2 transition-all cursor-pointer text-xs font-medium text-ink active:scale-[0.97] overflow-hidden ${
                         selectedId === t.id
-                          ? "border-[hsl(var(--accent))] ring-2 ring-[hsl(var(--accent)/0.3)]"
-                          : "border-transparent hover:border-[hsl(var(--accent))]"
-                      } bg-[hsl(var(--surface))]`}
+                          ? "border-accent ring-2 ring-accent/30"
+                          : "border-border hover:border-accent"
+                      } bg-surface`}
                     >
                       {t.slug}
                       {((t.config.brandAccent as string) || (t.config.brandBg as string)) && (
@@ -383,20 +383,20 @@ export function ShareDrawer({
             {/* preview */}
             {selectedId && (
               <div>
-                <p className="mb-2 text-sm font-medium text-[hsl(var(--muted))]">
+                <p className="mb-2 text-sm font-medium text-muted">
                   {labels.preview}
                 </p>
 
                 {previewLoading && (
-                  <div className="aspect-[1200/630] w-full animate-pulse rounded-lg bg-slate-200" />
+                  <div className="aspect-[1200/630] w-full animate-pulse rounded-lg bg-border" />
                 )}
 
                 {previewError && !previewLoading && (
-                  <div className="flex aspect-[1200/630] w-full items-center justify-center rounded-lg bg-slate-100">
+                  <div className="flex aspect-[1200/630] w-full items-center justify-center rounded-lg border border-border bg-paper">
                     <button
                       type="button"
                       onClick={fetchPreview}
-                      className="text-sm font-medium text-[hsl(var(--accent))] underline active:scale-[0.97] transition-transform"
+                      className="text-sm font-medium text-accent underline active:scale-[0.97] transition-transform"
                     >
                       {labels.retry || "Retry"}
                     </button>
@@ -407,7 +407,7 @@ export function ShareDrawer({
                   <img
                     src={previewUrl}
                     alt={labels.preview}
-                    className="aspect-[1200/630] w-full rounded-lg object-cover shadow-md border border-[hsl(var(--border)/0.5)]"
+                    className="aspect-[1200/630] w-full rounded-lg object-cover shadow-md border border-border/60"
                   />
                 )}
               </div>
@@ -415,12 +415,12 @@ export function ShareDrawer({
 
             {/* inline error */}
             {inlineError && (
-              <p className="text-sm text-red-600">{inlineError}</p>
+              <p className="text-sm text-sakura">{inlineError}</p>
             )}
 
             {/* copied feedback */}
             {copied && (
-              <p className="text-center text-sm font-medium text-emerald-600">{labels.copied}</p>
+              <p className="text-center text-sm font-medium text-leaf-strong">{labels.copied}</p>
             )}
 
             {/* action buttons */}
@@ -430,7 +430,7 @@ export function ShareDrawer({
                   type="button"
                   disabled={shareLoading}
                   onClick={handleShare}
-                  className="w-full rounded-xl bg-[hsl(var(--accent))] min-h-[48px] px-4 font-semibold text-white transition-transform active:scale-[0.97] disabled:opacity-60 md:flex-1"
+                  className="w-full rounded-xl bg-action min-h-[48px] px-4 font-semibold text-white transition-transform hover:bg-action-hover active:scale-[0.97] disabled:opacity-60 md:flex-1"
                 >
                   {shareLoading ? labels.loading : labels.share}
                 </button>
@@ -438,14 +438,14 @@ export function ShareDrawer({
                   type="button"
                   disabled={shareLoading}
                   onClick={handleCopy}
-                  className="w-full rounded-xl border border-[hsl(var(--border))] min-h-[48px] px-4 font-semibold text-[hsl(var(--ink))] transition-transform active:scale-[0.97] disabled:opacity-60 md:flex-1"
+                  className="w-full rounded-xl border border-border min-h-[48px] px-4 font-semibold text-ink transition-transform hover:border-border-hover active:scale-[0.97] disabled:opacity-60 md:flex-1"
                 >
                   {labels.copyLink}
                 </button>
                 <button
                   type="button"
                   onClick={handleDownload}
-                  className="w-full rounded-xl border border-[hsl(var(--border))] min-h-[48px] px-4 font-semibold text-[hsl(var(--ink))] transition-transform active:scale-[0.97] md:flex-1"
+                  className="w-full rounded-xl border border-border min-h-[48px] px-4 font-semibold text-ink transition-transform hover:border-border-hover active:scale-[0.97] md:flex-1"
                 >
                   {labels.download}
                 </button>
@@ -456,7 +456,7 @@ export function ShareDrawer({
             <button
               type="button"
               onClick={onClose}
-              className="w-full min-h-[48px] text-sm font-medium text-[hsl(var(--muted))] transition-all hover:text-[hsl(var(--ink))] active:scale-[0.97]"
+              className="w-full min-h-[48px] text-sm font-medium text-muted transition-all hover:text-ink active:scale-[0.97]"
             >
               {labels.cancel}
             </button>
