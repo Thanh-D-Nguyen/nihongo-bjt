@@ -65,11 +65,11 @@ function ExpressionCard({
 
   return (
     <div
-      className={`group/card overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 ${expanded ? "shadow-lg ring-1 ring-slate-200" : "hover:shadow-md hover:-translate-y-0.5"}`}
+      className={`group/card overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition-all duration-300 ${expanded ? "shadow-lg ring-1 ring-border-hover" : "hover:shadow-md hover:-translate-y-0.5"}`}
     >
       {/* Main row - always visible */}
       <button
-        className="flex w-full items-start gap-4 p-5 text-left transition-colors hover:bg-slate-50/50"
+        className="flex w-full items-start gap-4 p-5 text-left transition-colors hover:bg-paper/60"
         onClick={() => setExpanded(!expanded)}
         type="button"
       >
@@ -83,26 +83,26 @@ function ExpressionCard({
         {/* Word + Reading + Meaning */}
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="text-2xl font-bold text-slate-900 leading-tight" lang="ja">
+            <span className="text-2xl font-bold text-ink leading-tight" lang="ja">
               {expression.word}
             </span>
-            <span className="text-sm font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg" lang="ja">
+            <span className="text-sm font-medium text-leaf-strong bg-leaf-soft px-2 py-0.5 rounded-lg" lang="ja">
               {expression.reading}
             </span>
             {expression.jlptLevel && (
-              <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full uppercase">
+              <span className="text-[11px] font-bold text-muted bg-paper border border-border px-2 py-0.5 rounded-full uppercase">
                 {expression.jlptLevel}
               </span>
             )}
           </div>
-          <p className="mt-1.5 text-sm font-medium text-slate-700 leading-relaxed">
+          <p className="mt-1.5 text-sm font-medium text-muted leading-relaxed">
             {expression.meaning}
           </p>
         </div>
 
         {/* Expand indicator */}
         <svg
-          className={`h-5 w-5 shrink-0 text-slate-400 transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}
+          className={`h-5 w-5 shrink-0 text-muted transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           strokeWidth={2}
@@ -117,11 +117,11 @@ function ExpressionCard({
         className={`grid transition-all duration-300 ease-in-out ${expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
       >
         <div className="overflow-hidden">
-          <div className="border-t border-slate-100 px-5 pb-5 pt-4 space-y-4">
+          <div className="border-t border-border px-5 pb-5 pt-4 space-y-4">
             {/* Action buttons */}
             <div className="flex flex-wrap gap-2">
               <button
-                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 active:scale-95"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-accent/20 bg-accent-soft px-3 py-2 text-xs font-semibold text-brand-accent transition hover:border-accent/40 hover:bg-accent-soft/80 active:scale-95"
                 onClick={handleSpeak}
                 title={labels.listenPronunciation}
                 type="button"
@@ -143,13 +143,13 @@ function ExpressionCard({
 
             {/* Example sentence */}
             {expression.example && (
-              <div className="rounded-xl bg-slate-50 p-4 space-y-2">
+              <div className="rounded-xl border border-border bg-paper p-4 space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-muted">
                     {labels.example}
                   </span>
                   <button
-                    className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-200 hover:text-slate-600 active:scale-90"
+                    className="rounded-lg p-1.5 text-muted transition hover:bg-border/60 hover:text-ink active:scale-90"
                     onClick={handleSpeakExample}
                     title={labels.listenPronunciation}
                     type="button"
@@ -159,17 +159,17 @@ function ExpressionCard({
                     </svg>
                   </button>
                 </div>
-                <p className="text-lg font-semibold text-slate-900 leading-relaxed" lang="ja" style={{ lineHeight: "1.9" }}>
+                <p className="text-lg font-semibold text-ink leading-relaxed" lang="ja" style={{ lineHeight: "1.9" }}>
                   {expression.example}
                 </p>
                 {expression.exampleReading && (
-                  <p className="text-xs font-medium text-slate-500" lang="ja">
+                  <p className="text-xs font-medium text-muted" lang="ja">
                     {expression.exampleReading}
                   </p>
                 )}
                 {expression.exampleMeaning && (
-                  <p className="mt-1 text-sm text-slate-700 italic">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 not-italic mr-2">
+                  <p className="mt-1 text-sm text-muted italic">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-muted not-italic mr-2">
                       {labels.exampleMeaning}
                     </span>
                     {expression.exampleMeaning}
@@ -180,15 +180,15 @@ function ExpressionCard({
 
             {/* Usage note */}
             {expression.usageNote && (
-              <div className="flex gap-2.5 rounded-xl bg-amber-50/70 p-3.5 border border-amber-100">
-                <svg className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <div className="flex gap-2.5 rounded-xl bg-amber-soft p-3.5 border border-amber/30">
+                <svg className="h-4 w-4 shrink-0 text-amber-strong mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-strong">
                     {labels.usageNote}
                   </span>
-                  <p className="mt-0.5 text-sm leading-relaxed text-amber-900">
+                  <p className="mt-0.5 text-sm leading-relaxed text-amber-strong">
                     {expression.usageNote}
                   </p>
                 </div>

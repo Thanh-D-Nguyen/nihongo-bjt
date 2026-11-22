@@ -353,3 +353,100 @@ describe("WEB-435 companion mascot and speech bubble dark-mode regressions", () 
   expect(contrast(darkMuted, darkSurface), "speech bubble secondary text contrast in dark").toBeGreaterThanOrEqual(4.5);
  });
 });
+
+describe("WEB-436 hardcoded light-palette to theme-token regressions", () => {
+ it("defines --color-amber-strong for both themes and keeps all vocab-expression-list token pairs at >= 4.5:1 without hardcoded palette utilities", () => {
+  const lightAmberStrong = tokenIn(lightBlock, "amber-strong");
+  const darkAmberStrong = tokenIn(darkBlock, "amber-strong");
+  const fallbackAmberStrong = tokenIn(fallbackBlock, "amber-strong");
+
+  expect(lightAmberStrong, "--color-amber-strong must be defined in light, dark, and system fallback themes").toBeTruthy();
+  expect(darkAmberStrong, "--color-amber-strong must be defined in light, dark, and system fallback themes").toBeTruthy();
+  expect(fallbackAmberStrong, "system fallback --color-amber-strong must match .dark").toBe(darkAmberStrong);
+
+  const vocabPairs: Array<[string, string]> = [
+   ["ink", "surface"],
+   ["ink", "paper"],
+   ["muted", "surface"],
+   ["muted", "paper"],
+   ["leaf-strong", "leaf-soft"],
+   ["brand-accent", "accent-soft"],
+   ["amber-strong", "amber-soft"]
+  ];
+  for (const [fg, bg] of vocabPairs) {
+   const lightRatio = contrast(tokenIn(lightBlock, fg)!, tokenIn(lightBlock, bg)!);
+   const darkRatio = contrast(tokenIn(darkBlock, fg)!, tokenIn(darkBlock, bg)!);
+   expect(lightRatio, `light ${fg} on ${bg}`).toBeGreaterThanOrEqual(4.5);
+   expect(darkRatio, `dark ${fg} on ${bg}`).toBeGreaterThanOrEqual(4.5);
+  }
+
+  const hardcodedPalette = /(?<![\w:-])(?:(?:hover|focus|active|dark|group-hover):)?(?:bg|text|border|ring|from|to|via)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950)(?:\/\d+)?(?![\w-])|(?<![\w:-])(?:hover:)?bg-white(?![\w/-])/;
+  const vocabViolations: string[] = [];
+  sourceLines("app/[locale]/_components/vocab-expression-list.tsx").forEach((line, index) => {
+   const match = line.match(hardcodedPalette);
+   if (match) vocabViolations.push(`vocab-expression-list.tsx:${index + 1} (${match[0]})`);
+  });
+  expect(vocabViolations, "vocab-expression-list.tsx must not contain hardcoded Tailwind palette utilities").toEqual([]);
+ });
+
+ it("migrates broken light-palette utilities, undefined vars, and dark-invisible skeletons across the audited sweep files", () => {
+  const failures: string[] = [];
+  if (!/\.dark\s+\.foryou-skeleton\s*\{[^}]*rgba\(\s*255\s*,\s*255\s*,\s*255/s.test(css)) {
+   failures.push("app/globals.css: missing dark variant for .foryou-skeleton");
+  }
+  if (!/\.dark\s+\.exercise-skeleton-shimmer\s*\{[^}]*rgba\(\s*255\s*,\s*255\s*,\s*255/s.test(css)) {
+   failures.push("app/globals.css: missing dark variant for .exercise-skeleton-shimmer");
+  }
+
+  const migratedSweepFiles = [
+   "app/[locale]/_components/content-actions.tsx",
+   "app/[locale]/_components/homepage/for-you-feed-widget.tsx",
+   "app/[locale]/_components/homepage/login-bonus-widget.tsx",
+   "app/[locale]/_components/homepage/progress-section.tsx",
+   "app/[locale]/battle/_components/battle-configs-panel.tsx",
+   "app/[locale]/battle/_components/battle-hype-layer.tsx",
+   "app/[locale]/battle/_components/battle-lobby-leaderboard.tsx",
+   "app/[locale]/battle/_components/game-types/speed-duel-round.tsx",
+   "app/[locale]/daily/[id]/daily-detail-client.tsx",
+   "app/[locale]/exercises/_components/exercises-page-client.tsx",
+   "app/[locale]/flashcards/_components/deck-composer-panel.tsx",
+   "app/[locale]/login/_components/login-form-client.tsx",
+   "app/[locale]/magazine/loto/_components/loto-balls.tsx",
+   "app/[locale]/me/_components/me-page-client.tsx",
+   "app/[locale]/quiz/_components/quiz-client.tsx",
+   "app/[locale]/register/_components/register-form-client.tsx",
+   "app/_components/announcement-strip.tsx"
+  ];
+
+  const brokenDarkDefect = new RegExp([
+   "(?<![\\w:-])bg-(?:amber|red|orange|emerald|blue)-50/",
+   "(?<![\\w:-])bg-amber-100/",
+   "(?<![\\w:-])bg-white/80(?![\\w/-])",
+   "(?<![\\w:-])from-(?:amber|orange|emerald|indigo|violet)-(?:50|100)(?![\\w-])",
+   "(?<![\\w:-])to-(?:indigo|violet|orange|blue|emerald|red|amber)-(?:50|100)(?![\\w-])",
+   "hover:bg-white(?![\\w/-])",
+   "hover:bg-(?:amber-100|blue-50|\\[#F3F4F6\\]|\\[#EFF6FF\\]|\\[#F9FAFB\\])",
+   "active:bg-(?:amber-100/|\\[#E5E7EB\\])",
+   "(?<![\\w:-])text-(?:amber|orange)-(?:900|950)(?![\\w-])",
+   "(?<![\\w:-])text-slate-100(?![\\w-])",
+   "(?<![\\w:-])ring-(?:emerald|amber)-(?:200|300)(?![\\w-])",
+   "(?<![\\w:-])border-(?:amber-200/(?:60|90)|amber-300/40|amber-800/20|red-200/80|\\[#F3F4F6\\])",
+   "bg-\\[#(?:EFF6FF|FEF2F2|F0FDF4)\\]",
+   "text-\\[#(?:DC2626|16A34A)\\]",
+   "--color-navy\\b",
+   "hsl\\(var\\(--",
+   "bg-white text-gray-900 hover:bg-white/90",
+   "bg-indigo-500/10 text-indigo-700",
+   "bg-amber-500/15 text-amber-700",
+   "(?<![\\w:-])border-amber-400/40 bg-amber-50(?![\\w/-])"
+  ].join("|"));
+
+  for (const file of migratedSweepFiles) {
+   sourceLines(file).forEach((line, index) => {
+    const match = line.match(brokenDarkDefect);
+    if (match) failures.push(`${file}:${index + 1} (${match[0]})`);
+   });
+  }
+  expect(failures, "audited sweep files must not retain unmapped light-palette dark-mode defects or undefined CSS vars").toEqual([]);
+ });
+});

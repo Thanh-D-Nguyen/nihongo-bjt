@@ -147,32 +147,32 @@ function DeckPicker({
   return (
     <div
       ref={popoverRef}
-      className="absolute left-0 top-full z-50 mt-2 w-64 rounded-xl border border-[#E5E7EB] bg-white shadow-xl shadow-black/8 animate-in fade-in slide-in-from-top-1 duration-150"
+      className="absolute left-0 top-full z-50 mt-2 w-64 rounded-xl border border-border bg-surface shadow-xl shadow-black/8 animate-in fade-in slide-in-from-top-1 duration-150"
     >
-      <div className="border-b border-[#F3F4F6] px-3 py-2.5">
-        <p className="text-xs font-semibold text-[#374151]">
+      <div className="border-b border-border px-3 py-2.5">
+        <p className="text-xs font-semibold text-ink">
           {labels.chooseDeck ?? "Chọn bộ thẻ"}
         </p>
       </div>
 
       <div className="max-h-48 overflow-y-auto p-1.5">
         {loading ? (
-          <div className="flex items-center justify-center py-4">
+          <div className="flex items-center justify-center py-4 text-muted">
             <SpinnerIcon />
           </div>
         ) : decks.length === 0 && !creating ? (
-          <p className="px-2 py-3 text-center text-xs text-[#9CA3AF]">
+          <p className="px-2 py-3 text-center text-xs text-muted">
             {labels.nDecks ?? "Chưa có bộ thẻ nào"}
           </p>
         ) : (
           decks.map((deck) => (
             <button
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-[#374151] transition-colors hover:bg-[#F3F4F6] active:bg-[#E5E7EB]"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-ink transition-colors hover:bg-paper active:bg-border/60"
               key={deck.id}
               onClick={() => onSelect(deck.id)}
               type="button"
             >
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#EFF6FF] text-[10px] font-bold text-[#3B82F6]">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-accent-soft text-[10px] font-bold text-brand-accent">
                 {deck._count?.cards ?? 0}
               </span>
               <span className="truncate font-medium">
@@ -184,12 +184,12 @@ function DeckPicker({
       </div>
 
       {/* Create new deck */}
-      <div className="border-t border-[#F3F4F6] p-2">
+      <div className="border-t border-border p-2">
         {creating ? (
           <div className="flex gap-1.5">
             <input
               autoFocus
-              className="flex-1 rounded-lg border border-[#E5E7EB] px-2.5 py-1.5 text-xs text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#3B82F6] focus:outline-none focus:ring-1 focus:ring-[#3B82F6]/30"
+              className="flex-1 rounded-lg border border-border bg-paper px-2.5 py-1.5 text-xs text-ink placeholder:text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30"
               disabled={submitting}
               maxLength={60}
               onKeyDown={(e) => {
@@ -201,7 +201,7 @@ function DeckPicker({
               value={newName}
             />
             <button
-              className="inline-flex items-center justify-center rounded-lg bg-[#3B82F6] px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#2563EB] disabled:opacity-50"
+              className="inline-flex items-center justify-center rounded-lg bg-action px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-action-hover disabled:opacity-50"
               disabled={!newName.trim() || submitting}
               onClick={() => void handleCreateDeck()}
               type="button"
@@ -211,7 +211,7 @@ function DeckPicker({
           </div>
         ) : (
           <button
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium text-[#3B82F6] transition-colors hover:bg-[#EFF6FF]"
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium text-brand-accent transition-colors hover:bg-accent-soft/60"
             onClick={() => setCreating(true)}
             type="button"
           >
@@ -264,11 +264,11 @@ export function FlashcardAddAction({
     }
   };
 
-  if (!userId) return <p className="text-[11px] text-[#9CA3AF]">{labels.signInHint}</p>;
+  if (!userId) return <p className="text-[11px] text-muted">{labels.signInHint}</p>;
   return (
     <div className="relative">
       <button
-        className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold ${added ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700 hover:bg-amber-100"}`}
+        className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${added ? "border-leaf/30 bg-leaf-soft text-leaf-strong" : "border-amber/30 bg-amber-soft text-amber-strong hover:bg-amber-soft/80"}`}
         disabled={loading || added}
         onClick={() => setShowPicker((current) => !current)}
         type="button"
@@ -276,7 +276,7 @@ export function FlashcardAddAction({
         {loading ? <SpinnerIcon /> : <PlusIcon />}
         {added ? labels.addedFlashcard : labels.addFlashcard}
       </button>
-      {failed && <p className="mt-1 text-xs text-red-600" role="alert">{labels.flashcardError ?? labels.addFlashcard}</p>}
+      {failed && <p className="mt-1 text-xs text-sakura-strong" role="alert">{labels.flashcardError ?? labels.addFlashcard}</p>}
       {showPicker && <DeckPicker labels={labels} onClose={() => setShowPicker(false)} onSelect={(deckId) => void addToDeck(deckId)} />}
     </div>
   );
@@ -360,7 +360,7 @@ export function ContentActions({
 
   if (!isLoggedIn) {
     return (
-      <p className="text-[11px] text-[#9CA3AF]">{labels.signInHint}</p>
+      <p className="text-[11px] text-muted">{labels.signInHint}</p>
     );
   }
 
@@ -371,8 +371,8 @@ export function ContentActions({
         aria-pressed={bookmarked}
         className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
           bookmarked
-            ? "border-[#F87171]/30 bg-[#FEF2F2] text-[#DC2626]"
-            : "border-[#E5E7EB] bg-white text-[#4B5563] hover:bg-[#F9FAFB]"
+            ? "border-sakura/30 bg-sakura-soft text-sakura-strong"
+            : "border-border bg-surface text-muted hover:bg-paper hover:text-ink"
         }`}
         disabled={bmLoading}
         onClick={() => void toggleBookmark()}
@@ -386,8 +386,8 @@ export function ContentActions({
         aria-label={fcAdded ? labels.addedFlashcard : labels.addFlashcard}
         className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
           fcAdded
-            ? "border-[#22C55E]/30 bg-[#F0FDF4] text-[#16A34A]"
-            : "border-[#E5E7EB] bg-white text-[#4B5563] hover:bg-[#F9FAFB]"
+            ? "border-leaf/30 bg-leaf-soft text-leaf-strong"
+            : "border-border bg-surface text-muted hover:bg-paper hover:text-ink"
         }`}
         disabled={fcLoading || fcAdded}
         onClick={() => !fcAdded && setShowPicker((v) => !v)}

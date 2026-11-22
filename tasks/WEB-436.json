@@ -1,0 +1,419 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-436",
+  "title": "Migrate hardcoded light-palette components to theme tokens (vocab expression list + audit sweep)",
+  "start_head": "27201fac548022848a1238fcbe841a0225c22356",
+  "preexisting_changes": {
+    ".build/.buildSystem_debug": "c337257139e569398ce8bf081a54dbc7d1e0267d",
+    ".build/CACHEDIR.TAG": "b7ab0d883e974d20c05898291a6218954e18e5ef"
+  },
+  "spec": {
+    "problem": "In production dark mode, Radar/Magazine vocabulary expression cards (apps/web/app/[locale]/_components/vocab-expression-list.tsx) render broken contrast when expanded—especially the Usage Note box (unmapped bg-amber-50/70, remapped yellow text-amber-700/600, unmapped dark text-amber-900) plus hardcoded slate/emerald/blue/white utilities and unmapped hover flashes. A sweep of 24 flagged learner web components found 17 files with genuinely broken dark-mode surfaces/contrast (unmapped bg-*-50/NN, bg-white/80, from/to pastel gradients missing from globals.css/.battle-scope, unmapped hover/active light flashes, unmapped ring-*-200/300, unmapped hex chips, dark-invisible skeletons, undefined var(--color-navy) and hsl(var(--...)) vars) and 7 files that are already themed, covered by .battle-scope/globals.css, or intentionally always dark.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "AC1: vocab-expression-list.tsx contains no hardcoded Tailwind palette utilities; --color-amber-strong is added for both themes and system fallback, and all vocab-expression-list text/background pairs reach >= 4.5 WCAG AA in both themes per the extended contrast regression test and component test."
+      },
+      {
+        "id": "AC2",
+        "text": "AC2: Every file in the Fix-2 24-file sweep list is either migrated to app theme tokens (17 genuinely broken files) or explicitly justified as intentional/already dark-safe (7 unchanged files) in the summary."
+      },
+      {
+        "id": "AC3",
+        "text": "AC3: No visual regression in light mode beyond class-equivalent token mapping (amber note stays amber-family, emerald reading chip stays green-family via leaf tokens, blue speak button stays blue-family via accent/brand-accent tokens)."
+      },
+      {
+        "id": "AC4",
+        "text": "AC4: Existing tests for radar/magazine/vocab and audited components pass; pnpm quality verify passes; WEB-436 CLOSED via the harness; git status shows only intended files (no .build/, no tsconfig.tsbuildinfo)."
+      }
+    ],
+    "expected_behavior": "globals.css defines --color-amber-strong (#92400e light, #fcd34d dark and system fallback) plus dark variants for .foryou-skeleton and .exercise-skeleton/.exercise-skeleton-shimmer. vocab-expression-list.tsx uses only app theme tokens (bg-surface, bg-paper, border-border, text-ink, text-muted, bg-leaf-soft/text-leaf-strong, bg-accent-soft/text-brand-accent, bg-amber-soft/border-amber/30/text-amber-strong) with all pairs >= 4.5:1 in both themes. All 17 genuinely broken Fix-2 sweep files migrate their unmapped light-palette utilities, hover flashes, pastel gradients, hex chips, and undefined CSS vars to theme tokens, while the 7 dark-safe/intentional files remain untouched with explicit justifications.",
+    "observed_behavior": "vocab-expression-list.tsx uses hardcoded Tailwind palette classes (bg-amber-50/70, text-amber-700/900, bg-white, text-slate-900/700/500/400, bg-emerald-50, bg-blue-50, hover:bg-slate-50/50, hover:bg-blue-100), causing unreadable yellow-on-cream / dark-on-dark usage notes and white hover flashes in dark mode. Across the 24 flagged Fix-2 files, 17 exhibit unmapped light-palette utilities in dark mode (e.g., unreadable light-red error alerts on bg-red-50/90 in login/register forms, bg-amber-50/50 + text-amber-950 and nonexistent hsl(var(--...)) in daily-detail-client, undefined var(--color-navy) + bg-white/80 + pastel gradients in exercises-page-client, missing from-indigo-50/to-violet-50/to-indigo-50 in battle panels, unmapped from-emerald-50 + hover:bg-white in me-page-client, white-on-white CTA hover in announcement-strip, unmapped hex chips in content-actions, unmapped text-slate-100 ring track + hover:bg-blue-50 in progress-section, unmapped bg-amber-50/60 quota banner in deck-composer-panel, and unmapped pastel rings/borders in quiz-client).",
+    "rollback_plan": "Revert the WEB-436 web-only changes in apps/web; no API, database, admin, or deploy files were modified."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Presentation-only dark-mode styling and theme-token migration for vocab-expression-list and 17 audited learner components in apps/web; no API, database, admin, or domain logic changes."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx",
+      "test": "vocabulary flashcard action > uses app theme tokens without hardcoded Tailwind palette classes across expanded expression cards",
+      "expect": "vocab-expression-list must use app theme tokens instead of hardcoded Tailwind palette classes"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "WEB-436 hardcoded light-palette to theme-token regressions > defines --color-amber-strong for both themes and keeps all vocab-expression-list token pairs at >= 4.5:1 without hardcoded palette utilities",
+      "expect": "amber-strong must be defined in light, dark, and system fallback themes"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "WEB-436 hardcoded light-palette to theme-token regressions > migrates broken light-palette utilities, undefined vars, and dark-invisible skeletons across the audited sweep files",
+      "expect": "audited sweep files must not retain unmapped light-palette dark-mode defects or undefined CSS vars"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-22T04:57:29.564Z",
+      "head": "27201fac548022848a1238fcbe841a0225c22356"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-22T04:59:37.932Z",
+      "head": "27201fac548022848a1238fcbe841a0225c22356"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-22T04:59:38.648Z",
+      "head": "27201fac548022848a1238fcbe841a0225c22356"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-22T05:00:03.112Z",
+      "head": "27201fac548022848a1238fcbe841a0225c22356"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-22T05:08:12.020Z",
+      "head": "27201fac548022848a1238fcbe841a0225c22356"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-22T05:25:28.203Z",
+      "head": "27201fac548022848a1238fcbe841a0225c22356"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-22T05:26:16.058Z",
+      "head": "27201fac548022848a1238fcbe841a0225c22356"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-22T04:59:42.807Z",
+      "head": "27201fac548022848a1238fcbe841a0225c22356",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > uses app theme tokens without hardcoded Tailwind palette classes across expanded expression cards",
+          "outcome": "FAIL",
+          "excerpt": "vocab-expression-list must use app theme tokens instead of hardcoded Tailwind palette classes: expected [ 'div: border-slate-200/80', …(19) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-436 hardcoded light-palette to theme-token regressions > defines --color-amber-strong for both themes and keeps all vocab-expression-list token pairs at >= 4.5:1 without hardcoded palette utilities",
+          "outcome": "FAIL",
+          "excerpt": "--color-amber-strong must be defined in light, dark, and system fallback themes: expected undefined to be truthy",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"true\""
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-436 hardcoded light-palette to theme-token regressions > migrates broken light-palette utilities, undefined vars, and dark-invisible skeletons across the audited sweep files",
+          "outcome": "FAIL",
+          "excerpt": "audited sweep files must not retain unmapped light-palette dark-mode defects or undefined CSS vars: expected [ …(81) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > uses app theme tokens without hardcoded Tailwind palette classes across expanded expression cards": "vocab-expression-list must use app theme tokens instead of hardcoded Tailwind palette classes",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-436 hardcoded light-palette to theme-token regressions > defines --color-amber-strong for both themes and keeps all vocab-expression-list token pairs at >= 4.5:1 without hardcoded palette utilities": "true",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-436 hardcoded light-palette to theme-token regressions > migrates broken light-palette utilities, undefined vars, and dark-invisible skeletons across the audited sweep files": "audited sweep files must not retain unmapped light-palette dark-mode defects or undefined CSS vars"
+      },
+      "fingerprint": "05dd953a49a25d22f06478a5b7f898ed8da07146916508acd8e4474b5d5d353a"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-22T05:00:02.646Z",
+      "head": "27201fac548022848a1238fcbe841a0225c22356",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > uses app theme tokens without hardcoded Tailwind palette classes across expanded expression cards",
+          "outcome": "FAIL",
+          "excerpt": "vocab-expression-list must use app theme tokens instead of hardcoded Tailwind palette classes: expected [ 'div: border-slate-200/80', …(19) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-436 hardcoded light-palette to theme-token regressions > defines --color-amber-strong for both themes and keeps all vocab-expression-list token pairs at >= 4.5:1 without hardcoded palette utilities",
+          "outcome": "FAIL",
+          "excerpt": "--color-amber-strong must be defined in light, dark, and system fallback themes: expected undefined to be truthy",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-436 hardcoded light-palette to theme-token regressions > migrates broken light-palette utilities, undefined vars, and dark-invisible skeletons across the audited sweep files",
+          "outcome": "FAIL",
+          "excerpt": "audited sweep files must not retain unmapped light-palette dark-mode defects or undefined CSS vars: expected [ …(81) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > uses app theme tokens without hardcoded Tailwind palette classes across expanded expression cards": "vocab-expression-list must use app theme tokens instead of hardcoded Tailwind palette classes",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-436 hardcoded light-palette to theme-token regressions > defines --color-amber-strong for both themes and keeps all vocab-expression-list token pairs at >= 4.5:1 without hardcoded palette utilities": "amber-strong must be defined in light, dark, and system fallback themes",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-436 hardcoded light-palette to theme-token regressions > migrates broken light-palette utilities, undefined vars, and dark-invisible skeletons across the audited sweep files": "audited sweep files must not retain unmapped light-palette dark-mode defects or undefined CSS vars"
+      },
+      "fingerprint": "05dd953a49a25d22f06478a5b7f898ed8da07146916508acd8e4474b5d5d353a"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-22T05:07:27.703Z",
+      "head": "27201fac548022848a1238fcbe841a0225c22356",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > uses app theme tokens without hardcoded Tailwind palette classes across expanded expression cards",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-436 hardcoded light-palette to theme-token regressions > defines --color-amber-strong for both themes and keeps all vocab-expression-list token pairs at >= 4.5:1 without hardcoded palette utilities",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-436 hardcoded light-palette to theme-token regressions > migrates broken light-palette utilities, undefined vars, and dark-invisible skeletons across the audited sweep files",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "audited sweep files must not retain unmapped light-palette dark-mode defects or undefined CSS vars: expected [ Array(1) ] to deeply equal []"
+        }
+      ],
+      "fingerprint": "eca2b5763d6f0afcf116a672ebf10d165db6b8c2e65b953f543f50f67cf1115f"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-22T05:08:11.033Z",
+      "head": "27201fac548022848a1238fcbe841a0225c22356",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx::vocabulary flashcard action > uses app theme tokens without hardcoded Tailwind palette classes across expanded expression cards",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-436 hardcoded light-palette to theme-token regressions > defines --color-amber-strong for both themes and keeps all vocab-expression-list token pairs at >= 4.5:1 without hardcoded palette utilities",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-436 hardcoded light-palette to theme-token regressions > migrates broken light-palette utilities, undefined vars, and dark-invisible skeletons across the audited sweep files",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "cc50aa9cbed9a18ae67ee3ef4cf09c2a64d3236017ffdbc6d0eb26a8322f2aa5"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-22T05:10:42.141Z",
+      "head": "27201fac548022848a1238fcbe841a0225c22356",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 694,
+        "executed": 694,
+        "passed": 693,
+        "failed": 1,
+        "failed_new": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 888,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 1
+      },
+      "message": "RATCHET_VIOLATION: 1 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "cc50aa9cbed9a18ae67ee3ef4cf09c2a64d3236017ffdbc6d0eb26a8322f2aa5"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-22T05:13:06.092Z",
+      "head": "27201fac548022848a1238fcbe841a0225c22356",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 694,
+        "executed": 694,
+        "passed": 693,
+        "failed": 1,
+        "failed_new": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 888,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 1
+      },
+      "message": "RATCHET_VIOLATION: 1 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "cc50aa9cbed9a18ae67ee3ef4cf09c2a64d3236017ffdbc6d0eb26a8322f2aa5"
+    },
+    {
+      "seq": 7,
+      "at": "2026-11-22T05:17:55.859Z",
+      "head": "27201fac548022848a1238fcbe841a0225c22356",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 694,
+        "executed": 694,
+        "passed": 693,
+        "failed": 1,
+        "failed_new": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 888,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 1
+      },
+      "message": "RATCHET_VIOLATION: 1 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "cc50aa9cbed9a18ae67ee3ef4cf09c2a64d3236017ffdbc6d0eb26a8322f2aa5"
+    },
+    {
+      "seq": 8,
+      "at": "2026-11-22T05:21:22.346Z",
+      "head": "27201fac548022848a1238fcbe841a0225c22356",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 694,
+        "executed": 694,
+        "passed": 694,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 888,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "cc50aa9cbed9a18ae67ee3ef4cf09c2a64d3236017ffdbc6d0eb26a8322f2aa5"
+    },
+    {
+      "seq": 9,
+      "at": "2026-11-22T05:25:24.372Z",
+      "head": "27201fac548022848a1238fcbe841a0225c22356",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 694,
+        "executed": 694,
+        "passed": 694,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 888,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "cc50aa9cbed9a18ae67ee3ef4cf09c2a64d3236017ffdbc6d0eb26a8322f2aa5"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-22T05:26:16.051Z",
+    "head": "27201fac548022848a1238fcbe841a0225c22356",
+    "fingerprint": "cc50aa9cbed9a18ae67ee3ef4cf09c2a64d3236017ffdbc6d0eb26a8322f2aa5",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/_components/content-actions.tsx": "102e40c217a8c2b78deb7015b74778c8a5a8744b",
+      "apps/web/app/[locale]/_components/homepage/for-you-feed-widget.tsx": "52c371a82fd2f941651af4fa46f1e084b902bdd8",
+      "apps/web/app/[locale]/_components/homepage/login-bonus-widget.tsx": "1d0be0db0d03159b164904b04ef9e4aa590f4296",
+      "apps/web/app/[locale]/_components/homepage/progress-section.tsx": "6abbd29e2466aa62f536a0ab2c7897d99a8e0d6b",
+      "apps/web/app/[locale]/_components/vocab-expression-list.tsx": "fd1caa1868befd959b4e59edc5552998fad4cb27",
+      "apps/web/app/[locale]/battle/_components/battle-configs-panel.tsx": "782914179b665727dd0580543ea87cd079afe28d",
+      "apps/web/app/[locale]/battle/_components/battle-hype-layer.tsx": "ec728c5a27fcca73b97feee3461664c8134e59db",
+      "apps/web/app/[locale]/battle/_components/battle-lobby-leaderboard.tsx": "b30730d9f388fa67328139b556a2d852614786c0",
+      "apps/web/app/[locale]/battle/_components/game-types/speed-duel-round.tsx": "e3b0fd76591bba48e5e4f8b7d6591c18c4d14650",
+      "apps/web/app/[locale]/daily/[id]/daily-detail-client.tsx": "200287bb12dc5ce56bdc57407b85f2d34cc0b6a8",
+      "apps/web/app/[locale]/exercises/_components/exercises-page-client.tsx": "b41cdadc4300ea16522dd313a80f1754dd3c32d3",
+      "apps/web/app/[locale]/flashcards/_components/deck-composer-panel.tsx": "aa9bbc8462cb9dcc59fa2d4566c2ca1976117d0d",
+      "apps/web/app/[locale]/login/_components/login-form-client.tsx": "d18fb400a250d18e5ebcc3e949212050ab04b40e",
+      "apps/web/app/[locale]/magazine/_components/vocab-expression-list.test.tsx": "0cf36ee054da89a2752328396b04efc87a343785",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-balls.tsx": "5c3f8ad12b8bd1cb1ae63b1a5754db15fbccdfce",
+      "apps/web/app/[locale]/me/_components/me-page-client.tsx": "d49b16f22c9cb7ffb75864c48431ff8f89632dd1",
+      "apps/web/app/[locale]/quiz/_components/quiz-client.tsx": "42e7826a4d7fbfe9934db787cbf998a7fe29dced",
+      "apps/web/app/[locale]/register/_components/register-form-client.tsx": "076607930bb487ef9604888304f555c8cfcbd503",
+      "apps/web/app/_components/announcement-strip.tsx": "ca2076d713b169956b5bb8646ecaab40b7b4c646",
+      "apps/web/app/globals.css": "593f6feb2b7705361284f3349e6ed292e1ebdec2",
+      "apps/web/app/theme-contrast.regression.test.ts": "62b79b247e4ef0f6dfdc259340b923c78948a57a"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

@@ -123,7 +123,7 @@ export function LoginBonusWidget() {
                 : r.current
                   ? "border-accent/40 bg-accent/5 ring-2 ring-accent/20"
                   : "border-ink/6 bg-paper",
-              r.isBigReward && !r.claimed && "border-amber-400/40 bg-amber-50"
+              r.isBigReward && !r.claimed && "border-amber/40 bg-amber-soft"
             )}
           >
             <span className="text-[10px] font-semibold text-muted">D{r.day}</span>

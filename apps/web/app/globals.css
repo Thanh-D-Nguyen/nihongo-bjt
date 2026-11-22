@@ -32,6 +32,7 @@
   --color-danger-soft: #fef2f2;
   --color-amber: #d97706;
   --color-amber-soft: #fffbeb;
+  --color-amber-strong: #92400e;
   --color-warning: #d97706;
   --color-warning-soft: #fffbeb;
   --color-matcha: #22c55e;
@@ -145,6 +146,7 @@
   --color-danger-soft: #450a0a;
   --color-amber: #fbbf24;
   --color-amber-soft: #451a03;
+  --color-amber-strong: #fcd34d;
   --color-warning: #fbbf24;
   --color-warning-soft: #451a03;
   --color-matcha: #4ade80;
@@ -231,6 +233,7 @@
     --color-danger-soft: #450a0a;
     --color-amber: #fbbf24;
     --color-amber-soft: #451a03;
+    --color-amber-strong: #fcd34d;
     --color-warning: #fbbf24;
     --color-warning-soft: #451a03;
     --color-matcha: #4ade80;
@@ -2006,10 +2009,22 @@ button.primary:disabled {
   background-size: 200% 100%;
   animation: foryou-shimmer 1.5s ease-in-out infinite;
 }
+.dark .foryou-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.04) 75%
+  );
+  background-size: 200% 100%;
+}
 @media (prefers-reduced-motion: reduce) {
   .foryou-skeleton {
     animation: none;
     background: rgba(0, 0, 0, 0.06);
+  }
+  .dark .foryou-skeleton {
+    background: rgba(255, 255, 255, 0.07);
   }
 }
 
@@ -2356,6 +2371,9 @@ button.primary:disabled {
 .exercise-skeleton {
   background: rgba(0, 0, 0, 0.02);
 }
+.dark .exercise-skeleton {
+  background: rgba(255, 255, 255, 0.03);
+}
 .exercise-skeleton-shimmer {
   background: linear-gradient(
     90deg,
@@ -2366,6 +2384,15 @@ button.primary:disabled {
   background-size: 200% 100%;
   animation: battle-shimmer 1.5s ease-in-out infinite;
   border-radius: 8px;
+}
+.dark .exercise-skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.04) 75%
+  );
+  background-size: 200% 100%;
 }
 
 /* ─── Exercise: Type card selection ─── */

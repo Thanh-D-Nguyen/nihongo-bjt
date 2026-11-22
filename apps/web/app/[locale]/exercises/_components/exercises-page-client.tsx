@@ -407,7 +407,7 @@ export function ExercisesPageClient({
       {error && (
         <div className="my-4">
           <ErrorState title={error} action={
-            <button className="rounded-lg border border-ink/15 bg-white px-4 py-2 text-sm font-bold text-ink hover:bg-paper" onClick={() => setError(null)} type="button">OK</button>
+            <button className="rounded-lg border border-ink/15 bg-surface px-4 py-2 text-sm font-bold text-ink hover:bg-paper" onClick={() => setError(null)} type="button">OK</button>
           } />
         </div>
       )}
@@ -453,13 +453,13 @@ export function ExercisesPageClient({
                       }
                       void handleGenerate(metaType && EXERCISE_TYPES.includes(metaType as typeof EXERCISE_TYPES[number]) ? metaType : selectedType);
                     }}
-                    className="group relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-left shadow-xs transition-all hover:border-[var(--color-border-hover)] hover:shadow-sm hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-navy)]"
+                    className="group relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-left shadow-xs transition-all hover:border-[var(--color-border-hover)] hover:shadow-sm hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="text-body font-bold text-ink line-clamp-2">
                         {item.title ?? labels.types[item.metadata?.exerciseType ?? ""] ?? item.type}
                       </h3>
-                      <span className="shrink-0 rounded-md bg-[var(--color-navy)]/10 px-2 py-0.5 text-[10px] font-bold text-[var(--color-navy)]">
+                      <span className="shrink-0 rounded-md bg-accent-soft px-2 py-0.5 text-[10px] font-bold text-brand-accent">
                         {labels.card?.recommended ?? "Recommended"}
                       </span>
                     </div>
@@ -488,9 +488,9 @@ export function ExercisesPageClient({
             <button
               type="button"
               onClick={handleStartReview}
-              className="flex w-full items-center gap-3 overflow-hidden rounded-xl border border-amber-200/60 bg-gradient-to-br from-amber-50/60 to-orange-50/30 p-4 text-left shadow-sm transition hover:border-amber-300/60 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+              className="flex w-full items-center gap-3 overflow-hidden rounded-xl border border-amber/30 bg-amber-soft p-4 text-left shadow-sm transition hover:border-amber/50 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber"
             >
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-100 text-lg" aria-hidden>🔄</span>
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber/15 text-lg" aria-hidden>🔄</span>
               <div>
                 <p className="text-sm font-bold text-ink">{labels.card?.continue ?? "Continue"} — Review</p>
                 <p className="text-xs font-semibold text-muted">
@@ -516,7 +516,7 @@ export function ExercisesPageClient({
               </p>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--color-border)]">
                 <div
-                  className="h-full rounded-full bg-[var(--color-navy)] transition-all duration-700 ease-out"
+                  className="h-full rounded-full bg-action transition-all duration-700 ease-out"
                   style={{ width: `${Math.min(dailyProgress.progress * 100, 100)}%` }}
                 />
               </div>
@@ -535,9 +535,9 @@ export function ExercisesPageClient({
                     key={f}
                     type="button"
                     onClick={() => setActiveFilter(f)}
-                    className={`min-h-[36px] rounded-lg px-3.5 py-1.5 text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-navy)] ${
+                    className={`min-h-[36px] rounded-lg px-3.5 py-1.5 text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                       active
-                        ? "bg-[var(--color-navy)] text-white shadow-sm"
+                        ? "bg-action text-white shadow-sm"
                         : "bg-[var(--color-paper)] text-muted hover:bg-[var(--color-border)] hover:text-ink"
                     }`}
                   >
@@ -561,9 +561,9 @@ export function ExercisesPageClient({
                 return (
                   <button
                     key={t}
-                    className={`exercise-type-card group relative overflow-hidden rounded-xl border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-navy)] ${
+                    className={`exercise-type-card group relative overflow-hidden rounded-xl border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                       active
-                        ? "border-[var(--color-navy)]/30 bg-[var(--color-navy)]/5 shadow-md ring-1 ring-[var(--color-navy)]/15"
+                        ? "border-accent/40 bg-accent-soft/40 shadow-md ring-1 ring-accent/20"
                         : "border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-border-hover)] hover:shadow-sm"
                     }`}
                     onClick={() => setSelectedType(t)}
@@ -571,7 +571,7 @@ export function ExercisesPageClient({
                   >
                     <span className={`grid h-10 w-10 place-items-center rounded-xl text-lg transition-colors ${
                       active
-                        ? "bg-[var(--color-navy)]/12 shadow-sm"
+                        ? "bg-accent-soft shadow-sm"
                         : "bg-[var(--color-paper)] group-hover:bg-[var(--color-border)]"
                     }`} aria-hidden>
                       {EXERCISE_TYPE_ICONS[t]}
@@ -583,7 +583,7 @@ export function ExercisesPageClient({
                       {EXERCISE_TYPE_HINTS[t]}
                     </span>
                     {active ? (
-                      <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-navy)] text-[10px] text-white" aria-hidden>✓</span>
+                      <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-action text-[10px] text-white" aria-hidden>✓</span>
                     ) : null}
                   </button>
                 );
@@ -602,9 +602,9 @@ export function ExercisesPageClient({
                 return (
                   <button
                     key={l}
-                    className={`exercise-level-pill min-h-[40px] rounded-xl px-4 py-2 text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-navy)] ${
+                    className={`exercise-level-pill min-h-[40px] rounded-xl px-4 py-2 text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                       active
-                        ? "bg-[var(--color-navy)] text-white shadow-sm"
+                        ? "bg-action text-white shadow-sm"
                         : "bg-[var(--color-paper)] text-muted hover:bg-[var(--color-border)] hover:text-ink"
                     }`}
                     onClick={() => setSelectedLevel(l)}
@@ -635,7 +635,7 @@ export function ExercisesPageClient({
           {/* Review progress */}
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <span className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-black tabular-nums text-amber-700 shadow-sm">
+              <span className="rounded-lg border border-amber/30 bg-amber-soft px-2.5 py-1 text-xs font-black tabular-nums text-amber-strong shadow-sm">
                 {reviewIndex + 1}/{reviewItems.length}
               </span>
               <span className="text-sm font-bold text-muted">{labels.review?.title ?? "Review"}</span>
@@ -650,7 +650,7 @@ export function ExercisesPageClient({
           </div>
 
           {/* Review progress bar */}
-          <div className="h-2 overflow-hidden rounded-full bg-amber-100/60">
+          <div className="h-2 overflow-hidden rounded-full bg-amber/20">
             <div
               className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-400 transition-all duration-500"
               style={{ width: `${((reviewIndex + 1) / reviewItems.length) * 100}%` }}
@@ -664,9 +664,9 @@ export function ExercisesPageClient({
             if (!ex) return <p className="text-sm text-muted">{labels.review?.notFound ?? "Exercise not found."}</p>;
 
             return (
-              <div className="overflow-hidden rounded-[1.5rem] border border-amber-200/40 bg-white shadow-sm">
-                <div className="border-b border-amber-100 bg-gradient-to-b from-amber-50/40 to-white p-5 sm:p-6">
-                  <Badge className="mb-3 gap-1.5 border-amber-200 bg-amber-50 text-amber-700">
+              <div className="overflow-hidden rounded-[1.5rem] border border-amber/30 bg-surface shadow-sm">
+                <div className="border-b border-border bg-gradient-to-b from-amber-soft/60 to-surface p-5 sm:p-6">
+                  <Badge className="mb-3 gap-1.5 border-amber/30 bg-amber-soft text-amber-strong">
                     <span aria-hidden>{EXERCISE_TYPE_ICONS[ex.exerciseType]}</span>
                     {labels.types[ex.exerciseType] ?? ex.exerciseType}
                   </Badge>
@@ -697,10 +697,10 @@ export function ExercisesPageClient({
                       <p className="mb-3 text-xs font-black uppercase tracking-wider text-muted">{labels.review?.ratingPrompt ?? "How well do you remember?"}</p>
                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                         {([
-                          { key: "again" as const, color: "border-sakura/30 bg-sakura/8 text-sakura hover:bg-sakura/15" },
-                          { key: "hard" as const, color: "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100" },
-                          { key: "good" as const, color: "border-leaf/20 bg-leaf/8 text-leaf hover:bg-leaf/15" },
-                          { key: "easy" as const, color: "border-accent/20 bg-accent/8 text-accent hover:bg-accent/15" },
+                          { key: "again" as const, color: "border-sakura/30 bg-sakura-soft text-sakura-strong hover:bg-sakura/15" },
+                          { key: "hard" as const, color: "border-amber/30 bg-amber-soft text-amber-strong hover:bg-amber/20" },
+                          { key: "good" as const, color: "border-leaf/25 bg-leaf-soft text-leaf-strong hover:bg-leaf/15" },
+                          { key: "easy" as const, color: "border-accent/25 bg-accent-soft text-brand-accent hover:bg-accent/15" },
                         ]).map((r) => (
                           <button
                             key={r.key}
@@ -739,7 +739,7 @@ export function ExercisesPageClient({
           {/* Progress header */}
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <span className="rounded-lg border border-ink/10 bg-white px-2.5 py-1 text-xs font-black tabular-nums text-ink shadow-sm">
+              <span className="rounded-lg border border-ink/10 bg-surface px-2.5 py-1 text-xs font-black tabular-nums text-ink shadow-sm">
                 {currentIndex + 1}/{exercises.length}
               </span>
               <span className="text-sm font-bold text-muted">
@@ -779,11 +779,11 @@ export function ExercisesPageClient({
       {/* ── Completed Phase ──────────────────────────────────────────── */}
       {phase === "completed" && session && (
         <div className="mt-6">
-          <div className="exercise-complete-card relative overflow-hidden rounded-[1.5rem] border border-accent/15 bg-gradient-to-br from-accent/5 via-surface to-blue-50/40 p-8 text-center shadow-sm">
+          <div className="exercise-complete-card relative overflow-hidden rounded-[1.5rem] border border-accent/15 bg-gradient-to-br from-accent/5 via-surface to-accent-soft/40 p-8 text-center shadow-sm">
             {/* Decorative glow */}
             <div className="pointer-events-none absolute left-1/2 top-0 h-32 w-64 -translate-x-1/2 rounded-full bg-accent/8 blur-3xl" aria-hidden />
 
-            <span className="relative mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-accent/15 to-blue-100/60 text-3xl shadow-sm" aria-hidden>
+            <span className="relative mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-accent/15 to-accent-soft text-3xl shadow-sm" aria-hidden>
               🎉
             </span>
             <h2 className="relative mt-4 text-2xl font-black tracking-tight text-ink">
@@ -792,7 +792,7 @@ export function ExercisesPageClient({
 
             {/* Score bento */}
             <div className="relative mx-auto mt-6 grid max-w-sm grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-leaf/15 bg-white/80 p-4 shadow-sm">
+              <div className="rounded-2xl border border-leaf/15 bg-surface/90 p-4 shadow-sm">
                 <p className="text-3xl font-black tabular-nums text-leaf">
                   {session.correctCount}
                 </p>
@@ -800,7 +800,7 @@ export function ExercisesPageClient({
                   / {session.totalQuestions} {labels.correct.replace("!", "")}
                 </p>
               </div>
-              <div className="rounded-2xl border border-accent/15 bg-white/80 p-4 shadow-sm">
+              <div className="rounded-2xl border border-accent/15 bg-surface/90 p-4 shadow-sm">
                 <p className="text-3xl font-black tabular-nums text-accent">
                   {session.score}
                 </p>
@@ -840,7 +840,7 @@ export function ExercisesPageClient({
 
             {/* Daily goal completion celebration */}
             {dailyProgress?.isComplete && (
-              <div className="exercise-goal-complete relative mt-6 rounded-2xl border border-leaf/20 bg-gradient-to-r from-leaf/8 to-emerald-50/60 p-4 shadow-sm">
+              <div className="exercise-goal-complete relative mt-6 rounded-2xl border border-leaf/25 bg-gradient-to-r from-leaf/8 to-leaf-soft/60 p-4 shadow-sm">
                 <div className="flex items-center gap-3">
                   <span className="grid h-10 w-10 place-items-center rounded-xl bg-leaf/15 text-xl" aria-hidden>🏆</span>
                   <div className="text-left">
@@ -882,9 +882,9 @@ function ExerciseCard({
   const isWordOrder = exercise.exerciseType === "word_order";
 
   return (
-    <div className="exercise-question-card overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white shadow-sm">
+    <div className="exercise-question-card overflow-hidden rounded-[1.5rem] border border-ink/10 bg-surface shadow-sm">
       {/* Prompt */}
-      <div className="border-b border-ink/8 bg-gradient-to-b from-paper/60 to-white p-5 sm:p-6">
+      <div className="border-b border-ink/8 bg-gradient-to-b from-paper/60 to-surface p-5 sm:p-6">
         {prompt.maskedSentence ? (
           <div>
             <p className="text-lg font-bold leading-8 text-ink" style={{ lineHeight: 1.8 }}>
@@ -988,11 +988,11 @@ function ExerciseCard({
           <div
             className={`exercise-feedback mt-5 flex items-start gap-3 rounded-xl border p-4 ${
               answerResult.isCorrect
-                ? "border-leaf/20 bg-gradient-to-r from-leaf/8 to-emerald-50/50 text-leaf"
-                : "border-sakura/20 bg-gradient-to-r from-sakura/8 to-red-50/50 text-sakura"
+                ? "border-leaf/25 bg-leaf-soft text-leaf-strong"
+                : "border-sakura/25 bg-sakura-soft text-sakura-strong"
             }`}
           >
-            <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/80 text-sm shadow-sm" aria-hidden>
+            <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-surface/90 text-sm shadow-sm" aria-hidden>
               {answerResult.isCorrect ? "✅" : "💡"}
             </span>
             <div className="min-w-0 flex-1">
@@ -1097,7 +1097,7 @@ function WordOrderInput({
         {remaining.map((token, i) => (
           <button
             key={`${token}-${i}`}
-            className="exercise-word-token rounded-lg border border-ink/10 bg-white px-3.5 py-2 text-sm font-bold text-ink shadow-sm transition hover:border-accent/20 hover:bg-paper active:scale-95"
+            className="exercise-word-token rounded-lg border border-ink/10 bg-surface px-3.5 py-2 text-sm font-bold text-ink shadow-sm transition hover:border-accent/20 hover:bg-paper active:scale-95"
             onClick={() => addToken(token)}
             disabled={disabled}
           >

@@ -201,7 +201,7 @@ export function RegisterFormClient({
   }, []);
 
   const fieldClass =
-    "w-full rounded-xl border border-ink/15 bg-white px-4 py-3 text-sm text-ink outline-none transition placeholder:text-muted/50 focus:border-accent focus:ring-2 focus:ring-accent/20";
+    "w-full rounded-xl border border-ink/15 bg-surface px-4 py-3 text-sm text-ink outline-none transition placeholder:text-muted/50 focus:border-accent focus:ring-2 focus:ring-accent/20";
 
   if (!authReady) {
     return (
@@ -210,7 +210,7 @@ export function RegisterFormClient({
           <div className="space-y-2.5">
             {socialProviders.map((p) => (
               <span
-                className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-ink/12 bg-white px-4 py-3 text-sm font-semibold text-ink opacity-50 cursor-not-allowed"
+                className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-ink/12 bg-surface px-4 py-3 text-sm font-semibold text-ink opacity-50 cursor-not-allowed"
                 key={p.label}
                 aria-disabled="true"
               >
@@ -221,7 +221,7 @@ export function RegisterFormClient({
           </div>
         ) : null}
         <p
-          className="rounded-xl border border-amber-200/90 bg-amber-50/90 px-3 py-3 text-sm leading-relaxed text-amber-950"
+          className="rounded-xl border border-amber/30 bg-amber-soft px-3 py-3 text-sm leading-relaxed text-amber-strong"
           id="register-auth-unavailable"
           role="status"
         >
@@ -239,7 +239,7 @@ export function RegisterFormClient({
           <div className="space-y-2.5">
             {socialProviders.map((p) => (
               <a
-                className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-ink/12 bg-white px-4 py-3 text-sm font-semibold text-ink no-underline transition hover:bg-paper hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-ink/12 bg-surface px-4 py-3 text-sm font-semibold text-ink no-underline transition hover:bg-paper hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                 href={p.href}
                 key={p.label}
               >
@@ -351,7 +351,7 @@ export function RegisterFormClient({
 
         {error ? (
           <p
-            className="rounded-xl border border-red-200/80 bg-red-50/90 px-3 py-2 text-sm text-red-800"
+            className="rounded-xl border border-sakura/30 bg-sakura-soft px-3 py-2 text-sm text-sakura-strong"
             role="alert"
           >
             {error}

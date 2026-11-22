@@ -247,7 +247,7 @@ export function MePageClient({
   return (
     <main className="mx-auto w-full max-w-5xl space-y-0 px-4 pb-12">
       {/* ═══ HERO SECTION ═══ */}
-      <section className="overflow-hidden rounded-2xl border border-ink/8 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-2xl border border-ink/8 bg-surface shadow-sm">
         {/* Cover */}
         <div
           className="relative min-h-36 sm:min-h-44 bg-[linear-gradient(135deg,#0f766e_0%,#1d4ed8_55%,#6366f1_100%)]"
@@ -258,7 +258,7 @@ export function MePageClient({
             <input ref={coverInputRef} accept="image/*" className="hidden" type="file"
               onChange={(e) => void handleFile("coverAssetId", e)} />
             <button
-              className="rounded-lg bg-surface/90 px-3 py-1.5 text-xs font-medium text-ink backdrop-blur-sm transition hover:bg-white"
+              className="rounded-lg bg-surface/90 px-3 py-1.5 text-xs font-medium text-ink backdrop-blur-sm transition hover:bg-surface"
               disabled={uploading}
               onClick={() => coverInputRef.current?.click()}
             >
@@ -266,7 +266,7 @@ export function MePageClient({
             </button>
             {profile?.coverAssetId && (
               <button
-                className="rounded-lg bg-surface/90 px-3 py-1.5 text-xs font-medium text-muted backdrop-blur-sm transition hover:bg-surface/90"
+                className="rounded-lg bg-surface/90 px-3 py-1.5 text-xs font-medium text-muted backdrop-blur-sm transition hover:bg-surface hover:text-ink"
                 disabled={uploading}
                 onClick={() => void updateProfileImage("coverAssetId", null)}
               >
@@ -285,7 +285,7 @@ export function MePageClient({
             <input ref={avatarInputRef} accept="image/*" className="hidden" type="file"
               onChange={(e) => void handleFile("avatarAssetId", e)} />
             <button
-              className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-full bg-white shadow-md ring-1 ring-ink/10 transition hover:scale-110"
+              className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-full bg-surface shadow-md ring-1 ring-ink/10 transition hover:scale-110"
               disabled={uploading}
               onClick={() => avatarInputRef.current?.click()}
               title={labels.hero.changeAvatar}
@@ -350,7 +350,7 @@ export function MePageClient({
       {/* ═══ TAB CONTENT ═══ */}
       <div className="mt-5">
         {error && (
-          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <div className="mb-4 rounded-xl border border-sakura/30 bg-sakura-soft px-4 py-3 text-sm font-medium text-sakura-strong">
             {labels.hero.uploadError}
           </div>
         )}
@@ -406,9 +406,9 @@ function OverviewTab({
 
       {/* Today snapshot — bento style */}
       <div className="grid gap-3 sm:grid-cols-2">
-        <Card className="bg-gradient-to-br from-emerald-50 to-white border-emerald-100">
+        <Card className="bg-gradient-to-br from-leaf-soft to-surface border-leaf/25">
           <CardContent className="flex items-center gap-3 p-4">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-100 text-lg">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-leaf/15 text-lg">
               🔥
             </div>
             <div>
@@ -422,9 +422,9 @@ function OverviewTab({
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-100">
+        <Card className="bg-gradient-to-br from-accent-soft/60 to-surface border-accent/25">
           <CardContent className="flex items-center gap-3 p-4">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-100 text-lg">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent/15 text-lg">
               📚
             </div>
             <div>
@@ -487,16 +487,16 @@ function StatPill({
   accent: "emerald" | "blue" | "violet" | "amber";
 }) {
   const bgMap = {
-    emerald: "bg-emerald-50 border-emerald-100",
-    blue: "bg-blue-50 border-blue-100",
-    violet: "bg-violet-50 border-violet-100",
-    amber: "bg-amber-50 border-amber-100",
+    emerald: "bg-leaf-soft border-leaf/25",
+    blue: "bg-accent-soft border-accent/25",
+    violet: "bg-srs-new/10 border-srs-new/25",
+    amber: "bg-amber-soft border-amber/25",
   };
   const textMap = {
-    emerald: "text-emerald-700",
-    blue: "text-blue-700",
+    emerald: "text-leaf-strong",
+    blue: "text-brand-accent",
     violet: "text-violet-700",
-    amber: "text-amber-700",
+    amber: "text-amber-strong",
   };
 
   return (

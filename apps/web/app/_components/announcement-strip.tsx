@@ -44,7 +44,7 @@ interface Announcement {
 }
 
 const NOTICE_TONE: Record<AnnouncementType, string> = {
-  event: "bg-amber-100 text-amber-700",
+  event: "bg-amber-soft text-amber-strong",
   info: "bg-accent/10 text-accent",
   promo: "bg-accent/10 text-accent"
 };
@@ -193,14 +193,14 @@ function AnnouncementModal({ ann, locale, onDismiss }: { ann: Announcement; loca
 
   // CTA theme
   const ctaClass = dark
-    ? "bg-white text-gray-900 hover:bg-white/90"
-    : "bg-[#1B2A4A] text-white hover:bg-[#243560]";
+    ? "bg-white dark:bg-white text-[#0f172a] hover:bg-white/90"
+    : "bg-action text-white hover:bg-action-hover";
   const dismissBtnClass = dark
     ? "border-white/20 text-white/80 hover:bg-white/10 hover:text-white"
-    : "border-ink/10 text-muted hover:bg-surface hover:text-ink";
+    : "border-ink/10 text-muted hover:bg-paper hover:text-ink";
   const closeBtnClass = dark
     ? "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
-    : "bg-black/5 text-ink/40 hover:bg-black/10 hover:text-ink";
+    : "bg-ink/5 text-muted hover:bg-ink/10 hover:text-ink";
 
   const modalContent = (
     <div
@@ -211,7 +211,7 @@ function AnnouncementModal({ ann, locale, onDismiss }: { ann: Announcement; loca
       aria-label={title ?? ann.message}
     >
       <div
-        className={`pointer-events-auto relative flex w-full max-w-sm flex-col overflow-hidden rounded-2xl border border-white/10 shadow-lg transition-all duration-300 ease-out ${BG_CLASSES[bgPreset]} ${
+        className={`pointer-events-auto relative flex w-full max-w-sm flex-col overflow-hidden rounded-2xl border shadow-lg transition-all duration-300 ease-out ${dark ? "border-white/10" : "border-border"} ${BG_CLASSES[bgPreset]} ${
           visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
         }`}
       >
