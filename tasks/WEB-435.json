@@ -1,0 +1,284 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-435",
+  "title": "Companion mascot: remove white-square glare in dark mode",
+  "start_head": "c98553f83af80d35a76ba166b4ed73650a50fe52",
+  "preexisting_changes": {
+    ".build/.buildSystem_debug": "c337257139e569398ce8bf081a54dbc7d1e0267d",
+    ".build/CACHEDIR.TAG": "b7ab0d883e974d20c05898291a6218954e18e5ef"
+  },
+  "spec": {
+    "problem": "After WEB-434 themed companion surfaces, the collapsed companion mascot at bottom-right still renders as a bright near-white/light-gray rectangle in dark mode on every page. Direct Rive WASM draw inspection of 18912-35694-lil-guy.riv (Artboard 500x400) proves draw[0] paints an opaque #E0E0E0 full-artboard rectangle (rgba(224,224,224,1), bbox [2,2,502,402]) and draws[45..53] paint the three non-interactive #5BA5FF demo buttons at y=37..77 inside the binary .riv asset itself, while BattleBotAvatar variant=companion renders the canvas unclipped with no dark-mode presentation treatment. CompanionSpeechBubble also uses faint border-ink/8 and border-ink/10 borders in dark mode.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "AC1: Root cause stated with evidence (which layer paints the white/light-gray square and the three small blue buttons)."
+      },
+      {
+        "id": "AC2",
+        "text": "AC2: In dark mode the collapsed companion no longer renders as a white/near-white square (test asserting the dark-scoped classes/structure introduced; light-mode classes unchanged)."
+      },
+      {
+        "id": "AC3",
+        "text": "AC3: Mascot animation, tap-to-open, speech bubble, signal badge and chat panel behavior unchanged (existing companion/battle-bot tests pass; speech bubble dark-mode borders and AA text contrast verified)."
+      },
+      {
+        "id": "AC4",
+        "text": "AC4: pnpm quality verify passes; WEB-435 CLOSED via the harness; git status shows only intended files (no .build/, no tsbuildinfo)."
+      }
+    ],
+    "expected_behavior": "In dark mode only, BattleBotAvatar variant=companion frames its inner canvas wrapper as a circular themed disc (dark:overflow-hidden dark:rounded-full dark:bg-surface dark:ring-1 dark:ring-border-hover dark:shadow-md), fills and softens the Rive canvas glare without distorting character hue (dark:scale-[1.26] dark:brightness-[0.80] dark:contrast-[1.06] dark:saturate-[1.12]), lifts the signal badge with dark:z-20, keeps rootSpan overflow-visible and light-mode/non-companion classes unchanged, and CompanionSpeechBubble adds dark:border-border on body and tail while maintaining >=4.5:1 AA text contrast.",
+    "observed_behavior": "In dark mode, BattleBotAvatar variant=companion leaves the 500x400 opaque #E0E0E0 Rive canvas unclipped and unattenuated over #0f172a paper (13.52:1 glare jump), producing a sharp-cornered light-gray rectangle; CompanionSpeechBubble renders border-ink/8 and tail border-ink/10 (1.57:1 vs dark paper) instead of theme border-border tokens.",
+    "rollback_plan": "Revert the WEB-435 web-only changes in apps/web; no API, database, admin, deploy, or binary .riv asset files were modified."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Presentation-only dark-mode styling fix for BattleBotAvatar companion variant and CompanionSpeechBubble border tokens in apps/web; no API, database, or domain logic changes."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/battle-bot-avatar.test.tsx",
+      "test": "BattleBotAvatar > applies dark-only circular disc framing and glare softening for companion variant without altering light-mode or framed variants",
+      "expect": "companion canvas wrapper must clip into a themed circular disc in dark mode"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "WEB-435 companion mascot and speech bubble dark-mode regressions > uses dark-mode theme borders and WCAG AA text contrast on the companion speech bubble while keeping light classes unchanged",
+      "expect": "speech bubble body must add dark:border-border without altering light border-ink/8"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-22T04:23:37.463Z",
+      "head": "c98553f83af80d35a76ba166b4ed73650a50fe52"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-22T04:23:59.063Z",
+      "head": "c98553f83af80d35a76ba166b4ed73650a50fe52"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-22T04:23:59.356Z",
+      "head": "c98553f83af80d35a76ba166b4ed73650a50fe52"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-22T04:25:01.011Z",
+      "head": "c98553f83af80d35a76ba166b4ed73650a50fe52"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-22T04:26:15.732Z",
+      "head": "c98553f83af80d35a76ba166b4ed73650a50fe52"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-22T04:40:03.784Z",
+      "head": "c98553f83af80d35a76ba166b4ed73650a50fe52"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-22T04:41:17.390Z",
+      "head": "c98553f83af80d35a76ba166b4ed73650a50fe52"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-22T04:25:00.738Z",
+      "head": "c98553f83af80d35a76ba166b4ed73650a50fe52",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/battle-bot-avatar.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/battle-bot-avatar.test.tsx::BattleBotAvatar > applies dark-only circular disc framing and glare softening for companion variant without altering light-mode or framed variants",
+          "outcome": "FAIL",
+          "excerpt": "companion canvas wrapper must clip into a themed circular disc in dark mode: expected [ 'relative', 'z-10', 'grid', …(8) ] to deeply equal ArrayContaining{…}",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-435 companion mascot and speech bubble dark-mode regressions > uses dark-mode theme borders and WCAG AA text contrast on the companion speech bubble while keeping light classes unchanged",
+          "outcome": "FAIL",
+          "excerpt": "speech bubble body must add dark:border-border without altering light border-ink/8: expected ' className={`pointer-events-none…' to contain 'dark:border-border'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/battle-bot-avatar.test.tsx::BattleBotAvatar > applies dark-only circular disc framing and glare softening for companion variant without altering light-mode or framed variants": "companion canvas wrapper must clip into a themed circular disc in dark mode",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-435 companion mascot and speech bubble dark-mode regressions > uses dark-mode theme borders and WCAG AA text contrast on the companion speech bubble while keeping light classes unchanged": "speech bubble body must add dark:border-border without altering light border-ink/8"
+      },
+      "fingerprint": "96b85527bf5d036c4880399ced305c2ddacc9f57dee6c72155fd3512d120218e"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-22T04:26:15.469Z",
+      "head": "c98553f83af80d35a76ba166b4ed73650a50fe52",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/battle-bot-avatar.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/battle-bot-avatar.test.tsx::BattleBotAvatar > applies dark-only circular disc framing and glare softening for companion variant without altering light-mode or framed variants",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-435 companion mascot and speech bubble dark-mode regressions > uses dark-mode theme borders and WCAG AA text contrast on the companion speech bubble while keeping light classes unchanged",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "d421391958c3824925812de16ed20c4b426dc23954ef19fdf4d2ef82820cf808"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-22T04:29:07.291Z",
+      "head": "c98553f83af80d35a76ba166b4ed73650a50fe52",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 691,
+        "executed": 691,
+        "passed": 691,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 888,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "d421391958c3824925812de16ed20c4b426dc23954ef19fdf4d2ef82820cf808"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-22T04:31:27.630Z",
+      "head": "c98553f83af80d35a76ba166b4ed73650a50fe52",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 691,
+        "executed": 691,
+        "passed": 691,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 888,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "d421391958c3824925812de16ed20c4b426dc23954ef19fdf4d2ef82820cf808"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-22T04:37:09.103Z",
+      "head": "c98553f83af80d35a76ba166b4ed73650a50fe52",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 691,
+        "executed": 691,
+        "passed": 690,
+        "failed": 1,
+        "failed_new": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 888,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 1
+      },
+      "message": "RATCHET_VIOLATION: 1 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "d421391958c3824925812de16ed20c4b426dc23954ef19fdf4d2ef82820cf808"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-22T04:40:02.546Z",
+      "head": "c98553f83af80d35a76ba166b4ed73650a50fe52",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 691,
+        "executed": 691,
+        "passed": 691,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 888,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "d421391958c3824925812de16ed20c4b426dc23954ef19fdf4d2ef82820cf808"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-22T04:41:17.381Z",
+    "head": "c98553f83af80d35a76ba166b4ed73650a50fe52",
+    "fingerprint": "d421391958c3824925812de16ed20c4b426dc23954ef19fdf4d2ef82820cf808",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/_components/battle-bot-avatar.test.tsx": "3d4c904b49362abead5ac4feaad0c12aa8afa2a3",
+      "apps/web/app/_components/battle-bot-avatar.tsx": "cedf63efdb1c185f609079a7ecf67dce463ea31a",
+      "apps/web/app/_components/companion-speech-bubble.tsx": "344a1bedc683b991956e5f4877f66748fe25956a",
+      "apps/web/app/theme-contrast.regression.test.ts": "cc8e1a7dfed7762c5a5008b80850441798797104"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

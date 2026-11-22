@@ -337,3 +337,19 @@ describe("WEB-434 dark-mode contrast and token regressions", () => {
   expect(failures, "audited files must not keep unthemed light slate/gray/white classes or nonexistent hsl vars").toEqual([]);
  });
 });
+
+describe("WEB-435 companion mascot and speech bubble dark-mode regressions", () => {
+ it("uses dark-mode theme borders and WCAG AA text contrast on the companion speech bubble while keeping light classes unchanged", () => {
+  const source = readFileSync(new URL("_components/companion-speech-bubble.tsx", import.meta.url), "utf8");
+  const bubbleLine = source.split("\n").find((line) => line.includes("border-ink/8") && line.includes("bg-surface"));
+  expect(bubbleLine, "speech bubble body must add dark:border-border without altering light border-ink/8").toContain("dark:border-border");
+  const tailLine = source.split("\n").find((line) => line.includes("rotate-45") && line.includes("bg-surface"));
+  expect(tailLine, "speech bubble tail must add dark:border-border without altering light border-ink/10").toContain("dark:border-border");
+
+  const darkSurface = tokenIn(darkBlock, "surface")!;
+  const darkInk = tokenIn(darkBlock, "ink")!;
+  const darkMuted = tokenIn(darkBlock, "muted")!;
+  expect(contrast(darkInk, darkSurface), "speech bubble primary text contrast in dark").toBeGreaterThanOrEqual(4.5);
+  expect(contrast(darkMuted, darkSurface), "speech bubble secondary text contrast in dark").toBeGreaterThanOrEqual(4.5);
+ });
+});
