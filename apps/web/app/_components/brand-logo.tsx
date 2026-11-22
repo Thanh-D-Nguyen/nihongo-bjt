@@ -13,7 +13,7 @@ export function BrandLogo({ className, size = 28 }: { className?: string; size?:
       width={size}
       xmlns="http://www.w3.org/2000/svg"
     >
-      <rect fill="#1B2A4A" height="58" rx="14" width="58" x="3" y="3" />
+      <rect fill="var(--color-brand-panel, #1B2A4A)" height="58" rx="14" width="58" x="3" y="3" />
       <path
         d="M20 16H44M20 29H39M20 42H44"
         stroke="#F8FAFC"
@@ -54,7 +54,7 @@ export function BrandFull({
         }`}
       >
         Kio
-        <span className={tone === "light" ? "text-white/80" : "text-blue-700"}>koto</span>
+        <span className={tone === "light" ? "text-white/80" : "text-brand-accent"}>koto</span>
       </span>
     </span>
   );

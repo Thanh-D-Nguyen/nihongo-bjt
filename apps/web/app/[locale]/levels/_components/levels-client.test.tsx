@@ -144,4 +144,19 @@ describe("LevelsClient", () => {
       "Empty-history CTA is shown after analytics failure"
     ).toBeUndefined();
   });
+
+  it("uses dark-visible border-hover tokens on the roadmap timeline line and nodes", async () => {
+    await act(async () => root.render(<LevelsClient labels={labels.vi} locale="vi" />));
+    await act(async () => { await Promise.resolve(); });
+
+    const track = host.querySelector(".roadmap-track");
+    const line = track?.querySelector<HTMLElement>('[aria-hidden="true"]');
+    expect(line?.className, "levels timeline connector must raise dark visibility via dark:bg-border-hover").toContain("dark:bg-border-hover");
+    expect(line?.className).toContain("bg-border");
+
+    const nodeCircle = track?.querySelector<HTMLElement>(".roadmap-node .rounded-full");
+    expect(nodeCircle?.className, "levels timeline node must raise dark visibility via dark:border-border-hover").toContain("dark:border-border-hover");
+    expect(nodeCircle?.className).toContain("border-border");
+    expect(host.innerHTML, "levels client must not reference undefined --color-navy or --color-blue vars").not.toMatch(/--color-(?:navy|blue)\b/);
+  });
 });

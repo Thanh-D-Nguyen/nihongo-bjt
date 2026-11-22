@@ -175,7 +175,7 @@ function LotoHubInner({ labels, locale }: { labels: LotoLabels; locale: string }
   );
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-background via-background to-accent/5 px-4 pb-28 pt-6 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-gradient-to-b from-paper via-paper to-accent/5 px-4 pb-28 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-3xl">
         {/* Header */}
         <header className="mb-6 flex items-center justify-between">
@@ -206,7 +206,7 @@ function LotoHubInner({ labels, locale }: { labels: LotoLabels; locale: string }
         </div>
 
         {/* Sticky game toggle */}
-        <div className="sticky top-0 z-20 -mx-4 bg-background/80 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6">
+        <div className="sticky top-0 z-20 -mx-4 bg-paper/80 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6">
           <LotoGameToggle
             game={game}
             onChange={setGame}
@@ -241,14 +241,14 @@ function LotoHubInner({ labels, locale }: { labels: LotoLabels; locale: string }
           )}
 
           {nextDrawError && !nextDraw && (
-            <div className="mb-8 flex items-center justify-between gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3">
-              <p className="text-sm text-destructive">
+            <div className="mb-8 flex items-center justify-between gap-3 rounded-2xl border border-danger/25 bg-danger-soft px-4 py-3">
+              <p className="text-sm text-sakura-strong">
                 {labels.error ?? "Tạm chưa tải được dữ liệu Loto."}
               </p>
               <button
                 type="button"
                 onClick={() => setRetryKey((value) => value + 1)}
-                className="min-h-10 shrink-0 rounded-xl bg-destructive/10 px-4 text-sm font-semibold text-destructive transition hover:bg-destructive/15"
+                className="min-h-10 shrink-0 rounded-xl bg-danger/15 px-4 text-sm font-semibold text-sakura-strong transition hover:bg-danger/20"
               >
                 {labels.retry ?? "Thử lại"}
               </button>
@@ -268,14 +268,14 @@ function LotoHubInner({ labels, locale }: { labels: LotoLabels; locale: string }
             )}
 
             {feedError && (
-              <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3">
-                <p className="text-sm text-destructive">
+              <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-danger/25 bg-danger-soft px-4 py-3">
+                <p className="text-sm text-sakura-strong">
                   {labels.error ?? "Tạm chưa tải được dữ liệu Loto."}
                 </p>
                 <button
                   type="button"
                   onClick={() => setRetryKey((value) => value + 1)}
-                  className="min-h-10 shrink-0 rounded-xl bg-destructive/10 px-4 text-sm font-semibold text-destructive transition hover:bg-destructive/15"
+                  className="min-h-10 shrink-0 rounded-xl bg-danger/15 px-4 text-sm font-semibold text-sakura-strong transition hover:bg-danger/20"
                 >
                   {labels.retry ?? "Thử lại"}
                 </button>
@@ -305,7 +305,7 @@ function LotoHubInner({ labels, locale }: { labels: LotoLabels; locale: string }
               <button
                 type="button"
                 onClick={loadMore}
-                className="mx-auto mt-4 flex min-h-12 items-center gap-2 rounded-xl bg-primary/10 px-6 py-3 text-sm font-medium text-primary transition-all duration-150 hover:bg-primary/20 active:scale-95"
+                className="mx-auto mt-4 flex min-h-12 items-center gap-2 rounded-xl bg-accent/10 px-6 py-3 text-sm font-medium text-accent transition-all duration-150 hover:bg-accent/20 active:scale-95"
               >
                 {labels.loadMore ?? "Tải thêm"} ↓
               </button>

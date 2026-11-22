@@ -61,10 +61,10 @@ export default async function DailyRadarModulePlaceholder({
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-      <Link className="text-sm font-semibold text-blue-700 hover:text-blue-900" href={`/${locale}`}>
+      <Link className="text-sm font-semibold text-action hover:text-action-hover dark:text-accent dark:hover:text-accent-hover" href={`/${locale}`}>
         ← {labels.heading}
       </Link>
-      <section className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <section className="mt-6 overflow-hidden rounded-3xl border border-border bg-surface shadow-sm">
         <div className="bg-gradient-to-br from-slate-950 via-blue-900 to-blue-700 p-8 text-white">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-100">Japan Daily Radar</p>
           <h1 className="mt-3 text-3xl font-semibold">{displayTitle ?? title}</h1>
@@ -74,16 +74,16 @@ export default async function DailyRadarModulePlaceholder({
         </div>
         <div className="space-y-4 p-6">
           {module?.disclaimerVi ? (
-            <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <p className="rounded-xl border border-amber/25 bg-amber-soft px-4 py-3 text-sm text-ink">
               {module.disclaimerVi}
             </p>
           ) : null}
           {comingSoon ? (
             <>
-              <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+              <span className="inline-flex rounded-full border border-border bg-paper px-3 py-1 text-xs font-semibold text-muted">
                 {labels.comingSoon}
               </span>
-              <p className="text-sm leading-relaxed text-slate-700">{labels.placeholderBody}</p>
+              <p className="text-sm leading-relaxed text-muted">{labels.placeholderBody}</p>
             </>
           ) : null}
           {safeCards.length > 0 ? (
@@ -95,25 +95,25 @@ export default async function DailyRadarModulePlaceholder({
                   : `/${locale}/radar/${card.slug}`;
                 return (
                 <Link
-                  className="block rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:bg-slate-50"
+                  className="block rounded-2xl border border-border bg-surface p-4 transition hover:border-border-hover hover:bg-paper"
                   href={href}
                   key={card.id}
                 >
-                  <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5">{card.badgeTextVi ?? (displayTitle ?? title)}</span>
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-muted">
+                    <span className="rounded-full border border-border bg-paper px-2 py-0.5">{card.badgeTextVi ?? (displayTitle ?? title)}</span>
                     {card.levelLabel ? <span>{card.levelLabel}</span> : null}
                     {card.estimatedMinutes ? <span>{labels.minutes.replace("{n}", String(card.estimatedMinutes))}</span> : null}
                   </div>
-                  <h2 className="mt-2 text-lg font-semibold text-slate-950">{card.titleVi}</h2>
-                  <p className="mt-1 text-sm text-slate-700">{card.descriptionVi}</p>
-                  <p className="mt-3 text-sm font-semibold text-blue-700">{card.ctaLabelVi}</p>
+                  <h2 className="mt-2 text-lg font-semibold text-ink">{card.titleVi}</h2>
+                  <p className="mt-1 text-sm text-muted">{card.descriptionVi}</p>
+                  <p className="mt-3 text-sm font-semibold text-action dark:text-accent">{card.ctaLabelVi}</p>
                 </Link>
                 );
               })}
             </div>
           ) : null}
           <Link
-            className="inline-flex min-h-11 items-center rounded-xl bg-slate-950 px-4 text-sm font-semibold text-white"
+            className="inline-flex min-h-11 items-center rounded-xl bg-ink px-4 text-sm font-semibold text-surface transition hover:bg-ink/90"
             href={`/${locale}`}
           >
             {labels.heading}

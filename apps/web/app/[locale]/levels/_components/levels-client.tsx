@@ -154,7 +154,7 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
         {/* Vertical connector line */}
         <div
           aria-hidden="true"
-          className="absolute left-[23px] top-0 bottom-0 w-0.5 bg-[var(--color-border)] sm:left-[27px]"
+          className="absolute left-[23px] top-0 bottom-0 w-0.5 bg-border dark:bg-border-hover sm:left-[27px]"
         />
 
         <div className="space-y-0">
@@ -171,7 +171,7 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
                 {/* Timeline Dot — neutral state; decorative repeat of the card heading */}
                 <div aria-hidden="true" className="relative z-10 shrink-0">
                   <div
-                    className="flex size-12 items-center justify-center rounded-full border-2 border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-subtle)] transition-colors sm:size-14"
+                    className="flex size-12 items-center justify-center rounded-full border-2 border-border bg-surface text-subtle transition-colors dark:border-border-hover dark:text-ink sm:size-14"
                   >
                     <span className="text-sm font-bold sm:text-base">{lv.code}</span>
                   </div>
@@ -230,11 +230,11 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
 
         <div className="mt-4 flex items-baseline gap-3">
           {analyticsReady ? (
-            <span className="text-4xl font-bold tabular-nums text-[var(--color-navy)]">
+            <span className="text-4xl font-bold tabular-nums text-ink">
               {hasSessions ? `${readinessPct}%` : "—"}
             </span>
           ) : (
-            <div className="h-10 w-20 animate-pulse rounded bg-[var(--color-border)]" />
+            <div className="h-10 w-20 animate-pulse rounded bg-border" />
           )}
           <span className="text-body-sm text-muted">
             {analyticsFailed
@@ -247,9 +247,9 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
 
         {hasSessions && (
           <div className="mt-4">
-            <div className="h-2.5 w-full overflow-hidden rounded-full bg-[var(--color-border)]">
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-border">
               <div
-                className="h-full rounded-full bg-[var(--color-blue)] transition-all"
+                className="h-full rounded-full bg-accent transition-all"
                 style={{ width: `${Math.min(readinessPct, 100)}%` }}
               />
             </div>

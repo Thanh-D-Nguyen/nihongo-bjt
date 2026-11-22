@@ -100,11 +100,11 @@ function AccuracyChart({
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl bg-primary/10 p-3">
+        <div className="rounded-xl bg-accent/10 p-3">
           <p className="text-[11px] font-medium text-muted">
             {labels.accuracyAvg ?? "Trung bình khớp"}
           </p>
-          <p className="mt-0.5 text-2xl font-bold tabular-nums text-primary">
+          <p className="mt-0.5 text-2xl font-bold tabular-nums text-accent">
             {accuracy.avgHits.toFixed(2)}
           </p>
         </div>
@@ -136,7 +136,7 @@ function AccuracyChart({
               </div>
               <div className="h-2.5 rounded-full bg-border/15">
                 <div
-                  className="h-full rounded-full bg-muted/50"
+                  className="h-full rounded-full bg-border-hover"
                   style={{
                     width: `${Math.max((bucket.expected / peak) * 100, bucket.expected > 0 ? 2 : 0)}%`
                   }}
@@ -156,7 +156,7 @@ function AccuracyChart({
           {labels.accuracyObserved ?? "Thực tế"}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full bg-muted/50" />
+          <span className="size-2.5 rounded-full bg-border-hover" />
           {labels.accuracyExpected ?? "Ngẫu nhiên"}
         </span>
         <span>{fill(labels.accuracySamples, "{n} kỳ đã đối chiếu", { n: accuracy.samples })}</span>
@@ -213,14 +213,14 @@ export function LotoStatsLab({ game, labels }: { game: LotoGame; labels: LotoLab
 
   if (failed) {
     return (
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3">
-        <p className="text-sm text-destructive">
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-danger/25 bg-danger-soft px-4 py-3">
+        <p className="text-sm text-sakura-strong">
           {labels.statsError ?? "Chưa tải được số liệu thống kê."}
         </p>
         <button
           type="button"
           onClick={retry}
-          className="min-h-10 shrink-0 rounded-xl bg-destructive/10 px-4 text-sm font-semibold text-destructive transition hover:bg-destructive/15"
+          className="min-h-10 shrink-0 rounded-xl bg-danger/15 px-4 text-sm font-semibold text-sakura-strong transition hover:bg-danger/20"
         >
           {labels.retry ?? "Thử lại"}
         </button>
@@ -258,11 +258,11 @@ export function LotoStatsLab({ game, labels }: { game: LotoGame; labels: LotoLab
       </header>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl bg-primary/10 p-3.5">
+        <div className="rounded-2xl bg-accent/10 p-3.5">
           <p className="text-[11px] font-medium text-muted">
             {labels.totalDraws ?? "Số kỳ đã quay"}
           </p>
-          <p className="mt-0.5 text-2xl font-bold tabular-nums text-primary">
+          <p className="mt-0.5 text-2xl font-bold tabular-nums text-accent">
             {formatInt(stats.totalDraws)}
           </p>
         </div>
@@ -287,7 +287,7 @@ export function LotoStatsLab({ game, labels }: { game: LotoGame; labels: LotoLab
           {(showAllResults ? stats.recentDraws : stats.recentDraws.slice(0, 5)).map((draw) => (
             <li key={draw.drawNumber} className="rounded-xl bg-white/40 p-3 dark:bg-white/5">
               <div className="mb-2 flex items-center justify-between gap-2 text-xs">
-                <span className="rounded-lg bg-primary/10 px-2 py-0.5 font-semibold tabular-nums text-primary">
+                <span className="rounded-lg bg-accent/10 px-2 py-0.5 font-semibold tabular-nums text-accent">
                   #{draw.drawNumber}
                 </span>
                 <span className="text-muted">
@@ -321,7 +321,7 @@ export function LotoStatsLab({ game, labels }: { game: LotoGame; labels: LotoLab
             type="button"
             onClick={() => setShowAllResults((value) => !value)}
             aria-expanded={showAllResults}
-            className="mt-3 mr-4 min-h-10 rounded-lg px-2 text-xs font-medium text-primary transition hover:bg-primary/10"
+            className="mt-3 mr-4 min-h-10 rounded-lg px-2 text-xs font-medium text-accent transition hover:bg-accent/10"
           >
             {showAllResults
               ? `${labels.collapse ?? "Thu gọn"} ↑`
@@ -333,7 +333,7 @@ export function LotoStatsLab({ game, labels }: { game: LotoGame; labels: LotoLab
             href={stats.officialVerificationUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 inline-flex min-h-10 items-center text-xs font-medium text-primary underline-offset-2 hover:underline"
+            className="mt-3 inline-flex min-h-10 items-center text-xs font-medium text-accent underline-offset-2 hover:underline"
           >
             {labels.verifyOfficial ?? "Đối chiếu kết quả chính thức"} ↗
           </a>

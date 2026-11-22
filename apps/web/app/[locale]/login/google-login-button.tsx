@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { APPEARANCE_CHANGE_EVENT } from "../../../lib/appearance";
 import { useGoAuth } from "../../../lib/go-auth-provider";
 
 type GoogleAccounts = {
@@ -14,6 +15,14 @@ type GoogleAccounts = {
 const clientId = process.env.NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID;
 export const googleLoginEnabled = Boolean(clientId);
 
+function documentIsDark() {
+  if (typeof document === "undefined") return false;
+  return (
+    document.documentElement.classList.contains("dark") ||
+    document.documentElement.getAttribute("data-theme") === "dark"
+  );
+}
+
 export function GoogleLoginButton({ locale, destination, label, onError }: {
   locale: string;
   destination: string;
@@ -23,9 +32,22 @@ export function GoogleLoginButton({ locale, destination, label, onError }: {
   const target = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
+  const [isDark, setIsDark] = useState(documentIsDark);
   const busyRef = useRef(false);
   const router = useRouter();
   const { reload } = useGoAuth();
+
+  useEffect(() => {
+    const syncTheme = () => setIsDark(documentIsDark());
+    syncTheme();
+    const observer = new MutationObserver(syncTheme);
+    observer.observe(document.documentElement, { attributeFilter: ["class", "data-theme"], attributes: true });
+    window.addEventListener(APPEARANCE_CHANGE_EVENT, syncTheme);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener(APPEARANCE_CHANGE_EVENT, syncTheme);
+    };
+  }, []);
 
   useEffect(() => {
     if (!googleLoginEnabled || !clientId) return;
@@ -60,7 +82,12 @@ export function GoogleLoginButton({ locale, destination, label, onError }: {
           }
         }
       });
-      google.accounts.id.renderButton(target.current, { theme: "outline", size: "large", width: 320, locale });
+      google.accounts.id.renderButton(target.current, {
+        theme: isDark ? "filled_black" : "outline",
+        size: "large",
+        width: 320,
+        locale
+      });
       setReady(true);
     };
 
@@ -78,7 +105,7 @@ export function GoogleLoginButton({ locale, destination, label, onError }: {
       script.addEventListener("load", loadButton);
     }
     return () => { active = false; script?.removeEventListener("load", loadButton); };
-  }, [locale, destination, onError, reload, router]);
+  }, [locale, destination, onError, reload, router, isDark]);
 
   if (!googleLoginEnabled) return null;
   return (

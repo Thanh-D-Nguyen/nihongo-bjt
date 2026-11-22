@@ -28,10 +28,10 @@ export function LotoPromoBanner({ locale, labels }: LotoPromoBannerProps) {
 
       {/* Text */}
       <div className="relative flex-1">
-        <h3 className="text-base font-bold text-foreground sm:text-lg">
+        <h3 className="text-base font-bold text-ink sm:text-lg">
           {labels.title}
         </h3>
-        <p className="mt-0.5 text-sm text-muted-foreground line-clamp-2">
+        <p className="mt-0.5 text-sm text-muted line-clamp-2">
           {labels.subtitle}
         </p>
       </div>

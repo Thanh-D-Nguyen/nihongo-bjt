@@ -31,7 +31,7 @@ export function LotoTabs({ tab, onChange, labelPredictions, labelLab }: Props) {
             onClick={() => onChange(id)}
             className={`-mb-px flex min-h-11 items-center gap-1.5 border-b-2 px-1 text-sm font-semibold transition-colors ${
               selected
-                ? "border-primary text-primary"
+                ? "border-accent text-accent"
                 : "border-transparent text-muted hover:text-ink"
             }`}
           >

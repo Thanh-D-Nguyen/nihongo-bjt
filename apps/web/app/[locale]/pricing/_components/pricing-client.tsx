@@ -151,9 +151,9 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
     return (
       <main className="mx-auto w-full max-w-4xl px-4 py-12">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 w-48 rounded bg-slate-200" />
+          <div className="h-8 w-48 rounded bg-border" />
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => <div key={i} className="h-64 rounded-2xl bg-slate-100" />)}
+            {[1, 2, 3].map((i) => <div key={i} className="h-64 rounded-2xl border border-border bg-surface" />)}
           </div>
         </div>
       </main>
@@ -163,8 +163,8 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
   if (error) {
     return (
       <main className="mx-auto w-full max-w-4xl px-4 py-12 text-center">
-        <p className="text-sm text-rose-600">{labels.error}</p>
-        <button className="mt-4 rounded-xl border px-4 py-2 text-sm" onClick={() => void load()} type="button">
+        <p className="text-sm text-sakura">{labels.error}</p>
+        <button className="mt-4 rounded-xl border border-border bg-surface px-4 py-2 text-sm text-ink hover:border-border-hover" onClick={() => void load()} type="button">
           {labels.retry || "Retry"}
         </button>
       </main>
@@ -192,8 +192,10 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
           return (
             <div
               key={plan.id}
-              className={`relative flex flex-col rounded-2xl border p-6 shadow-sm transition-shadow hover:shadow-md ${
-                recommended ? "border-indigo-300 ring-2 ring-indigo-100" : "border-slate-200"
+              className={`relative flex flex-col rounded-2xl border bg-surface p-6 shadow-sm transition-shadow hover:shadow-md ${
+                recommended
+                  ? "border-indigo-300 ring-2 ring-indigo-100 dark:border-accent dark:ring-accent/30"
+                  : "border-border dark:border-border-hover"
               }`}
             >
               {recommended && (
@@ -235,7 +237,7 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
 
               <div className="mt-6">
                 {isCurrent ? (
-                  <span className="block w-full rounded-xl border border-slate-200 py-2.5 text-center text-sm font-medium text-muted">
+                  <span className="block w-full rounded-xl border border-border py-2.5 text-center text-sm font-medium text-muted">
                     {labels.current}
                   </span>
                 ) : !isFree ? (
@@ -259,14 +261,14 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
       </div>
 
       {checkoutError && (
-        <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-center">
-          <p className="text-sm text-rose-700">{checkoutError}</p>
+        <div className="mt-4 rounded-xl border border-sakura/30 bg-sakura-soft px-4 py-3 text-center">
+          <p className="text-sm text-sakura-strong">{checkoutError}</p>
         </div>
       )}
-      {pendingPlanSlug && <p className="mt-4 text-center text-sm text-amber-700">{labels.checkoutPending}</p>}
+      {pendingPlanSlug && <p className="mt-4 text-center text-sm text-amber-700 dark:text-amber">{labels.checkoutPending}</p>}
 
       <div className="mt-8 text-center">
-        <Link className="text-sm text-indigo-600 hover:underline" href={`/${locale}`}>
+        <Link className="text-sm text-action hover:underline dark:text-accent" href={`/${locale}`}>
           {labels.backHome}
         </Link>
       </div>

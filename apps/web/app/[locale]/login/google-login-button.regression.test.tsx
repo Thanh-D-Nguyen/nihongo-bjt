@@ -32,3 +32,43 @@ it("shows the Google control loading until the provider renders it", async () =>
   vi.unstubAllGlobals();
  }
 });
+
+it("passes filled_black to Google Identity Services in dark mode and re-renders on theme toggle", async () => {
+ vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+ vi.stubEnv("NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID", "test-client");
+ vi.resetModules();
+ document.documentElement.classList.add("dark");
+ document.documentElement.setAttribute("data-theme", "dark");
+ const renderButton = vi.fn((target: HTMLElement) => { target.textContent = "Provider button"; });
+ Object.defineProperty(window, "google", { configurable: true, value: { accounts: { id: { initialize: vi.fn(), renderButton } } } });
+ const { GoogleLoginButton } = await import("./google-login-button");
+ const host = document.createElement("div");
+ document.body.appendChild(host);
+ const root = createRoot(host);
+ try {
+  await act(async () => root.render(<GoogleLoginButton locale="vi" destination="/vi" label="Google sign-in" onError={() => {}} />));
+  expect(renderButton, "Google button must use filled_black theme in dark mode").toHaveBeenCalledWith(
+   expect.any(HTMLElement),
+   expect.objectContaining({ theme: "filled_black" })
+  );
+
+  await act(async () => {
+   document.documentElement.classList.remove("dark");
+   document.documentElement.setAttribute("data-theme", "light");
+   await Promise.resolve();
+  });
+  expect(renderButton, "Google button must switch back to outline theme in light mode").toHaveBeenLastCalledWith(
+   expect.any(HTMLElement),
+   expect.objectContaining({ theme: "outline" })
+  );
+ } finally {
+  await act(async () => root.unmount());
+  host.remove();
+  document.documentElement.classList.remove("dark");
+  document.documentElement.removeAttribute("data-theme");
+  document.getElementById("google-identity-services")?.remove();
+  Reflect.deleteProperty(window, "google");
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+ }
+});

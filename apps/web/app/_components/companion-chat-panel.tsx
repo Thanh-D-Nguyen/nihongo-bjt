@@ -136,9 +136,9 @@ export function CompanionChatPanel({
       className="pointer-events-auto motion-safe:animate-[panelSlideUp_0.25s_ease-out_both] absolute bottom-full right-0 mb-3 w-[min(22rem,calc(100vw-2rem))]"
       onPointerDown={(e) => e.stopPropagation()}
     >
-      <div className="flex flex-col rounded-2xl border border-ink/10 bg-surface/95 shadow-2xl backdrop-blur-lg">
+      <div className="flex flex-col rounded-2xl border border-border bg-surface/95 shadow-2xl backdrop-blur-lg">
         {/* ── Header ── */}
-        <div className="flex items-center justify-between border-b border-ink/5 px-4 py-2.5">
+        <div className="flex items-center justify-between border-b border-border/60 px-4 py-2.5">
           <div className="flex items-center gap-2">
             <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-xs shadow-sm">
               🐕
@@ -150,7 +150,7 @@ export function CompanionChatPanel({
               <p className="text-[10px] text-muted">
                 {hintLoading ? labels.moodThinking : labels.moodIdle}
                 {streakDays > 0 && isLoggedIn ? (
-                  <span className="ml-1.5 inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700">
+                  <span className="ml-1.5 inline-flex items-center gap-0.5 rounded-full bg-amber-soft px-1.5 py-0.5 text-[9px] font-semibold text-amber-700 dark:text-amber">
                     🔥 {streakDays}
                   </span>
                 ) : null}
@@ -196,10 +196,10 @@ export function CompanionChatPanel({
               {/* Loading indicator */}
               {hintLoading ? (
                 <div className="flex gap-2">
-                  <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-[10px]">
+                  <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-soft text-[10px]">
                     🐕
                   </span>
-                  <div className="rounded-2xl rounded-tl-sm bg-amber-50 px-3 py-2 text-xs text-muted">
+                  <div className="rounded-2xl rounded-tl-sm bg-amber-soft/70 px-3 py-2 text-xs text-muted">
                     <span className="inline-flex gap-1">
                       <span className="animate-bounce">.</span>
                       <span className="animate-bounce" style={{ animationDelay: "0.1s" }}>.</span>
@@ -306,7 +306,7 @@ export function CompanionChatPanel({
         ) : null}
 
         {/* Tail */}
-        <div className="absolute -bottom-[6px] right-8 h-3 w-3 rotate-45 border-b border-r border-ink/10 bg-surface/95" />
+        <div className="absolute -bottom-[6px] right-8 h-3 w-3 rotate-45 border-b border-r border-border bg-surface/95" />
       </div>
     </div>
   );

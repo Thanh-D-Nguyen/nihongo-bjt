@@ -961,9 +961,9 @@ function ExerciseCard({
                   <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-black transition-colors ${
                     answerResult
                       ? isCorrectChoice
-                        ? "bg-leaf/15 text-leaf"
+                        ? "bg-leaf/15 text-leaf-strong"
                         : isWrong
-                          ? "bg-sakura/15 text-sakura"
+                          ? "bg-sakura/15 text-sakura-strong"
                           : "bg-ink/5 text-ink/40"
                       : isSelected
                         ? "bg-accent/12 text-accent"
@@ -973,9 +973,9 @@ function ExerciseCard({
                   </span>
                   <span className="min-w-0 flex-1">{choice.text}</span>
                   {isCorrectChoice ? (
-                    <span className="shrink-0 text-leaf" aria-hidden>✓</span>
+                    <span className="shrink-0 text-leaf-strong" aria-hidden>✓</span>
                   ) : isWrong ? (
-                    <span className="shrink-0 text-sakura" aria-hidden>✗</span>
+                    <span className="shrink-0 text-sakura-strong" aria-hidden>✗</span>
                   ) : null}
                 </button>
               );

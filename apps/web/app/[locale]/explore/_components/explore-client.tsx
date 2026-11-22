@@ -140,19 +140,19 @@ export function ExploreClient({ labels, locale }: { labels: ExploreLabels; local
 
       {/* ── Stats ribbon ── */}
       {stats.status !== "loading" ? (
-        <div className="explore-stats-ribbon flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-2xl border border-ink/6 bg-gradient-to-r from-paper to-surface px-4 py-3 sm:gap-6">
+        <div className="explore-stats-ribbon flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-2xl border border-border bg-gradient-to-r from-paper to-surface px-4 py-3 sm:gap-6">
           <StatChip label={labels.statsWords} unavailableLabel={labels.statsUnavailable} value={stats.status === "ready" ? stats.stats.lexemes : null} />
-          <div className="hidden h-5 w-px bg-ink/10 sm:block" />
+          <div className="hidden h-5 w-px bg-border sm:block" />
           <StatChip label={labels.statsKanji} unavailableLabel={labels.statsUnavailable} value={stats.status === "ready" ? stats.stats.kanji : null} />
-          <div className="hidden h-5 w-px bg-ink/10 sm:block" />
+          <div className="hidden h-5 w-px bg-border sm:block" />
           <StatChip label={labels.statsGrammar} unavailableLabel={labels.statsUnavailable} value={stats.status === "ready" ? stats.stats.grammar : null} />
         </div>
       ) : (
-        <div className="flex items-center justify-center gap-6 rounded-2xl border border-ink/6 bg-paper px-4 py-3">
+        <div className="flex items-center justify-center gap-6 rounded-2xl border border-border bg-surface px-4 py-3">
           <div className="explore-skeleton-shimmer h-5 w-16 rounded" />
-          <div className="h-5 w-px bg-ink/10" />
+          <div className="h-5 w-px bg-border" />
           <div className="explore-skeleton-shimmer h-5 w-16 rounded" />
-          <div className="h-5 w-px bg-ink/10" />
+          <div className="h-5 w-px bg-border" />
           <div className="explore-skeleton-shimmer h-5 w-16 rounded" />
         </div>
       )}

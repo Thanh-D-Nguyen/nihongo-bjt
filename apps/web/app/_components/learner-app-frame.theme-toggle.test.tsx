@@ -131,4 +131,15 @@ describe("LearnerAppFrame header theme toggle", () => {
       expect([labels.themeToggleToDark, labels.themeToggleToLight].every((value) => typeof value === "string" && value.length > 0), "theme toggle labels must exist in every locale").toBe(true);
     }
   });
+
+  it("renders the footer Kiokoto wordmark with flipping theme tokens", async () => {
+    await renderFrame();
+    const wordmark = host.querySelector<HTMLElement>('footer [aria-label="Kiokoto"]');
+    expect(wordmark, "footer must render the Kiokoto wordmark").not.toBeNull();
+    expect(wordmark!.className, "footer wordmark base must use flipping text-ink token").toContain("text-ink");
+    const accentSpan = wordmark!.querySelector("span");
+    expect(accentSpan, "footer wordmark accent span must be rendered").not.toBeNull();
+    expect(accentSpan!.className, "footer wordmark accent span must use flipping text-brand-accent token").toContain("text-brand-accent");
+    expect(accentSpan!.className).not.toContain("text-blue-700");
+  });
 });

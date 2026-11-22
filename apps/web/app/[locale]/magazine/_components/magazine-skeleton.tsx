@@ -3,37 +3,37 @@
 function SkeletonCard({ isHero = false }: { isHero?: boolean }) {
   return (
     <div
-      className={`animate-pulse rounded-2xl border border-border/30 bg-card p-5 ${
+      className={`animate-pulse rounded-2xl border border-border bg-surface p-5 ${
         isHero ? "row-span-2 sm:col-span-2" : ""
       }`}
     >
       {/* Top badge area */}
       <div className="flex items-center justify-between">
-        <div className="size-8 rounded-lg bg-muted" />
-        <div className="h-5 w-12 rounded-full bg-muted" />
+        <div className="size-8 rounded-lg bg-border/60" />
+        <div className="h-5 w-12 rounded-full bg-border/60" />
       </div>
       {/* Title shimmer */}
       <div className="mt-4 space-y-2">
-        <div className="h-5 w-4/5 rounded bg-muted" />
-        {isHero && <div className="h-5 w-3/5 rounded bg-muted" />}
-        <div className="h-4 w-2/3 rounded bg-muted" />
+        <div className="h-5 w-4/5 rounded bg-border/60" />
+        {isHero && <div className="h-5 w-3/5 rounded bg-border/60" />}
+        <div className="h-4 w-2/3 rounded bg-border/60" />
       </div>
       {/* Summary shimmer */}
       {isHero && (
         <div className="mt-4 space-y-2">
-          <div className="h-3 w-full rounded bg-muted" />
-          <div className="h-3 w-4/5 rounded bg-muted" />
+          <div className="h-3 w-full rounded bg-border/60" />
+          <div className="h-3 w-4/5 rounded bg-border/60" />
         </div>
       )}
       {/* Tags shimmer */}
       <div className="mt-5 flex gap-2">
-        <div className="h-6 w-14 rounded-md bg-muted" />
-        <div className="h-6 w-16 rounded-md bg-muted" />
-        <div className="h-6 w-12 rounded-md bg-muted" />
+        <div className="h-6 w-14 rounded-md bg-border/60" />
+        <div className="h-6 w-16 rounded-md bg-border/60" />
+        <div className="h-6 w-12 rounded-md bg-border/60" />
       </div>
       {/* Date */}
       <div className="mt-auto pt-4">
-        <div className="h-3 w-20 rounded bg-muted" />
+        <div className="h-3 w-20 rounded bg-border/60" />
       </div>
     </div>
   );
@@ -45,7 +45,7 @@ export function MagazineGridSkeleton() {
       {/* Filter skeleton */}
       <div className="flex gap-2">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-12 w-24 animate-pulse rounded-2xl bg-muted" />
+          <div key={i} className="h-12 w-24 animate-pulse rounded-2xl bg-border/60" />
         ))}
       </div>
       {/* Bento grid skeleton */}

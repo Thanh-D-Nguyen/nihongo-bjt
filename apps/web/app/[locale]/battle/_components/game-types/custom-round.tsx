@@ -19,7 +19,7 @@ export function CustomRound({
       {/* Custom header */}
       <div className="flex items-center gap-2">
         <span className="text-lg" aria-hidden>⚙️</span>
-        <span className="text-xs font-black uppercase text-slate-600">Custom Battle</span>
+        <span className="text-xs font-black uppercase text-muted">Custom Battle</span>
       </div>
 
       {/* Question */}
@@ -40,10 +40,10 @@ export function CustomRound({
                 correct
                   ? "border-leaf/30 bg-leaf/10 text-leaf ring-2 ring-leaf/20"
                   : wrong
-                    ? "border-red-300 bg-red-50 text-red-700 ring-2 ring-red-200"
+                    ? "border-sakura/30 bg-sakura-soft text-sakura-strong ring-2 ring-sakura/20"
                     : picked
-                      ? "border-slate-300 bg-slate-50 text-slate-800"
-                      : "border-ink/10 bg-white text-ink hover:border-slate-200 hover:bg-slate-50/30 active:scale-[0.97]"
+                      ? "border-border-hover bg-paper text-ink"
+                      : "border-border bg-surface text-ink hover:border-border-hover hover:bg-paper active:scale-[0.97]"
               } ${answerPending || answerResult ? "pointer-events-none" : ""}`}
               disabled={!canAnswer}
               onClick={() => onSubmitAnswer(option.optionKey)}

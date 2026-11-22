@@ -88,17 +88,17 @@ export function MiniQuiz({
     const message = score === total ? t.quizPerfect : score >= total / 2 ? t.quizGood : t.quizTryAgain;
 
     return (
-      <div className="flex flex-col items-center rounded-3xl border border-border/30 bg-gradient-to-br from-primary/5 to-accent/5 p-8 text-center">
-        <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-4xl">
+      <div className="flex flex-col items-center rounded-3xl border border-border bg-gradient-to-br from-surface to-accent/5 p-8 text-center">
+        <div className="flex size-16 items-center justify-center rounded-2xl bg-accent/10 text-4xl">
           {emoji}
         </div>
-        <p className="mt-5 text-2xl font-bold text-foreground">
+        <p className="mt-5 text-2xl font-bold text-ink">
           {t.quizScore.replace("{score}", String(score)).replace("{total}", String(total))}
         </p>
-        <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">
+        <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted">
           {message}
         </p>
-        {saveFailed && <p role="alert" className="mt-3 text-sm text-destructive">{t.quizSaveFailed}</p>}
+        {saveFailed && <p role="alert" className="mt-3 text-sm text-sakura">{t.quizSaveFailed}</p>}
       </div>
     );
   }
@@ -106,20 +106,20 @@ export function MiniQuiz({
   if (!current) return null;
 
   return (
-    <div className="rounded-3xl border border-border/30 bg-card p-5 sm:p-6">
+    <div className="rounded-3xl border border-border bg-surface p-5 sm:p-6">
       {/* Progress bar */}
       <div className="mb-5">
         <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="font-medium text-muted-foreground">
+          <span className="font-medium text-muted">
             {t.quizProgress.replace("{current}", String(currentIndex + 1)).replace("{total}", String(total))}
           </span>
-          <span className="rounded-full bg-primary/10 px-3 py-0.5 text-xs font-semibold text-primary">
+          <span className="rounded-full bg-accent/10 px-3 py-0.5 text-xs font-semibold text-accent">
             🎯 {score}
           </span>
         </div>
-        <div className="h-1.5 overflow-hidden rounded-full bg-accent/30">
+        <div className="h-1.5 overflow-hidden rounded-full bg-border/60">
           <div
-            className="h-full rounded-full bg-primary transition-all duration-500 ease-out motion-reduce:transition-none"
+            className="h-full rounded-full bg-accent transition-all duration-500 ease-out motion-reduce:transition-none"
             style={{ width: `${((currentIndex + 1) / total) * 100}%` }}
           />
         </div>
@@ -127,9 +127,9 @@ export function MiniQuiz({
 
       {/* Question */}
       <div className="mb-5">
-        <p className="text-lg font-bold leading-[1.8] text-foreground">{current.questionJp}</p>
+        <p className="text-lg font-bold leading-[1.8] text-ink">{current.questionJp}</p>
         {current.questionVi && (
-          <p className="mt-1.5 text-sm text-muted-foreground">{current.questionVi}</p>
+          <p className="mt-1.5 text-sm text-muted">{current.questionVi}</p>
         )}
       </div>
 
@@ -141,15 +141,15 @@ export function MiniQuiz({
 
           if (!showResult) {
             className +=
-              " border-border/40 bg-background text-foreground hover:border-primary/40 hover:bg-primary/5 cursor-pointer active:scale-[0.98]";
+              " border-border bg-paper text-ink hover:border-accent/50 hover:bg-accent/5 cursor-pointer active:scale-[0.98]";
           } else if (opt.isCorrect) {
             className +=
-              " border-green-500/50 bg-green-50 text-green-900 dark:bg-green-900/20 dark:text-green-200 shadow-sm shadow-green-500/10";
+              " border-leaf/40 bg-leaf-soft text-leaf-strong shadow-sm shadow-leaf/10";
           } else if (idx === selected) {
             className +=
-              " border-red-500/50 bg-red-50 text-red-900 dark:bg-red-900/20 dark:text-red-200";
+              " border-sakura/40 bg-sakura-soft text-sakura-strong";
           } else {
-            className += " border-border/20 bg-muted/50 text-muted-foreground opacity-50";
+            className += " border-border/40 bg-paper/50 text-muted opacity-50";
           }
 
           return (
@@ -173,12 +173,12 @@ export function MiniQuiz({
       {showResult && (
         <div className="mt-5 space-y-3">
           {(current.explanationJp || current.explanationVi) && (
-            <div className="rounded-2xl border border-border/30 bg-accent/30 p-4">
+            <div className="rounded-2xl border border-border bg-paper p-4">
               {current.explanationJp && (
-                <p className="text-sm leading-[1.8] text-foreground">{current.explanationJp}</p>
+                <p className="text-sm leading-[1.8] text-ink">{current.explanationJp}</p>
               )}
               {current.explanationVi && (
-                <p className="mt-1.5 text-xs italic text-muted-foreground">
+                <p className="mt-1.5 text-xs italic text-muted">
                   {current.explanationVi}
                 </p>
               )}
@@ -187,7 +187,7 @@ export function MiniQuiz({
           <button
             type="button"
             onClick={handleNext}
-            className="flex min-h-[48px] w-full items-center justify-center rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition-all duration-200 hover:bg-primary/90 active:scale-[0.98]"
+            className="flex min-h-[48px] w-full items-center justify-center rounded-2xl bg-action px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-action/20 transition-all duration-200 hover:bg-action-hover active:scale-[0.98]"
           >
             {isLast ? t.quizResult : t.quizNext}
           </button>

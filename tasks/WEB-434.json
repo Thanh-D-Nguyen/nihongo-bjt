@@ -1,0 +1,641 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-434",
+  "title": "Fix dark-mode defects: shadcn-token magazine pages, invisible explore stats and footer logo, white companion widget, muted-on-soft dark contrast, sakura-on-soft migration, hardcoded light classes",
+  "start_head": "63113ea3b94b242f7b0c55649a835dab99d87188",
+  "preexisting_changes": {
+    ".build/.buildSystem_debug": "c337257139e569398ce8bf081a54dbc7d1e0267d",
+    ".build/CACHEDIR.TAG": "b7ab0d883e974d20c05898291a6218954e18e5ef"
+  },
+  "spec": {
+    "problem": "2026-11-22 Kiokoto dark-mode production audit and contrast measurements identified dark-theme defects in apps/web: magazine pages use undefined shadcn tokens (bg-card, text-foreground, bg-primary, text-primary, text-primary-foreground, text-muted-foreground, bg-background, ring-primary, accent-foreground, destructive), explore skeleton shimmer uses invisible black-alpha gradient on dark paper with faint border-ink/6 dividers, BrandFull wordmark 'koto' uses hardcoded text-blue-700 and BrandLogo uses hardcoded #1B2A4A fill, companion surfaces (companion-onboarding.tsx, companion-message.tsx, companion-chat-panel.tsx) use hardcoded white/cream/slate light backgrounds with no dark variants, dark muted/subtle (#94a3b8) on dark *-soft surfaces falls below WCAG AA 4.5 (3.54-4.49), exercises-page-client.tsx retains nested text-sakura children inside its bg-sakura-soft wrong-answer button, 9 files carry hardcoded light slate/gray/white or broken hsl(var(--...)) classes with no dark variants, levels timeline and pricing card borders nearly disappear or glare with ring-indigo-100 in dark, and GoogleLoginButton always passes theme:'outline'.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "AC1: No undefined shadcn color tokens (card, foreground, primary, primary-foreground, muted-foreground, background, accent-foreground, destructive) remain in apps/web/app/[locale]/magazine/**; a regression test enforces it."
+      },
+      {
+        "id": "AC2",
+        "text": "AC2: Explore StatChip + ribbon and loading shimmer verified/fixed to theme tokens with dark contrast >= 4.5 (test)."
+      },
+      {
+        "id": "AC3",
+        "text": "AC3: Footer wordmark uses flipping theme tokens (test)."
+      },
+      {
+        "id": "AC4",
+        "text": "AC4: Companion widget surfaces use theme tokens; no bg-white/bg-slate-50/cream surface remains in the companion components."
+      },
+      {
+        "id": "AC5",
+        "text": "AC5: Dark muted/subtle on every *-soft >= 4.5 by the extended contrast regression test; light pairs unchanged."
+      },
+      {
+        "id": "AC6",
+        "text": "AC6: No small-text text-sakura on bg-sakura-soft remains in the 4 listed files."
+      },
+      {
+        "id": "AC7",
+        "text": "AC7: The 9 listed files no longer carry unthemed light surfaces (or each exception is justified)."
+      },
+      {
+        "id": "AC8",
+        "text": "AC8: Levels timeline + pricing borders use theme border tokens readable in dark with light unchanged (test)."
+      },
+      {
+        "id": "AC9",
+        "text": "AC9: Google button receives filled_black when app theme is dark and outline when light, updating on theme change (test)."
+      },
+      {
+        "id": "AC10",
+        "text": "AC10: pnpm quality verify passes; WEB-434 CLOSED via the harness; git status shows only intended files (no .build/, no tsbuildinfo)."
+      }
+    ],
+    "expected_behavior": "Magazine uses only real app tokens (bg-surface, bg-paper, text-ink, text-muted, bg-action/text-white, text-accent, border-border, text-danger); explore loading shimmer has a dark white-alpha variant and ribbon uses border-border/bg-border with >=4.5 dark contrast; BrandFull wordmark uses flipping theme tokens (text-ink + text-brand-accent) and BrandLogo uses var(--color-brand-panel); companion surfaces use app theme tokens with no bg-white/bg-slate-50/cream light surfaces; dark muted and subtle on every *-soft surface measure >=4.5 while light tokens remain unchanged; no small-text text-sakura on bg-sakura-soft remains in the 4 audited files; the 9 audited files use theme tokens for surfaces/text/borders; levels timeline and pricing borders use theme border/border-hover/accent tokens readable in dark while keeping light mode unchanged; GoogleLoginButton passes theme:'filled_black' when dark mode is active and re-renders when theme toggles.",
+    "observed_behavior": "Magazine renders unthemed cards/chips with broken shadcn tokens and bright-blue bg-accent/60 tags; explore loading shimmer is black-alpha on dark paper (loaded StatChip already uses text-ink/text-muted on from-paper to-surface with >=13.4:1 contrast); BrandFull 'koto' uses hardcoded text-blue-700 (Kio already uses text-ink) and BrandLogo uses #1B2A4A; companion onboarding renders bright cream from-amber-50 to-orange-50 and bg-white, companion-message uses bg-slate-50 and from-amber-50 to-orange-50; dark muted on *-soft measures 3.54-4.49; WEB-433 migrated outer sakura-on-soft elements in the 4 files while exercises-page-client.tsx keeps nested text-sakura inside bg-sakura-soft; 9 audited files have hardcoded light surfaces/text (and share-drawer uses nonexistent hsl(var(--...)) vars); levels timeline uses dim #334155 border/line and undefined --color-navy/--color-blue; pricing uses border-slate-200 and glaring ring-indigo-100; GoogleLoginButton always passes theme:'outline'.",
+    "rollback_plan": "Revert the WEB-434 web-only changes; no API, database, admin, or deployment files were modified."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "WEB-434 dark-mode contrast and token regressions > uses only defined app color tokens across magazine pages and components",
+      "expect": "magazine components must not use undefined shadcn tokens or mismatched shadcn accents"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "WEB-434 dark-mode contrast and token regressions > themes the explore stats ribbon and loading shimmer with dark-readable tokens",
+      "expect": "explore skeleton shimmer must define a visible dark-mode variant"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "WEB-434 dark-mode contrast and token regressions > uses flipping theme tokens for the Kiokoto brand wordmark and mark",
+      "expect": "brand wordmark must use a flipping token instead of hardcoded text-blue-700"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "WEB-434 dark-mode contrast and token regressions > themes companion widget surfaces without hardcoded white, slate-50, or light amber gradients",
+      "expect": "companion widget surfaces must use theme tokens in dark mode"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "WEB-434 dark-mode contrast and token regressions > keeps dark muted and subtle text at 4.5:1 on every *-soft surface without changing light tokens",
+      "expect": "dark muted/subtle text on *-soft surfaces must reach 4.5:1"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "WEB-434 dark-mode contrast and token regressions > migrates small-text sakura-on-soft usages to sakura-strong in the four audited files",
+      "expect": "sakura-on-soft text in audited files must use text-sakura-strong"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "WEB-434 dark-mode contrast and token regressions > replaces unthemed light slate/gray/white surfaces and broken hsl vars in the nine audited files",
+      "expect": "audited files must not keep unthemed light slate/gray/white classes or nonexistent hsl vars"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx",
+      "test": "LearnerAppFrame header theme toggle > renders the footer Kiokoto wordmark with flipping theme tokens",
+      "expect": "footer wordmark accent span must use flipping text-brand-accent token"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/explore/_components/explore-client.test.tsx",
+      "test": "ExploreClient canonical content summary > uses theme border and surface tokens on the stats ribbon and loading skeleton",
+      "expect": "loading stats ribbon must use border-border token"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/levels/_components/levels-client.test.tsx",
+      "test": "LevelsClient > uses dark-visible border-hover tokens on the roadmap timeline line and nodes",
+      "expect": "levels timeline connector must raise dark visibility via dark:bg-border-hover"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx",
+      "test": "PricingClient contracts > themes standard and recommended plan card borders for dark mode while preserving light styling",
+      "expect": "standard pricing card must use theme border tokens for dark visibility"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/login/google-login-button.regression.test.tsx",
+      "test": "passes filled_black to Google Identity Services in dark mode and re-renders on theme toggle",
+      "expect": "Google button must use filled_black theme in dark mode"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-22T01:15:44.441Z",
+      "head": "63113ea3b94b242f7b0c55649a835dab99d87188"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-22T01:45:05.325Z",
+      "head": "63113ea3b94b242f7b0c55649a835dab99d87188"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-22T01:45:05.694Z",
+      "head": "63113ea3b94b242f7b0c55649a835dab99d87188"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-22T01:47:03.386Z",
+      "head": "63113ea3b94b242f7b0c55649a835dab99d87188"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-22T01:57:37.101Z",
+      "head": "63113ea3b94b242f7b0c55649a835dab99d87188"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-22T02:18:21.387Z",
+      "head": "63113ea3b94b242f7b0c55649a835dab99d87188"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-22T02:19:25.908Z",
+      "head": "63113ea3b94b242f7b0c55649a835dab99d87188"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-22T01:47:02.991Z",
+      "head": "63113ea3b94b242f7b0c55649a835dab99d87188",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/login/google-login-button.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > uses only defined app color tokens across magazine pages and components",
+          "outcome": "FAIL",
+          "excerpt": "magazine components must not use undefined shadcn tokens or mismatched shadcn accents: expected [ …(138) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > themes the explore stats ribbon and loading shimmer with dark-readable tokens",
+          "outcome": "FAIL",
+          "excerpt": "explore skeleton shimmer must define a visible dark-mode variant: expected '@import \"tailwindcss\";\\n\\n@source \"..…' to match /\\.dark\\s+\\.explore-skeleton-shimmer\\…/s",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > uses flipping theme tokens for the Kiokoto brand wordmark and mark",
+          "outcome": "FAIL",
+          "excerpt": "brand wordmark must use a flipping token instead of hardcoded text-blue-700: expected '/** Kiokoto brand mark — a minimal 言 …' not to contain 'text-blue-700'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > themes companion widget surfaces without hardcoded white, slate-50, or light amber gradients",
+          "outcome": "FAIL",
+          "excerpt": "companion widget surfaces must use theme tokens in dark mode: expected [ …(11) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > keeps dark muted and subtle text at 4.5:1 on every *-soft surface without changing light tokens",
+          "outcome": "FAIL",
+          "excerpt": "dark muted/subtle text on *-soft surfaces must reach 4.5:1: expected [ …(16) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > migrates small-text sakura-on-soft usages to sakura-strong in the four audited files",
+          "outcome": "FAIL",
+          "excerpt": "sakura-on-soft text in audited files must use text-sakura-strong: expected [ Array(1) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > replaces unthemed light slate/gray/white surfaces and broken hsl vars in the nine audited files",
+          "outcome": "FAIL",
+          "excerpt": "audited files must not keep unthemed light slate/gray/white classes or nonexistent hsl vars: expected [ …(65) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > renders the footer Kiokoto wordmark with flipping theme tokens",
+          "outcome": "FAIL",
+          "excerpt": "footer wordmark accent span must use flipping text-brand-accent token: *** 'text-blue-700' to contain 'text-brand-accent'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses theme border and surface tokens on the stats ribbon and loading skeleton",
+          "outcome": "FAIL",
+          "excerpt": "loading stats ribbon must use border-border token: *** 'flex items-center justify-center gap-…' to contain 'border-border'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > uses dark-visible border-hover tokens on the roadmap timeline line and nodes",
+          "outcome": "FAIL",
+          "excerpt": "levels timeline connector must raise dark visibility via dark:bg-border-hover: expected 'absolute left-[23px] top-0 bottom-0 w…' to contain 'dark:bg-border-hover'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > themes standard and recommended plan card borders for dark mode while preserving light styling",
+          "outcome": "FAIL",
+          "excerpt": "standard pricing card must use theme border tokens for dark visibility: expected 'relative flex flex-col rounded-2xl bo…' to contain 'border-border'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/login/google-login-button.regression.test.tsx::passes filled_black to Google Identity Services in dark mode and re-renders on theme toggle",
+          "outcome": "FAIL",
+          "excerpt": "Google button must use filled_black theme in dark mode: expected \"vi.fn()\" to be called with arguments: [ Any<HTMLElement>, …(1) ] Received: 1st vi.fn() call: [ - Any<HTMLElement>, - ObjectContaining { - \"theme\": \"filled_black\", + <div + aria-label=\"Google sign-in\" + role=\"group\" + > + Provider butt…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > uses only defined app color tokens across magazine pages and components": "magazine components must not use undefined shadcn tokens or mismatched shadcn accents",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > themes the explore stats ribbon and loading shimmer with dark-readable tokens": "explore skeleton shimmer must define a visible dark-mode variant",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > uses flipping theme tokens for the Kiokoto brand wordmark and mark": "brand wordmark must use a flipping token instead of hardcoded text-blue-700",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > themes companion widget surfaces without hardcoded white, slate-50, or light amber gradients": "companion widget surfaces must use theme tokens in dark mode",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > keeps dark muted and subtle text at 4.5:1 on every *-soft surface without changing light tokens": "dark muted/subtle text on *-soft surfaces must reach 4.5:1",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > migrates small-text sakura-on-soft usages to sakura-strong in the four audited files": "sakura-on-soft text in audited files must use text-sakura-strong",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > replaces unthemed light slate/gray/white surfaces and broken hsl vars in the nine audited files": "audited files must not keep unthemed light slate/gray/white classes or nonexistent hsl vars",
+        "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > renders the footer Kiokoto wordmark with flipping theme tokens": "footer wordmark accent span must use flipping text-brand-accent token",
+        "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses theme border and surface tokens on the stats ribbon and loading skeleton": "loading stats ribbon must use border-border token",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > uses dark-visible border-hover tokens on the roadmap timeline line and nodes": "levels timeline connector must raise dark visibility via dark:bg-border-hover",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > themes standard and recommended plan card borders for dark mode while preserving light styling": "standard pricing card must use theme border tokens for dark visibility",
+        "vitest:apps/web/app/[locale]/login/google-login-button.regression.test.tsx::passes filled_black to Google Identity Services in dark mode and re-renders on theme toggle": "Google button must use filled_black theme in dark mode"
+      },
+      "fingerprint": "b47293983b9e722336a2db6dcf24fc4150d967d6dbe120ce1a75645f74201b75"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-22T01:56:26.247Z",
+      "head": "63113ea3b94b242f7b0c55649a835dab99d87188",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/login/google-login-button.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > uses only defined app color tokens across magazine pages and components",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "magazine components must not use undefined shadcn tokens or mismatched shadcn accents: expected [ …(2) ] to deeply equal []"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > themes the explore stats ribbon and loading shimmer with dark-readable tokens",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > uses flipping theme tokens for the Kiokoto brand wordmark and mark",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > themes companion widget surfaces without hardcoded white, slate-50, or light amber gradients",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > keeps dark muted and subtle text at 4.5:1 on every *-soft surface without changing light tokens",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > migrates small-text sakura-on-soft usages to sakura-strong in the four audited files",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > replaces unthemed light slate/gray/white surfaces and broken hsl vars in the nine audited files",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > renders the footer Kiokoto wordmark with flipping theme tokens",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses theme border and surface tokens on the stats ribbon and loading skeleton",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > uses dark-visible border-hover tokens on the roadmap timeline line and nodes",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > themes standard and recommended plan card borders for dark mode while preserving light styling",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/login/google-login-button.regression.test.tsx::passes filled_black to Google Identity Services in dark mode and re-renders on theme toggle",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "2131d5d7f74683197846615ba5b7b77f69ed18674d2ffc0399512892a1025d46"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-22T01:57:33.576Z",
+      "head": "63113ea3b94b242f7b0c55649a835dab99d87188",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/explore/_components/explore-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/login/google-login-button.regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > uses only defined app color tokens across magazine pages and components",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > themes the explore stats ribbon and loading shimmer with dark-readable tokens",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > uses flipping theme tokens for the Kiokoto brand wordmark and mark",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > themes companion widget surfaces without hardcoded white, slate-50, or light amber gradients",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > keeps dark muted and subtle text at 4.5:1 on every *-soft surface without changing light tokens",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > migrates small-text sakura-on-soft usages to sakura-strong in the four audited files",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-434 dark-mode contrast and token regressions > replaces unthemed light slate/gray/white surfaces and broken hsl vars in the nine audited files",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx::LearnerAppFrame header theme toggle > renders the footer Kiokoto wordmark with flipping theme tokens",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/_components/explore-client.test.tsx::ExploreClient canonical content summary > uses theme border and surface tokens on the stats ribbon and loading skeleton",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > uses dark-visible border-hover tokens on the roadmap timeline line and nodes",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > themes standard and recommended plan card borders for dark mode while preserving light styling",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/login/google-login-button.regression.test.tsx::passes filled_black to Google Identity Services in dark mode and re-renders on theme toggle",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "2c33fd58a3247fc801c3d907ab68f31b578faa34abc10f3d4d2fc1e0add887c4"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-22T02:01:35.319Z",
+      "head": "63113ea3b94b242f7b0c55649a835dab99d87188",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 689,
+        "executed": 689,
+        "passed": 688,
+        "failed": 1,
+        "failed_new": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 888,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 1
+      },
+      "message": "RATCHET_VIOLATION: 1 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "2c33fd58a3247fc801c3d907ab68f31b578faa34abc10f3d4d2fc1e0add887c4"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-22T02:04:09.526Z",
+      "head": "63113ea3b94b242f7b0c55649a835dab99d87188",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 689,
+        "executed": 689,
+        "passed": 687,
+        "failed": 2,
+        "failed_new": 2,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 888,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 2
+      },
+      "message": "RATCHET_VIOLATION: 2 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "2c33fd58a3247fc801c3d907ab68f31b578faa34abc10f3d4d2fc1e0add887c4"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-22T02:08:53.209Z",
+      "head": "63113ea3b94b242f7b0c55649a835dab99d87188",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 689,
+        "executed": 689,
+        "passed": 689,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 888,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "2c33fd58a3247fc801c3d907ab68f31b578faa34abc10f3d4d2fc1e0add887c4"
+    },
+    {
+      "seq": 7,
+      "at": "2026-11-22T02:11:29.921Z",
+      "head": "63113ea3b94b242f7b0c55649a835dab99d87188",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 689,
+        "executed": 689,
+        "passed": 689,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 888,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "2c33fd58a3247fc801c3d907ab68f31b578faa34abc10f3d4d2fc1e0add887c4"
+    },
+    {
+      "seq": 8,
+      "at": "2026-11-22T02:18:15.142Z",
+      "head": "63113ea3b94b242f7b0c55649a835dab99d87188",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 689,
+        "executed": 689,
+        "passed": 689,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 888,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "2c33fd58a3247fc801c3d907ab68f31b578faa34abc10f3d4d2fc1e0add887c4"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-22T02:19:25.885Z",
+    "head": "63113ea3b94b242f7b0c55649a835dab99d87188",
+    "fingerprint": "2c33fd58a3247fc801c3d907ab68f31b578faa34abc10f3d4d2fc1e0add887c4",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/_components/back-navigation.tsx": "b33168e492661aa093d215c9b28ac7e4bd5ca6e9",
+      "apps/web/app/[locale]/_components/homepage/quick-actions-strip.tsx": "588356e5ff4b82118dc86bc683e4fb25aa120042",
+      "apps/web/app/[locale]/_components/share-drawer.tsx": "2669d01f768a0edbd439859ba17cf44776b16562",
+      "apps/web/app/[locale]/battle/_components/game-types/custom-round.tsx": "004c3a8189237673872bc5abc79ec63d96c9901c",
+      "apps/web/app/[locale]/exercises/_components/exercises-page-client.tsx": "1b8a4c68ae59f7849bcf5ebd546eca4a2c70689b",
+      "apps/web/app/[locale]/explore/_components/explore-client.test.tsx": "3801cbd6134f4669a7cee15e2546d8eb6c2f99f4",
+      "apps/web/app/[locale]/explore/_components/explore-client.tsx": "8c00f879507e2533c318c9899efa2b74ca06b7e4",
+      "apps/web/app/[locale]/levels/_components/levels-client.test.tsx": "e9038ac07bdbe4e04e732068d0dadd0066a7cac5",
+      "apps/web/app/[locale]/levels/_components/levels-client.tsx": "be7c58fa95cd991cb5a3061ab0ddf2bc844aedda",
+      "apps/web/app/[locale]/login/google-login-button.regression.test.tsx": "675c5c9bb79f97f70bc9e1591c2d4503618cbaf9",
+      "apps/web/app/[locale]/login/google-login-button.tsx": "eeacb837a7fbc277bf038e333522604f20873d83",
+      "apps/web/app/[locale]/magazine/_components/loto-promo-banner.tsx": "ec6d8f262fe20bfc6aec84215cf93def3e997c64",
+      "apps/web/app/[locale]/magazine/_components/magazine-article-view.tsx": "86758124602d4dac790af4deb5f649f65e7fad3c",
+      "apps/web/app/[locale]/magazine/_components/magazine-page-client.tsx": "1a1b0d9a8edb2b70000daabc5ffb3f6ff4899316",
+      "apps/web/app/[locale]/magazine/_components/magazine-skeleton.tsx": "7610283c96a17ffa67b93ee00efcf735f565bab7",
+      "apps/web/app/[locale]/magazine/_components/mini-quiz.tsx": "9821ecdde79dab92d0e2082f6410dc1e4a9dd588",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-hero-prediction.tsx": "84b726e1544602cf5f5f5ad3f9b96087fcf29279",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-history-card.tsx": "d04239f8d7bafb145c7f35bc6dce2fcb80dd2817",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-hub-client.tsx": "e20a7ee746ab3e8f94c33c3c5c092e4199dda822",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-stats-lab.tsx": "24680b76255737bd261c18ddefe7c2fd28fe65bc",
+      "apps/web/app/[locale]/magazine/loto/_components/loto-tabs.tsx": "b6bfc0a7040a5eedc5ac0af58573a85010f4bfe8",
+      "apps/web/app/[locale]/magazine/page.tsx": "4bb52b0e348620dda6a113fc33c9f74066d865c6",
+      "apps/web/app/[locale]/modules/[moduleKey]/page.tsx": "76d5c7c947e5b0e6a466a9284e06a2070c5d63d0",
+      "apps/web/app/[locale]/news/[id]/_components/nhk-article-detail-client.tsx": "3d28587866a7302b9fa5e23e01e310400fb54a28",
+      "apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx": "97b873bf8ce2a6c4e71980c4f392d3300a548ab6",
+      "apps/web/app/[locale]/pricing/_components/pricing-client.tsx": "13cdeea3b55a501783db897b1e8c12cf805fc729",
+      "apps/web/app/[locale]/radar/[slug]/page.tsx": "8f3c95980615688fbcb6c0cede7f09faa89101de",
+      "apps/web/app/_components/brand-logo.tsx": "b60f0d141ae1b5ecc524e15ba4f4b1ad4f506c95",
+      "apps/web/app/_components/companion-chat-panel.tsx": "115eb908be9d9f90ce496c072c542237fdf54d7e",
+      "apps/web/app/_components/companion-message.tsx": "5e4d8c7b8febbe4dd4f45ff16bc65b425228288e",
+      "apps/web/app/_components/companion-onboarding.tsx": "718439dd7fa456e80751930d5af2f039aaeed84b",
+      "apps/web/app/_components/learner-app-frame.theme-toggle.test.tsx": "611343c229fe732402250f6c66e25642cf3213fe",
+      "apps/web/app/globals.css": "5941fff71e38f3c6849fdd4f7ae3185c240732f0",
+      "apps/web/app/theme-contrast.regression.test.ts": "8082d821a581baf390edb6a41133846d8cb6b684"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

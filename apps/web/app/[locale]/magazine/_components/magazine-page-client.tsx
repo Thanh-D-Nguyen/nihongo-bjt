@@ -84,10 +84,10 @@ function MagazineFilter({ activeKind, t }: { activeKind: string; t: MagazineTran
               key={f.key}
               type="button"
               onClick={() => handleFilter(f.key)}
-              className={`flex min-h-[48px] shrink-0 items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium transition-all duration-200 motion-reduce:transition-none active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 sm:min-h-[44px] ${
+              className={`flex min-h-[48px] shrink-0 items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium transition-all duration-200 motion-reduce:transition-none active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35 sm:min-h-[44px] ${
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                  : "border border-border/40 bg-card/80 text-muted-foreground backdrop-blur-sm hover:border-primary/30 hover:bg-accent hover:text-foreground"
+                  ? "bg-action text-white shadow-md shadow-action/20"
+                  : "border border-border bg-surface/90 text-muted backdrop-blur-sm hover:border-border-hover hover:bg-surface hover:text-ink"
               }`}
             >
               <span className="text-base">{f.icon}</span>
@@ -146,7 +146,7 @@ function BentoCard({
   t: MagazineTranslations;
 }) {
   const icon = kindIcons[article.widgetKind] ?? "📄";
-  const gradient = kindGradients[article.widgetKind] ?? "from-primary/10 to-accent/5";
+  const gradient = kindGradients[article.widgetKind] ?? "from-accent/10 to-accent/5";
   const isToday = new Date(article.publishDate).toDateString() === new Date().toDateString();
 
   const formattedDate = new Date(article.publishDate).toLocaleDateString(dateLocales[locale] ?? "vi-VN", {
@@ -158,8 +158,8 @@ function BentoCard({
   return (
     <Link
       href={`/${locale}/magazine/${article.slug}`}
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border/40 bg-card transition-all duration-300 motion-reduce:transition-none hover:-translate-y-1 motion-reduce:hover:translate-y-0 hover:border-border/80 hover:shadow-xl hover:shadow-primary/5 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 ${
-        isHero ? "row-span-2 bg-gradient-to-br from-card to-accent/5 sm:col-span-2" : ""
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-all duration-300 motion-reduce:transition-none hover:-translate-y-1 motion-reduce:hover:translate-y-0 hover:border-border-hover hover:shadow-xl hover:shadow-accent/5 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35 ${
+        isHero ? "row-span-2 bg-gradient-to-br from-surface to-accent/5 sm:col-span-2" : ""
       }`}
     >
       {/* Gradient overlay */}
@@ -171,12 +171,12 @@ function BentoCard({
           <span className={isHero ? "text-3xl" : "text-2xl"}>{icon}</span>
           <div className="flex items-center gap-2">
             {isToday && (
-              <span className="rounded-full bg-green-500/10 px-2.5 py-0.5 text-xs font-semibold text-green-600 dark:text-green-400">
+              <span className="rounded-full bg-leaf-soft px-2.5 py-0.5 text-xs font-semibold text-leaf-strong">
                 {t.todayTitle}
               </span>
             )}
             {article.jlptLevel && (
-              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+              <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-semibold text-accent">
                 {article.jlptLevel}
               </span>
             )}
@@ -185,19 +185,19 @@ function BentoCard({
 
         {/* Title */}
         <h3
-          className={`mt-3 font-bold leading-[1.8] text-foreground ${
+          className={`mt-3 font-bold leading-[1.8] text-ink ${
             isHero ? "text-xl sm:text-2xl" : "text-base sm:text-lg"
           }`}
         >
           {article.titleJp}
         </h3>
-        <p className={`mt-1 text-muted-foreground ${isHero ? "text-base" : "text-sm"}`}>
+        <p className={`mt-1 text-muted ${isHero ? "text-base" : "text-sm"}`}>
           {article.titleVi}
         </p>
 
         {/* Summary (hero only) */}
         {isHero && article.summaryVi && (
-          <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-muted-foreground/80">
+          <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-muted">
             {article.summaryVi}
           </p>
         )}
@@ -208,11 +208,11 @@ function BentoCard({
             {article.vocabWords.slice(0, isHero ? 5 : 3).map((w) => (
               <span
                 key={w.word}
-                className="rounded-lg bg-accent/60 px-2.5 py-1 text-xs font-medium text-accent-foreground backdrop-blur-sm"
+                className="rounded-lg border border-border/60 bg-paper px-2.5 py-1 text-xs font-medium text-ink"
               >
                 {w.word}
                 {w.reading && (
-                  <span className="ml-1 text-muted-foreground/70">({w.reading})</span>
+                  <span className="ml-1 text-muted">({w.reading})</span>
                 )}
               </span>
             ))}
@@ -221,8 +221,8 @@ function BentoCard({
 
         {/* Bottom: date + read more */}
         <div className="mt-auto flex items-center justify-between pt-5">
-          <time className="text-xs text-muted-foreground/60">{formattedDate}</time>
-          <span className="text-xs font-medium text-primary opacity-70 transition-opacity duration-200 group-hover:opacity-100 sm:opacity-0">
+          <time className="text-xs text-muted">{formattedDate}</time>
+          <span className="text-xs font-medium text-accent opacity-70 transition-opacity duration-200 group-hover:opacity-100 sm:opacity-0">
             {t.readMore} →
           </span>
         </div>
@@ -235,14 +235,14 @@ function BentoCard({
 
 function MagazineEmptyState({ t }: { t: MagazineTranslations }) {
   return (
-    <div className="mt-12 flex flex-col items-center justify-center rounded-3xl border border-dashed border-border/50 bg-accent/5 p-12 text-center sm:mt-16">
-      <div className="flex size-20 items-center justify-center rounded-3xl bg-primary/5 text-4xl">
+    <div className="mt-12 flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-surface/60 p-12 text-center sm:mt-16">
+      <div className="flex size-20 items-center justify-center rounded-3xl bg-accent/10 text-4xl">
         📖
       </div>
-      <h2 className="mt-6 text-xl font-bold text-foreground">
+      <h2 className="mt-6 text-xl font-bold text-ink">
         {t.emptyTitle}
       </h2>
-      <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
+      <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">
         {t.emptyDescription}
       </p>
     </div>
@@ -272,7 +272,7 @@ function Pagination({
         <Link
           href={`/${locale}/magazine?kind=${kind}&page=${page - 1}`}
           scroll
-          className="flex min-h-[48px] items-center rounded-xl border border-border/50 bg-card px-5 py-2.5 text-sm font-medium text-foreground shadow-sm transition-all duration-200 motion-reduce:transition-none hover:border-primary/30 hover:bg-accent active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+          className="flex min-h-[48px] items-center rounded-xl border border-border bg-surface px-5 py-2.5 text-sm font-medium text-ink shadow-sm transition-all duration-200 motion-reduce:transition-none hover:border-border-hover hover:bg-paper active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35"
         >
           {t.prevPage}
         </Link>
@@ -286,10 +286,10 @@ function Pagination({
               key={pageNum}
               href={`/${locale}/magazine?kind=${kind}&page=${pageNum}`}
               scroll
-              className={`flex size-12 items-center justify-center rounded-xl text-sm font-medium transition-all duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 ${
+              className={`flex size-12 items-center justify-center rounded-xl text-sm font-medium transition-all duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35 ${
                 pageNum === page
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  ? "bg-action text-white shadow-sm"
+                  : "text-muted hover:bg-surface hover:text-ink"
               }`}
             >
               {pageNum}
@@ -301,7 +301,7 @@ function Pagination({
         <Link
           href={`/${locale}/magazine?kind=${kind}&page=${page + 1}`}
           scroll
-          className="flex min-h-[48px] items-center rounded-xl border border-border/50 bg-card px-5 py-2.5 text-sm font-medium text-foreground shadow-sm transition-all duration-200 motion-reduce:transition-none hover:border-primary/30 hover:bg-accent active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+          className="flex min-h-[48px] items-center rounded-xl border border-border bg-surface px-5 py-2.5 text-sm font-medium text-ink shadow-sm transition-all duration-200 motion-reduce:transition-none hover:border-border-hover hover:bg-paper active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35"
         >
           {t.nextPage}
         </Link>
@@ -361,9 +361,9 @@ export function MagazinePageClient({
           {todayArticles.length > 0 && (
             <section className="mb-8">
               <div className="mb-4 flex items-center gap-2">
-                <span className="flex size-7 items-center justify-center rounded-lg bg-green-500/10 text-sm">✨</span>
-                <h2 className="text-base font-bold text-foreground">{t.todayTitle}</h2>
-                <div className="h-px flex-1 bg-border/40" />
+                <span className="flex size-7 items-center justify-center rounded-lg bg-leaf-soft text-sm">✨</span>
+                <h2 className="text-base font-bold text-ink">{t.todayTitle}</h2>
+                <div className="h-px flex-1 bg-border/60" />
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {todayArticles.map((article, idx) => (
@@ -384,9 +384,9 @@ export function MagazinePageClient({
             <section>
               {todayArticles.length > 0 && (
                 <div className="mb-4 flex items-center gap-2">
-                  <span className="flex size-7 items-center justify-center rounded-lg bg-muted text-sm">📚</span>
-                  <h2 className="text-base font-bold text-muted-foreground">{t.olderTitle ?? "Earlier"}</h2>
-                  <div className="h-px flex-1 bg-border/40" />
+                  <span className="flex size-7 items-center justify-center rounded-lg border border-border bg-surface text-sm">📚</span>
+                  <h2 className="text-base font-bold text-muted">{t.olderTitle ?? "Earlier"}</h2>
+                  <div className="h-px flex-1 bg-border/60" />
                 </div>
               )}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -97,21 +97,21 @@ export default async function MagazinePage({
   const retryHref = `/${locale}/magazine${retryParams.size ? `?${retryParams.toString()}` : ""}`;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-background via-background to-accent/5 px-4 pb-28 pt-6 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-gradient-to-b from-paper via-paper to-accent/5 px-4 pb-28 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         {/* Header with glassmorphic accent */}
-        <header className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-primary/5 via-accent/10 to-transparent p-6 sm:p-8">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
+        <header className="relative mb-8 overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-surface via-surface to-accent/10 p-6 sm:p-8">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent/10 via-transparent to-transparent" />
           <div className="relative">
             <div className="flex items-center gap-3">
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-2xl backdrop-blur-sm">
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-accent/10 text-2xl backdrop-blur-sm">
                 📰
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">
                   {t.magazine.title}
                 </h1>
-                <p className="mt-0.5 text-sm text-muted-foreground sm:text-base">
+                <p className="mt-0.5 text-sm text-muted sm:text-base">
                   {t.magazine.subtitle}
                 </p>
               </div>
@@ -131,10 +131,10 @@ export default async function MagazinePage({
               t={t.magazine}
             />
           ) : (
-            <section role="alert" className="mt-12 rounded-3xl border border-border/50 bg-card p-8 text-center">
-              <h2 className="text-xl font-bold text-foreground">{t.magazine.loadErrorTitle}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">{t.magazine.loadErrorDescription}</p>
-              <Link href={retryHref} className="mt-5 inline-flex min-h-12 items-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35">
+            <section role="alert" className="mt-12 rounded-3xl border border-border bg-surface p-8 text-center">
+              <h2 className="text-xl font-bold text-ink">{t.magazine.loadErrorTitle}</h2>
+              <p className="mt-2 text-sm text-muted">{t.magazine.loadErrorDescription}</p>
+              <Link href={retryHref} className="mt-5 inline-flex min-h-12 items-center rounded-xl bg-action px-5 py-2.5 text-sm font-semibold text-white hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35">
                 {t.magazine.retry}
               </Link>
             </section>

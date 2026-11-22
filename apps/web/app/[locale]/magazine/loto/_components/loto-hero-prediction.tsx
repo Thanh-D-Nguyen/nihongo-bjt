@@ -36,7 +36,7 @@ function ConfidenceMeter({ value, labels }: { value: number; labels: LotoLabels 
         <span className="text-xs font-medium text-ink/70">
           {labels.confidence ?? "Điểm xếp hạng mô hình"}
         </span>
-        <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold tabular-nums text-primary">
+        <span className="rounded-full bg-accent/10 px-2.5 py-1 text-xs font-bold tabular-nums text-accent">
           {value.toFixed(2)}
         </span>
       </div>
@@ -45,7 +45,7 @@ function ConfidenceMeter({ value, labels }: { value: number; labels: LotoLabels 
         role="presentation"
         aria-hidden="true"
       >
-        <div className="h-full rounded-full bg-primary" style={{ width: `${percent}%` }} />
+        <div className="h-full rounded-full bg-accent" style={{ width: `${percent}%` }} />
       </div>
       <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
         {labels.confidenceHint ?? "Chỉ dùng để xếp hạng heuristic, không phải xác suất trúng."}
@@ -63,9 +63,9 @@ function VocabGrid({ items, labels }: { items: LotoVocabItem[]; labels: LotoLabe
         {items.map((item) => (
           <li
             key={`${item.wordJp}-${item.reading}`}
-            className="rounded-xl bg-primary/5 px-3 py-2 ring-1 ring-primary/10"
+            className="rounded-xl bg-accent/5 px-3 py-2 ring-1 ring-accent/15"
           >
-            <p className="text-sm font-semibold leading-[1.8] text-primary">
+            <p className="text-sm font-semibold leading-[1.8] text-accent">
               {item.wordJp}
               <span className="ml-1.5 text-xs font-normal text-muted">（{item.reading}）</span>
             </p>
@@ -101,7 +101,7 @@ export function LotoHeroPrediction({
     <div
       className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${gradientClass} p-5 ring-1 ${borderClass} sm:p-6`}
     >
-      <div className="absolute -right-10 -top-10 size-40 rounded-full bg-gradient-to-br from-primary/10 to-transparent blur-3xl" />
+      <div className="absolute -right-10 -top-10 size-40 rounded-full bg-gradient-to-br from-accent/10 to-transparent blur-3xl" />
 
       <div className="relative space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -114,7 +114,7 @@ export function LotoHeroPrediction({
             </span>
             {data.drawNumber != null && (
               <span
-                className="rounded-lg bg-primary/10 px-2 py-0.5 text-xs font-semibold tabular-nums text-primary"
+                className="rounded-lg bg-accent/10 px-2 py-0.5 text-xs font-semibold tabular-nums text-accent"
                 title={
                   data.drawNumberEstimated
                     ? (labels.estimatedNumber ?? "số kỳ ước tính")
@@ -135,7 +135,7 @@ export function LotoHeroPrediction({
             {data.drawDayJp ? `（${data.drawDayJp}）` : ""}
           </p>
           {data.drawTime && (
-            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+            <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-semibold text-accent">
               ⏰ {data.drawTime}
             </span>
           )}
@@ -191,8 +191,8 @@ export function LotoHeroPrediction({
             )}
             <p className="mt-1 text-sm text-ink/70">→ {sentence.textVi}</p>
             {sentence.grammar && (
-              <p className="mt-2 rounded-lg bg-primary/5 px-2.5 py-1.5 text-xs text-ink/70">
-                <span className="font-semibold text-primary">{labels.grammar ?? "Ngữ pháp"}:</span>{" "}
+              <p className="mt-2 rounded-lg bg-accent/5 px-2.5 py-1.5 text-xs text-ink/70">
+                <span className="font-semibold text-accent">{labels.grammar ?? "Ngữ pháp"}:</span>{" "}
                 {sentence.grammar}
               </p>
             )}
@@ -200,7 +200,7 @@ export function LotoHeroPrediction({
               type="button"
               onClick={() => setShowReading((value) => !value)}
               aria-pressed={showReading}
-              className="mt-2 min-h-10 rounded-lg px-2 text-xs font-medium text-primary transition hover:bg-primary/10"
+              className="mt-2 min-h-10 rounded-lg px-2 text-xs font-medium text-accent transition hover:bg-accent/10"
             >
               {showReading
                 ? (labels.hideReading ?? "Ẩn cách đọc")

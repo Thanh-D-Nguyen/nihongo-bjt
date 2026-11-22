@@ -92,4 +92,28 @@ describe("ExploreClient canonical content summary", () => {
     expect(magazine?.className, "pale cards have a readable dark surface variant")
       .toContain("dark:from-orange-950/20");
   });
+
+  it("uses theme border and surface tokens on the stats ribbon and loading skeleton", async () => {
+    let resolveSummary!: (res: Response) => void;
+    learnerApiFetchMock.mockReturnValue(new Promise<Response>((resolve) => { resolveSummary = resolve; }));
+    const host = await renderExplore();
+
+    const loadingRibbon = host.querySelector(".explore-skeleton-shimmer")?.parentElement;
+    expect(loadingRibbon?.className, "loading stats ribbon must use border-border token").toContain("border-border");
+
+    await act(async () => {
+      resolveSummary(response({ lexemes: 252146, kanji: 5787, grammar: 2149 }));
+      await Promise.resolve();
+    });
+
+    const ribbon = host.querySelector(".explore-stats-ribbon");
+    expect(ribbon?.className, "stats ribbon must use border-border token").toContain("border-border");
+    expect(ribbon?.className).toContain("from-paper");
+    expect(ribbon?.className).toContain("to-surface");
+    const values = Array.from(ribbon?.querySelectorAll(".tabular-nums") ?? []);
+    expect(values).toHaveLength(3);
+    for (const value of values) {
+      expect(value.className, "StatChip values must use text-ink").toContain("text-ink");
+    }
+  });
 });
