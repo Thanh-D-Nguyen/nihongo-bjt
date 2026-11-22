@@ -54,7 +54,7 @@ export function LotoBonusBall({
   return (
     <span
       className={`flex shrink-0 items-center justify-center rounded-full border-2 font-bold tabular-nums ${SIZE[size]} ${
-        matched ? "border-amber-500 bg-amber-500/15 text-amber-700" : "border-muted/40 text-muted"
+        matched ? "border-amber bg-amber-soft text-amber-strong" : "border-muted/40 text-muted"
       }`}
     >
       {value}

@@ -97,7 +97,7 @@ export function CompanionSpeechBubble({
 
   return (
     <div
-      className={`pointer-events-none relative w-max max-w-[20rem] min-w-[10rem] rounded-2xl border border-ink/8 bg-surface px-3.5 py-2 shadow-md ${
+      className={`pointer-events-none relative w-max max-w-[20rem] min-w-[10rem] rounded-2xl border border-ink/8 bg-surface px-3.5 py-2 shadow-md dark:border-border ${
         isExiting
           ? "motion-safe:animate-[bubbleFadeOut_0.3s_ease-in_both]"
           : "motion-safe:animate-[bubblePop_0.3s_ease-out_both]"
@@ -106,7 +106,7 @@ export function CompanionSpeechBubble({
       aria-live="polite"
     >
       {/* Speech bubble tail */}
-      <div className="absolute -bottom-[6px] right-5 h-3 w-3 rotate-45 border-b border-r border-ink/10 bg-surface" />
+      <div className="absolute -bottom-[6px] right-5 h-3 w-3 rotate-45 border-b border-r border-ink/10 bg-surface dark:border-border" />
 
       <p className="text-xs font-semibold leading-relaxed text-ink">
         {moodEmoji[mood] ? `${moodEmoji[mood]} ` : ""}

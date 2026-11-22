@@ -311,17 +311,17 @@ export function DailyDetailClient({
 
       {/* ── learning safeguard (Life in Japan) ── */}
       {item.learningSafeguard ? (
-        <section className="mb-6 rounded-2xl border border-amber-800/20 bg-amber-50/50 p-4 space-y-2">
-          <p className="text-xs text-amber-950">
+        <section className="mb-6 rounded-2xl border border-amber/30 bg-amber-soft p-4 space-y-2">
+          <p className="text-xs text-amber-strong">
             <strong>{dailyLabels.lifeLearningObjectiveLabel}: </strong>
             {item.learningSafeguard.learningObjective}
           </p>
-          <p className="text-xs text-amber-950">
+          <p className="text-xs text-amber-strong">
             <strong>{dailyLabels.lifeDisclaimerLabel}: </strong>
             {item.learningSafeguard.riskDisclaimer}
           </p>
           {(item.learningSafeguard.sourceTitle || item.learningSafeguard.sourceUrl) ? (
-            <p className="text-xs text-amber-900">
+            <p className="text-xs text-amber-strong">
               <strong>{dailyLabels.lifeSourceLabel}: </strong>
               {item.learningSafeguard.sourceTitle ?? ""}
               {item.learningSafeguard.sourceUrl ? (
@@ -331,11 +331,11 @@ export function DailyDetailClient({
           ) : null}
           {item.learningSafeguard.remediationLinks.length > 0 ? (
             <div className="space-y-1">
-              <p className="text-xs font-semibold text-amber-900">{dailyLabels.lifeRemediationLabel}</p>
+              <p className="text-xs font-semibold text-amber-strong">{dailyLabels.lifeRemediationLabel}</p>
               <ul className="space-y-1">
                 {item.learningSafeguard.remediationLinks.slice(0, 5).map((link) => (
                   <li key={link.href}>
-                    <a className="text-xs text-amber-900 underline underline-offset-2" href={link.href} rel="noreferrer" target="_blank">
+                    <a className="text-xs text-amber-strong underline underline-offset-2" href={link.href} rel="noreferrer" target="_blank">
                       {link.label}
                     </a>
                   </li>
@@ -382,7 +382,7 @@ export function DailyDetailClient({
             {dailyLabels.markUseful}
           </button>
           <button
-            className="rounded-xl border border-[hsl(var(--border))] min-h-[40px] px-4 text-sm font-medium text-[hsl(var(--muted))] hover:text-[hsl(var(--ink))] transition-colors"
+            className="rounded-xl border border-border min-h-[40px] px-4 text-sm font-medium text-muted hover:text-ink transition-colors"
             type="button"
             onClick={() => setShareOpen(true)}
           >
@@ -428,7 +428,7 @@ export function DailyDetailClient({
       ) : null}
 
       {actionMsg ? (
-        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-800">
+        <div className="mb-4 rounded-xl border border-leaf/30 bg-leaf-soft px-4 py-2 text-sm text-leaf-strong">
           {actionMsg}
         </div>
       ) : null}

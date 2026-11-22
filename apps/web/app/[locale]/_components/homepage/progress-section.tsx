@@ -67,7 +67,7 @@ function ProgressRing({
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-slate-100"
+          className="text-border"
         />
         <circle
           cx={size / 2}
@@ -106,12 +106,12 @@ function RingStat({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center gap-2 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+    <div className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-surface p-4 shadow-sm">
       <ProgressRing value={numericValue} max={maxValue} color={ringColor}>
-        <span className="text-slate-400">{icon}</span>
+        <span className="text-muted">{icon}</span>
       </ProgressRing>
-      <p className="text-xl font-black tabular-nums tracking-tight text-slate-800">{displayValue}</p>
-      <p className="text-center text-[11px] font-medium leading-tight text-slate-500">{label}</p>
+      <p className="text-xl font-black tabular-nums tracking-tight text-ink">{displayValue}</p>
+      <p className="text-center text-[11px] font-medium leading-tight text-muted">{label}</p>
     </div>
   );
 }
@@ -179,7 +179,7 @@ export function ProgressSection({
   if (!isLoggedIn) {
     return (
       <section>
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-[#1B2A4A] to-[#2563EB] p-6 shadow-lg">
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-[#1B2A4A] to-[#2563EB] p-6 shadow-lg">
           {/* Torii gate illustration */}
           <ToriiGate className="absolute -right-2 -top-2 h-24 w-24 text-white/[0.08]" />
           <div className="relative">
@@ -191,7 +191,7 @@ export function ProgressSection({
           </div>
           <Link
             href={`/${locale}/login`}
-            className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-white px-5 text-sm font-bold text-[#1B2A4A] shadow-[0_4px_16px_rgba(255,255,255,0.2)] outline-none transition-all duration-200 hover:bg-blue-50 hover:shadow-[0_6px_24px_rgba(255,255,255,0.3)] focus-visible:ring-2 focus-visible:ring-white/50 dark:bg-white"
+            className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-white px-5 text-sm font-bold text-[#1B2A4A] shadow-[0_4px_16px_rgba(255,255,255,0.2)] outline-none transition-all duration-200 hover:opacity-95 hover:shadow-[0_6px_24px_rgba(255,255,255,0.3)] focus-visible:ring-2 focus-visible:ring-white/50 dark:bg-white"
           >
             {labels.progressSignInCta}
           </Link>
@@ -208,7 +208,7 @@ export function ProgressSection({
         actions={
           <Link
             href={`/${locale}/analytics`}
-            className="text-sm font-semibold text-blue-600 outline-none hover:text-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2"
+            className="text-sm font-semibold text-brand-accent outline-none hover:text-accent-hover focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2"
           >
             {labels.sectionViewAll}
           </Link>
@@ -223,7 +223,7 @@ export function ProgressSection({
           <p className="sr-only">{labels.sectionLoadingHint}</p>
         </div>
       ) : (
-        <div className="relative rounded-2xl border border-slate-100 bg-gradient-to-br from-white to-slate-50/80 p-5 shadow-lg">
+        <div className="relative rounded-2xl border border-border bg-gradient-to-br from-surface to-paper p-5 shadow-lg">
           {/* Daruma mascot — corner decoration */}
           <DarumaMascot
             className="absolute -right-1 -top-10 z-10 h-16 w-16 drop-shadow-md"
@@ -267,7 +267,7 @@ export function ProgressSection({
 
           <Link
             href={`/${locale}/analytics`}
-            className="mt-4 flex items-center justify-center gap-1.5 rounded-xl bg-slate-50 py-2.5 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
+            className="mt-4 flex items-center justify-center gap-1.5 rounded-xl bg-paper py-2.5 text-sm font-semibold text-brand-accent transition-colors hover:bg-accent-soft hover:text-brand-accent"
           >
             {labels.sectionViewAll}
             <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
@@ -276,7 +276,7 @@ export function ProgressSection({
       )}
 
       {analytics?.insight ? (
-        <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-slate-800">
+        <div className="mt-3 rounded-xl border border-amber/30 bg-amber-soft p-4 text-sm text-ink">
           {analytics.insight}
         </div>
       ) : null}

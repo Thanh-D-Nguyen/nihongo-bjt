@@ -90,7 +90,7 @@ export function BattleLobbyLeaderboardPanel({
   return (
     <section
       className={cn(
-        "rounded-[1.5rem] border border-amber-200/40 bg-gradient-to-br from-amber-50/35 via-surface to-indigo-50/30 p-5 shadow-sm",
+        "rounded-[1.5rem] border border-amber/30 bg-gradient-to-br from-amber-soft/40 via-surface to-accent-soft/30 p-5 shadow-sm",
         hideIntro ? "mt-0" : "mt-4",
         className
       )}
@@ -125,7 +125,7 @@ export function BattleLobbyLeaderboardPanel({
       </div>
 
       {error ? (
-        <p className="mt-4 text-sm font-semibold text-amber-900">{labels.leaderboardLoadError}</p>
+        <p className="mt-4 text-sm font-semibold text-amber-strong">{labels.leaderboardLoadError}</p>
       ) : null}
 
       {!error && data?.viewerRank ? (
@@ -171,7 +171,7 @@ export function BattleLobbyLeaderboardPanel({
                       row.isYou
                         ? "bg-leaf/12 ring-1 ring-inset ring-leaf/25"
                         : top
-                          ? "bg-amber-50/50"
+                          ? "bg-amber-soft/50"
                           : ""
                     }`}
                     key={`${row.rank}-${row.displayName}`}
@@ -180,11 +180,11 @@ export function BattleLobbyLeaderboardPanel({
                       <span
                         className={`inline-flex min-w-[2rem] justify-center rounded-full px-2 py-0.5 text-xs font-black tabular-nums ${
                           row.rank === 1
-                            ? "bg-amber-100 text-amber-900"
+                            ? "bg-amber-soft text-amber-strong"
                             : row.rank === 2
                               ? "bg-paper text-ink"
                               : row.rank === 3
-                                ? "bg-orange-50 text-orange-900"
+                                ? "bg-orange-500/12 text-orange-800"
                                 : "text-muted"
                         }`}
                       >

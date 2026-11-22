@@ -691,7 +691,7 @@ export function DeckComposerPanel({
         {actionBar()}
       </div>
 
-      <div className="space-y-4 rounded-xl border border-ink/8 bg-white p-3 sm:p-5 shadow-sm transition-shadow duration-300">
+      <div className="space-y-4 rounded-xl border border-ink/8 bg-surface p-3 sm:p-5 shadow-sm transition-shadow duration-300">
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <span className="text-xs font-bold text-muted">{labels.composerVisibilityLabel}</span>
           <div className="inline-flex rounded-xl border border-ink/10 bg-paper/50 p-0.5" role="group">
@@ -904,8 +904,8 @@ export function DeckComposerPanel({
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
               {suggestPremiumLocked ? (
                 <div className="text-center space-y-3 py-8">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-100 to-amber-50">
-                    <svg className="h-7 w-7 text-amber-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-amber/25 bg-amber-soft">
+                    <svg className="h-7 w-7 text-amber-strong" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
                     </svg>
                   </div>
@@ -1159,8 +1159,8 @@ export function DeckComposerPanel({
           const isDuplicate = r.front.trim().length > 0 && rows.some((o, oi) => oi !== rowIndex && o.front.trim().toLowerCase() === r.front.trim().toLowerCase());
           return (
               <div
-                className={`min-w-0 rounded-xl border bg-white p-3 sm:p-4 transition-all duration-200 ease-in-out shadow-sm ${
-                  isDuplicate ? "border-amber-400/60 ring-1 ring-amber-300/30" :
+                className={`min-w-0 rounded-xl border bg-surface p-3 sm:p-4 transition-all duration-200 ease-in-out shadow-sm ${
+                  isDuplicate ? "border-amber/60 ring-1 ring-amber/30" :
                   isDropTarget ? "border-leaf ring-2 ring-leaf/25 scale-[1.01] shadow-leaf/10" : "border-ink/8"
                 } ${isDragging ? "opacity-55" : ""}`}
                 key={r.id}
@@ -1177,7 +1177,7 @@ export function DeckComposerPanel({
                 onBlur={() => setDragOverIndex(null)}
               >
                 {isDuplicate ? (
-                  <p className="mb-2 text-[11px] font-bold text-amber-600">⚠ {labels.composerDuplicateHint}</p>
+                  <p className="mb-2 text-[11px] font-bold text-amber-strong">⚠ {labels.composerDuplicateHint}</p>
                 ) : null}
                 <div className="mb-2.5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-ink/6 pb-2.5">
                   <div className="flex min-w-0 items-center gap-1 flex-wrap">
@@ -1442,9 +1442,9 @@ export function DeckComposerPanel({
                 {/* ── Image search suggestions ── */}
                 {selectingRowId === r.id ? <p className="mt-2 text-xs text-muted" role="status">{labels.imgSelecting}</p> : null}
                 {imgSearchStatus[r.id] === "quota" ? (
-                  <div className="mt-2 rounded-lg border border-amber-300/40 bg-amber-50/60 p-2.5 text-center">
-                    <p className="text-xs font-bold text-amber-700">{labels.imgSearchQuotaTitle}</p>
-                    <p className="mt-0.5 text-[10px] text-amber-600">{labels.imgSearchQuotaBody}</p>
+                  <div className="mt-2 rounded-lg border border-amber/30 bg-amber-soft p-2.5 text-center">
+                    <p className="text-xs font-bold text-amber-strong">{labels.imgSearchQuotaTitle}</p>
+                    <p className="mt-0.5 text-[10px] text-amber-strong">{labels.imgSearchQuotaBody}</p>
                     <button
                       className={`${btnPrimary} mt-1.5 min-h-7 px-4 text-[10px] font-bold`}
                       onClick={() => router.push(`/${locale}/pricing`)}

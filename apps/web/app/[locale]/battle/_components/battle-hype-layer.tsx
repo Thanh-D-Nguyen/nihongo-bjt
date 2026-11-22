@@ -100,7 +100,7 @@ export function BattleHypeLayer({
       className="pointer-events-none absolute inset-x-0 top-4 z-30 flex justify-center"
     >
       <span
-        className={`inline-block rounded-full border border-amber-200/60 bg-gradient-to-r from-amber-50 to-orange-50 px-5 py-2 text-sm font-black tracking-wide text-amber-800 shadow-lg shadow-amber-500/10 ${
+        className={`inline-block rounded-full border border-amber/30 bg-amber-soft px-5 py-2 text-sm font-black tracking-wide text-amber-strong shadow-lg shadow-amber/10 ${
           exiting ? "battle-hype-text-exit" : "battle-hype-text"
         }`}
         key={hypeKey}
@@ -199,10 +199,10 @@ export function BattleComboIndicator({ combo }: ComboIndicatorProps) {
     <span
       className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-black tabular-nums ${
         level === "blaze"
-          ? "border-red-300/50 bg-red-50/80 text-red-600"
+          ? "border-sakura/30 bg-sakura-soft text-sakura-strong"
           : level === "fire"
-            ? "border-amber-300/50 bg-amber-50/80 text-amber-600"
-            : "border-orange-200/50 bg-orange-50/60 text-orange-600"
+            ? "border-amber/30 bg-amber-soft text-amber-strong"
+            : "border-orange-500/30 bg-orange-500/12 text-orange-800"
       } ${cls}`}
     >
       {level === "blaze" ? "🔥🔥" : level === "fire" ? "🔥" : "⚡"}

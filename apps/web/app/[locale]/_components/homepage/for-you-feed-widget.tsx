@@ -35,13 +35,13 @@ interface FeedResponse {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TYPE_META: Record<string, { emoji: string; label: string; color: string; href: string }> = {
-  flashcard_review: { emoji: "🃏", label: "Ôn thẻ", color: "bg-blue-500/10 text-blue-700", href: "/flashcards?tab=review" },
-  exercise: { emoji: "✏️", label: "Bài tập", color: "bg-emerald-500/10 text-emerald-700", href: "/exercises" },
+  flashcard_review: { emoji: "🃏", label: "Ôn thẻ", color: "bg-accent-soft text-brand-accent", href: "/flashcards?tab=review" },
+  exercise: { emoji: "✏️", label: "Bài tập", color: "bg-leaf-soft text-leaf-strong", href: "/exercises" },
   lesson: { emoji: "📖", label: "Bài học", color: "bg-purple-500/10 text-purple-700", href: "/levels" },
-  news_article: { emoji: "📰", label: "Đọc báo", color: "bg-amber-500/10 text-amber-700", href: "/news" },
-  quiz: { emoji: "📝", label: "Quiz", color: "bg-rose-500/10 text-rose-700", href: "/quiz" },
+  news_article: { emoji: "📰", label: "Đọc báo", color: "bg-amber-soft text-amber-strong", href: "/news" },
+  quiz: { emoji: "📝", label: "Quiz", color: "bg-sakura-soft text-sakura-strong", href: "/quiz" },
   vocabulary: { emoji: "あ", label: "Từ vựng", color: "bg-cyan-500/10 text-cyan-700", href: "/flashcards" },
-  grammar_point: { emoji: "文", label: "Ngữ pháp", color: "bg-indigo-500/10 text-indigo-700", href: "/grammar" },
+  grammar_point: { emoji: "文", label: "Ngữ pháp", color: "bg-violet-500/10 text-violet-700", href: "/grammar" },
 };
 
 /** Build item-specific URL using metadata when available */

@@ -50,25 +50,25 @@ function formatCountdown(targetDate: Date): string {
 }
 
 function levelBadgeColor(level: string): string {
-  if (level.includes("N1") || level.includes("advanced")) return "border-red-200 bg-red-50 text-red-700";
-  if (level.includes("N2")) return "border-orange-200 bg-orange-50 text-orange-700";
-  if (level.includes("N3") || level.includes("intermediate")) return "border-amber-200 bg-amber-50 text-amber-700";
-  if (level.includes("N4")) return "border-green-200 bg-green-50 text-green-700";
-  return "border-blue-200 bg-blue-50 text-blue-700";
+  if (level.includes("N1") || level.includes("advanced")) return "border-sakura/30 bg-sakura-soft text-sakura-strong";
+  if (level.includes("N2")) return "border-orange-500/30 bg-orange-500/12 text-orange-800";
+  if (level.includes("N3") || level.includes("intermediate")) return "border-amber/30 bg-amber-soft text-amber-strong";
+  if (level.includes("N4")) return "border-leaf/30 bg-leaf-soft text-leaf-strong";
+  return "border-accent/30 bg-accent-soft text-brand-accent";
 }
 
 type GameTypeMeta = { icon: string; label: string; color: string; bgGradient: string };
 
 const GAME_TYPE_META: Record<string, GameTypeMeta> = {
-  speed_duel: { icon: "⚡", label: "Speed", color: "text-amber-700", bgGradient: "from-amber-50 to-orange-50/60" },
-  kanji_vocab_duel: { icon: "漢", label: "Kanji", color: "text-indigo-700", bgGradient: "from-indigo-50 to-violet-50/60" },
-  listening_challenge: { icon: "🎧", label: "Listening", color: "text-cyan-700", bgGradient: "from-cyan-50 to-sky-50/60" },
-  business_roleplay: { icon: "💼", label: "Business", color: "text-emerald-700", bgGradient: "from-emerald-50 to-teal-50/60" },
-  boss_rush: { icon: "🔥", label: "Boss Rush", color: "text-red-700", bgGradient: "from-red-50 to-rose-50/60" },
-  mock_exam_sprint: { icon: "📋", label: "Mock Exam", color: "text-violet-700", bgGradient: "from-violet-50 to-purple-50/60" },
-  team_room: { icon: "👥", label: "Team", color: "text-blue-700", bgGradient: "from-blue-50 to-sky-50/60" },
-  tournament: { icon: "🏆", label: "Tournament", color: "text-yellow-700", bgGradient: "from-yellow-50 to-amber-50/60" },
-  custom: { icon: "⚙️", label: "Custom", color: "text-slate-700", bgGradient: "from-slate-50 to-gray-50/60" }
+  speed_duel: { icon: "⚡", label: "Speed", color: "text-amber-strong", bgGradient: "from-amber-soft/70 to-surface" },
+  kanji_vocab_duel: { icon: "漢", label: "Kanji", color: "text-indigo-700", bgGradient: "from-indigo-500/10 to-violet-500/5" },
+  listening_challenge: { icon: "🎧", label: "Listening", color: "text-cyan-700", bgGradient: "from-cyan-500/10 to-sky-500/5" },
+  business_roleplay: { icon: "💼", label: "Business", color: "text-leaf-strong", bgGradient: "from-leaf-soft/70 to-surface" },
+  boss_rush: { icon: "🔥", label: "Boss Rush", color: "text-sakura-strong", bgGradient: "from-sakura-soft/70 to-surface" },
+  mock_exam_sprint: { icon: "📋", label: "Mock Exam", color: "text-violet-700", bgGradient: "from-violet-500/10 to-purple-500/5" },
+  team_room: { icon: "👥", label: "Team", color: "text-brand-accent", bgGradient: "from-accent-soft/70 to-surface" },
+  tournament: { icon: "🏆", label: "Tournament", color: "text-amber-strong", bgGradient: "from-amber-soft/70 to-surface" },
+  custom: { icon: "⚙️", label: "Custom", color: "text-muted", bgGradient: "from-surface to-paper" }
 };
 
 const POOL_LABELS: Record<string, string> = {
@@ -194,7 +194,7 @@ export function BattleConfigsPanel({ locale, onSelectConfig, selectedConfigId }:
           <div className="flex items-center gap-1">
             <button
               aria-label={copy.scrollLeft}
-              className="grid h-11 w-11 place-items-center rounded-xl border border-ink/10 bg-white text-sm text-ink transition hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:opacity-30 sm:h-9 sm:w-9"
+              className="grid h-11 w-11 place-items-center rounded-xl border border-ink/10 bg-surface text-sm text-ink transition hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:opacity-30 sm:h-9 sm:w-9"
               disabled={!canScrollLeft}
               onClick={() => scroll("left")}
               type="button"
@@ -203,7 +203,7 @@ export function BattleConfigsPanel({ locale, onSelectConfig, selectedConfigId }:
             </button>
             <button
               aria-label={copy.scrollRight}
-              className="grid h-11 w-11 place-items-center rounded-xl border border-ink/10 bg-white text-sm text-ink transition hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:opacity-30 sm:h-9 sm:w-9"
+              className="grid h-11 w-11 place-items-center rounded-xl border border-ink/10 bg-surface text-sm text-ink transition hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:opacity-30 sm:h-9 sm:w-9"
               disabled={!canScrollRight}
               onClick={() => scroll("right")}
               type="button"
@@ -325,7 +325,7 @@ function ConfigCard({
           📚 {poolLabel}
         </span>
         {countdown && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700">
+          <span className="inline-flex items-center gap-1 rounded-full border border-amber/30 bg-amber-soft px-2 py-0.5 text-amber-strong">
             🕐 {countdown}
           </span>
         )}

@@ -1073,7 +1073,7 @@ export function QuizClient({
                 {labels.sessionBadgeActive}
               </span>
               {flaggedQuestions.size > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-700">
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-soft px-2.5 py-1 text-[10px] font-bold text-amber-strong">
                   <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M4 2v20l1-1 5 3 4-3 4 3 1-3V2H4zm12 13-4-2.5L8 15V4h8v11z" />
                   </svg>
@@ -1470,7 +1470,7 @@ export function ExamCard({
       className={`
         group relative flex flex-col overflow-hidden rounded-2xl border bg-surface shadow-sm
         transition hover:shadow-md
-        ${isOfficial ? "border-amber-200/60" : "border-ink/8"}
+        ${isOfficial ? "border-amber/30" : "border-ink/8"}
       `}
       onSubmit={onStart}
     >
@@ -1487,7 +1487,7 @@ export function ExamCard({
           )}
           <span
             className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-              isOfficial ? "bg-amber-50 text-amber-700" : "bg-accent/8 text-accent/70"
+              isOfficial ? "bg-amber-soft text-amber-strong" : "bg-accent/8 text-accent/70"
             }`}
           >
             {typeBadge}
@@ -1707,7 +1707,7 @@ export function QuizQuestionPanel({
           <div className="flex items-center gap-2">
             {/* Flag button */}
             <button
-              className={`rounded-full p-1.5 transition ${flagged ? "bg-amber-100 text-amber-600" : "text-muted hover:bg-paper hover:text-ink"}`}
+              className={`rounded-full p-1.5 transition ${flagged ? "bg-amber-soft text-amber-strong" : "text-muted hover:bg-paper hover:text-ink"}`}
               onClick={onToggleFlag}
               title={
                 flagged
@@ -1861,7 +1861,7 @@ export function QuizQuestionPanel({
             <button
               className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold transition ${
                 confidence === "sure"
-                  ? "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-300"
+                  ? "bg-leaf-soft text-leaf-strong ring-1 ring-leaf/30"
                   : "bg-ink/4 text-muted hover:bg-ink/8"
               }`}
               onClick={() => setConfidence((c) => (c === "sure" ? null : "sure"))}
@@ -1881,7 +1881,7 @@ export function QuizQuestionPanel({
             <button
               className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold transition ${
                 confidence === "guessing"
-                  ? "bg-amber-100 text-amber-700 ring-1 ring-amber-300"
+                  ? "bg-amber-soft text-amber-strong ring-1 ring-amber/30"
                   : "bg-ink/4 text-muted hover:bg-ink/8"
               }`}
               onClick={() => setConfidence((c) => (c === "guessing" ? null : "guessing"))}
@@ -2045,7 +2045,7 @@ function ResultsSummary({
           {(flaggedCount > 0 || guessedCount > 0) && (
             <div className="mx-auto mt-3 flex max-w-lg items-center justify-center gap-4">
               {flaggedCount > 0 && (
-                <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-strong">
                   <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
                     <line x1="4" x2="4" y1="22" y2="15" />
@@ -2054,7 +2054,7 @@ function ResultsSummary({
                 </span>
               )}
               {guessedCount > 0 && (
-                <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-500">
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-strong">
                   <svg
                     className="h-3.5 w-3.5"
                     fill="none"
@@ -2187,7 +2187,7 @@ function AchievementBadges({
       {earned.map((b) => (
         <span
           key={b.label}
-          className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 ring-1 ring-amber-200 animate-in fade-in duration-500"
+          className="inline-flex items-center gap-1.5 rounded-full bg-amber-soft px-3 py-1.5 text-xs font-bold text-amber-strong ring-1 ring-amber/30 animate-in fade-in duration-500"
         >
           <span className="text-sm">{b.emoji}</span>
           {b.label}
@@ -2488,7 +2488,7 @@ function ExamTimer({ seconds, warningLabel }: { seconds: number; warningLabel?: 
           isCritical
             ? "animate-pulse bg-sakura/15 text-sakura"
             : isWarning
-              ? "bg-amber-100 text-amber-700"
+              ? "bg-amber-soft text-amber-strong"
               : "bg-ink/5 text-ink"
         }
       `}

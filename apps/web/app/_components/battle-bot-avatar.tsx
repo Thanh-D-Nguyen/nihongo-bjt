@@ -82,10 +82,12 @@ const moodStyle: Record<
 };
 
 function RiveBotCanvas({
+  canvasClassName,
   fallback,
   rive,
   state
 }: {
+  canvasClassName?: string;
   fallback: string;
   rive: BattleBotRiveMetadata;
   state: BattleBotAnimationState;
@@ -155,7 +157,12 @@ function RiveBotCanvas({
     );
   }
 
-  return <RiveComponent aria-hidden className="h-full w-full" />;
+  return (
+    <RiveComponent
+      aria-hidden
+      className={canvasClassName ? `h-full w-full ${canvasClassName}` : "h-full w-full"}
+    />
+  );
 }
 
 class RiveBoundary extends React.Component<
@@ -217,11 +224,20 @@ export function BattleBotAvatar({
         className={`absolute inset-[12%] rounded-full blur-2xl transition-colors duration-300 ${style.aura}`}
       />
       <span
-        className={`relative z-10 grid h-full w-full min-h-0 min-w-0 place-items-center transition-transform duration-300 ${style.motion}`}
+        className={`relative z-10 grid h-full w-full min-h-0 min-w-0 place-items-center transition-transform duration-300 ${isCompanion ? "dark:overflow-hidden dark:rounded-full dark:bg-surface dark:ring-1 dark:ring-border-hover dark:shadow-md " : ""}${style.motion}`}
       >
         {rive.src ? (
           <RiveBoundary fallback={fallbackNode}>
-            <RiveBotCanvas fallback={fallback} rive={rive} state={state} />
+            <RiveBotCanvas
+              canvasClassName={
+                isCompanion
+                  ? "dark:scale-[1.26] dark:brightness-[0.80] dark:contrast-[1.06] dark:saturate-[1.12]"
+                  : undefined
+              }
+              fallback={fallback}
+              rive={rive}
+              state={state}
+            />
           </RiveBoundary>
         ) : (
           fallbackNode
@@ -230,7 +246,7 @@ export function BattleBotAvatar({
       {showSignal ? (
         <span
           aria-hidden
-          className={`absolute right-2 top-2 h-3 w-3 rounded-full border-2 border-surface shadow-sm ${style.badge}`}
+          className={`absolute right-2 top-2 h-3 w-3 rounded-full border-2 border-surface shadow-sm ${isCompanion ? "dark:z-20 " : ""}${style.badge}`}
         />
       ) : null}
     </span>
