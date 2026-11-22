@@ -1,0 +1,279 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-437",
+  "title": "Calibrate companion mascot dark-mode medallion luminance and backdrop",
+  "start_head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae",
+  "preexisting_changes": {
+    ".build/.buildSystem_debug": "c337257139e569398ce8bf081a54dbc7d1e0267d",
+    ".build/CACHEDIR.TAG": "b7ab0d883e974d20c05898291a6218954e18e5ef"
+  },
+  "spec": {
+    "problem": "After WEB-435 framed BattleBotAvatar variant=companion as a dark-mode circular disc with dark:brightness-[0.80] dark:contrast-[1.06] dark:saturate-[1.12], live production verification shows the disc interior still renders glaring light silver-gray because the baked #E0E0E0 Rive artboard sits at 0.7027 (>0.5) after brightness(0.80), so contrast(1.06) pushes it up to #b6b6b6 (relative luminance 0.4695, 8.83:1 jump over #0f172a paper — more than double the 0.22 ceiling).",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "AC1: Dark-scoped companion canvas filter and disc backdrop/vignette recalibrated so #E0E0E0 artboard rendered luminance is <= 0.22 (measured 0.1536 direct / 0.1289 at 90% resting opacity) while #EC5264 coral hue stays in red-coral family (353.0 deg, dH=0.0 deg) and cream face features stay distinguishable; light mode and arena/card variants remain untouched."
+      },
+      {
+        "id": "AC2",
+        "text": "AC2: WEB-435/WEB-437 component and contrast-calibration regression tests pin the calibrated classes, dark-only vignette, and W3C Filter Effects luminance/hue bounds."
+      },
+      {
+        "id": "AC3",
+        "text": "AC3: pnpm quality verify passes, WEB-437 closes VERIFIED via harness, and git status contains only owned files."
+      }
+    ],
+    "expected_behavior": "In dark mode only, BattleBotAvatar variant=companion applies dark:brightness-[0.50] dark:contrast-[1.18] dark:saturate-[1.28] over a dark:bg-paper dark:ring-border clipped disc with a dark-only inset vignette overlay (hidden dark:block), bringing the #E0E0E0 artboard to #6d6d6d (L=0.1536 <= 0.22 direct, 0.1289 at 90% resting opacity) while preserving exact coral-red #EC5264 hue (353.0 deg, dH=0.0 deg, S=74.6%, no channel clipping) and face/cream distinguishability, with light mode and arena/card variants pixel-identical.",
+    "observed_behavior": "In dark mode, BattleBotAvatar variant=companion applies dark:brightness-[0.80] dark:contrast-[1.06] dark:saturate-[1.12] over a dark:bg-surface dark:ring-border-hover disc, rendering the baked #E0E0E0 artboard at #b6b6b6 (L=0.4695 direct, 0.3831 at 90% resting opacity), which still reads as a bright silver-gray glare disc against the dark navy page.",
+    "rollback_plan": "Revert apps/web/app/_components/battle-bot-avatar.tsx and its WEB-437 test updates; no API, DB, admin, deploy, or .riv asset files are modified."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Dark-mode visual calibration of BattleBotAvatar companion variant in apps/web; no API, database, admin, or domain logic changes."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/battle-bot-avatar.test.tsx",
+      "test": "BattleBotAvatar > applies dark-only circular disc framing and glare softening for companion variant without altering light-mode or framed variants",
+      "expect": "companion canvas wrapper must clip into a dark-backdrop circular disc in dark mode"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "WEB-437 companion mascot dark-mode luminance and hue calibration > keeps the baked #E0E0E0 artboard at <= 0.22 luminance in dark mode while preserving coral #EC5264 hue and cream face readability",
+      "expect": "must be <= 0.22 in dark mode"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-22T06:28:17.143Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-22T06:28:17.484Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-22T06:28:17.961Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-22T06:29:58.124Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-22T06:31:45.561Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-22T07:19:21.223Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-22T07:19:35.577Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-22T06:29:57.904Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/battle-bot-avatar.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/battle-bot-avatar.test.tsx::BattleBotAvatar > applies dark-only circular disc framing and glare softening for companion variant without altering light-mode or framed variants",
+          "outcome": "FAIL",
+          "excerpt": "companion canvas wrapper must clip into a dark-backdrop circular disc in dark mode: expected [ 'relative', 'z-10', 'grid', …(14) ] to deeply equal ArrayContaining{…}",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-437 companion mascot dark-mode luminance and hue calibration > keeps the baked #E0E0E0 artboard at <= 0.22 luminance in dark mode while preserving coral #EC5264 hue and cream face readability",
+          "outcome": "FAIL",
+          "excerpt": "baked #E0E0E0 artboard rendered luminance (#b6b6b6, L=0.4695) must be <= 0.22 in dark mode: expected 0.4695152865505716 to be less than or equal to 0.22",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/battle-bot-avatar.test.tsx::BattleBotAvatar > applies dark-only circular disc framing and glare softening for companion variant without altering light-mode or framed variants": "companion canvas wrapper must clip into a dark-backdrop circular disc in dark mode",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-437 companion mascot dark-mode luminance and hue calibration > keeps the baked #E0E0E0 artboard at <= 0.22 luminance in dark mode while preserving coral #EC5264 hue and cream face readability": "must be <= 0.22 in dark mode"
+      },
+      "fingerprint": "209325c6426295d12cd5a423ef6de7d4022a70b233452258bd00799fb1fc468d"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-22T06:31:45.289Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/battle-bot-avatar.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/battle-bot-avatar.test.tsx::BattleBotAvatar > applies dark-only circular disc framing and glare softening for companion variant without altering light-mode or framed variants",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-437 companion mascot dark-mode luminance and hue calibration > keeps the baked #E0E0E0 artboard at <= 0.22 luminance in dark mode while preserving coral #EC5264 hue and cream face readability",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "73e33ee52cbf82bd1fbad3462c171469cf228d3bd63b3cb79435f304745aa757"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-22T06:36:29.226Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 695,
+        "executed": 695,
+        "passed": 695,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 888,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "73e33ee52cbf82bd1fbad3462c171469cf228d3bd63b3cb79435f304745aa757"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-22T06:48:58.360Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "VIOLATION",
+      "accounting": {
+        "discovered": 695,
+        "executed": 695,
+        "passed": 694,
+        "failed": 1,
+        "failed_new": 1,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 888,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 1
+      },
+      "message": "RATCHET_VIOLATION: 1 new debt item(s), 0 floor drop(s)",
+      "fingerprint": "73e33ee52cbf82bd1fbad3462c171469cf228d3bd63b3cb79435f304745aa757"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-22T07:03:51.949Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 695,
+        "executed": 695,
+        "passed": 695,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 888,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "73e33ee52cbf82bd1fbad3462c171469cf228d3bd63b3cb79435f304745aa757"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-22T07:19:20.760Z",
+      "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 695,
+        "executed": 695,
+        "passed": 695,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 888,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "73e33ee52cbf82bd1fbad3462c171469cf228d3bd63b3cb79435f304745aa757"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-22T07:19:35.569Z",
+    "head": "290d749ef1da75165f8ce09e1e7bb8a199c42cae",
+    "fingerprint": "73e33ee52cbf82bd1fbad3462c171469cf228d3bd63b3cb79435f304745aa757",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/_components/battle-bot-avatar.test.tsx": "4aad87be1c5c979a07cbcc1b2a8f7002f28dff60",
+      "apps/web/app/_components/battle-bot-avatar.tsx": "03dc05fe0257b0576cb1cd74ebb88854eed6fbff",
+      "apps/web/app/theme-contrast.regression.test.ts": "c40653016f85cc07a9aa75aa614bfc5adcc44f11"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

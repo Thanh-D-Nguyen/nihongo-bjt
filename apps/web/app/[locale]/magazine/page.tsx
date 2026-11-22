@@ -8,6 +8,7 @@ import vi from "../../../messages/vi.json";
 import { getServerApiBaseUrl } from "../../../lib/server-api-url";
 import { MagazinePageClient } from "./_components/magazine-page-client";
 import { MagazineGridSkeleton } from "./_components/magazine-skeleton";
+import { buildMagazineHref, normalizeMagazineKind } from "./magazine-kinds";
 
 const messages: Record<string, typeof vi> = { ja, vi, en };
 
@@ -55,8 +56,9 @@ interface MagazineResponse {
 
 async function fetchMagazine(kind?: string, page = 1): Promise<MagazineResponse | null> {
   try {
+    const normalizedKind = normalizeMagazineKind(kind);
     const params = new URLSearchParams();
-    if (kind && kind !== "all") params.set("kind", kind);
+    if (normalizedKind !== "all") params.set("kind", normalizedKind);
     params.set("page", String(page));
     params.set("limit", "12");
 
@@ -85,16 +87,13 @@ export default async function MagazinePage({
 }) {
   const { locale } = await params;
   const sp = await searchParams;
-  const kind = sp.kind ?? "all";
+  const kind = normalizeMagazineKind(sp.kind);
   const pageParam = Number(sp.page);
   const page = Number.isSafeInteger(pageParam) && pageParam > 0 ? pageParam : 1;
   const t = messages[locale] ?? messages.vi;
 
   const result = await fetchMagazine(kind, page);
-  const retryParams = new URLSearchParams();
-  if (kind !== "all") retryParams.set("kind", kind);
-  if (page > 1) retryParams.set("page", String(page));
-  const retryHref = `/${locale}/magazine${retryParams.size ? `?${retryParams.toString()}` : ""}`;
+  const retryHref = buildMagazineHref(locale, kind, page);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-paper via-paper to-accent/5 px-4 pb-28 pt-6 sm:px-6 lg:px-8">

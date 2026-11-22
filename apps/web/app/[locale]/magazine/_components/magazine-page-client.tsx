@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
+import { buildMagazineHref, normalizeMagazineKind, type MagazineFilterKind } from "../magazine-kinds";
 import { LotoPromoBanner } from "./loto-promo-banner";
 
 /* ─── Types ─── */
@@ -45,30 +46,37 @@ interface MagazineTranslations {
 
 /* ─── Filter bar ─── */
 
-const filterKeys = [
+const filterKeys: ReadonlyArray<{
+  key: MagazineFilterKind;
+  icon: string;
+  labelKey: keyof MagazineTranslations;
+}> = [
   { key: "all", icon: "📰", labelKey: "filterAll" },
   { key: "vocab", icon: "🌸", labelKey: "filterVocab" },
   { key: "weather", icon: "☀️", labelKey: "filterWeather" },
   { key: "horoscope", icon: "⭐", labelKey: "filterHoroscope" },
   { key: "loto", icon: "🎰", labelKey: "filterLoto" },
   { key: "bjt_phrase", icon: "💼", labelKey: "filterBjt" },
-] as const;
+];
 
 function MagazineFilter({ activeKind, t }: { activeKind: string; t: MagazineTranslations }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const normalizedActiveKind = normalizeMagazineKind(activeKind);
 
   const handleFilter = useCallback(
-    (kind: string) => {
+    (kind: MagazineFilterKind) => {
+      const normalizedKind = normalizeMagazineKind(kind);
       const params = new URLSearchParams(searchParams.toString());
-      if (kind === "all") {
+      if (normalizedKind === "all") {
         params.delete("kind");
       } else {
-        params.set("kind", kind);
+        params.set("kind", normalizedKind);
       }
       params.delete("page");
-      router.push(`${pathname}?${params.toString()}`);
+      const qs = params.toString();
+      router.push(qs ? `${pathname}?${qs}` : pathname);
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
     [router, pathname, searchParams],
@@ -78,7 +86,7 @@ function MagazineFilter({ activeKind, t }: { activeKind: string; t: MagazineTran
     <div className="-mx-4 mb-6 overflow-x-auto px-4 scrollbar-none sm:mx-0 sm:px-0">
       <div className="flex gap-2 pb-1">
         {filterKeys.map((f) => {
-          const isActive = activeKind === f.key;
+          const isActive = normalizedActiveKind === f.key;
           return (
             <button
               key={f.key}
@@ -145,8 +153,12 @@ function BentoCard({
   isHero?: boolean;
   t: MagazineTranslations;
 }) {
-  const icon = kindIcons[article.widgetKind] ?? "📄";
-  const gradient = kindGradients[article.widgetKind] ?? "from-accent/10 to-accent/5";
+  const normalizedWidgetKind = normalizeMagazineKind(article.widgetKind);
+  const icon = kindIcons[article.widgetKind] ?? kindIcons[normalizedWidgetKind] ?? "📄";
+  const gradient =
+    kindGradients[article.widgetKind] ??
+    kindGradients[normalizedWidgetKind] ??
+    "from-accent/10 to-accent/5";
   const isToday = new Date(article.publishDate).toDateString() === new Date().toDateString();
 
   const formattedDate = new Date(article.publishDate).toLocaleDateString(dateLocales[locale] ?? "vi-VN", {
@@ -265,12 +277,13 @@ function Pagination({
   t: MagazineTranslations;
 }) {
   if (totalPages <= 1) return null;
+  const normalizedKind = normalizeMagazineKind(kind);
 
   return (
     <nav className="mt-10 flex items-center justify-center gap-3">
       {page > 1 && (
         <Link
-          href={`/${locale}/magazine?kind=${kind}&page=${page - 1}`}
+          href={buildMagazineHref(locale, normalizedKind, page - 1)}
           scroll
           className="flex min-h-[48px] items-center rounded-xl border border-border bg-surface px-5 py-2.5 text-sm font-medium text-ink shadow-sm transition-all duration-200 motion-reduce:transition-none hover:border-border-hover hover:bg-paper active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35"
         >
@@ -284,7 +297,7 @@ function Pagination({
           return (
             <Link
               key={pageNum}
-              href={`/${locale}/magazine?kind=${kind}&page=${pageNum}`}
+              href={buildMagazineHref(locale, normalizedKind, pageNum)}
               scroll
               className={`flex size-12 items-center justify-center rounded-xl text-sm font-medium transition-all duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35 ${
                 pageNum === page
@@ -299,7 +312,7 @@ function Pagination({
       </div>
       {page < totalPages && (
         <Link
-          href={`/${locale}/magazine?kind=${kind}&page=${page + 1}`}
+          href={buildMagazineHref(locale, normalizedKind, page + 1)}
           scroll
           className="flex min-h-[48px] items-center rounded-xl border border-border bg-surface px-5 py-2.5 text-sm font-medium text-ink shadow-sm transition-all duration-200 motion-reduce:transition-none hover:border-border-hover hover:bg-paper active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35"
         >
@@ -327,6 +340,7 @@ export function MagazinePageClient({
   totalPages: number;
   t: MagazineTranslations;
 }) {
+  const normalizedKind = normalizeMagazineKind(kind);
   const todayStr = new Date().toDateString();
   const { todayArticles, olderArticles } = useMemo(() => {
     if (page !== 1) return { todayArticles: [], olderArticles: articles };
@@ -341,10 +355,10 @@ export function MagazinePageClient({
 
   return (
     <>
-      <MagazineFilter activeKind={kind} t={t} />
+      <MagazineFilter activeKind={normalizedKind} t={t} />
 
       {/* Loto Promo Banner — show on page 1 when not filtered to loto specifically */}
-      {page === 1 && kind !== "loto" && (
+      {page === 1 && normalizedKind !== "loto" && (
         <LotoPromoBanner
           locale={locale}
           labels={{
@@ -403,7 +417,7 @@ export function MagazinePageClient({
             </section>
           )}
 
-          <Pagination locale={locale} kind={kind} page={page} totalPages={totalPages} t={t} />
+          <Pagination locale={locale} kind={normalizedKind} page={page} totalPages={totalPages} t={t} />
         </>
       ) : (
         <MagazineEmptyState t={t} />

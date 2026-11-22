@@ -92,38 +92,57 @@ describe("BattleBotAvatar", () => {
     const wrapperTokens = canvasWrapper!.className.split(/\s+/).filter(Boolean);
     expect(
       wrapperTokens,
-      "companion canvas wrapper must clip into a themed circular disc in dark mode",
+      "companion canvas wrapper must clip into a dark-backdrop circular disc in dark mode",
     ).toEqual(
       expect.arrayContaining([
         "dark:overflow-hidden",
         "dark:rounded-full",
-        "dark:bg-surface",
+        "dark:bg-paper",
         "dark:ring-1",
-        "dark:ring-border-hover",
+        "dark:ring-border",
         "dark:shadow-md",
       ]),
     );
     // Light-mode wrapper classes must remain unchanged (no unprefixed clip/disc background).
     expect(wrapperTokens).not.toContain("overflow-hidden");
+    expect(wrapperTokens).not.toContain("bg-paper");
     expect(wrapperTokens).not.toContain("bg-surface");
     expect(wrapperTokens).not.toContain("ring-1");
 
     const canvasTokens = canvas!.className.split(/\s+/).filter(Boolean);
     expect(
       canvasTokens,
-      "companion Rive canvas must apply dark-only full-bleed framing and balanced glare softening",
+      "companion Rive canvas must apply WEB-437 calibrated dark-only filter values",
     ).toEqual(
       expect.arrayContaining([
         "h-full",
         "w-full",
         "dark:scale-[1.26]",
-        "dark:brightness-[0.80]",
-        "dark:contrast-[1.06]",
-        "dark:saturate-[1.12]",
+        "dark:brightness-[0.50]",
+        "dark:contrast-[1.18]",
+        "dark:saturate-[1.28]",
       ]),
     );
     expect(canvasTokens.some((token) => /^(?:dark:)?(?:invert|mix-blend-)/.test(token))).toBe(false);
     expect(canvasTokens.some((token) => /^(?:scale-|brightness-|contrast-|saturate-)/.test(token))).toBe(false);
+
+    const vignette = [...canvasWrapper!.children].find(
+      (child) => child !== canvas && child.getAttribute("aria-hidden") !== null,
+    ) as HTMLElement | undefined;
+    expect(
+      vignette,
+      "companion disc must include a dark-only inset vignette overlay inside the clipped wrapper",
+    ).toBeDefined();
+    const vignetteTokens = vignette!.className.split(/\s+/).filter(Boolean);
+    expect(vignetteTokens).toEqual(
+      expect.arrayContaining([
+        "pointer-events-none",
+        "hidden",
+        "dark:block",
+        "rounded-full",
+        "dark:shadow-[inset_0_0_10px_2px_rgba(15,23,42,0.55)]",
+      ]),
+    );
 
     const signalDot = [...rootSpan!.children].find((child) =>
       child.className.includes("right-2") && child.className.includes("top-2"),
@@ -150,6 +169,7 @@ describe("BattleBotAvatar", () => {
       expect(otherCanvas!.className).not.toContain("dark:brightness-");
       expect(otherCanvas!.className).not.toContain("dark:scale-");
       expect(otherCanvas!.parentElement!.className).not.toContain("dark:overflow-hidden");
+      expect(otherCanvas!.parentElement!.children.length).toBe(1);
     }
   });
 });
