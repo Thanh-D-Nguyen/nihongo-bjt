@@ -33,9 +33,9 @@ interface ScenarioListCopy {
 }
 
 const DIFFICULTY_COLORS: Record<string, string> = {
-  beginner: "bg-[var(--color-matcha)]/15 text-[var(--color-matcha)]",
-  intermediate: "bg-[var(--color-gold,#f59e0b)]/15 text-[var(--color-gold,#f59e0b)]",
-  advanced: "bg-[var(--color-sakura)]/15 text-[var(--color-sakura)]",
+  beginner: "bg-matcha-soft text-matcha-strong dark:text-matcha",
+  intermediate: "bg-amber-soft text-amber-strong",
+  advanced: "bg-sakura-soft text-sakura-strong",
 };
 
 export function ScenarioListClient({ locale, copy }: { locale: string; copy: ScenarioListCopy }) {
@@ -99,7 +99,7 @@ export function ScenarioListClient({ locale, copy }: { locale: string; copy: Sce
                 <button
                   key={s.id}
                   onClick={() => router.push(`/${locale}/scenarios/${s.id}`)}
-                  className="w-full rounded-2xl border border-ink/8 bg-surface p-4 text-left shadow-sm transition-all hover:shadow-md hover:border-ink/15 active:scale-[0.99]"
+                  className="w-full rounded-2xl border border-border bg-surface p-4 text-left shadow-sm transition-all hover:shadow-md hover:border-border-hover active:scale-[0.99]"
                 >
                   <div className="flex items-start gap-3">
                     <span className="text-2xl">{s.iconEmoji}</span>
@@ -111,7 +111,7 @@ export function ScenarioListClient({ locale, copy }: { locale: string; copy: Sce
                         <span
                           className={cn(
                             "rounded-full px-2 py-0.5 text-[10px] font-bold",
-                            DIFFICULTY_COLORS[s.difficulty],
+                            DIFFICULTY_COLORS[s.difficulty] ?? "bg-ink/10 text-ink",
                           )}
                         >
                           {copy.difficulty[s.difficulty] ?? s.difficulty}
@@ -139,8 +139,12 @@ export function ScenarioListClient({ locale, copy }: { locale: string; copy: Sce
 
       {error && (
         <div role="alert" className="text-center py-8">
-          <p className="text-sm text-muted">{copy.loadError}</p>
-          <button type="button" onClick={() => void load()} className="mt-3 min-h-12 rounded-xl px-4 font-semibold">
+          <p className="text-sm text-sakura-strong">{copy.loadError}</p>
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="mt-3 min-h-12 rounded-xl border border-border bg-surface px-4 font-semibold text-ink hover:bg-ink/5"
+          >
             {copy.retry}
           </button>
         </div>

@@ -114,4 +114,39 @@ describe("scenario list", () => {
     act(() => root.unmount());
     container.remove();
   });
+
+  it("renders WCAG AA contrast tokens on beginner, intermediate, advanced badges and load-error retry controls", async () => {
+    state.fetch.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify([
+          { ...scenarios[0], id: "s-beg", difficulty: "beginner" },
+          { ...scenarios[0], id: "s-int", difficulty: "intermediate" },
+          { ...scenarios[0], id: "s-adv", difficulty: "advanced" },
+        ]),
+        { status: 200 },
+      ),
+    );
+    const { container, root } = await mount("en");
+    const badges = [...container.querySelectorAll("span.rounded-full")];
+    expect(badges).toHaveLength(3);
+    expect(badges[0]?.className, "beginner badge must use WCAG AA matcha tokens").toContain("bg-matcha-soft");
+    expect(badges[0]?.className).toContain("text-matcha-strong");
+    expect(badges[0]?.className).toContain("dark:text-matcha");
+    expect(badges[1]?.className, "intermediate badge must use WCAG AA amber tokens").toContain("bg-amber-soft");
+    expect(badges[1]?.className).toContain("text-amber-strong");
+    expect(badges[1]?.className).not.toContain("--color-gold");
+    expect(badges[2]?.className, "advanced badge must use WCAG AA sakura tokens").toContain("bg-sakura-soft");
+    expect(badges[2]?.className).toContain("text-sakura-strong");
+    act(() => root.unmount());
+
+    state.fetch.mockResolvedValueOnce(new Response(JSON.stringify({ error: "down" }), { status: 503 }));
+    const errMount = await mount("en");
+    const alert = errMount.container.querySelector('[role="alert"]');
+    expect(alert?.querySelector("p")?.className, "load error message must use text-sakura-strong").toContain("text-sakura-strong");
+    const retryBtn = alert?.querySelector("button");
+    expect(retryBtn?.className, "retry button must declare explicit text-ink and surface/border tokens").toContain("text-ink");
+    expect(retryBtn?.className).toContain("bg-surface");
+    expect(retryBtn?.className).toContain("border-border");
+    act(() => errMount.root.unmount());
+  });
 });

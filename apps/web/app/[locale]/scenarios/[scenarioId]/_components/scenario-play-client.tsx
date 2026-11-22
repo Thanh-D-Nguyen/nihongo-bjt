@@ -158,10 +158,24 @@ export function ScenarioPlayClient({
   }
 
   if (!scenario) {
+    const isLoadError = error !== null && error !== copy.notFound;
     return (
       <div className="mx-auto max-w-2xl p-4 text-center py-20">
-        <p className="text-muted">{error ?? copy.notFound}</p>
-        {error !== copy.notFound && <button className="mt-4 min-h-12 rounded-xl border px-5" onClick={() => void load()}>{copy.retry}</button>}
+        <p
+          role={isLoadError ? "alert" : undefined}
+          className={isLoadError ? "text-sm text-sakura-strong" : "text-muted"}
+        >
+          {error ?? copy.notFound}
+        </p>
+        {error !== copy.notFound && (
+          <button
+            type="button"
+            className="mt-4 min-h-12 rounded-xl border border-border bg-surface px-5 font-semibold text-ink hover:bg-ink/5"
+            onClick={() => void load()}
+          >
+            {copy.retry}
+          </button>
+        )}
       </div>
     );
   }
@@ -175,14 +189,14 @@ export function ScenarioPlayClient({
 
     return (
       <div className="mx-auto max-w-2xl p-4">
-        <div className="rounded-2xl border border-ink/8 bg-surface p-6 shadow-sm text-center">
+        <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm text-center">
           <p className="text-4xl">
             {pct >= 80 ? "🎉" : pct >= 50 ? "👍" : "💪"}
           </p>
           <h2 className="mt-3 text-lg font-black text-ink">
             {locale === "ja" ? scenario.titleJa || scenario.titleVi : scenario.titleVi}
           </h2>
-          <p className="mt-2 text-2xl font-black text-[var(--color-matcha)]">
+          <p className="mt-2 text-2xl font-black text-matcha-strong dark:text-matcha">
             {copy.score.replace("{total}", String(totalPoints)).replace("{max}", String(maxPossible))}
           </p>
           <p className="mt-1 text-sm text-muted">
@@ -194,10 +208,10 @@ export function ScenarioPlayClient({
               <div
                 key={i}
                 className={cn(
-                  "rounded-xl p-3 text-xs",
+                  "rounded-xl border p-3 text-xs text-ink",
                   r.isOptimal
-                    ? "bg-[var(--color-matcha)]/10"
-                    : "bg-[var(--color-sakura)]/10",
+                    ? "border-matcha-strong bg-matcha/10 dark:border-matcha"
+                    : "border-sakura-strong bg-sakura/10",
                 )}
               >
                 <span className="font-bold">{copy.stepLabel.replace("{step}", String(r.stepOrder))}</span>{" "}
@@ -209,6 +223,7 @@ export function ScenarioPlayClient({
 
           <div className="mt-6 flex gap-3 justify-center">
             <button
+              type="button"
               onClick={() => {
                 setCurrentStep(0);
                 setResults([]);
@@ -217,13 +232,14 @@ export function ScenarioPlayClient({
                 setSelectedChoice(null);
                 setFeedback(null);
               }}
-              className="rounded-xl bg-[var(--color-matcha)] px-6 py-2.5 text-sm font-bold text-white"
+              className="rounded-xl bg-matcha-strong px-6 py-2.5 text-sm font-bold text-white"
             >
               {copy.replay}
             </button>
             <button
+              type="button"
               onClick={() => router.push(`/${locale}/scenarios`)}
-              className="rounded-xl border border-ink/15 px-6 py-2.5 text-sm font-medium text-muted"
+              className="rounded-xl border border-border bg-surface px-6 py-2.5 text-sm font-medium text-muted hover:text-ink hover:bg-ink/5"
             >
               {copy.back}
             </button>
@@ -248,7 +264,7 @@ export function ScenarioPlayClient({
       {/* Progress bar */}
       <div className="h-1 w-full rounded-full bg-ink/10 mb-4">
         <div
-          className="h-full rounded-full bg-[var(--color-matcha)] transition-all duration-300"
+          className="h-full rounded-full bg-matcha-strong dark:bg-matcha transition-all duration-300"
           style={{
             width: `${((currentStep + 1) / scenario.steps.length) * 100}%`,
           }}
@@ -256,7 +272,7 @@ export function ScenarioPlayClient({
       </div>
 
       {/* Situation */}
-      <div className="rounded-2xl border border-ink/8 bg-surface p-4 shadow-sm">
+      <div className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
         {step.speakerName && (
           <div className="flex items-center gap-2 mb-3">
             <div className="h-8 w-8 rounded-full bg-ink/10 flex items-center justify-center text-sm">
@@ -286,16 +302,21 @@ export function ScenarioPlayClient({
       {/* Choices */}
       <div className="mt-4 space-y-2">
         {step.choices.map((c) => {
-          let choiceStyle = "border-ink/10 bg-paper hover:bg-ink/5";
+          let choiceStyle = selectedChoice
+            ? "border-border bg-paper cursor-default"
+            : "border-border bg-surface hover:border-border-hover hover:bg-ink/5";
           if (selectedChoice === c.choiceKey && feedback) {
             choiceStyle = feedback.isOptimal
-              ? "border-[var(--color-matcha)] bg-[var(--color-matcha)]/10"
-              : "border-[var(--color-sakura)] bg-[var(--color-sakura)]/10";
+              ? "border-matcha-strong bg-matcha/10"
+              : "border-sakura-strong bg-sakura/10";
+          } else if (selectedChoice === c.choiceKey) {
+            choiceStyle = "border-accent bg-surface cursor-wait";
           }
 
           return (
             <button
               key={c.choiceKey}
+              type="button"
               disabled={!!selectedChoice}
               onClick={() => void handleChoice(step, c.choiceKey)}
               className={cn(
@@ -304,7 +325,7 @@ export function ScenarioPlayClient({
                 !selectedChoice && "active:scale-[0.98]",
               )}
             >
-              <span className="font-bold text-ink/40 mr-2">
+              <span className="font-bold text-ink/70 mr-2">
                 {c.choiceKey}.
               </span>
               <span className="text-ink">{locale === "ja" ? c.textJa || c.textVi : c.textVi}</span>
@@ -317,19 +338,19 @@ export function ScenarioPlayClient({
       </div>
 
       {/* Feedback */}
-      {error && <p role="alert" className="mt-3 text-sm text-[var(--color-sakura)]">{error}</p>}
+      {error && <p role="alert" className="mt-3 text-sm text-sakura-strong">{error}</p>}
       {feedback && (
         <div
           className={cn(
-            "mt-4 rounded-xl p-3 text-sm animate-in fade-in slide-in-from-bottom-2",
+            "mt-4 rounded-xl border p-3 text-sm animate-in fade-in slide-in-from-bottom-2",
             feedback.isOptimal
-              ? "bg-[var(--color-matcha)]/10 border border-[var(--color-matcha)]/20"
-              : "bg-[var(--color-sakura)]/10 border border-[var(--color-sakura)]/20",
+              ? "bg-matcha/10 border-matcha-strong"
+              : "bg-sakura/10 border-sakura-strong",
           )}
         >
           <div className="flex items-center gap-2 mb-1">
             <span>{feedback.isOptimal ? "✅" : "💡"}</span>
-            <span className="font-bold text-xs">
+            <span className="font-bold text-xs text-ink">
               {feedback.isOptimal ? copy.optimalAnswer : copy.suboptimalAnswer} (+
               {feedback.pointsAwarded} {copy.points})
             </span>
@@ -343,9 +364,10 @@ export function ScenarioPlayClient({
       {/* Next button */}
       {feedback && (
         <button
+          type="button"
           disabled={submitting}
           onClick={() => void handleNext()}
-          className="mt-4 min-h-12 w-full rounded-xl bg-[var(--color-matcha)] py-3 text-sm font-bold text-white shadow-sm transition-transform active:scale-[0.97]"
+          className="mt-4 min-h-12 w-full rounded-xl bg-matcha-strong py-3 text-sm font-bold text-white shadow-sm transition-transform active:scale-[0.97] disabled:cursor-wait"
         >
           {currentStep >= scenario.steps.length - 1
             ? copy.showResult

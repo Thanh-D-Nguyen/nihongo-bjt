@@ -541,3 +541,217 @@ describe("WEB-437 companion mascot dark-mode luminance and hue calibration", () 
   expect(rgbContrast(bg, outline), "artboard background vs dark outline contrast").toBeGreaterThanOrEqual(3.5);
  });
 });
+
+describe("WEB-439 scenarios answer-flow contrast sweep", () => {
+ type Rgb = [number, number, number];
+ const parseRgb = (hex: string): Rgb => {
+  const parts = hex.match(/[a-f\d]{2}/gi)!.map((v) => parseInt(v, 16) / 255);
+  return [parts[0], parts[1], parts[2]];
+ };
+ const blendRgb = (fgHex: string, alpha: number, bgRgb: Rgb): Rgb => {
+  const fg = parseRgb(fgHex);
+  return [
+   fg[0] * alpha + bgRgb[0] * (1 - alpha),
+   fg[1] * alpha + bgRgb[1] * (1 - alpha),
+   fg[2] * alpha + bgRgb[2] * (1 - alpha),
+  ];
+ };
+ const rgbLum = ([r, g, b]: Rgb) => {
+  const lin = (v: number) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+ };
+ const rgbCr = (a: Rgb, b: Rgb) => {
+  const [hi, lo] = [rgbLum(a), rgbLum(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+ };
+
+ it("defines --color-matcha-strong for both themes without changing --color-matcha and meets WCAG AA ratios across all scenario token pairs", () => {
+  const lightMatchaStrong = tokenIn(lightBlock, "matcha-strong");
+  const darkMatchaStrong = tokenIn(darkBlock, "matcha-strong");
+  const fallbackMatchaStrong = tokenIn(fallbackBlock, "matcha-strong");
+
+  expect(lightMatchaStrong, "--color-matcha-strong must be defined in light, dark, and system fallback themes").toBe("#15803d");
+  expect(darkMatchaStrong, "--color-matcha-strong must be defined in light, dark, and system fallback themes").toBe("#15853e");
+  expect(fallbackMatchaStrong, "system fallback --color-matcha-strong must match .dark").toBe(darkMatchaStrong);
+
+  // Base --color-matcha must NOT be changed (out-of-scope features depend on it).
+  expect(tokenIn(lightBlock, "matcha"), "light --color-matcha must remain unchanged").toBe("#22c55e");
+  expect(tokenIn(darkBlock, "matcha"), "dark --color-matcha must remain unchanged").toBe("#4ade80");
+  expect(tokenIn(fallbackBlock, "matcha"), "fallback --color-matcha must remain unchanged").toBe("#4ade80");
+
+  const white = parseRgb("#ffffff");
+  const themes = [
+   { name: "light", block: lightBlock },
+   { name: "dark", block: darkBlock },
+  ] as const;
+
+  for (const { name, block } of themes) {
+   const ink = tokenIn(block, "ink")!;
+   const muted = tokenIn(block, "muted")!;
+   const paper = parseRgb(tokenIn(block, "paper")!);
+   const surface = parseRgb(tokenIn(block, "surface")!);
+   const matcha = tokenIn(block, "matcha")!;
+   const matchaSoft = parseRgb(tokenIn(block, "matcha-soft")!);
+   const matchaStrong = tokenIn(block, "matcha-strong")!;
+   const sakura = tokenIn(block, "sakura")!;
+   const sakuraSoft = parseRgb(tokenIn(block, "sakura-soft")!);
+   const sakuraStrong = tokenIn(block, "sakura-strong")!;
+   const amberSoft = parseRgb(tokenIn(block, "amber-soft")!);
+   const amberStrong = tokenIn(block, "amber-strong")!;
+
+   const matcha10Paper = blendRgb(matcha, 0.1, paper);
+   const sakura10Paper = blendRgb(sakura, 0.1, paper);
+   const matcha10Surface = blendRgb(matcha, 0.1, surface);
+   const sakura10Surface = blendRgb(sakura, 0.1, surface);
+   const trackPaper = blendRgb(ink, 0.1, paper);
+
+   // 1. Primary buttons (white on matcha-strong) — before: 2.28 light / 1.74 dark; after: 5.02 light / 4.71 dark.
+   expect(rgbCr(white, parseRgb(matcha)), `${name} before: white on base matcha failed AA`).toBeLessThan(4.5);
+   expect(rgbCr(white, parseRgb(matchaStrong)), `${name} after: white on matcha-strong`).toBeGreaterThanOrEqual(4.5);
+
+   // 2. Choice key prefix (ink/70 vs ink/40) — before: 2.52 / 3.58; after: 6.44 / 8.41 (paper), >=5.97 (tints).
+   expect(rgbCr(blendRgb(ink, 0.4, paper), paper), `${name} before: ink/40 on paper failed AA`).toBeLessThan(4.5);
+   for (const [bgName, bg] of [
+    ["paper", paper],
+    ["surface", surface],
+    ["matcha/10(paper)", matcha10Paper],
+    ["sakura/10(paper)", sakura10Paper],
+   ] as const) {
+    expect(rgbCr(blendRgb(ink, 0.7, bg), bg), `${name} after: ink/70 on ${bgName}`).toBeGreaterThanOrEqual(4.5);
+   }
+
+   // 3. Level badges (beginner, intermediate, advanced, unknown fallback).
+   const badgeMatchaText = name === "light" ? matchaStrong : matcha;
+   expect(rgbCr(parseRgb(badgeMatchaText), matchaSoft), `${name} after: beginner badge on matcha-soft`).toBeGreaterThanOrEqual(4.5);
+   expect(rgbCr(parseRgb(amberStrong), amberSoft), `${name} after: intermediate badge on amber-soft`).toBeGreaterThanOrEqual(4.5);
+   expect(rgbCr(parseRgb(sakuraStrong), sakuraSoft), `${name} after: advanced badge on sakura-soft`).toBeGreaterThanOrEqual(4.5);
+   expect(rgbCr(parseRgb(ink), blendRgb(ink, 0.1, surface)), `${name} after: fallback badge on ink/10(surface)`).toBeGreaterThanOrEqual(4.5);
+
+   // 4 & 6b. Selected-choice and feedback-panel state borders (matcha-strong / sakura-strong) vs paper AND inner tint.
+   expect(rgbCr(parseRgb(matchaStrong), paper), `${name} after: optimal border matcha-strong vs paper`).toBeGreaterThanOrEqual(3.0);
+   expect(rgbCr(parseRgb(matchaStrong), matcha10Paper), `${name} after: optimal border matcha-strong vs matcha/10(paper)`).toBeGreaterThanOrEqual(3.0);
+   expect(rgbCr(parseRgb(sakuraStrong), paper), `${name} after: suboptimal border sakura-strong vs paper`).toBeGreaterThanOrEqual(3.0);
+   expect(rgbCr(parseRgb(sakuraStrong), sakura10Paper), `${name} after: suboptimal border sakura-strong vs sakura/10(paper)`).toBeGreaterThanOrEqual(3.0);
+   expect(rgbCr(blendRgb(matcha, 0.2, paper), paper), `${name} before: feedback matcha/20 border failed 3:1`).toBeLessThan(3.0);
+   expect(rgbCr(blendRgb(sakura, 0.2, paper), paper), `${name} before: feedback sakura/20 border failed 3:1`).toBeLessThan(3.0);
+
+   // 5. Error text (sakura-strong on paper).
+   expect(rgbCr(parseRgb(sakuraStrong), paper), `${name} after: error text sakura-strong on paper`).toBeGreaterThanOrEqual(4.5);
+
+   // 6a. Feedback verdict (explicit text-ink) and feedback body (text-muted) on tinted panels.
+   expect(rgbCr(parseRgb(ink), matcha10Paper), `${name} after: verdict ink on matcha/10(paper)`).toBeGreaterThanOrEqual(4.5);
+   expect(rgbCr(parseRgb(ink), sakura10Paper), `${name} after: verdict ink on sakura/10(paper)`).toBeGreaterThanOrEqual(4.5);
+   expect(rgbCr(parseRgb(muted), matcha10Paper), `${name} after: feedback muted on matcha/10(paper)`).toBeGreaterThanOrEqual(4.5);
+   expect(rgbCr(parseRgb(muted), sakura10Paper), `${name} after: feedback muted on sakura/10(paper)`).toBeGreaterThanOrEqual(4.5);
+
+   // 7. Progress bar fill (matcha-strong in light, matcha in dark) on ink/10 track.
+   const progressFill = name === "light" ? matchaStrong : matcha;
+   expect(rgbCr(parseRgb(progressFill), trackPaper), `${name} after: progress fill on ink/10(paper)`).toBeGreaterThanOrEqual(3.0);
+
+   // 8. Summary score readout (matcha-strong in light, matcha in dark) on surface.
+   const summaryScore = name === "light" ? matchaStrong : matcha;
+   expect(rgbCr(parseRgb(summaryScore), surface), `${name} after: summary score on surface`).toBeGreaterThanOrEqual(4.5);
+
+   // 9. Summary per-step result rows (explicit text-ink + strong state borders vs surface & inner tint).
+   const summaryOptimalBorder = name === "light" ? matchaStrong : matcha;
+   expect(rgbCr(parseRgb(summaryOptimalBorder), surface), `${name} after: summary optimal border vs surface`).toBeGreaterThanOrEqual(3.0);
+   expect(rgbCr(parseRgb(summaryOptimalBorder), matcha10Surface), `${name} after: summary optimal border vs matcha/10(surface)`).toBeGreaterThanOrEqual(3.0);
+   expect(rgbCr(parseRgb(sakuraStrong), surface), `${name} after: summary suboptimal border vs surface`).toBeGreaterThanOrEqual(3.0);
+   expect(rgbCr(parseRgb(sakuraStrong), sakura10Surface), `${name} after: summary suboptimal border vs sakura/10(surface)`).toBeGreaterThanOrEqual(3.0);
+   expect(rgbCr(parseRgb(ink), matcha10Surface), `${name} after: summary optimal text-ink`).toBeGreaterThanOrEqual(4.5);
+   expect(rgbCr(parseRgb(ink), sakura10Surface), `${name} after: summary suboptimal text-ink`).toBeGreaterThanOrEqual(4.5);
+
+   // 10. Retry buttons and secondary metadata (step counter, speaker role, empty/back text).
+   expect(rgbCr(parseRgb(ink), surface), `${name} after: retry/primary ink on surface`).toBeGreaterThanOrEqual(4.5);
+   expect(rgbCr(parseRgb(muted), paper), `${name} after: secondary muted text on paper`).toBeGreaterThanOrEqual(4.5);
+   expect(rgbCr(parseRgb(muted), surface), `${name} after: secondary muted text on surface`).toBeGreaterThanOrEqual(4.5);
+  }
+
+  // Pin light-mode before-state failures explicitly so regressions cannot hide behind averages.
+  const lightSurface = parseRgb(tokenIn(lightBlock, "surface")!);
+  const lightPaper = parseRgb(tokenIn(lightBlock, "paper")!);
+  expect(rgbCr(parseRgb("#22c55e"), blendRgb("#22c55e", 0.15, lightSurface)), "before light beginner badge failed AA").toBeLessThan(4.5);
+  expect(rgbCr(parseRgb("#f59e0b"), blendRgb("#f59e0b", 0.15, lightSurface)), "before light intermediate #f59e0b badge failed AA").toBeLessThan(4.5);
+  expect(rgbCr(parseRgb("#dc2626"), blendRgb("#dc2626", 0.15, lightSurface)), "before light advanced badge failed AA").toBeLessThan(4.5);
+  expect(rgbCr(parseRgb("#f87171"), blendRgb("#f87171", 0.15, parseRgb(tokenIn(darkBlock, "surface")!))), "before dark advanced badge failed AA").toBeLessThan(4.5);
+  expect(rgbCr(parseRgb("#22c55e"), lightPaper), "before light optimal border failed 3:1").toBeLessThan(3.0);
+  expect(rgbCr(parseRgb("#22c55e"), blendRgb(tokenIn(lightBlock, "ink")!, 0.1, lightPaper)), "before light progress fill failed 3:1").toBeLessThan(3.0);
+  expect(rgbCr(parseRgb("#22c55e"), lightSurface), "before light summary score failed 3:1").toBeLessThan(3.0);
+ });
+
+ it("migrates scenario-play-client.tsx off low-contrast base tokens and pins explicit verdict, error, progress, and summary contrast", () => {
+  const file = "app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.tsx";
+  const source = readFileSync(new URL(file, webRoot), "utf8");
+  const lines = source.split("\n");
+
+  const forbidden = new RegExp([
+   "bg-\\[var\\(--color-matcha\\)\\](?!/)",
+   "(?<![\\w:-])bg-matcha(?![\\w/-])",
+   "(?<![\\w:-])text-ink/40(?![\\w-])",
+   "(?<![\\w:-])text-\\[var\\(--color-matcha\\)\\]",
+   "(?<![\\w:-])text-matcha(?![\\w-])",
+   "(?<![\\w:-])text-\\[var\\(--color-sakura\\)\\]",
+   "(?<![\\w:-])text-sakura(?![\\w-])",
+   "(?<![\\w:-])border-\\[var\\(--color-matcha\\)\\](?:/\\d+)?",
+   "(?<![\\w:-])border-matcha(?:/\\d+)?(?![\\w-])",
+   "(?<![\\w:-])border-\\[var\\(--color-sakura\\)\\](?:/\\d+)?",
+   "(?<![\\w:-])border-sakura(?:/\\d+)?(?![\\w-])",
+  ].join("|"));
+
+  const violations: string[] = [];
+  lines.forEach((line, index) => {
+   const match = line.match(forbidden);
+   if (match) violations.push(`scenario-play-client.tsx:${index + 1} (${match[0]})`);
+  });
+  expect(violations, "scenario-play-client.tsx must not retain sub-AA matcha/sakura base tokens or text-ink/40").toEqual([]);
+
+  // Pin every required fix in scenario-play-client.tsx.
+  const primaryMatchaButtons = lines.filter((l) => l.includes("bg-matcha-strong") && l.includes("text-white"));
+  expect(primaryMatchaButtons.length, "both Replay and Next/Show Result primary buttons must use bg-matcha-strong text-white").toBeGreaterThanOrEqual(2);
+  expect(source, "choice key letter must use text-ink/70").toContain("text-ink/70");
+  expect(source, "selected optimal choice and feedback borders must use border-matcha-strong").toContain("border-matcha-strong");
+  expect(source, "selected suboptimal choice and feedback borders must use border-sakura-strong").toContain("border-sakura-strong");
+  expect(source, "error text must use text-sakura-strong").toContain("text-sakura-strong");
+  expect(source, "progress bar fill must use bg-matcha-strong dark:bg-matcha").toContain("bg-matcha-strong dark:bg-matcha");
+  expect(source, "summary score must use text-matcha-strong dark:text-matcha").toContain("text-matcha-strong dark:text-matcha");
+
+  const verdictLine = lines.find((l) => l.includes("font-bold text-xs") && l.includes("text-ink"));
+  expect(verdictLine, "feedback verdict line must specify explicit text-ink").toBeTruthy();
+
+  const summaryRowLine = lines.find((l) => l.includes("rounded-xl border p-3 text-xs text-ink"));
+  expect(summaryRowLine, "summary step rows must specify explicit border and text-ink").toBeTruthy();
+ });
+
+ it("migrates scenario-list-client.tsx difficulty badges and error retry controls to WCAG AA theme tokens", () => {
+  const file = "app/[locale]/scenarios/_components/scenario-list-client.tsx";
+  const source = readFileSync(new URL(file, webRoot), "utf8");
+  const lines = source.split("\n");
+
+  const forbidden = new RegExp([
+   "--color-gold",
+   "#f59e0b",
+   "bg-\\[var\\(--color-matcha\\)\\]/15",
+   "bg-\\[var\\(--color-sakura\\)\\]/15",
+   "(?<![\\w:-])text-\\[var\\(--color-matcha\\)\\]",
+   "(?<![\\w:-])text-\\[var\\(--color-sakura\\)\\]",
+   "(?<![\\w:-])text-matcha(?![\\w-])",
+   "(?<![\\w:-])text-sakura(?![\\w-])",
+  ].join("|"));
+
+  const violations: string[] = [];
+  lines.forEach((line, index) => {
+   const match = line.match(forbidden);
+   if (match) violations.push(`scenario-list-client.tsx:${index + 1} (${match[0]})`);
+  });
+  expect(violations, "scenario-list-client.tsx must not retain low-contrast badge tokens or undefined --color-gold").toEqual([]);
+
+  expect(source, "beginner badge must use bg-matcha-soft text-matcha-strong dark:text-matcha").toContain("bg-matcha-soft text-matcha-strong dark:text-matcha");
+  expect(source, "intermediate badge must use bg-amber-soft text-amber-strong").toContain("bg-amber-soft text-amber-strong");
+  expect(source, "advanced badge must use bg-sakura-soft text-sakura-strong").toContain("bg-sakura-soft text-sakura-strong");
+  expect(source, "load error message must use text-sakura-strong").toContain("text-sakura-strong");
+  const retryBlock = source.match(/role="alert"[\s\S]*?<button([\s\S]*?)<\/button>/)?.[1] ?? "";
+  expect(retryBlock, "retry button must specify explicit text-ink and surface/border tokens").toContain("text-ink");
+  expect(retryBlock, "retry button must specify bg-surface").toContain("bg-surface");
+  expect(retryBlock, "retry button must specify border-border").toContain("border-border");
+ });
+});

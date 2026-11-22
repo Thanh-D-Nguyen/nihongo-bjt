@@ -37,6 +37,7 @@
   --color-warning-soft: #fffbeb;
   --color-matcha: #22c55e;
   --color-matcha-soft: #f0fdf4;
+  --color-matcha-strong: #15803d;
   --color-focus-surface: #eff6ff;
 
   /* ── Brand extended ── */
@@ -151,6 +152,7 @@
   --color-warning-soft: #451a03;
   --color-matcha: #4ade80;
   --color-matcha-soft: #052e23;
+  --color-matcha-strong: #15853e;
   --color-focus-surface: #1e293b;
 
   /* Brand extended (dark variants) */
@@ -238,6 +240,7 @@
     --color-warning-soft: #451a03;
     --color-matcha: #4ade80;
     --color-matcha-soft: #052e23;
+    --color-matcha-strong: #15853e;
     --color-focus-surface: #1e293b;
     --color-brand-navy: #93c5fd;
     --color-brand-navy-hover: #bfdbfe;
