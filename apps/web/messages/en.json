@@ -1023,7 +1023,18 @@
       "ocean-calm": "An airy, calm blue reading surface.",
       "gold-calligraphy": "An elegant ink-and-gold combination."
     },
-    "easy": "Easy"
+    "easy": "Easy",
+    "revengeAnswerError": "Could not submit your answer. Please try again.",
+    "revengeClose": "Close",
+    "revengeCompleteScore": "{correct}/{total} correct ({percent}%)",
+    "revengeCompleteTitle": "Missed-question review complete!",
+    "revengeLoadError": "Could not load missed questions. Please try again.",
+    "revengeLoading": "Loading missed questions...",
+    "revengeQuestionCounter": "Question {current}/{total}",
+    "revengeRetry": "Try again",
+    "revengeStartCta": "Start review",
+    "revengeSubtitle": "{count} missed questions to review. Try again to lock them in.",
+    "revengeTitle": "Review Missed Questions"
   },
   "decks": {
     "title": "deck",

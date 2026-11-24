@@ -165,6 +165,17 @@ export interface FlashcardLabels {
   stylePickerSelectTheme: string;
   stylePickerTitle: string;
   stylePickerUnnamed: string;
+  revengeAnswerError?: string;
+  revengeClose?: string;
+  revengeCompleteScore?: string;
+  revengeCompleteTitle?: string;
+  revengeLoadError?: string;
+  revengeLoading?: string;
+  revengeQuestionCounter?: string;
+  revengeRetry?: string;
+  revengeStartCta?: string;
+  revengeSubtitle?: string;
+  revengeTitle?: string;
 }
 
 function imageFlowLabel(step: ImageFlowState["step"], labels: FlashcardLabels): string | null {

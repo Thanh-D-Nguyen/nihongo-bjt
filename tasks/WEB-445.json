@@ -1,0 +1,712 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-445",
+  "title": "Ôn tập review-first default, embed localized revenge widget, and redirect /cardgen",
+  "start_head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0",
+  "preexisting_changes": {
+    ".build/.buildSystem_debug": "c337257139e569398ce8bf081a54dbc7d1e0267d",
+    ".build/CACHEDIR.TAG": "b7ab0d883e974d20c05898291a6218954e18e5ef"
+  },
+  "spec": {
+    "problem": "Visiting /{locale}/flashcards without a ?tab param currently defaults to the Library deck list even when the learner has due SRS cards; RevengeModeWidget is disconnected from Ôn tập and contains hardcoded mixed English/Vietnamese copy while silently swallowing fetch/submit errors; /{locale}/cardgen remains a standalone page duplicating AutoGenDialog in the Flashcards library.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "1. /{locale}/flashcards with no explicit ?tab param (and no cloneToken/deckId) opens the Review tab directly when the existing /api/flashcards/reviews/due fetch returns due > 0 (without adding any new API calls), and opens Library when due === 0; explicit ?tab=review, ?tab=library, valid ?deckId, and ?cloneToken always win and manual tab selection is never overridden. 2. RevengeModeWidget is embedded at the top of the Review tab inside FlashcardsPageClient with all copy (title, subtitle, start CTA, loading status, error/retry, question counter, completion summary, close) localized via the flashcards namespace in vi/en/ja messages and WCAG-AA theme tokens, while remaining backward-compatible for callers passing only locale. 3. /{locale}/cardgen server-redirects to /{locale}/flashcards?tab=library under Strategy (a) (keeping cardgen-page-client.tsx on disk) and /cardgen stays excluded from sitemap.xml. 4. /review stays a separate route; web-only changes; theme-contrast regression and frontend-debt floors remain green untouched."
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "modify",
+    "rationale": "Web-only Next.js App Router UI, i18n, and server redirect change across flashcards, RevengeModeWidget, and /cardgen with zero backend, schema, auth, or shared-package mutations."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx",
+      "test": "FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > opens Review tab by default with localized RevengeModeWidget at the top when no ?tab param and due > 0, without extra due API calls",
+      "expect": "default route with due > 0 must not remain on Library deck list"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx",
+      "test": "FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > syncs explicit ?tab=library when learner switches from Review to Library",
+      "expect": "to be null"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx",
+      "test": "RevengeModeWidget localization and resilience (WEB-445) > shows localized loading status and recoverable error state on queue failure",
+      "expect": "loading skeleton must expose localized status text"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx",
+      "test": "RevengeModeWidget localization and resilience (WEB-445) > clears selection lock and shows localized error when submitting an answer fails",
+      "expect": "failed answer submit must show localized error"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/cardgen/page.test.tsx",
+      "test": "CardgenPage redirect (WEB-445) > redirects /{locale}/cardgen to /{locale}/flashcards?tab=library across vi, ja, and en",
+      "expect": "instead of rejecting"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx",
+      "test": "RevengeModeWidget localization and resilience (WEB-445) > renders localized idle, active quiz, and completion strings across en, ja, and vi without hardcoded bleed",
+      "expect": "en idle card must show localized title"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-24T12:24:36.931Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-24T12:24:37.196Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-24T12:24:37.461Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-24T12:28:20.555Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-24T12:30:23.981Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-24T12:35:17.798Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-24T12:43:33.259Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-24T12:44:29.511Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-24T12:50:39.303Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-24T12:58:23.453Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-24T12:26:53.751Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/cardgen/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > opens Review tab by default with localized RevengeModeWidget at the top when no ?tab param and due > 0, without extra due API calls",
+          "outcome": "FAIL",
+          "excerpt": "default route with due > 0 must not remain on Library deck list: expected <div …(1)></div> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > syncs explicit ?tab=library when learner switches from Review to Library",
+          "outcome": "FAIL",
+          "excerpt": "expected <div …(1)></div> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > renders localized idle, active quiz, and completion strings for en without hardcoded bleed",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"RevengeModeWidget localization and resilience (WEB-445) > renders localized idle, active quiz, and completion strings for en without hardcoded bleed\" in apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > shows localized loading status and recoverable error state on queue failure",
+          "outcome": "FAIL",
+          "excerpt": "loading skeleton must expose localized status text: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > clears selection lock and shows localized error when submitting an answer fails",
+          "outcome": "FAIL",
+          "excerpt": "the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"Could not submit your answer\""
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/cardgen/page.test.tsx::CardgenPage redirect (WEB-445) > redirects /{locale}/cardgen to /{locale}/flashcards?tab=library across vi, ja, and en",
+          "outcome": "FAIL",
+          "excerpt": "promise resolved \"{ …(10) }\" instead of rejecting",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"must server-redirect to /vi/flashcards?tab=library\""
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > opens Review tab by default with localized RevengeModeWidget at the top when no ?tab param and due > 0, without extra due API calls": "default route with due > 0 must not remain on Library deck list",
+        "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > syncs explicit ?tab=library when learner switches from Review to Library": "to be null",
+        "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > renders localized idle, active quiz, and completion strings for en without hardcoded bleed": "en idle card must show localized title",
+        "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > shows localized loading status and recoverable error state on queue failure": "loading skeleton must expose localized status text",
+        "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > clears selection lock and shows localized error when submitting an answer fails": "Could not submit your answer",
+        "vitest:apps/web/app/[locale]/cardgen/page.test.tsx::CardgenPage redirect (WEB-445) > redirects /{locale}/cardgen to /{locale}/flashcards?tab=library across vi, ja, and en": "must server-redirect to /vi/flashcards?tab=library"
+      },
+      "fingerprint": "3039cc138638115b82676814849236aea884dcd4ce90dfaf8b3e4bf362d8e042"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-24T12:27:39.328Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/cardgen/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > opens Review tab by default with localized RevengeModeWidget at the top when no ?tab param and due > 0, without extra due API calls",
+          "outcome": "FAIL",
+          "excerpt": "default route with due > 0 must not remain on Library deck list: expected <div …(1)></div> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > syncs explicit ?tab=library when learner switches from Review to Library",
+          "outcome": "FAIL",
+          "excerpt": "expected <div …(1)></div> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > renders localized idle, active quiz, and completion strings for en without hardcoded bleed",
+          "outcome": "NOT_FOUND",
+          "excerpt": "no test named \"RevengeModeWidget localization and resilience (WEB-445) > renders localized idle, active quiz, and completion strings for en without hardcoded bleed\" in apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx",
+          "valid": false,
+          "reason": "test not found/collected"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > shows localized loading status and recoverable error state on queue failure",
+          "outcome": "FAIL",
+          "excerpt": "loading skeleton must expose localized status text: expected '' to contain 'Loading missed questions...'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > clears selection lock and shows localized error when submitting an answer fails",
+          "outcome": "FAIL",
+          "excerpt": "failed answer submit must show localized error: expected '' to contain 'Could not submit your answer'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/cardgen/page.test.tsx::CardgenPage redirect (WEB-445) > redirects /{locale}/cardgen to /{locale}/flashcards?tab=library across vi, ja, and en",
+          "outcome": "FAIL",
+          "excerpt": "promise resolved \"{ …(10) }\" instead of rejecting",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > renders localized idle, active quiz, and completion strings across en, ja, and vi without hardcoded bleed",
+          "outcome": "FAIL",
+          "excerpt": "en idle card must show localized title: expected '⚔️Revenge Mode33 câu sai tuần này. Th…' to contain 'Review Missed Questions'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > opens Review tab by default with localized RevengeModeWidget at the top when no ?tab param and due > 0, without extra due API calls": "default route with due > 0 must not remain on Library deck list",
+        "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > syncs explicit ?tab=library when learner switches from Review to Library": "to be null",
+        "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > renders localized idle, active quiz, and completion strings for en without hardcoded bleed": "en idle card must show localized title",
+        "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > shows localized loading status and recoverable error state on queue failure": "loading skeleton must expose localized status text",
+        "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > clears selection lock and shows localized error when submitting an answer fails": "failed answer submit must show localized error",
+        "vitest:apps/web/app/[locale]/cardgen/page.test.tsx::CardgenPage redirect (WEB-445) > redirects /{locale}/cardgen to /{locale}/flashcards?tab=library across vi, ja, and en": "instead of rejecting",
+        "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > renders localized idle, active quiz, and completion strings across en, ja, and vi without hardcoded bleed": "en idle card must show localized title"
+      },
+      "fingerprint": "7f2e0dbf4dcff76ce027450df6dab9afc0106f8f697e8cc086c667c6d2c977a9"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-24T12:28:20.327Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/cardgen/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > opens Review tab by default with localized RevengeModeWidget at the top when no ?tab param and due > 0, without extra due API calls",
+          "outcome": "FAIL",
+          "excerpt": "default route with due > 0 must not remain on Library deck list: expected <div …(1)></div> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > syncs explicit ?tab=library when learner switches from Review to Library",
+          "outcome": "FAIL",
+          "excerpt": "expected <div …(1)></div> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > shows localized loading status and recoverable error state on queue failure",
+          "outcome": "FAIL",
+          "excerpt": "loading skeleton must expose localized status text: expected '' to contain 'Loading missed questions...'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > clears selection lock and shows localized error when submitting an answer fails",
+          "outcome": "FAIL",
+          "excerpt": "failed answer submit must show localized error: expected '' to contain 'Could not submit your answer'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/cardgen/page.test.tsx::CardgenPage redirect (WEB-445) > redirects /{locale}/cardgen to /{locale}/flashcards?tab=library across vi, ja, and en",
+          "outcome": "FAIL",
+          "excerpt": "promise resolved \"{ …(10) }\" instead of rejecting",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > renders localized idle, active quiz, and completion strings across en, ja, and vi without hardcoded bleed",
+          "outcome": "FAIL",
+          "excerpt": "en idle card must show localized title: expected '⚔️Revenge Mode33 câu sai tuần này. Th…' to contain 'Review Missed Questions'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > opens Review tab by default with localized RevengeModeWidget at the top when no ?tab param and due > 0, without extra due API calls": "default route with due > 0 must not remain on Library deck list",
+        "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > syncs explicit ?tab=library when learner switches from Review to Library": "to be null",
+        "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > shows localized loading status and recoverable error state on queue failure": "loading skeleton must expose localized status text",
+        "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > clears selection lock and shows localized error when submitting an answer fails": "failed answer submit must show localized error",
+        "vitest:apps/web/app/[locale]/cardgen/page.test.tsx::CardgenPage redirect (WEB-445) > redirects /{locale}/cardgen to /{locale}/flashcards?tab=library across vi, ja, and en": "instead of rejecting",
+        "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > renders localized idle, active quiz, and completion strings across en, ja, and vi without hardcoded bleed": "en idle card must show localized title"
+      },
+      "fingerprint": "7f2e0dbf4dcff76ce027450df6dab9afc0106f8f697e8cc086c667c6d2c977a9"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-24T12:30:23.544Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/cardgen/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > opens Review tab by default with localized RevengeModeWidget at the top when no ?tab param and due > 0, without extra due API calls",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > syncs explicit ?tab=library when learner switches from Review to Library",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > shows localized loading status and recoverable error state on queue failure",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > clears selection lock and shows localized error when submitting an answer fails",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/cardgen/page.test.tsx::CardgenPage redirect (WEB-445) > redirects /{locale}/cardgen to /{locale}/flashcards?tab=library across vi, ja, and en",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > renders localized idle, active quiz, and completion strings across en, ja, and vi without hardcoded bleed",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "a03824c5180c8af434286d518a692e0b983db6e910120a85809c9f0889948c83"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-24T12:31:16.549Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "a03824c5180c8af434286d518a692e0b983db6e910120a85809c9f0889948c83"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-24T12:32:01.696Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/cardgen/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > opens Review tab by default with localized RevengeModeWidget at the top when no ?tab param and due > 0, without extra due API calls",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > syncs explicit ?tab=library when learner switches from Review to Library",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > shows localized loading status and recoverable error state on queue failure",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > clears selection lock and shows localized error when submitting an answer fails",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/cardgen/page.test.tsx::CardgenPage redirect (WEB-445) > redirects /{locale}/cardgen to /{locale}/flashcards?tab=library across vi, ja, and en",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > renders localized idle, active quiz, and completion strings across en, ja, and vi without hardcoded bleed",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "4bedad59ccf823db00a96dbdcdb72586e23325c5cf6a3aaf242dee94c05a0975"
+    },
+    {
+      "seq": 7,
+      "at": "2026-11-24T12:33:15.497Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 741,
+        "executed": 741,
+        "passed": 741,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 910,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "4bedad59ccf823db00a96dbdcdb72586e23325c5cf6a3aaf242dee94c05a0975"
+    },
+    {
+      "seq": 8,
+      "at": "2026-11-24T12:35:17.400Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 741,
+        "executed": 741,
+        "passed": 741,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 910,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "4bedad59ccf823db00a96dbdcdb72586e23325c5cf6a3aaf242dee94c05a0975"
+    },
+    {
+      "seq": 9,
+      "at": "2026-11-24T12:43:32.796Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/cardgen/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > opens Review tab by default with localized RevengeModeWidget at the top when no ?tab param and due > 0, without extra due API calls",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "library AdSlot must never mount on a review-first default load when due > 0: expected \"vi.fn()\" to not be called at all, but actually been called 1 times Received: 1st vi.fn() call: Array [] Number of calls: 1"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > syncs explicit ?tab=library when learner switches from Review to Library",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > shows localized loading status and recoverable error state on queue failure",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > clears selection lock and shows localized error when submitting an answer fails",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/cardgen/page.test.tsx::CardgenPage redirect (WEB-445) > redirects /{locale}/cardgen to /{locale}/flashcards?tab=library across vi, ja, and en",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > renders localized idle, active quiz, and completion strings across en, ja, and vi without hardcoded bleed",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "29c733b27c68464570793754942c63e1b5c608055dd2686f893862b057d6dd24"
+    },
+    {
+      "seq": 10,
+      "at": "2026-11-24T12:44:28.992Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/cardgen/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > opens Review tab by default with localized RevengeModeWidget at the top when no ?tab param and due > 0, without extra due API calls",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > syncs explicit ?tab=library when learner switches from Review to Library",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > shows localized loading status and recoverable error state on queue failure",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > clears selection lock and shows localized error when submitting an answer fails",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/cardgen/page.test.tsx::CardgenPage redirect (WEB-445) > redirects /{locale}/cardgen to /{locale}/flashcards?tab=library across vi, ja, and en",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > renders localized idle, active quiz, and completion strings across en, ja, and vi without hardcoded bleed",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "15f878816574f73fb7db5138dfdbf76824df2b8146ea45fbad418165b5d6dc2f"
+    },
+    {
+      "seq": 11,
+      "at": "2026-11-24T12:48:18.744Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "15f878816574f73fb7db5138dfdbf76824df2b8146ea45fbad418165b5d6dc2f"
+    },
+    {
+      "seq": 12,
+      "at": "2026-11-24T12:48:48.300Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/cardgen/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > opens Review tab by default with localized RevengeModeWidget at the top when no ?tab param and due > 0, without extra due API calls",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx::FlashcardsPageClient review-first default & revenge widget embed (WEB-445) > syncs explicit ?tab=library when learner switches from Review to Library",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > shows localized loading status and recoverable error state on queue failure",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > clears selection lock and shows localized error when submitting an answer fails",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/cardgen/page.test.tsx::CardgenPage redirect (WEB-445) > redirects /{locale}/cardgen to /{locale}/flashcards?tab=library across vi, ja, and en",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx::RevengeModeWidget localization and resilience (WEB-445) > renders localized idle, active quiz, and completion strings across en, ja, and vi without hardcoded bleed",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "eafd5b65253606c882702572f2d4020702268b5548ec574c9dafdc07a8e133f0"
+    },
+    {
+      "seq": 13,
+      "at": "2026-11-24T12:50:38.876Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 742,
+        "executed": 742,
+        "passed": 742,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 910,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "eafd5b65253606c882702572f2d4020702268b5548ec574c9dafdc07a8e133f0"
+    },
+    {
+      "seq": 14,
+      "at": "2026-11-24T12:58:22.297Z",
+      "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "fresh-research-subagent:ee189941-40ff-4009-b3d3-50ed507fe011",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "Pass 2 fresh read-only independent review APPROVED after resolving Pass 1 findings (post-clone ?cloneToken retention, atomic due-count state batching eliminating frame-1 AdSlot/Library flash, unmount timer guard, dark border token, and added regression tests).",
+      "output_sha256": "414d293e7963ca692224280dab2b18e3c0317ccaa60ded7aaf42abfa53b702df",
+      "attested": true,
+      "fingerprint": "eafd5b65253606c882702572f2d4020702268b5548ec574c9dafdc07a8e133f0"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-24T12:58:23.446Z",
+    "head": "f9482d3dffe5f2a3a638733158a6978663d8a0a0",
+    "fingerprint": "eafd5b65253606c882702572f2d4020702268b5548ec574c9dafdc07a8e133f0",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/_components/homepage/revenge-mode-widget.test.tsx": "02e9952c1184c12c996d88de02e35307b9bf14b3",
+      "apps/web/app/[locale]/_components/homepage/revenge-mode-widget.tsx": "c9a7c08b7b414240dfbffcd7d9a7afc2db0aa245",
+      "apps/web/app/[locale]/cardgen/page.test.tsx": "763449985e5fdaf0c5212377aeef2428a2c81c11",
+      "apps/web/app/[locale]/cardgen/page.tsx": "e1b84c497923517f7dbcad78cee64044bc7514d5",
+      "apps/web/app/[locale]/flashcards/_components/flashcards-client.tsx": "a1bba64e2822ee3611fb037582b524f02e6a7626",
+      "apps/web/app/[locale]/flashcards/_components/flashcards-page-client.test.tsx": "675a5e7b9c42e9743a008e038dd0be3a47a017de",
+      "apps/web/app/[locale]/flashcards/_components/flashcards-page-client.tsx": "1b3e964a8cfc1d59835997aa2912ba26283db404",
+      "apps/web/app/[locale]/flashcards/page.tsx": "1f54cd802ca574e920f326e5032f91f8fd8033e2",
+      "apps/web/app/sitemap.test.ts": "6479530763f282413e23da17e8eae8ce5bbf05f6",
+      "apps/web/messages/en.json": "31c48e9e58ccff17213fcf06cd0a282ba9fbd69c",
+      "apps/web/messages/ja.json": "56ca25b7b903847e0da0b19d3684c39ab7610e73",
+      "apps/web/messages/vi.json": "71e4a3efd85b9e3c191d8dab088ee599104cf29e"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

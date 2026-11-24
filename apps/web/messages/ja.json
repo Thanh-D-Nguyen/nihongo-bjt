@@ -951,7 +951,18 @@
       "ocean-calm": "落ち着いた青で、ゆったり読めます。",
       "gold-calligraphy": "墨色と金色の上品な組み合わせ。"
     },
-    "easy": "簡単"
+    "easy": "簡単",
+    "revengeAnswerError": "回答を送信できませんでした。もう一度お試しください。",
+    "revengeClose": "閉じる",
+    "revengeCompleteScore": "{total}問中{correct}問正解（{percent}%）",
+    "revengeCompleteTitle": "間違えた問題の復習が完了しました！",
+    "revengeLoadError": "間違えた問題を読み込めませんでした。もう一度お試しください。",
+    "revengeLoading": "間違えた問題を読み込み中...",
+    "revengeQuestionCounter": "問題 {current}/{total}",
+    "revengeRetry": "再試行",
+    "revengeStartCta": "復習を始める",
+    "revengeSubtitle": "最近間違えた問題が{count}問あります。もう一度解いて定着させましょう。",
+    "revengeTitle": "間違えた問題の復習"
   },
   "decks": {
     "title": "デッキ",
