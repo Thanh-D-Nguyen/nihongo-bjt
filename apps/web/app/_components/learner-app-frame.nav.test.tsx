@@ -132,10 +132,18 @@ describe("LearnerAppFrame 5-item canonical navigation", () => {
     expect(host.querySelector('a[href="/vi/analytics"]')).toBeNull();
     expect(host.querySelector('a[href="/vi/explore"]')).toBeNull();
 
-    // Opening avatar dropdown preserves /me and /daily-standup (WEB-442 owns /daily-standup removal)
+    // WEB-442: Opening avatar dropdown preserves /me and /me?tab=settings while removing /daily-standup ("Đi làm ở Nhật")
     await act(async () => menuButtons[0]!.click());
     expect(host.querySelector('header a[href="/vi/me"]')).not.toBeNull();
-    expect(host.querySelector('header a[href="/vi/daily-standup"]')).not.toBeNull();
+    expect(host.querySelector('header a[href="/vi/me?tab=settings"]')).not.toBeNull();
+    expect(
+      host.querySelector('header a[href="/vi/daily-standup"]'),
+      "avatar dropdown must remove /vi/daily-standup link"
+    ).toBeNull();
+    expect(
+      host.querySelector('header [role="menu"]')?.textContent ?? "",
+      'avatar dropdown must not render "Đi làm ở Nhật"'
+    ).not.toContain("Đi làm ở Nhật");
 
     // Footer learning links match the 5 pillars + Gói dịch vụ (/pricing)
     const footerHrefs = [...host.querySelectorAll<HTMLAnchorElement>("footer nav a")].map((a) =>

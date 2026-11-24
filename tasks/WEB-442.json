@@ -1,0 +1,528 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-442",
+  "title": "Sunset Loto Lab & auto-Magazine, freeze Career RPG, clean avatar menu and sitemap",
+  "start_head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+  "preexisting_changes": {
+    ".build/.buildSystem_debug": "c337257139e569398ce8bf081a54dbc7d1e0267d",
+    ".build/CACHEDIR.TAG": "b7ab0d883e974d20c05898291a6218954e18e5ef"
+  },
+  "spec": {
+    "problem": "Off-mission Loto Lab and auto-Magazine routes and half-wired Mirai Shoji Career RPG routes remain publicly accessible and indexed in sitemap.xml, and the avatar menu still links to /daily-standup (Đi làm ở Nhật).",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Avatar dropdown in learner-app-frame.tsx removes the /{locale}/daily-standup (nav.dailyStandup / Đi làm ở Nhật) link while keeping /{locale}/me, /{locale}/me?tab=settings, locale switcher, and sign-out."
+      },
+      {
+        "id": "AC2",
+        "text": "Server redirects in page.tsx route /[locale]/magazine/loto -> /{locale}/levels, /[locale]/magazine and /[locale]/magazine/[slug] -> /{locale}/news, /[locale]/daily-standup, /[locale]/career, /[locale]/story/arcs, /[locale]/story/arcs/[slug], and /[locale]/story/chapters/[id] -> /{locale}/scenarios, and /[locale]/review-inbox-preview -> /{locale}/flashcards?tab=review while leaving all component files on disk (Strategy a)."
+      },
+      {
+        "id": "AC3",
+        "text": "app/sitemap.ts removes magazine and story/arcs from PUBLIC_ROUTES and sitemap.test.ts verifies both routes are excluded across vi, ja, and en."
+      },
+      {
+        "id": "AC4",
+        "text": "Route, nav, and sitemap tests assert the new contracts with contract-change justification per ENGINEERING_POLICY.md §5; theme-contrast.regression.test.ts and verify-frontend pass with zero new debt."
+      }
+    ],
+    "expected_behavior": "Avatar dropdown omits /daily-standup while keeping /me, /me?tab=settings, locale switcher, and sign-out; the 9 sunset/frozen page routes server-redirect to /{locale}/levels, /{locale}/news, /{locale}/scenarios, or /{locale}/flashcards?tab=review; app/sitemap.ts excludes magazine and story/arcs; all component files remain untouched on disk.",
+    "observed_behavior": "Avatar dropdown in learner-app-frame.tsx renders /daily-standup (nav.dailyStandup); 9 sunset/frozen page routes render magazine/loto/career-rpg views; app/sitemap.ts includes magazine and story/arcs in PUBLIC_ROUTES.",
+    "rollback_plan": "Revert learner-app-frame.tsx, the 9 route page.tsx redirects, sitemap.ts, and updated tests; all underlying components remain on disk under Strategy (a)."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "modify",
+    "rationale": "Web-only Strategy (a) sunset/freeze: removes /daily-standup from avatar dropdown, replaces 9 route page.tsx files with Next.js server redirect(), removes magazine and story/arcs from sitemap.ts, and updates tests while leaving all component files on disk and touching no backend, database, deploy, or admin code."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/learner-app-frame.nav.test.tsx",
+      "test": "LearnerAppFrame 5-item canonical navigation > renders the exact 5 primary items identically on desktop header and mobile bottom bar, removes Khám phá dropdown, mobile hamburger, and /analytics, and updates footer learning links",
+      "expect": "avatar dropdown must remove /vi/daily-standup link"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/sitemap.test.ts",
+      "test": "sitemap metadata > lists all 14 public routes across vi, ja, and en locales using canonical base URL",
+      "expect": "sitemap must exclude redirected /magazine route"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/magazine/page.test.tsx",
+      "test": "MagazinePage server redirect > redirects /[locale]/magazine to /[locale]/news across supported locales without fetching the magazine API",
+      "expect": "MagazinePage must server-redirect /vi/magazine to /vi/news"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/magazine/page.test.tsx",
+      "test": "MagazinePage server redirect > redirects legacy magazine filter and pagination URLs directly to /[locale]/news",
+      "expect": "MagazinePage must server-redirect legacy query URLs to /vi/news"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/magazine/[slug]/page.test.ts",
+      "test": "MagazineArticlePage server redirect > redirects /[locale]/magazine/[slug] to /[locale]/news across locales without fetching the magazine API",
+      "expect": "MagazineArticlePage must server-redirect /vi/magazine/business-phrase to /vi/news"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/magazine/[slug]/page.test.ts",
+      "test": "MagazineArticlePage server redirect > redirects missing or unknown slugs to /[locale]/news instead of calling notFound",
+      "expect": "MagazineArticlePage must server-redirect unknown slugs to /vi/news"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/magazine/loto/page.test.tsx",
+      "test": "LotoHubPage server redirect > redirects /[locale]/magazine/loto to /[locale]/levels across locales",
+      "expect": "LotoHubPage must server-redirect /vi/magazine/loto to /vi/levels"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/daily-standup/page.test.tsx",
+      "test": "DailyStandupRoute server redirect > redirects /[locale]/daily-standup to /[locale]/scenarios across locales",
+      "expect": "DailyStandupRoute must server-redirect /vi/daily-standup to /vi/scenarios"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/career/page.test.tsx",
+      "test": "CareerRoute server redirect > redirects /[locale]/career to /[locale]/scenarios across locales",
+      "expect": "CareerRoute must server-redirect /vi/career to /vi/scenarios"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/story/arcs/page.test.tsx",
+      "test": "ArcsRoute server redirect > redirects /[locale]/story/arcs to /[locale]/scenarios across locales",
+      "expect": "ArcsRoute must server-redirect /vi/story/arcs to /vi/scenarios"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/story/arcs/[slug]/page.test.tsx",
+      "test": "ArcDetailRoute server redirect > redirects /[locale]/story/arcs/[slug] to /[locale]/scenarios across locales",
+      "expect": "ArcDetailRoute must server-redirect /vi/story/arcs/arc.business-manner-basics to /vi/scenarios"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/story/chapters/[id]/page.test.tsx",
+      "test": "ChapterRoute server redirect > redirects /[locale]/story/chapters/[id] to /[locale]/scenarios across locales",
+      "expect": "ChapterRoute must server-redirect /vi/story/chapters/chapter-1 to /vi/scenarios"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/review-inbox-preview/page.test.tsx",
+      "test": "InboxRoute server redirect > redirects /[locale]/review-inbox-preview to /[locale]/flashcards?tab=review across locales",
+      "expect": "InboxRoute must server-redirect /vi/review-inbox-preview to /vi/flashcards?tab=review"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [
+    {
+      "finding": "assertions_reduced:apps/web/app/[locale]/magazine/page.test.tsx",
+      "reason": "Contract change per WEB-442 / ENGINEERING_POLICY.md §5: /[locale]/magazine is intentionally sunset under Strategy (a) and replaced with a server redirect to /{locale}/news. Previously the page fetched /api/magazine, normalized ?kind aliases, handled pagination clamping, and rendered MagazinePageClient or a 503 alert (5 tests, 14 assertions). The new contract requires an immediate server redirect across vi/ja/en and legacy ?kind/?page query params with zero /api/magazine fetch calls (2 tests, 6 assertions). Underlying magazine/_components/* and magazine-kinds.ts remain on disk with their existing component unit tests intact; magazine/[slug]/page.test.ts was likewise updated from article/notFound/503 loading to redirect-only behavior."
+    }
+  ],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-24T09:30:06.570Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-24T09:30:06.815Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-24T09:30:07.064Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-24T09:32:24.900Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-24T09:33:59.438Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-24T09:42:37.041Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-24T09:48:57.028Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-24T09:48:58.641Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-24T09:32:24.523Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.nav.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/sitemap.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/daily-standup/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/career/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/story/arcs/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/story/arcs/[slug]/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/story/chapters/[id]/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/review-inbox-preview/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.nav.test.tsx::LearnerAppFrame 5-item canonical navigation > renders the exact 5 primary items identically on desktop header and mobile bottom bar, removes Khám phá dropdown, mobile hamburger, and /analytics, and updates footer learning links",
+          "outcome": "FAIL",
+          "excerpt": "avatar dropdown must remove /vi/daily-standup link: expected <a …(3)><svg …(10)>…(1)</svg></a> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/sitemap.test.ts::sitemap metadata > lists all 14 public routes across vi, ja, and en locales using canonical base URL",
+          "outcome": "FAIL",
+          "excerpt": "sitemap must exclude redirected /magazine route: expected [ 'https://kiokoto.com/vi', …(47) ] to not include 'https://kiokoto.com/vi/magazine'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::MagazinePage server redirect > redirects /[locale]/magazine to /[locale]/news across supported locales without fetching the magazine API",
+          "outcome": "FAIL",
+          "excerpt": "MagazinePage must server-redirect /vi/magazine to /vi/news: expected \"vi.fn()\" to be called with arguments: [ '/vi/news' ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::MagazinePage server redirect > redirects legacy magazine filter and pagination URLs directly to /[locale]/news",
+          "outcome": "FAIL",
+          "excerpt": "MagazinePage must server-redirect legacy query URLs to /vi/news: expected \"vi.fn()\" to be called with arguments: [ '/vi/news' ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::MagazineArticlePage server redirect > redirects /[locale]/magazine/[slug] to /[locale]/news across locales without fetching the magazine API",
+          "outcome": "FAIL",
+          "excerpt": "MagazineArticlePage must server-redirect /vi/magazine/business-phrase to /vi/news: expected \"vi.fn()\" to be called with arguments: [ '/vi/news' ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::MagazineArticlePage server redirect > redirects missing or unknown slugs to /[locale]/news instead of calling notFound",
+          "outcome": "FAIL",
+          "excerpt": "MagazineArticlePage must server-redirect unknown slugs to /vi/news: expected \"vi.fn()\" to be called with arguments: [ '/vi/news' ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/page.test.tsx::LotoHubPage server redirect > redirects /[locale]/magazine/loto to /[locale]/levels across locales",
+          "outcome": "FAIL",
+          "excerpt": "LotoHubPage must server-redirect /vi/magazine/loto to /vi/levels: expected \"vi.fn()\" to be called with arguments: [ '/vi/levels' ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/daily-standup/page.test.tsx::DailyStandupRoute server redirect > redirects /[locale]/daily-standup to /[locale]/scenarios across locales",
+          "outcome": "FAIL",
+          "excerpt": "DailyStandupRoute must server-redirect /vi/daily-standup to /vi/scenarios: expected \"vi.fn()\" to be called with arguments: [ '/vi/scenarios' ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/career/page.test.tsx::CareerRoute server redirect > redirects /[locale]/career to /[locale]/scenarios across locales",
+          "outcome": "FAIL",
+          "excerpt": "CareerRoute must server-redirect /vi/career to /vi/scenarios: expected \"vi.fn()\" to be called with arguments: [ '/vi/scenarios' ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/story/arcs/page.test.tsx::ArcsRoute server redirect > redirects /[locale]/story/arcs to /[locale]/scenarios across locales",
+          "outcome": "FAIL",
+          "excerpt": "ArcsRoute must server-redirect /vi/story/arcs to /vi/scenarios: expected \"vi.fn()\" to be called with arguments: [ '/vi/scenarios' ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/story/arcs/[slug]/page.test.tsx::ArcDetailRoute server redirect > redirects /[locale]/story/arcs/[slug] to /[locale]/scenarios across locales",
+          "outcome": "FAIL",
+          "excerpt": "ArcDetailRoute must server-redirect /vi/story/arcs/arc.business-manner-basics to /vi/scenarios: expected \"vi.fn()\" to be called with arguments: [ '/vi/scenarios' ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/story/chapters/[id]/page.test.tsx::ChapterRoute server redirect > redirects /[locale]/story/chapters/[id] to /[locale]/scenarios across locales",
+          "outcome": "FAIL",
+          "excerpt": "ChapterRoute must server-redirect /vi/story/chapters/chapter-1 to /vi/scenarios: expected \"vi.fn()\" to be called with arguments: [ '/vi/scenarios' ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/page.test.tsx::InboxRoute server redirect > redirects /[locale]/review-inbox-preview to /[locale]/flashcards?tab=review across locales",
+          "outcome": "FAIL",
+          "excerpt": "InboxRoute must server-redirect /vi/review-inbox-preview to /vi/flashcards?tab=review: expected \"vi.fn()\" to be called with arguments: [ '/vi/flashcards?tab=review' ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.nav.test.tsx::LearnerAppFrame 5-item canonical navigation > renders the exact 5 primary items identically on desktop header and mobile bottom bar, removes Khám phá dropdown, mobile hamburger, and /analytics, and updates footer learning links": "avatar dropdown must remove /vi/daily-standup link",
+        "vitest:apps/web/app/sitemap.test.ts::sitemap metadata > lists all 14 public routes across vi, ja, and en locales using canonical base URL": "sitemap must exclude redirected /magazine route",
+        "vitest:apps/web/app/[locale]/magazine/page.test.tsx::MagazinePage server redirect > redirects /[locale]/magazine to /[locale]/news across supported locales without fetching the magazine API": "MagazinePage must server-redirect /vi/magazine to /vi/news",
+        "vitest:apps/web/app/[locale]/magazine/page.test.tsx::MagazinePage server redirect > redirects legacy magazine filter and pagination URLs directly to /[locale]/news": "MagazinePage must server-redirect legacy query URLs to /vi/news",
+        "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::MagazineArticlePage server redirect > redirects /[locale]/magazine/[slug] to /[locale]/news across locales without fetching the magazine API": "MagazineArticlePage must server-redirect /vi/magazine/business-phrase to /vi/news",
+        "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::MagazineArticlePage server redirect > redirects missing or unknown slugs to /[locale]/news instead of calling notFound": "MagazineArticlePage must server-redirect unknown slugs to /vi/news",
+        "vitest:apps/web/app/[locale]/magazine/loto/page.test.tsx::LotoHubPage server redirect > redirects /[locale]/magazine/loto to /[locale]/levels across locales": "LotoHubPage must server-redirect /vi/magazine/loto to /vi/levels",
+        "vitest:apps/web/app/[locale]/daily-standup/page.test.tsx::DailyStandupRoute server redirect > redirects /[locale]/daily-standup to /[locale]/scenarios across locales": "DailyStandupRoute must server-redirect /vi/daily-standup to /vi/scenarios",
+        "vitest:apps/web/app/[locale]/career/page.test.tsx::CareerRoute server redirect > redirects /[locale]/career to /[locale]/scenarios across locales": "CareerRoute must server-redirect /vi/career to /vi/scenarios",
+        "vitest:apps/web/app/[locale]/story/arcs/page.test.tsx::ArcsRoute server redirect > redirects /[locale]/story/arcs to /[locale]/scenarios across locales": "ArcsRoute must server-redirect /vi/story/arcs to /vi/scenarios",
+        "vitest:apps/web/app/[locale]/story/arcs/[slug]/page.test.tsx::ArcDetailRoute server redirect > redirects /[locale]/story/arcs/[slug] to /[locale]/scenarios across locales": "ArcDetailRoute must server-redirect /vi/story/arcs/arc.business-manner-basics to /vi/scenarios",
+        "vitest:apps/web/app/[locale]/story/chapters/[id]/page.test.tsx::ChapterRoute server redirect > redirects /[locale]/story/chapters/[id] to /[locale]/scenarios across locales": "ChapterRoute must server-redirect /vi/story/chapters/chapter-1 to /vi/scenarios",
+        "vitest:apps/web/app/[locale]/review-inbox-preview/page.test.tsx::InboxRoute server redirect > redirects /[locale]/review-inbox-preview to /[locale]/flashcards?tab=review across locales": "InboxRoute must server-redirect /vi/review-inbox-preview to /vi/flashcards?tab=review"
+      },
+      "fingerprint": "83d6ffcf2c2454c0705d118de7cf011e0b5c5de62d121b7df1d0d98a1ae4e560"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-24T09:33:58.780Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.nav.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/sitemap.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/[slug]/page.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/magazine/loto/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/daily-standup/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/career/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/story/arcs/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/story/arcs/[slug]/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/story/chapters/[id]/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/review-inbox-preview/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.nav.test.tsx::LearnerAppFrame 5-item canonical navigation > renders the exact 5 primary items identically on desktop header and mobile bottom bar, removes Khám phá dropdown, mobile hamburger, and /analytics, and updates footer learning links",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/sitemap.test.ts::sitemap metadata > lists all 14 public routes across vi, ja, and en locales using canonical base URL",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::MagazinePage server redirect > redirects /[locale]/magazine to /[locale]/news across supported locales without fetching the magazine API",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/page.test.tsx::MagazinePage server redirect > redirects legacy magazine filter and pagination URLs directly to /[locale]/news",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::MagazineArticlePage server redirect > redirects /[locale]/magazine/[slug] to /[locale]/news across locales without fetching the magazine API",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/[slug]/page.test.ts::MagazineArticlePage server redirect > redirects missing or unknown slugs to /[locale]/news instead of calling notFound",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/magazine/loto/page.test.tsx::LotoHubPage server redirect > redirects /[locale]/magazine/loto to /[locale]/levels across locales",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/daily-standup/page.test.tsx::DailyStandupRoute server redirect > redirects /[locale]/daily-standup to /[locale]/scenarios across locales",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/career/page.test.tsx::CareerRoute server redirect > redirects /[locale]/career to /[locale]/scenarios across locales",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/story/arcs/page.test.tsx::ArcsRoute server redirect > redirects /[locale]/story/arcs to /[locale]/scenarios across locales",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/story/arcs/[slug]/page.test.tsx::ArcDetailRoute server redirect > redirects /[locale]/story/arcs/[slug] to /[locale]/scenarios across locales",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/story/chapters/[id]/page.test.tsx::ChapterRoute server redirect > redirects /[locale]/story/chapters/[id] to /[locale]/scenarios across locales",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/review-inbox-preview/page.test.tsx::InboxRoute server redirect > redirects /[locale]/review-inbox-preview to /[locale]/flashcards?tab=review across locales",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "b25b5f95c6a170830dbf3fb309ec4d2901102a23d931c187d294a4608f69f717"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-24T09:36:48.348Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 722,
+        "executed": 722,
+        "passed": 722,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 902,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "b25b5f95c6a170830dbf3fb309ec4d2901102a23d931c187d294a4608f69f717"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-24T09:38:15.122Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 722,
+        "executed": 722,
+        "passed": 722,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 902,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "b25b5f95c6a170830dbf3fb309ec4d2901102a23d931c187d294a4608f69f717"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-24T09:42:35.904Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 722,
+        "executed": 722,
+        "passed": 722,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 902,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "b25b5f95c6a170830dbf3fb309ec4d2901102a23d931c187d294a4608f69f717"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-24T09:48:56.450Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "fresh-research-subagent:e191e3f8",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "Fresh-context independent review verified all 9 redirects, avatar dropdown cleanup, sitemap update, Strategy (a) preservation, and §5 contract-change justification for magazine/page.test.tsx.",
+      "output_sha256": "28c8c3c7fcf132a25cf5cc7096c2d2e2cab58ebe44591c60ae76f66eb27ae3ec",
+      "attested": true,
+      "fingerprint": "b25b5f95c6a170830dbf3fb309ec4d2901102a23d931c187d294a4608f69f717"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-24T09:48:58.634Z",
+    "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+    "fingerprint": "b25b5f95c6a170830dbf3fb309ec4d2901102a23d931c187d294a4608f69f717",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/career/page.test.tsx": "c7ec3c342feab5459b30b9d224228d8a16774e2f",
+      "apps/web/app/[locale]/career/page.tsx": "8839d00f581ebfd761aa3e276787457f5c6388ac",
+      "apps/web/app/[locale]/daily-standup/page.test.tsx": "9abd3f35447eacee7d86f4ed0726bf97d40fc3b0",
+      "apps/web/app/[locale]/daily-standup/page.tsx": "92dbab0e183ecaf1ddd7ed78fc14432bafea75d8",
+      "apps/web/app/[locale]/magazine/[slug]/page.test.ts": "1a478edf3917a6dafa821ffaeb11cb6409161587",
+      "apps/web/app/[locale]/magazine/[slug]/page.tsx": "4cfeb268cf7346f6186833ea8ec7df6d0c014a6c",
+      "apps/web/app/[locale]/magazine/loto/page.test.tsx": "3a44a0a253e09629ff976db31ef8a11797360827",
+      "apps/web/app/[locale]/magazine/loto/page.tsx": "3256a10b0e9e6fdc7652419e5a81599cb90ee437",
+      "apps/web/app/[locale]/magazine/page.test.tsx": "3149cede2b33fdc92a948a75afa282321ea7f9e7",
+      "apps/web/app/[locale]/magazine/page.tsx": "c636861dbc20bc990d1b7edf342abb06784db26e",
+      "apps/web/app/[locale]/review-inbox-preview/page.test.tsx": "d2921c3dac86a3a0f3d7185eab52cff5175d9d00",
+      "apps/web/app/[locale]/review-inbox-preview/page.tsx": "8d221a0676e2d61bf5110f7068a7e4ec150e7835",
+      "apps/web/app/[locale]/story/arcs/[slug]/page.test.tsx": "7c3f95d091ff9c8543184fe07282beec5e6dc35e",
+      "apps/web/app/[locale]/story/arcs/[slug]/page.tsx": "94795b30e976396996a06eb2a13491aa52efd0bf",
+      "apps/web/app/[locale]/story/arcs/page.test.tsx": "8cf7c9054524b630f10b074e2b6573f0929fddc5",
+      "apps/web/app/[locale]/story/arcs/page.tsx": "61eb3fc45f902bdd94589d0922b79401be0acbab",
+      "apps/web/app/[locale]/story/chapters/[id]/page.test.tsx": "4834f5021e758854165950c6ac1c1b408de4c40b",
+      "apps/web/app/[locale]/story/chapters/[id]/page.tsx": "ab5ff592bb96cf1f2a72aa356c9dd02d220d4409",
+      "apps/web/app/_components/learner-app-frame.nav.test.tsx": "f649df30e57ca5e7f6aff73814a92f9152191410",
+      "apps/web/app/_components/learner-app-frame.tsx": "813693b6397a91d25843d57c10b96399127ca554",
+      "apps/web/app/sitemap.test.ts": "44b1791573d548c71cec0dfd4b1d7285d27a2505",
+      "apps/web/app/sitemap.ts": "7e3d9592e7e8f8abacd5531e02162bc175acef3a"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

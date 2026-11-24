@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import sitemap from "./sitemap";
 
 // WEB-441: "explore" server-redirects to /{locale}/search and is excluded from sitemap.xml
+// WEB-442: "magazine" (-> /{locale}/news) and "story/arcs" (-> /{locale}/scenarios) server-redirect and are excluded from sitemap.xml
 const EXPECTED_ROUTES = [
   "",
   "levels",
@@ -11,14 +12,12 @@ const EXPECTED_ROUTES = [
   "flashcards",
   "quiz",
   "exercises",
-  "magazine",
   "news",
   "pricing",
   "help",
   "feedback",
   "privacy",
   "terms",
-  "story/arcs",
 ];
 
 describe("sitemap metadata", () => {
@@ -26,7 +25,7 @@ describe("sitemap metadata", () => {
     vi.unstubAllEnvs();
   });
 
-  it("lists all 16 public routes across vi, ja, and en locales using canonical base URL", () => {
+  it("lists all 14 public routes across vi, ja, and en locales using canonical base URL", () => {
     vi.stubEnv("WEB_PUBLIC_URL", "");
     vi.stubEnv("NEXT_PUBLIC_WEB_PUBLIC_URL", "");
 
@@ -36,6 +35,12 @@ describe("sitemap metadata", () => {
     for (const locale of ["vi", "ja", "en"] as const) {
       expect(urls, "sitemap must exclude redirected /explore route").not.toContain(
         `https://kiokoto.com/${locale}/explore`
+      );
+      expect(urls, "sitemap must exclude redirected /magazine route").not.toContain(
+        `https://kiokoto.com/${locale}/magazine`
+      );
+      expect(urls, "sitemap must exclude redirected /story/arcs route").not.toContain(
+        `https://kiokoto.com/${locale}/story/arcs`
       );
     }
 

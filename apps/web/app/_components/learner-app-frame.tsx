@@ -24,7 +24,6 @@ import { LocaleSwitcher, type LocaleSwitcherLabels } from "./locale-switcher";
 import { ThemeToggle } from "./theme-toggle";
 import {
   IconDocument,
-  IconExercise,
   IconHelp,
   IconHome,
   IconLevels,
@@ -550,15 +549,6 @@ export function LearnerAppFrame({
                     </Link>
                     <div className="p-1.5">
                       {/* Quick links */}
-                      <Link
-                        className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-paper hover:text-ink dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
-                        href={`${base}/daily-standup`}
-                        role="menuitem"
-                        onClick={() => setUserMenuOpen(false)}
-                      >
-                        <IconExercise aria-hidden size={16} />
-                        {nav.dailyStandup}
-                      </Link>
                       <Link
                         className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-paper hover:text-ink dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                         href={`${base}/me?tab=settings`}

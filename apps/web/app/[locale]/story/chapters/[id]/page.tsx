@@ -1,36 +1,10 @@
-import type { Metadata } from "next";
-
-import en from "../../../../../messages/en.json";
-import ja from "../../../../../messages/ja.json";
-import vi from "../../../../../messages/vi.json";
-import { CareerRpgProvider } from "../../../../../src/features/career-rpg/store";
-import { findChapter } from "../../../../../src/features/career-rpg/mock-data";
-
-import { ChapterPlayerClient } from "./_components/chapter-player-client";
-
-const messages = { ja, vi, en } as const;
-
-export async function generateMetadata({
-  params
-}: {
-  params: Promise<{ locale: string; id: string }>;
-}): Promise<Metadata> {
-  const { locale, id } = await params;
-  const t = (messages as Record<string, typeof vi>)[locale] ?? messages.vi;
-  const chapter = findChapter(id);
-  return { title: `${chapter?.titleJa ?? t.careerRpg.chapter.briefingEyebrow} — Kiokoto` };
-}
+import { redirect } from "next/navigation";
 
 export default async function ChapterRoute({
   params
 }: {
-  params: Promise<{ locale: keyof typeof messages; id: string }>;
+  params: Promise<{ locale: string; id: string }>;
 }) {
-  const { locale, id } = await params;
-  const t = messages[locale] ?? messages.vi;
-  return (
-    <CareerRpgProvider>
-      <ChapterPlayerClient chapterId={id} labels={t.careerRpg} locale={locale} />
-    </CareerRpgProvider>
-  );
+  const { locale } = await params;
+  redirect(`/${locale}/scenarios`);
 }
