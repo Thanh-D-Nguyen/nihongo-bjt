@@ -480,6 +480,93 @@
       "reasonExercise": "Phù hợp mục tiêu học của bạn",
       "reasonDefault": "Dựa trên hoạt động gần đây",
       "summary": "{count} gợi ý"
+    },
+    "onboardingFlow": {
+      "dialogAria": "Thiết lập lộ trình học",
+      "stepCounter": "Bước {current}/{total}",
+      "recommendedBadge": "Đề xuất",
+      "back": "← Quay lại",
+      "next": "Tiếp theo →",
+      "finishStartReview": "Bắt đầu ôn tập ngay →",
+      "saving": "Đang lưu...",
+      "skip": "Bỏ qua — tôi sẽ thiết lập sau",
+      "saveError": "Không thể lưu lựa chọn. Vui lòng thử lại.",
+      "steps": {
+        "goalTitle": "Mục tiêu chính của bạn là gì?",
+        "goalSubtitle": "Chúng tôi sẽ ưu tiên nội dung BJT và công việc phù hợp",
+        "levelTitle": "Trình độ tiếng Nhật hiện tại của bạn?",
+        "levelSubtitle": "Giúp chọn đúng độ khó từ phiên học đầu tiên",
+        "diagnosticTitle": "Kiểm tra nhanh trình độ",
+        "diagnosticSubtitle": "5 câu hỏi nhanh để gợi ý trình độ phù hợp",
+        "timeTitle": "Mỗi ngày bạn muốn học bao lâu?",
+        "timeSubtitle": "Sau bước này bạn sẽ vào thẳng phiên ôn tập đầu tiên"
+      },
+      "goals": {
+        "pass_bjt": {
+          "label": "Thi đỗ BJT",
+          "desc": "Chuẩn bị bài bản cho kỳ thi BJT"
+        },
+        "business_japanese": {
+          "label": "Tiếng Nhật công sở",
+          "desc": "Email, họp, keigo và thuyết trình"
+        },
+        "daily_conversation": {
+          "label": "Giao tiếp đời sống tại Nhật",
+          "desc": "Sinh hoạt, mua sắm, thủ tục hàng ngày"
+        },
+        "reading_news": {
+          "label": "Đọc hiểu tin tức NHK",
+          "desc": "NHK News Web Easy, báo chí và tài liệu"
+        },
+        "jlpt_prep": {
+          "label": "Ôn thi JLPT",
+          "desc": "Ngữ pháp, từ vựng và đọc hiểu"
+        }
+      },
+      "levels": {
+        "n5": {
+          "label": "N5 — Mới bắt đầu",
+          "desc": "Hiragana, từ vựng cơ bản"
+        },
+        "n4": {
+          "label": "N4 — Sơ cấp",
+          "desc": "Giao tiếp đơn giản hàng ngày"
+        },
+        "n3": {
+          "label": "N3 — Trung cấp",
+          "desc": "Đọc báo dễ, hội thoại công việc cơ bản"
+        },
+        "n2": {
+          "label": "N2 — Trung-cao cấp",
+          "desc": "Làm việc trực tiếp bằng tiếng Nhật"
+        },
+        "n1": {
+          "label": "N1 — Cao cấp",
+          "desc": "Tiếng Nhật chuyên sâu như người bản xứ"
+        },
+        "unknown": {
+          "label": "Chưa biết",
+          "desc": "Làm nhanh 5 câu kiểm tra trình độ"
+        }
+      },
+      "times": {
+        "m5": {
+          "label": "5 phút",
+          "desc": "Nhanh gọn mỗi ngày"
+        },
+        "m10": {
+          "label": "10 phút",
+          "desc": "Cân bằng và bền vững"
+        },
+        "m20": {
+          "label": "20 phút",
+          "desc": "Tập trung chuyên sâu"
+        },
+        "m30": {
+          "label": "30+ phút",
+          "desc": "Tăng tốc cho mục tiêu BJT"
+        }
+      }
     }
   },
   "nhkDetail": {
@@ -1591,7 +1678,8 @@
         "LR": "Nghe và đọc hiểu",
         "RC": "Đọc hiểu"
       }
-    }
+    },
+    "focusMode": "Tập trung"
   },
   "onboarding": {
     "eyebrow": "BJT",
@@ -2505,8 +2593,32 @@
     "incorrectAnswer": "Chưa phù hợp nhất",
     "chooseAnswer": "Chọn một đáp án",
     "explanationLabel": "Giải thích",
-    "activityTypes": {"best_expression": "Chọn cách diễn đạt phù hợp", "fill_phrase": "Điền cụm từ", "role_response": "Ứng đáp theo vai", "politeness_check": "Kiểm tra mức độ lịch sự", "mini_case_inference": "Suy luận tình huống", "sentence_order": "Sắp xếp câu", "error_correction": "Sửa lỗi", "reading_comprehension": "Đọc hiểu", "speaker_intent": "Ý định người nói", "context_match": "Ghép ngữ cảnh"},
-    "stimulusTypes": {"dialogue": "Hội thoại", "email": "Email", "internal_chat": "Tin nhắn nội bộ", "memo": "Bản ghi nhớ", "telephone": "Điện thoại", "meeting": "Cuộc họp", "announcement": "Thông báo", "report": "Báo cáo", "table": "Bảng", "policy": "Quy định", "proposal": "Đề xuất", "complaint": "Khiếu nại"},
+    "activityTypes": {
+      "best_expression": "Chọn cách diễn đạt phù hợp",
+      "fill_phrase": "Điền cụm từ",
+      "role_response": "Ứng đáp theo vai",
+      "politeness_check": "Kiểm tra mức độ lịch sự",
+      "mini_case_inference": "Suy luận tình huống",
+      "sentence_order": "Sắp xếp câu",
+      "error_correction": "Sửa lỗi",
+      "reading_comprehension": "Đọc hiểu",
+      "speaker_intent": "Ý định người nói",
+      "context_match": "Ghép ngữ cảnh"
+    },
+    "stimulusTypes": {
+      "dialogue": "Hội thoại",
+      "email": "Email",
+      "internal_chat": "Tin nhắn nội bộ",
+      "memo": "Bản ghi nhớ",
+      "telephone": "Điện thoại",
+      "meeting": "Cuộc họp",
+      "announcement": "Thông báo",
+      "report": "Báo cáo",
+      "table": "Bảng",
+      "policy": "Quy định",
+      "proposal": "Đề xuất",
+      "complaint": "Khiếu nại"
+    },
     "audioUnavailable": "Chưa có audio được cấp phép; transcript vẫn dùng được cho bài học.",
     "audioTtsReady": "TTS tiếng Nhật sẵn sàng",
     "audioGeneratedReady": "Audio tạo sẵn sàng",
@@ -2552,7 +2664,8 @@
     "tapToReveal": "Chạm hoặc nhấn Space",
     "reading": "Cách đọc",
     "playAudio": "Phát âm",
-    "examplesLabel": "Ví dụ"
+    "examplesLabel": "Ví dụ",
+    "focusMode": "Tập trung"
   },
   "appearancePage": {
     "title": "Giao diện",
@@ -2735,7 +2848,7 @@
     },
     "settingsTab": {
       "account": "Tài khoản",
-      "accountDesc": "Tên hiển thị, email, mật khẩu",
+      "accountDesc": "Thông tin tài khoản, email và liên kết đăng nhập",
       "appearance": "Giao diện",
       "appearanceDesc": "Chế độ sáng/tối, cỡ chữ",
       "reading": "Hỗ trợ đọc",
@@ -2951,7 +3064,8 @@
       "points": "điểm",
       "showResult": "Xem kết quả",
       "continue": "Tiếp tục →",
-      "retry": "Thử lại"
+      "retry": "Thử lại",
+      "focusMode": "Tập trung"
     }
   },
   "systemPages": {

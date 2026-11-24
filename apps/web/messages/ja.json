@@ -480,6 +480,93 @@
       "reasonExercise": "学習目標に合った練習",
       "reasonDefault": "最近の学習に基づくおすすめ",
       "summary": "おすすめ {count} 件"
+    },
+    "onboardingFlow": {
+      "dialogAria": "学習プラン設定",
+      "stepCounter": "ステップ {current}/{total}",
+      "recommendedBadge": "おすすめ",
+      "back": "← 戻る",
+      "next": "次へ →",
+      "finishStartReview": "最初の復習を始める →",
+      "saving": "保存中...",
+      "skip": "スキップ — あとで設定する",
+      "saveError": "設定を保存できませんでした。もう一度お試しください。",
+      "steps": {
+        "goalTitle": "主な学習目標は何ですか？",
+        "goalSubtitle": "BJT対策や職場での日本語に合わせて優先表示します",
+        "levelTitle": "現在の日本語レベルは？",
+        "levelSubtitle": "最初のセッションから適切な難易度を選びます",
+        "diagnosticTitle": "クイックレベル診断",
+        "diagnosticSubtitle": "5問の短い質問でおすすめのレベルを提案します",
+        "timeTitle": "1日の学習時間はどれくらい？",
+        "timeSubtitle": "完了するとそのまま最初の復習セッションへ進みます"
+      },
+      "goals": {
+        "pass_bjt": {
+          "label": "BJT合格を目指す",
+          "desc": "ビジネス日本語能力テストの体系的な対策"
+        },
+        "business_japanese": {
+          "label": "職場のビジネス日本語",
+          "desc": "メール、会議、敬語、プレゼン表現"
+        },
+        "daily_conversation": {
+          "label": "日本での日常会話",
+          "desc": "生活、買い物、各種手続きの会話"
+        },
+        "reading_news": {
+          "label": "NHKニュース読解",
+          "desc": "NEWS WEB EASYやビジネス記事の読解"
+        },
+        "jlpt_prep": {
+          "label": "JLPT対策",
+          "desc": "文法・語彙・読解をバランスよく強化"
+        }
+      },
+      "levels": {
+        "n5": {
+          "label": "N5 — 入門",
+          "desc": "ひらがな・基本語彙からスタート"
+        },
+        "n4": {
+          "label": "N4 — 初級",
+          "desc": "身近な日常会話ができる"
+        },
+        "n3": {
+          "label": "N3 — 中級",
+          "desc": "やさしいニュースや基本業務に対応"
+        },
+        "n2": {
+          "label": "N2 — 中上級",
+          "desc": "職場で日本語を使って業務ができる"
+        },
+        "n1": {
+          "label": "N1 — 上級",
+          "desc": "高度なビジネス日本語に対応"
+        },
+        "unknown": {
+          "label": "まだわからない",
+          "desc": "5問のクイック診断で目安を確認"
+        }
+      },
+      "times": {
+        "m5": {
+          "label": "5分",
+          "desc": "スキマ時間で毎日継続"
+        },
+        "m10": {
+          "label": "10分",
+          "desc": "無理なく続けやすいペース"
+        },
+        "m20": {
+          "label": "20分",
+          "desc": "集中して実力を伸ばす"
+        },
+        "m30": {
+          "label": "30分以上",
+          "desc": "BJT目標に向けて短期集中"
+        }
+      }
     }
   },
   "nhkDetail": {
@@ -1591,7 +1678,8 @@
         "LR": "聴読解",
         "RC": "読解"
       }
-    }
+    },
+    "focusMode": "集中"
   },
   "onboarding": {
     "eyebrow": "BJT",
@@ -2505,8 +2593,32 @@
     "incorrectAnswer": "最適な答えではありません",
     "chooseAnswer": "答えを選んでください",
     "explanationLabel": "解説",
-    "activityTypes": {"best_expression": "適切な表現", "fill_phrase": "語句の穴埋め", "role_response": "立場に応じた応答", "politeness_check": "敬意の確認", "mini_case_inference": "事例の推論", "sentence_order": "文の並べ替え", "error_correction": "誤りの訂正", "reading_comprehension": "読解", "speaker_intent": "話し手の意図", "context_match": "場面の組み合わせ"},
-    "stimulusTypes": {"dialogue": "会話", "email": "メール", "internal_chat": "社内チャット", "memo": "メモ", "telephone": "電話", "meeting": "会議", "announcement": "お知らせ", "report": "報告", "table": "表", "policy": "方針", "proposal": "提案", "complaint": "苦情"},
+    "activityTypes": {
+      "best_expression": "適切な表現",
+      "fill_phrase": "語句の穴埋め",
+      "role_response": "立場に応じた応答",
+      "politeness_check": "敬意の確認",
+      "mini_case_inference": "事例の推論",
+      "sentence_order": "文の並べ替え",
+      "error_correction": "誤りの訂正",
+      "reading_comprehension": "読解",
+      "speaker_intent": "話し手の意図",
+      "context_match": "場面の組み合わせ"
+    },
+    "stimulusTypes": {
+      "dialogue": "会話",
+      "email": "メール",
+      "internal_chat": "社内チャット",
+      "memo": "メモ",
+      "telephone": "電話",
+      "meeting": "会議",
+      "announcement": "お知らせ",
+      "report": "報告",
+      "table": "表",
+      "policy": "方針",
+      "proposal": "提案",
+      "complaint": "苦情"
+    },
     "audioUnavailable": "ライセンス済み音声は未提供です。スクリプトで学習できます。",
     "audioTtsReady": "日本語TTSを利用できます",
     "audioGeneratedReady": "生成済み音声を利用できます",
@@ -2552,7 +2664,8 @@
     "tapToReveal": "タップまたはSpaceキー",
     "reading": "読み方",
     "playAudio": "発音を再生",
-    "examplesLabel": "例文"
+    "examplesLabel": "例文",
+    "focusMode": "集中"
   },
   "appearancePage": {
     "title": "外観",
@@ -2735,7 +2848,7 @@
     },
     "settingsTab": {
       "account": "アカウント",
-      "accountDesc": "表示名、メール、パスワード",
+      "accountDesc": "アカウント情報・メール・連携ログイン",
       "appearance": "外観",
       "appearanceDesc": "ライト/ダーク、フォントサイズ",
       "reading": "読解サポート",
@@ -2951,7 +3064,8 @@
       "points": "点",
       "showResult": "結果を見る",
       "continue": "続ける →",
-      "retry": "再試行"
+      "retry": "再試行",
+      "focusMode": "集中"
     }
   },
   "systemPages": {

@@ -1,113 +1,134 @@
 "use client";
 
 import { cn } from "@nihongo-bjt/ui";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { OnboardingDiagnostic } from "./onboarding-diagnostic";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface OnboardingFlowProps {
+export interface OnboardingOptionCopy {
+  label: string;
+  desc: string;
+}
+
+export interface OnboardingFlowLabels {
+  dialogAria: string;
+  stepCounter: string;
+  recommendedBadge: string;
+  back: string;
+  next: string;
+  finishStartReview: string;
+  saving: string;
+  skip: string;
+  saveError: string;
+  steps: {
+    goalTitle: string;
+    goalSubtitle: string;
+    levelTitle: string;
+    levelSubtitle: string;
+    diagnosticTitle: string;
+    diagnosticSubtitle: string;
+    timeTitle: string;
+    timeSubtitle: string;
+  };
+  goals: {
+    pass_bjt: OnboardingOptionCopy;
+    business_japanese: OnboardingOptionCopy;
+    daily_conversation: OnboardingOptionCopy;
+    reading_news: OnboardingOptionCopy;
+    jlpt_prep: OnboardingOptionCopy;
+  };
+  levels: {
+    n5: OnboardingOptionCopy;
+    n4: OnboardingOptionCopy;
+    n3: OnboardingOptionCopy;
+    n2: OnboardingOptionCopy;
+    n1: OnboardingOptionCopy;
+    unknown: OnboardingOptionCopy;
+  };
+  times: {
+    m5: OnboardingOptionCopy;
+    m10: OnboardingOptionCopy;
+    m20: OnboardingOptionCopy;
+    m30: OnboardingOptionCopy;
+  };
+}
+
+export interface OnboardingFlowProps {
+  labels: OnboardingFlowLabels;
+  locale: string;
   onComplete: (didComplete?: boolean) => void;
 }
 
-type Step = "level" | "diagnostic" | "goal" | "topics" | "time" | "style";
+type Step = "goal" | "level" | "diagnostic" | "time";
 
 interface Answers {
   currentLevel: number;
   goal: string;
-  topics: string[];
   dailyMinutes: number;
-  style: string;
 }
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
+// ─── Focused BJT/work option metadata ────────────────────────────────────────
 
-const LEVELS = [
-  { value: 5, label: "N5 — Mới bắt đầu", desc: "Hiragana, từ cơ bản", emoji: "🌱" },
-  { value: 4, label: "N4 — Sơ cấp", desc: "Giao tiếp đơn giản", emoji: "📗" },
-  { value: 3, label: "N3 — Trung cấp", desc: "Đọc báo dễ, hội thoại", emoji: "📘" },
-  { value: 2, label: "N2 — Trung-cao cấp", desc: "Làm việc bằng tiếng Nhật", emoji: "📙" },
-  { value: 1, label: "N1 — Cao cấp", desc: "Tiếng Nhật gần native", emoji: "🎓" },
-  { value: 0, label: "Chưa biết", desc: "Để hệ thống đánh giá sau", emoji: "🤔" },
+const GOAL_ITEMS: Array<{ value: keyof OnboardingFlowLabels["goals"]; emoji: string }> = [
+  { value: "pass_bjt", emoji: "🏆" },
+  { value: "business_japanese", emoji: "💼" },
+  { value: "daily_conversation", emoji: "🗣️" },
+  { value: "reading_news", emoji: "📰" },
+  { value: "jlpt_prep", emoji: "📝" }
 ];
 
-const GOALS = [
-  { value: "pass_bjt", label: "Thi đỗ BJT", desc: "Chuẩn bị cho kỳ thi BJT", emoji: "🏆" },
-  { value: "business_japanese", label: "Tiếng Nhật công sở", desc: "Email, họp, thuyết trình", emoji: "💼" },
-  { value: "daily_conversation", label: "Giao tiếp hàng ngày", desc: "Mua sắm, nhà hàng, giao thông", emoji: "🗣️" },
-  { value: "reading_news", label: "Đọc hiểu tin tức", desc: "NHK, báo chí, tài liệu", emoji: "📰" },
-  { value: "jlpt_prep", label: "Ôn thi JLPT", desc: "Ngữ pháp, từ vựng, đọc hiểu", emoji: "📝" },
-  { value: "travel", label: "Du lịch Nhật Bản", desc: "Hỏi đường, đặt phòng, giao tiếp", emoji: "✈️" },
-  { value: "general", label: "Học chung", desc: "Không mục tiêu cụ thể", emoji: "🌸" },
+const LEVEL_ITEMS: Array<{ value: number; key: keyof OnboardingFlowLabels["levels"]; emoji: string }> = [
+  { value: 5, key: "n5", emoji: "🌱" },
+  { value: 4, key: "n4", emoji: "📗" },
+  { value: 3, key: "n3", emoji: "📘" },
+  { value: 2, key: "n2", emoji: "📙" },
+  { value: 1, key: "n1", emoji: "🎓" },
+  { value: 0, key: "unknown", emoji: "🤔" }
 ];
 
-const TOPICS = [
-  { value: "business_meeting", label: "Họp hành", emoji: "🤝" },
-  { value: "business_email", label: "Viết email", emoji: "📧" },
-  { value: "business_phone", label: "Điện thoại", emoji: "📞" },
-  { value: "business_presentation", label: "Thuyết trình", emoji: "📊" },
-  { value: "daily_greetings", label: "Chào hỏi", emoji: "👋" },
-  { value: "daily_shopping", label: "Mua sắm", emoji: "🛍️" },
-  { value: "daily_restaurant", label: "Nhà hàng", emoji: "🍜" },
-  { value: "daily_transport", label: "Đi lại", emoji: "🚃" },
-  { value: "news_economy", label: "Kinh tế", emoji: "📈" },
-  { value: "news_technology", label: "Công nghệ", emoji: "💻" },
-  { value: "news_culture", label: "Văn hoá", emoji: "🎌" },
-  { value: "keigo", label: "Kính ngữ", emoji: "🎩" },
-  { value: "kanjii", label: "Kanji", emoji: "漢" },
-  { value: "idioms", label: "Thành ngữ", emoji: "💡" },
-];
-
-const TIME_OPTIONS = [
-  { value: 5, label: "5 phút", desc: "Nhanh mỗi ngày", emoji: "⚡" },
-  { value: 10, label: "10 phút", desc: "Cân bằng & hiệu quả", emoji: "⏰", recommended: true },
-  { value: 20, label: "20 phút", desc: "Chuyên sâu", emoji: "🔥" },
-  { value: 30, label: "30+ phút", desc: "Cam kết cao", emoji: "🚀" },
-];
-
-const STYLES = [
-  { value: "flashcard", label: "Lặp lại cách quãng", desc: "Ôn thẻ SRS, nhớ lâu", emoji: "🃏" },
-  { value: "practice", label: "Luyện bài tập", desc: "Giải quiz, điền từ, chọn đáp án", emoji: "✏️" },
-  { value: "immersion", label: "Ngâm trong ngôn ngữ", desc: "Đọc báo, nghe tin tức NHK", emoji: "📰" },
-  { value: "visual", label: "Học qua hình ảnh", desc: "Bài học có minh họa", emoji: "🖼️" },
-  { value: "mixed", label: "Trộn đều các kiểu", desc: "Để hệ thống tự phối hợp", emoji: "🎲", recommended: true },
+const TIME_ITEMS: Array<{
+  value: number;
+  key: keyof OnboardingFlowLabels["times"];
+  emoji: string;
+  recommended?: boolean;
+}> = [
+  { value: 5, key: "m5", emoji: "⚡" },
+  { value: 10, key: "m10", emoji: "⏰", recommended: true },
+  { value: 20, key: "m20", emoji: "🔥" },
+  { value: 30, key: "m30", emoji: "🚀" }
 ];
 
 /**
- * Static base step order. `diagnostic` is inserted dynamically only when
- * `currentLevel === 0` ("Chưa biết"); see `getSteps()` below.
+ * 3 focused steps: (1) Goal -> (2) Current Level (+ optional 5-Q diagnostic) -> (3) Daily pace & launch first review.
+ * Removed steps (`topics`, `style`) are preserved as backward-compatible defaults on submit.
  */
-const BASE_STEPS: Step[] = ["level", "goal", "topics", "time", "style"];
-
-function getSteps(answers: Answers): Step[] {
-  if (answers.currentLevel === 0) {
-    // Insert diagnostic right after the level step
-    return ["level", "diagnostic", "goal", "topics", "time", "style"];
-  }
-  return BASE_STEPS;
-}
+const BASE_STEPS: Step[] = ["goal", "level", "time"];
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
-  const [step, setStep] = useState<Step>("level");
+export function OnboardingFlow({ labels, locale, onComplete }: OnboardingFlowProps) {
+  const router = useRouter();
+  const [step, setStep] = useState<Step>("goal");
   const [answers, setAnswers] = useState<Answers>({
     currentLevel: -1,
     goal: "",
-    topics: [],
-    dailyMinutes: 10,
-    style: "",
+    dailyMinutes: 10
   });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
 
   const skipOnboarding = useCallback(async () => {
-    // Persist skip to backend so it won't show on other devices
+    if (saving) return;
     setSaving(true);
     setSaveError(false);
     try {
-      const response = await learnerApiFetch("/api/recommendation/onboarding/skip", { method: "POST" });
+      const response = await learnerApiFetch("/api/recommendation/onboarding/skip", {
+        method: "POST"
+      });
       if (!response.ok) throw new Error(`skip_onboarding:${response.status}`);
       onComplete(false);
     } catch {
@@ -115,99 +136,122 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     } finally {
       setSaving(false);
     }
-  }, [onComplete]);
+  }, [onComplete, saving]);
 
-  // Escape key to skip onboarding
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") void skipOnboarding();
+      if (e.key === "Escape" && !saving) void skipOnboarding();
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [skipOnboarding]);
+  }, [saving, skipOnboarding]);
 
-  // Respect prefers-reduced-motion
   const prefersReducedMotion =
     typeof window !== "undefined" &&
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-  const steps = getSteps(answers);
-  const stepIndex = steps.indexOf(step);
-  const progress = ((stepIndex + 1) / steps.length) * 100;
+  const displayStepIndex =
+    step === "goal" ? 0 : step === "level" || step === "diagnostic" ? 1 : 2;
+  const totalSteps = BASE_STEPS.length;
+  const progress = ((displayStepIndex + 1) / totalSteps) * 100;
 
   const canProceed = useCallback(() => {
     switch (step) {
-      case "level": return answers.currentLevel >= 0;
-      case "diagnostic": return false; // diagnostic auto-advances on completion
-      case "goal": return answers.goal !== "";
-      case "topics": return answers.topics.length >= 1;
-      case "time": return answers.dailyMinutes > 0;
-      case "style": return answers.style !== "";
+      case "goal":
+        return answers.goal !== "";
+      case "level":
+        return answers.currentLevel >= 0;
+      case "diagnostic":
+        return false;
+      case "time":
+        return answers.dailyMinutes > 0;
     }
   }, [step, answers]);
 
   const next = useCallback(async () => {
-    const currentSteps = getSteps(answers);
-    const idx = currentSteps.indexOf(step);
-    if (idx < currentSteps.length - 1) {
-      setStep(currentSteps[idx + 1]);
-    } else {
-      // Final step — save to backend
-      setSaving(true);
-      setSaveError(false);
-      try {
-        const response = await learnerApiFetch("/api/recommendation/onboarding/preferences", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(answers),
-        });
-        if (!response.ok) throw new Error(`save_onboarding:${response.status}`);
-        onComplete(true);
-      } catch {
-        setSaveError(true);
-      } finally {
-        setSaving(false);
-      }
+    if (step === "goal") {
+      setStep("level");
+      return;
     }
-  }, [step, answers, onComplete]);
+    if (step === "level") {
+      setStep(answers.currentLevel === 0 ? "diagnostic" : "time");
+      return;
+    }
+    if (step !== "time") return;
+
+    setSaving(true);
+    setSaveError(false);
+    try {
+      const response = await learnerApiFetch("/api/recommendation/onboarding/preferences", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentLevel: answers.currentLevel,
+          goal: answers.goal,
+          topics: [],
+          dailyMinutes: answers.dailyMinutes,
+          style: "mixed"
+        })
+      });
+      if (!response.ok) throw new Error(`save_onboarding:${response.status}`);
+      onComplete(true);
+      router.push(`/${locale}/flashcards?tab=review`);
+    } catch {
+      setSaveError(true);
+    } finally {
+      setSaving(false);
+    }
+  }, [step, answers, onComplete, router, locale]);
 
   const back = useCallback(() => {
-    const currentSteps = getSteps(answers);
-    const idx = currentSteps.indexOf(step);
-    if (idx > 0) setStep(currentSteps[idx - 1]);
-  }, [step, answers]);
+    if (step === "level") setStep("goal");
+    else if (step === "time") setStep("level");
+  }, [step]);
 
-  /** When diagnostic completes, apply suggested level and advance to goal */
   const handleDiagnosticComplete = useCallback((suggestedLevel: 5 | 4 | 3) => {
-    setAnswers((a) => ({ ...a, currentLevel: suggestedLevel }));
-    // getSteps will now return BASE_STEPS — jump to "goal"
-    setStep("goal");
+    setAnswers((prev) => ({ ...prev, currentLevel: suggestedLevel }));
+    setStep("time");
   }, []);
 
-  /** Skip diagnostic — keep level=0 won't pass canProceed, so push to goal directly */
   const handleDiagnosticSkip = useCallback(() => {
-    setStep("goal");
+    setStep("time");
   }, []);
 
-  const toggleTopic = (topic: string) => {
-    setAnswers((prev) => {
-      const has = prev.topics.includes(topic);
-      if (has) return { ...prev, topics: prev.topics.filter((t) => t !== topic) };
-      if (prev.topics.length >= 5) return prev; // max 5
-      return { ...prev, topics: [...prev.topics, topic] };
-    });
-  };
+  const stepTitle =
+    step === "goal"
+      ? labels.steps.goalTitle
+      : step === "level"
+        ? labels.steps.levelTitle
+        : step === "diagnostic"
+          ? labels.steps.diagnosticTitle
+          : labels.steps.timeTitle;
+
+  const stepSubtitle =
+    step === "goal"
+      ? labels.steps.goalSubtitle
+      : step === "level"
+        ? labels.steps.levelSubtitle
+        : step === "diagnostic"
+          ? labels.steps.diagnosticSubtitle
+          : labels.steps.timeSubtitle;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-label="Onboarding">
-      <div className={cn(
-        "w-full max-w-md rounded-3xl bg-surface shadow-2xl overflow-hidden",
-        !prefersReducedMotion && "animate-in fade-in slide-in-from-bottom-4 duration-300",
-      )}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label={labels.dialogAria}
+    >
+      <div
+        className={cn(
+          "w-full max-w-md overflow-hidden rounded-3xl bg-surface shadow-2xl",
+          !prefersReducedMotion && "animate-in fade-in slide-in-from-bottom-4 duration-300"
+        )}
+      >
         {/* Progress bar */}
         <div className="h-1.5 bg-ink/5">
           <div
-            className="h-full bg-accent transition-all duration-500 ease-out rounded-r-full"
+            className="h-full rounded-r-full bg-accent transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -215,35 +259,56 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         <div className="p-6">
           {/* Header */}
           <div className="mb-6 text-center">
-            <p className="text-xs text-muted mb-1">
-              Bước {stepIndex + 1}/{steps.length}
+            <p className="mb-1 text-xs text-muted">
+              {labels.stepCounter
+                .replace("{current}", String(displayStepIndex + 1))
+                .replace("{total}", String(totalSteps))}
             </p>
-            <h2 className="text-lg font-bold text-ink">
-              {step === "level" && "Trình độ hiện tại của bạn?"}
-              {step === "diagnostic" && "Kiểm tra nhanh trình độ"}
-              {step === "goal" && "Mục tiêu chính là gì?"}
-              {step === "topics" && "Bạn quan tâm chủ đề nào?"}
-              {step === "time" && "Mỗi ngày bạn dành bao lâu?"}
-              {step === "style" && "Bạn thích học kiểu nào?"}
-            </h2>
-            <p className="mt-1 text-xs text-muted">
-              {step === "level" && "Giúp hệ thống chọn nội dung phù hợp từ đầu"}
-              {step === "diagnostic" && "5 câu hỏi nhanh để gợi ý trình độ phù hợp"}
-              {step === "goal" && "Chúng tôi sẽ ưu tiên nội dung liên quan"}
-              {step === "topics" && "Chọn 1–5 chủ đề (bạn có thể thay đổi sau)"}
-              {step === "time" && "Gợi ý sẽ vừa vặn thời gian của bạn"}
-              {step === "style" && "Thuật toán sẽ thiên về phong cách này"}
-            </p>
+            <h2 className="text-lg font-bold text-ink">{stepTitle}</h2>
+            <p className="mt-1 text-xs text-muted">{stepSubtitle}</p>
           </div>
 
           {saveError ? (
-            <p className="mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800" role="alert">
-              Không thể lưu lựa chọn. Vui lòng thử lại.
+            <p
+              className="mb-3 rounded-xl border border-sakura-strong/30 bg-sakura-soft px-3 py-2 text-xs font-medium text-sakura-strong"
+              role="alert"
+            >
+              {labels.saveError}
             </p>
           ) : null}
 
           {/* Options */}
-          <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
+          <div className="max-h-[50vh] space-y-2 overflow-y-auto pr-1">
+            {step === "goal" &&
+              GOAL_ITEMS.map((item) => {
+                const copy = labels.goals[item.value];
+                return (
+                  <OptionButton
+                    key={item.value}
+                    selected={answers.goal === item.value}
+                    onClick={() => setAnswers((prev) => ({ ...prev, goal: item.value }))}
+                    emoji={item.emoji}
+                    label={copy.label}
+                    desc={copy.desc}
+                  />
+                );
+              })}
+
+            {step === "level" &&
+              LEVEL_ITEMS.map((item) => {
+                const copy = labels.levels[item.key];
+                return (
+                  <OptionButton
+                    key={item.value}
+                    selected={answers.currentLevel === item.value}
+                    onClick={() => setAnswers((prev) => ({ ...prev, currentLevel: item.value }))}
+                    emoji={item.emoji}
+                    label={copy.label}
+                    desc={copy.desc}
+                  />
+                );
+              })}
+
             {step === "diagnostic" && (
               <OnboardingDiagnostic
                 onComplete={handleDiagnosticComplete}
@@ -251,76 +316,22 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
               />
             )}
 
-            {step === "level" &&
-              LEVELS.map((l) => (
-                <OptionButton
-                  key={l.value}
-                  selected={answers.currentLevel === l.value}
-                  onClick={() => setAnswers((a) => ({ ...a, currentLevel: l.value }))}
-                  emoji={l.emoji}
-                  label={l.label}
-                  desc={l.desc}
-                />
-              ))}
-
-            {step === "goal" &&
-              GOALS.map((g) => (
-                <OptionButton
-                  key={g.value}
-                  selected={answers.goal === g.value}
-                  onClick={() => setAnswers((a) => ({ ...a, goal: g.value }))}
-                  emoji={g.emoji}
-                  label={g.label}
-                  desc={g.desc}
-                />
-              ))}
-
-            {step === "topics" && (
-              <div className="grid grid-cols-2 gap-2">
-                {TOPICS.map((t) => (
-                  <button
-                    key={t.value}
-                    onClick={() => toggleTopic(t.value)}
-                    className={cn(
-                      "flex items-center gap-2 rounded-xl p-3 text-left text-sm transition",
-                      "border hover:scale-[1.02] active:scale-[0.98]",
-                      answers.topics.includes(t.value)
-                        ? "border-accent bg-accent/10 text-ink shadow-sm"
-                        : "border-ink/8 bg-surface text-muted hover:border-ink/20",
-                    )}
-                  >
-                    <span className="text-base">{t.emoji}</span>
-                    <span className="font-medium">{t.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
             {step === "time" &&
-              TIME_OPTIONS.map((t) => (
-                <OptionButton
-                  key={t.value}
-                  selected={answers.dailyMinutes === t.value}
-                  onClick={() => setAnswers((a) => ({ ...a, dailyMinutes: t.value }))}
-                  emoji={t.emoji}
-                  label={t.label}
-                  desc={t.desc}
-                  recommended={t.recommended}
-                />
-              ))}
-
-            {step === "style" &&
-              STYLES.map((s) => (
-                <OptionButton
-                  key={s.value}
-                  selected={answers.style === s.value}
-                  onClick={() => setAnswers((a) => ({ ...a, style: s.value }))}
-                  emoji={s.emoji}
-                  label={s.label}
-                  desc={s.desc}
-                  recommended={s.recommended}
-                />
-              ))}
+              TIME_ITEMS.map((item) => {
+                const copy = labels.times[item.key];
+                return (
+                  <OptionButton
+                    key={item.value}
+                    selected={answers.dailyMinutes === item.value}
+                    onClick={() => setAnswers((prev) => ({ ...prev, dailyMinutes: item.value }))}
+                    emoji={item.emoji}
+                    label={copy.label}
+                    desc={copy.desc}
+                    recommended={item.recommended}
+                    recommendedBadge={labels.recommendedBadge}
+                  />
+                );
+              })}
           </div>
 
           {/* Navigation — hidden during diagnostic (component has its own nav) */}
@@ -328,33 +339,34 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             <div className="mt-6 flex items-center justify-between">
               <button
                 onClick={back}
-                disabled={stepIndex === 0}
+                disabled={displayStepIndex === 0}
+                type="button"
                 className={cn(
                   "rounded-xl px-4 py-2 text-sm font-medium transition",
-                  stepIndex === 0
+                  displayStepIndex === 0
                     ? "invisible"
-                    : "text-muted hover:text-ink hover:bg-ink/5",
+                    : "text-muted hover:bg-ink/5 hover:text-ink"
                 )}
               >
-                ← Quay lại
+                {labels.back}
               </button>
 
               <button
-                onClick={next}
+                onClick={() => void next()}
                 disabled={!canProceed() || saving}
+                type="button"
                 className={cn(
-                  "rounded-xl px-5 py-2.5 text-sm font-bold transition",
-                  "shadow-sm active:scale-[0.97]",
+                  "rounded-xl px-5 py-2.5 text-sm font-bold shadow-sm transition active:scale-[0.97]",
                   canProceed() && !saving
                     ? "bg-action text-white hover:bg-action-hover"
-                    : "bg-ink/10 text-muted cursor-not-allowed",
+                    : "cursor-not-allowed bg-ink/10 text-muted"
                 )}
               >
                 {saving
-                  ? "Đang lưu..."
-                  : stepIndex === steps.length - 1
-                    ? "Hoàn tất ✓"
-                    : "Tiếp theo →"}
+                  ? labels.saving
+                  : step === "time"
+                    ? labels.finishStartReview
+                    : labels.next}
               </button>
             </div>
           )}
@@ -362,10 +374,12 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
           {/* Skip */}
           <div className="mt-3 text-center">
             <button
-              onClick={skipOnboarding}
-              className="text-[11px] text-muted hover:text-ink transition"
+              disabled={saving}
+              onClick={() => void skipOnboarding()}
+              type="button"
+              className="text-[11px] text-muted transition hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Bỏ qua — tôi sẽ thiết lập sau
+              {labels.skip}
             </button>
           </div>
         </div>
@@ -383,6 +397,7 @@ function OptionButton({
   label,
   desc,
   recommended,
+  recommendedBadge
 }: {
   selected: boolean;
   onClick: () => void;
@@ -390,39 +405,46 @@ function OptionButton({
   label: string;
   desc: string;
   recommended?: boolean;
+  recommendedBadge?: string;
 }) {
   return (
     <button
       onClick={onClick}
+      type="button"
       className={cn(
-        "flex w-full items-center gap-3 rounded-xl p-3.5 text-left transition-colors duration-150",
-        "border",
+        "flex w-full items-center gap-3 rounded-xl border p-3.5 text-left transition-colors duration-150",
         selected
           ? "border-accent bg-accent/10 shadow-sm"
-          : "border-ink/8 bg-surface hover:border-ink/20",
+          : "border-ink/8 bg-surface hover:border-ink/20"
       )}
     >
-      <span className="text-xl">{emoji}</span>
-      <div className="flex-1 min-w-0">
+      <span className="text-xl" aria-hidden="true">
+        {emoji}
+      </span>
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className={cn("text-sm font-medium", selected ? "text-ink" : "text-ink/80")}>
             {label}
           </span>
-          {recommended && (
-            <span className="rounded-full bg-accent/15 px-1.5 py-0.5 text-[9px] font-bold text-accent">
-              Đề xuất
+          {recommended && recommendedBadge ? (
+            <span className="rounded-full bg-accent-soft px-1.5 py-0.5 text-[9px] font-bold text-brand-accent">
+              {recommendedBadge}
             </span>
-          )}
+          ) : null}
         </div>
-        <p className="mt-0.5 text-[11px] text-muted truncate">{desc}</p>
+        <p className="mt-0.5 truncate text-[11px] text-muted">{desc}</p>
       </div>
-      {selected && (
-        <div className="shrink-0">
+      {selected ? (
+        <div className="shrink-0" aria-hidden="true">
           <svg className="h-5 w-5 text-accent" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clipRule="evenodd"
+            />
           </svg>
         </div>
-      )}
+      ) : null}
     </button>
   );
 }

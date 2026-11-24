@@ -1,5 +1,6 @@
 /** Shared types for homepage section components */
 import type { DailyRadarLabels } from "@/src/features/daily-radar/types";
+import type { OnboardingFlowLabels } from "./onboarding-flow";
 
 export type NewsType = "easy" | "normal" | "business" | "livedoor";
 
@@ -176,6 +177,7 @@ export interface HomepageLabels {
     rewardsSub: string;
     focusSub: string;
   };
+  onboardingFlow: OnboardingFlowLabels;
 }
 
 export interface NhkArticle {

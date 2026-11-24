@@ -1,46 +1,10 @@
-import { Card, CardContent, PageHeader } from "@nihongo-bjt/ui";
-import Link from "next/link";
-import { Suspense } from "react";
+import { redirect } from "next/navigation";
 
-import en from "../../../../messages/en.json";
-import ja from "../../../../messages/ja.json";
-import vi from "../../../../messages/vi.json";
-import { RequireAuth } from "../../../../components/auth/require-auth";
-import { AccountsSettingsClient } from "./_components/accounts-settings-client";
-
-const messages = { ja, vi, en };
-
-export default async function AccountsSettingsPage({
+export default async function LinkedAccountsRedirectPage({
   params
 }: {
-  params: Promise<{ locale: keyof typeof messages }>;
+  params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const t = messages[locale] ?? messages.vi;
-  return (
-    <RequireAuth locale={locale}>
-      <main className="w-full space-y-6 pb-12">
-        <PageHeader description={t.accounts.linkedAccountsSubtitle} title={t.accounts.linkedAccountsTitle} />
-        <Card className="border-ink/10 shadow-sm">
-          <CardContent className="p-5 sm:p-6">
-            <Suspense fallback={<p className="text-sm text-muted">{t.accounts.subtitle}</p>}>
-              <AccountsSettingsClient
-                labels={{
-                  exchangeError: t.accounts.exchangeError,
-                  identitiesEmpty: t.accounts.linkedAccountsEmpty,
-                  unlink: t.accounts.unlink
-                }}
-              />
-            </Suspense>
-          </CardContent>
-        </Card>
-        <Link
-          className="text-sm font-medium text-muted underline-offset-4 hover:text-ink hover:underline"
-          href={`/${locale}/settings`}
-        >
-          ← {t.settings.title}
-        </Link>
-      </main>
-    </RequireAuth>
-  );
+  redirect(`/${locale}/settings/accounts`);
 }
