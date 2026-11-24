@@ -24,5 +24,12 @@ export default async function NhkNewsPage({
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
 
-  return <NhkNewsListClient labels={t.nhkDetail} homepageLabels={t.homepage} locale={locale} />;
+  return (
+    <NhkNewsListClient
+      labels={t.nhkDetail}
+      homepageLabels={t.homepage}
+      locale={locale}
+      studyTrackLabels={t.studyTracks}
+    />
+  );
 }

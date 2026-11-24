@@ -214,6 +214,12 @@
     "exercisesTab": "スキル別クイック練習",
     "battleLink": "Botスピード対戦 →"
   },
+  "studyTracks": {
+    "ariaLabel": "学習トラック",
+    "levelsTab": "BJT学習パス",
+    "scenariosTab": "職場シナリオ",
+    "readingTab": "NHKニュース読解"
+  },
   "home": {
     "actionsLabel": "主な操作",
     "eyebrow": "Kiokoto",

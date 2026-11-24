@@ -8,10 +8,10 @@ const messages = { en, ja, vi };
 
 export default async function ScenariosPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const copy = messages[locale as keyof typeof messages]?.scenarios.list ?? vi.scenarios.list;
+  const t = messages[locale as keyof typeof messages] ?? vi;
   return (
     <RequireAuth locale={locale}>
-      <ScenarioListClient locale={locale} copy={copy} />
+      <ScenarioListClient locale={locale} copy={t.scenarios.list} studyTrackLabels={t.studyTracks} />
     </RequireAuth>
   );
 }

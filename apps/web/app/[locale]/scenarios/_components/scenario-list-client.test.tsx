@@ -149,4 +149,25 @@ describe("scenario list", () => {
     expect(retryBtn?.className).toContain("border-border");
     act(() => errMount.root.unmount());
   });
+
+  it("renders StudyTrackTabs with Tình huống công sở active and navigation links to /levels and /news", async () => {
+    state.fetch.mockResolvedValueOnce(new Response(JSON.stringify(scenarios), { status: 200 }));
+    const { container, root } = await mount("vi");
+
+    const levelsTab = container.querySelector<HTMLAnchorElement>('a[href="/vi/levels"]');
+    const scenariosTab = container.querySelector<HTMLAnchorElement>('a[href="/vi/scenarios"]');
+    const readingTab = container.querySelector<HTMLAnchorElement>('a[href="/vi/news"]');
+
+    expect(levelsTab, "/scenarios must render StudyTrackTabs with link to /vi/levels").not.toBeNull();
+    expect(scenariosTab, "/scenarios must render active StudyTrackTabs link to /vi/scenarios").not.toBeNull();
+    expect(readingTab, "/scenarios must render StudyTrackTabs with link to /vi/news").not.toBeNull();
+    expect(scenariosTab!.getAttribute("aria-current")).toBe("page");
+    expect(levelsTab!.getAttribute("aria-current")).toBeNull();
+    expect(readingTab!.getAttribute("aria-current")).toBeNull();
+    expect(levelsTab!.textContent?.trim()).toBe("Lộ trình BJT");
+    expect(scenariosTab!.textContent?.trim()).toBe("Tình huống công sở");
+    expect(readingTab!.textContent?.trim()).toBe("Đọc NHK");
+
+    act(() => root.unmount());
+  });
 });

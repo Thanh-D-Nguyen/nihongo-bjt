@@ -1,0 +1,344 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-444",
+  "title": "Expand Học tập (/levels) into 2-track hub with shared StudyTrackTabs and /modules redirect",
+  "start_head": "44aec6b25785dc53928b3b3623d49ea42097924a",
+  "preexisting_changes": {
+    ".build/.buildSystem_debug": "c337257139e569398ce8bf081a54dbc7d1e0267d",
+    ".build/CACHEDIR.TAG": "b7ab0d883e974d20c05898291a6218954e18e5ef"
+  },
+  "spec": {
+    "problem": "Học tập (/levels) is disconnected from practical workplace scenarios (/scenarios) and Japanese NHK news reading (/news), lacks ?track= deep-link redirects, and /modules/[moduleKey] exposes early-preview dev placeholder copy.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Shared StudyTrackTabs renders 3 navigation links (/{locale}/levels, /{locale}/scenarios, /{locale}/news) with localized labels in vi/en/ja and accurate aria-current=page state at the top of /levels, /scenarios, and /news without duplicating page content or changing the 5-item primary nav."
+      },
+      {
+        "id": "AC2",
+        "text": "/[locale]/levels supports ?track= deep links: ?track=scenarios server-redirects to /{locale}/scenarios and ?track=reading server-redirects to /{locale}/news."
+      },
+      {
+        "id": "AC3",
+        "text": "/[locale]/modules and /[locale]/modules/[moduleKey] server-redirect to /{locale}/levels without calling daily-radar APIs or showing early-preview dev copy, keeping Strategy (a) files intact."
+      },
+      {
+        "id": "AC4",
+        "text": "app/sitemap.ts excludes modules (verified in sitemap.test.ts across vi/ja/en), and updated/new unit tests cover StudyTrackTabs, ?track= redirects, and /modules redirects with §5 justification for modules/[moduleKey]/page.test.tsx; theme-contrast.regression.test.ts and frontend-debt floors stay green untouched."
+      }
+    ],
+    "expected_behavior": "Shared StudyTrackTabs renders [Lộ trình BJT | Tình huống công sở | Đọc NHK] across /levels, /scenarios, and /news with accurate active aria-current state and localized labels in vi/en/ja; /levels?track=scenarios redirects to /{locale}/scenarios and /levels?track=reading redirects to /{locale}/news; /modules and /modules/[moduleKey] server-redirect to /{locale}/levels under Strategy (a); sitemap.xml excludes /modules.",
+    "observed_behavior": "/levels, /scenarios, and /news have no shared hub tab bar; /levels ignores ?track=scenarios and ?track=reading; /modules/[moduleKey] fetches /api/daily-radar/* and renders early-preview placeholder copy while /modules has no redirect page.",
+    "rollback_plan": "Revert StudyTrackTabs, levels/scenarios/news header mounts, levels ?track= redirects, modules redirects, i18n studyTracks keys, and updated tests."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "modify",
+    "rationale": "Web-only Học tập hub consolidation: adds shared StudyTrackTabs navigation component across /levels, /scenarios, and /news with vi/en/ja i18n keys, adds ?track= deep-link server redirects on /levels, replaces /modules/[moduleKey] (and adds /modules) with server redirects to /{locale}/levels under Strategy (a), and updates modules/[moduleKey]/page.test.tsx per ENGINEERING_POLICY.md §5."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/levels/page.test.tsx",
+      "test": "LevelsPage track deep links > redirects ?track=scenarios to /[locale]/scenarios and ?track=reading to /[locale]/news across locales",
+      "expect": "LevelsPage must server-redirect /vi/levels?track=scenarios to /vi/scenarios"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/levels/page.test.tsx",
+      "test": "LevelsPage track deep links > renders LevelsClient with studyTrackLabels when no redirect track is specified",
+      "expect": "LevelsPage must pass studyTrackLabels to LevelsClient"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/levels/_components/levels-client.test.tsx",
+      "test": "LevelsClient > renders StudyTrackTabs with Lộ trình BJT active and navigation links to /scenarios and /news",
+      "expect": "/levels must render StudyTrackTabs with link to /vi/scenarios"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx",
+      "test": "scenario list > renders StudyTrackTabs with Tình huống công sở active and navigation links to /levels and /news",
+      "expect": "/scenarios must render StudyTrackTabs with link to /vi/levels"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/news/nhk-news-regression.test.tsx",
+      "test": "NHK regression > renders StudyTrackTabs with Đọc NHK active and navigation links to /levels and /scenarios",
+      "expect": "/news must render StudyTrackTabs with link to /vi/levels"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/modules/[moduleKey]/page.test.tsx",
+      "test": "DailyRadarModulePlaceholder server redirect > redirects /[locale]/modules/[moduleKey] to /[locale]/levels across locales without fetching daily-radar APIs",
+      "expect": "DailyRadarModulePlaceholder must server-redirect /vi/modules/audit_probe_module to /vi/levels"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-24T11:48:57.615Z",
+      "head": "44aec6b25785dc53928b3b3623d49ea42097924a"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-24T11:48:57.960Z",
+      "head": "44aec6b25785dc53928b3b3623d49ea42097924a"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-24T11:48:58.333Z",
+      "head": "44aec6b25785dc53928b3b3623d49ea42097924a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-24T11:50:18.684Z",
+      "head": "44aec6b25785dc53928b3b3623d49ea42097924a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-24T11:52:08.522Z",
+      "head": "44aec6b25785dc53928b3b3623d49ea42097924a"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-24T11:56:21.381Z",
+      "head": "44aec6b25785dc53928b3b3623d49ea42097924a"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-24T12:04:08.925Z",
+      "head": "44aec6b25785dc53928b3b3623d49ea42097924a"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-24T11:50:18.395Z",
+      "head": "44aec6b25785dc53928b3b3623d49ea42097924a",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/levels/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/modules/[moduleKey]/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/page.test.tsx::LevelsPage track deep links > redirects ?track=scenarios to /[locale]/scenarios and ?track=reading to /[locale]/news across locales",
+          "outcome": "FAIL",
+          "excerpt": "LevelsPage must server-redirect /vi/levels?track=scenarios to /vi/scenarios: expected \"vi.fn()\" to be called with arguments: [ '/vi/scenarios' ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/page.test.tsx::LevelsPage track deep links > renders LevelsClient with studyTrackLabels when no redirect track is specified",
+          "outcome": "FAIL",
+          "excerpt": "LevelsPage must pass studyTrackLabels to LevelsClient: expected undefined to deeply equal { ariaLabel: 'Lộ trình học tập', …(3) }",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders StudyTrackTabs with Lộ trình BJT active and navigation links to /scenarios and /news",
+          "outcome": "FAIL",
+          "excerpt": "/levels must render StudyTrackTabs with link to /vi/scenarios: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > renders StudyTrackTabs with Tình huống công sở active and navigation links to /levels and /news",
+          "outcome": "FAIL",
+          "excerpt": "/scenarios must render StudyTrackTabs with link to /vi/levels: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders StudyTrackTabs with Đọc NHK active and navigation links to /levels and /scenarios",
+          "outcome": "FAIL",
+          "excerpt": "/news must render StudyTrackTabs with link to /vi/levels: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/modules/[moduleKey]/page.test.tsx::DailyRadarModulePlaceholder server redirect > redirects /[locale]/modules/[moduleKey] to /[locale]/levels across locales without fetching daily-radar APIs",
+          "outcome": "FAIL",
+          "excerpt": "DailyRadarModulePlaceholder must server-redirect /vi/modules/audit_probe_module to /vi/levels: expected \"vi.fn()\" to be called with arguments: [ '/vi/levels' ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/levels/page.test.tsx::LevelsPage track deep links > redirects ?track=scenarios to /[locale]/scenarios and ?track=reading to /[locale]/news across locales": "LevelsPage must server-redirect /vi/levels?track=scenarios to /vi/scenarios",
+        "vitest:apps/web/app/[locale]/levels/page.test.tsx::LevelsPage track deep links > renders LevelsClient with studyTrackLabels when no redirect track is specified": "LevelsPage must pass studyTrackLabels to LevelsClient",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders StudyTrackTabs with Lộ trình BJT active and navigation links to /scenarios and /news": "/levels must render StudyTrackTabs with link to /vi/scenarios",
+        "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > renders StudyTrackTabs with Tình huống công sở active and navigation links to /levels and /news": "/scenarios must render StudyTrackTabs with link to /vi/levels",
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders StudyTrackTabs with Đọc NHK active and navigation links to /levels and /scenarios": "/news must render StudyTrackTabs with link to /vi/levels",
+        "vitest:apps/web/app/[locale]/modules/[moduleKey]/page.test.tsx::DailyRadarModulePlaceholder server redirect > redirects /[locale]/modules/[moduleKey] to /[locale]/levels across locales without fetching daily-radar APIs": "DailyRadarModulePlaceholder must server-redirect /vi/modules/audit_probe_module to /vi/levels"
+      },
+      "fingerprint": "bbcc85d7a58d1d5f39e599daba3c0031fbb057725f9d18948ba2d06ce4745691"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-24T11:52:07.691Z",
+      "head": "44aec6b25785dc53928b3b3623d49ea42097924a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/levels/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/modules/[moduleKey]/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/page.test.tsx::LevelsPage track deep links > redirects ?track=scenarios to /[locale]/scenarios and ?track=reading to /[locale]/news across locales",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/page.test.tsx::LevelsPage track deep links > renders LevelsClient with studyTrackLabels when no redirect track is specified",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders StudyTrackTabs with Lộ trình BJT active and navigation links to /scenarios and /news",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx::scenario list > renders StudyTrackTabs with Tình huống công sở active and navigation links to /levels and /news",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders StudyTrackTabs with Đọc NHK active and navigation links to /levels and /scenarios",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/modules/[moduleKey]/page.test.tsx::DailyRadarModulePlaceholder server redirect > redirects /[locale]/modules/[moduleKey] to /[locale]/levels across locales without fetching daily-radar APIs",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0335ca4645b330cd7c6e0256eb4297195b498c38c70bd441a52d30fa95c58e35"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-24T11:54:06.960Z",
+      "head": "44aec6b25785dc53928b3b3623d49ea42097924a",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 731,
+        "executed": 731,
+        "passed": 731,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 908,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "0335ca4645b330cd7c6e0256eb4297195b498c38c70bd441a52d30fa95c58e35"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-24T11:56:20.203Z",
+      "head": "44aec6b25785dc53928b3b3623d49ea42097924a",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 731,
+        "executed": 731,
+        "passed": 731,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 908,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "0335ca4645b330cd7c6e0256eb4297195b498c38c70bd441a52d30fa95c58e35"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-24T12:04:07.401Z",
+      "head": "44aec6b25785dc53928b3b3623d49ea42097924a",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "fresh-research-subagent:88e3794e",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "Fresh-context independent review verified shared StudyTrackTabs on /levels, /scenarios, and /news, ?track= deep-link redirects on /levels, /modules and /modules/[moduleKey] redirects to /{locale}/levels, sitemap exclusion, Strategy (a) preservation, and §5 justification for modules/[moduleKey]/page.test.tsx.",
+      "output_sha256": "980e5497ca5c235f80ec66e43742bbc06b33374e5568e63fdf74b70b44fa8d2c",
+      "attested": true,
+      "fingerprint": "0335ca4645b330cd7c6e0256eb4297195b498c38c70bd441a52d30fa95c58e35"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-24T12:04:08.917Z",
+    "head": "44aec6b25785dc53928b3b3623d49ea42097924a",
+    "fingerprint": "0335ca4645b330cd7c6e0256eb4297195b498c38c70bd441a52d30fa95c58e35",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/levels/_components/levels-client.test.tsx": "8474434eb0a882eca9da36d70096f539d6cf541e",
+      "apps/web/app/[locale]/levels/_components/levels-client.tsx": "14f6fdcfb637994e3727015dc0dffe536d743a0c",
+      "apps/web/app/[locale]/levels/_components/study-track-tabs.test.tsx": "40cac5b10dfe893dc47084a38b1bdad3e6431426",
+      "apps/web/app/[locale]/levels/_components/study-track-tabs.tsx": "c989e52848099bcccd3094150a57945fde618c34",
+      "apps/web/app/[locale]/levels/page.test.tsx": "018e7a519719eb1a897345ed12f26a579d0e4c8e",
+      "apps/web/app/[locale]/levels/page.tsx": "3297285daf16e0b789d5fe3e3c885b41fe917782",
+      "apps/web/app/[locale]/modules/[moduleKey]/page.test.tsx": "017e0ceecea0331dbc513a29213e1f86db5b1a7e",
+      "apps/web/app/[locale]/modules/[moduleKey]/page.tsx": "4bbc0274299b380993a5548cf1d9a465c7a828b3",
+      "apps/web/app/[locale]/modules/page.test.tsx": "f68d5fd20c79659db3c7b70a9713bcd85538177a",
+      "apps/web/app/[locale]/modules/page.tsx": "732c3a591f44edef52ebd290975a4dc9edb9639c",
+      "apps/web/app/[locale]/news/_components/nhk-news-list-client.tsx": "8c9bf643f359ce7b44077f65c64ecfdac3f008bb",
+      "apps/web/app/[locale]/news/nhk-news-regression.test.tsx": "d549556c0d0853905fa2c4f6bc4407d77cfb5e07",
+      "apps/web/app/[locale]/news/page.tsx": "fa5e9b753350608bd2cf20e59b1f982a522af196",
+      "apps/web/app/[locale]/scenarios/_components/scenario-list-client.test.tsx": "63aefa360406b9c66f5fe6ec0be73f0e4f4b8751",
+      "apps/web/app/[locale]/scenarios/_components/scenario-list-client.tsx": "d403ef302e33a58db6c48d015f0cb9361b6db6b7",
+      "apps/web/app/[locale]/scenarios/page.tsx": "a530e211ca248480f29c605d8cca97d9986f27b7",
+      "apps/web/app/sitemap.test.ts": "4e99df1f3d333bef62826f5b62b0e64b62c67b4e",
+      "apps/web/messages/en.json": "7efc097db886bd6fc79d10d41718c42918ff0d29",
+      "apps/web/messages/ja.json": "5a2e4ff061bdd5f2bfc5a4607a82d3159c13477f",
+      "apps/web/messages/vi.json": "6753b9eb6a45233389807ae73022ba9553435f7d"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}
