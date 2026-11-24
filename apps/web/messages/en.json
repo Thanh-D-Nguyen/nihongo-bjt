@@ -286,6 +286,12 @@
     "exercisesTab": "Quick Skill Drills",
     "battleLink": "Bot Speed Drill →"
   },
+  "studyTracks": {
+    "ariaLabel": "Study tracks",
+    "levelsTab": "BJT Roadmap",
+    "scenariosTab": "Workplace Scenarios",
+    "readingTab": "NHK Reading"
+  },
   "home": {
     "actionsLabel": "Quick actions",
     "eyebrow": "Kiokoto",

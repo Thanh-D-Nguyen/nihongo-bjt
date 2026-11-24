@@ -101,4 +101,29 @@ describe("NHK regression", () => {
     const meta = await generateMetadata({ params: Promise.resolve({ locale: "en", id: "normal-test" }) });
     expect(meta.title).not.toContain("easy");
   });
+
+  it("renders StudyTrackTabs with Đọc NHK active and navigation links to /levels and /scenarios", async () => {
+    api.article = [article];
+    const container = document.createElement("div");
+    const root = createRoot(container);
+    await act(async () =>
+      root.render(<NhkNewsListClient labels={en.nhkDetail} homepageLabels={en.homepage} locale="vi" />)
+    );
+
+    const levelsTab = container.querySelector<HTMLAnchorElement>('a[href="/vi/levels"]');
+    const scenariosTab = container.querySelector<HTMLAnchorElement>('a[href="/vi/scenarios"]');
+    const readingTab = container.querySelector<HTMLAnchorElement>('a[href="/vi/news"]');
+
+    expect(levelsTab, "/news must render StudyTrackTabs with link to /vi/levels").not.toBeNull();
+    expect(scenariosTab, "/news must render StudyTrackTabs with link to /vi/scenarios").not.toBeNull();
+    expect(readingTab, "/news must render active StudyTrackTabs link to /vi/news").not.toBeNull();
+    expect(readingTab!.getAttribute("aria-current")).toBe("page");
+    expect(levelsTab!.getAttribute("aria-current")).toBeNull();
+    expect(scenariosTab!.getAttribute("aria-current")).toBeNull();
+    expect(levelsTab!.textContent?.trim()).toBe("Lộ trình BJT");
+    expect(scenariosTab!.textContent?.trim()).toBe("Tình huống công sở");
+    expect(readingTab!.textContent?.trim()).toBe("Đọc NHK");
+
+    await act(async () => root.unmount());
+  });
 });

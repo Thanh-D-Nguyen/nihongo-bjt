@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { learnerApiFetchOptional } from "../../../../lib/learner-api";
 import { levelNameWithoutCode } from "../../../../lib/level-display";
+import { StudyTrackTabs, type StudyTrackTabsLabels } from "./study-track-tabs";
 
 interface LevelItem {
   code: string;
@@ -56,7 +57,15 @@ interface Labels {
   analyticsError: string;
 }
 
-export function LevelsClient({ labels, locale }: { labels: Labels; locale: string }) {
+export function LevelsClient({
+  labels,
+  locale,
+  studyTrackLabels
+}: {
+  labels: Labels;
+  locale: string;
+  studyTrackLabels?: StudyTrackTabsLabels;
+}) {
   const [levels, setLevels] = useState<LevelItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -89,7 +98,8 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-8">
+      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+        <StudyTrackTabs activeTrack="levels" className="mb-6" labels={studyTrackLabels} locale={locale} />
         <div className="h-8 w-48 animate-pulse rounded bg-[var(--color-border)]" />
         <div className="mt-8 space-y-6">
           {[1, 2, 3, 4].map((i) => (
@@ -108,8 +118,11 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
 
   if (error) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-8 text-center">
-        <p className="text-sm text-[var(--color-danger)]">{labels.error}</p>
+      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+        <StudyTrackTabs activeTrack="levels" className="mb-6" labels={studyTrackLabels} locale={locale} />
+        <div className="py-8 text-center">
+          <p className="text-sm text-[var(--color-danger)]">{labels.error}</p>
+        </div>
       </div>
     );
   }
@@ -127,6 +140,7 @@ export function LevelsClient({ labels, locale }: { labels: Labels; locale: strin
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+      <StudyTrackTabs activeTrack="levels" className="mb-6" labels={studyTrackLabels} locale={locale} />
       {/* Page Header */}
       <div className="mb-8">
         <p className="text-overline text-muted">{labels.scoreRange}</p>
