@@ -704,7 +704,7 @@ function DetailActions({
       <p className="text-[10px] leading-relaxed text-muted">{labels.detailActionsFootnote}</p>
       <Link
         className="search-detail-cta inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-ink/10 bg-paper/80 px-3 text-xs font-semibold text-accent hover:bg-accent/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
-        href={`/${locale}/saved`}
+        href={`/${locale}/search?tab=saved`}
       >
         {labels.detailSavedListLink}
       </Link>

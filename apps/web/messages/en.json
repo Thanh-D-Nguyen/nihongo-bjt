@@ -753,6 +753,7 @@
     "kindKanji": "Kanji",
     "kindLexeme": "vocabulary",
     "kindAll": "All",
+    "tabSaved": "Saved",
     "loading": "Searching…",
     "placeholder": "e.g. meeting, N2, business",
     "submit": "search",

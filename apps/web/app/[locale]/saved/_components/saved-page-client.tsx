@@ -97,7 +97,15 @@ async function resolveBookmarkTitle(targetType: string, targetId: string): Promi
   return null;
 }
 
-export function SavedPageClient({ labels, locale }: { labels: SavedPageLabels; locale: string }) {
+export function SavedPageClient({
+  embedded = false,
+  labels,
+  locale
+}: {
+  embedded?: boolean;
+  labels: SavedPageLabels;
+  locale: string;
+}) {
   const { userId } = useGoAuth();
   const [tab, setTab] = useState<SavedTab>("words");
   const [rows, setRows] = useState<BookmarkRow[]>([]);
@@ -175,6 +183,22 @@ export function SavedPageClient({ labels, locale }: { labels: SavedPageLabels; l
   };
 
   if (!userId) {
+    if (embedded) {
+      return (
+        <section aria-label={labels.title} className="mt-6 px-4 pb-8 sm:px-0">
+          <div className="mx-auto w-full max-w-2xl rounded-2xl border border-ink/8 bg-surface px-5 py-10 text-center shadow-sm sm:px-8">
+            <h2 className="text-xl font-bold text-ink">{labels.signInTitle}</h2>
+            <p className="mt-3 text-sm leading-relaxed text-muted">{labels.signInBody}</p>
+            <Link
+              className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-ink px-5 text-sm font-semibold text-surface shadow-sm transition-colors hover:bg-ink/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/35"
+              href={`/${locale}/login`}
+            >
+              {labels.signInCta}
+            </Link>
+          </div>
+        </section>
+      );
+    }
     return (
       <main className="mx-auto w-full max-w-2xl px-4 py-16 sm:px-6">
         <h1 className="text-xl font-bold text-ink">{labels.signInTitle}</h1>
@@ -189,10 +213,28 @@ export function SavedPageClient({ labels, locale }: { labels: SavedPageLabels; l
     );
   }
 
+  const Wrapper = embedded ? "section" : "main";
+  const Heading = embedded ? "h2" : "h1";
+
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 pb-24 pt-8 sm:px-0 sm:pb-16">
+    <Wrapper
+      aria-label={embedded ? labels.title : undefined}
+      className={
+        embedded
+          ? "mt-6 px-4 pb-8 sm:px-0"
+          : "mx-auto w-full max-w-3xl px-4 pb-24 pt-8 sm:px-0 sm:pb-16"
+      }
+    >
       <header className="border-b border-ink/10 pb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-ink">{labels.title}</h1>
+        <Heading
+          className={
+            embedded
+              ? "text-xl font-bold tracking-tight text-ink"
+              : "text-2xl font-bold tracking-tight text-ink"
+          }
+        >
+          {labels.title}
+        </Heading>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted">{labels.subtitle}</p>
       </header>
 
@@ -233,8 +275,8 @@ export function SavedPageClient({ labels, locale }: { labels: SavedPageLabels; l
       ) : null}
 
       {error ? (
-        <div className="mt-10 rounded-xl border border-sakura/20 bg-sakura/5 p-4">
-          <p className="text-sm text-sakura" role="alert">
+        <div className="mt-10 rounded-xl border border-sakura-strong/30 bg-sakura-soft/60 p-4">
+          <p className="text-sm font-medium text-sakura-strong" role="alert">
             {labels.error}
           </p>
           <button
@@ -286,6 +328,6 @@ export function SavedPageClient({ labels, locale }: { labels: SavedPageLabels; l
           })}
         </ul>
       ) : null}
-    </main>
+    </Wrapper>
   );
 }

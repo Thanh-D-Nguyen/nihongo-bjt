@@ -14,6 +14,9 @@ import {
   useState
 } from "react";
 
+import enMessages from "../../../../messages/en.json";
+import jaMessages from "../../../../messages/ja.json";
+import viMessages from "../../../../messages/vi.json";
 import { VoiceSearchButton } from "../../../_components/search-advanced-inputs";
 import { IconSearch } from "../../../_components/nav-icons";
 import { useGoAuth } from "../../../../lib/go-auth-provider";
@@ -24,6 +27,7 @@ import {
   type SearchDropdownLabels
 } from "../../../_components/search-dropdown";
 import { AdSlot, type AdSlotLabels } from "../../_components/ads/ad-slot";
+import { SavedPageClient, type SavedPageLabels } from "../../saved/_components/saved-page-client";
 import {
   type DetailPayload,
   normalizeKanjiDetailDto,
@@ -45,6 +49,7 @@ export interface SearchLabels extends SearchDetailLabels {
   kindGrammar: string;
   kindKanji: string;
   kindLexeme: string;
+  tabSaved?: string;
   loading: string;
   placeholder: string;
   submit: string;
@@ -159,11 +164,13 @@ export function filterSearchResults(
 export function SearchClient({
   adLabels,
   labels,
-  locale
+  locale,
+  savedLabels
 }: {
   adLabels: AdSlotLabels;
   labels: SearchLabels;
   locale: string;
+  savedLabels?: SavedPageLabels;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -172,6 +179,13 @@ export function SearchClient({
   const searchParamsRef = useRef(searchParams);
   searchParamsRef.current = searchParams;
   const { userId } = useGoAuth();
+  const resolvedSavedLabels = useMemo<SavedPageLabels>(() => {
+    if (savedLabels) return savedLabels;
+    if (locale === "en") return enMessages.saved;
+    if (locale === "ja") return jaMessages.saved;
+    return viMessages.saved;
+  }, [locale, savedLabels]);
+  const savedTabLabel = labels.tabSaved ?? resolvedSavedLabels.title;
   const sheetTitleId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const sheetPanelRef = useRef<HTMLDivElement>(null);
@@ -191,19 +205,24 @@ export function SearchClient({
 
   const { searches: recentSearches, addSearch } = useRecentSearches();
 
-  /** q + scope + level only — entry changes must not re-fetch the whole index */
+  /** q + scope/kind + level + tab only — entry changes must not re-fetch the whole index */
   const urlSearchBootstrapKey = useMemo(
     () =>
       [
         searchParams.get("q") ?? "",
-        searchParams.get("scope") ?? "",
-        searchParams.get("level") ?? ""
+        searchParams.get("scope") ?? searchParams.get("kind") ?? "",
+        searchParams.get("level") ?? "",
+        searchParams.get("tab") ?? ""
       ].join("\u0001"),
     [searchParams]
   );
   const entryParam = searchParams.get("entry");
   const isMobile = useIsMobileMd();
 
+  const [activeTab, setActiveTab] = useState<"search" | "saved">(() =>
+    searchParams.get("tab") === "saved" && !(searchParams.get("q") ?? "").trim() ? "saved" : "search"
+  );
+  const isSavedTab = activeTab === "saved";
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
@@ -286,6 +305,7 @@ export function SearchClient({
   }, [entryParam]);
 
   useEffect(() => {
+    if (isSavedTab) return;
     if (!hasSearched) return;
     if (pendingEntryRef.current) return;
     const params = new URLSearchParams(searchParams.toString());
@@ -304,10 +324,11 @@ export function SearchClient({
     }
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-  }, [selectedEntry, hasSearched, query, pathname, router, searchParams]);
+  }, [isSavedTab, selectedEntry, hasSearched, query, pathname, router, searchParams]);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setActiveTab("search");
     pendingEntryRef.current = null;
     setSelected(null);
     setDropdownOpen(false);
@@ -319,6 +340,7 @@ export function SearchClient({
 
   /** Debounced instant search: triggers 300ms after user stops typing */
   useEffect(() => {
+    if (isSavedTab) return;
     const q = query.trim();
     if (!q || q === (searchParamsRef.current.get("q") ?? "").trim()) return;
     clearTimeout(debounceRef.current);
@@ -330,10 +352,11 @@ export function SearchClient({
     }, 350);
     return () => clearTimeout(debounceRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+  }, [isSavedTab, query]);
 
   function applySearchInputSideEffects(value: string) {
     if (value.trim()) {
+      setActiveTab("search");
       clearTimeout(clearDebounceRef.current);
       setDropdownOpen(true);
       return;
@@ -351,28 +374,57 @@ export function SearchClient({
       setHasSearched(false);
       setSelected(null);
       clearTimeout(debounceRef.current);
-      updateUrl("", filter, levelFilter, null);
+      if (!isSavedTab) {
+        updateUrl("", filter, levelFilter, null);
+      }
     }, 50);
   }
 
   function handleInputChange(value: string) {
     setQuery(value);
     if (isComposingRef.current) {
-      if (value.trim()) setDropdownOpen(true);
+      if (value.trim()) {
+        setActiveTab("search");
+        setDropdownOpen(true);
+      }
       return;
     }
     applySearchInputSideEffects(value);
   }
 
   function handleFilterChange(newFilter: KindFilter) {
+    const wasSavedTab = isSavedTab;
+    const hadScopeInUrl = Boolean(
+      searchParamsRef.current.get("scope") || searchParamsRef.current.get("kind")
+    );
+    clearTimeout(debounceRef.current);
+    setActiveTab("search");
     setFilter(newFilter);
-    if (query.trim()) {
+    if (query.trim() || wasSavedTab || filter !== "all" || newFilter !== "all" || hadScopeInUrl) {
       updateUrl(query, newFilter, levelFilter, null);
     }
   }
 
+  function handleSavedTabSelect() {
+    searchEpochRef.current += 1;
+    clearTimeout(debounceRef.current);
+    clearTimeout(clearDebounceRef.current);
+    pendingEntryRef.current = null;
+    setLoading(false);
+    setError(false);
+    setQuery("");
+    setResults([]);
+    setHasSearched(false);
+    setSelected(null);
+    setDropdownOpen(false);
+    setDetailSheetOpen(false);
+    setActiveTab("saved");
+    router.replace(`${pathname}?tab=saved`, { scroll: false });
+  }
+
   function handleLevelChange(newLevel: string) {
     const level = newLevel === levelFilter ? "" : newLevel;
+    setActiveTab("search");
     setLevelFilter(level);
     if (query.trim()) {
       updateUrl(query, filter, level, null);
@@ -392,8 +444,29 @@ export function SearchClient({
   useEffect(() => {
     const params = searchParamsRef.current;
     const q = params.get("q") ?? "";
-    const scope = params.get("scope") ?? "";
+    const scope = params.get("scope") ?? params.get("kind") ?? "";
     const level = params.get("level") ?? "";
+    const tab = params.get("tab") ?? "";
+
+    clearTimeout(debounceRef.current);
+
+    if (tab === "saved" && !q.trim()) {
+      searchEpochRef.current += 1;
+      clearTimeout(clearDebounceRef.current);
+      pendingEntryRef.current = null;
+      setLoading(false);
+      setError(false);
+      setQuery("");
+      setResults([]);
+      setHasSearched(false);
+      setSelected(null);
+      setActiveTab("saved");
+      setDropdownOpen(false);
+      setDetailSheetOpen(false);
+      return;
+    }
+
+    setActiveTab("search");
 
     if (scope && (kinds as readonly string[]).includes(scope)) {
       setFilter(scope as KindFilter);
@@ -428,7 +501,7 @@ export function SearchClient({
       setSelected(null);
       inputRef.current?.focus();
     }
-    // Keyed ONLY on `urlSearchBootstrapKey` (q/scope/level). `searchParams` is read via
+    // Keyed ONLY on `urlSearchBootstrapKey` (q/scope/kind/level/tab). `searchParams` is read via
     // `searchParamsRef` so patching `entry` into the URL on selection does NOT re-run this
     // effect — which previously caused a double fetch and reset the active selection.
   }, [urlSearchBootstrapKey, runSearch]);
@@ -525,6 +598,7 @@ export function SearchClient({
   }, [selected]);
 
   const showMobileDetailBar =
+    !isSavedTab &&
     isMobile &&
     selected &&
     !detailSheetOpen &&
@@ -537,6 +611,7 @@ export function SearchClient({
   const searchBodyInert = isMobile && detailSheetOpen;
 
   const searchStatusAnnouncementRaw = useMemo(() => {
+    if (isSavedTab) return "";
     if (loading && hasSearched) return labels.loading;
     if (error) return labels.error;
     if (!hasSearched) return "";
@@ -555,6 +630,7 @@ export function SearchClient({
   }, [
     error,
     hasSearched,
+    isSavedTab,
     labels.empty,
     labels.error,
     labels.loading,
@@ -703,7 +779,7 @@ export function SearchClient({
                   className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted/70"
                   size={18}
                 />
-                {loading && hasSearched && (
+                {!isSavedTab && loading && hasSearched && (
                   <div className="absolute right-3.5 top-1/2 -translate-y-1/2" aria-hidden>
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-accent/30 border-t-accent motion-reduce:animate-none" />
                   </div>
@@ -733,9 +809,10 @@ export function SearchClient({
                 {/* Autocomplete dropdown */}
                 <SearchDropdown
                   query={query}
-                  open={dropdownOpen && !hasSearched}
+                  open={dropdownOpen && !hasSearched && !isSavedTab}
                   onClose={() => setDropdownOpen(false)}
                   onSelect={(q) => {
+                    setActiveTab("search");
                     setQuery(q);
                     setDropdownOpen(false);
                     clearTimeout(debounceRef.current);
@@ -763,6 +840,7 @@ export function SearchClient({
                   genericError: labels.voiceGenericError
                 }}
                 onResult={(text) => {
+                  setActiveTab("search");
                   setQuery(text);
                   setDropdownOpen(false);
                   clearTimeout(debounceRef.current);
@@ -786,8 +864,8 @@ export function SearchClient({
               role="group"
             >
               <FilterPill
-                active={filter === "all"}
-                count={results.length}
+                active={!isSavedTab && filter === "all"}
+                count={!isSavedTab ? results.length : 0}
                 onClick={() => handleFilterChange("all")}
               >
                 {labels.kindAll}
@@ -795,39 +873,53 @@ export function SearchClient({
               {kinds.map((kind) => (
                 <FilterPill
                   key={kind}
-                  active={filter === kind}
-                  count={kindCounts[kind] ?? 0}
+                  active={!isSavedTab && filter === kind}
+                  count={!isSavedTab ? (kindCounts[kind] ?? 0) : 0}
                   kind={kind}
                   onClick={() => handleFilterChange(kind)}
                 >
                   {kindLabel(kind, labels)}
                 </FilterPill>
               ))}
+              <FilterPill
+                active={isSavedTab}
+                count={0}
+                kind="saved"
+                onClick={handleSavedTabSelect}
+              >
+                {savedTabLabel}
+              </FilterPill>
             </div>
-            <div
-              aria-label={labels.jlptLevelFiltersAriaLabel}
-              className="flex flex-wrap items-center gap-1 sm:ml-auto"
-              role="group"
-            >
-              {levels.map((lvl) => (
-                <button
-                  key={lvl}
-                  className={cn(
-                    "search-level-pill inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 active:scale-95",
-                    levelFilter === lvl
-                      ? "bg-accent text-surface shadow-md shadow-accent/20"
-                      : "text-muted hover:bg-ink/5 hover:text-ink hover:shadow-sm"
-                  )}
-                  type="button"
-                  onClick={() => handleLevelChange(lvl)}
-                >
-                  {lvl}
-                </button>
-              ))}
-            </div>
+            {!isSavedTab ? (
+              <div
+                aria-label={labels.jlptLevelFiltersAriaLabel}
+                className="flex flex-wrap items-center gap-1 sm:ml-auto"
+                role="group"
+              >
+                {levels.map((lvl) => (
+                  <button
+                    key={lvl}
+                    className={cn(
+                      "search-level-pill inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 active:scale-95",
+                      levelFilter === lvl
+                        ? "bg-accent text-surface shadow-md shadow-accent/20"
+                        : "text-muted hover:bg-ink/5 hover:text-ink hover:shadow-sm"
+                    )}
+                    type="button"
+                    onClick={() => handleLevelChange(lvl)}
+                  >
+                    {lvl}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
 
+        {isSavedTab ? (
+          <SavedPageClient embedded labels={resolvedSavedLabels} locale={locale} />
+        ) : (
+          <>
         {!loading && hasSearched && results.length > 0 && (
           <p className="mt-3 px-4 text-xs font-medium text-muted sm:px-0">
             {labels.resultsForQueryLabel
@@ -1140,9 +1232,11 @@ export function SearchClient({
             </div>
           </div>
         ) : null}
+          </>
+        )}
       </div>
 
-      {isMobile && detailSheetOpen && selected && (
+      {!isSavedTab && isMobile && detailSheetOpen && selected && (
         <div className="fixed inset-0 z-50 md:hidden">
           <button
             aria-hidden
@@ -1372,6 +1466,7 @@ function FilterPill({
 }) {
   return (
     <button
+      aria-pressed={active}
       className={cn(
         "search-filter-pill inline-flex min-h-9 items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 active:scale-95",
         active
@@ -1446,6 +1541,8 @@ function kindDotColor(kind: string): string {
       return "bg-amber-400";
     case "lesson":
       return "bg-sky-500";
+    case "saved":
+      return "bg-amber";
     default:
       return "bg-muted";
   }

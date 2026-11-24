@@ -681,6 +681,7 @@
     "kindKanji": "漢字",
     "kindLexeme": "語彙",
     "kindAll": "すべて",
+    "tabSaved": "保存済み",
     "loading": "検索中...",
     "placeholder": "例: 会議, N2, ビジネス",
     "submit": "検索",

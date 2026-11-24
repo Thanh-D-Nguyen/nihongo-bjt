@@ -126,7 +126,7 @@ export function LexemeDetailClient({
     return (
       <div className="mx-auto max-w-2xl px-4 py-8 text-center">
         <p className="text-sm text-muted">{error ? labels.error : labels.notFound}</p>
-        <Link className="mt-2 inline-block text-sm font-medium text-accent hover:underline" href={`/${locale}/dictionary`}>
+        <Link className="mt-2 inline-block text-sm font-medium text-accent hover:underline" href={`/${locale}/search?scope=lexeme`}>
           ← {labels.back}
         </Link>
       </div>
@@ -135,7 +135,7 @@ export function LexemeDetailClient({
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
-      <Link className="text-sm font-medium text-accent hover:underline" href={`/${locale}/dictionary`}>
+      <Link className="text-sm font-medium text-accent hover:underline" href={`/${locale}/search?scope=lexeme`}>
         ← {labels.back}
       </Link>
 
@@ -234,10 +234,10 @@ export function LexemeDetailClient({
 
       {/* Cross-links */}
       <nav className="mt-8 flex flex-wrap gap-2 border-t border-border pt-4">
-        <Link className="inline-flex min-h-9 items-center rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-accent/30 hover:text-ink" href={`/${locale}/kanji`}>
+        <Link className="inline-flex min-h-9 items-center rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-accent/30 hover:text-ink" href={`/${locale}/search?scope=kanji`}>
           {locale === "ja" ? "漢字 →" : "Kanji →"}
         </Link>
-        <Link className="inline-flex min-h-9 items-center rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-accent/30 hover:text-ink" href={`/${locale}/grammar`}>
+        <Link className="inline-flex min-h-9 items-center rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-accent/30 hover:text-ink" href={`/${locale}/search?scope=grammar`}>
           {locale === "ja" ? "文法 →" : locale === "en" ? "Grammar →" : "Ngữ pháp →"}
         </Link>
       </nav>

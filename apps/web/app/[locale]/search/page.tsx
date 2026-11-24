@@ -34,7 +34,12 @@ export default async function SearchPage({
         />
       }
     >
-      <SearchClient adLabels={t.adSurface} labels={t.search} locale={locale} />
+      <SearchClient
+        adLabels={t.adSurface}
+        labels={t.search}
+        locale={locale}
+        savedLabels={t.saved}
+      />
     </Suspense>
   );
 }
