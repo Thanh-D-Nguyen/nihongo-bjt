@@ -1,0 +1,405 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-440",
+  "title": "Homepage focus reset: adaptive primary CTA, guest hero, calm reading strip",
+  "start_head": "92c79b41a76e288992aac9d8c90fa46d4217127a",
+  "preexisting_changes": {
+    ".build/.buildSystem_debug": "c337257139e569398ce8bf081a54dbc7d1e0267d",
+    ".build/CACHEDIR.TAG": "b7ab0d883e974d20c05898291a6218954e18e5ef"
+  },
+  "spec": {
+    "problem": "HomepageClient currently mounts 4 tabs (HomepageSectionsTabs), competing task/gamification widgets, and a mid-page AdSlot above content, while TodayPlanHub renders a static /levels primary CTA, shows an empty 0-stat dashboard to guests, omits ?tab=review on due-review links, links remediation to Career RPG (/review-inbox-preview), omits a /scenarios action, and duplicates global search in a Tra cứu nhanh snapshot row.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "AC1: Signed-out TodayPlanHub (isLoggedIn=false) renders a BJT workplace positioning hero with primary CTA to /{locale}/levels, secondary register/login links, and a 3-step core-loop summary, with no zero-stat strip and no snapshot aside."
+      },
+      {
+        "id": "AC2",
+        "text": "AC2: Signed-in TodayPlanHub adapts the primary hero CTA to /{locale}/flashcards?tab=review when dueReviews > 0 and /{locale}/quiz (with secondary /{locale}/levels link) when dueReviews === 0, wires action cards to /{locale}/flashcards?tab=review, /{locale}/quiz mistake review, and /{locale}/scenarios (removing /review-inbox-preview), and omits the redundant Tra cứu nhanh SnapshotRow."
+      },
+      {
+        "id": "AC3",
+        "text": "AC3: HomepageClient unmounts HomepageSectionsTabs (keeping files on disk), renders one compact reading strip of up to 3 NHK Easy cards plus a view-all link to /{locale}/news, and renders AdSlot below the reading strip while preserving OnboardingFlow and PushPromptBanner."
+      },
+      {
+        "id": "AC4",
+        "text": "AC4: Minimal i18n keys are added to messages/{vi,en,ja}.json and HomepageLabels; unit tests in today-plan-hub.test.tsx and homepage-client.test.tsx cover guest and signed-in contracts, and verify-frontend passes with zero new lint/test/contrast debt."
+      }
+    ],
+    "expected_behavior": "Signed-out visitors get a focused BJT positioning hero (1 primary CTA to /{locale}/levels, secondary register/login links, 3-step core-loop summary, no stat strip or snapshot aside); signed-in learners get an adaptive primary hero CTA (/{locale}/flashcards?tab=review when dueReviews > 0, else /{locale}/quiz with secondary /{locale}/levels link), 2 calm action cards plus scenarios entry without /review-inbox-preview, and a clean snapshot aside without Tra cứu nhanh; HomepageClient unmounts HomepageSectionsTabs, renders one compact <=3-card NHK Easy reading strip with /{locale}/news link, and places AdSlot below the reading strip.",
+    "observed_behavior": "Signed-out visitors see 0-stat counters and no value proposition; signed-in learners with due reviews still get a static /levels hero CTA and a /flashcards link without ?tab=review; Card 2 links to /review-inbox-preview; TodayPlanHub aside renders a redundant Tra cứu nhanh row; HomepageClient mounts HomepageSectionsTabs and places AdSlot above the content section.",
+    "rollback_plan": "Revert apps/web/app/[locale]/_components/homepage/{homepage-client,today-plan-hub,types}* and the new homepage keys in apps/web/messages/{vi,en,ja}.json; unmounted homepage components remain on disk untouched."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "modify",
+    "rationale": "Learner homepage focus reset in apps/web (TodayPlanHub guest/adaptive hero, action cards, reading strip, AdSlot ordering, and i18n copy) with no API, DB, auth, or component file deletions."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx",
+      "test": "TodayPlanHub > renders a focused BJT positioning hero and 3-step core loop for signed-out guests without zero stats or snapshot aside",
+      "expect": "guest hero must offer register and login actions"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx",
+      "test": "TodayPlanHub > adapts signed-in primary hero CTA to /flashcards?tab=review when dueReviews > 0",
+      "expect": "signed-in due hero CTA must target /vi/flashcards?tab=review"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx",
+      "test": "TodayPlanHub > adapts signed-in calm primary CTA to /quiz with secondary /levels link and replaces /review-inbox-preview with /quiz and /scenarios",
+      "expect": "calm hero must route primary CTA to /vi/quiz"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx",
+      "test": "TodayPlanHub > removes the redundant Tra cứu nhanh quick-reference row from the signed-in snapshot aside",
+      "expect": "TodayPlanHub aside must omit redundant Tra cứu nhanh row"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/homepage-client.test.tsx",
+      "test": "HomepageClient focus layout > unmounts HomepageSectionsTabs, caps NHK Easy reading strip at 3 articles, and places AdSlot below the reading strip",
+      "expect": "HomepageClient must not mount HomepageSectionsTabs"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/homepage-client.test.tsx",
+      "test": "HomepageClient focus layout > passes guest state to TodayPlanHub when signed out without rendering zero-stat dashboard",
+      "expect": "signed-out homepage must render guest register link"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-24T06:20:20.135Z",
+      "head": "92c79b41a76e288992aac9d8c90fa46d4217127a"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-24T06:20:20.366Z",
+      "head": "92c79b41a76e288992aac9d8c90fa46d4217127a"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-24T06:20:20.597Z",
+      "head": "92c79b41a76e288992aac9d8c90fa46d4217127a"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-24T06:27:22.696Z",
+      "head": "92c79b41a76e288992aac9d8c90fa46d4217127a"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-24T06:34:12.615Z",
+      "head": "92c79b41a76e288992aac9d8c90fa46d4217127a"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-24T06:47:21.145Z",
+      "head": "92c79b41a76e288992aac9d8c90fa46d4217127a"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-24T06:48:14.182Z",
+      "head": "92c79b41a76e288992aac9d8c90fa46d4217127a"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-24T06:26:14.523Z",
+      "head": "92c79b41a76e288992aac9d8c90fa46d4217127a",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/homepage-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > renders a focused BJT positioning hero and 3-step core loop for signed-out guests without zero stats or snapshot aside",
+          "outcome": "FAIL",
+          "excerpt": "guest hero must offer register and login actions: expected '<section class=\"mx-auto w-full max-w-…' to contain 'href=\"/vi/register\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > adapts signed-in primary hero CTA to /flashcards?tab=review when dueReviews > 0",
+          "outcome": "FAIL",
+          "excerpt": "signed-in due hero CTA must target /vi/flashcards?tab=review: expected '<section class=\"mx-auto w-full max-w-…' to contain 'href=\"/vi/flashcards?tab=review\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > adapts signed-in calm primary CTA to /quiz with secondary /levels link and replaces /review-inbox-preview with /quiz and /scenarios",
+          "outcome": "FAIL",
+          "excerpt": "calm hero must route primary CTA to /vi/quiz: expected '<section class=\"mx-auto w-full max-w-…' to contain 'href=\"/vi/quiz\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > removes the redundant Tra cứu nhanh quick-reference row from the signed-in snapshot aside",
+          "outcome": "FAIL",
+          "excerpt": "TodayPlanHub aside must omit redundant Tra cứu nhanh row: expected '<section class=\"mx-auto w-full max-w-…' not to contain 'Tra cứu nhanh'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/homepage-client.test.tsx::HomepageClient focus layout > unmounts HomepageSectionsTabs, caps NHK Easy reading strip at 3 articles, and places AdSlot below the reading strip",
+          "outcome": "FAIL",
+          "excerpt": "Cannot read properties of undefined (reading 'length')",
+          "valid": false,
+          "reason": "runtime crash or non-assertion exception is not a valid RED/sensitivity failure"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/homepage-client.test.tsx::HomepageClient focus layout > passes guest state to TodayPlanHub when signed out without rendering zero-stat dashboard",
+          "outcome": "FAIL",
+          "excerpt": "Cannot read properties of undefined (reading 'length')",
+          "valid": false,
+          "reason": "runtime crash or non-assertion exception is not a valid RED/sensitivity failure"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > renders a focused BJT positioning hero and 3-step core loop for signed-out guests without zero stats or snapshot aside": "guest hero must offer register and login actions",
+        "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > adapts signed-in primary hero CTA to /flashcards?tab=review when dueReviews > 0": "signed-in due hero CTA must target /vi/flashcards?tab=review",
+        "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > adapts signed-in calm primary CTA to /quiz with secondary /levels link and replaces /review-inbox-preview with /quiz and /scenarios": "calm hero must route primary CTA to /vi/quiz",
+        "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > removes the redundant Tra cứu nhanh quick-reference row from the signed-in snapshot aside": "TodayPlanHub aside must omit redundant Tra cứu nhanh row",
+        "vitest:apps/web/app/[locale]/_components/homepage/homepage-client.test.tsx::HomepageClient focus layout > unmounts HomepageSectionsTabs, caps NHK Easy reading strip at 3 articles, and places AdSlot below the reading strip": "HomepageClient must not mount HomepageSectionsTabs",
+        "vitest:apps/web/app/[locale]/_components/homepage/homepage-client.test.tsx::HomepageClient focus layout > passes guest state to TodayPlanHub when signed out without rendering zero-stat dashboard": "signed-out homepage must render guest register link"
+      },
+      "fingerprint": "370554d8550cd4df7c57cad06913e4cf15718cd48bc0f998cde2f6185601d9dc"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-24T06:27:22.550Z",
+      "head": "92c79b41a76e288992aac9d8c90fa46d4217127a",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/homepage-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > renders a focused BJT positioning hero and 3-step core loop for signed-out guests without zero stats or snapshot aside",
+          "outcome": "FAIL",
+          "excerpt": "guest hero must offer register and login actions: expected '<section class=\"mx-auto w-full max-w-…' to contain 'href=\"/vi/register\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > adapts signed-in primary hero CTA to /flashcards?tab=review when dueReviews > 0",
+          "outcome": "FAIL",
+          "excerpt": "signed-in due hero CTA must target /vi/flashcards?tab=review: expected '<section class=\"mx-auto w-full max-w-…' to contain 'href=\"/vi/flashcards?tab=review\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > adapts signed-in calm primary CTA to /quiz with secondary /levels link and replaces /review-inbox-preview with /quiz and /scenarios",
+          "outcome": "FAIL",
+          "excerpt": "calm hero must route primary CTA to /vi/quiz: expected '<section class=\"mx-auto w-full max-w-…' to contain 'href=\"/vi/quiz\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > removes the redundant Tra cứu nhanh quick-reference row from the signed-in snapshot aside",
+          "outcome": "FAIL",
+          "excerpt": "TodayPlanHub aside must omit redundant Tra cứu nhanh row: expected '<section class=\"mx-auto w-full max-w-…' not to contain 'Tra cứu nhanh'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/homepage-client.test.tsx::HomepageClient focus layout > unmounts HomepageSectionsTabs, caps NHK Easy reading strip at 3 articles, and places AdSlot below the reading strip",
+          "outcome": "FAIL",
+          "excerpt": "HomepageClient must not mount HomepageSectionsTabs: expected <div …(3)>…(4)</div> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/homepage-client.test.tsx::HomepageClient focus layout > passes guest state to TodayPlanHub when signed out without rendering zero-stat dashboard",
+          "outcome": "FAIL",
+          "excerpt": "signed-out homepage must render guest register link: expected '<main class=\"min-w-0 space-y-8 overfl…' to contain 'href=\"/vi/register\"'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > renders a focused BJT positioning hero and 3-step core loop for signed-out guests without zero stats or snapshot aside": "guest hero must offer register and login actions",
+        "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > adapts signed-in primary hero CTA to /flashcards?tab=review when dueReviews > 0": "signed-in due hero CTA must target /vi/flashcards?tab=review",
+        "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > adapts signed-in calm primary CTA to /quiz with secondary /levels link and replaces /review-inbox-preview with /quiz and /scenarios": "calm hero must route primary CTA to /vi/quiz",
+        "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > removes the redundant Tra cứu nhanh quick-reference row from the signed-in snapshot aside": "TodayPlanHub aside must omit redundant Tra cứu nhanh row",
+        "vitest:apps/web/app/[locale]/_components/homepage/homepage-client.test.tsx::HomepageClient focus layout > unmounts HomepageSectionsTabs, caps NHK Easy reading strip at 3 articles, and places AdSlot below the reading strip": "HomepageClient must not mount HomepageSectionsTabs",
+        "vitest:apps/web/app/[locale]/_components/homepage/homepage-client.test.tsx::HomepageClient focus layout > passes guest state to TodayPlanHub when signed out without rendering zero-stat dashboard": "signed-out homepage must render guest register link"
+      },
+      "fingerprint": "c1942a15b85b1c60ac7f73569936948a1f605b56ab1840b915eab5405cfe1f3e"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-24T06:34:12.311Z",
+      "head": "92c79b41a76e288992aac9d8c90fa46d4217127a",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/homepage-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > renders a focused BJT positioning hero and 3-step core loop for signed-out guests without zero stats or snapshot aside",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > adapts signed-in primary hero CTA to /flashcards?tab=review when dueReviews > 0",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > adapts signed-in calm primary CTA to /quiz with secondary /levels link and replaces /review-inbox-preview with /quiz and /scenarios",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx::TodayPlanHub > removes the redundant Tra cứu nhanh quick-reference row from the signed-in snapshot aside",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/homepage-client.test.tsx::HomepageClient focus layout > unmounts HomepageSectionsTabs, caps NHK Easy reading strip at 3 articles, and places AdSlot below the reading strip",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/homepage-client.test.tsx::HomepageClient focus layout > passes guest state to TodayPlanHub when signed out without rendering zero-stat dashboard",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "de5e11e1c45228f4ea51ccd02913d99f9a64b844375498b17822352e8b544026"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-24T06:35:22.564Z",
+      "head": "92c79b41a76e288992aac9d8c90fa46d4217127a",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 712,
+        "executed": 712,
+        "passed": 712,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 891,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "de5e11e1c45228f4ea51ccd02913d99f9a64b844375498b17822352e8b544026"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-24T06:36:51.494Z",
+      "head": "92c79b41a76e288992aac9d8c90fa46d4217127a",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 712,
+        "executed": 712,
+        "passed": 712,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 891,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "de5e11e1c45228f4ea51ccd02913d99f9a64b844375498b17822352e8b544026"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-24T06:47:20.635Z",
+      "head": "92c79b41a76e288992aac9d8c90fa46d4217127a",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 712,
+        "executed": 712,
+        "passed": 712,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 891,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "de5e11e1c45228f4ea51ccd02913d99f9a64b844375498b17822352e8b544026"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-24T06:48:14.174Z",
+    "head": "92c79b41a76e288992aac9d8c90fa46d4217127a",
+    "fingerprint": "de5e11e1c45228f4ea51ccd02913d99f9a64b844375498b17822352e8b544026",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/_components/homepage/homepage-client.test.tsx": "6d848923b3796f0f794d766849fe20ae23a4dbba",
+      "apps/web/app/[locale]/_components/homepage/homepage-client.tsx": "9d12dc343ff676c30a442d7db3750728fe40e628",
+      "apps/web/app/[locale]/_components/homepage/today-plan-hub.test.tsx": "cad0928d33f6d33d4d84ee032c52af89d7336eeb",
+      "apps/web/app/[locale]/_components/homepage/today-plan-hub.tsx": "08af501a0d9769c483e5298b5517935d13cdca43",
+      "apps/web/app/[locale]/_components/homepage/types.ts": "39c994b52668a81a88d3eb686df2398b2e90d9a1",
+      "apps/web/messages/en.json": "9f934e382fe793cb7d8d126864f68950f2eadf84",
+      "apps/web/messages/ja.json": "b950d5b8a50b8d348adfbca0fe49b4099f396f40",
+      "apps/web/messages/vi.json": "4f0f4e6af8eacf72d780caca9ce2c4d33df4fa0c"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}
