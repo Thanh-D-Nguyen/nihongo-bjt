@@ -32,7 +32,11 @@ export default async function ExercisesPage({
           />
         }
       >
-        <ExercisesPageClient labels={t.exercises} locale={locale} />
+        <ExercisesPageClient
+          labels={t.exercises}
+          locale={locale}
+          practiceModeLabels={t.practiceModes}
+        />
       </Suspense>
     </RequireAuth>
   );

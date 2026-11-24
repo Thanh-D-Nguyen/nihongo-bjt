@@ -115,7 +115,9 @@
     "brand": "Kiokoto",
     "cardgen": "Create cards",
     "exercises": "Practice",
+    "examPrep": "Exam Prep",
     "explore": "Explore",
+    "learn": "Learn",
     "home": "Home",
     "more": "More",
     "quiz": "BJT",
@@ -140,6 +142,7 @@
     "footerHelp": "Help",
     "footerLegal": "Legal",
     "footerLearning": "Learning",
+    "footerPricing": "Pricing",
     "footerPrivacy": "Privacy",
     "footerProductSummary": "Kiokoto supports business Japanese, BJT practice, and daily review through search, flashcards, and structured exercises.",
     "footerSupport": "Support",
@@ -276,6 +279,12 @@
     "localeEn": "English",
     "themeToggleToDark": "Switch to dark theme",
     "themeToggleToLight": "Switch to light theme"
+  },
+  "practiceModes": {
+    "ariaLabel": "Exam prep modes",
+    "quizTab": "BJT Mock & Practice",
+    "exercisesTab": "Quick Skill Drills",
+    "battleLink": "Bot Speed Drill →"
   },
   "home": {
     "actionsLabel": "Quick actions",
@@ -1906,7 +1915,7 @@
     "faq2q": "Can I use it for free?",
     "faq2a": "Yes. Flashcard reviews, dictionary searches, and basic BJT practice questions are free.",
     "faq3q": "How to start BJT preparation?",
-    "faq3a": "Log in, select \"BJT\" from the menu, and start practicing according to your level.",
+    "faq3a": "Log in, select \"Exam Prep\" from the menu, and start BJT practice according to your level.",
     "faq4q": "Is my learning data safe?",
     "faq4a": "Yes. Your data is stored securely and you can request to export or delete it at any time in your settings.",
     "contactTitle": "Contact us",

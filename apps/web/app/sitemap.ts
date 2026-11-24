@@ -10,7 +10,6 @@ type PublicRoute = {
 
 const PUBLIC_ROUTES: readonly PublicRoute[] = [
   { path: "", changeFrequency: "daily", priority: 1.0 },
-  { path: "explore", changeFrequency: "weekly", priority: 0.9 },
   { path: "levels", changeFrequency: "weekly", priority: 0.9 },
   { path: "dictionary", changeFrequency: "weekly", priority: 0.8 },
   { path: "kanji", changeFrequency: "weekly", priority: 0.8 },

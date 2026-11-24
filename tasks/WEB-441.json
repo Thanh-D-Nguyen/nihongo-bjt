@@ -1,0 +1,382 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-441",
+  "title": "5-item global navigation, PracticeModeTabs switcher, and /explore redirect",
+  "start_head": "51eaf73bdbb2481e1b47c2855595307908f2f01d",
+  "preexisting_changes": {
+    ".build/.buildSystem_debug": "c337257139e569398ce8bf081a54dbc7d1e0267d",
+    ".build/CACHEDIR.TAG": "b7ab0d883e974d20c05898291a6218954e18e5ef"
+  },
+  "spec": {
+    "problem": "Desktop header and mobile bottom bar expose diverging 5+dropdown/hamburger navigation with an /analytics redirect stub, /quiz and /exercises lack a unified Luyện thi switcher, and /explore duplicates search/reference navigation.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "AC1: LearnerAppFrame renders the exact 5 canonical primary nav items identically on desktop header and mobile bottom bar (Trang chủ /{locale}, Học tập /{locale}/levels active on /levels|/scenarios|/news|/radar, Ôn tập /{locale}/flashcards?tab=review when dueCount > 0 else /{locale}/flashcards with due badge, Luyện thi /{locale}/quiz active on /quiz|/exercises|/battle, Tra cứu /{locale}/search active on /search|/dictionary|/kanji|/grammar|/saved), removes the desktop Khám phá dropdown, mobile top-left hamburger menu, and /analytics item, keeps top-right Avatar -> /{locale}/me and its /daily-standup item untouched, and updates footer learning links to the 5 pillars plus Gói dịch vụ (/pricing)."
+      },
+      {
+        "id": "AC2",
+        "text": "AC2: Shared PracticeModeTabs renders at the top of /quiz (quiz-client.tsx) and /exercises (exercises-page-client.tsx) with Tab 1 Thi thử & Đề BJT (/{locale}/quiz), Tab 2 Bài tập kỹ năng nhanh (/{locale}/exercises), and a quiet right-aligned Đấu phản xạ cùng Bot -> link (/{locale}/battle), highlighting the active mode per route."
+      },
+      {
+        "id": "AC3",
+        "text": "AC3: app/[locale]/explore/page.tsx server-redirects to /{locale}/search while keeping explore/_components/explore-client.tsx on disk; app/sitemap.ts (+ sitemap.test.ts) removes explore; and helpPage.faq3a in vi/en/ja messages (+ help-copy.test.ts) references Luyện thi instead of the removed menu."
+      },
+      {
+        "id": "AC4",
+        "text": "AC4: Unit tests cover the 5-item nav active-route/due-link/clutter-removal contract, PracticeModeTabs on /quiz and /exercises, /explore redirect, sitemap, and help copy, and verify-frontend passes with zero new lint/test/contrast debt."
+      }
+    ],
+    "expected_behavior": "Desktop and mobile navigation render the identical 5 canonical pillars (Trang chủ, Học tập, Ôn tập with due-aware href and badge, Luyện thi, Tra cứu) with no Khám phá dropdown, no mobile hamburger menu, and no /analytics tab; footer learning column lists the 5 pillars plus Gói dịch vụ (/pricing); /quiz and /exercises share PracticeModeTabs at top with quiet /battle link; /explore server-redirects to /{locale}/search; explore is removed from sitemap.xml; helpPage.faq3a references Luyện thi.",
+    "observed_behavior": "LearnerAppFrame renders Home, BJT Roadmap, Practice (/exercises), Review (/flashcards without ?tab=review), and Progress (/analytics redirect stub) plus a desktop Khám phá dropdown and mobile top-left hamburger menu; /quiz and /exercises have no shared mode switcher; /explore renders ExploreClient and appears in sitemap.xml; helpPage.faq3a points learners to old menu labels.",
+    "rollback_plan": "Revert LearnerAppFrame, PracticeModeTabs + quiz/exercises header mount, explore/page.tsx redirect, sitemap.ts, and nav/practiceModes/helpPage message updates; unmounted explore components remain on disk."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "modify",
+    "rationale": "Web-only global navigation consolidation, shared PracticeModeTabs header on /quiz and /exercises, /explore server redirect, sitemap update, and i18n copy updates with no API, DB, auth, or component file deletions."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/learner-app-frame.nav.test.tsx",
+      "test": "LearnerAppFrame 5-item canonical navigation > renders the exact 5 primary items identically on desktop header and mobile bottom bar, removes Khám phá dropdown, mobile hamburger, and /analytics, and updates footer learning links",
+      "expect": "desktop primary nav must render the exact 5 canonical hrefs"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/learner-app-frame.nav.test.tsx",
+      "test": "LearnerAppFrame 5-item canonical navigation > routes Ôn tập to /flashcards?tab=review with due badge when dueCount > 0 and highlights nested routes across all 5 pillars",
+      "expect": "desktop Ôn tập must route to /vi/flashcards?tab=review when dueCount > 0"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/quiz/_components/quiz-practice-modes.test.tsx",
+      "test": "QuizClient PracticeModeTabs integration > renders PracticeModeTabs at the top of /quiz with Thi thử & Đề BJT active, link to /exercises, and quiet /battle link",
+      "expect": "/quiz must render PracticeModeTabs with link to /vi/exercises"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx",
+      "test": "Exercises shared recommendations > renders PracticeModeTabs at the top of /exercises with Bài tập kỹ năng nhanh active, link to /quiz, and quiet /battle link",
+      "expect": "/exercises must render PracticeModeTabs with link to /vi/quiz"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/explore/page.test.tsx",
+      "test": "ExplorePage server redirect > redirects /[locale]/explore to /[locale]/search",
+      "expect": "ExplorePage must server-redirect /vi/explore to /vi/search"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/sitemap.test.ts",
+      "test": "sitemap metadata > lists all 16 public routes across vi, ja, and en locales using canonical base URL",
+      "expect": "sitemap must exclude redirected /explore route"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/help/help-copy.test.ts",
+      "test": "localized Help copy > directs learners to the Luyện thi / Exam Prep / 試験対策 nav item in faq3a",
+      "expect": "vi helpPage.faq3a must reference Luyện thi instead of old BJT menu label"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-24T07:54:56.989Z",
+      "head": "51eaf73bdbb2481e1b47c2855595307908f2f01d"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-24T07:58:17.033Z",
+      "head": "51eaf73bdbb2481e1b47c2855595307908f2f01d"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-24T07:58:17.187Z",
+      "head": "51eaf73bdbb2481e1b47c2855595307908f2f01d"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-24T08:11:56.993Z",
+      "head": "51eaf73bdbb2481e1b47c2855595307908f2f01d"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-24T08:17:41.807Z",
+      "head": "51eaf73bdbb2481e1b47c2855595307908f2f01d"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-24T08:20:21.010Z",
+      "head": "51eaf73bdbb2481e1b47c2855595307908f2f01d"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-24T08:21:36.935Z",
+      "head": "51eaf73bdbb2481e1b47c2855595307908f2f01d"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-24T08:03:17.352Z",
+      "head": "51eaf73bdbb2481e1b47c2855595307908f2f01d",
+      "kind": "red",
+      "outcome": "TOOL_FAILURE",
+      "mode": "in_place",
+      "production_at_base": true,
+      "message": "vitest wrote no report for apps/web/app/_components/learner-app-frame.nav.test.tsx (config error?): [WARN] Issue while reading \"/Users/thanhnguyen/.npmrc\". Operation not permitted (os error 1) [WARN] Issue while reading \"/Users/thanhnguyen/.npmrc\". Operation not permitted (os error 1) Scope: all 7 workspace projects [WARN] The store at /Users/thanhnguyen/Library/pnpm/store/v11 is not used because …",
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.nav.test.tsx::LearnerAppFrame 5-item canonical navigation > renders the exact 5 primary items identically on desktop header and mobile bottom bar, removes Khám phá dropdown, mobile hamburger, and /analytics, and updates footer learning links": "desktop primary nav must render the exact 5 canonical hrefs",
+        "vitest:apps/web/app/_components/learner-app-frame.nav.test.tsx::LearnerAppFrame 5-item canonical navigation > routes Ôn tập to /flashcards?tab=review with due badge when dueCount > 0 and highlights nested routes across all 5 pillars": "desktop Ôn tập must route to /vi/flashcards?tab=review when dueCount > 0",
+        "vitest:apps/web/app/[locale]/quiz/_components/quiz-practice-modes.test.tsx::QuizClient PracticeModeTabs integration > renders PracticeModeTabs at the top of /quiz with Thi thử & Đề BJT active, link to /exercises, and quiet /battle link": "/quiz must render PracticeModeTabs with link to /vi/exercises",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > renders PracticeModeTabs at the top of /exercises with Bài tập kỹ năng nhanh active, link to /quiz, and quiet /battle link": "/exercises must render PracticeModeTabs with link to /vi/quiz",
+        "vitest:apps/web/app/[locale]/explore/page.test.tsx::ExplorePage server redirect > redirects /[locale]/explore to /[locale]/search": "ExplorePage must server-redirect /vi/explore to /vi/search",
+        "vitest:apps/web/app/sitemap.test.ts::sitemap metadata > lists all 16 public routes across vi, ja, and en locales using canonical base URL": "sitemap must exclude redirected /explore route",
+        "vitest:apps/web/app/[locale]/help/help-copy.test.ts::localized Help copy > directs learners to the Luyện thi / Exam Prep / 試験対策 nav item in faq3a": "vi helpPage.faq3a must reference Luyện thi instead of old BJT menu label"
+      },
+      "fingerprint": "bfd8068c50f5127d95395463682e321f01446e10c74cd8135620b4eed22a2d6e"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-24T08:05:03.661Z",
+      "head": "51eaf73bdbb2481e1b47c2855595307908f2f01d",
+      "kind": "red",
+      "outcome": "TOOL_FAILURE",
+      "mode": "in_place",
+      "production_at_base": true,
+      "message": "vitest wrote no report for apps/web/app/_components/learner-app-frame.nav.test.tsx (config error?): [WARN] Issue while reading \"/Users/thanhnguyen/.npmrc\". Operation not permitted (os error 1) [WARN] Issue while reading \"/Users/thanhnguyen/.npmrc\". Operation not permitted (os error 1) Scope: all 7 workspace projects [WARN] The store at /Users/thanhnguyen/Library/pnpm/store/v11 is not used because …",
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.nav.test.tsx::LearnerAppFrame 5-item canonical navigation > renders the exact 5 primary items identically on desktop header and mobile bottom bar, removes Khám phá dropdown, mobile hamburger, and /analytics, and updates footer learning links": "desktop primary nav must render the exact 5 canonical hrefs",
+        "vitest:apps/web/app/_components/learner-app-frame.nav.test.tsx::LearnerAppFrame 5-item canonical navigation > routes Ôn tập to /flashcards?tab=review with due badge when dueCount > 0 and highlights nested routes across all 5 pillars": "desktop Ôn tập must route to /vi/flashcards?tab=review when dueCount > 0",
+        "vitest:apps/web/app/[locale]/quiz/_components/quiz-practice-modes.test.tsx::QuizClient PracticeModeTabs integration > renders PracticeModeTabs at the top of /quiz with Thi thử & Đề BJT active, link to /exercises, and quiet /battle link": "/quiz must render PracticeModeTabs with link to /vi/exercises",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > renders PracticeModeTabs at the top of /exercises with Bài tập kỹ năng nhanh active, link to /quiz, and quiet /battle link": "/exercises must render PracticeModeTabs with link to /vi/quiz",
+        "vitest:apps/web/app/[locale]/explore/page.test.tsx::ExplorePage server redirect > redirects /[locale]/explore to /[locale]/search": "ExplorePage must server-redirect /vi/explore to /vi/search",
+        "vitest:apps/web/app/sitemap.test.ts::sitemap metadata > lists all 16 public routes across vi, ja, and en locales using canonical base URL": "sitemap must exclude redirected /explore route",
+        "vitest:apps/web/app/[locale]/help/help-copy.test.ts::localized Help copy > directs learners to the Luyện thi / Exam Prep / 試験対策 nav item in faq3a": "vi helpPage.faq3a must reference Luyện thi instead of old BJT menu label"
+      },
+      "fingerprint": "bfd8068c50f5127d95395463682e321f01446e10c74cd8135620b4eed22a2d6e"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-24T08:10:23.980Z",
+      "head": "51eaf73bdbb2481e1b47c2855595307908f2f01d",
+      "kind": "red",
+      "outcome": "TOOL_FAILURE",
+      "mode": "in_place",
+      "production_at_base": true,
+      "message": "vitest reported unhandled error(s): [vitest-pool]: Worker forks emitted error.",
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.nav.test.tsx::LearnerAppFrame 5-item canonical navigation > renders the exact 5 primary items identically on desktop header and mobile bottom bar, removes Khám phá dropdown, mobile hamburger, and /analytics, and updates footer learning links": "desktop primary nav must render the exact 5 canonical hrefs",
+        "vitest:apps/web/app/_components/learner-app-frame.nav.test.tsx::LearnerAppFrame 5-item canonical navigation > routes Ôn tập to /flashcards?tab=review with due badge when dueCount > 0 and highlights nested routes across all 5 pillars": "desktop Ôn tập must route to /vi/flashcards?tab=review when dueCount > 0",
+        "vitest:apps/web/app/[locale]/quiz/_components/quiz-practice-modes.test.tsx::QuizClient PracticeModeTabs integration > renders PracticeModeTabs at the top of /quiz with Thi thử & Đề BJT active, link to /exercises, and quiet /battle link": "/quiz must render PracticeModeTabs with link to /vi/exercises",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > renders PracticeModeTabs at the top of /exercises with Bài tập kỹ năng nhanh active, link to /quiz, and quiet /battle link": "/exercises must render PracticeModeTabs with link to /vi/quiz",
+        "vitest:apps/web/app/[locale]/explore/page.test.tsx::ExplorePage server redirect > redirects /[locale]/explore to /[locale]/search": "ExplorePage must server-redirect /vi/explore to /vi/search",
+        "vitest:apps/web/app/sitemap.test.ts::sitemap metadata > lists all 16 public routes across vi, ja, and en locales using canonical base URL": "sitemap must exclude redirected /explore route",
+        "vitest:apps/web/app/[locale]/help/help-copy.test.ts::localized Help copy > directs learners to the Luyện thi / Exam Prep / 試験対策 nav item in faq3a": "vi helpPage.faq3a must reference Luyện thi instead of old BJT menu label"
+      },
+      "fingerprint": "bfd8068c50f5127d95395463682e321f01446e10c74cd8135620b4eed22a2d6e"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-24T08:11:56.731Z",
+      "head": "51eaf73bdbb2481e1b47c2855595307908f2f01d",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.nav.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-practice-modes.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/explore/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/sitemap.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/help/help-copy.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.nav.test.tsx::LearnerAppFrame 5-item canonical navigation > renders the exact 5 primary items identically on desktop header and mobile bottom bar, removes Khám phá dropdown, mobile hamburger, and /analytics, and updates footer learning links",
+          "outcome": "FAIL",
+          "excerpt": "desktop primary nav must render the exact 5 canonical hrefs: expected [ '/vi', '/vi/levels', …(3) ] to deeply equal [ '/vi', '/vi/levels', …(3) ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.nav.test.tsx::LearnerAppFrame 5-item canonical navigation > routes Ôn tập to /flashcards?tab=review with due badge when dueCount > 0 and highlights nested routes across all 5 pillars",
+          "outcome": "FAIL",
+          "excerpt": "desktop Ôn tập must route to /vi/flashcards?tab=review when dueCount > 0: expected '/vi/exercises' to be '/vi/flashcards?tab=review' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-practice-modes.test.tsx::QuizClient PracticeModeTabs integration > renders PracticeModeTabs at the top of /quiz with Thi thử & Đề BJT active, link to /exercises, and quiet /battle link",
+          "outcome": "FAIL",
+          "excerpt": "/quiz must render PracticeModeTabs with link to /vi/exercises: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > renders PracticeModeTabs at the top of /exercises with Bài tập kỹ năng nhanh active, link to /quiz, and quiet /battle link",
+          "outcome": "FAIL",
+          "excerpt": "/exercises must render PracticeModeTabs with link to /vi/quiz: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/page.test.tsx::ExplorePage server redirect > redirects /[locale]/explore to /[locale]/search",
+          "outcome": "FAIL",
+          "excerpt": "ExplorePage must server-redirect /vi/explore to /vi/search: expected \"vi.fn()\" to be called with arguments: [ '/vi/search' ] Number of calls: 0",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/sitemap.test.ts::sitemap metadata > lists all 16 public routes across vi, ja, and en locales using canonical base URL",
+          "outcome": "FAIL",
+          "excerpt": "sitemap must exclude redirected /explore route: expected [ 'https://kiokoto.com/vi', …(50) ] to not include 'https://kiokoto.com/vi/explore'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/help/help-copy.test.ts::localized Help copy > directs learners to the Luyện thi / Exam Prep / 試験対策 nav item in faq3a",
+          "outcome": "FAIL",
+          "excerpt": "vi helpPage.faq3a must reference Luyện thi instead of old BJT menu label: expected 'Đăng nhập, chọn \"BJT\" trên thanh menu…' to contain 'Luyện thi'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.nav.test.tsx::LearnerAppFrame 5-item canonical navigation > renders the exact 5 primary items identically on desktop header and mobile bottom bar, removes Khám phá dropdown, mobile hamburger, and /analytics, and updates footer learning links": "desktop primary nav must render the exact 5 canonical hrefs",
+        "vitest:apps/web/app/_components/learner-app-frame.nav.test.tsx::LearnerAppFrame 5-item canonical navigation > routes Ôn tập to /flashcards?tab=review with due badge when dueCount > 0 and highlights nested routes across all 5 pillars": "desktop Ôn tập must route to /vi/flashcards?tab=review when dueCount > 0",
+        "vitest:apps/web/app/[locale]/quiz/_components/quiz-practice-modes.test.tsx::QuizClient PracticeModeTabs integration > renders PracticeModeTabs at the top of /quiz with Thi thử & Đề BJT active, link to /exercises, and quiet /battle link": "/quiz must render PracticeModeTabs with link to /vi/exercises",
+        "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > renders PracticeModeTabs at the top of /exercises with Bài tập kỹ năng nhanh active, link to /quiz, and quiet /battle link": "/exercises must render PracticeModeTabs with link to /vi/quiz",
+        "vitest:apps/web/app/[locale]/explore/page.test.tsx::ExplorePage server redirect > redirects /[locale]/explore to /[locale]/search": "ExplorePage must server-redirect /vi/explore to /vi/search",
+        "vitest:apps/web/app/sitemap.test.ts::sitemap metadata > lists all 16 public routes across vi, ja, and en locales using canonical base URL": "sitemap must exclude redirected /explore route",
+        "vitest:apps/web/app/[locale]/help/help-copy.test.ts::localized Help copy > directs learners to the Luyện thi / Exam Prep / 試験対策 nav item in faq3a": "vi helpPage.faq3a must reference Luyện thi instead of old BJT menu label"
+      },
+      "fingerprint": "f95d0b49120bebd8ad196b8b9abcc81808d8be0629e0a1a3eae958f8b7f816d9"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-24T08:17:41.221Z",
+      "head": "51eaf73bdbb2481e1b47c2855595307908f2f01d",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.nav.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-practice-modes.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/explore/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/sitemap.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/help/help-copy.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.nav.test.tsx::LearnerAppFrame 5-item canonical navigation > renders the exact 5 primary items identically on desktop header and mobile bottom bar, removes Khám phá dropdown, mobile hamburger, and /analytics, and updates footer learning links",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.nav.test.tsx::LearnerAppFrame 5-item canonical navigation > routes Ôn tập to /flashcards?tab=review with due badge when dueCount > 0 and highlights nested routes across all 5 pillars",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-practice-modes.test.tsx::QuizClient PracticeModeTabs integration > renders PracticeModeTabs at the top of /quiz with Thi thử & Đề BJT active, link to /exercises, and quiet /battle link",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx::Exercises shared recommendations > renders PracticeModeTabs at the top of /exercises with Bài tập kỹ năng nhanh active, link to /quiz, and quiet /battle link",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/explore/page.test.tsx::ExplorePage server redirect > redirects /[locale]/explore to /[locale]/search",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/sitemap.test.ts::sitemap metadata > lists all 16 public routes across vi, ja, and en locales using canonical base URL",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/help/help-copy.test.ts::localized Help copy > directs learners to the Luyện thi / Exam Prep / 試験対策 nav item in faq3a",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0a4787fe92736cb8c860a8574150c906b9f804c49759c3397109834b7fc6279e"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-24T08:20:19.642Z",
+      "head": "51eaf73bdbb2481e1b47c2855595307908f2f01d",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 718,
+        "executed": 718,
+        "passed": 718,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 895,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "0a4787fe92736cb8c860a8574150c906b9f804c49759c3397109834b7fc6279e"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-24T08:21:36.875Z",
+    "head": "51eaf73bdbb2481e1b47c2855595307908f2f01d",
+    "fingerprint": "0a4787fe92736cb8c860a8574150c906b9f804c49759c3397109834b7fc6279e",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/exercises/_components/exercises-page-client.test.tsx": "d76215d488b28376cb9fc2094a563ca925701670",
+      "apps/web/app/[locale]/exercises/_components/exercises-page-client.tsx": "177ec6fc6b69e3c80a7b3667623cdbf91554e9e4",
+      "apps/web/app/[locale]/exercises/page.tsx": "836d9b9c567be83239e0e73f83be11c09db3d3f7",
+      "apps/web/app/[locale]/explore/page.test.tsx": "6f3e1baf0211cc47bec3bb71f4788946184fe4d9",
+      "apps/web/app/[locale]/explore/page.tsx": "7ecbf5c90c2a3764bf251ed659314ad3279c2f09",
+      "apps/web/app/[locale]/help/help-copy.test.ts": "4431e4529b91b9d9c6b3d2d5a2d1ebcecbb4bcb3",
+      "apps/web/app/[locale]/quiz/_components/practice-mode-tabs.tsx": "972623915c21bf82c63a51effa6db9b933d8d78a",
+      "apps/web/app/[locale]/quiz/_components/quiz-client.tsx": "ed323ebc2febb3ea4a2985a5d20db5463308b209",
+      "apps/web/app/[locale]/quiz/_components/quiz-practice-modes.test.tsx": "0264aa4cb77fb2095a5a7afd56307772e388a2d2",
+      "apps/web/app/[locale]/quiz/page.tsx": "eabe722a921dcc121c745378c7cd7fcb055e942b",
+      "apps/web/app/_components/learner-app-frame.nav.test.tsx": "537a310692f400d7b2afca193a161e38c60ec398",
+      "apps/web/app/_components/learner-app-frame.tsx": "7a750a9fb8ee34075058946159ea7d2f2bae14b6",
+      "apps/web/app/sitemap.test.ts": "ccdc30e7770a766adb2cc80a4c6d32b4e5a194d0",
+      "apps/web/app/sitemap.ts": "c6a4b2536d2893df2d24651cb9d162195133e01d",
+      "apps/web/messages/en.json": "56a6cb71d5e5f8ca1cf8aa141bed4adb121776a9",
+      "apps/web/messages/ja.json": "b516983e06df8def75b90abc601abfd9157925aa",
+      "apps/web/messages/vi.json": "1a2502b033c97dc6f4a8ab63a476e4996579f6c3"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

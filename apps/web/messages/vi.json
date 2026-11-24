@@ -115,7 +115,9 @@
     "brand": "Kiokoto",
     "cardgen": "Tạo thẻ",
     "exercises": "Luyện tập",
+    "examPrep": "Luyện thi",
     "explore": "Khám phá",
+    "learn": "Học tập",
     "home": "Trang chủ",
     "more": "Thêm",
     "quiz": "BJT",
@@ -140,6 +142,7 @@
     "footerHelp": "Trợ giúp",
     "footerLegal": "Pháp lý",
     "footerLearning": "Học tập",
+    "footerPricing": "Gói dịch vụ",
     "footerPrivacy": "Quyền riêng tư",
     "footerProductSummary": "Kiokoto giúp bạn luyện tiếng Nhật công sở, ôn BJT và giữ nhịp học mỗi ngày bằng tra cứu, thẻ nhớ và bài luyện có cấu trúc.",
     "footerSupport": "Hỗ trợ",
@@ -204,6 +207,12 @@
     "localeEn": "English",
     "themeToggleToDark": "Chuyển sang giao diện tối",
     "themeToggleToLight": "Chuyển sang giao diện sáng"
+  },
+  "practiceModes": {
+    "ariaLabel": "Chế độ luyện thi",
+    "quizTab": "Thi thử & Đề BJT",
+    "exercisesTab": "Bài tập kỹ năng nhanh",
+    "battleLink": "Đấu phản xạ cùng Bot →"
   },
   "home": {
     "actionsLabel": "Hành động chính",
@@ -1834,7 +1843,7 @@
     "faq2q": "Tôi có thể dùng miễn phí không?",
     "faq2a": "Có. Các tính năng cốt lõi như ôn flashcard, tra cứu từ điển và bài luyện BJT cơ bản đều miễn phí.",
     "faq3q": "Làm sao để bắt đầu ôn BJT?",
-    "faq3a": "Đăng nhập, chọn \"BJT\" trên thanh menu và bắt đầu bài luyện theo cấp độ phù hợp.",
+    "faq3a": "Đăng nhập, chọn \"Luyện thi\" trên thanh menu và bắt đầu bài luyện BJT theo cấp độ phù hợp.",
     "faq4q": "Dữ liệu học của tôi có an toàn không?",
     "faq4a": "Có. Dữ liệu được lưu trữ bảo mật và bạn có thể yêu cầu xuất hoặc xóa bất kỳ lúc nào trong phần Cài đặt.",
     "contactTitle": "Liên hệ hỗ trợ",

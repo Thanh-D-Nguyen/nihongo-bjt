@@ -50,4 +50,27 @@ describe("Exercises shared recommendations", () => {
     await click("generate");
     expect(host.textContent).toContain("Lesson 2");
   });
+
+  it("renders PracticeModeTabs at the top of /exercises with Bài tập kỹ năng nhanh active, link to /quiz, and quiet /battle link", async () => {
+    api.mockImplementation(async (url: string) => ({
+      ok: true,
+      json: async () => (url.includes("study-feed") ? { items: [] } : [])
+    }));
+    host = document.createElement("div");
+    document.body.append(host);
+    root = createRoot(host);
+    await act(async () => root.render(<ExercisesPageClient labels={labels} locale="vi" />));
+
+    const quizTab = host.querySelector<HTMLAnchorElement>('a[href="/vi/quiz"]');
+    const exercisesTab = host.querySelector<HTMLAnchorElement>('a[href="/vi/exercises"]');
+    const battleLink = host.querySelector<HTMLAnchorElement>('a[href="/vi/battle"]');
+
+    expect(quizTab, "/exercises must render PracticeModeTabs with link to /vi/quiz").not.toBeNull();
+    expect(exercisesTab, "/exercises must render active PracticeModeTabs item").not.toBeNull();
+    expect(exercisesTab?.getAttribute("aria-current")).toBe("page");
+    expect(quizTab?.getAttribute("aria-current")).toBeNull();
+    expect(quizTab?.textContent).toContain("Thi thử & Đề BJT");
+    expect(exercisesTab?.textContent).toContain("Bài tập kỹ năng nhanh");
+    expect(battleLink?.textContent).toContain("Đấu phản xạ cùng Bot →");
+  });
 });

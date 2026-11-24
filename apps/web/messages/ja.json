@@ -115,7 +115,9 @@
     "brand": "Kiokoto",
     "cardgen": "カード生成",
     "exercises": "練習",
+    "examPrep": "試験対策",
     "explore": "探索",
+    "learn": "学習",
     "home": "ホーム",
     "more": "その他",
     "quiz": "BJT",
@@ -140,6 +142,7 @@
     "footerHelp": "ヘルプ",
     "footerLegal": "法務",
     "footerLearning": "学習",
+    "footerPricing": "料金プラン",
     "footerPrivacy": "プライバシー",
     "footerProductSummary": "Kiokoto は、ビジネス日本語、BJT対策、日々の復習を検索・カード・演習で支える学習プロダクトです。",
     "footerSupport": "サポート",
@@ -204,6 +207,12 @@
     "localeEn": "English",
     "themeToggleToDark": "ダークテーマに切り替える",
     "themeToggleToLight": "ライトテーマに切り替える"
+  },
+  "practiceModes": {
+    "ariaLabel": "試験対策モード",
+    "quizTab": "BJT模試・演習",
+    "exercisesTab": "スキル別クイック練習",
+    "battleLink": "Botスピード対戦 →"
   },
   "home": {
     "actionsLabel": "主な操作",
@@ -1834,7 +1843,7 @@
     "faq2q": "無料で使えますか？",
     "faq2a": "はい。フラッシュカード復習、辞書検索、基本的なBJT練習問題は無料です。",
     "faq3q": "BJT対策の始め方は？",
-    "faq3a": "ログインし、メニューから「BJT」を選び、レベルに合った練習を始めましょう。",
+    "faq3a": "ログインし、メニューから「試験対策」を選び、レベルに合ったBJT練習を始めましょう。",
     "faq4q": "学習データは安全ですか？",
     "faq4a": "はい。データは安全に保管されており、設定からいつでもエクスポートや削除を要求できます。",
     "contactTitle": "お問い合わせ",

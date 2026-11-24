@@ -23,24 +23,19 @@ import { CompanionBot, type CompanionBotLabels } from "./companion-bot";
 import { LocaleSwitcher, type LocaleSwitcherLabels } from "./locale-switcher";
 import { ThemeToggle } from "./theme-toggle";
 import {
-  IconAnalytics,
-  IconBattle,
   IconDocument,
   IconExercise,
-  IconExplore,
   IconHelp,
-  IconDictionary,
-  IconGrammar,
   IconHome,
-  IconKanji,
   IconLevels,
   IconLogout,
-  IconMagazine,
   IconMessage,
+  IconQuiz,
   IconReview,
   IconSearch,
   IconSettings,
   IconShield,
+  IconSpark,
   IconUser
 } from "./app-icons";
 import {
@@ -71,6 +66,7 @@ export type LearnerNavLabels = {
   cardgen: string;
   dailyStandup: string;
   dictionary: string;
+  examPrep: string;
   exercises: string;
   explore: string;
   footerCopyright: string;
@@ -78,6 +74,7 @@ export type LearnerNavLabels = {
   footerLegal: string;
   footerHelp: string;
   footerLearning: string;
+  footerPricing: string;
   footerPrivacy: string;
   footerProductSummary: string;
   footerSupport: string;
@@ -85,6 +82,7 @@ export type LearnerNavLabels = {
   grammarNav: string;
   home: string;
   kanjiNav: string;
+  learn: string;
   levelsNav: string;
   magazine: string;
   quiz: string;
@@ -107,11 +105,13 @@ export type LearnerNavLabels = {
   themeToggleToLight: string;
 };
 
-type NavItem = {
+type PrimaryNavItem = {
+  active: boolean;
+  badge: number;
   href: string;
   icon: ComponentType<SVGProps<SVGSVGElement> & { size?: number }>;
+  key: string;
   label: string;
-  mobile?: boolean;
 };
 
 function normalizePath(path: string) {
@@ -149,15 +149,11 @@ export function LearnerAppFrame({
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [exploreMenuOpen, setExploreMenuOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const searchKeyHandlerRef = useRef<DropdownKeyHandler | null>(null);
   const mobileSearchKeyHandlerRef = useRef<DropdownKeyHandler | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement | null>(null);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
-  const exploreMenuRef = useRef<HTMLDivElement | null>(null);
-  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -194,23 +190,15 @@ export function LearnerAppFrame({
   }, [isAuthenticated]);
 
   useEffect(() => {
-    if (!userMenuOpen && !exploreMenuOpen && !mobileMenuOpen) return;
+    if (!userMenuOpen) return;
     const onPointerDown = (event: PointerEvent) => {
       if (userMenuOpen && !userMenuRef.current?.contains(event.target as Node)) {
         setUserMenuOpen(false);
-      }
-      if (exploreMenuOpen && !exploreMenuRef.current?.contains(event.target as Node)) {
-        setExploreMenuOpen(false);
-      }
-      if (mobileMenuOpen && !mobileMenuRef.current?.contains(event.target as Node)) {
-        setMobileMenuOpen(false);
       }
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setUserMenuOpen(false);
-        setExploreMenuOpen(false);
-        setMobileMenuOpen(false);
       }
     };
     document.addEventListener("pointerdown", onPointerDown);
@@ -219,46 +207,83 @@ export function LearnerAppFrame({
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [userMenuOpen, exploreMenuOpen, mobileMenuOpen]);
+  }, [userMenuOpen]);
 
   const hideChrome = pathname === `${base}/register` || pathname === `${base}/quiz/session`;
 
-  /* ── Primary nav: learner IA from the Claude v2 handoff ── */
-  const primaryNavItems = useMemo(
-    () =>
-      [
-        { href: base, icon: IconHome, label: nav.home },
-        { href: `${base}/levels`, icon: IconLevels, label: nav.levelsNav },
-        { href: `${base}/exercises`, icon: IconExercise, label: nav.exercises },
-        { href: `${base}/flashcards`, icon: IconReview, label: nav.review },
-        { href: `${base}/analytics`, icon: IconAnalytics, label: nav.analytics }
-      ] satisfies NavItem[],
-    [base, nav]
-  );
+  const reviewHref = dueCount > 0 ? `${base}/flashcards?tab=review` : `${base}/flashcards`;
 
-  /* ── "Explore" dropdown: reference lookup & secondary learning modules (no duplicates of primaryNavItems) ── */
-  const exploreNavItems = useMemo(
-    () =>
-      [
-        { href: `${base}/dictionary`, icon: IconDictionary, label: nav.dictionary },
-        { href: `${base}/kanji`, icon: IconKanji, label: nav.kanjiNav },
-        { href: `${base}/grammar`, icon: IconGrammar, label: nav.grammarNav },
-        { href: `${base}/saved`, icon: IconDocument, label: nav.saved },
-        { href: `${base}/magazine`, icon: IconMagazine, label: nav.magazine },
-        { href: `${base}/quiz`, icon: IconExercise, label: nav.quiz },
-        { href: `${base}/battle`, icon: IconBattle, label: nav.battle }
-      ] satisfies NavItem[],
-    [base, nav]
-  );
+  /* ── Canonical 5-item primary nav (shared across desktop header and mobile bottom bar) ── */
+  const primaryNavItems = useMemo<PrimaryNavItem[]>(() => {
+    const matchesSegment = (segment: string) => {
+      const target = `${base}/${segment}`;
+      return pathname === target || pathname.startsWith(`${target}/`);
+    };
+
+    return [
+      {
+        active: pathname === base,
+        badge: 0,
+        href: base,
+        icon: IconHome,
+        key: "home",
+        label: nav.home
+      },
+      {
+        active: ["levels", "scenarios", "news", "radar"].some(matchesSegment),
+        badge: 0,
+        href: `${base}/levels`,
+        icon: IconLevels,
+        key: "learn",
+        label: nav.learn
+      },
+      {
+        active: matchesSegment("flashcards"),
+        badge: dueCount,
+        href: reviewHref,
+        icon: IconReview,
+        key: "review",
+        label: nav.review
+      },
+      {
+        active: ["quiz", "exercises", "battle"].some(matchesSegment),
+        badge: 0,
+        href: `${base}/quiz`,
+        icon: IconQuiz,
+        key: "examPrep",
+        label: nav.examPrep
+      },
+      {
+        active: ["search", "dictionary", "kanji", "grammar", "saved"].some(matchesSegment),
+        badge: 0,
+        href: `${base}/search`,
+        icon: IconSearch,
+        key: "search",
+        label: nav.search
+      }
+    ];
+  }, [
+    base,
+    dueCount,
+    nav.examPrep,
+    nav.home,
+    nav.learn,
+    nav.review,
+    nav.search,
+    pathname,
+    reviewHref
+  ]);
 
   const footerLinks = useMemo(
     () => [
       {
         items: [
           { href: base, icon: IconHome, label: nav.home },
+          { href: `${base}/levels`, icon: IconLevels, label: nav.learn },
           { href: `${base}/flashcards`, icon: IconReview, label: nav.review },
-          { href: `${base}/exercises`, icon: IconExercise, label: nav.exercises },
-          { href: `${base}/analytics`, icon: IconAnalytics, label: nav.analytics }
+          { href: `${base}/quiz`, icon: IconQuiz, label: nav.examPrep },
+          { href: `${base}/search`, icon: IconSearch, label: nav.search },
+          { href: `${base}/pricing`, icon: IconSpark, label: nav.footerPricing }
         ],
         title: nav.footerLearning
       },
@@ -280,26 +305,12 @@ export function LearnerAppFrame({
     [base, nav]
   );
 
-  const linkActive = (href: string) => {
-    if (href === base) {
-      return pathname === base;
-    }
-    return pathname === href || pathname.startsWith(`${href}/`);
-  };
-
   if (hideChrome) {
     return <>{children}</>;
   }
 
   const userLabel = displayName || email || nav.userFallback;
   const userInitial = userLabel.trim().charAt(0).toUpperCase() || "N";
-  const mobileNavItems = [
-    { href: base, icon: IconHome, label: nav.home },
-    { href: `${base}/levels`, icon: IconLevels, label: nav.levelsNav },
-    { href: `${base}/exercises`, icon: IconExercise, label: nav.exercises },
-    { href: `${base}/flashcards`, icon: IconReview, label: nav.review },
-    { href: `${base}/analytics`, icon: IconAnalytics, label: nav.analytics }
-  ];
 
   function submitGlobalSearch(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
@@ -345,205 +356,34 @@ export function LearnerAppFrame({
             />
           </Link>
 
-          <div className="relative lg:hidden" ref={mobileMenuRef}>
-            <button
-              aria-expanded={mobileMenuOpen}
-              aria-haspopup="menu"
-              aria-label={nav.explore}
-              className="inline-flex size-10 items-center justify-center rounded-xl border border-ink/8 bg-surface text-ink shadow-sm transition hover:border-border-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              type="button"
-              onClick={() => setMobileMenuOpen((v) => !v)}
-            >
-              <svg
-                aria-hidden
-                className="size-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                />
-              </svg>
-            </button>
-            {mobileMenuOpen ? (
-              <div
-                className="absolute left-0 top-12 z-50 w-72 overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-[0_18px_48px_rgba(23,33,31,0.14)]"
-                role="menu"
-              >
-                <div className="p-2">
-                  {mobileNavItems.map((item) => {
-                    const active = linkActive(item.href);
-                    return (
-                      <Link
-                        aria-current={active ? "page" : undefined}
-                        className={cn(
-                          "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold transition-colors",
-                          active
-                            ? "bg-[#EFF6FF] text-[#1B2A4A]"
-                            : "text-muted hover:bg-paper hover:text-ink"
-                        )}
-                        href={item.href}
-                        key={item.href}
-                        role="menuitem"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        <item.icon aria-hidden size={18} />
-                        <span>{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                  <div className="my-1 border-t border-ink/8" />
-                  {exploreNavItems.map((item) => {
-                    const active = linkActive(item.href);
-                    return (
-                      <Link
-                        aria-current={active ? "page" : undefined}
-                        className={cn(
-                          "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold transition-colors",
-                          active
-                            ? "bg-[#EFF6FF] text-[#1B2A4A]"
-                            : "text-muted hover:bg-paper hover:text-ink"
-                        )}
-                        href={item.href}
-                        key={item.href}
-                        role="menuitem"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        <item.icon aria-hidden size={18} />
-                        <span>{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          {/* Primary nav — learner web IA on desktop */}
+          {/* Primary nav — canonical 5-item learner IA on desktop */}
           <nav aria-label={nav.ariaMain} className="hidden shrink-0 items-center gap-1 lg:flex">
-            {primaryNavItems.map((item) => {
-              const active = linkActive(item.href);
-              const isReview = item.href === `${base}/flashcards`;
-              return (
-                <Link
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "relative inline-flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 text-sm font-semibold transition-colors",
-                    active
-                      ? "bg-ink text-surface shadow-sm"
-                      : "text-muted hover:bg-ink/5 hover:text-ink"
-                  )}
-                  href={item.href}
-                  key={item.href}
-                >
-                  <item.icon aria-hidden="true" className="shrink-0" size={18} />
-                  <span>{item.label}</span>
-                  {isReview && dueCount > 0 ? (
-                    <span
-                      className={cn(
-                        "inline-flex min-w-5 items-center justify-center rounded-full px-1 py-0.5 text-[10px] font-bold leading-none",
-                        active ? "bg-surface/20 text-surface" : "bg-accent/15 text-accent"
-                      )}
-                    >
-                      {dueCount > 99 ? "99+" : dueCount}
-                    </span>
-                  ) : null}
-                </Link>
-              );
-            })}
-
-            {/* Explore dropdown — secondary items */}
-            <div className="relative" ref={exploreMenuRef}>
-              <button
-                aria-expanded={exploreMenuOpen}
-                aria-haspopup="menu"
+            {primaryNavItems.map((item) => (
+              <Link
+                aria-current={item.active ? "page" : undefined}
                 className={cn(
-                  "inline-flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 text-sm font-semibold transition-colors",
-                  exploreMenuOpen || exploreNavItems.some((item) => linkActive(item.href))
-                    ? "bg-ink/5 text-ink"
+                  "relative inline-flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 text-sm font-semibold transition-colors",
+                  item.active
+                    ? "bg-ink text-surface shadow-sm"
                     : "text-muted hover:bg-ink/5 hover:text-ink"
                 )}
-                type="button"
-                onClick={() => setExploreMenuOpen((v) => !v)}
+                href={item.href}
+                key={item.key}
               >
-                <svg
-                  aria-hidden
-                  className="size-4 shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                  />
-                </svg>
-                <span>{nav.explore}</span>
-                <svg
-                  aria-hidden
-                  className={cn(
-                    "size-3 shrink-0 transition-transform duration-150",
-                    exploreMenuOpen && "rotate-180"
-                  )}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-                  />
-                </svg>
-              </button>
-              {exploreMenuOpen ? (
-                <div className="absolute left-0 top-12 z-50 w-56 overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-[0_18px_48px_rgba(23,33,31,0.12)] dark:border-white/10 dark:shadow-[0_18px_48px_rgba(0,0,0,0.5)]">
-                  <div className="p-1.5">
-                    <Link
-                      className={cn(
-                        "flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-bold transition-colors",
-                        linkActive(`${base}/explore`)
-                          ? "bg-accent/8 text-accent"
-                          : "text-ink hover:bg-paper dark:hover:bg-white/5"
-                      )}
-                      href={`${base}/explore`}
-                      onClick={() => setExploreMenuOpen(false)}
-                    >
-                      <IconExplore aria-hidden size={18} />
-                      <span>{nav.explore}</span>
-                    </Link>
-                    <div className="my-1 border-t border-ink/6 dark:border-white/5" />
-                    {exploreNavItems.map((item) => {
-                      const active = linkActive(item.href);
-                      return (
-                        <Link
-                          aria-current={active ? "page" : undefined}
-                          className={cn(
-                            "flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-semibold transition-colors",
-                            active
-                              ? "bg-accent/8 text-accent"
-                              : "text-muted hover:bg-paper hover:text-ink dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
-                          )}
-                          href={item.href}
-                          key={item.href}
-                          onClick={() => setExploreMenuOpen(false)}
-                        >
-                          <item.icon aria-hidden size={18} />
-                          <span>{item.label}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-            </div>
+                <item.icon aria-hidden="true" className="shrink-0" size={18} />
+                <span>{item.label}</span>
+                {item.badge > 0 ? (
+                  <span
+                    className={cn(
+                      "inline-flex min-w-5 items-center justify-center rounded-full px-1 py-0.5 text-[10px] font-bold leading-none",
+                      item.active ? "bg-surface/20 text-surface" : "bg-accent/15 text-accent"
+                    )}
+                  >
+                    {item.badge > 99 ? "99+" : item.badge}
+                  </span>
+                ) : null}
+              </Link>
+            ))}
           </nav>
 
           {/* Search — fills remaining space */}
@@ -820,20 +660,7 @@ export function LearnerAppFrame({
         className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
       >
         <div className="mx-auto grid max-w-lg grid-cols-5 items-center">
-          {[
-            { href: base, icon: IconHome, label: nav.home, active: linkActive(base) },
-            { href: `${base}/levels`, icon: IconLevels, label: nav.levelsNav, active: linkActive(`${base}/levels`) },
-            { href: `${base}/exercises`, icon: IconExercise, label: nav.exercises, active: linkActive(`${base}/exercises`) },
-            { href: `${base}/flashcards`, icon: IconReview, label: nav.review, active: linkActive(`${base}/flashcards`), badge: dueCount },
-            {
-              href: `${base}/explore`,
-              icon: IconExplore,
-              label: nav.explore,
-              active:
-                linkActive(`${base}/explore`) ||
-                exploreNavItems.some((item) => linkActive(item.href))
-            }
-          ].map((item) => (
+          {primaryNavItems.map((item) => (
             <Link
               aria-current={item.active ? "page" : undefined}
               className={cn(
@@ -841,11 +668,11 @@ export function LearnerAppFrame({
                 item.active ? "text-accent" : "text-muted hover:text-ink"
               )}
               href={item.href}
-              key={item.href}
+              key={item.key}
             >
               <span className="relative inline-flex items-center justify-center">
                 <item.icon aria-hidden size={20} />
-                {item.badge && item.badge > 0 ? (
+                {item.badge > 0 ? (
                   <span className="absolute -right-2.5 -top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-action px-1 py-0.5 text-[9px] font-bold leading-none text-white">
                     {item.badge > 99 ? "99+" : item.badge}
                   </span>
