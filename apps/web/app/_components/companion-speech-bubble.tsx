@@ -79,7 +79,7 @@ export function CompanionSpeechBubble({
     : quote.ja;
   const subText = locale === "en"
     ? customText ? customText.ja : enMessages.nav.companion.english.quotes[quoteIndex % MOTIVATIONAL_QUOTES.length]
-    : locale === "ja" ? null : quote.vi;
+    : locale === "ja" ? null : customText ? customText.ja : quote.vi;
 
   // Mood-specific emoji prefix
   const moodEmoji: Record<CompanionMood, string> = {

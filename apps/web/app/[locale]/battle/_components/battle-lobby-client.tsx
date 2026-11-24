@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { BattleBotAnimationState } from "@nihongo-bjt/shared";
-import { Badge, Button, Input, PageHeader } from "@nihongo-bjt/ui";
+import { Badge, PageHeader } from "@nihongo-bjt/ui";
 
 import { BattleBotAvatar } from "../../../_components/battle-bot-avatar";
-import { BattleConfigsPanel, type BattleConfigItem } from "./battle-configs-panel";
 import { BotDetailPopover } from "./bot-detail-popover";
 import { BattleLobbyLeaderboardPanel } from "./battle-lobby-leaderboard";
 import { useBattleRuntime } from "./battle-runtime-provider";
@@ -18,46 +17,10 @@ import {
   personaLabel,
   styleFor,
   type BattleBotStageProfile,
-  type BattlePageLabels,
-  type PresenceUser
+  type BattlePageLabels
 } from "./battle-types";
-import { UserPresencePopover } from "./user-presence-popover";
-import { toIntlLocale } from "@/lib/locale-utils";
 
-type PopoverState =
-  | { kind: "bot"; bot: BattleBotStageProfile; rect: DOMRect }
-  | { kind: "user"; user: PresenceUser; rect: DOMRect }
-  | null;
-
-type LobbyRosterColumnProps = {
-  variant: "desktop" | "drawer";
-  labels: BattlePageLabels;
-  battleMode: "bot" | "pvp";
-  botChoices: BattleBotStageProfile[];
-  botChoicesLoading: boolean;
-  botKey: string;
-  botState: BattleBotAnimationState;
-  presence: PresenceUser[];
-  userId: string | null | undefined;
-  displayedBot: BattleBotStageProfile;
-  totalOpponents: number;
-  startDisabled: boolean;
-  startBusy: boolean;
-  pickBot: (bot: BattleBotStageProfile) => void;
-  connectAndStart: () => void;
-  challengeUser: (targetUserId: string) => void;
-  openBot: (bot: BattleBotStageProfile, el: HTMLElement) => void;
-  botRowEnter: (bot: BattleBotStageProfile, el: HTMLElement) => void;
-  openUser: (user: PresenceUser, el: HTMLElement) => void;
-  userRowEnter: (user: PresenceUser, el: HTMLElement) => void;
-  rowLeave: () => void;
-  onCloseDrawer?: () => void;
-  onAfterBattleStart?: () => void;
-  /** PvP match running — hide bot arena / start, show return-to-match */
-  pvpMatchInProgress: boolean;
-  opponentName: string | null;
-  matchHref: string;
-};
+type BotPopoverState = { bot: BattleBotStageProfile; rect: DOMRect } | null;
 
 type StartBotButtonProps = {
   labels: BattlePageLabels;
@@ -95,63 +58,57 @@ function StartBotButton({
   );
 }
 
-function LobbyRosterColumn({
-  variant,
+type BotDrillSelectorProps = {
+  labels: BattlePageLabels;
+  botChoices: BattleBotStageProfile[];
+  botChoicesLoading: boolean;
+  botKey: string;
+  botState: BattleBotAnimationState;
+  displayedBot: BattleBotStageProfile;
+  startDisabled: boolean;
+  startBusy: boolean;
+  pickBot: (bot: BattleBotStageProfile) => void;
+  connectAndStart: () => void;
+  openBot: (bot: BattleBotStageProfile, el: HTMLElement) => void;
+  botRowEnter: (bot: BattleBotStageProfile, el: HTMLElement) => void;
+  rowLeave: () => void;
+  pvpMatchInProgress: boolean;
+  opponentName: string | null;
+  matchHref: string;
+};
+
+function BotDrillSelector({
   labels,
-  battleMode,
   botChoices,
   botChoicesLoading,
   botKey,
   botState,
-  presence,
-  userId,
   displayedBot,
-  totalOpponents,
   startDisabled,
   startBusy,
   pickBot,
   connectAndStart,
-  challengeUser,
   openBot,
   botRowEnter,
-  openUser,
-  userRowEnter,
   rowLeave,
-  onCloseDrawer,
-  onAfterBattleStart,
   pvpMatchInProgress,
   opponentName,
   matchHref
-}: LobbyRosterColumnProps) {
-  const sectionClass =
-    variant === "desktop"
-      ? "hidden min-h-[22rem] overflow-hidden rounded-[1.5rem] border border-ink/10 bg-surface shadow-sm lg:flex lg:min-h-[28rem] lg:flex-col"
-      : "flex h-full min-h-0 flex-col bg-surface";
-
+}: BotDrillSelectorProps) {
   return (
-    <section className={sectionClass}>
-      <div className="border-b border-ink/10 p-3">
+    <section className="flex flex-col overflow-hidden rounded-[1.5rem] border border-ink/10 bg-surface shadow-sm">
+      <div className="border-b border-ink/10 p-4">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sm font-black text-ink">{labels.lobbyRoster}</h2>
-          <div className="flex shrink-0 items-center gap-2">
-            {variant === "drawer" ? (
-              <button
-                className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border border-ink/15 bg-white text-sm font-black text-ink hover:bg-paper"
-                onClick={onCloseDrawer}
-                type="button"
-              >
-                {labels.lobbyCloseRoster}
-              </button>
-            ) : null}
-            <span className="rounded-full border border-leaf/20 bg-leaf/10 px-2.5 py-0.5 text-[11px] font-black text-leaf">
-              {labels.lobbyOnline.replace("{count}", String(totalOpponents))}
-            </span>
-          </div>
+          <h2 className="text-sm font-black text-ink">{labels.chooseArena}</h2>
+          <span className="rounded-full border border-leaf/20 bg-leaf/10 px-2.5 py-0.5 text-[11px] font-black text-leaf">
+            {labels.lobbyOnline.replace("{count}", String(botChoices.length))}
+          </span>
         </div>
-        <p className="mt-2 text-xs font-semibold text-muted">
+        <p className="mt-1.5 text-xs font-semibold text-muted">
           {pvpMatchInProgress ? labels.matchActiveBanner : labels.pickBot}
         </p>
       </div>
+
       {botChoicesLoading ? (
         <div className="space-y-2 p-3" aria-busy="true" aria-label={labels.connecting}>
           {[0, 1, 2, 3].map((i) => (
@@ -166,15 +123,16 @@ function LobbyRosterColumn({
           ))}
         </div>
       ) : null}
-      <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-3">
+
+      <div className="space-y-2 p-3">
         {botChoices.map((bot) => {
           const selected = bot.key === botKey;
           const style = styleFor(bot.styleToken);
           return (
             <button
-              className={`battle-bot-card grid w-full grid-cols-[40px_1fr_auto] items-center gap-2.5 rounded-xl border p-2.5 text-left ${
+              className={`battle-bot-card grid w-full grid-cols-[40px_1fr_auto] items-center gap-2.5 rounded-xl border p-2.5 text-left transition ${
                 selected
-                  ? `battle-bot-card-selected ${style.border} bg-gradient-to-r from-blue-50/60 to-indigo-50/40 shadow-md`
+                  ? `battle-bot-card-selected ${style.border} bg-accent/5 shadow-sm`
                   : "border-ink/10 bg-surface/75 hover:bg-paper hover:shadow-sm"
               }`}
               key={bot.key}
@@ -208,67 +166,17 @@ function LobbyRosterColumn({
                   <span className="shrink-0">{localizeDifficulty(labels, bot.difficulty)}</span>
                 </span>
               </span>
-              <span className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-black tabular-nums ${
-                selected
-                  ? "border-accent/25 bg-accent/10 text-accent"
-                  : "border-ink/10 bg-white text-muted"
-              }`}>
+              <span
+                className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-black tabular-nums ${
+                  selected
+                    ? "border-accent/25 bg-accent/10 text-accent"
+                    : "border-ink/10 bg-paper text-muted"
+                }`}
+              >
                 <span className={`h-1.5 w-1.5 rounded-full ${style.accent}`} aria-hidden />
                 {bot.accuracyPct ?? "--"}%
               </span>
             </button>
-          );
-        })}
-
-        {presence.length === 0 && !botChoicesLoading ? (
-          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-ink/10 bg-gradient-to-b from-paper to-white p-5 text-center">
-            <span className="grid h-10 w-10 place-items-center rounded-full bg-ink/5 text-lg" aria-hidden>👥</span>
-            <p className="text-xs font-bold text-muted">
-              {labels.lobbyConnectionOffline}
-            </p>
-          </div>
-        ) : null}
-        {presence.map((user) => {
-          const mine = user.userId === userId;
-          const name = user.displayName || labels.userLabel;
-          return (
-            <div
-              className="flex cursor-pointer items-center gap-2 rounded-xl border border-ink/10 bg-paper p-2 transition hover:bg-surface"
-              key={user.userId}
-              onClick={(e) => openUser(user, e.currentTarget)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  openUser(user, e.currentTarget as HTMLElement);
-                }
-              }}
-              onMouseEnter={(e) => userRowEnter(user, e.currentTarget)}
-              onMouseLeave={rowLeave}
-              role="button"
-              tabIndex={0}
-            >
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-leaf/10 text-[10px] font-black text-leaf">
-                {name.slice(0, 2).toUpperCase()}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-black text-ink">{name}</span>
-                <span className="text-[11px] font-semibold text-muted">
-                  {mine ? labels.userLabel : labels.lobbyConnectionOnline}
-                </span>
-              </span>
-              {!mine ? (
-                <button
-                  className="rounded-lg border border-ink/10 bg-white px-2 py-0.5 text-[11px] font-black text-ink hover:bg-ink/5"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    challengeUser(user.userId);
-                  }}
-                  type="button"
-                >
-                  {labels.lobbyChallenge}
-                </button>
-              ) : null}
-            </div>
           );
         })}
       </div>
@@ -285,7 +193,7 @@ function LobbyRosterColumn({
                 : labels.matchActiveBanner}
             </p>
             <Link
-              className="flex w-full min-h-11 items-center justify-center rounded-xl bg-ink px-4 text-sm font-black text-surface transition hover:bg-ink/90"
+              className="flex min-h-11 w-full items-center justify-center rounded-xl bg-ink px-4 text-sm font-black text-surface transition hover:bg-ink/90"
               href={matchHref}
             >
               {labels.enterActiveMatch}
@@ -293,9 +201,6 @@ function LobbyRosterColumn({
           </>
         ) : (
           <>
-            <p className="mb-2 text-[11px] font-black uppercase text-muted">
-              {battleMode === "pvp" ? labels.pvpSessionBadge : labels.chooseArena}
-            </p>
             <div className="flex min-h-12 items-center gap-2 rounded-xl border border-ink/10 bg-paper/70 px-3 py-2">
               <BattleBotAvatar
                 className="h-10 w-10 shrink-0 rounded-lg"
@@ -317,14 +222,16 @@ function LobbyRosterColumn({
             <div className="mt-3">
               <StartBotButton
                 labels={labels}
-                onStart={() => {
-                connectAndStart();
-                onAfterBattleStart?.();
-              }}
+                onStart={connectAndStart}
                 startBusy={startBusy}
                 startDisabled={startDisabled}
               />
             </div>
+            {startDisabled ? (
+              <p className="mt-2 text-xs font-semibold leading-5 text-muted" role="status">
+                {labels.startBotDisabledHint}
+              </p>
+            ) : null}
           </>
         )}
       </div>
@@ -339,22 +246,12 @@ export function BattleLobbyClient() {
     botChoicesLoading,
     botKey,
     botState,
-    challengeUser,
-    chatText,
     connectAndStart,
-    declinePvpChallenge,
-    acceptPvpChallenge,
     isMatchUiActive,
     labels,
-    lobbyMessages,
-    lobbyNotice,
     locale,
     opponentName,
     pickBot,
-    presence,
-    pvpChallenge,
-    sendLobbyMessage,
-    setChatText,
     socketConnected,
     status,
     userId,
@@ -363,19 +260,13 @@ export function BattleLobbyClient() {
     setActiveGameType
   } = useBattleRuntime();
 
-  const [selectedConfig, setSelectedConfig] = useState<BattleConfigItem | null>(null);
-  // Sync local config selection to runtime context
+  // Keep standard BJT bot rounds active with no arcade config selected.
   useEffect(() => {
-    setSelectedConfigId(selectedConfig?.id ?? null);
-    setActiveGameType(selectedConfig?.gameType ?? null);
-  }, [selectedConfig, setSelectedConfigId, setActiveGameType]);
+    setSelectedConfigId(null);
+    setActiveGameType(null);
+  }, [setSelectedConfigId, setActiveGameType]);
 
-  const chatScrollRef = useRef<HTMLDivElement | null>(null);
-  const didInitialChatScrollRef = useRef(false);
-  const pvpDialogTitleId = useId();
-  const rosterSheetId = useId();
-  const [rosterOpen, setRosterOpen] = useState(false);
-  const [detail, setDetail] = useState<PopoverState>(null);
+  const [detail, setDetail] = useState<BotPopoverState>(null);
   const hoverOpenTimer = useRef<number | null>(null);
   const hoverCloseTimer = useRef<number | null>(null);
 
@@ -402,47 +293,6 @@ export function BattleLobbyClient() {
     [labels.popoverAccuracy, labels.popoverSpeed, labels.popoverVocab]
   );
 
-  const popoverStatsLabels = useMemo(
-    () => ({
-      couldNotLoad: labels.popoverStatsCouldNotLoad,
-      heading: labels.popoverStatsHeading,
-      loading: labels.popoverStatsLoading,
-      matchesLine: labels.popoverStatsMatchesLine,
-      wldrLine: labels.popoverStatsWLDR,
-      winRateLine: labels.popoverStatsWinRateLine
-    }),
-    [
-      labels.popoverStatsCouldNotLoad,
-      labels.popoverStatsHeading,
-      labels.popoverStatsLoading,
-      labels.popoverStatsMatchesLine,
-      labels.popoverStatsWLDR,
-      labels.popoverStatsWinRateLine
-    ]
-  );
-
-  useEffect(() => {
-    const root = chatScrollRef.current;
-    if (!root || lobbyMessages.length === 0) {
-      didInitialChatScrollRef.current = false;
-      return;
-    }
-
-    const last = lobbyMessages[lobbyMessages.length - 1];
-    if (!last) return;
-
-    const distanceFromBottom = root.scrollHeight - root.scrollTop - root.clientHeight;
-    const nearBottom = distanceFromBottom < 72;
-    const shouldPin = !didInitialChatScrollRef.current || last.userId === userId || nearBottom;
-
-    if (!shouldPin) return;
-
-    didInitialChatScrollRef.current = true;
-    requestAnimationFrame(() => {
-      root.scrollTop = root.scrollHeight;
-    });
-  }, [lobbyMessages, userId]);
-
   useEffect(() => {
     return () => {
       if (hoverOpenTimer.current) clearTimeout(hoverOpenTimer.current);
@@ -451,18 +301,13 @@ export function BattleLobbyClient() {
   }, []);
 
   const liveStatus = socketConnected ? labels.lobbyConnectionOnline : labels.lobbyConnectionOffline;
-
   const startDisabled = !userId || !socketConnected || botChoicesLoading;
   const startBusy = status === labels.connecting;
+  const pvpMatchInProgress = battleMode === "pvp" && isMatchUiActive;
 
   function openBot(bot: BattleBotStageProfile, el: HTMLElement) {
     cancelHoverClose();
-    setDetail({ kind: "bot", bot, rect: el.getBoundingClientRect() });
-  }
-
-  function openUser(user: PresenceUser, el: HTMLElement) {
-    cancelHoverClose();
-    setDetail({ kind: "user", user, rect: el.getBoundingClientRect() });
+    setDetail({ bot, rect: el.getBoundingClientRect() });
   }
 
   function botRowEnter(bot: BattleBotStageProfile, el: HTMLElement) {
@@ -470,14 +315,6 @@ export function BattleLobbyClient() {
     cancelHoverClose();
     hoverOpenTimer.current = window.setTimeout(() => {
       openBot(bot, el);
-    }, 300);
-  }
-
-  function userRowEnter(user: PresenceUser, el: HTMLElement) {
-    if (hoverOpenTimer.current) clearTimeout(hoverOpenTimer.current);
-    cancelHoverClose();
-    hoverOpenTimer.current = window.setTimeout(() => {
-      openUser(user, el);
     }, 300);
   }
 
@@ -489,108 +326,13 @@ export function BattleLobbyClient() {
     scheduleHoverClose();
   }
 
-  const totalOpponents = botChoices.length + presence.length;
-  const rosterCountDisplay = totalOpponents > 99 ? "99+" : String(totalOpponents);
-
-  useEffect(() => {
-    if (!rosterOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [rosterOpen]);
-
-  useEffect(() => {
-    if (!rosterOpen) return;
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setRosterOpen(false);
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [rosterOpen]);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    function closeIfDesktop() {
-      if (mq.matches) setRosterOpen(false);
-    }
-    mq.addEventListener("change", closeIfDesktop);
-    closeIfDesktop();
-    return () => mq.removeEventListener("change", closeIfDesktop);
-  }, []);
-
-  const pvpMatchInProgress = battleMode === "pvp" && isMatchUiActive;
-
-  const rosterColumnProps: Omit<LobbyRosterColumnProps, "variant"> = {
-    battleMode,
-    botChoices,
-    botChoicesLoading,
-    botKey,
-    botState,
-    challengeUser,
-    connectAndStart,
-    displayedBot,
-    labels,
-    matchHref: `/${locale}/battle/match`,
-    openBot,
-    botRowEnter,
-    openUser,
-    opponentName,
-    userRowEnter,
-    pickBot,
-    presence,
-    pvpMatchInProgress,
-    rowLeave,
-    startBusy,
-    startDisabled,
-    totalOpponents,
-    userId
-  };
-
   return (
     <main className="w-full pb-12">
-      {pvpChallenge ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div
-            aria-labelledby={pvpDialogTitleId}
-            aria-modal="true"
-            className="mx-4 w-full max-w-sm rounded-2xl border border-ink/10 bg-surface p-6 shadow-xl"
-            role="dialog"
-          >
-            <h2 className="text-lg font-black text-ink" id={pvpDialogTitleId}>
-              {labels.pvpChallengeTitle}
-            </h2>
-            <p className="mt-2 text-sm font-semibold leading-6 text-muted">
-              {labels.pvpChallengeBody.replace(
-                "{name}",
-                pvpChallenge.fromDisplayName || labels.userLabel
-              )}
-            </p>
-            <div className="mt-5 flex gap-3">
-              <button
-                className="flex-1 rounded-xl bg-leaf px-4 py-2.5 text-sm font-black text-white transition hover:bg-leaf/90"
-                onClick={acceptPvpChallenge}
-                type="button"
-              >
-                {labels.pvpAccept}
-              </button>
-              <button
-                className="flex-1 rounded-xl border border-ink/15 bg-white px-4 py-2.5 text-sm font-black text-ink transition hover:bg-paper"
-                onClick={declinePvpChallenge}
-                type="button"
-              >
-                {labels.pvpDecline}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {detail?.kind === "bot" ? (
+      {detail ? (
         <BotDetailPopover
           accuracyPct={detail.bot.accuracyPct}
           avatarFallback={detail.bot.avatarFallback}
+          battleRecordHint={labels.botPopoverBattleRecordHint}
           difficultyKey={detail.bot.difficulty}
           difficultyLabel={localizeDifficulty(labels, detail.bot.difficulty)}
           maxDelayMs={detail.bot.maxDelayMs}
@@ -606,27 +348,6 @@ export function BattleLobbyClient() {
           styleToken={detail.bot.styleToken}
           triggerRect={detail.rect}
           vocabularyLabel={localizeVocab(labels, detail.bot.vocabularyLevel)}
-          battleRecordHint={labels.botPopoverBattleRecordHint}
-        />
-      ) : null}
-
-      {detail?.kind === "user" ? (
-        <UserPresencePopover
-          displayName={detail.user.displayName || labels.userLabel}
-          isSelf={detail.user.userId === userId}
-          labels={{
-            challenge: labels.lobbyChallenge,
-            lobbyOnline: labels.lobbyConnectionOnline,
-            member: labels.userPopoverMember,
-            userLabel: labels.userLabel
-          }}
-          onChallenge={() => challengeUser(detail.user.userId)}
-          onClose={() => setDetail(null)}
-          onHoverGroupEnter={cancelHoverClose}
-          onHoverGroupLeave={scheduleHoverClose}
-          statsLabels={popoverStatsLabels}
-          targetUserId={detail.user.userId}
-          triggerRect={detail.rect}
         />
       ) : null}
 
@@ -654,254 +375,28 @@ export function BattleLobbyClient() {
         </div>
       ) : null}
 
-      {/* Available battle configs from admin */}
-      <div className="mt-4">
-        <BattleConfigsPanel
+      <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)] lg:items-start">
+        <BotDrillSelector
+          botChoices={botChoices}
+          botChoicesLoading={botChoicesLoading}
+          botKey={botKey}
+          botRowEnter={botRowEnter}
+          botState={botState}
+          connectAndStart={connectAndStart}
+          displayedBot={displayedBot}
           labels={labels}
-          locale={locale}
-          onSelectConfig={setSelectedConfig}
-          selectedConfigId={selectedConfig?.id ?? null}
+          matchHref={`/${locale}/battle/match`}
+          openBot={openBot}
+          opponentName={opponentName}
+          pickBot={pickBot}
+          pvpMatchInProgress={pvpMatchInProgress}
+          rowLeave={rowLeave}
+          startBusy={startBusy}
+          startDisabled={startDisabled}
         />
-        {selectedConfig && (
-          <div className="mt-2 flex items-center gap-2 rounded-xl border border-accent/20 bg-accent/5 px-3 py-2">
-            <span className="text-base" aria-hidden>
-              {selectedConfig.gameType === "speed_duel" ? "⚡" :
-               selectedConfig.gameType === "kanji_vocab_duel" ? "漢" :
-               selectedConfig.gameType === "listening_challenge" ? "🎧" :
-               selectedConfig.gameType === "business_roleplay" ? "💼" :
-               selectedConfig.gameType === "boss_rush" ? "🔥" :
-               selectedConfig.gameType === "mock_exam_sprint" ? "📋" :
-               selectedConfig.gameType === "team_room" ? "👥" :
-               selectedConfig.gameType === "tournament" ? "🏆" : "⚙️"}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-black text-accent truncate">
-                {selectedConfig.name}
-              </p>
-              <p className="text-[10px] font-semibold text-muted">
-                {selectedConfig.questionCount}Q · {selectedConfig.timePerQuestionSec}s · {selectedConfig.maxParticipants}P max
-              </p>
-            </div>
-          </div>
-        )}
+
+        <BattleLobbyLeaderboardPanel className="mt-0" labels={labels} />
       </div>
-
-      <section className="mt-4 rounded-2xl border border-indigo-200/50 bg-gradient-to-br from-indigo-50/80 via-surface to-blue-50/50 p-3 shadow-sm lg:hidden">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-wide text-indigo-800">
-              {labels.chooseArena}
-            </p>
-            <p className="mt-1 text-xs font-semibold leading-5 text-muted">
-              {labels.pickBot}
-            </p>
-          </div>
-          <button
-            aria-controls={rosterSheetId}
-            aria-expanded={rosterOpen}
-            aria-label={labels.lobbyOpenRoster}
-            className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl border border-ink/15 bg-white px-3 text-xs font-black text-ink shadow-sm transition hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 active:scale-[0.98]"
-            onClick={() => setRosterOpen(true)}
-            type="button"
-          >
-            {labels.lobbyRoster}
-          </button>
-        </div>
-        <div className="mt-3 flex min-h-14 items-center gap-3 rounded-xl border border-ink/10 bg-surface/80 px-3 py-2">
-          <BattleBotAvatar
-            className="h-11 w-11 shrink-0 rounded-xl"
-            fallback={displayedBot.avatarFallback}
-            label={botName(labels, displayedBot.label)}
-            rive={displayedBot.rive}
-            state={botState}
-            variant="card"
-          />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-black text-ink">
-              {botName(labels, displayedBot.label)}
-            </p>
-            <p className="truncate text-xs font-semibold text-muted">
-              {localizeDifficulty(labels, displayedBot.difficulty) ?? labels.battleDeck}
-            </p>
-          </div>
-        </div>
-        <div className="mt-3">
-          <StartBotButton
-            labels={labels}
-            onStart={connectAndStart}
-            startBusy={startBusy}
-            startDisabled={startDisabled}
-          />
-        </div>
-        {startDisabled ? (
-          <p className="mt-2 text-xs font-semibold leading-5 text-muted" role="status">
-            {labels.startBotDisabledHint}
-          </p>
-        ) : null}
-      </section>
-
-      <button
-        aria-hidden={!rosterOpen}
-        className={`fixed inset-0 z-30 bg-ink/40 transition-opacity duration-200 lg:hidden ${
-          rosterOpen ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
-        onClick={() => setRosterOpen(false)}
-        tabIndex={rosterOpen ? 0 : -1}
-        type="button"
-      />
-      <aside
-        aria-hidden={!rosterOpen}
-        aria-label={labels.lobbyRoster}
-        aria-modal={rosterOpen || undefined}
-        className={`fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-0 top-0 z-40 flex w-[min(22rem,calc(100vw-1rem))] max-w-full flex-col rounded-r-[1.5rem] border border-ink/10 border-l-0 bg-surface shadow-xl transition-transform duration-200 ease-out will-change-transform lg:hidden ${
-          rosterOpen ? "translate-x-0" : "pointer-events-none -translate-x-full"
-        }`}
-        id={rosterSheetId}
-        role="dialog"
-      >
-        <LobbyRosterColumn
-          {...rosterColumnProps}
-          onAfterBattleStart={() => setRosterOpen(false)}
-          onCloseDrawer={() => setRosterOpen(false)}
-          variant="drawer"
-        />
-      </aside>
-
-      <div className="relative mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
-        <section className="relative flex min-h-[22rem] flex-col overflow-hidden rounded-[1.5rem] border border-indigo-200/30 bg-gradient-to-br from-surface via-surface to-indigo-50/20 shadow-sm lg:min-h-[28rem]">
-          <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-blue-500/60 via-indigo-500/40 to-transparent" aria-hidden />
-          <div className="border-b border-ink/10 p-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex min-w-0 flex-1 items-center gap-2">
-                <button
-                  aria-controls={rosterSheetId}
-                  aria-expanded={rosterOpen}
-                  aria-label={labels.lobbyOpenRoster}
-                  className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-ink/15 bg-paper shadow-sm outline-none ring-offset-2 transition hover:bg-surface focus-visible:ring-2 focus-visible:ring-accent lg:hidden"
-                  onClick={() => setRosterOpen((open) => !open)}
-                  type="button"
-                >
-                  <span
-                    className="absolute inset-[3px] rounded-full border border-leaf/30 bg-leaf/10"
-                    aria-hidden
-                  />
-                  <span className="relative text-[12px] font-black tabular-nums text-leaf">
-                    {rosterCountDisplay}
-                  </span>
-                </button>
-                <h2 className="min-w-0 truncate text-sm font-black text-ink">
-                  {labels.lobbyTitle}
-                </h2>
-              </div>
-              {lobbyNotice ? (
-                <span className="max-w-[40%] shrink-0 truncate rounded-full bg-paper px-2 py-0.5 text-[10px] font-bold text-ink sm:max-w-[55%]">
-                  {lobbyNotice}
-                </span>
-              ) : null}
-            </div>
-          </div>
-          <div
-            className="flex-1 space-y-2 overflow-y-auto p-3"
-            aria-live="polite"
-            ref={chatScrollRef}
-          >
-            {lobbyMessages.length === 0 ? (
-              <div className="flex min-h-[10rem] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-ink/10 bg-gradient-to-b from-paper/80 to-surface/60 p-6 text-center">
-                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 text-2xl shadow-sm" aria-hidden>💬</span>
-                <p className="max-w-[18rem] text-xs font-semibold leading-5 text-muted">
-                  {labels.lobbyEmpty}
-                </p>
-              </div>
-            ) : (
-              lobbyMessages.map((message) => {
-                const mine = message.userId === userId;
-                const isBot = message.kind === "bot";
-                const timeStr = new Date(message.createdAt).toLocaleTimeString(
-                  toIntlLocale(locale),
-                  { hour: "2-digit", minute: "2-digit" }
-                );
-                return (
-                  <div
-                    className={`flex ${mine ? "justify-end" : "justify-start"} px-0.5`}
-                    key={message.id}
-                  >
-                    <article
-                      className={`relative max-w-[min(92%,28rem)] px-4 py-2.5 shadow-sm ${
-                        mine
-                          ? "rounded-[1.35rem] rounded-br-md bg-gradient-to-br from-ink via-ink to-ink/92 text-surface ring-1 ring-ink/20"
-                          : isBot
-                            ? "rounded-[1.35rem] rounded-bl-md bg-gradient-to-b from-violet-50/95 to-indigo-50/90 text-ink ring-1 ring-violet-200/45"
-                            : "rounded-[1.35rem] rounded-bl-md bg-surface/95 text-ink ring-1 ring-ink/10"
-                      }`}
-                    >
-                      <p
-                        className={`text-[11px] font-black ${
-                          mine ? "text-surface/70" : isBot ? "text-violet-800" : "text-muted"
-                        }`}
-                      >
-                        {isBot
-                          ? message.displayName
-                            ? `${labels.botBadge} · ${message.displayName}`
-                            : labels.botBadge
-                          : message.displayName || labels.userLabel}
-                        <span className="ml-1.5 font-bold opacity-80">
-                          {labels.lobbyChatTimeLabel.replace("{time}", timeStr)}
-                        </span>
-                      </p>
-                      <p
-                        className={`mt-1.5 whitespace-pre-wrap break-words text-sm font-semibold leading-relaxed ${
-                          mine ? "text-surface" : "text-ink"
-                        }`}
-                      >
-                        {message.message}
-                      </p>
-                    </article>
-                  </div>
-                );
-              })
-            )}
-          </div>
-          <form
-            className="border-t border-ink/10 p-3"
-            onSubmit={(event) => {
-              event.preventDefault();
-              sendLobbyMessage();
-            }}
-          >
-            <div className="flex gap-2">
-              <Input
-                className="min-h-12 min-w-0 flex-1 bg-paper shadow-none"
-                maxLength={500}
-                onChange={(event) => setChatText(event.target.value)}
-                placeholder={labels.lobbyMessagePlaceholder}
-                value={chatText}
-              />
-              <Button
-                className="min-h-12 px-4"
-                disabled={!userId || !socketConnected || chatText.trim().length === 0}
-                type="submit"
-              >
-                {labels.lobbySend}
-              </Button>
-            </div>
-          </form>
-        </section>
-
-        <LobbyRosterColumn {...rosterColumnProps} variant="desktop" />
-      </div>
-
-      <details className="mt-4 rounded-2xl border border-ink/10 bg-surface shadow-sm open:pb-1">
-        <summary className="cursor-pointer list-none px-4 py-3 text-sm font-bold tracking-tight text-ink outline-none marker:content-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
-          {labels.leaderboardFoldTitle}
-        </summary>
-        <div className="border-t border-ink/10 px-3 pb-3 pt-2">
-          <BattleLobbyLeaderboardPanel
-            className="mt-0 border-0 bg-transparent p-0 shadow-none"
-            hideIntro
-            labels={labels}
-          />
-        </div>
-      </details>
     </main>
   );
 }
