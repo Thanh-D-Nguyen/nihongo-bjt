@@ -23,7 +23,7 @@ export default async function FlashcardsPage({
   searchParams
 }: {
   params: Promise<{ locale: keyof typeof messages }>;
-  searchParams: Promise<{ tab?: string; deckId?: string }>;
+  searchParams: Promise<{ tab?: string; deckId?: string; cloneToken?: string }>;
 }) {
   const { locale } = await params;
   const sp = await searchParams;
@@ -31,7 +31,13 @@ export default async function FlashcardsPage({
   const deckIdOk =
     typeof sp.deckId === "string" &&
     /^[\da-f]{8}-[\da-f]{4}-[1-5][\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/i.test(sp.deckId);
-  const initialMain = sp.tab === "review" || deckIdOk ? ("review" as const) : ("library" as const);
+  const hasCloneToken = typeof sp.cloneToken === "string" && sp.cloneToken.trim().length > 0;
+  const initialMain =
+    sp.tab === "library" || hasCloneToken
+      ? ("library" as const)
+      : sp.tab === "review" || deckIdOk
+        ? ("review" as const)
+        : ("library" as const);
 
   return (
     <RequireAuth locale={locale}>
