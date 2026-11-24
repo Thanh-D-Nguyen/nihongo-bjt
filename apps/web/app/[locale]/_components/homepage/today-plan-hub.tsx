@@ -302,7 +302,7 @@ export function TodayPlanHub({
         </h1>
         <HomeStateCard
           action={copy.emptyCta}
-          href={`/${locale}/onboarding`}
+          href={`/${locale}/flashcards?tab=review`}
           title={copy.emptyTitle}
           tone="empty"
         />

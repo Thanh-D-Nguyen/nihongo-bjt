@@ -1,10 +1,12 @@
-import { Card, CardContent, PageHeader } from "@nihongo-bjt/ui";
+import { Card, CardContent, PageHeader, SectionHeader } from "@nihongo-bjt/ui";
+import Link from "next/link";
 import { Suspense } from "react";
 
 import en from "../../../../messages/en.json";
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
 import { RequireAuth } from "../../../../components/auth/require-auth";
+import { AccountIdentityCard } from "./_components/account-identity-card";
 import { AccountsSettingsClient } from "./_components/accounts-settings-client";
 
 const messages = { ja, vi, en };
@@ -20,11 +22,35 @@ export default async function AccountsSettingsPage({
     <RequireAuth locale={locale}>
       <main className="w-full space-y-6 pb-12">
         <PageHeader
-          description={t.accounts.linkedAccountsSubtitle}
-          title={t.accounts.linkedAccountsTitle}
+          description={t.accountInfo.subtitle}
+          eyebrow={t.accountInfo.eyebrow}
+          title={t.accountInfo.title}
         />
         <Card className="border-ink/10 shadow-sm">
           <CardContent className="p-5 sm:p-6">
+            <AccountIdentityCard
+              labels={{
+                accountStatus: t.accountInfo.accountStatus,
+                email: t.accountInfo.email,
+                identityTitle: t.accountInfo.identityTitle,
+                localeLabel: t.accountInfo.localeLabel,
+                privacyDesc: t.settings.privacyDesc,
+                privacyTitle: t.settings.privacy,
+                signOut: t.accountInfo.signOut,
+                signedIn: t.accountInfo.signedIn,
+                signedOut: t.accountInfo.signedOut
+              }}
+              locale={locale}
+            />
+          </CardContent>
+        </Card>
+        <Card className="border-ink/10 shadow-sm">
+          <CardContent className="space-y-4 p-5 sm:p-6">
+            <SectionHeader
+              description={t.accounts.linkedAccountsSubtitle}
+              heading="h2"
+              title={t.accounts.linkedAccountsTitle}
+            />
             <Suspense fallback={<p className="text-sm text-muted">{t.accounts.subtitle}</p>}>
               <AccountsSettingsClient
                 labels={{ ...t.accounts, identitiesEmpty: t.accounts.linkedAccountsEmpty }}
@@ -32,6 +58,12 @@ export default async function AccountsSettingsPage({
             </Suspense>
           </CardContent>
         </Card>
+        <Link
+          className="inline-flex text-sm font-medium text-muted underline-offset-4 hover:text-ink hover:underline"
+          href={`/${locale}/settings`}
+        >
+          ← {t.settings.title}
+        </Link>
       </main>
     </RequireAuth>
   );

@@ -25,7 +25,7 @@ interface SettingsTabLabels {
 }
 
 const SETTINGS_ITEMS: Array<{
-  key: keyof Pick<SettingsTabLabels, "account" | "appearance" | "reading" | "notifications" | "privacy" | "subscription" | "linkedAccounts">;
+  key: keyof Pick<SettingsTabLabels, "account" | "appearance" | "reading" | "notifications" | "privacy" | "subscription">;
   descKey: keyof SettingsTabLabels;
   icon: string;
   href: string;
@@ -36,7 +36,6 @@ const SETTINGS_ITEMS: Array<{
   { key: "notifications", descKey: "notificationsDesc", icon: "🔔", href: "/settings/notifications" },
   { key: "privacy", descKey: "privacyDesc", icon: "🔒", href: "/settings/privacy" },
   { key: "subscription", descKey: "subscriptionDesc", icon: "💎", href: "/settings/subscription" },
-  { key: "linkedAccounts", descKey: "linkedAccountsDesc", icon: "🔗", href: "/settings/linked-accounts" },
 ];
 
 export function MeTabSettings({
@@ -82,12 +81,13 @@ export function MeTabSettings({
       {/* Sign out */}
       <div className="pt-4 border-t border-ink/8">
         <button
-          className="inline-flex min-h-10 items-center justify-center rounded-xl border border-red-200 bg-red-50 px-5 text-sm font-semibold text-red-700 transition-all hover:bg-red-100 hover:shadow-sm active:scale-[0.98]"
+          className="inline-flex min-h-10 items-center justify-center rounded-xl border border-sakura-strong/30 bg-sakura-soft px-5 text-sm font-semibold text-sakura-strong transition-all hover:bg-sakura-soft/80 hover:shadow-sm active:scale-[0.98]"
           onClick={() => {
             if (window.confirm(t.signOutConfirm)) {
               auth.logout();
             }
           }}
+          type="button"
         >
           {t.signOut}
         </button>

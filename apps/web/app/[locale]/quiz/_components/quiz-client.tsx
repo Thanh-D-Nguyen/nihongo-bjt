@@ -18,7 +18,9 @@ import {
 } from "../../../../components/reading-assist/annotated-japanese-text";
 import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
+import { useStudyFocusMode } from "../../../../lib/use-study-focus-mode";
 import { ShareDrawer } from "../../_components/share-drawer";
+import { StudyFocusToggle } from "../../_components/study-focus-toggle";
 import { BjtAudioPlayer, isAudioSection } from "./bjt-audio-player";
 import { BjtFormatGuidePanel } from "./bjt-format-guide";
 import { PracticeModeTabs, type PracticeModeTabsLabels } from "./practice-mode-tabs";
@@ -242,6 +244,7 @@ export interface QuizLabels {
   flagQuestion?: string;
   unflagQuestion?: string;
   flaggedCount?: string;
+  focusMode?: string;
   keyboardHint?: string;
   confidenceSure?: string;
   confidenceGuessing?: string;
@@ -432,6 +435,7 @@ export function QuizClient({
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answeringRef = useRef(false);
   const { userId } = useGoAuth();
+  const { focused: studyFocus, toggle: toggleStudyFocus } = useStudyFocusMode();
 
   const inQuestion = Boolean(question?.question);
   const showHub = !inQuestion && !results && !resuming;
@@ -1074,12 +1078,17 @@ export function QuizClient({
       {inQuestion && question && (
         <div className="space-y-4">
           {/* Top bar */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2.5">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent">
-                <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-accent" />
-                {labels.sessionBadgeActive}
-              </span>
+              {!studyFocus && (
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent"
+                  data-study-ambient="status-badge"
+                >
+                  <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-accent" />
+                  {labels.sessionBadgeActive}
+                </span>
+              )}
               {flaggedQuestions.size > 0 && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-soft px-2.5 py-1 text-[10px] font-bold text-amber-strong">
                   <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
@@ -1101,16 +1110,26 @@ export function QuizClient({
                 {progressCurrent}
                 <span className="text-muted"> / {progressTotal}</span>
               </span>
+              <StudyFocusToggle
+                focused={studyFocus}
+                label={labels.focusMode ?? "Tập trung"}
+                onToggle={toggleStudyFocus}
+              />
             </div>
           </div>
 
           {/* Progress bar */}
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-ink/5">
+          {!studyFocus && (
             <div
-              className="h-full rounded-full bg-accent transition-all duration-500 ease-out"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
+              className="h-1.5 w-full overflow-hidden rounded-full bg-ink/5"
+              data-study-ambient="progress"
+            >
+              <div
+                className="h-full rounded-full bg-accent transition-all duration-500 ease-out"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+          )}
 
           {/* Question card */}
           <QuizQuestionPanel
@@ -1120,6 +1139,7 @@ export function QuizClient({
             onToggleFlag={() => question.question && toggleFlag(question.question.id)}
             question={question}
             readingAssistMode={readingAssistMode}
+            studyFocus={studyFocus}
             userId={userId}
           />
         </div>
@@ -1628,6 +1648,7 @@ export function QuizQuestionPanel({
   onToggleFlag,
   question,
   readingAssistMode,
+  studyFocus = false,
   userId
 }: {
   flagged: boolean;
@@ -1636,6 +1657,7 @@ export function QuizQuestionPanel({
   onToggleFlag: () => void;
   question: QuestionPayload;
   readingAssistMode?: ReadingAssistDisplayMode | null;
+  studyFocus?: boolean;
   userId: string | null;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
@@ -1739,15 +1761,22 @@ export function QuizQuestionPanel({
                 <line x1="4" x2="4" y1="22" y2="15" />
               </svg>
             </button>
-            <span className="rounded-full bg-accent/8 px-2.5 py-1 text-[10px] font-bold tracking-wider text-accent">
-              {formatSkillTag(question.question.skillTag, labels)}
-            </span>
+            {!studyFocus && (
+              <span
+                className="rounded-full bg-accent/8 px-2.5 py-1 text-[10px] font-bold tracking-wider text-accent"
+                data-study-ambient="skill-tag"
+              >
+                {formatSkillTag(question.question.skillTag, labels)}
+              </span>
+            )}
           </div>
         </div>
         {/* Keyboard hint */}
-        <p className="mt-1 text-[10px] text-muted/60">
-          {labels.keyboardHint ?? "A/B/C/D to select · F to flag"}
-        </p>
+        {!studyFocus && (
+          <p className="mt-1 text-[10px] text-muted/60" data-study-ambient="keyboard-hint">
+            {labels.keyboardHint ?? "A/B/C/D to select · F to flag"}
+          </p>
+        )}
       </div>
 
       {/* Question body */}
@@ -1861,8 +1890,8 @@ export function QuizQuestionPanel({
         </div>
 
         {/* Confidence indicator */}
-        {!selected && (
-          <div className="mt-3 flex items-center gap-2">
+        {!selected && !studyFocus && (
+          <div className="mt-3 flex items-center gap-2" data-study-ambient="confidence">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">
               {labels.confidenceSure ? "" : ""}
             </span>

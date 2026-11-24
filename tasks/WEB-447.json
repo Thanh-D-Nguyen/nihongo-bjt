@@ -1,0 +1,616 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-447",
+  "title": "3-step onboarding, settings dedupe, focus toggle in study views",
+  "start_head": "716207a5c231e6cdecfed0af6fa1c58172539e69",
+  "preexisting_changes": {
+    ".build/.buildSystem_debug": "c337257139e569398ce8bf081a54dbc7d1e0267d",
+    ".build/CACHEDIR.TAG": "b7ab0d883e974d20c05898291a6218954e18e5ef"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "1) OnboardingFlow trimmed to 3 focused BJT/work steps (goal -> level with optional 5-Q diagnostic -> daily minutes finishing into /{locale}/flashcards?tab=review), removing topics/style steps and off-focus travel/general goals while preserving POST /api/recommendation/onboarding/preferences contract with safe defaults (topics:[], style:'mixed'), localized across vi/en/ja, and legacy /[locale]/onboarding redirects to /{locale} (Strategy a: onboarding-client.tsx & onboarding-diagnostic.tsx kept on disk). 2) Account settings deduplicated: /[locale]/settings/accounts renders real learner identity plus linked social accounts, /[locale]/settings/linked-accounts redirects to /{locale}/settings/accounts (Strategy a: linked-accounts/_components/accounts-settings-client.tsx kept on disk), and MeTabSettings removes the duplicate 7th linkedAccounts card so /me has no duplicate account surface. 3) Minimal localStorage-backed study focus mode hook (default OFF) + localized Tập trung/Focus/集中 toggle mounted in the study-session headers of ReviewSession (flashcards), ScenarioPlayClient (scenarios), and QuizClient (quiz); when ON, hides non-essential ambient UI in each view while keeping core study content and controls intact. Policy §5 contract-change justification: scenario-play-client.contract.test.tsx previously indexed choice buttons via querySelectorAll('button')[0..1] because no header button existed; adding the required focus toggle button to the scenario session header changes button DOM index order, so choice lookups are scoped to choice buttons ([data-choice-key]) while preserving 100% of existing API, error, and WCAG-AA contrast assertions unchanged."
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "modify",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/homepage/onboarding-flow.test.tsx",
+      "test": "OnboardingFlow 3-step focused flow (WEB-447) > runs a 3-step goal -> level -> finish-into-review flow without topics/style/off-focus goals",
+      "expect": "onboarding must start at step 1/3"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/onboarding/page.test.tsx",
+      "test": "legacy /[locale]/onboarding redirect (WEB-447) > redirects /{locale}/onboarding to /{locale} for supported locales",
+      "expect": "instead of rejecting"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/me/_components/me-tab-settings.test.tsx",
+      "test": "MeTabSettings account settings dedupe (WEB-447) > links once to /settings/accounts without duplicating /settings/linked-accounts or account forms",
+      "expect": "duplicate /vi/settings/linked-accounts card must be removed from MeTabSettings"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/settings/linked-accounts/page.test.tsx",
+      "test": "duplicate /[locale]/settings/linked-accounts redirect (WEB-447) > redirects /{locale}/settings/linked-accounts to /{locale}/settings/accounts",
+      "expect": "instead of rejecting"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/settings/accounts/page.test.tsx",
+      "test": "unified /[locale]/settings/accounts page (WEB-447) > renders real learner identity together with linked accounts management and privacy/data link",
+      "expect": "accounts settings page must display learner display name"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/flashcards/_components/review-session.focus.test.tsx",
+      "test": "ReviewSession study focus mode toggle (WEB-447) > defaults OFF, hides ambient review UI when toggled ON, and persists across remounts",
+      "expect": "review session header must include a focus toggle switch"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.focus.test.tsx",
+      "test": "ScenarioPlayClient study focus mode toggle (WEB-447) > defaults OFF, hides decorative scenario ambient chrome when ON, and persists to localStorage",
+      "expect": "scenario session header must render a focus toggle switch"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/quiz/_components/quiz-client.focus.test.tsx",
+      "test": "QuizClient study focus mode toggle (WEB-447) > defaults OFF, hides non-essential quiz session ambient chrome when ON, and persists to localStorage",
+      "expect": "quiz session header must render a focus toggle switch"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-24T15:07:57.105Z",
+      "head": "716207a5c231e6cdecfed0af6fa1c58172539e69"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-24T15:08:23.385Z",
+      "head": "716207a5c231e6cdecfed0af6fa1c58172539e69"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-24T15:08:23.667Z",
+      "head": "716207a5c231e6cdecfed0af6fa1c58172539e69"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-24T15:17:18.268Z",
+      "head": "716207a5c231e6cdecfed0af6fa1c58172539e69"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-24T15:21:55.821Z",
+      "head": "716207a5c231e6cdecfed0af6fa1c58172539e69"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-24T15:26:12.330Z",
+      "head": "716207a5c231e6cdecfed0af6fa1c58172539e69"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-24T15:40:53.154Z",
+      "head": "716207a5c231e6cdecfed0af6fa1c58172539e69"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-24T15:44:35.899Z",
+      "head": "716207a5c231e6cdecfed0af6fa1c58172539e69"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-24T15:51:58.731Z",
+      "head": "716207a5c231e6cdecfed0af6fa1c58172539e69"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-24T15:15:32.432Z",
+      "head": "716207a5c231e6cdecfed0af6fa1c58172539e69",
+      "kind": "red",
+      "outcome": "TOOL_FAILURE",
+      "mode": "in_place",
+      "production_at_base": true,
+      "message": "vitest reported unhandled error(s): [vitest-pool]: Worker forks emitted error.",
+      "expects": {
+        "vitest:apps/web/app/[locale]/_components/homepage/onboarding-flow.test.tsx::OnboardingFlow 3-step focused flow (WEB-447) > runs a 3-step goal -> level -> finish-into-review flow without topics/style/off-focus goals": "onboarding must start at step 1/3",
+        "vitest:apps/web/app/[locale]/onboarding/page.test.tsx::legacy /[locale]/onboarding redirect (WEB-447) > redirects /{locale}/onboarding to /{locale} for supported locales": "/vi/onboarding must redirect to /vi",
+        "vitest:apps/web/app/[locale]/me/_components/me-tab-settings.test.tsx::MeTabSettings account settings dedupe (WEB-447) > links once to /settings/accounts without duplicating /settings/linked-accounts or account forms": "duplicate /vi/settings/linked-accounts card must be removed from MeTabSettings",
+        "vitest:apps/web/app/[locale]/settings/linked-accounts/page.test.tsx::duplicate /[locale]/settings/linked-accounts redirect (WEB-447) > redirects /{locale}/settings/linked-accounts to /{locale}/settings/accounts": "/vi/settings/linked-accounts must redirect to /vi/settings/accounts",
+        "vitest:apps/web/app/[locale]/settings/accounts/page.test.tsx::unified /[locale]/settings/accounts page (WEB-447) > renders real learner identity together with linked accounts management and privacy/data link": "accounts settings page must display learner display name",
+        "vitest:apps/web/app/[locale]/flashcards/_components/review-session.focus.test.tsx::ReviewSession study focus mode toggle (WEB-447) > defaults OFF, hides ambient review UI when toggled ON, and persists across remounts": "review session header must include a focus toggle switch",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.focus.test.tsx::ScenarioPlayClient study focus mode toggle (WEB-447) > defaults OFF, hides decorative scenario ambient chrome when ON, and persists to localStorage": "scenario session header must render a focus toggle switch",
+        "vitest:apps/web/app/[locale]/quiz/_components/quiz-client.focus.test.tsx::QuizClient study focus mode toggle (WEB-447) > defaults OFF, hides non-essential quiz session ambient chrome when ON, and persists to localStorage": "quiz session header must render a focus toggle switch"
+      },
+      "fingerprint": "9c0fa8658acc6174bc6d781930c3871873e9bd32dd7c6dbd6ff2563d96137f43"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-24T15:16:56.473Z",
+      "head": "716207a5c231e6cdecfed0af6fa1c58172539e69",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/onboarding-flow.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/onboarding/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/me/_components/me-tab-settings.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/linked-accounts/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/review-session.focus.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.focus.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-client.focus.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/onboarding-flow.test.tsx::OnboardingFlow 3-step focused flow (WEB-447) > runs a 3-step goal -> level -> finish-into-review flow without topics/style/off-focus goals",
+          "outcome": "FAIL",
+          "excerpt": "onboarding must start at step 1/3: expected 'Bước 1/5Trình độ hiện tại của bạn?Giú…' to contain '1/3'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/onboarding/page.test.tsx::legacy /[locale]/onboarding redirect (WEB-447) > redirects /{locale}/onboarding to /{locale} for supported locales",
+          "outcome": "FAIL",
+          "excerpt": "promise resolved \"{ …(10) }\" instead of rejecting",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"/vi/onboarding must redirect to /vi\""
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/me/_components/me-tab-settings.test.tsx::MeTabSettings account settings dedupe (WEB-447) > links once to /settings/accounts without duplicating /settings/linked-accounts or account forms",
+          "outcome": "FAIL",
+          "excerpt": "duplicate /vi/settings/linked-accounts card must be removed from MeTabSettings: expected [ '/vi/settings/accounts', …(6) ] to not include '/vi/settings/linked-accounts'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/linked-accounts/page.test.tsx::duplicate /[locale]/settings/linked-accounts redirect (WEB-447) > redirects /{locale}/settings/linked-accounts to /{locale}/settings/accounts",
+          "outcome": "FAIL",
+          "excerpt": "promise resolved \"{ …(10) }\" instead of rejecting",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"/vi/settings/linked-accounts must redirect to /vi/settings/accounts\""
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/page.test.tsx::unified /[locale]/settings/accounts page (WEB-447) > renders real learner identity together with linked accounts management and privacy/data link",
+          "outcome": "FAIL",
+          "excerpt": "accounts settings page must display learner display name: expected 'Tài khoản đã liên kếtQuản lý các tài …' to contain 'Minh Nguyen'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/review-session.focus.test.tsx::ReviewSession study focus mode toggle (WEB-447) > defaults OFF, hides ambient review UI when toggled ON, and persists across remounts",
+          "outcome": "FAIL",
+          "excerpt": "review session header must include a focus toggle switch: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.focus.test.tsx::ScenarioPlayClient study focus mode toggle (WEB-447) > defaults OFF, hides decorative scenario ambient chrome when ON, and persists to localStorage",
+          "outcome": "FAIL",
+          "excerpt": "scenario session header must render a focus toggle switch: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-client.focus.test.tsx::QuizClient study focus mode toggle (WEB-447) > defaults OFF, hides non-essential quiz session ambient chrome when ON, and persists to localStorage",
+          "outcome": "FAIL",
+          "excerpt": "quiz session header must render a focus toggle switch: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/_components/homepage/onboarding-flow.test.tsx::OnboardingFlow 3-step focused flow (WEB-447) > runs a 3-step goal -> level -> finish-into-review flow without topics/style/off-focus goals": "onboarding must start at step 1/3",
+        "vitest:apps/web/app/[locale]/onboarding/page.test.tsx::legacy /[locale]/onboarding redirect (WEB-447) > redirects /{locale}/onboarding to /{locale} for supported locales": "/vi/onboarding must redirect to /vi",
+        "vitest:apps/web/app/[locale]/me/_components/me-tab-settings.test.tsx::MeTabSettings account settings dedupe (WEB-447) > links once to /settings/accounts without duplicating /settings/linked-accounts or account forms": "duplicate /vi/settings/linked-accounts card must be removed from MeTabSettings",
+        "vitest:apps/web/app/[locale]/settings/linked-accounts/page.test.tsx::duplicate /[locale]/settings/linked-accounts redirect (WEB-447) > redirects /{locale}/settings/linked-accounts to /{locale}/settings/accounts": "/vi/settings/linked-accounts must redirect to /vi/settings/accounts",
+        "vitest:apps/web/app/[locale]/settings/accounts/page.test.tsx::unified /[locale]/settings/accounts page (WEB-447) > renders real learner identity together with linked accounts management and privacy/data link": "accounts settings page must display learner display name",
+        "vitest:apps/web/app/[locale]/flashcards/_components/review-session.focus.test.tsx::ReviewSession study focus mode toggle (WEB-447) > defaults OFF, hides ambient review UI when toggled ON, and persists across remounts": "review session header must include a focus toggle switch",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.focus.test.tsx::ScenarioPlayClient study focus mode toggle (WEB-447) > defaults OFF, hides decorative scenario ambient chrome when ON, and persists to localStorage": "scenario session header must render a focus toggle switch",
+        "vitest:apps/web/app/[locale]/quiz/_components/quiz-client.focus.test.tsx::QuizClient study focus mode toggle (WEB-447) > defaults OFF, hides non-essential quiz session ambient chrome when ON, and persists to localStorage": "quiz session header must render a focus toggle switch"
+      },
+      "fingerprint": "d8a32b78086f09aebc12a10192aecd838d738e6dac7968755716f1ee13f08a7d"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-24T15:17:17.935Z",
+      "head": "716207a5c231e6cdecfed0af6fa1c58172539e69",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/onboarding-flow.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/onboarding/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/me/_components/me-tab-settings.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/linked-accounts/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/review-session.focus.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.focus.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-client.focus.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/onboarding-flow.test.tsx::OnboardingFlow 3-step focused flow (WEB-447) > runs a 3-step goal -> level -> finish-into-review flow without topics/style/off-focus goals",
+          "outcome": "FAIL",
+          "excerpt": "onboarding must start at step 1/3: expected 'Bước 1/5Trình độ hiện tại của bạn?Giú…' to contain '1/3'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/onboarding/page.test.tsx::legacy /[locale]/onboarding redirect (WEB-447) > redirects /{locale}/onboarding to /{locale} for supported locales",
+          "outcome": "FAIL",
+          "excerpt": "promise resolved \"{ …(10) }\" instead of rejecting",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/me/_components/me-tab-settings.test.tsx::MeTabSettings account settings dedupe (WEB-447) > links once to /settings/accounts without duplicating /settings/linked-accounts or account forms",
+          "outcome": "FAIL",
+          "excerpt": "duplicate /vi/settings/linked-accounts card must be removed from MeTabSettings: expected [ '/vi/settings/accounts', …(6) ] to not include '/vi/settings/linked-accounts'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/linked-accounts/page.test.tsx::duplicate /[locale]/settings/linked-accounts redirect (WEB-447) > redirects /{locale}/settings/linked-accounts to /{locale}/settings/accounts",
+          "outcome": "FAIL",
+          "excerpt": "promise resolved \"{ …(10) }\" instead of rejecting",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/page.test.tsx::unified /[locale]/settings/accounts page (WEB-447) > renders real learner identity together with linked accounts management and privacy/data link",
+          "outcome": "FAIL",
+          "excerpt": "accounts settings page must display learner display name: expected 'Tài khoản đã liên kếtQuản lý các tài …' to contain 'Minh Nguyen'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/review-session.focus.test.tsx::ReviewSession study focus mode toggle (WEB-447) > defaults OFF, hides ambient review UI when toggled ON, and persists across remounts",
+          "outcome": "FAIL",
+          "excerpt": "review session header must include a focus toggle switch: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.focus.test.tsx::ScenarioPlayClient study focus mode toggle (WEB-447) > defaults OFF, hides decorative scenario ambient chrome when ON, and persists to localStorage",
+          "outcome": "FAIL",
+          "excerpt": "scenario session header must render a focus toggle switch: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-client.focus.test.tsx::QuizClient study focus mode toggle (WEB-447) > defaults OFF, hides non-essential quiz session ambient chrome when ON, and persists to localStorage",
+          "outcome": "FAIL",
+          "excerpt": "quiz session header must render a focus toggle switch: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/_components/homepage/onboarding-flow.test.tsx::OnboardingFlow 3-step focused flow (WEB-447) > runs a 3-step goal -> level -> finish-into-review flow without topics/style/off-focus goals": "onboarding must start at step 1/3",
+        "vitest:apps/web/app/[locale]/onboarding/page.test.tsx::legacy /[locale]/onboarding redirect (WEB-447) > redirects /{locale}/onboarding to /{locale} for supported locales": "instead of rejecting",
+        "vitest:apps/web/app/[locale]/me/_components/me-tab-settings.test.tsx::MeTabSettings account settings dedupe (WEB-447) > links once to /settings/accounts without duplicating /settings/linked-accounts or account forms": "duplicate /vi/settings/linked-accounts card must be removed from MeTabSettings",
+        "vitest:apps/web/app/[locale]/settings/linked-accounts/page.test.tsx::duplicate /[locale]/settings/linked-accounts redirect (WEB-447) > redirects /{locale}/settings/linked-accounts to /{locale}/settings/accounts": "instead of rejecting",
+        "vitest:apps/web/app/[locale]/settings/accounts/page.test.tsx::unified /[locale]/settings/accounts page (WEB-447) > renders real learner identity together with linked accounts management and privacy/data link": "accounts settings page must display learner display name",
+        "vitest:apps/web/app/[locale]/flashcards/_components/review-session.focus.test.tsx::ReviewSession study focus mode toggle (WEB-447) > defaults OFF, hides ambient review UI when toggled ON, and persists across remounts": "review session header must include a focus toggle switch",
+        "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.focus.test.tsx::ScenarioPlayClient study focus mode toggle (WEB-447) > defaults OFF, hides decorative scenario ambient chrome when ON, and persists to localStorage": "scenario session header must render a focus toggle switch",
+        "vitest:apps/web/app/[locale]/quiz/_components/quiz-client.focus.test.tsx::QuizClient study focus mode toggle (WEB-447) > defaults OFF, hides non-essential quiz session ambient chrome when ON, and persists to localStorage": "quiz session header must render a focus toggle switch"
+      },
+      "fingerprint": "d8a32b78086f09aebc12a10192aecd838d738e6dac7968755716f1ee13f08a7d"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-24T15:21:55.036Z",
+      "head": "716207a5c231e6cdecfed0af6fa1c58172539e69",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/onboarding-flow.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/onboarding/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/me/_components/me-tab-settings.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/linked-accounts/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/review-session.focus.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.focus.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-client.focus.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/onboarding-flow.test.tsx::OnboardingFlow 3-step focused flow (WEB-447) > runs a 3-step goal -> level -> finish-into-review flow without topics/style/off-focus goals",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/onboarding/page.test.tsx::legacy /[locale]/onboarding redirect (WEB-447) > redirects /{locale}/onboarding to /{locale} for supported locales",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/me/_components/me-tab-settings.test.tsx::MeTabSettings account settings dedupe (WEB-447) > links once to /settings/accounts without duplicating /settings/linked-accounts or account forms",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/linked-accounts/page.test.tsx::duplicate /[locale]/settings/linked-accounts redirect (WEB-447) > redirects /{locale}/settings/linked-accounts to /{locale}/settings/accounts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/page.test.tsx::unified /[locale]/settings/accounts page (WEB-447) > renders real learner identity together with linked accounts management and privacy/data link",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/review-session.focus.test.tsx::ReviewSession study focus mode toggle (WEB-447) > defaults OFF, hides ambient review UI when toggled ON, and persists across remounts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.focus.test.tsx::ScenarioPlayClient study focus mode toggle (WEB-447) > defaults OFF, hides decorative scenario ambient chrome when ON, and persists to localStorage",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-client.focus.test.tsx::QuizClient study focus mode toggle (WEB-447) > defaults OFF, hides non-essential quiz session ambient chrome when ON, and persists to localStorage",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "9d0251306aab6b6556966a99b670e4363c9f841bcce290ada945bab4c7c6ff77"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-24T15:24:17.580Z",
+      "head": "716207a5c231e6cdecfed0af6fa1c58172539e69",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 768,
+        "executed": 768,
+        "passed": 768,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 928,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "9d0251306aab6b6556966a99b670e4363c9f841bcce290ada945bab4c7c6ff77"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-24T15:26:11.713Z",
+      "head": "716207a5c231e6cdecfed0af6fa1c58172539e69",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 768,
+        "executed": 768,
+        "passed": 768,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 928,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "9d0251306aab6b6556966a99b670e4363c9f841bcce290ada945bab4c7c6ff77"
+    },
+    {
+      "seq": 7,
+      "at": "2026-11-24T15:40:52.362Z",
+      "head": "716207a5c231e6cdecfed0af6fa1c58172539e69",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/_components/homepage/onboarding-flow.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/onboarding/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/me/_components/me-tab-settings.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/linked-accounts/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/settings/accounts/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/flashcards/_components/review-session.focus.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.focus.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-client.focus.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/homepage/onboarding-flow.test.tsx::OnboardingFlow 3-step focused flow (WEB-447) > runs a 3-step goal -> level -> finish-into-review flow without topics/style/off-focus goals",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/onboarding/page.test.tsx::legacy /[locale]/onboarding redirect (WEB-447) > redirects /{locale}/onboarding to /{locale} for supported locales",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/me/_components/me-tab-settings.test.tsx::MeTabSettings account settings dedupe (WEB-447) > links once to /settings/accounts without duplicating /settings/linked-accounts or account forms",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/linked-accounts/page.test.tsx::duplicate /[locale]/settings/linked-accounts redirect (WEB-447) > redirects /{locale}/settings/linked-accounts to /{locale}/settings/accounts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/settings/accounts/page.test.tsx::unified /[locale]/settings/accounts page (WEB-447) > renders real learner identity together with linked accounts management and privacy/data link",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/flashcards/_components/review-session.focus.test.tsx::ReviewSession study focus mode toggle (WEB-447) > defaults OFF, hides ambient review UI when toggled ON, and persists across remounts",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.focus.test.tsx::ScenarioPlayClient study focus mode toggle (WEB-447) > defaults OFF, hides decorative scenario ambient chrome when ON, and persists to localStorage",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-client.focus.test.tsx::QuizClient study focus mode toggle (WEB-447) > defaults OFF, hides non-essential quiz session ambient chrome when ON, and persists to localStorage",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "0c0b403a8f9fc2f7f8caa49c546e3b8c591bc6f27c8f2a9720db0b91ccf7ec5a"
+    },
+    {
+      "seq": 8,
+      "at": "2026-11-24T15:42:26.166Z",
+      "head": "716207a5c231e6cdecfed0af6fa1c58172539e69",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 769,
+        "executed": 769,
+        "passed": 769,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 929,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "0c0b403a8f9fc2f7f8caa49c546e3b8c591bc6f27c8f2a9720db0b91ccf7ec5a"
+    },
+    {
+      "seq": 9,
+      "at": "2026-11-24T15:44:35.195Z",
+      "head": "716207a5c231e6cdecfed0af6fa1c58172539e69",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 769,
+        "executed": 769,
+        "passed": 769,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 929,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "0c0b403a8f9fc2f7f8caa49c546e3b8c591bc6f27c8f2a9720db0b91ccf7ec5a"
+    },
+    {
+      "seq": 10,
+      "at": "2026-11-24T15:51:56.630Z",
+      "head": "716207a5c231e6cdecfed0af6fa1c58172539e69",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "research-subagent:510ee0e6",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "",
+      "output_sha256": "bb5f4f14305f4fb0230e708a9ebbbf36cc38d4be0ed312bc94efbb57eda5f83a",
+      "attested": true,
+      "fingerprint": "0c0b403a8f9fc2f7f8caa49c546e3b8c591bc6f27c8f2a9720db0b91ccf7ec5a"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-24T15:51:58.723Z",
+    "head": "716207a5c231e6cdecfed0af6fa1c58172539e69",
+    "fingerprint": "0c0b403a8f9fc2f7f8caa49c546e3b8c591bc6f27c8f2a9720db0b91ccf7ec5a",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/_components/homepage/homepage-client.tsx": "a1e542cd7cb510178221ff60ed8db2801c6b040a",
+      "apps/web/app/[locale]/_components/homepage/onboarding-diagnostic.tsx": "590e94b41a84ecec778defe5b571092a86531b2e",
+      "apps/web/app/[locale]/_components/homepage/onboarding-flow.test.tsx": "70fbb1468f08a1c5353daaeab61eb0df298528ba",
+      "apps/web/app/[locale]/_components/homepage/onboarding-flow.tsx": "00bcd3bab39b468cf536898a5c1ab0cce6023aab",
+      "apps/web/app/[locale]/_components/homepage/today-plan-hub.tsx": "2fe2e27691c86ff986966fd5194476b58ee11872",
+      "apps/web/app/[locale]/_components/homepage/types.ts": "59fc8d64b6cbbb007440053e958910d057efc588",
+      "apps/web/app/[locale]/_components/study-focus-toggle.tsx": "bcaeb17f5ce90b62ffe97c4d83a27aa72d4e7043",
+      "apps/web/app/[locale]/flashcards/_components/review-session.focus.test.tsx": "d26b22eb2b914edefb70c08eb5dd67f3982f6e09",
+      "apps/web/app/[locale]/flashcards/_components/review-session.tsx": "f93ccbd1f1270a15112815cd77e16d4b69bfc625",
+      "apps/web/app/[locale]/me/_components/me-tab-settings.test.tsx": "b1755bb85f2fc84fc65874ee41d6dcbd3e9ef82f",
+      "apps/web/app/[locale]/me/_components/me-tab-settings.tsx": "59e34d6f9f07829aaecbbc4ab0bfe996105457d5",
+      "apps/web/app/[locale]/onboarding/page.test.tsx": "47c2163ec32f84c08cb50c63cee6d994515ce766",
+      "apps/web/app/[locale]/onboarding/page.tsx": "a39558e9434eeb4ea8905d2440ccd21eb7fd299c",
+      "apps/web/app/[locale]/quiz/_components/quiz-client.focus.test.tsx": "639b3db9c4bb71dcfc6c8c9f6f8f6dcb74db1145",
+      "apps/web/app/[locale]/quiz/_components/quiz-client.tsx": "6a647bb5f3658eac2d09fa042dada1ad7554fea6",
+      "apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.contract.test.tsx": "5706a2bcf0a9b673287b67d38be5a4c41e080850",
+      "apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.focus.test.tsx": "683a8a86334d4a69d1330bbadb177baa6e6f764b",
+      "apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.tsx": "be2af19246593acfce2de51151c70a2337c85cf1",
+      "apps/web/app/[locale]/settings/accounts/_components/account-identity-card.tsx": "a605e3c0abd551665380115822c1cd6f2830c202",
+      "apps/web/app/[locale]/settings/accounts/page.test.tsx": "1b592d4984f1938ca76cca92c9f03497cf73d199",
+      "apps/web/app/[locale]/settings/accounts/page.tsx": "645e5e928e7e4cccf6ab45f807c8208deb83315a",
+      "apps/web/app/[locale]/settings/linked-accounts/page.test.tsx": "04487fcc69ab1d64d7a5179fd9e531f313a14735",
+      "apps/web/app/[locale]/settings/linked-accounts/page.tsx": "81c9aa2dd9c5005f7c204def1a3aeb187e1d7f48",
+      "apps/web/lib/use-study-focus-mode.test.tsx": "c8a30c07230edea0d9bc652bdccbec40216036f5",
+      "apps/web/lib/use-study-focus-mode.ts": "79cacb6d094a4444bb0b0741e7f21e89ec31b1b9",
+      "apps/web/messages/en.json": "f14a14a929637de8f567393cb63d2a6f0ba7d4d9",
+      "apps/web/messages/ja.json": "baae231acdd0e2a370d36c9e542630797de011dd",
+      "apps/web/messages/vi.json": "35f94934bb8b5f39dd19786cf2813e028b92eaa9"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

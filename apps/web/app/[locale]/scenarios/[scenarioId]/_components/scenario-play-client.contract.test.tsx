@@ -86,7 +86,7 @@ describe("scenario play API contract", () => {
     const { container, root } = await mount();
 
     await act(async () => {
-      container.querySelectorAll("button")[0]?.click();
+      container.querySelectorAll<HTMLButtonElement>("button[data-choice-key]")[0]?.click();
     });
     expect(api.fetch.mock.calls[1]?.[0]).toBe(
       `/api/scenarios/steps/${scenario.steps[0].id}/answer`
@@ -119,10 +119,10 @@ describe("scenario play API contract", () => {
     const { container, root } = await mount();
 
     await act(async () => {
-      container.querySelectorAll("button")[0]?.click();
+      container.querySelectorAll<HTMLButtonElement>("button[data-choice-key]")[0]?.click();
     });
     await act(async () => {
-      container.querySelectorAll("button")[1]?.click();
+      container.querySelectorAll<HTMLButtonElement>("button[data-choice-key]")[1]?.click();
     });
 
     expect(api.fetch).toHaveBeenCalledTimes(3);
@@ -140,7 +140,7 @@ describe("scenario play API contract", () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ id: "attempt-2", totalPoints: 7, maxPoints: 15 }), { status: 200 }));
     const { container, root } = await mount();
 
-    await act(async () => { container.querySelectorAll("button")[0]?.click(); });
+    await act(async () => { container.querySelectorAll<HTMLButtonElement>("button[data-choice-key]")[0]?.click(); });
     await act(async () => { container.querySelector<HTMLButtonElement>("button.mt-4")?.click(); });
     expect(container.textContent).toContain("complete error");
     expect(container.textContent).not.toContain("7/15 điểm");
@@ -203,7 +203,7 @@ describe("scenario play API contract", () => {
     expect(progressFill?.className, "progress bar fill must use bg-matcha-strong dark:bg-matcha").toContain("bg-matcha-strong");
     expect(progressFill?.className).toContain("dark:bg-matcha");
 
-    const choiceButtons = [...container.querySelectorAll("button")];
+    const choiceButtons = [...container.querySelectorAll<HTMLButtonElement>("button[data-choice-key]")];
     const keySpan = choiceButtons[0]?.querySelector("span");
     expect(keySpan?.className, "choice key letter must use text-ink/70 instead of text-ink/40").toContain("text-ink/70");
     expect(keySpan?.className).not.toContain("text-ink/40");
@@ -217,9 +217,9 @@ describe("scenario play API contract", () => {
 
     // Submit optimal choice A and inspect selected border, unselected disabled state, feedback verdict/border, and Next CTA.
     await act(async () => {
-      container.querySelectorAll("button")[0]?.click();
+      container.querySelectorAll<HTMLButtonElement>("button[data-choice-key]")[0]?.click();
     });
-    const afterAnswerButtons = [...container.querySelectorAll("button")];
+    const afterAnswerButtons = [...container.querySelectorAll<HTMLButtonElement>("button[data-choice-key]")];
     expect(afterAnswerButtons[0]?.className, "optimal selected choice must use border-matcha-strong").toContain("border-matcha-strong");
     expect(afterAnswerButtons[1]?.className, "disabled unselected choice must not retain hover flash").not.toContain("hover:bg-ink/5");
 
@@ -275,9 +275,9 @@ describe("scenario play API contract", () => {
     const { container, root } = await mount();
 
     await act(async () => {
-      container.querySelectorAll("button")[1]?.click();
+      container.querySelectorAll<HTMLButtonElement>("button[data-choice-key]")[1]?.click();
     });
-    expect(container.querySelectorAll("button")[1]?.className, "suboptimal selected choice must use border-sakura-strong").toContain("border-sakura-strong");
+    expect(container.querySelectorAll<HTMLButtonElement>("button[data-choice-key]")[1]?.className, "suboptimal selected choice must use border-sakura-strong").toContain("border-sakura-strong");
     expect(container.querySelector<HTMLDivElement>("div.animate-in")?.className, "suboptimal feedback panel must use border-sakura-strong").toContain("border-sakura-strong");
 
     await act(async () => {

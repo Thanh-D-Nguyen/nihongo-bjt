@@ -5,6 +5,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useGoAuth } from "../../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../../lib/learner-api";
+import { useStudyFocusMode } from "../../../../../lib/use-study-focus-mode";
+import { StudyFocusToggle } from "../../../_components/study-focus-toggle";
 
 interface Choice {
   id: string;
@@ -44,7 +46,7 @@ interface ScenarioPlayCopy {
   loadError: string; answerError: string; completeError: string; notFound: string;
   score: string; replay: string; back: string; step: string; stepLabel: string;
   optimal: string; optimalAnswer: string; suboptimalAnswer: string; points: string;
-  showResult: string; continue: string; retry: string;
+  showResult: string; continue: string; retry: string; focusMode?: string;
 }
 
 export function ScenarioPlayClient({
@@ -57,6 +59,7 @@ export function ScenarioPlayClient({
   copy: ScenarioPlayCopy;
 }) {
   const { userId } = useGoAuth();
+  const { focused: studyFocus, toggle: toggleStudyFocus } = useStudyFocusMode();
   const router = useRouter();
   const [scenario, setScenario] = useState<ScenarioData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -190,9 +193,11 @@ export function ScenarioPlayClient({
     return (
       <div className="mx-auto max-w-2xl p-4">
         <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm text-center">
-          <p className="text-4xl">
-            {pct >= 80 ? "🎉" : pct >= 50 ? "👍" : "💪"}
-          </p>
+          {!studyFocus && (
+            <p className="text-4xl" data-study-ambient="celebration">
+              {pct >= 80 ? "🎉" : pct >= 50 ? "👍" : "💪"}
+            </p>
+          )}
           <h2 className="mt-3 text-lg font-black text-ink">
             {locale === "ja" ? scenario.titleJa || scenario.titleVi : scenario.titleVi}
           </h2>
@@ -254,30 +259,44 @@ export function ScenarioPlayClient({
   return (
     <div className="mx-auto max-w-2xl p-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between gap-2 mb-4">
         <h2 className="text-sm font-bold text-ink">{locale === "ja" ? scenario.titleJa || scenario.titleVi : scenario.titleVi}</h2>
-        <span className="text-xs text-muted">
-          {copy.step.replace("{current}", String(currentStep + 1)).replace("{total}", String(scenario.steps.length))}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted">
+            {copy.step.replace("{current}", String(currentStep + 1)).replace("{total}", String(scenario.steps.length))}
+          </span>
+          <StudyFocusToggle
+            focused={studyFocus}
+            label={copy.focusMode ?? "Tập trung"}
+            onToggle={toggleStudyFocus}
+          />
+        </div>
       </div>
 
       {/* Progress bar */}
-      <div className="h-1 w-full rounded-full bg-ink/10 mb-4">
-        <div
-          className="h-full rounded-full bg-matcha-strong dark:bg-matcha transition-all duration-300"
-          style={{
-            width: `${((currentStep + 1) / scenario.steps.length) * 100}%`,
-          }}
-        />
-      </div>
+      {!studyFocus && (
+        <div className="h-1 w-full rounded-full bg-ink/10 mb-4" data-study-ambient="progress">
+          <div
+            className="h-full rounded-full bg-matcha-strong dark:bg-matcha transition-all duration-300"
+            style={{
+              width: `${((currentStep + 1) / scenario.steps.length) * 100}%`,
+            }}
+          />
+        </div>
+      )}
 
       {/* Situation */}
       <div className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
         {step.speakerName && (
           <div className="flex items-center gap-2 mb-3">
-            <div className="h-8 w-8 rounded-full bg-ink/10 flex items-center justify-center text-sm">
-              {step.speakerRole === "Narrator" ? "📋" : "👤"}
-            </div>
+            {!studyFocus && (
+              <div
+                className="h-8 w-8 rounded-full bg-ink/10 flex items-center justify-center text-sm"
+                data-study-ambient="speaker-avatar"
+              >
+                {step.speakerRole === "Narrator" ? "📋" : "👤"}
+              </div>
+            )}
             <div>
               <span className="text-xs font-bold text-ink">
                 {step.speakerName}
@@ -316,6 +335,7 @@ export function ScenarioPlayClient({
           return (
             <button
               key={c.choiceKey}
+              data-choice-key={c.choiceKey}
               type="button"
               disabled={!!selectedChoice}
               onClick={() => void handleChoice(step, c.choiceKey)}

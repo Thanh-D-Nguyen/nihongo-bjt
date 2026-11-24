@@ -150,7 +150,13 @@ export function HomepageClient({
 
   return (
     <main className="min-w-0 space-y-8 overflow-x-clip pb-12 pt-2 sm:space-y-10 sm:pt-6">
-      {showOnboarding && <OnboardingFlow onComplete={() => setShowOnboarding(false)} />}
+      {showOnboarding && (
+        <OnboardingFlow
+          labels={labels.onboardingFlow}
+          locale={locale}
+          onComplete={() => setShowOnboarding(false)}
+        />
+      )}
       <PushPromptBanner labels={pushBannerLabels} />
 
       <div className="hp-enter">

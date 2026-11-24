@@ -128,9 +128,9 @@ export function OnboardingDiagnostic({
                 className={cn(
                   "block w-full rounded-xl border p-3 text-left text-sm transition",
                   reveal && isCorrect
-                    ? "border-emerald-400 bg-emerald-50 text-emerald-900"
+                    ? "border-matcha-strong bg-matcha-soft text-ink"
                     : reveal && isPicked && !isCorrect
-                      ? "border-rose-400 bg-rose-50 text-rose-900"
+                      ? "border-sakura-strong bg-sakura-soft text-sakura-strong"
                       : isPicked
                         ? "border-accent bg-accent/10 text-ink"
                         : "border-ink/8 bg-surface text-ink/80 hover:border-ink/20",
@@ -148,8 +148,8 @@ export function OnboardingDiagnostic({
               className={cn(
                 "font-medium",
                 selected === current.correctIndex
-                  ? "text-emerald-600"
-                  : "text-rose-600",
+                  ? "text-leaf-strong"
+                  : "text-sakura-strong",
               )}
             >
               {selected === current.correctIndex

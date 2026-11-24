@@ -552,6 +552,93 @@
       "reasonExercise": "Matches your learning goals",
       "reasonDefault": "Based on your recent activity",
       "summary": "{count} recommendations"
+    },
+    "onboardingFlow": {
+      "dialogAria": "Study setup",
+      "stepCounter": "Step {current}/{total}",
+      "recommendedBadge": "Recommended",
+      "back": "← Back",
+      "next": "Next →",
+      "finishStartReview": "Start first review →",
+      "saving": "Saving...",
+      "skip": "Skip — I will set this up later",
+      "saveError": "Could not save your preferences. Please try again.",
+      "steps": {
+        "goalTitle": "What is your main goal?",
+        "goalSubtitle": "We prioritize BJT and Japan workplace content that fits",
+        "levelTitle": "What is your current Japanese level?",
+        "levelSubtitle": "Helps match difficulty from your very first session",
+        "diagnosticTitle": "Quick level check",
+        "diagnosticSubtitle": "5 short questions to suggest a starting level",
+        "timeTitle": "How many minutes a day?",
+        "timeSubtitle": "Next up, jump straight into your first review session"
+      },
+      "goals": {
+        "pass_bjt": {
+          "label": "Pass the BJT exam",
+          "desc": "Structured Business Japanese Test prep"
+        },
+        "business_japanese": {
+          "label": "Workplace Japanese",
+          "desc": "Email, meetings, keigo, and presentations"
+        },
+        "daily_conversation": {
+          "label": "Daily life in Japan",
+          "desc": "Everyday errands, dining, and transit"
+        },
+        "reading_news": {
+          "label": "Read NHK news",
+          "desc": "NHK News Web Easy, articles, and briefings"
+        },
+        "jlpt_prep": {
+          "label": "JLPT preparation",
+          "desc": "Grammar, vocabulary, and reading comprehension"
+        }
+      },
+      "levels": {
+        "n5": {
+          "label": "N5 — Beginner",
+          "desc": "Hiragana and core basics"
+        },
+        "n4": {
+          "label": "N4 — Elementary",
+          "desc": "Simple daily conversation"
+        },
+        "n3": {
+          "label": "N3 — Intermediate",
+          "desc": "Easy news and workplace basics"
+        },
+        "n2": {
+          "label": "N2 — Upper-intermediate",
+          "desc": "Working professionally in Japanese"
+        },
+        "n1": {
+          "label": "N1 — Advanced",
+          "desc": "Near-native business fluency"
+        },
+        "unknown": {
+          "label": "Not sure yet",
+          "desc": "Take a quick 5-question check"
+        }
+      },
+      "times": {
+        "m5": {
+          "label": "5 minutes",
+          "desc": "Quick daily habit"
+        },
+        "m10": {
+          "label": "10 minutes",
+          "desc": "Balanced and steady"
+        },
+        "m20": {
+          "label": "20 minutes",
+          "desc": "Focused daily practice"
+        },
+        "m30": {
+          "label": "30+ minutes",
+          "desc": "Intensive BJT preparation"
+        }
+      }
     }
   },
   "nhkDetail": {
@@ -1663,7 +1750,8 @@
         "LR": "Listening and reading",
         "RC": "Reading"
       }
-    }
+    },
+    "focusMode": "Focus"
   },
   "onboarding": {
     "eyebrow": "BJT",
@@ -2577,8 +2665,32 @@
     "incorrectAnswer": "Not the best answer",
     "chooseAnswer": "Choose an answer",
     "explanationLabel": "Explanation",
-    "activityTypes": {"best_expression": "Best expression", "fill_phrase": "Fill in the phrase", "role_response": "Role response", "politeness_check": "Politeness check", "mini_case_inference": "Case inference", "sentence_order": "Sentence order", "error_correction": "Error correction", "reading_comprehension": "Reading comprehension", "speaker_intent": "Speaker intent", "context_match": "Context match"},
-    "stimulusTypes": {"dialogue": "Dialogue", "email": "Email", "internal_chat": "Internal chat", "memo": "Memo", "telephone": "Telephone", "meeting": "Meeting", "announcement": "Announcement", "report": "Report", "table": "Table", "policy": "Policy", "proposal": "Proposal", "complaint": "Complaint"},
+    "activityTypes": {
+      "best_expression": "Best expression",
+      "fill_phrase": "Fill in the phrase",
+      "role_response": "Role response",
+      "politeness_check": "Politeness check",
+      "mini_case_inference": "Case inference",
+      "sentence_order": "Sentence order",
+      "error_correction": "Error correction",
+      "reading_comprehension": "Reading comprehension",
+      "speaker_intent": "Speaker intent",
+      "context_match": "Context match"
+    },
+    "stimulusTypes": {
+      "dialogue": "Dialogue",
+      "email": "Email",
+      "internal_chat": "Internal chat",
+      "memo": "Memo",
+      "telephone": "Telephone",
+      "meeting": "Meeting",
+      "announcement": "Announcement",
+      "report": "Report",
+      "table": "Table",
+      "policy": "Policy",
+      "proposal": "Proposal",
+      "complaint": "Complaint"
+    },
     "audioUnavailable": "Licensed audio is not available yet; the transcript remains usable for study.",
     "audioTtsReady": "Japanese TTS is ready",
     "audioGeneratedReady": "Generated audio is ready",
@@ -2624,7 +2736,8 @@
     "tapToReveal": "Tap or Spacebar",
     "reading": "How to read",
     "playAudio": "Play audio",
-    "examplesLabel": "Examples"
+    "examplesLabel": "Examples",
+    "focusMode": "Focus"
   },
   "appearancePage": {
     "title": "Appearance",
@@ -2807,7 +2920,7 @@
     },
     "settingsTab": {
       "account": "Account",
-      "accountDesc": "Display name, email, password",
+      "accountDesc": "Account details, email, and linked logins",
       "appearance": "Appearance",
       "appearanceDesc": "Light/dark mode, font size",
       "reading": "Reading assist",
@@ -3023,7 +3136,8 @@
       "points": "points",
       "showResult": "View result",
       "continue": "Continue →",
-      "retry": "Try again"
+      "retry": "Try again",
+      "focusMode": "Focus"
     }
   },
   "systemPages": {

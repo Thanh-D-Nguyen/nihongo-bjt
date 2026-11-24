@@ -7,6 +7,8 @@ import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { enqueueReview } from "../../../../lib/offline-review-queue";
 import { learnerApiFetch, learnerMediaUrl } from "../../../../lib/learner-api";
 import { speakJapanese } from "../../../../lib/japanese-speech";
+import { useStudyFocusMode } from "../../../../lib/use-study-focus-mode";
+import { StudyFocusToggle } from "../../_components/study-focus-toggle";
 import { flashcardThemeCss } from "./flashcard-theme-css";
 
 /* ═══════════════════════════════════════════════════════
@@ -83,6 +85,7 @@ export interface ReviewSessionLabels {
   reading: string;
   playAudio: string;
   examplesLabel: string;
+  focusMode?: string;
 }
 
 interface Stats {
@@ -918,11 +921,13 @@ function EntryScreen({
 function SummaryScreen({
   stats,
   labels,
+  studyFocus = false,
   onReviewMore,
   onExit
 }: {
   stats: Stats;
   labels: ReviewSessionLabels;
+  studyFocus?: boolean;
   onReviewMore: () => void;
   onExit: () => void;
 }) {
@@ -930,7 +935,7 @@ function SummaryScreen({
   // good + easy both count as correct recall for accuracy
   const accuracy =
     stats.total > 0 ? Math.round(((stats.good + stats.easy) / stats.total) * 100) : 0;
-  const showConfetti = accuracy >= 70;
+  const showConfetti = accuracy >= 70 && !studyFocus;
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center gap-8 px-4 text-center">
@@ -1030,6 +1035,7 @@ export function ReviewSession({
   onExit: () => void;
 }) {
   const { userId } = useGoAuth();
+  const { focused: studyFocus, toggle: toggleStudyFocus } = useStudyFocusMode();
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [error, setError] = useState<string | null>(null);
@@ -1402,7 +1408,15 @@ export function ReviewSession({
               />
             </div>
 
-            <ComboDisplay combo={combo} />
+            <div className="flex items-center gap-2">
+              {!studyFocus ? <ComboDisplay combo={combo} /> : null}
+              <StudyFocusToggle
+                focused={studyFocus}
+                label={labels.focusMode ?? "Tập trung"}
+                onToggle={toggleStudyFocus}
+                variant="overlay"
+              />
+            </div>
           </header>
 
           {/* Card area */}
@@ -1450,9 +1464,11 @@ export function ReviewSession({
           </div>
 
           {/* Bottom hint */}
-          <footer className="pb-4 text-center sm:pb-6">
-            <p className="text-xs text-white/25">{labels.keyboardHint}</p>
-          </footer>
+          {!studyFocus ? (
+            <footer className="pb-4 text-center sm:pb-6" data-study-ambient="keyboard-hint">
+              <p className="text-xs text-white/25">{labels.keyboardHint}</p>
+            </footer>
+          ) : null}
         </>
       ) : null}
 
@@ -1461,6 +1477,7 @@ export function ReviewSession({
         <SummaryScreen
           stats={stats}
           labels={labels}
+          studyFocus={studyFocus}
           onReviewMore={() => void reviewMore()}
           onExit={onExit}
         />
