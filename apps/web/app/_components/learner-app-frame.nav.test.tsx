@@ -31,7 +31,7 @@ vi.mock("../../lib/learner-api", () => ({
   )
 }));
 vi.mock("./announcement-strip", () => ({ AnnouncementStrip: () => null }));
-vi.mock("./companion-bot", () => ({ CompanionBot: () => null }));
+vi.mock("./companion-bot", () => ({ CompanionBot: () => <div data-testid="companion-bot-mount" /> }));
 vi.mock("./search-dropdown", () => ({ SearchDropdown: () => null }));
 
 import { LearnerAppFrame, type LearnerNavLabels } from "./learner-app-frame";
@@ -212,6 +212,39 @@ describe("LearnerAppFrame 5-item canonical navigation", () => {
         mLinks.map((a) => a.getAttribute("aria-current") === "page"),
         `mobile active state for ${route}`
       ).toEqual(mLinks.map((_, idx) => idx === expectedActiveIdx));
+    }
+  });
+
+  it("mounts CompanionBot only on locale home (/{locale}) and /{locale}/me, omitting it from study, exam, lookup, and other routes", async () => {
+    const allowedRoutes = ["/vi", "/vi/", "/vi/me", "/vi/me/"];
+    for (const route of allowedRoutes) {
+      pathnameRef.current = route;
+      await renderFrame();
+      expect(
+        host.querySelector('[data-testid="companion-bot-mount"]'),
+        `CompanionBot must mount on ${route}`
+      ).not.toBeNull();
+    }
+
+    const hiddenRoutes = [
+      "/vi/levels",
+      "/vi/levels/J3",
+      "/vi/quiz",
+      "/vi/exercises",
+      "/vi/flashcards",
+      "/vi/search",
+      "/vi/scenarios",
+      "/vi/news",
+      "/vi/pricing",
+      "/vi/battle"
+    ];
+    for (const route of hiddenRoutes) {
+      pathnameRef.current = route;
+      await renderFrame();
+      expect(
+        host.querySelector('[data-testid="companion-bot-mount"]'),
+        `CompanionBot must not mount on ${route}`
+      ).toBeNull();
     }
   });
 });

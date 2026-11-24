@@ -1,15 +1,9 @@
 "use client";
 
-import { companionHintResponseSchema, type BattleBotAnimationState, type CompanionEventKind, type CompanionHintResponse, type CompanionReasonCode } from "@nihongo-bjt/shared";
-import { Component, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import type { BattleBotAnimationState, CompanionEventKind, CompanionReasonCode } from "@nihongo-bjt/shared";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useGoAuth } from "../../lib/go-auth-provider";
-import { learnerApiFetch } from "../../lib/learner-api";
-import { useCompanionEngine } from "../_hooks/use-companion-engine";
 import { BattleBotAvatar } from "./battle-bot-avatar";
-import { CompanionChatPanel, type CompanionChatPanelLabels } from "./companion-chat-panel";
-import { CompanionCelebrationOverlay } from "./companion-message";
-import { CompanionOnboarding, type CompanionOnboardingLabels } from "./companion-onboarding";
 import { CompanionSpeechBubble, type CompanionMood } from "./companion-speech-bubble";
 
 export type CompanionBotReasonLabels = Record<CompanionReasonCode, string>;
@@ -60,20 +54,66 @@ const companionRive = {
   stateMachine: null
 };
 
+type MascotTip = {
+  ja: string;
+  vi: string;
+  en: string;
+  mood: CompanionMood;
+};
+
+const MASCOT_TIPS: readonly MascotTip[] = [
+  {
+    ja: "お疲れ様です！今日も一歩ずつ進みましょう。",
+    vi: "Chúc bạn giữ nhịp học BJT vững vàng hôm nay!",
+    en: "Great work today! One steady BJT step at a time.",
+    mood: "cheer"
+  },
+  {
+    ja: "「恐れ入りますが」は職場での丁寧な切り出しに便利です。",
+    vi: "Mẹo công sở: mở đầu lịch sự bằng 「恐れ入りますが」.",
+    en: "Workplace tip: open polite requests with 「恐れ入りますが」.",
+    mood: "wave"
+  },
+  {
+    ja: "毎日の短い復習が、確かな実力につながります。",
+    vi: "Ôn nhanh vài thẻ SRS mỗi ngày giúp nhớ lâu hơn hẳn!",
+    en: "Short daily SRS reviews build lasting recall.",
+    mood: "happy"
+  },
+  {
+    ja: "メールの結びは「よろしくお願いいたします」で丁寧に。",
+    vi: "Mẹo công sở: kết email lịch sự với 「よろしくお願いいたします」.",
+    en: "Workplace tip: close business emails with 「よろしくお願いいたします」.",
+    mood: "wave"
+  },
+  {
+    ja: "連続学習リズムを大切に。応援しています！",
+    vi: "Giữ chuỗi học đều đặn nhé — Shiba luôn cổ vũ bạn!",
+    en: "Keep your study rhythm going — cheering you on!",
+    mood: "cheer"
+  }
+];
+
 /* ── Mood → Rive state mapping ── */
 
 function moodToRiveState(mood: CompanionMood): BattleBotAnimationState {
   switch (mood) {
-    case "wave": case "happy": case "cheer": case "dance": case "surprise": return "correct";
-    case "talk": case "think": return "thinking";
-    case "sleep": case "sad": return "abandoned";
-    default: return "idle";
+    case "wave":
+    case "happy":
+    case "cheer":
+    case "dance":
+    case "surprise":
+      return "correct";
+    case "talk":
+    case "think":
+      return "thinking";
+    case "sleep":
+    case "sad":
+      return "abandoned";
+    default:
+      return "idle";
   }
 }
-
-/* ── Idle expression cycling ── */
-
-const IDLE_MOOD_CYCLE: CompanionMood[] = ["idle", "wave", "idle", "happy", "idle", "dance", "idle", "cheer"];
 
 /* ── Layout constants ── */
 
@@ -82,206 +122,90 @@ const IDLE_MOOD_CYCLE: CompanionMood[] = ["idle", "wave", "idle", "happy", "idle
    on lg it keeps the original 24px offset. Both add the safe-area inset. */
 const HOME_RIGHT = 20;
 const MASCOT_SIZE = 48;
+const BUBBLE_AUTO_HIDE_MS = 4000;
 
-class CompanionBoundary extends Component<{ children: ReactNode; onClose: () => void; labels: CompanionBotLabels }, { failed: boolean }> {
-  state = { failed: false };
-  static getDerivedStateFromError() { return { failed: true }; }
-  componentDidCatch(error: Error) { console.error("Companion panel failed", error); }
-  render() {
-    if (!this.state.failed) return this.props.children;
-    return <div role="alert" className="pointer-events-auto absolute bottom-full right-0 mb-3 w-72 rounded-2xl border border-border bg-surface p-4 text-ink shadow-lg">
-      <p>{this.props.labels.hintError}</p>
-      <button type="button" className="mt-3 min-h-11 rounded-lg border border-border px-3" onClick={this.props.onClose}>{this.props.labels.close}</button>
-    </div>;
-  }
-}
+/* ── Main component (mascot-only mode on /{locale} and /{locale}/me) ── */
 
-/* ── Main component ── */
+export function CompanionBot({
+  labels,
+  locale
+}: {
+  base?: string;
+  labels: CompanionBotLabels;
+  locale: string;
+}) {
+  const [tipIndex, setTipIndex] = useState(-1);
+  const [bubbleVisible, setBubbleVisible] = useState(false);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-export function CompanionBot({ base, labels, locale }: { base: string; labels: CompanionBotLabels; locale: string }) {
-  const { isAuthenticated } = useGoAuth();
-  const isLoggedIn = isAuthenticated;
-  const [open, setOpen] = useState(false);
-  const [hint, setHint] = useState<CompanionHintResponse | null>(null);
-  const [hintLoading, setHintLoading] = useState(false);
-  const [hintError, setHintError] = useState(false);
-  const [moodIndex, setMoodIndex] = useState(0);
-  const showBubble = false;
-
-  // ── Engine ──
-  const engine = useCompanionEngine({
-    hint,
-    isLoggedIn,
-    locale,
-    base,
-  });
-
-  const handleTap = useCallback(() => {
-    engine.wakeUp();
-    setOpen((prev) => {
-      if (!prev) engine.memory.incrementPanelOpen();
-      return !prev;
-    });
-  }, [engine]);
-
-  // ── Expression cycling (every 6s when idle, deferred to engine mood when active) ──
-  useEffect(() => {
-    if (open || engine.sleeping) return;
-    const t = setInterval(() => {
-      setMoodIndex((i) => (i + 1) % IDLE_MOOD_CYCLE.length);
-    }, 6000);
-    return () => clearInterval(t);
-  }, [open, engine.sleeping]);
-
-  // ── Hint API ──
-  const loadHint = useCallback(async () => {
-    setHintLoading(true);
-    setHintError(false);
-    try {
-      const res = await learnerApiFetch("/api/companion/hint?days=7");
-      if (!res.ok) { setHintError(true); setHint(null); return; }
-      const parsed = companionHintResponseSchema.safeParse(await res.json());
-      setHint(parsed.success ? parsed.data : null);
-      setHintError(!parsed.success);
-    } catch {
-      setHintError(true); setHint(null);
-    } finally {
-      setHintLoading(false);
+  const clearHideTimer = useCallback(() => {
+    if (hideTimerRef.current !== null) {
+      clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
     }
   }, []);
 
-  useEffect(() => {
-    if (!open || !isLoggedIn) return;
-    void loadHint();
-  }, [isLoggedIn, loadHint, open]);
+  useEffect(() => clearHideTimer, [clearHideTimer]);
 
-  // ── Mood computation ──
-  const mood = useMemo<CompanionMood>(() => {
-    // Engine mood takes priority for celebrations/reactions
-    if (engine.mood !== "idle") return engine.mood;
-    if (engine.sleeping) return "sleep";
-    if (hintLoading) return "think";
-    if (open) return "talk";
-    return IDLE_MOOD_CYCLE[moodIndex] ?? "idle";
-  }, [engine.mood, engine.sleeping, hintLoading, moodIndex, open]);
+  const handleTap = useCallback(() => {
+    setTipIndex((prev) => (prev + 1) % MASCOT_TIPS.length);
+    setBubbleVisible(true);
+    clearHideTimer();
+    hideTimerRef.current = setTimeout(() => {
+      setBubbleVisible(false);
+      hideTimerRef.current = null;
+    }, BUBBLE_AUTO_HIDE_MS);
+  }, [clearHideTimer]);
 
-  const riveState = useMemo(() => moodToRiveState(mood), [mood]);
-
-  // ── Bubble text from engine ──
-  const bubbleTextForSpeech = engine.bubbleText;
-  const bubbleMoodForSpeech = engine.bubbleMood;
-
-  // ── Chat panel labels (map from existing labels + new defaults) ──
-  const chatLabels = useMemo<CompanionChatPanelLabels>(() => ({
-    ...labels,
-    messagesEmpty: labels.messagesEmpty ?? (locale === "ja" ? "メッセージはまだありません" : "Chưa có tin nhắn"),
-    tipSectionLabel: labels.tipSectionLabel ?? (locale === "ja" ? "今日のヒント" : "Mẹo hôm nay"),
-    quickActionsLabel: labels.quickActionsLabel ?? labels.secondaryLabel,
-    muteBubble: labels.muteBubble ?? (locale === "ja" ? "通知をオフ" : "Tắt bong bóng"),
-    unmuteBubble: labels.unmuteBubble ?? (locale === "ja" ? "通知をオン" : "Bật bong bóng"),
-  }), [labels, locale]);
-
-  // ── Onboarding labels ──
-  const onboardingLabels = useMemo<CompanionOnboardingLabels>(() => ({
-    step1Title: labels.onboardingStep1Title ?? (locale === "ja" ? "こんにちは！🐕" : "Xin chào! 🐕"),
-    step1Body: labels.onboardingStep1Body ?? (locale === "ja" ? "私はシバ、あなたの学習パートナーです。一緒に日本語を学びましょう！" : "Mình là Shiba, bạn đồng hành học tập của bạn. Cùng học tiếng Nhật nhé!"),
-    step2Title: labels.onboardingStep2Title ?? (locale === "ja" ? "私にできること 📚" : "Mình có thể giúp gì 📚"),
-    step2Body: labels.onboardingStep2Body ?? (locale === "ja" ? "復習リマインダー、BJTヒント、日本語ミニレッスン、達成のお祝いなど！" : "Nhắc ôn tập, gợi ý BJT, mini bài học tiếng Nhật, chúc mừng thành tích!"),
-    step3Title: labels.onboardingStep3Title ?? (locale === "ja" ? "始めましょう！ 🚀" : "Bắt đầu nào! 🚀"),
-    step3Body: labels.onboardingStep3Body ?? (locale === "ja" ? "いつでもクリックして話しかけてね。ドラッグで移動もできるよ！" : "Click vào mình bất cứ lúc nào để trò chuyện. Kéo thả để di chuyển nhé!"),
-    next: labels.onboardingNext ?? (locale === "ja" ? "次へ" : "Tiếp"),
-    skip: labels.onboardingSkip ?? (locale === "ja" ? "スキップ" : "Bỏ qua"),
-    finish: labels.onboardingFinish ?? (locale === "ja" ? "始める！" : "Bắt đầu!"),
-  }), [labels, locale]);
-
-  const handleMuteToggle = useCallback(() => {
-    engine.memory.update({ bubbleMuted: !engine.memory.memory.bubbleMuted });
-  }, [engine.memory]);
-
-  // ── Expose pushEvent globally for other components ──
-  useEffect(() => {
-    const handler = (e: CustomEvent<{ kind: CompanionEventKind; params?: Record<string, string | number> }>) => {
-      engine.pushEvent(e.detail.kind, e.detail.params);
-    };
-    window.addEventListener("companion:event" as string, handler as EventListener);
-    return () => window.removeEventListener("companion:event" as string, handler as EventListener);
-  }, [engine]);
+  const activeTip = tipIndex >= 0 ? MASCOT_TIPS[tipIndex] : null;
+  const mood: CompanionMood = bubbleVisible && activeTip ? activeTip.mood : "idle";
+  const riveState = moodToRiveState(mood);
 
   return (
     <aside
       aria-label={labels.ariaLabel}
       className="pointer-events-none fixed inset-0 z-30"
     >
-      {/* Celebration overlay */}
-      <CompanionCelebrationOverlay emoji={engine.celebrationEmoji} visible={engine.showCelebration} />
-
       {/* Mascot container */}
       <div
         className="pointer-events-auto absolute bottom-[calc(69px_+_env(safe-area-inset-bottom))] lg:bottom-[max(24px,calc(24px_+_env(safe-area-inset-bottom)))]"
         style={{
           height: `${MASCOT_SIZE}px`,
           right: `${HOME_RIGHT}px`,
-          width: `${MASCOT_SIZE}px`,
+          width: `${MASCOT_SIZE}px`
         }}
       >
-        {/* Chat panel */}
-        {open && !engine.isOnboarding ? (
-          <CompanionBoundary labels={labels} onClose={() => setOpen(false)}>
-          <CompanionChatPanel
-            base={base}
-            hint={hint}
-            hintError={hintError}
-            hintLoading={hintLoading}
-            isLoggedIn={isLoggedIn}
-            isMuted={engine.memory.memory.bubbleMuted}
-            labels={chatLabels}
+        {/* Tap-to-delight short speech bubble (auto-hides after 4s, zero API calls) */}
+        <div className="absolute bottom-full right-[-8px] mb-2">
+          <CompanionSpeechBubble
+            customText={activeTip ? { ja: activeTip.ja, vi: activeTip.vi, en: activeTip.en } : null}
             locale={locale}
-            messages={engine.messages}
-            onClose={() => setOpen(false)}
-            onMuteToggle={handleMuteToggle}
-            onQuickReply={engine.handleQuickReply}
-            onSendMessage={engine.handleUserMessage}
-            quickReplies={engine.quickReplies}
-            streakDays={engine.memory.memory.localStreakDays}
+            mood={mood}
+            visible={bubbleVisible}
           />
-          </CompanionBoundary>
-        ) : null}
-
-        {/* Onboarding overlay */}
-        {open && engine.isOnboarding ? (
-          <CompanionOnboarding
-            currentStep={engine.onboardingStep}
-            labels={onboardingLabels}
-            onAdvance={engine.advanceOnboarding}
-            onDismiss={engine.dismissOnboarding}
-          />
-        ) : null}
-
-        {/* Speech bubble (context-aware from engine) */}
-        {!open && !engine.isOnboarding ? (
-          <div className="absolute bottom-full right-[-8px] mb-2">
-            <CompanionSpeechBubble
-              customText={bubbleTextForSpeech}
-              locale={locale}
-              mood={bubbleMoodForSpeech}
-              visible={showBubble}
-            />
-          </div>
-        ) : null}
+        </div>
 
         {/* Mascot */}
         <div
-          className={`h-full w-full cursor-pointer overflow-visible transition-[opacity,filter,transform] duration-200 ${engine.sleeping ? "opacity-60 grayscale-[30%]" : "opacity-90 hover:opacity-100"} ${open ? "scale-105" : "hover:scale-105 active:scale-95"}`}
+          aria-label={bubbleVisible ? labels.close : labels.collapsedLabel}
+          className={`h-full w-full cursor-pointer overflow-visible opacity-90 transition-[opacity,filter,transform] duration-200 hover:opacity-100 ${
+            bubbleVisible ? "scale-105" : "hover:scale-105 active:scale-95"
+          }`}
           onClick={handleTap}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleTap();
+            }
+          }}
+          role="button"
           tabIndex={0}
-          aria-label={open ? labels.close : labels.collapsedLabel}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleTap(); } }}
         >
           <BattleBotAvatar
             className="h-full w-full drop-shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
             fallback="🐕"
             rive={companionRive}
-            showSignal={!open && isLoggedIn}
+            showSignal={false}
             state={riveState}
             variant="companion"
           />

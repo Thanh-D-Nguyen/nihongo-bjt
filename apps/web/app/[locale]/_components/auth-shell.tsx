@@ -20,7 +20,7 @@ export interface PresenceNotificationLabels {
   fallbackChallenger: string;
 }
 
-function PresenceConnector({
+export function PresenceConnector({
   labels,
   locale
 }: {
@@ -90,15 +90,7 @@ function PresenceConnector({
  * instead of Keycloak OIDC. The name is retained for backward compatibility
  * with existing imports; will be renamed in a follow-up cleanup.
  */
-export function AuthShell({
-  children,
-  companionLabels,
-  focusTimerLabels,
-  locale,
-  nav,
-  presenceLabels,
-  searchLabels
-}: {
+export function AuthShell(props: {
   children: ReactNode;
   companionLabels: CompanionBotLabels;
   focusTimerLabels: FocusMiniIndicatorLabels;
@@ -106,12 +98,12 @@ export function AuthShell({
   kcAccessCookiePresent?: boolean;
   locale: string;
   nav: LearnerNavLabels;
-  presenceLabels: PresenceNotificationLabels;
+  presenceLabels?: PresenceNotificationLabels;
   searchLabels: SearchDropdownLabels;
 }) {
+  const { children, companionLabels, focusTimerLabels, locale, nav, searchLabels } = props;
   return (
     <GoAuthProvider locale={locale}>
-      <PresenceConnector labels={presenceLabels} locale={locale} />
       <FocusTimerProvider>
         <AppearanceSync />
         <LearnerAppFrame companionLabels={companionLabels} locale={locale} nav={nav} searchLabels={searchLabels}>

@@ -554,31 +554,6 @@ export function BattleRuntimeProvider({
   }, [isAuthenticated, botKey]);
 
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      if (!isAuthenticated || !userId) {
-        setLobbyMessages([]);
-        return;
-      }
-      try {
-        const params = new URLSearchParams({ limit: "40", roomKey: "global", userId });
-        const response = await fetch(`${apiBase}/api/battle/chat/recent?${params.toString()}`, {
-          cache: "no-store",
-          credentials: "include"
-        });
-        if (!response.ok) return;
-        const data = (await response.json()) as LobbyMessage[];
-        if (!cancelled) setLobbyMessages(data);
-      } catch {
-        if (!cancelled) setLobbyMessages([]);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [isAuthenticated, userId]);
-
-  useEffect(() => {
     if (!round || answerResult) return;
     setTimeLeft(round.timeLimitSec);
     const interval = window.setInterval(() => {

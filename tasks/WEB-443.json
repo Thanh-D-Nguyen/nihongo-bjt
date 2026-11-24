@@ -1,0 +1,445 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-443",
+  "title": "Demote Shiba companion to mascot-only on / and /me, remove global PresenceConnector, slim Battle lobby",
+  "start_head": "baa28e097706dc3e3e51ca6a39ffe05f2b5cf4f8",
+  "preexisting_changes": {
+    ".build/.buildSystem_debug": "c337257139e569398ce8bf081a54dbc7d1e0267d",
+    ".build/CACHEDIR.TAG": "b7ab0d883e974d20c05898291a6218954e18e5ef"
+  },
+  "spec": {
+    "problem": "CompanionBot runs useCompanionEngine timers and /api/companion/hint chat on every route, PresenceConnector opens a global /ws/presence socket and PvP popups on every page, /battle exposes 9 arcade modes, global chat, and a false reconnect box when human presence is empty, and Profile/Search contain dead PvP/battle CTAs.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "LearnerAppFrame renders CompanionBot only when pathname is /{locale} or /{locale}/me, and omits it on /levels, /quiz, /flashcards, /search, /news, /pricing, /scenarios, and /battle."
+      },
+      {
+        "id": "AC2",
+        "text": "CompanionBot runs in mascot-only mode without mounting useCompanionEngine, idle intervals, CompanionChatPanel, CompanionOnboarding, or /api/companion/hint fetches; tapping Shiba cycles a localized short speech bubble via CompanionSpeechBubble that auto-hides after 4s."
+      },
+      {
+        "id": "AC3",
+        "text": "AuthShell removes the global PresenceConnector mount while keeping hooks/use-presence.ts on disk; BattleLobbyClient removes the false presence.length===0 lobbyConnectionOffline box, hides human presence, unmounts BattleConfigsPanel and global lobby chat, and BattleRuntimeProvider skips /api/battle/chat/recent while preserving 1v1 bot drills and Leaderboard."
+      },
+      {
+        "id": "AC4",
+        "text": "ProfileActions hides the dead PvP challenge button while retaining the friends badge; SearchDetailPanel removes the Đấu bot (/battle) CTA while retaining /quiz and /flashcards CTAs."
+      },
+      {
+        "id": "AC5",
+        "text": "Updated and new unit tests cover all WEB-443 contracts with §5 justification for companion-bot.test.tsx; Strategy (a) files, companionRive assets, theme-contrast.regression.test.ts, and frontend-debt floors stay green untouched."
+      }
+    ],
+    "expected_behavior": "CompanionBot mounts only on /{locale} and /{locale}/me in mascot-only mode without useCompanionEngine, idle loops, chat/onboarding panels, or /api/companion/hint calls, responding to taps with a cycling localized speech bubble that auto-hides after 4s; AuthShell unmounts PresenceConnector while keeping hooks/use-presence.ts on disk; BattleLobbyClient shows a clean 1v1 bot drill selector (J1-J4) + Start + Leaderboard with no BattleConfigsPanel, no global chat, no human presence roster, and no fake lobbyConnectionOffline box, and BattleRuntimeProvider skips /api/battle/chat/recent; ProfileActions hides the PvP challenge button; SearchDetailPanel removes the Đấu bot CTA.",
+    "observed_behavior": "LearnerAppFrame mounts CompanionBot on all routes with useCompanionEngine, chat panel, onboarding modal, and /api/companion/hint calls; AuthShell mounts PresenceConnector globally; BattleLobbyClient renders BattleConfigsPanel, global chat, human presence, and a fake lobbyConnectionOffline box when presence.length===0 while BattleRuntimeProvider fetches /api/battle/chat/recent; ProfileActions renders a PvP challenge button; SearchDetailPanel renders a Đấu bot CTA.",
+    "rollback_plan": "Revert LearnerAppFrame, CompanionBot, CompanionSpeechBubble, AuthShell, BattleLobbyClient, BattleRuntimeProvider, ProfileActions, and SearchDetailPanel edits; all Strategy (a) companion, presence, and battle component files remain untouched on disk."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "modify",
+    "rationale": "Web-only Strategy (a) focus slice: scopes CompanionBot to /{locale} and /{locale}/me in mascot-only tap-bubble mode, unmounts global PresenceConnector from AuthShell, slims BattleLobbyClient and skips /api/battle/chat/recent, hides dead PvP/battle CTAs in ProfileActions and SearchDetailPanel, and updates companion-bot.test.tsx per ENGINEERING_POLICY.md §5 while preserving all underlying files and assets on disk."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/learner-app-frame.nav.test.tsx",
+      "test": "LearnerAppFrame 5-item canonical navigation > mounts CompanionBot only on locale home (/{locale}) and /{locale}/me, omitting it from study, exam, lookup, and other routes",
+      "expect": "CompanionBot must not mount on /vi/levels"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/companion-bot.test.tsx",
+      "test": "CompanionBot mascot-only contract > runs in mascot-only mode without mounting useCompanionEngine, calling /api/companion/hint, or rendering chat/onboarding panels",
+      "expect": "CompanionBot mascot-only mode must not mount useCompanionEngine"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/_components/companion-bot.test.tsx",
+      "test": "CompanionBot mascot-only contract > responds to tap with a cycling localized speech bubble that auto-hides after 4s",
+      "expect": "tapping mascot must show a short speech bubble"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/_components/auth-shell.test.tsx",
+      "test": "AuthShell global presence removal > does not mount global PresenceConnector or open /ws/presence while rendering children",
+      "expect": "AuthShell must not mount global PresenceConnector or call usePresence"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/battle/_components/battle-lobby-client.test.tsx",
+      "test": "BattleLobbyClient quiet 1v1 bot drill > renders 4 BJT bots, Start button, and Leaderboard without fake reconnect error, BattleConfigsPanel, or global chat",
+      "expect": "battle lobby must not render fake lobbyConnectionOffline box when presence is empty"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/battle/_components/battle-runtime-provider.lobby-queue.test.tsx",
+      "test": "BattleRuntimeProvider lobby readiness > skips fetching /api/battle/chat/recent on mount while keeping /api/battle/bots",
+      "expect": "BattleRuntimeProvider must not fetch /api/battle/chat/recent"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/u/[userId]/_components/profile-actions.test.tsx",
+      "test": "ProfileActions dead PvP challenge removal > hides the dead PvP challenge button for strangers and signed-out viewers while preserving the friends badge",
+      "expect": "ProfileActions must hide the dead PvP challenge button"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx",
+      "test": "SearchDetailPanel reference CTAs > removes the Đấu bot (/battle) CTA while preserving /quiz and /flashcards reference actions",
+      "expect": "SearchDetailPanel must remove the /vi/battle Đấu bot CTA"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-24T11:02:13.207Z",
+      "head": "baa28e097706dc3e3e51ca6a39ffe05f2b5cf4f8"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-24T11:02:13.463Z",
+      "head": "baa28e097706dc3e3e51ca6a39ffe05f2b5cf4f8"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-24T11:02:13.698Z",
+      "head": "baa28e097706dc3e3e51ca6a39ffe05f2b5cf4f8"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-24T11:04:26.440Z",
+      "head": "baa28e097706dc3e3e51ca6a39ffe05f2b5cf4f8"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-24T11:07:15.945Z",
+      "head": "baa28e097706dc3e3e51ca6a39ffe05f2b5cf4f8"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-24T11:10:53.660Z",
+      "head": "baa28e097706dc3e3e51ca6a39ffe05f2b5cf4f8"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-24T11:18:42.088Z",
+      "head": "baa28e097706dc3e3e51ca6a39ffe05f2b5cf4f8"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-24T11:04:26.154Z",
+      "head": "baa28e097706dc3e3e51ca6a39ffe05f2b5cf4f8",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.nav.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/_components/companion-bot.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/auth-shell.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/battle/_components/battle-lobby-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/battle/_components/battle-runtime-provider.lobby-queue.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/u/[userId]/_components/profile-actions.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.nav.test.tsx::LearnerAppFrame 5-item canonical navigation > mounts CompanionBot only on locale home (/{locale}) and /{locale}/me, omitting it from study, exam, lookup, and other routes",
+          "outcome": "FAIL",
+          "excerpt": "CompanionBot must not mount on /vi/levels: expected <div …(1)></div> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot mascot-only contract > runs in mascot-only mode without mounting useCompanionEngine, calling /api/companion/hint, or rendering chat/onboarding panels",
+          "outcome": "FAIL",
+          "excerpt": "CompanionBot mascot-only mode must not mount useCompanionEngine: expected \"vi.fn()\" to not be called at all, but actually been called 1 times Received: 1st vi.fn() call: Array [ Object { \"base\": \"/vi\", \"hint\": null, \"isLoggedIn\": true, \"locale\": \"vi\", }, ] Number of calls: 1",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot mascot-only contract > responds to tap with a cycling localized speech bubble that auto-hides after 4s",
+          "outcome": "FAIL",
+          "excerpt": "tapping mascot must show a short speech bubble: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/auth-shell.test.tsx::AuthShell global presence removal > does not mount global PresenceConnector or open /ws/presence while rendering children",
+          "outcome": "FAIL",
+          "excerpt": "AuthShell must not mount global PresenceConnector or call usePresence: expected \"vi.fn()\" to not be called at all, but actually been called 1 times Received: 1st vi.fn() call: Array [ Object { \"onChallengeReceived\": [Function anonymous], }, ] Number of calls: 1",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/battle/_components/battle-lobby-client.test.tsx::BattleLobbyClient quiet 1v1 bot drill > renders 4 BJT bots, Start button, and Leaderboard without fake reconnect error, BattleConfigsPanel, or global chat",
+          "outcome": "FAIL",
+          "excerpt": "battle lobby must not render fake lobbyConnectionOffline box when presence is empty: expected 'BJTĐấu trí BJTChọn botĐã kết nốiAvail…' not to contain 'Đang kết nối lại'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/battle/_components/battle-runtime-provider.lobby-queue.test.tsx::BattleRuntimeProvider lobby readiness > skips fetching /api/battle/chat/recent on mount while keeping /api/battle/bots",
+          "outcome": "FAIL",
+          "excerpt": "BattleRuntimeProvider must not fetch /api/battle/chat/recent: expected true to be false // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/u/[userId]/_components/profile-actions.test.tsx::ProfileActions dead PvP challenge removal > hides the dead PvP challenge button for strangers and signed-out viewers while preserving the friends badge",
+          "outcome": "FAIL",
+          "excerpt": "ProfileActions must hide the dead PvP challenge button: expected <button …(1)>…(1)</button> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx::SearchDetailPanel reference CTAs > removes the Đấu bot (/battle) CTA while preserving /quiz and /flashcards reference actions",
+          "outcome": "FAIL",
+          "excerpt": "SearchDetailPanel must remove the /vi/battle Đấu bot CTA: expected <a …(2)></a> to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/_components/learner-app-frame.nav.test.tsx::LearnerAppFrame 5-item canonical navigation > mounts CompanionBot only on locale home (/{locale}) and /{locale}/me, omitting it from study, exam, lookup, and other routes": "CompanionBot must not mount on /vi/levels",
+        "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot mascot-only contract > runs in mascot-only mode without mounting useCompanionEngine, calling /api/companion/hint, or rendering chat/onboarding panels": "CompanionBot mascot-only mode must not mount useCompanionEngine",
+        "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot mascot-only contract > responds to tap with a cycling localized speech bubble that auto-hides after 4s": "tapping mascot must show a short speech bubble",
+        "vitest:apps/web/app/[locale]/_components/auth-shell.test.tsx::AuthShell global presence removal > does not mount global PresenceConnector or open /ws/presence while rendering children": "AuthShell must not mount global PresenceConnector or call usePresence",
+        "vitest:apps/web/app/[locale]/battle/_components/battle-lobby-client.test.tsx::BattleLobbyClient quiet 1v1 bot drill > renders 4 BJT bots, Start button, and Leaderboard without fake reconnect error, BattleConfigsPanel, or global chat": "battle lobby must not render fake lobbyConnectionOffline box when presence is empty",
+        "vitest:apps/web/app/[locale]/battle/_components/battle-runtime-provider.lobby-queue.test.tsx::BattleRuntimeProvider lobby readiness > skips fetching /api/battle/chat/recent on mount while keeping /api/battle/bots": "BattleRuntimeProvider must not fetch /api/battle/chat/recent",
+        "vitest:apps/web/app/[locale]/u/[userId]/_components/profile-actions.test.tsx::ProfileActions dead PvP challenge removal > hides the dead PvP challenge button for strangers and signed-out viewers while preserving the friends badge": "ProfileActions must hide the dead PvP challenge button",
+        "vitest:apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx::SearchDetailPanel reference CTAs > removes the Đấu bot (/battle) CTA while preserving /quiz and /flashcards reference actions": "SearchDetailPanel must remove the /vi/battle Đấu bot CTA"
+      },
+      "fingerprint": "e5d8ec04d8de10eb7d4afed78ab66637de33989ae7efbfe9e407bdbe77f3fa7f"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-24T11:06:24.425Z",
+      "head": "baa28e097706dc3e3e51ca6a39ffe05f2b5cf4f8",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.nav.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/_components/companion-bot.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/auth-shell.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/battle/_components/battle-lobby-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/battle/_components/battle-runtime-provider.lobby-queue.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/u/[userId]/_components/profile-actions.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.nav.test.tsx::LearnerAppFrame 5-item canonical navigation > mounts CompanionBot only on locale home (/{locale}) and /{locale}/me, omitting it from study, exam, lookup, and other routes",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot mascot-only contract > runs in mascot-only mode without mounting useCompanionEngine, calling /api/companion/hint, or rendering chat/onboarding panels",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot mascot-only contract > responds to tap with a cycling localized speech bubble that auto-hides after 4s",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "speech bubble must auto-hide after 4s: expected <div …(3)>…(3)</div> to be null"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/auth-shell.test.tsx::AuthShell global presence removal > does not mount global PresenceConnector or open /ws/presence while rendering children",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/battle/_components/battle-lobby-client.test.tsx::BattleLobbyClient quiet 1v1 bot drill > renders 4 BJT bots, Start button, and Leaderboard without fake reconnect error, BattleConfigsPanel, or global chat",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/battle/_components/battle-runtime-provider.lobby-queue.test.tsx::BattleRuntimeProvider lobby readiness > skips fetching /api/battle/chat/recent on mount while keeping /api/battle/bots",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/u/[userId]/_components/profile-actions.test.tsx::ProfileActions dead PvP challenge removal > hides the dead PvP challenge button for strangers and signed-out viewers while preserving the friends badge",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx::SearchDetailPanel reference CTAs > removes the Đấu bot (/battle) CTA while preserving /quiz and /flashcards reference actions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "bf7b81dcf73e7243aed688268c7d52296945dcb55de22033be6522075fbecbae"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-24T11:07:15.481Z",
+      "head": "baa28e097706dc3e3e51ca6a39ffe05f2b5cf4f8",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/_components/learner-app-frame.nav.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/_components/companion-bot.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/_components/auth-shell.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/battle/_components/battle-lobby-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/battle/_components/battle-runtime-provider.lobby-queue.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/u/[userId]/_components/profile-actions.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/_components/learner-app-frame.nav.test.tsx::LearnerAppFrame 5-item canonical navigation > mounts CompanionBot only on locale home (/{locale}) and /{locale}/me, omitting it from study, exam, lookup, and other routes",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot mascot-only contract > runs in mascot-only mode without mounting useCompanionEngine, calling /api/companion/hint, or rendering chat/onboarding panels",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/_components/companion-bot.test.tsx::CompanionBot mascot-only contract > responds to tap with a cycling localized speech bubble that auto-hides after 4s",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/_components/auth-shell.test.tsx::AuthShell global presence removal > does not mount global PresenceConnector or open /ws/presence while rendering children",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/battle/_components/battle-lobby-client.test.tsx::BattleLobbyClient quiet 1v1 bot drill > renders 4 BJT bots, Start button, and Leaderboard without fake reconnect error, BattleConfigsPanel, or global chat",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/battle/_components/battle-runtime-provider.lobby-queue.test.tsx::BattleRuntimeProvider lobby readiness > skips fetching /api/battle/chat/recent on mount while keeping /api/battle/bots",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/u/[userId]/_components/profile-actions.test.tsx::ProfileActions dead PvP challenge removal > hides the dead PvP challenge button for strangers and signed-out viewers while preserving the friends badge",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx::SearchDetailPanel reference CTAs > removes the Đấu bot (/battle) CTA while preserving /quiz and /flashcards reference actions",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "29d1acffbba5d5b21dc7a3bcb2175348ca775be6bfc4c11fd74d726f6afaa384"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-24T11:09:01.578Z",
+      "head": "baa28e097706dc3e3e51ca6a39ffe05f2b5cf4f8",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 729,
+        "executed": 729,
+        "passed": 729,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 906,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "29d1acffbba5d5b21dc7a3bcb2175348ca775be6bfc4c11fd74d726f6afaa384"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-24T11:10:52.711Z",
+      "head": "baa28e097706dc3e3e51ca6a39ffe05f2b5cf4f8",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 729,
+        "executed": 729,
+        "passed": 729,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 906,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "29d1acffbba5d5b21dc7a3bcb2175348ca775be6bfc4c11fd74d726f6afaa384"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-24T11:18:40.849Z",
+      "head": "baa28e097706dc3e3e51ca6a39ffe05f2b5cf4f8",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "fresh-research-subagent:281a60a0",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "Fresh-context independent review verified CompanionBot mascot-only scoping & 4s bubble, AuthShell PresenceConnector unmount, BattleLobbyClient/RuntimeProvider slimming, ProfileActions & SearchDetailPanel dead-CTA removal, Strategy (a) preservation, ESLint baseline parity, and §5 justification for companion-bot.test.tsx.",
+      "output_sha256": "71f5058bd368226cfe228ef7ddfdd8345e97f330db598e46d41b763478f0dd2a",
+      "attested": true,
+      "fingerprint": "29d1acffbba5d5b21dc7a3bcb2175348ca775be6bfc4c11fd74d726f6afaa384"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-24T11:18:42.080Z",
+    "head": "baa28e097706dc3e3e51ca6a39ffe05f2b5cf4f8",
+    "fingerprint": "29d1acffbba5d5b21dc7a3bcb2175348ca775be6bfc4c11fd74d726f6afaa384",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/_components/auth-shell.test.tsx": "ab2962e71f4922525e225fc6ee5de94b337e88c7",
+      "apps/web/app/[locale]/_components/auth-shell.tsx": "db582cfa938bb575c65241576b5446f8ca981873",
+      "apps/web/app/[locale]/battle/_components/battle-lobby-client.test.tsx": "28b942e68fe74c9f07e0b4aa276452d78b9018c0",
+      "apps/web/app/[locale]/battle/_components/battle-lobby-client.tsx": "5039e950a648be4b877cf81ce8981a7ab8ce4aaf",
+      "apps/web/app/[locale]/battle/_components/battle-runtime-provider.lobby-queue.test.tsx": "2fd1bd947f322478e49769642fa9e99e6f5c724e",
+      "apps/web/app/[locale]/battle/_components/battle-runtime-provider.tsx": "2ed242b7d194c916c7e293ad186dad45abc59820",
+      "apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx": "96e94188959c032366affa418f087939f3b26c34",
+      "apps/web/app/[locale]/search/_components/search-detail-panel.tsx": "1dd316b5f7227adc8efed0709b338997f8b73674",
+      "apps/web/app/[locale]/u/[userId]/_components/profile-actions.test.tsx": "3ea314bc1c3bb6ef6f227e93e0ed6f96d33d7390",
+      "apps/web/app/[locale]/u/[userId]/_components/profile-actions.tsx": "27fe22798ce8454c7e0149d39df2382b8405f3f7",
+      "apps/web/app/_components/companion-bot.test.tsx": "f636aac9990cd64046ad06a13fec6d3a43206c38",
+      "apps/web/app/_components/companion-bot.tsx": "9a4c63eaecf6b30d0da2010ce225787d3a209a0b",
+      "apps/web/app/_components/companion-speech-bubble.tsx": "cacc74498be925531485b30ce1582b26365d4f8b",
+      "apps/web/app/_components/learner-app-frame.nav.test.tsx": "54b0a87bba6a24863c743b087252562a6097f1a5",
+      "apps/web/app/_components/learner-app-frame.tsx": "4901f19277b8a35da153f778ae2f5ff17b230dbe"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

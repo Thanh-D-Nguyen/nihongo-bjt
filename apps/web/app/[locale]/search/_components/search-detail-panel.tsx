@@ -694,12 +694,6 @@ function DetailActions({
         >
           {labels.bjtCtaFlashcards}
         </Link>
-        <Link
-          className="search-detail-cta inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-ink/10 bg-paper px-3 text-xs font-bold text-ink shadow-sm transition-all duration-150 hover:border-ink/18 hover:bg-ink/5 hover:shadow-md active:scale-95 sm:flex-none sm:px-4"
-          href={`/${locale}/battle`}
-        >
-          {labels.bjtCtaBattle}
-        </Link>
       </div>
       <Link
         className="search-detail-cta inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-dashed border-ink/12 bg-surface px-3 text-xs font-semibold text-muted transition-all duration-150 hover:border-accent/30 hover:bg-accent/5 hover:text-accent active:scale-[0.98]"

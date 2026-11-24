@@ -68,6 +68,7 @@ describe("BattleRuntimeProvider lobby readiness", () => {
   let root: ReturnType<typeof createRoot>;
   let runtime: ReturnType<typeof useBattleRuntime>;
   let socket: FakeSocket;
+  let fetchMock: ReturnType<typeof vi.fn>;
 
   function Probe() {
     runtime = useBattleRuntime();
@@ -78,6 +79,8 @@ describe("BattleRuntimeProvider lobby readiness", () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     vi.useFakeTimers();
     vi.spyOn(console, "error").mockImplementation(() => undefined);
+    fetchMock = vi.fn(async () => new Response("[]", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
     hoisted.sockets.length = 0;
     sessionStorage.clear();
     container = document.createElement("div");
@@ -100,6 +103,7 @@ describe("BattleRuntimeProvider lobby readiness", () => {
   afterEach(async () => {
     await act(async () => root.unmount());
     vi.useRealTimers();
+    vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
@@ -148,5 +152,17 @@ describe("BattleRuntimeProvider lobby readiness", () => {
     await act(async () => runtime.goToLobby());
     await act(async () => socket.fire("battle:lobby_joined"));
     expect(socket.challenges()).toHaveLength(0);
+  });
+
+  it("skips fetching /api/battle/chat/recent on mount while keeping /api/battle/bots", async () => {
+    const urls = fetchMock.mock.calls.map((args) => String(args[0]));
+    expect(
+      urls.some((u) => u.includes("/api/battle/chat/recent")),
+      "BattleRuntimeProvider must not fetch /api/battle/chat/recent"
+    ).toBe(false);
+    expect(
+      urls.some((u) => u.includes("/api/battle/bots")),
+      "BattleRuntimeProvider must continue loading /api/battle/bots"
+    ).toBe(true);
   });
 });

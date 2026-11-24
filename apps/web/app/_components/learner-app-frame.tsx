@@ -209,6 +209,7 @@ export function LearnerAppFrame({
   }, [userMenuOpen]);
 
   const hideChrome = pathname === `${base}/register` || pathname === `${base}/quiz/session`;
+  const showCompanionMascot = pathname === base || pathname === `${base}/me`;
 
   const reviewHref = dueCount > 0 ? `${base}/flashcards?tab=review` : `${base}/flashcards`;
 
@@ -673,7 +674,9 @@ export function LearnerAppFrame({
           ))}
         </div>
       </nav>
-      <CompanionBot base={base} labels={companionLabels} locale={locale} />
+      {showCompanionMascot ? (
+        <CompanionBot base={base} labels={companionLabels} locale={locale} />
+      ) : null}
     </AppShell>
   );
 }
