@@ -1,0 +1,344 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-449",
+  "title": "Fix Career RPG question card dark-mode contrast",
+  "start_head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+  "preexisting_changes": {
+    ".build/.buildSystem_debug": "c337257139e569398ce8bf081a54dbc7d1e0267d",
+    ".build/CACHEDIR.TAG": "b7ab0d883e974d20c05898291a6218954e18e5ef"
+  },
+  "spec": {
+    "problem": "In dark mode, the selected answer in BjtStyleQuestionCard uses hardcoded bg-[#EEF2FF] while globals.css remaps text-[#111827] to near-white, making the selected option invisible (~1.1:1).",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "BjtStyleQuestionCard uses theme tokens instead of hardcoded light hex colors; picked and unpicked options use theme-aware background/border/badge tokens ensuring >=4.5:1 contrast in both light and dark mode."
+      }
+    ],
+    "expected_behavior": "Option text and badges in BjtStyleQuestionCard use theme tokens (bg-surface, bg-paper, bg-accent-soft, bg-brand-panel, border-border, border-brand-navy, text-ink, text-muted) with zero hardcoded hex colors.",
+    "observed_behavior": "Picked choice uses border-[#1B2A4A] bg-[#EEF2FF] and text-[#111827], causing white-on-#EEF2FF in dark mode.",
+    "rollback_plan": "Revert bjt-style-question-card.tsx and its test file."
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/src/features/career-rpg/components/bjt-style-question-card.test.tsx",
+      "test": "BjtStyleQuestionCard > uses theme tokens for picked and unpicked states with no hardcoded light hex colors",
+      "expect": "bg-surface"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-24T09:55:13.505Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-24T09:55:40.475Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-24T09:56:36.226Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-24T09:56:38.275Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-24T09:57:44.292Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-24T10:00:04.172Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-24T10:10:02.152Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-24T10:10:51.220Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-24T10:18:26.515Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-24T09:56:38.100Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/bjt-style-question-card.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/bjt-style-question-card.test.tsx::BjtStyleQuestionCard > uses theme tokens for picked and unpicked states with no hardcoded light hex colors",
+          "outcome": "FAIL",
+          "excerpt": "expected 'group flex w-full items-start gap-3 r…' to contain 'bg-surface'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/src/features/career-rpg/components/bjt-style-question-card.test.tsx::BjtStyleQuestionCard > uses theme tokens for picked and unpicked states with no hardcoded light hex colors": "bg-surface"
+      },
+      "fingerprint": "f5d675749d14b44b02fd2bcf7df67c0244d952fc76fb0f2bb1ab4b5498250c5a"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-24T09:57:16.847Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+      "kind": "green",
+      "outcome": "NOT_GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/bjt-style-question-card.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/bjt-style-question-card.test.tsx::BjtStyleQuestionCard > uses theme tokens for picked and unpicked states with no hardcoded light hex colors",
+          "outcome": "FAIL",
+          "valid": false,
+          "excerpt": "expected '<div class=\"rounded-[14px] border bor…' not to match /#[0-9A-Fa-f]{6}/"
+        }
+      ],
+      "fingerprint": "45a8b9640250a46600933865c18794420c5fe37864592d5a1b1969a82e6dbb3a"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-24T09:57:44.022Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/bjt-style-question-card.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/bjt-style-question-card.test.tsx::BjtStyleQuestionCard > uses theme tokens for picked and unpicked states with no hardcoded light hex colors",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "c11f043f4a1c43c54651e6cd6a9463caf828162cdd7ba47269b6af5ae3dda0c9"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-24T09:58:00.060Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 2,
+      "result": "FAIL",
+      "accounting": null,
+      "message": "suite produced no execution accounting",
+      "fingerprint": "c11f043f4a1c43c54651e6cd6a9463caf828162cdd7ba47269b6af5ae3dda0c9"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-24T09:58:50.819Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/bjt-style-question-card.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/bjt-style-question-card.test.tsx::BjtStyleQuestionCard > uses theme tokens for picked and unpicked states with no hardcoded light hex colors",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "2c49751e79f6b98f6c4df8b2ddbcdd634e83ea1a31fa096e55ddd217f9713b89"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-24T10:00:03.919Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 718,
+        "executed": 718,
+        "passed": 718,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 895,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "2c49751e79f6b98f6c4df8b2ddbcdd634e83ea1a31fa096e55ddd217f9713b89"
+    },
+    {
+      "seq": 7,
+      "at": "2026-11-24T10:09:05.369Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "CHANGES_REQUESTED",
+      "open_findings": 1,
+      "findings": [
+        {
+          "severity": "major",
+          "file": "apps/web/app/theme-contrast.regression.test.ts",
+          "summary": "AC1's '>=4.5:1 in light and dark' clause is not pinned by any test: the new test only asserts class-name substrings, and no repo test asserts white-on-brand-panel (light 14.22/dark 11.50), light ink-o…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/src/features/career-rpg/components/bjt-style-question-card.test.tsx",
+          "summary": "After NOT_GREEN evidence #2 (tripped by the shared @nihongo-bjt/ui Card/Button hex classes) the no-hex assertion was narrowed to header/ul innerHTML, leaving the component's own footer (border-border,…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/src/features/career-rpg/components/bjt-style-question-card.tsx",
+          "summary": "Cosmetic, non-blocking: in dark mode the picked background (accent-soft #172554 vs card surface #1e293b, 1.00:1) and picked badge circle (1.28:1) are imperceptible, so selection relies on the brand-na…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/src/features/career-rpg/components/workplace-scenario-card.tsx",
+          "summary": "Out of scope, follow-up ticket: the same root cause remains on the same chapter screen; the chat bubble bg-[#F1F5F9] text-[#111827] (line 95) renders at 1.00:1 in dark mode directly above this card, a…"
+        }
+      ],
+      "package_sha256": "436827f592b88af2e5f4ac5138c52e2eeda5edf2078e4ad86417411862a460ed",
+      "fingerprint": "2c49751e79f6b98f6c4df8b2ddbcdd634e83ea1a31fa096e55ddd217f9713b89"
+    },
+    {
+      "seq": 8,
+      "at": "2026-11-24T10:10:01.845Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/src/features/career-rpg/components/bjt-style-question-card.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/src/features/career-rpg/components/bjt-style-question-card.test.tsx::BjtStyleQuestionCard > uses theme tokens for picked and unpicked states with no hardcoded light hex colors",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "163244cf9b8d30788d831daabad1f84ca8181a0c0b516c1995c27194d45b192b"
+    },
+    {
+      "seq": 9,
+      "at": "2026-11-24T10:10:50.935Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 719,
+        "executed": 719,
+        "passed": 719,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 895,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "163244cf9b8d30788d831daabad1f84ca8181a0c0b516c1995c27194d45b192b"
+    },
+    {
+      "seq": 10,
+      "at": "2026-11-24T10:17:54.425Z",
+      "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "claude -p --model opus --effort max --permission-mode plan --setting-sources user,project --no-session-persistence --output-format text",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "findings": [
+        {
+          "severity": "minor",
+          "file": "apps/web/src/features/career-rpg/components/bjt-style-question-card.tsx",
+          "summary": "Carried from review #7, cosmetic: in dark mode the picked background has the same luminance as the unpicked surface (accent-soft #172554 vs surface #1e293b, 1.00:1) and the picked badge disc is 1.28:1…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/src/features/career-rpg/components/bjt-style-question-card.test.tsx",
+          "summary": "Header (eyebrow, h3, promptVi) and footer text tokens are not asserted; only the source-level no-hex regex guards them, so a non-hex class that is not a theme token (e.g. text-gray-500) there would pa…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/src/features/career-rpg/components/review-inbox-preview.tsx",
+          "summary": "Out of scope, needs a follow-up ticket: line 38 has the identical border-[#1B2A4A] bg-[#EEF2FF] selected state with text-[#111827] content (1.02:1 in dark mode); track it together with workplace-scena…"
+        },
+        {
+          "severity": "minor",
+          "file": "apps/web/src/features/career-rpg/components/bjt-style-question-card.tsx",
+          "summary": "No rendered light/dark check is recorded; light mode shifts slightly by design (picked bg #EEF2FF to #DBEAFE, eyebrow/footer #6B7280 to #4B5563, unpicked badge #F1F5F9 to #F8FAFC). All pass AA; a quic…"
+        }
+      ],
+      "package_sha256": "7769e36f63a73ecbd9c204cbccb27beba582b37fd26b8d347a04d9e81d68cda7",
+      "fingerprint": "163244cf9b8d30788d831daabad1f84ca8181a0c0b516c1995c27194d45b192b"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-24T10:18:26.499Z",
+    "head": "59a9ad4c8f4fc4bff587e9cd83f60892979b086f",
+    "fingerprint": "163244cf9b8d30788d831daabad1f84ca8181a0c0b516c1995c27194d45b192b",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/theme-contrast.regression.test.ts": "d204a2b964a6ef412610eca4f73f8b0deda26fd5",
+      "apps/web/src/features/career-rpg/components/bjt-style-question-card.test.tsx": "c7d1166bccd16cdbe840ef6b0aa2fe92b599377a",
+      "apps/web/src/features/career-rpg/components/bjt-style-question-card.tsx": "3d068ba5179249863b37731cd1dbc171f6459847"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

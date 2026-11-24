@@ -755,3 +755,44 @@ describe("WEB-439 scenarios answer-flow contrast sweep", () => {
   expect(retryBlock, "retry button must specify border-border").toContain("border-border");
  });
 });
+
+describe("WEB-449 Career RPG question card dark-mode contrast", () => {
+ it("keeps all card text/background pairs >= 4.5:1 and selected border >= 3:1 in both light and dark modes", () => {
+  const cardSource = readFileSync(
+   new URL("../src/features/career-rpg/components/bjt-style-question-card.tsx", import.meta.url),
+   "utf8"
+  );
+  expect(cardSource, "question card must not contain hardcoded hex colors").not.toMatch(/#[0-9a-f]{3,8}/i);
+  expect(cardSource, "question card must not use unthemed bg-white").not.toMatch(/(?<![\w:-])bg-white(?![\w/-])/);
+
+  // Record original failure: dark ink (#f1f5f9) on old hardcoded picked bg (#EEF2FF) is ~1.1:1.
+  expect(contrast(tokenIn(darkBlock, "ink")!, "#eef2ff"), "pre-fix dark ink on #EEF2FF").toBeLessThan(4.5);
+
+  for (const [theme, block] of [
+   ["light", lightBlock],
+   ["dark", darkBlock]
+  ] as const) {
+   const ink = tokenIn(block, "ink")!;
+   const muted = tokenIn(block, "muted")!;
+   const surface = tokenIn(block, "surface")!;
+   const paper = tokenIn(block, "paper")!;
+   const accentSoft = tokenIn(block, "accent-soft")!;
+   const brandPanel = tokenIn(block, "brand-panel")!;
+   const brandNavy = tokenIn(block, "brand-navy")!;
+
+   expect(contrast(ink, accentSoft), `${theme} ink on accent-soft (picked option)`).toBeGreaterThanOrEqual(4.5);
+   expect(contrast("#ffffff", brandPanel), `${theme} white on brand-panel (picked badge)`).toBeGreaterThanOrEqual(4.5);
+   expect(contrast(ink, surface), `${theme} ink on surface`).toBeGreaterThanOrEqual(4.5);
+   expect(contrast(ink, paper), `${theme} ink on paper`).toBeGreaterThanOrEqual(4.5);
+   expect(contrast(muted, paper), `${theme} muted on paper (unpicked badge)`).toBeGreaterThanOrEqual(4.5);
+   expect(contrast(muted, surface), `${theme} muted on surface`).toBeGreaterThanOrEqual(4.5);
+
+   expect(contrast(brandNavy, surface), `${theme} brand-navy border on surface`).toBeGreaterThanOrEqual(3);
+   expect(contrast(brandNavy, accentSoft), `${theme} brand-navy border on accent-soft`).toBeGreaterThanOrEqual(3);
+  }
+
+  for (const token of ["accent-soft", "brand-panel", "brand-navy"] as const) {
+   expect(tokenIn(fallbackBlock, token), `${token} system fallback must match .dark`).toBe(tokenIn(darkBlock, token));
+  }
+ });
+});
