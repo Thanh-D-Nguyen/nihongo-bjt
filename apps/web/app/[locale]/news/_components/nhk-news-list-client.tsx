@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetchOptional } from "../../../../lib/learner-api";
+import { StudyTrackTabs, type StudyTrackTabsLabels } from "../../levels/_components/study-track-tabs";
 
 type NewsType = "easy" | "normal" | "business" | "livedoor";
 
@@ -76,10 +77,12 @@ export function NhkNewsListClient({
   labels,
   homepageLabels,
   locale,
+  studyTrackLabels,
 }: {
   labels: Labels;
   homepageLabels: HomepageLabels;
   locale: string;
+  studyTrackLabels?: StudyTrackTabsLabels;
 }) {
   const auth = useGoAuth();
   const PAGE_SIZE = 12;
@@ -146,9 +149,7 @@ export function NhkNewsListClient({
 
   return (
     <main className="py-6">
-      <Link href={`/${locale}`} className="mb-4 inline-flex items-center gap-1 text-sm text-muted hover:text-ink transition-colors">
-        {labels.backToHome}
-      </Link>
+      <StudyTrackTabs activeTrack="reading" className="mb-5" labels={studyTrackLabels} locale={locale} />
 
       <h1 className="mb-2 text-2xl font-bold text-ink">{labels.title}</h1>
 

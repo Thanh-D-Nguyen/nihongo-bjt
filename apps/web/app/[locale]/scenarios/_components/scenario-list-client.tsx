@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
+import { StudyTrackTabs, type StudyTrackTabsLabels } from "../../levels/_components/study-track-tabs";
 
 interface Scenario {
   id: string;
@@ -38,7 +39,15 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   advanced: "bg-sakura-soft text-sakura-strong",
 };
 
-export function ScenarioListClient({ locale, copy }: { locale: string; copy: ScenarioListCopy }) {
+export function ScenarioListClient({
+  locale,
+  copy,
+  studyTrackLabels
+}: {
+  locale: string;
+  copy: ScenarioListCopy;
+  studyTrackLabels?: StudyTrackTabsLabels;
+}) {
   const { userId } = useGoAuth();
   const router = useRouter();
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
@@ -73,6 +82,7 @@ export function ScenarioListClient({ locale, copy }: { locale: string; copy: Sce
   if (loading) {
     return (
       <div className="mx-auto max-w-3xl p-4 space-y-4">
+        <StudyTrackTabs activeTrack="scenarios" className="mb-1" labels={studyTrackLabels} locale={locale} />
         <div className="h-8 w-48 rounded bg-ink/10 animate-pulse" />
         {[1, 2, 3].map((i) => (
           <div key={i} className="h-28 rounded-2xl bg-ink/5 animate-pulse" />
@@ -83,6 +93,7 @@ export function ScenarioListClient({ locale, copy }: { locale: string; copy: Sce
 
   return (
     <div className="mx-auto max-w-3xl p-4">
+      <StudyTrackTabs activeTrack="scenarios" className="mb-5" labels={studyTrackLabels} locale={locale} />
       <h1 className="text-xl font-black text-ink mb-1">
         💼 {copy.title}
       </h1>

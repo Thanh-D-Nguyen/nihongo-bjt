@@ -159,4 +159,23 @@ describe("LevelsClient", () => {
     expect(nodeCircle?.className).toContain("border-border");
     expect(host.innerHTML, "levels client must not reference undefined --color-navy or --color-blue vars").not.toMatch(/--color-(?:navy|blue)\b/);
   });
+
+  it("renders StudyTrackTabs with Lộ trình BJT active and navigation links to /scenarios and /news", async () => {
+    await act(async () => root.render(<LevelsClient labels={labels.vi} locale="vi" />));
+    await act(async () => { await Promise.resolve(); });
+
+    const levelsTab = host.querySelector<HTMLAnchorElement>('a[href="/vi/levels"]');
+    const scenariosTab = host.querySelector<HTMLAnchorElement>('a[href="/vi/scenarios"]');
+    const readingTab = host.querySelector<HTMLAnchorElement>('a[href="/vi/news"]');
+
+    expect(scenariosTab, "/levels must render StudyTrackTabs with link to /vi/scenarios").not.toBeNull();
+    expect(readingTab, "/levels must render StudyTrackTabs with link to /vi/news").not.toBeNull();
+    expect(levelsTab, "/levels must render active StudyTrackTabs link to /vi/levels").not.toBeNull();
+    expect(levelsTab!.getAttribute("aria-current")).toBe("page");
+    expect(scenariosTab!.getAttribute("aria-current")).toBeNull();
+    expect(readingTab!.getAttribute("aria-current")).toBeNull();
+    expect(levelsTab!.textContent?.trim()).toBe("Lộ trình BJT");
+    expect(scenariosTab!.textContent?.trim()).toBe("Tình huống công sở");
+    expect(readingTab!.textContent?.trim()).toBe("Đọc NHK");
+  });
 });

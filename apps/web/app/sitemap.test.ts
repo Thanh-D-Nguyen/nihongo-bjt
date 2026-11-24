@@ -3,6 +3,7 @@ import sitemap from "./sitemap";
 
 // WEB-441: "explore" server-redirects to /{locale}/search and is excluded from sitemap.xml
 // WEB-442: "magazine" (-> /{locale}/news) and "story/arcs" (-> /{locale}/scenarios) server-redirect and are excluded from sitemap.xml
+// WEB-444: "modules" server-redirects to /{locale}/levels and stays excluded from sitemap.xml
 // WEB-445: "cardgen" (-> /{locale}/flashcards?tab=library) server-redirects and is excluded from sitemap.xml
 const EXPECTED_ROUTES = [
   "",
@@ -42,6 +43,9 @@ describe("sitemap metadata", () => {
       );
       expect(urls, "sitemap must exclude redirected /story/arcs route").not.toContain(
         `https://kiokoto.com/${locale}/story/arcs`
+      );
+      expect(urls, "sitemap must exclude redirected /modules route").not.toContain(
+        `https://kiokoto.com/${locale}/modules`
       );
       expect(urls, "sitemap must exclude redirected /cardgen route").not.toContain(
         `https://kiokoto.com/${locale}/cardgen`
