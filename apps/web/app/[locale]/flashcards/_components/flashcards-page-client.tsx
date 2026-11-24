@@ -16,7 +16,7 @@ import {
   TabButton,
   TabsList
 } from "@nihongo-bjt/ui";
-import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
@@ -27,6 +27,10 @@ import {
   IconSpark
 } from "../../../_components/app-icons";
 import { AdSlot, type AdSlotLabels } from "../../_components/ads/ad-slot";
+import {
+  RevengeModeWidget,
+  type RevengeModeLabels
+} from "../../_components/homepage/revenge-mode-widget";
 import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { queueSizeForUser } from "../../../../lib/offline-review-queue";
 import { learnerApiFetch } from "../../../../lib/learner-api";
@@ -68,11 +72,21 @@ export function FlashcardsPageClient({
   const searchParams = useSearchParams();
   const deckIdParam = searchParams.get("deckId");
   const scopeDeckId = isDeckScopeId(deckIdParam) ? deckIdParam : null;
-  const [main, setMain] = useState<MainView>(initialMain);
+  const tabParam = searchParams.get("tab");
+  const cloneTokenParam = searchParams.get("cloneToken");
+  const hasCloneToken = Boolean(cloneTokenParam && cloneTokenParam.trim().length > 0);
+  const explicitMain: MainView | null =
+    tabParam === "library" || hasCloneToken
+      ? "library"
+      : tabParam === "review" || scopeDeckId !== null
+        ? "review"
+        : null;
+  const [main, setMain] = useState<MainView>(explicitMain ?? initialMain);
   const [deckFilter, setDeckFilter] = useState<LibraryDeckFilter>("my");
   const [createOpen, setCreateOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [heroDue, setHeroDue] = useState<number | null>(null);
+  const [dueResolved, setDueResolved] = useState(explicitMain !== null || !userId);
   const [heroPending, setHeroPending] = useState<number | null>(null);
   const [sessionActive, setSessionActive] = useState(false);
   const [autoGenOpen, setAutoGenOpen] = useState(false);
@@ -81,6 +95,9 @@ export function FlashcardsPageClient({
     DEFAULT_FLASHCARD_THEME.config
   );
   const [styleReady, setStyleReady] = useState(false);
+  const explicitMainRef = useRef<MainView | null>(explicitMain);
+  const userSwitchedTabRef = useRef(false);
+  const autoDefaultResolvedRef = useRef(explicitMain !== null);
 
   // Fetch active flashcard style on mount
   useEffect(() => {
@@ -94,25 +111,49 @@ export function FlashcardsPageClient({
       .finally(() => setStyleReady(true));
   }, []);
 
+  const activeScopeDeckId = main === "review" ? scopeDeckId : null;
+
   const refreshDueHero = useCallback(async () => {
-    if (!userId) return;
+    if (!userId) {
+      setDueResolved(true);
+      return;
+    }
     try {
       const params = new URLSearchParams({
         limit: "500",
         userId
       });
-      const deckForHero = main === "review" && scopeDeckId ? scopeDeckId : null;
-      if (deckForHero) {
-        params.set("deckId", deckForHero);
+      if (activeScopeDeckId) {
+        params.set("deckId", activeScopeDeckId);
       }
       const r = await learnerApiFetch(`/api/flashcards/reviews/due?${params.toString()}`);
       if (!r.ok) return;
       const j = (await r.json()) as unknown[];
-      setHeroDue(Array.isArray(j) ? j.length : 0);
+      const dueCount = Array.isArray(j) ? j.length : 0;
+      setHeroDue(dueCount);
+      if (
+        explicitMainRef.current === null &&
+        !userSwitchedTabRef.current &&
+        !autoDefaultResolvedRef.current
+      ) {
+        autoDefaultResolvedRef.current = true;
+        if (dueCount > 0) {
+          setMain("review");
+        }
+      }
     } catch {
       /* keep previous dash */
+    } finally {
+      if (
+        explicitMainRef.current === null &&
+        !userSwitchedTabRef.current &&
+        !autoDefaultResolvedRef.current
+      ) {
+        autoDefaultResolvedRef.current = true;
+      }
+      setDueResolved(true);
     }
-  }, [main, scopeDeckId, userId]);
+  }, [activeScopeDeckId, userId]);
 
   useEffect(() => {
     void refreshDueHero();
@@ -122,6 +163,23 @@ export function FlashcardsPageClient({
     if (!userId) return;
     void queueSizeForUser(userId).then((n) => setHeroPending(n));
   }, [userId, main, deckFilter, createOpen]);
+
+  const revengeLabels = useMemo<Partial<RevengeModeLabels>>(
+    () => ({
+      answerError: flashcardLabels.revengeAnswerError,
+      close: flashcardLabels.revengeClose,
+      completeScore: flashcardLabels.revengeCompleteScore,
+      completeTitle: flashcardLabels.revengeCompleteTitle,
+      loadError: flashcardLabels.revengeLoadError,
+      loading: flashcardLabels.revengeLoading,
+      questionCounter: flashcardLabels.revengeQuestionCounter,
+      retry: flashcardLabels.revengeRetry,
+      startCta: flashcardLabels.revengeStartCta,
+      subtitle: flashcardLabels.revengeSubtitle,
+      title: flashcardLabels.revengeTitle
+    }),
+    [flashcardLabels]
+  );
 
   const railItems = useMemo(
     () => [
@@ -159,26 +217,34 @@ export function FlashcardsPageClient({
     [deckLabels, flashcardLabels]
   );
 
+  const waitingForDefaultTab =
+    explicitMain === null && !dueResolved && !userSwitchedTabRef.current;
+
   const activeRail = useMemo(() => {
+    if (waitingForDefaultTab) return null;
     if (main === "review") return "review" as const;
     if (createOpen) return "create" as const;
     return deckFilter;
-  }, [main, createOpen, deckFilter]);
+  }, [waitingForDefaultTab, main, createOpen, deckFilter]);
 
   useEffect(() => {
-    setMain(initialMain);
-  }, [initialMain]);
+    explicitMainRef.current = explicitMain;
+    if (explicitMain !== null) {
+      autoDefaultResolvedRef.current = true;
+      setMain(explicitMain);
+      setDueResolved(true);
+      return;
+    }
+    if (!autoDefaultResolvedRef.current) {
+      setMain(initialMain);
+    }
+  }, [explicitMain, initialMain]);
 
   const syncTabToUrl = useCallback(
     (next: MainView) => {
       const p = new URLSearchParams(searchParams.toString());
-      if (next === "review") {
-        p.set("tab", "review");
-        p.delete("deckId");
-      } else {
-        p.delete("tab");
-        p.delete("deckId");
-      }
+      p.set("tab", next);
+      p.delete("deckId");
       const q = p.toString();
       router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
     },
@@ -186,6 +252,9 @@ export function FlashcardsPageClient({
   );
 
   const selectRail = (id: (typeof railItems)[number]["id"]) => {
+    userSwitchedTabRef.current = true;
+    autoDefaultResolvedRef.current = true;
+    setDueResolved(true);
     if (id === "review") {
       setMain("review");
       syncTabToUrl("review");
@@ -204,7 +273,7 @@ export function FlashcardsPageClient({
     }
   };
 
-  const showLibrarySearch = main === "library";
+  const showLibrarySearch = !waitingForDefaultTab && main === "library";
 
   return (
     <main className="w-full space-y-5 pb-[calc(4rem+env(safe-area-inset-bottom))]">
@@ -256,7 +325,7 @@ export function FlashcardsPageClient({
               {flashcardLabels.stylePickerTitle}
             </button>
           </div>
-          {main === "library" && !createOpen ? (
+          {!waitingForDefaultTab && main === "library" && !createOpen ? (
             <AdSlot labels={adLabels} locale={locale} placementCode="flashcard_library_inline" />
           ) : null}
         </div>
@@ -386,63 +455,73 @@ export function FlashcardsPageClient({
         </aside>
 
         <div className="min-w-0 space-y-4">
-          <SectionHeader
-            title={
-              main === "review"
-                ? (flashcardLabels.libraryNavReview ?? flashcardLabels.reviewTab)
-                : (flashcardLabels.libraryNavDecks ?? deckLabels.title)
-            }
-            description={
-              main === "review"
-                ? flashcardLabels.libraryReviewDescription
-                : flashcardLabels.libraryDecksDescription
-            }
-            actions={
-              main === "library" ? (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  type="button"
-                  onClick={() => selectRail("review")}
-                >
-                  <IconReview aria-hidden size={16} />
-                  {flashcardLabels.libraryNavReview ?? flashcardLabels.reviewTab}
-                </Button>
-              ) : undefined
-            }
-          />
+          {!waitingForDefaultTab ? (
+            <SectionHeader
+              title={
+                main === "review"
+                  ? (flashcardLabels.libraryNavReview ?? flashcardLabels.reviewTab)
+                  : (flashcardLabels.libraryNavDecks ?? deckLabels.title)
+              }
+              description={
+                main === "review"
+                  ? flashcardLabels.libraryReviewDescription
+                  : flashcardLabels.libraryDecksDescription
+              }
+              actions={
+                main === "library" ? (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    type="button"
+                    onClick={() => selectRail("review")}
+                  >
+                    <IconReview aria-hidden size={16} />
+                    {flashcardLabels.libraryNavReview ?? flashcardLabels.reviewTab}
+                  </Button>
+                ) : undefined
+              }
+            />
+          ) : null}
           <div
-            aria-labelledby={`${tabListId}-${activeRail}`}
+            aria-labelledby={activeRail ? `${tabListId}-${activeRail}` : undefined}
             className="min-h-[12rem] rounded-2xl border border-ink/10 bg-surface p-3 sm:p-4"
-            id={`${tabListId}-${activeRail}-panel`}
+            id={activeRail ? `${tabListId}-${activeRail}-panel` : `${tabListId}-loading-panel`}
             role="tabpanel"
           >
-            {main === "review" ? (
-              <div className="mx-auto flex max-w-lg flex-col items-center gap-5 px-3 py-10 text-center sm:py-14">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-leaf/20 bg-leaf-soft text-leaf-strong">
-                  <IconReview aria-hidden size={30} />
+            {waitingForDefaultTab ? (
+              <div
+                aria-busy="true"
+                className="min-h-[12rem] animate-pulse rounded-xl bg-paper/70"
+              />
+            ) : main === "review" ? (
+              <div className="space-y-4">
+                <RevengeModeWidget labels={revengeLabels} locale={locale} />
+                <div className="mx-auto flex max-w-lg flex-col items-center gap-5 px-3 py-10 text-center sm:py-14">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-leaf/20 bg-leaf-soft text-leaf-strong">
+                    <IconReview aria-hidden size={30} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold tracking-tight text-ink">
+                      {reviewSessionLabels.entryTitle}
+                    </h3>
+                    <p className="mt-2 text-sm leading-relaxed text-muted">
+                      {heroDue !== null
+                        ? reviewSessionLabels.entrySubtitle.replace("{n}", String(heroDue))
+                        : reviewSessionLabels.loadingCards}
+                    </p>
+                  </div>
+                  <button
+                    className="inline-flex min-h-12 items-center justify-center rounded-xl bg-ink px-7 text-sm font-bold text-surface outline-none ring-offset-2 transition-colors hover:bg-ink/90 focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-wait disabled:opacity-55"
+                    disabled={!styleReady}
+                    onClick={() => setSessionActive(true)}
+                    type="button"
+                  >
+                    {reviewSessionLabels.startSession}
+                    <span aria-hidden className="ml-2">
+                      →
+                    </span>
+                  </button>
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold tracking-tight text-ink">
-                    {reviewSessionLabels.entryTitle}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted">
-                    {heroDue !== null
-                      ? reviewSessionLabels.entrySubtitle.replace("{n}", String(heroDue))
-                      : reviewSessionLabels.loadingCards}
-                  </p>
-                </div>
-                <button
-                  className="inline-flex min-h-12 items-center justify-center rounded-xl bg-ink px-7 text-sm font-bold text-surface outline-none ring-offset-2 transition-colors hover:bg-ink/90 focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-wait disabled:opacity-55"
-                  disabled={!styleReady}
-                  onClick={() => setSessionActive(true)}
-                  type="button"
-                >
-                  {reviewSessionLabels.startSession}
-                  <span aria-hidden className="ml-2">
-                    →
-                  </span>
-                </button>
               </div>
             ) : (
               <DeckBrowser
@@ -453,6 +532,8 @@ export function FlashcardsPageClient({
                 onCreateModeChange={setCreateOpen}
                 onDeckCreated={async ({ startReview }) => {
                   if (startReview) {
+                    userSwitchedTabRef.current = true;
+                    setDueResolved(true);
                     setCreateOpen(false);
                     setMain("review");
                     syncTabToUrl("review");

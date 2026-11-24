@@ -958,7 +958,18 @@
       "ocean-calm": "Xanh dịu, thoáng và dễ đọc.",
       "gold-calligraphy": "Tông mực đen và vàng trang nhã."
     },
-    "easy": "Dễ"
+    "easy": "Dễ",
+    "revengeAnswerError": "Chưa thể gửi câu trả lời. Vui lòng thử lại.",
+    "revengeClose": "Đóng",
+    "revengeCompleteScore": "Đúng {correct}/{total} câu ({percent}%)",
+    "revengeCompleteTitle": "Hoàn thành lượt ôn câu sai!",
+    "revengeLoadError": "Chưa thể tải danh sách câu làm sai. Vui lòng thử lại.",
+    "revengeLoading": "Đang tải câu làm sai...",
+    "revengeQuestionCounter": "Câu {current}/{total}",
+    "revengeRetry": "Thử lại",
+    "revengeStartCta": "Ôn lại ngay",
+    "revengeSubtitle": "{count} câu sai gần đây. Thử lại để ghi nhớ chắc hơn!",
+    "revengeTitle": "Ôn lại câu BJT làm sai"
   },
   "decks": {
     "title": "Bộ thẻ",
