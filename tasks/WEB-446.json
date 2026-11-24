@@ -2,7 +2,7 @@
   "schema": "nihongo-task/1",
   "id": "WEB-446",
   "title": "Consolidate Tra cứu single search hub with inline Saved tab and list-page redirects",
-  "start_head": "7d8411d9d99df274ace0d58717b7456cf5c41c87",
+  "start_head": "0f64852276d1966bf7619f739efcf23433c855cd",
   "preexisting_changes": {
     ".build/.buildSystem_debug": "c337257139e569398ce8bf081a54dbc7d1e0267d",
     ".build/CACHEDIR.TAG": "b7ab0d883e974d20c05898291a6218954e18e5ef"
@@ -114,6 +114,21 @@
       "state": "CLOSED",
       "at": "2026-11-24T13:42:18.594Z",
       "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-24T14:40:58.502Z",
+      "head": "8f66a8a59d178dc12ac1b15a680195bac8800916"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-24T14:43:42.945Z",
+      "head": "8f66a8a59d178dc12ac1b15a680195bac8800916"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-24T14:43:57.368Z",
+      "head": "8f66a8a59d178dc12ac1b15a680195bac8800916"
     }
   ],
   "evidence": [
@@ -438,12 +453,84 @@
       "output_sha256": "3c5f27f822310db58427bdd41c50754bc1713f8950afabd41f08e0ad179db9d8",
       "attested": true,
       "fingerprint": "8fd74b1b999638296435366e016bf0359a9253f52fb80537650c2797c0aa9a26"
+    },
+    {
+      "seq": 9,
+      "at": "2026-11-24T14:40:57.496Z",
+      "head": "8f66a8a59d178dc12ac1b15a680195bac8800916",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/search/reference-redirects.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/sitemap.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > renders the Saved tab inline when opened with ?tab=saved without nested main or duplicate h1",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > switches inline to the Saved tab when clicking the Đã lưu pill and returns to search on kind pill click",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > accepts ?kind=lexeme as a filter alias alongside ?scope=lexeme on mount",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/reference-redirects.test.ts::Reference list-page redirects and detail-page preservation (WEB-446) > redirects /dictionary, /kanji, /grammar, /saved, and /search/history list pages to /{locale}/search across vi, ja, and en",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/sitemap.test.ts::sitemap metadata > lists all 12 public routes across vi, ja, and en locales using canonical base URL",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx::SearchDetailPanel reference CTAs > links the saved-items shortcut directly to /{locale}/search?tab=saved",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "7e5f29031cfb61f0c9cb25681aea95a7373178312dabaddc540eba0bbb62920d"
+    },
+    {
+      "seq": 10,
+      "at": "2026-11-24T14:43:42.177Z",
+      "head": "8f66a8a59d178dc12ac1b15a680195bac8800916",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 759,
+        "executed": 759,
+        "passed": 759,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 917,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "7e5f29031cfb61f0c9cb25681aea95a7373178312dabaddc540eba0bbb62920d"
     }
   ],
   "closed": {
-    "at": "2026-11-24T13:42:18.588Z",
-    "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87",
-    "fingerprint": "8fd74b1b999638296435366e016bf0359a9253f52fb80537650c2797c0aa9a26",
+    "at": "2026-11-24T14:43:57.357Z",
+    "head": "8f66a8a59d178dc12ac1b15a680195bac8800916",
+    "fingerprint": "7e5f29031cfb61f0c9cb25681aea95a7373178312dabaddc540eba0bbb62920d",
     "status": "VERIFIED",
     "gates": {
       "acceptance": "PASS",
@@ -467,11 +554,11 @@
       "apps/web/app/[locale]/search/history/page.tsx": "68134c7d2c3f459d88cdfe5b08d2277f19b71929",
       "apps/web/app/[locale]/search/page.tsx": "4bcf73715492b9c1815bc4362330ddb5131be7c7",
       "apps/web/app/[locale]/search/reference-redirects.test.ts": "1e766e391fa0cd548d19992b683908d490e90f45",
-      "apps/web/app/sitemap.test.ts": "dedd9edb6e43b64310b799ce7d36fc3b4c91be75",
+      "apps/web/app/sitemap.test.ts": "ac913fadcfa271b1f167b2817ef28c46655fdafd",
       "apps/web/app/sitemap.ts": "d5ac86c99c487ad5d68e4e27168efd6bcde75d91",
-      "apps/web/messages/en.json": "b675bc1b68a02c57f025bfb17cc3cdbf99aff3a4",
-      "apps/web/messages/ja.json": "4936257a29a16887c3ee0fb7314a1511a43721be",
-      "apps/web/messages/vi.json": "53ff7590393dcf10991b8f8e46521dd72227d318"
+      "apps/web/messages/en.json": "be56297de53204c4948738fb357f8bb02c539d3a",
+      "apps/web/messages/ja.json": "7353da378c308ba60c1555eb7cf2397a65322d98",
+      "apps/web/messages/vi.json": "ae460e1919c32658afd472272472e04deafc717c"
     }
   },
   "execution": {
