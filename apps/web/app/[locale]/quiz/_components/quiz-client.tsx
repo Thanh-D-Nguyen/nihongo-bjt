@@ -21,6 +21,7 @@ import { learnerApiFetch } from "../../../../lib/learner-api";
 import { ShareDrawer } from "../../_components/share-drawer";
 import { BjtAudioPlayer, isAudioSection } from "./bjt-audio-player";
 import { BjtFormatGuidePanel } from "./bjt-format-guide";
+import { PracticeModeTabs, type PracticeModeTabsLabels } from "./practice-mode-tabs";
 import { QuizResultsBreakdown } from "./quiz-results-breakdown";
 
 /** Animated number hook for count-up effects */
@@ -397,11 +398,13 @@ interface SessionHistoryItem {
 export function QuizClient({
   focusMode = false,
   labels,
-  locale = "vi"
+  locale = "vi",
+  practiceModeLabels
 }: {
   focusMode?: boolean;
   labels: QuizLabels;
   locale?: string;
+  practiceModeLabels?: PracticeModeTabsLabels;
 }) {
   const router = useRouter();
   const [error, setError] = useState(false);
@@ -873,6 +876,11 @@ export function QuizClient({
           : "w-full space-y-6 pb-12 sm:pb-16"
       }
     >
+      {/* Shared Luyện thi mode switcher */}
+      {showHub && !focusMode && (
+        <PracticeModeTabs activeMode="quiz" labels={practiceModeLabels} locale={locale} />
+      )}
+
       {/* Header */}
       {showHub && (
         <PageHeader

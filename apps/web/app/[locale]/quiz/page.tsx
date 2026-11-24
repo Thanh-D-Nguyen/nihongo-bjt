@@ -23,7 +23,7 @@ export default async function QuizPage({
 
   return (
     <RequireAuth locale={locale}>
-      <QuizClient labels={t.quiz} locale={locale} />
+      <QuizClient labels={t.quiz} locale={locale} practiceModeLabels={t.practiceModes} />
     </RequireAuth>
   );
 }

@@ -13,6 +13,10 @@ import {
   speakJapanese
 } from "../../../../lib/japanese-speech";
 import { learnerApiFetch } from "../../../../lib/learner-api";
+import {
+  PracticeModeTabs,
+  type PracticeModeTabsLabels
+} from "../../quiz/_components/practice-mode-tabs";
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
 
@@ -152,10 +156,12 @@ const FILTER_TO_TYPES: Record<string, readonly string[]> = {
 
 export function ExercisesPageClient({
   labels,
-  locale
+  locale,
+  practiceModeLabels
 }: {
   labels: ExercisesLabels;
   locale: string;
+  practiceModeLabels?: PracticeModeTabsLabels;
 }) {
 
   const [phase, setPhase] = useState<Phase>("setup");
@@ -377,6 +383,12 @@ export function ExercisesPageClient({
   if (loading) {
     return (
       <div className="mx-auto w-full max-w-4xl px-3 py-6 sm:px-5">
+        <PracticeModeTabs
+          activeMode="exercises"
+          className="mb-5"
+          labels={practiceModeLabels}
+          locale={locale}
+        />
         <PageHeader eyebrow={labels.eyebrow} title={labels.title} />
         <div className="mt-6 space-y-4" aria-busy="true">
           {/* Shimmer skeletons matching setup layout */}
@@ -402,6 +414,14 @@ export function ExercisesPageClient({
 
   return (
     <div className="mx-auto w-full max-w-4xl px-3 py-6 sm:px-5">
+      {phase === "setup" && (
+        <PracticeModeTabs
+          activeMode="exercises"
+          className="mb-5"
+          labels={practiceModeLabels}
+          locale={locale}
+        />
+      )}
       <PageHeader eyebrow={labels.eyebrow} title={labels.title} description={labels.subtitle} />
 
       {error && (
