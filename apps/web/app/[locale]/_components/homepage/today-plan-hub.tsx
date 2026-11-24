@@ -21,6 +21,7 @@ type TodayPlanHubProps = {
   hub: DailyHubPayload | null;
   hubError: boolean;
   hubReady: boolean;
+  isLoggedIn?: boolean;
   isOffline: boolean;
   labels: HomepageLabels;
   locale: string;
@@ -143,13 +144,90 @@ export function TodayPlanHub({
   hub,
   hubError,
   hubReady,
+  isLoggedIn = true,
   isOffline,
   labels,
   locale,
   onRetry
 }: TodayPlanHubProps) {
   const copy = labels.todayPlan;
+
+  if (!isLoggedIn) {
+    const steps = [
+      { sub: copy.guestStep1Sub, title: copy.guestStep1Title },
+      { sub: copy.guestStep2Sub, title: copy.guestStep2Title },
+      { sub: copy.guestStep3Sub, title: copy.guestStep3Title }
+    ];
+
+    return (
+      <section className="mx-auto w-full max-w-[1280px]" aria-labelledby="today-plan-heading">
+        <div className="rounded-xl bg-border p-1 shadow-sm">
+          <article className="relative overflow-hidden rounded-[calc(var(--radius-xl)-4px)] bg-[var(--color-brand-panel)] px-5 py-7 text-white sm:px-8 sm:py-10">
+            <div
+              aria-hidden="true"
+              className="absolute -right-16 -top-20 size-56 rounded-full border border-white/10"
+            />
+            <div
+              aria-hidden="true"
+              className="absolute -right-6 -top-8 size-32 rounded-full border border-white/10"
+            />
+            <div className="relative max-w-2xl">
+              <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-blue-100 ring-1 ring-white/15">
+                {copy.guestEyebrow}
+              </span>
+              <h1
+                className="mt-4 text-2xl font-bold leading-snug text-white sm:text-3xl"
+                id="today-plan-heading"
+              >
+                {copy.guestTitle}
+              </h1>
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-blue-100/85 sm:text-base">
+                {copy.guestSub}
+              </p>
+              <div className="mt-7 flex flex-wrap items-center gap-3">
+                <Link
+                  className="group inline-flex min-h-12 items-center gap-3 rounded-full bg-white py-1.5 pl-5 pr-1.5 text-sm font-bold text-[#1B2A4A] shadow-[0_8px_24px_rgba(4,11,27,0.18)] transition-[transform,box-shadow] duration-300 ease-[var(--ease-expo)] hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(4,11,27,0.24)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1B2A4A] active:translate-y-0 dark:bg-white dark:text-[#1B2A4A]"
+                  href={`/${locale}/levels`}
+                >
+                  {copy.guestPrimaryCta}
+                  <span className="grid size-9 place-items-center rounded-full bg-[#1B2A4A] text-white transition-transform duration-300 ease-[var(--ease-expo)] group-hover:translate-x-0.5">
+                    <ArrowIcon className="size-4" />
+                  </span>
+                </Link>
+                <Link
+                  className="inline-flex min-h-11 items-center rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  href={`/${locale}/register`}
+                >
+                  {copy.guestRegisterCta}
+                </Link>
+                <Link
+                  className="inline-flex min-h-11 items-center rounded-full px-3 py-2 text-sm font-semibold text-blue-100 underline decoration-white/35 underline-offset-4 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  href={`/${locale}/login`}
+                >
+                  {copy.guestLoginCta}
+                </Link>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <ol className="mt-4 grid gap-3 sm:grid-cols-3">
+          {steps.map((step) => (
+            <li
+              className="rounded-xl bg-surface px-4 py-4 shadow-xs ring-1 ring-border sm:px-5"
+              key={step.title}
+            >
+              <p className="text-sm font-bold text-ink">{step.title}</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted">{step.sub}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+    );
+  }
+
   const dueCount = hub?.dueReviews ?? 0;
+  const hasDueReviews = dueCount > 0;
   const hasCompletedSessions = Boolean(
     (analytics?.totals.completedSessions ?? 0) > 0 ||
       (analytics?.totals.completedBjtSessions ?? 0) > 0 ||
@@ -300,23 +378,36 @@ export function TodayPlanHub({
               />
               <div className="relative max-w-2xl">
                 <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-blue-100 ring-1 ring-white/15">
-                  {copy.primaryEyebrow}
+                  {hasDueReviews ? copy.primaryDueEyebrow : copy.primaryEyebrow}
                 </span>
                 <h2 className="mt-5 text-xl font-bold leading-snug sm:text-2xl">
-                  {copy.primaryTitle}
+                  {hasDueReviews
+                    ? copy.primaryDueTitle.replace("{count}", String(dueCount))
+                    : copy.primaryTitle}
                 </h2>
                 <p className="mt-2 max-w-xl text-sm leading-relaxed text-blue-100/80">
-                  {copy.primarySub}
+                  {hasDueReviews ? copy.primaryDueSub : copy.primarySub}
                 </p>
-                <Link
-                  className="group mt-7 inline-flex min-h-12 items-center gap-3 rounded-full bg-white py-1.5 pl-5 pr-1.5 text-sm font-bold text-[#1B2A4A] shadow-[0_8px_24px_rgba(4,11,27,0.18)] transition-[transform,box-shadow] duration-300 ease-[var(--ease-expo)] hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(4,11,27,0.24)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1B2A4A] active:translate-y-0 dark:bg-white dark:text-[#1B2A4A]"
-                  href={`/${locale}/levels`}
-                >
-                  {copy.primaryCta}
-                  <span className="grid size-9 place-items-center rounded-full bg-[#1B2A4A] text-white transition-transform duration-300 ease-[var(--ease-expo)] group-hover:translate-x-0.5">
-                    <ArrowIcon className="size-4" />
-                  </span>
-                </Link>
+                <div className="mt-7 flex flex-wrap items-center gap-3">
+                  <Link
+                    className="group inline-flex min-h-12 items-center gap-3 rounded-full bg-white py-1.5 pl-5 pr-1.5 text-sm font-bold text-[#1B2A4A] shadow-[0_8px_24px_rgba(4,11,27,0.18)] transition-[transform,box-shadow] duration-300 ease-[var(--ease-expo)] hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(4,11,27,0.24)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1B2A4A] active:translate-y-0 dark:bg-white dark:text-[#1B2A4A]"
+                    href={hasDueReviews ? `/${locale}/flashcards?tab=review` : `/${locale}/quiz`}
+                  >
+                    {hasDueReviews ? copy.primaryDueCta : copy.primaryQuizCta}
+                    <span className="grid size-9 place-items-center rounded-full bg-[#1B2A4A] text-white transition-transform duration-300 ease-[var(--ease-expo)] group-hover:translate-x-0.5">
+                      <ArrowIcon className="size-4" />
+                    </span>
+                  </Link>
+                  {!hasDueReviews ? (
+                    <Link
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                      href={`/${locale}/levels`}
+                    >
+                      {copy.secondaryLevelsCta}
+                      <ArrowIcon className="size-4" />
+                    </Link>
+                  ) : null}
+                </div>
               </div>
             </article>
           </div>
@@ -328,7 +419,7 @@ export function TodayPlanHub({
                 "{count}",
                 String(dueCount)
               )}
-              href={`/${locale}/flashcards`}
+              href={`/${locale}/flashcards?tab=review`}
               title={
                 dueCount > 0
                   ? copy.reviewTitle.replace("{count}", String(dueCount))
@@ -337,11 +428,22 @@ export function TodayPlanHub({
             />
             <ActionCard
               accentClassName="bg-warning"
-              description={copy.remediationSub}
-              href={`/${locale}/review-inbox-preview`}
-              title={copy.remediationTitle}
+              description={copy.mistakeReviewSub}
+              href={`/${locale}/quiz`}
+              title={copy.mistakeReviewTitle}
             />
           </div>
+
+          <Link
+            className="group flex min-h-11 items-center justify-between gap-3 rounded-xl bg-surface px-4 py-3 text-sm text-ink shadow-xs ring-1 ring-border transition-colors hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus sm:px-5"
+            href={`/${locale}/scenarios`}
+          >
+            <span className="min-w-0">
+              <span className="font-semibold text-ink">{copy.scenariosTitle}</span>
+              <span className="hidden text-muted sm:inline"> · {copy.scenariosSub}</span>
+            </span>
+            <ArrowIcon className="size-4 shrink-0 text-muted transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-ink" />
+          </Link>
         </div>
 
         <aside
@@ -388,40 +490,6 @@ export function TodayPlanHub({
               )}
             </p>
             <p className="mt-2 text-xs leading-relaxed text-muted">{copy.dailyPhraseMeaning}</p>
-          </SnapshotRow>
-
-          <SnapshotRow
-            className="border-t border-border"
-            label={locale === "ja" ? "クイック辞書" : locale === "en" ? "Quick Reference" : "Tra cứu nhanh"}
-          >
-            <div className="mt-2.5 flex flex-wrap gap-2">
-              {[
-                {
-                  href: `/${locale}/dictionary`,
-                  label: locale === "ja" ? "辞書" : locale === "en" ? "Dictionary" : "Từ điển"
-                },
-                {
-                  href: `/${locale}/kanji`,
-                  label: "Kanji"
-                },
-                {
-                  href: `/${locale}/grammar`,
-                  label: locale === "ja" ? "文法" : locale === "en" ? "Grammar" : "Ngữ pháp"
-                },
-                {
-                  href: `/${locale}/saved`,
-                  label: locale === "ja" ? "保存済み" : locale === "en" ? "Saved" : "Đã lưu"
-                }
-              ].map((refItem) => (
-                <Link
-                  className="inline-flex min-h-9 items-center rounded-lg border border-border bg-paper px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-accent/40 hover:bg-surface hover:text-accent"
-                  href={refItem.href}
-                  key={refItem.href}
-                >
-                  {refItem.label}
-                </Link>
-              ))}
-            </div>
           </SnapshotRow>
         </aside>
       </div>

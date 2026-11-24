@@ -103,4 +103,55 @@ describe("TodayPlanHub", () => {
     expect(html).toContain("Không tải được hôm nay.");
     expect(html).toContain("Thử lại");
   });
+
+  it("renders a focused BJT positioning hero and 3-step core loop for signed-out guests without zero stats or snapshot aside", () => {
+    const html = renderToStaticMarkup(<TodayPlanHub {...baseProps} isLoggedIn={false} />);
+
+    expect(html, "guest hero must link primary CTA to /vi/levels").toContain('href="/vi/levels"');
+    expect(html, "guest hero must offer register and login actions").toContain('href="/vi/register"');
+    expect(html, "guest hero must offer login link").toContain('href="/vi/login"');
+    expect(html, "guest hero must not render zero-stat strip").not.toContain(
+      viMessages.homepage.todayPlan.statStreak
+    );
+    expect(html, "guest hero must not render snapshot aside").not.toContain(
+      viMessages.homepage.todayPlan.snapshotLabel
+    );
+  });
+
+  it("adapts signed-in primary hero CTA to /flashcards?tab=review when dueReviews > 0", () => {
+    const html = renderToStaticMarkup(
+      <TodayPlanHub {...baseProps} isLoggedIn hub={{ ...hub, dueReviews: 12 }} />
+    );
+
+    expect(html, "signed-in due hero CTA must target /vi/flashcards?tab=review").toContain(
+      'href="/vi/flashcards?tab=review"'
+    );
+  });
+
+  it("adapts signed-in calm primary CTA to /quiz with secondary /levels link and replaces /review-inbox-preview with /quiz and /scenarios", () => {
+    const html = renderToStaticMarkup(
+      <TodayPlanHub {...baseProps} isLoggedIn hub={{ ...hub, dueReviews: 0 }} />
+    );
+
+    expect(html, "calm hero must route primary CTA to /vi/quiz").toContain('href="/vi/quiz"');
+    expect(html, "calm hero must keep secondary link to /vi/levels").toContain('href="/vi/levels"');
+    expect(html, "review action card must target /vi/flashcards?tab=review").toContain(
+      'href="/vi/flashcards?tab=review"'
+    );
+    expect(html, "homepage must surface workplace scenarios link").toContain(
+      'href="/vi/scenarios"'
+    );
+    expect(html, "homepage must not link to /review-inbox-preview").not.toContain(
+      "/review-inbox-preview"
+    );
+  });
+
+  it("removes the redundant Tra cứu nhanh quick-reference row from the signed-in snapshot aside", () => {
+    const html = renderToStaticMarkup(<TodayPlanHub {...baseProps} isLoggedIn />);
+
+    expect(html, "TodayPlanHub aside must omit redundant Tra cứu nhanh row").not.toContain(
+      "Tra cứu nhanh"
+    );
+    expect(html).not.toContain('href="/vi/dictionary"');
+  });
 });
