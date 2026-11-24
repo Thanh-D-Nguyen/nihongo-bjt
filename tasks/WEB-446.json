@@ -1,0 +1,481 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-446",
+  "title": "Consolidate Tra cứu single search hub with inline Saved tab and list-page redirects",
+  "start_head": "7d8411d9d99df274ace0d58717b7456cf5c41c87",
+  "preexisting_changes": {
+    ".build/.buildSystem_debug": "c337257139e569398ce8bf081a54dbc7d1e0267d",
+    ".build/CACHEDIR.TAG": "b7ab0d883e974d20c05898291a6218954e18e5ef"
+  },
+  "spec": {
+    "problem": "Reference discovery is fragmented across /search, /dictionary, /kanji, /grammar, /saved, and /search/history, forcing learners to jump between separate pages and exposing duplicate redirecting list routes in sitemap.xml.",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "1. /{locale}/search adds a localized Saved tab pill ('Đã lưu'/'Saved'/'保存済み') alongside All/Vocabulary/Kanji/Grammar/Examples/BJT lessons that renders SavedPageClient inline (embedded mode, no nested main/h1, same bookmarks APIs, URL synced via ?tab=saved) and reads both ?scope= and ?kind= filter params on mount. 2. List pages server-redirect under Strategy (a) (keeping client components on disk): /{locale}/dictionary -> /{locale}/search?scope=lexeme, /{locale}/kanji -> /{locale}/search?scope=kanji, /{locale}/grammar -> /{locale}/search?scope=grammar, /{locale}/saved -> /{locale}/search?tab=saved, /{locale}/search/history -> /{locale}/search. 3. Detail pages (/dictionary/[id], /kanji/[id], /grammar/[id]) and /exercises remain untouched and render directly; detail page Back links and SearchDetailPanel saved-list link point directly to /{locale}/search?... without redirect hops. 4. app/sitemap.ts removes redirecting list routes (dictionary, kanji, grammar, saved, search/history) and indexes search; app/sitemap.test.ts updated per Policy §5 because the canonical public route list intentionally changed from 14 to 12 routes when dictionary/kanji/grammar became server redirects into /search."
+      }
+    ],
+    "expected_behavior": "",
+    "observed_behavior": "",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "modify",
+    "rationale": "Web-only Next.js App Router UI consolidation, i18n, server redirects, and sitemap update across /search, /saved, /dictionary, /kanji, /grammar, and /search/history with zero backend, database, auth, or shared-package changes."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx",
+      "test": "SearchClient inline Saved tab and filter alias (WEB-446) > renders the Saved tab inline when opened with ?tab=saved without nested main or duplicate h1",
+      "expect": "inline saved tab must display resolved bookmarked item"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx",
+      "test": "SearchClient inline Saved tab and filter alias (WEB-446) > switches inline to the Saved tab when clicking the Đã lưu pill and returns to search on kind pill click",
+      "expect": "search filter bar must include the Saved tab pill"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx",
+      "test": "SearchClient inline Saved tab and filter alias (WEB-446) > accepts ?kind=lexeme as a filter alias alongside ?scope=lexeme on mount",
+      "expect": "vocabulary filter pill must be active when ?kind=lexeme is in URL"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/search/reference-redirects.test.ts",
+      "test": "Reference list-page redirects and detail-page preservation (WEB-446) > redirects /dictionary, /kanji, /grammar, /saved, and /search/history list pages to /{locale}/search across vi, ja, and en",
+      "expect": "instead of rejecting"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/sitemap.test.ts",
+      "test": "sitemap metadata > lists all 12 public routes across vi, ja, and en locales using canonical base URL",
+      "expect": "sitemap must exclude redirected /dictionary route"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx",
+      "test": "SearchDetailPanel reference CTAs > links the saved-items shortcut directly to /{locale}/search?tab=saved",
+      "expect": "saved-list shortcut must open inline Saved tab directly"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-24T13:10:44.882Z",
+      "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-24T13:10:45.185Z",
+      "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-24T13:10:45.459Z",
+      "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-24T13:12:47.195Z",
+      "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-24T13:15:53.045Z",
+      "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-24T13:19:47.814Z",
+      "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-24T13:30:33.079Z",
+      "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-24T13:32:18.183Z",
+      "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-24T13:42:18.594Z",
+      "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-24T13:12:11.881Z",
+      "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/search/reference-redirects.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/sitemap.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > renders the Saved tab inline when opened with ?tab=saved without nested main or duplicate h1",
+          "outcome": "FAIL",
+          "excerpt": "expected 'Tìm nhanh nội dung họcTừ khóa tìm kiế…' to contain 'Mở trong tra cứu'",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"inline saved tab must display resolved bookmarked item\""
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > switches inline to the Saved tab when clicking the Đã lưu pill and returns to search on kind pill click",
+          "outcome": "FAIL",
+          "excerpt": "search filter bar must include the Saved tab pill: expected undefined to be defined",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > accepts ?kind=lexeme as a filter alias alongside ?scope=lexeme on mount",
+          "outcome": "FAIL",
+          "excerpt": "vocabulary filter pill must be active when ?kind=lexeme is in URL: expected null to be 'true' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/reference-redirects.test.ts::Reference list-page redirects and detail-page preservation (WEB-446) > redirects /dictionary, /kanji, /grammar, /saved, and /search/history list pages to /{locale}/search across vi, ja, and en",
+          "outcome": "FAIL",
+          "excerpt": "promise resolved \"{ …(10) }\" instead of rejecting",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/sitemap.test.ts::sitemap metadata > lists all 12 public routes across vi, ja, and en locales using canonical base URL",
+          "outcome": "FAIL",
+          "excerpt": "sitemap must exclude redirected /dictionary route: expected [ 'https://kiokoto.com/vi', …(41) ] to not include 'https://kiokoto.com/vi/dictionary'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx::SearchDetailPanel reference CTAs > links the saved-items shortcut directly to /{locale}/search?tab=saved",
+          "outcome": "FAIL",
+          "excerpt": "saved-list shortcut must open inline Saved tab directly: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > renders the Saved tab inline when opened with ?tab=saved without nested main or duplicate h1": "inline saved tab must display resolved bookmarked item",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > switches inline to the Saved tab when clicking the Đã lưu pill and returns to search on kind pill click": "search filter bar must include the Saved tab pill",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > accepts ?kind=lexeme as a filter alias alongside ?scope=lexeme on mount": "vocabulary filter pill must be active when ?kind=lexeme is in URL",
+        "vitest:apps/web/app/[locale]/search/reference-redirects.test.ts::Reference list-page redirects and detail-page preservation (WEB-446) > redirects /dictionary, /kanji, /grammar, /saved, and /search/history list pages to /{locale}/search across vi, ja, and en": "instead of rejecting",
+        "vitest:apps/web/app/sitemap.test.ts::sitemap metadata > lists all 12 public routes across vi, ja, and en locales using canonical base URL": "sitemap must exclude redirected /dictionary route",
+        "vitest:apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx::SearchDetailPanel reference CTAs > links the saved-items shortcut directly to /{locale}/search?tab=saved": "saved-list shortcut must open inline Saved tab directly"
+      },
+      "fingerprint": "3a128bef3ec886c5f1f30822f7096d56ec1bade6a9adb72b82543624730bc268"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-24T13:12:46.944Z",
+      "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/search/reference-redirects.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/sitemap.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > renders the Saved tab inline when opened with ?tab=saved without nested main or duplicate h1",
+          "outcome": "FAIL",
+          "excerpt": "inline saved tab must display resolved bookmarked item: expected 'Tìm nhanh nội dung họcTừ khóa tìm kiế…' to contain '稟議書'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > switches inline to the Saved tab when clicking the Đã lưu pill and returns to search on kind pill click",
+          "outcome": "FAIL",
+          "excerpt": "search filter bar must include the Saved tab pill: expected undefined to be defined",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > accepts ?kind=lexeme as a filter alias alongside ?scope=lexeme on mount",
+          "outcome": "FAIL",
+          "excerpt": "vocabulary filter pill must be active when ?kind=lexeme is in URL: expected null to be 'true' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/reference-redirects.test.ts::Reference list-page redirects and detail-page preservation (WEB-446) > redirects /dictionary, /kanji, /grammar, /saved, and /search/history list pages to /{locale}/search across vi, ja, and en",
+          "outcome": "FAIL",
+          "excerpt": "promise resolved \"{ …(10) }\" instead of rejecting",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/sitemap.test.ts::sitemap metadata > lists all 12 public routes across vi, ja, and en locales using canonical base URL",
+          "outcome": "FAIL",
+          "excerpt": "sitemap must exclude redirected /dictionary route: expected [ 'https://kiokoto.com/vi', …(41) ] to not include 'https://kiokoto.com/vi/dictionary'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx::SearchDetailPanel reference CTAs > links the saved-items shortcut directly to /{locale}/search?tab=saved",
+          "outcome": "FAIL",
+          "excerpt": "saved-list shortcut must open inline Saved tab directly: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > renders the Saved tab inline when opened with ?tab=saved without nested main or duplicate h1": "inline saved tab must display resolved bookmarked item",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > switches inline to the Saved tab when clicking the Đã lưu pill and returns to search on kind pill click": "search filter bar must include the Saved tab pill",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > accepts ?kind=lexeme as a filter alias alongside ?scope=lexeme on mount": "vocabulary filter pill must be active when ?kind=lexeme is in URL",
+        "vitest:apps/web/app/[locale]/search/reference-redirects.test.ts::Reference list-page redirects and detail-page preservation (WEB-446) > redirects /dictionary, /kanji, /grammar, /saved, and /search/history list pages to /{locale}/search across vi, ja, and en": "instead of rejecting",
+        "vitest:apps/web/app/sitemap.test.ts::sitemap metadata > lists all 12 public routes across vi, ja, and en locales using canonical base URL": "sitemap must exclude redirected /dictionary route",
+        "vitest:apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx::SearchDetailPanel reference CTAs > links the saved-items shortcut directly to /{locale}/search?tab=saved": "saved-list shortcut must open inline Saved tab directly"
+      },
+      "fingerprint": "e050d5013d0b2455c5ad930280d1a640fa2cdf99651a79e0eba37877bb5cdd2e"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-24T13:15:52.426Z",
+      "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/search/reference-redirects.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/sitemap.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > renders the Saved tab inline when opened with ?tab=saved without nested main or duplicate h1",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > switches inline to the Saved tab when clicking the Đã lưu pill and returns to search on kind pill click",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > accepts ?kind=lexeme as a filter alias alongside ?scope=lexeme on mount",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/reference-redirects.test.ts::Reference list-page redirects and detail-page preservation (WEB-446) > redirects /dictionary, /kanji, /grammar, /saved, and /search/history list pages to /{locale}/search across vi, ja, and en",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/sitemap.test.ts::sitemap metadata > lists all 12 public routes across vi, ja, and en locales using canonical base URL",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx::SearchDetailPanel reference CTAs > links the saved-items shortcut directly to /{locale}/search?tab=saved",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "e9d296a52fdaae3f8efedabb28dfe9c020f3a27ddec3436aca3bbceb564fff20"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-24T13:17:52.354Z",
+      "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 745,
+        "executed": 745,
+        "passed": 745,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 914,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "e9d296a52fdaae3f8efedabb28dfe9c020f3a27ddec3436aca3bbceb564fff20"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-24T13:19:47.217Z",
+      "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 745,
+        "executed": 745,
+        "passed": 745,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 914,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "e9d296a52fdaae3f8efedabb28dfe9c020f3a27ddec3436aca3bbceb564fff20"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-24T13:30:32.488Z",
+      "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/search/reference-redirects.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/sitemap.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > renders the Saved tab inline when opened with ?tab=saved without nested main or duplicate h1",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > switches inline to the Saved tab when clicking the Đã lưu pill and returns to search on kind pill click",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx::SearchClient inline Saved tab and filter alias (WEB-446) > accepts ?kind=lexeme as a filter alias alongside ?scope=lexeme on mount",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/reference-redirects.test.ts::Reference list-page redirects and detail-page preservation (WEB-446) > redirects /dictionary, /kanji, /grammar, /saved, and /search/history list pages to /{locale}/search across vi, ja, and en",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/sitemap.test.ts::sitemap metadata > lists all 12 public routes across vi, ja, and en locales using canonical base URL",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx::SearchDetailPanel reference CTAs > links the saved-items shortcut directly to /{locale}/search?tab=saved",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "8fd74b1b999638296435366e016bf0359a9253f52fb80537650c2797c0aa9a26"
+    },
+    {
+      "seq": 7,
+      "at": "2026-11-24T13:32:17.624Z",
+      "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 748,
+        "executed": 748,
+        "passed": 748,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 914,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "8fd74b1b999638296435366e016bf0359a9253f52fb80537650c2797c0aa9a26"
+    },
+    {
+      "seq": 8,
+      "at": "2026-11-24T13:42:17.189Z",
+      "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "fresh-research-subagent:036e33c6-a557-4c61-aff7-8b62f13b4f68",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "Pass 2 fresh read-only independent review APPROVED (open_findings: 0) after resolving all 6 Pass 1 findings (clearing ?scope=/?kind= on All pill, cancelling in-flight loading/timers and resetting query on entering Saved, updating detail-page bottom cross-links, mobile horizontal padding for signed-out embedded Saved card, and added regression tests).",
+      "output_sha256": "3c5f27f822310db58427bdd41c50754bc1713f8950afabd41f08e0ad179db9d8",
+      "attested": true,
+      "fingerprint": "8fd74b1b999638296435366e016bf0359a9253f52fb80537650c2797c0aa9a26"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-24T13:42:18.588Z",
+    "head": "7d8411d9d99df274ace0d58717b7456cf5c41c87",
+    "fingerprint": "8fd74b1b999638296435366e016bf0359a9253f52fb80537650c2797c0aa9a26",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/dictionary/[id]/_components/lexeme-detail-client.tsx": "f850c8e0095fccf1dbe9c4a458a16ad1e8e50880",
+      "apps/web/app/[locale]/dictionary/page.tsx": "73cd2cbac66dce806d67b9ba8335f6378e5f4b30",
+      "apps/web/app/[locale]/grammar/[id]/_components/grammar-detail-client.tsx": "d01af9dbf52c3a260c613ed5c1e057370dc7ceb2",
+      "apps/web/app/[locale]/grammar/page.tsx": "036fcb982192b0273d1e3d70f3f813b836b6fdad",
+      "apps/web/app/[locale]/kanji/[id]/_components/kanji-detail-client.tsx": "f32272ccc6ac1ef5b6a2e9b3a203d9aec113a4c3",
+      "apps/web/app/[locale]/kanji/page.tsx": "6fcab6c773c53231d13266411fbb54165ffe236c",
+      "apps/web/app/[locale]/saved/_components/saved-page-client.tsx": "00331cba5e0780e623686096e564c18511839c7b",
+      "apps/web/app/[locale]/saved/page.tsx": "f82de6203e11521993909a46da4ea45944e02c38",
+      "apps/web/app/[locale]/search/_components/search-client.saved-tab.test.tsx": "349274a5f416d78b32f8639990c49548bc039fc6",
+      "apps/web/app/[locale]/search/_components/search-client.tsx": "2ba86886b6cd1d43fb2dc05bfc466b6f896f8651",
+      "apps/web/app/[locale]/search/_components/search-detail-panel.actions.test.tsx": "a4131433355dbb44b6db4711beed84689488c1a8",
+      "apps/web/app/[locale]/search/_components/search-detail-panel.tsx": "d6310b795c40e3caf23ffa6e29e8cca3a1e2ea79",
+      "apps/web/app/[locale]/search/history/page.tsx": "68134c7d2c3f459d88cdfe5b08d2277f19b71929",
+      "apps/web/app/[locale]/search/page.tsx": "4bcf73715492b9c1815bc4362330ddb5131be7c7",
+      "apps/web/app/[locale]/search/reference-redirects.test.ts": "1e766e391fa0cd548d19992b683908d490e90f45",
+      "apps/web/app/sitemap.test.ts": "dedd9edb6e43b64310b799ce7d36fc3b4c91be75",
+      "apps/web/app/sitemap.ts": "d5ac86c99c487ad5d68e4e27168efd6bcde75d91",
+      "apps/web/messages/en.json": "b675bc1b68a02c57f025bfb17cc3cdbf99aff3a4",
+      "apps/web/messages/ja.json": "4936257a29a16887c3ee0fb7314a1511a43721be",
+      "apps/web/messages/vi.json": "53ff7590393dcf10991b8f8e46521dd72227d318"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

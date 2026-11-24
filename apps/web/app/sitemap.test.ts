@@ -4,12 +4,11 @@ import sitemap from "./sitemap";
 // WEB-441: "explore" server-redirects to /{locale}/search and is excluded from sitemap.xml
 // WEB-442: "magazine" (-> /{locale}/news) and "story/arcs" (-> /{locale}/scenarios) server-redirect and are excluded from sitemap.xml
 // WEB-444: "modules" server-redirects to /{locale}/levels and stays excluded from sitemap.xml
+// WEB-446: "dictionary", "kanji", "grammar", "saved", and "search/history" server-redirect to /{locale}/search; index "search" instead.
 const EXPECTED_ROUTES = [
   "",
   "levels",
-  "dictionary",
-  "kanji",
-  "grammar",
+  "search",
   "flashcards",
   "quiz",
   "exercises",
@@ -26,7 +25,7 @@ describe("sitemap metadata", () => {
     vi.unstubAllEnvs();
   });
 
-  it("lists all 14 public routes across vi, ja, and en locales using canonical base URL", () => {
+  it("lists all 12 public routes across vi, ja, and en locales using canonical base URL", () => {
     vi.stubEnv("WEB_PUBLIC_URL", "");
     vi.stubEnv("NEXT_PUBLIC_WEB_PUBLIC_URL", "");
 
@@ -45,6 +44,21 @@ describe("sitemap metadata", () => {
       );
       expect(urls, "sitemap must exclude redirected /modules route").not.toContain(
         `https://kiokoto.com/${locale}/modules`
+      );
+      expect(urls, "sitemap must exclude redirected /dictionary route").not.toContain(
+        `https://kiokoto.com/${locale}/dictionary`
+      );
+      expect(urls, "sitemap must exclude redirected /kanji route").not.toContain(
+        `https://kiokoto.com/${locale}/kanji`
+      );
+      expect(urls, "sitemap must exclude redirected /grammar route").not.toContain(
+        `https://kiokoto.com/${locale}/grammar`
+      );
+      expect(urls, "sitemap must exclude redirected /saved route").not.toContain(
+        `https://kiokoto.com/${locale}/saved`
+      );
+      expect(urls, "sitemap must exclude redirected /search/history route").not.toContain(
+        `https://kiokoto.com/${locale}/search/history`
       );
     }
 

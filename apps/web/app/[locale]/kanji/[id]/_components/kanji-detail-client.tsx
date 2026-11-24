@@ -94,7 +94,7 @@ export function KanjiDetailClient({
         <p className="text-sm text-muted">{error ? labels.error : labels.notFound}</p>
         <Link
           className="mt-2 inline-block text-sm font-medium text-accent hover:underline"
-          href={`/${locale}/kanji`}
+          href={`/${locale}/search?scope=kanji`}
         >
           ← {labels.back}
         </Link>
@@ -106,7 +106,7 @@ export function KanjiDetailClient({
     <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
       <Link
         className="text-sm font-medium text-accent hover:underline"
-        href={`/${locale}/kanji`}
+        href={`/${locale}/search?scope=kanji`}
       >
         ← {labels.back}
       </Link>
@@ -220,13 +220,13 @@ export function KanjiDetailClient({
       <nav className="mt-8 flex flex-wrap gap-2 border-t border-border pt-4">
         <Link
           className="inline-flex min-h-9 items-center rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-accent/30 hover:text-ink"
-          href={`/${locale}/dictionary`}
+          href={`/${locale}/search?scope=lexeme`}
         >
           {locale === "ja" ? "辞書 →" : locale === "en" ? "Dictionary →" : "Từ điển →"}
         </Link>
         <Link
           className="inline-flex min-h-9 items-center rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-accent/30 hover:text-ink"
-          href={`/${locale}/grammar`}
+          href={`/${locale}/search?scope=grammar`}
         >
           {locale === "ja" ? "文法 →" : locale === "en" ? "Grammar →" : "Ngữ pháp →"}
         </Link>
