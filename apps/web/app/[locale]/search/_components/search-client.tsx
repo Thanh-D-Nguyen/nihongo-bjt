@@ -200,6 +200,8 @@ export function SearchClient({
   /** Deferred clear when IME emits a transient empty value mid-conversion (mobile keyboards) */
   const clearDebounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const isComposingRef = useRef(false);
+  /** Suppresses opening the floating dropdown during mount-time programmatic focus */
+  const autoFocusingRef = useRef(false);
   /** Dropdown key handler for autocomplete */
   const dropdownKeyHandlerRef = useRef<DropdownKeyHandler | null>(null);
 
@@ -499,7 +501,9 @@ export function SearchClient({
       setResults([]);
       setHasSearched(false);
       setSelected(null);
+      autoFocusingRef.current = true;
       inputRef.current?.focus();
+      autoFocusingRef.current = false;
     }
     // Keyed ONLY on `urlSearchBootstrapKey` (q/scope/kind/level/tab). `searchParams` is read via
     // `searchParamsRef` so patching `entry` into the URL on selection does NOT re-run this
@@ -801,30 +805,12 @@ export function SearchClient({
                     isComposingRef.current = false;
                     applySearchInputSideEffects(e.currentTarget.value);
                   }}
-                  onFocus={() => setDropdownOpen(true)}
+                  onFocus={() => {
+                    if (!autoFocusingRef.current) setDropdownOpen(true);
+                  }}
+                  onClick={() => setDropdownOpen(true)}
                   onKeyDown={(e) => {
                     if (dropdownKeyHandlerRef.current?.(e)) return;
-                  }}
-                />
-                {/* Autocomplete dropdown */}
-                <SearchDropdown
-                  query={query}
-                  open={dropdownOpen && !hasSearched && !isSavedTab}
-                  onClose={() => setDropdownOpen(false)}
-                  onSelect={(q) => {
-                    setActiveTab("search");
-                    setQuery(q);
-                    setDropdownOpen(false);
-                    clearTimeout(debounceRef.current);
-                    pendingEntryRef.current = null;
-                    setSelected(null);
-                    addSearch(q);
-                    updateUrl(q, filter, levelFilter, null);
-                  }}
-                  locale={locale}
-                  labels={labels as unknown as SearchDropdownLabels}
-                  onKeyHandlerReady={(handler) => {
-                    dropdownKeyHandlerRef.current = handler;
                   }}
                 />
               </div>
@@ -851,16 +837,37 @@ export function SearchClient({
                 }}
               />
             </div>
+            {/* Autocomplete dropdown anchored to full form width so right-edge filter chips never peek out clipped */}
+            <SearchDropdown
+              query={query}
+              open={dropdownOpen && !hasSearched && !isSavedTab}
+              onClose={() => setDropdownOpen(false)}
+              onSelect={(q) => {
+                setActiveTab("search");
+                setQuery(q);
+                setDropdownOpen(false);
+                clearTimeout(debounceRef.current);
+                pendingEntryRef.current = null;
+                setSelected(null);
+                addSearch(q);
+                updateUrl(q, filter, levelFilter, null);
+              }}
+              locale={locale}
+              labels={labels as unknown as SearchDropdownLabels}
+              onKeyHandlerReady={(handler) => {
+                dropdownKeyHandlerRef.current = handler;
+              }}
+            />
             {/* Hidden submit to allow Enter key form submission */}
             <button type="submit" className="sr-only" tabIndex={-1} aria-hidden>
               {labels.submit}
             </button>
           </form>
 
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2">
             <div
               aria-label={labels.kindFiltersAriaLabel}
-              className="flex items-center gap-1.5 overflow-x-auto scrollbar-none"
+              className="flex min-w-0 items-center gap-1.5 overflow-x-auto scrollbar-none"
               role="group"
             >
               <FilterPill
@@ -902,7 +909,7 @@ export function SearchClient({
                     className={cn(
                       "search-level-pill inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 active:scale-95",
                       levelFilter === lvl
-                        ? "bg-accent text-surface shadow-md shadow-accent/20"
+                        ? "bg-action text-white shadow-md shadow-action/20"
                         : "text-muted hover:bg-ink/5 hover:text-ink hover:shadow-sm"
                     )}
                     type="button"
@@ -1088,7 +1095,7 @@ export function SearchClient({
                     <button
                       key={term}
                       type="button"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-ink/6 bg-paper px-3 py-1.5 text-xs font-medium text-ink/70 transition-all duration-150 hover:border-accent/20 hover:text-accent active:scale-95"
+                      className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-ink/6 bg-paper px-3 py-1.5 text-xs font-medium text-ink/70 transition-all duration-150 hover:border-accent/20 hover:text-accent active:scale-95"
                       onClick={() => {
                         setQuery(term);
                         setDropdownOpen(false);
@@ -1099,7 +1106,7 @@ export function SearchClient({
                       }}
                     >
                       <svg
-                        className="h-3 w-3 text-muted/50"
+                        className="h-3 w-3 shrink-0 text-muted/50"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -1111,7 +1118,7 @@ export function SearchClient({
                           d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                       </svg>
-                      <span className="jp-text">{term}</span>
+                      <span className="jp-text truncate">{term}</span>
                     </button>
                   ))}
                 </div>
@@ -1119,7 +1126,7 @@ export function SearchClient({
             )}
 
             {/* JLPT Level quick-access */}
-            <div className="mt-5 flex items-center justify-center gap-2">
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
               <span className="text-[11px] font-semibold text-muted/60">JLPT:</span>
               {levels.map((lvl) => (
                 <button

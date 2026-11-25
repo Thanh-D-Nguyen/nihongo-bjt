@@ -35,6 +35,7 @@ type Labels = {
   checkoutPendingShort?: string;
   retry?: string;
   signInToUpgrade?: string;
+  startFree?: string;
   entitlementLabels?: Record<string, string>;
   quotaLabels?: Record<string, string>;
   windowLabels?: Record<string, string>;
@@ -72,7 +73,7 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
     const text = (vi: string, ja: string, en: string) => locale === "ja" ? ja : locale === "vi" ? vi : en;
     const map: Record<string, string> = {
       "flashcard_reviews_per_day": text("Ôn thẻ flashcard", "フラッシュカード復習", "Flashcard reviews"),
-      "image_search_daily": text("Tìm ảnh mỗi ngày", "1日の画像検索", "Daily image searches"),
+      "image_search_daily": text("Tìm ảnh", "画像検索", "Image searches"),
       ...(labels.quotaLabels ?? {})
     };
     return map[key] ?? key;
@@ -253,7 +254,14 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
                   </button> : <Link className="block w-full rounded-xl bg-indigo-600 py-2.5 text-center text-sm font-medium text-white" href={`/${locale}/login?returnTo=/${locale}/pricing`}>
                     {labels.signInToUpgrade || labels.upgrade}
                   </Link>
-                ) : null}
+                ) : (
+                  <Link
+                    className="block w-full rounded-xl border border-action bg-surface py-2.5 text-center text-sm font-semibold text-action transition-colors hover:bg-accent-soft dark:border-accent dark:text-accent dark:hover:bg-accent-soft"
+                    href={userId ? `/${locale}/levels` : `/${locale}/register`}
+                  >
+                    {labels.startFree || (locale === "ja" ? "学習を始める" : locale === "en" ? "Start learning" : "Bắt đầu học ngay")}
+                  </Link>
+                )}
               </div>
             </div>
           );

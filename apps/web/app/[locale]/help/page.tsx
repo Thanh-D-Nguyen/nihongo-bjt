@@ -46,11 +46,21 @@ export default async function HelpPage({
         <div className="space-y-3">
           {faqs.map((faq, i) => (
             <details
-              className="group rounded-xl border border-ink/10 bg-white p-4"
+              className="group rounded-xl border border-ink/10 bg-surface p-4"
               key={i}
             >
-              <summary className="min-h-12 cursor-pointer py-3 font-medium text-ink">
-                {faq.q}
+              <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 py-3 font-medium text-ink marker:content-none [&::-webkit-details-marker]:hidden">
+                <span>{faq.q}</span>
+                <svg
+                  aria-hidden="true"
+                  className="h-5 w-5 shrink-0 text-muted transition-transform duration-200 group-open:rotate-180"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </summary>
               <p className="mt-2 text-sm text-muted">{faq.a}</p>
             </details>
@@ -62,7 +72,7 @@ export default async function HelpPage({
         <h2 className="text-lg font-semibold text-ink">{t.contactTitle}</h2>
         <p className="mt-1 text-sm text-muted">{t.contactDesc}</p>
         <Link
-          className="mt-3 inline-flex min-h-12 items-center rounded-lg bg-leaf px-4 py-2 text-sm font-medium text-white hover:bg-leaf/90"
+          className="mt-3 inline-flex min-h-12 items-center rounded-lg bg-action px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-action-hover"
           href={`${base}/feedback`}
         >
           {t.contactLink}

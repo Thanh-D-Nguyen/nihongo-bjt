@@ -66,9 +66,9 @@ async function renderPricing(locale: string, labels: typeof viMessages.pricing) 
 
 describe("PricingClient contracts", () => {
   it.each([
-    ["vi", viMessages.pricing, "Nâng cao", "Tìm ảnh mỗi ngày", "Giao diện thẻ cao cấp"],
-    ["en", enMessages.pricing, "Plus", "Daily image searches", "Premium flashcard styles"],
-    ["ja", jaMessages.pricing, "プラス", "1日の画像検索", "プレミアムカードデザイン"]
+    ["vi", viMessages.pricing, "Nâng cao", "Tìm ảnh", "Giao diện thẻ cao cấp"],
+    ["en", enMessages.pricing, "Plus", "Image searches", "Premium flashcard styles"],
+    ["ja", jaMessages.pricing, "プラス", "画像検索", "プレミアムカードデザイン"]
   ])("renders complete public %s plan data", async (locale, labels, displayName, quota, entitlement) => {
     apiFetchMock.mockResolvedValue(response([plan]));
     const host = await renderPricing(locale, labels);
@@ -150,6 +150,38 @@ describe("PricingClient contracts", () => {
     expectQuotaLine("en", enMessages.pricing, "Flashcard reviews: 30/day"));
   it("renders ja quota feature lines as one run with a space after the colon", () =>
     expectQuotaLine("ja", jaMessages.pricing, "フラッシュカード復習: 30/日"));
+
+  it("avoids redundant per-day wording on image_search_daily while keeping the exact quota numbers", async () => {
+    await expectQuotaLine("vi", viMessages.pricing, "Tìm ảnh: 5/ngày");
+    await expectQuotaLine("en", enMessages.pricing, "Image searches: 5/day");
+    await expectQuotaLine("ja", jaMessages.pricing, "画像検索: 5/日");
+  });
+
+  it("renders a localized CTA on the free plan card for guests and non-current learners", async () => {
+    const freePlan = {
+      ...plan,
+      id: "33333333-3333-4333-8333-333333333333",
+      slug: "free",
+      config: { displayName: "Free", displayNameVi: "Miễn phí", displayNameJa: "無料", price: 0 },
+      entitlements: ["learner.basic"],
+      quotas: [{ key: "image_search_daily", limit: 5, window: "day" }]
+    };
+    apiFetchMock.mockResolvedValue(response([freePlan, plan]));
+    const host = await renderPricing("vi", viMessages.pricing);
+    const freeCard = Array.from(host.querySelectorAll("h3")).find((heading) => heading.textContent === "Miễn phí")?.parentElement;
+    const guestCta = freeCard?.querySelector<HTMLAnchorElement>('a[href="/vi/register"]');
+    expect(guestCta, "free plan card must render a guest start-learning CTA").not.toBeNull();
+    expect(guestCta?.textContent?.trim()).toBe("Bắt đầu học ngay");
+
+    userId.value = "learner-id";
+    apiFetchMock.mockImplementation(async (path: string) => path.endsWith("/plans")
+      ? response([freePlan, plan])
+      : response({ subscription: null }));
+    const authedHost = await renderPricing("vi", viMessages.pricing);
+    const authedFreeCard = Array.from(authedHost.querySelectorAll("h3")).find((heading) => heading.textContent === "Miễn phí")?.parentElement;
+    const learnerCta = authedFreeCard?.querySelector<HTMLAnchorElement>('a[href="/vi/levels"]');
+    expect(learnerCta, "free plan card must link signed-in learners to learning track when not marked current").not.toBeNull();
+  });
 
   it("does not repeat the free plan name as its price", async () => {
     const freePlan = {

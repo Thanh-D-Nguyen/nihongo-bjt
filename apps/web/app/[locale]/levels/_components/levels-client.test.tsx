@@ -178,4 +178,24 @@ describe("LevelsClient", () => {
     expect(scenariosTab!.textContent?.trim()).toBe("Tình huống công sở");
     expect(readingTab!.textContent?.trim()).toBe("Đọc NHK");
   });
+
+  it("renders a truthful neutral readiness empty state without an oversized dash or fake 0% when no sessions are completed", async () => {
+    apiFetch.mockImplementation((path: string) => path === "/api/levels"
+      ? Promise.resolve(new Response(JSON.stringify([level])))
+      : Promise.resolve(new Response(JSON.stringify({ totals: { bjtAccuracyPct: 0, completedBjtSessions: 0, reviewCount: 0, streakDays: 0 } }))));
+
+    await act(async () => root.render(<LevelsClient labels={labels.vi} locale="vi" />));
+    await act(async () => { await Promise.resolve(); });
+
+    const readinessHeading = Array.from(host.querySelectorAll("h3")).find(
+      (heading) => heading.textContent?.trim() === labels.vi.readinessTitle
+    );
+    const readinessPanel = readinessHeading?.parentElement;
+    expect(readinessPanel, "readiness panel must render").toBeTruthy();
+    expect(readinessPanel?.textContent, "readiness panel must keep the neutral empty explanation").toContain(labels.vi.noSessions);
+    expect(readinessPanel?.textContent, "readiness panel must not render a broken em-dash placeholder").not.toContain("—");
+    expect(readinessPanel?.textContent, "readiness panel must not fake a 0% readiness score").not.toContain("0%");
+    expect(readinessPanel?.querySelector(".text-4xl"), "readiness panel must not show an oversized metric block when empty").toBeNull();
+    expect(readinessPanel?.querySelector('a[href="/vi/quiz"]')?.textContent?.trim()).toBe(labels.vi.readinessCta);
+  });
 });

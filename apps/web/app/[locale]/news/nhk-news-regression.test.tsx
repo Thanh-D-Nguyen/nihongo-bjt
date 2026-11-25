@@ -126,4 +126,41 @@ describe("NHK regression", () => {
 
     await act(async () => root.unmount());
   });
+
+  it("renders news card badges in the card body without overlapping thumbnail graphics and avoids cropping corner logos", async () => {
+    api.article = [
+      { ...article, id: "easy-with-img", sourceType: "easy", imageUrl: "https://www3.nhk.or.jp/news/easy-thumb.jpg", difficulty: "N4" },
+      { ...article, id: "easy-no-img", sourceType: "easy", imageUrl: null, difficulty: "N4" },
+    ];
+    const container = document.createElement("div");
+    const root = createRoot(container);
+    await act(async () =>
+      root.render(<NhkNewsListClient labels={en.nhkDetail} homepageLabels={en.homepage} locale="en" />)
+    );
+
+    const cardWithImg = container.querySelector<HTMLAnchorElement>('a[href="/en/news/easy-with-img"]');
+    const cardNoImg = container.querySelector<HTMLAnchorElement>('a[href="/en/news/easy-no-img"]');
+    expect(cardWithImg).not.toBeNull();
+    expect(cardNoImg).not.toBeNull();
+
+    const thumbImg = cardWithImg!.querySelector("img");
+    expect(thumbImg, "article with imageUrl must render thumbnail img").not.toBeNull();
+    expect(thumbImg!.className, "thumbnail img must use object-contain so baked-in NHK corner logos are never half-cut").toContain("object-contain");
+    expect(thumbImg!.className, "thumbnail img must not crop corner logos with object-cover").not.toContain("object-cover");
+
+    const thumbBoxWithImg = thumbImg!.parentElement!;
+    expect(thumbBoxWithImg.textContent, "NHK Easy badge must not overlay the thumbnail image").not.toContain(en.homepage.newsEasy);
+
+    const fallbackBanner = Array.from(cardNoImg!.querySelectorAll("span")).find((el) =>
+      el.textContent?.includes("NHK NEWS EASY")
+    );
+    expect(fallbackBanner, "no-image fallback must keep NHK NEWS EASY label").toBeTruthy();
+    const fallbackBox = fallbackBanner!.parentElement!.parentElement!;
+    expect(fallbackBox.textContent, "NHK Easy badge must not overlap the fallback NHK NEWS EASY banner").not.toContain(en.homepage.newsEasy);
+
+    expect(cardWithImg!.textContent, "card body must still show NHK Easy badge").toContain(en.homepage.newsEasy);
+    expect(cardWithImg!.textContent, "card body must still show article difficulty").toContain("N4");
+
+    await act(async () => root.unmount());
+  });
 });

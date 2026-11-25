@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge, EmptyState, ErrorState, LoadingSkeleton, TabButton, TabsList } from "@nihongo-bjt/ui";
+import { EmptyState, ErrorState, LoadingSkeleton, TabButton, TabsList } from "@nihongo-bjt/ui";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
@@ -185,13 +185,13 @@ export function NhkNewsListClient({
             <Link
               key={article.id}
               href={`/${locale}/news/${article.id}`}
-              className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-ink/5 transition-all hover:shadow-md hover:-translate-y-0.5"
+              className="group flex flex-col overflow-hidden rounded-2xl bg-surface shadow-sm ring-1 ring-border transition-all hover:shadow-md hover:-translate-y-0.5"
             >
-              <div className="relative aspect-[16/9] w-full overflow-hidden bg-gray-100">
+              <div className="relative aspect-[16/9] w-full overflow-hidden bg-paper">
                 {article.imageUrl ? (
                   <img
                     alt={article.title}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="h-full w-full object-contain"
                     loading={index < 6 ? "eager" : "lazy"}
                     src={article.imageUrl}
                   />
@@ -208,22 +208,30 @@ export function NhkNewsListClient({
                     </span>
                   </div>
                 )}
-                <div className="absolute left-2 top-2 flex flex-wrap gap-1">
-                  <Badge tone={activeType === "easy" ? "accent" : "neutral"}>
-                    {sourceTabLabel(activeType, homepageLabels)}
-                  </Badge>
-                  {article.difficulty ? <Badge>{article.difficulty}</Badge> : null}
-                  {readArticleIds.has(article.id) && (
-                    <Badge tone="accent">
-                      <span className="flex items-center gap-0.5">
-                        <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>
-                        {homepageLabels.newsRead ?? "Đã đọc"}
-                      </span>
-                    </Badge>
-                  )}
-                </div>
               </div>
               <div className="flex flex-1 flex-col p-4">
+                <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                  <span
+                    className={
+                      activeType === "easy"
+                        ? "inline-flex min-h-6 items-center rounded-full bg-accent-soft px-2.5 text-[11px] font-semibold leading-none text-brand-accent"
+                        : "inline-flex min-h-6 items-center rounded-full bg-paper px-2.5 text-[11px] font-semibold leading-none text-muted ring-1 ring-border"
+                    }
+                  >
+                    {sourceTabLabel(activeType, homepageLabels)}
+                  </span>
+                  {article.difficulty ? (
+                    <span className="inline-flex min-h-6 items-center rounded-full bg-paper px-2.5 text-[11px] font-semibold leading-none text-muted ring-1 ring-border">
+                      {article.difficulty}
+                    </span>
+                  ) : null}
+                  {readArticleIds.has(article.id) && (
+                    <span className="inline-flex min-h-6 items-center gap-0.5 rounded-full bg-accent-soft px-2.5 text-[11px] font-semibold leading-none text-brand-accent">
+                      <svg aria-hidden="true" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>
+                      {homepageLabels.newsRead ?? "Đã đọc"}
+                    </span>
+                  )}
+                </div>
                 <h2 className="line-clamp-2 text-sm font-semibold text-ink" lang="ja">
                   {article.title}
                 </h2>

@@ -242,22 +242,25 @@ export function LevelsClient({
           {labels.readinessSubtitle}
         </p>
 
-        <div className="mt-4 flex items-baseline gap-3">
-          {analyticsReady ? (
-            <span className="text-4xl font-bold tabular-nums text-ink">
-              {hasSessions ? `${readinessPct}%` : "—"}
-            </span>
-          ) : (
+        {!analyticsReady ? (
+          <div className="mt-4 flex items-center gap-3">
             <div className="h-10 w-20 animate-pulse rounded bg-border" />
-          )}
-          <span className="text-body-sm text-muted">
-            {analyticsFailed
-              ? labels.analyticsError
-              : hasSessions
-                ? labels.accuracyAcross.replace("{count}", String(completedSessionCount))
-                : labels.noSessions}
-          </span>
-        </div>
+            <div className="h-4 w-44 animate-pulse rounded bg-border" />
+          </div>
+        ) : hasSessions ? (
+          <div className="mt-4 flex items-baseline gap-3">
+            <span className="text-4xl font-bold tabular-nums text-ink">
+              {`${readinessPct}%`}
+            </span>
+            <span className="text-body-sm text-muted">
+              {labels.accuracyAcross.replace("{count}", String(completedSessionCount))}
+            </span>
+          </div>
+        ) : (
+          <p className="text-body-sm mt-3 text-muted">
+            {analyticsFailed ? labels.analyticsError : labels.noSessions}
+          </p>
+        )}
 
         {hasSessions && (
           <div className="mt-4">

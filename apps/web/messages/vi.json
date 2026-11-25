@@ -2713,7 +2713,8 @@
     "checkoutPending": "Yêu cầu nâng cấp đang chờ xác nhận. Gói chỉ có hiệu lực sau khi thanh toán được xác nhận.",
     "checkoutPendingShort": "Chờ xác nhận",
     "retry": "Thử lại",
-    "signInToUpgrade": "Đăng nhập để nâng cấp"
+    "signInToUpgrade": "Đăng nhập để nâng cấp",
+    "startFree": "Bắt đầu học ngay"
   },
   "subscription": {
     "title": "Gói đăng ký",

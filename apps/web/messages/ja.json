@@ -2713,7 +2713,8 @@
     "checkoutPending": "アップグレード申請は確認待ちです。支払い確認後にプランが有効になります。",
     "checkoutPendingShort": "確認待ち",
     "retry": "再試行",
-    "signInToUpgrade": "ログインしてアップグレード"
+    "signInToUpgrade": "ログインしてアップグレード",
+    "startFree": "学習を始める"
   },
   "subscription": {
     "title": "サブスクリプション",
