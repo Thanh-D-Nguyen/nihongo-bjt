@@ -33,6 +33,17 @@ const SHARE_LABELS = {
   retry: "Retry",
 };
 
+export function resolveBattleAnswerDisplayLabel(
+  options: ReadonlyArray<{ optionKey: string }>,
+  optionKey: string,
+  gameType?: string | null
+): string {
+  const idx = options.findIndex((o) => o.optionKey === optionKey);
+  if (idx < 0) return optionKey;
+  if (gameType === "mock_exam") return String(idx + 1);
+  return idx < 26 ? String.fromCharCode(65 + idx) : String(idx + 1);
+}
+
 function StatTile({
   label,
   tone = "dark",
@@ -121,10 +132,14 @@ export function BattleMatchClient() {
 
   const answerFeedback = useMemo(() => {
     if (!answerResult) return null;
-    return answerResult.userCorrect
-      ? labels.answerCorrect
-      : labels.answerWrong.replace("{answer}", answerResult.correctOptionKey);
-  }, [answerResult, labels.answerCorrect, labels.answerWrong]);
+    if (answerResult.userCorrect) return labels.answerCorrect;
+    const displayAnswer = resolveBattleAnswerDisplayLabel(
+      round?.question.options ?? [],
+      answerResult.correctOptionKey,
+      activeGameType
+    );
+    return labels.answerWrong.replace("{answer}", displayAnswer);
+  }, [activeGameType, answerResult, labels.answerCorrect, labels.answerWrong, round]);
 
   const countdownOverlayLabels = useMemo(
     () => ({

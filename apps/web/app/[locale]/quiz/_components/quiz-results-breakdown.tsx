@@ -6,6 +6,7 @@ export interface BreakdownQuestion {
   questionId: string;
   prompt: string;
   selectedOption: string;
+  selectedDisplayOption?: string;
   isCorrect: boolean;
   explanationVi: string;
   skillTag?: string;
@@ -165,7 +166,9 @@ export function QuizResultsBreakdown({
                     </p>
                     <p className="mt-1.5 text-xs text-muted">
                       {labels.selectedOptionLabel}:{" "}
-                      <span className="font-semibold text-ink">{question.selectedOption}</span>
+                      <span className="font-semibold text-ink">
+                        {question.selectedDisplayOption ?? question.selectedOption}
+                      </span>
                     </p>
                   </div>
                 </div>

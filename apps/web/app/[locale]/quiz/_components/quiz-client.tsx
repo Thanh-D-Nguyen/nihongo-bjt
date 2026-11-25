@@ -102,6 +102,7 @@ interface BreakdownResponse {
     questionId: string;
     prompt: string;
     selectedOption: string;
+    selectedDisplayOption?: string;
     isCorrect: boolean;
     explanationVi: string;
     skillTag?: string;
@@ -1663,8 +1664,8 @@ export function QuizQuestionPanel({
   const [selected, setSelected] = useState<string | null>(null);
   const [confidence, setConfidence] = useState<"sure" | "guessing" | null>(null);
 
-  // Options are pre-shuffled by backend with exam-level balanced distribution
-  // optionKey is already the positional display key (A/B/C/D) after backend shuffle
+  // Options are deterministically shuffled by the backend per (sessionId, questionId)
+  // while keeping canonical optionKey bound to its text; UI displays positional A/B/C/D badges.
   const options = useMemo(() => question.question?.options ?? [], [question.question?.options]);
   const handleAnswer = useCallback(
     (key: string) => {
@@ -1849,8 +1850,9 @@ export function QuizQuestionPanel({
 
         {/* Options */}
         <div className="flex flex-col gap-2.5">
-          {options.map((option) => {
+          {options.map((option, index) => {
             const isSelected = selected === option.optionKey;
+            const displayLabel = index < 26 ? String.fromCharCode(65 + index) : String(index + 1);
             return (
               <button
                 className={`
@@ -1880,7 +1882,7 @@ export function QuizQuestionPanel({
                       }
                     `}
                   >
-                    {option.optionKey}
+                    {displayLabel}
                   </span>
                   <span className="flex-1 leading-relaxed">{option.text}</span>
                 </span>

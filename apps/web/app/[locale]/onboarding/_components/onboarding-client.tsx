@@ -171,7 +171,7 @@ export function OnboardingClient({ labels }: { labels: OnboardingLabels }) {
                   <p className="eyebrow">{q.skillTag}</p>
                   <p>{q.prompt}</p>
                   <div className="result-list">
-                    {q.options.map((o) => (
+                    {q.options.map((o, idx) => (
                       <label
                         className="secondary-button"
                         key={o.optionKey}
@@ -184,7 +184,7 @@ export function OnboardingClient({ labels }: { labels: OnboardingLabels }) {
                           type="radio"
                           value={o.optionKey}
                         />{" "}
-                        {o.optionKey}. {o.text}
+                        {idx < 26 ? String.fromCharCode(65 + idx) : idx + 1}. {o.text}
                       </label>
                     ))}
                   </div>

@@ -10,6 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/optionshuffle"
 )
 
 // ErrNotFound is returned when a requested entity does not exist.
@@ -343,4 +344,15 @@ func (s *Store) GetAttempts(ctx context.Context, userID, scenarioID string) ([]U
 		attempts = []UserAttempt{}
 	}
 	return attempts, nil
+}
+
+// ShuffleStepChoices deterministically shuffles each step's choices for a learner
+// while keeping choiceKey bound to its text.
+func ShuffleStepChoices(detail *ScenarioDetail, seed string) {
+	if detail == nil || seed == "" {
+		return
+	}
+	for i := range detail.Steps {
+		detail.Steps[i].Choices = optionshuffle.Deterministic(detail.Steps[i].Choices, seed, detail.Steps[i].ID)
+	}
 }

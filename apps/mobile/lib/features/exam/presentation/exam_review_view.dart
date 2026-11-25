@@ -549,7 +549,9 @@ class _ReviewItemCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s),
           Text(
-            l10n.examReviewYourAnswer(item.selectedOption.toUpperCase()),
+            l10n.examReviewYourAnswer(
+              (item.selectedDisplayOption ?? item.selectedOption).toUpperCase(),
+            ),
             style: text.bodyMedium?.copyWith(
               color: item.isCorrect ? palette.success : palette.danger,
               fontWeight: FontWeight.w600,

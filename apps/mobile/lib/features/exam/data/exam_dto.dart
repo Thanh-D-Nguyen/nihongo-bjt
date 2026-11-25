@@ -126,6 +126,7 @@ abstract final class ExamDto {
         questionId: _str(json['questionId']),
         prompt: _str(json['prompt']),
         selectedOption: _str(json['selectedOption']),
+        selectedDisplayOption: _strOrNull(json['selectedDisplayOption']),
         isCorrect: json['isCorrect'] == true,
         explanationVi: _strOrNull(json['explanationVi']),
         skillTag: _strOrNull(json['skillTag']),

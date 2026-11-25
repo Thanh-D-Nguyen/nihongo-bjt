@@ -78,4 +78,71 @@ describe("PrintExamClient", () => {
     });
     expect(host.querySelectorAll(".border-positive")).toHaveLength(1);
   });
+
+  it("prints positional A/B/C/D option badges and aligns the answer-sheet bubble for shuffled options", async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          id: "exam-shuffled",
+          level: "J2",
+          sections: [
+            {
+              code: "RC1",
+              displayOrder: 1,
+              id: "section-1",
+              questions: [
+                {
+                  correctKey: "B",
+                  explanationVi: "Đáp án đúng",
+                  id: "question-1",
+                  number: 1,
+                  options: [
+                    { key: "C", text: "Sai C" },
+                    { key: "A", text: "Sai A" },
+                    { key: "D", text: "Sai D" },
+                    { key: "B", text: "Đúng B" }
+                  ],
+                  prompt: "Chọn đáp án đúng"
+                }
+              ],
+              titleVi: "Đọc hiểu"
+            }
+          ],
+          slug: "practice-shuffled",
+          timeLimitSeconds: 2700,
+          titleVi: "Đề luyện xáo trộn",
+          totalQuestions: 1,
+          type: "practice"
+        }),
+        { status: 200 }
+      )
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    host = document.createElement("div");
+    document.body.append(host);
+    root = createRoot(host);
+
+    await act(async () => {
+      root?.render(
+        createElement(PrintExamClient, {
+          examId: "exam-shuffled",
+          labels: viMessages.quiz,
+          locale: "vi"
+        })
+      );
+    });
+
+    const optionRows = Array.from(host.querySelectorAll("article .grid > div"));
+    expect(optionRows).toHaveLength(4);
+    const printedBadges = optionRows.map((row) => row.querySelector("span")?.textContent?.trim());
+    expect(printedBadges).toEqual(["A", "B", "C", "D"]);
+
+    await act(async () => {
+      (host?.querySelector("input[type=checkbox]") as HTMLInputElement).click();
+    });
+    const highlightedBubbles = Array.from(host.querySelectorAll(".border-positive")).map((el) =>
+      el.textContent?.trim()
+    );
+    expect(highlightedBubbles).toEqual(["D"]);
+  });
 });

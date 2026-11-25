@@ -13,6 +13,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/optionshuffle"
 )
 
 const defaultMaxRounds = 5
@@ -168,6 +169,12 @@ func ShuffleDeterministic[T any](items []T, seedString string) []T {
 		out[i], out[j] = out[j], out[i]
 	}
 	return out
+}
+
+func shuffleBattleQuestionOptions(questions []BattleQuestionPayload, fairnessSeed string) {
+	for i := range questions {
+		questions[i].Options = optionshuffle.Deterministic(questions[i].Options, fairnessSeed, questions[i].QuestionID)
+	}
 }
 
 // DecideBotOption picks the bot's answer option according to its accuracy.
@@ -464,6 +471,7 @@ func (s *PostgresBattleStore) CreateBotBattle(ctx context.Context, userID, botKe
 		n = len(pool)
 	}
 	picked := ShuffleDeterministic(pool, fairnessSeed)[:n]
+	shuffleBattleQuestionOptions(picked, fairnessSeed)
 	roomCode, err := s.makeUniqueRoomCode(ctx)
 	if err != nil {
 		return nil, err
@@ -518,6 +526,7 @@ func (s *PostgresBattleStore) CreatePvpBattle(ctx context.Context, userID, oppon
 		n = len(pool)
 	}
 	picked := ShuffleDeterministic(pool, fairnessSeed)[:n]
+	shuffleBattleQuestionOptions(picked, fairnessSeed)
 	roomCode, err := s.makeUniqueRoomCode(ctx)
 	if err != nil {
 		return nil, err

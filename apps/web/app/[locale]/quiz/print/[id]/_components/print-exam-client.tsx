@@ -59,6 +59,15 @@ const LEVEL_SCORE_TABLE = [
   { level: "J5", range: "0–199" }
 ] as const;
 
+function optionDisplayKey(index: number): string {
+  return index < 26 ? String.fromCharCode(65 + index) : String(index + 1);
+}
+
+function resolveCorrectDisplayKey(question: PrintableQuestion): string {
+  const idx = question.options.findIndex((option) => option.key === question.correctKey);
+  return idx >= 0 ? optionDisplayKey(idx) : question.correctKey;
+}
+
 export function PrintExamClient({
   examId,
   labels,
@@ -203,7 +212,7 @@ export function PrintExamClient({
                     {question.imageUrl ? <img alt={question.imageAlt || ""} className="mb-3 ml-11 max-h-64 max-w-[calc(100%-2.75rem)] object-contain" src={question.imageUrl} /> : null}
                     {question.audioScript ? <p className="mb-3 ml-11 whitespace-pre-wrap rounded-lg bg-paper p-3 text-sm leading-relaxed">{question.audioScript}</p> : null}
                     <div className="ml-11 mt-2 grid grid-cols-1 gap-1.5">
-                      {question.options.map((option) => <div className={`flex items-start gap-2 rounded px-2 py-1 text-sm ${showAnswerKey && question.correctKey === option.key ? "border border-positive/30 bg-positive/10" : ""}`} key={option.key}><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-ink/30 text-xs font-medium">{option.key}</span><span className="leading-relaxed">{option.text}</span></div>)}
+                      {question.options.map((option, index) => <div className={`flex items-start gap-2 rounded px-2 py-1 text-sm ${showAnswerKey && question.correctKey === option.key ? "border border-positive/30 bg-positive/10" : ""}`} key={option.key}><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-ink/30 text-xs font-medium">{optionDisplayKey(index)}</span><span className="leading-relaxed">{option.text}</span></div>)}
                     </div>
                   </article>
                 ))}
@@ -212,13 +221,16 @@ export function PrintExamClient({
           </section>
         ))}
 
-        {ungroupedSections.length ? <section className="print:page-break-before-always px-6 py-8 sm:px-8">{ungroupedSections.map((section) => <div key={section.id} className="mb-8"><h2 className="mb-4 border-b border-ink/15 pb-2 text-lg font-bold">{isJa ? section.titleJa || section.titleVi : section.titleVi}</h2>{section.questions.map((question) => <article className="mb-6 break-inside-avoid" key={question.id}><p className="mb-2 font-medium">{question.number}. {question.prompt}</p>{question.options.map((option) => <p className="ml-4 py-1 text-sm" key={option.key}>{option.key}. {option.text}</p>)}</article>)}</div>)}</section> : null}
+        {ungroupedSections.length ? <section className="print:page-break-before-always px-6 py-8 sm:px-8">{ungroupedSections.map((section) => <div key={section.id} className="mb-8"><h2 className="mb-4 border-b border-ink/15 pb-2 text-lg font-bold">{isJa ? section.titleJa || section.titleVi : section.titleVi}</h2>{section.questions.map((question) => <article className="mb-6 break-inside-avoid" key={question.id}><p className="mb-2 font-medium">{question.number}. {question.prompt}</p>{question.options.map((option, index) => <p className="ml-4 py-1 text-sm" key={option.key}>{optionDisplayKey(index)}. {option.text}</p>)}</article>)}</div>)}</section> : null}
 
         <section className="print:page-break-before-always px-6 py-8 sm:px-8">
           <h2 className="mb-4 border-b-2 border-ink/75 pb-2 text-xl font-bold">{copy.answerSheet}</h2>
           <p className="mb-6 text-sm text-muted">{copy.answerSheetHint}</p>
           <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5 sm:gap-4">
-            {questions.map((question) => <div className="flex items-center gap-2 rounded border border-ink/15 px-2 py-1.5" key={question.id}><span className="w-7 text-right font-bold">{question.number}.</span><div className="flex gap-1.5">{["A", "B", "C", "D"].map((key) => <span className={`flex h-6 w-6 items-center justify-center rounded-full border text-xs ${showAnswerKey && question.correctKey === key ? "border-positive bg-positive text-surface" : "border-ink/30"}`} key={key}>{key}</span>)}</div></div>)}
+            {questions.map((question) => {
+              const correctDisplayKey = resolveCorrectDisplayKey(question);
+              return <div className="flex items-center gap-2 rounded border border-ink/15 px-2 py-1.5" key={question.id}><span className="w-7 text-right font-bold">{question.number}.</span><div className="flex gap-1.5">{["A", "B", "C", "D"].map((key) => <span className={`flex h-6 w-6 items-center justify-center rounded-full border text-xs ${showAnswerKey && correctDisplayKey === key ? "border-positive bg-positive text-surface" : "border-ink/30"}`} key={key}>{key}</span>)}</div></div>;
+            })}
           </div>
         </section>
 

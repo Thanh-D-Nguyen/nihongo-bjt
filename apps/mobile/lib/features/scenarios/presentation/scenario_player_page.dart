@@ -64,8 +64,7 @@ class ScenarioPlayerPage extends ConsumerWidget {
               title: l10n.scenariosEmptyTitle,
               message: l10n.scenariosEmptyBody,
               retryLabel: l10n.commonRetry,
-              onRetry: () =>
-                  ref.invalidate(scenarioDetailProvider(scenarioId)),
+              onRetry: () => ref.invalidate(scenarioDetailProvider(scenarioId)),
             ),
           );
         }
@@ -214,16 +213,20 @@ class _ScenarioPlayerState extends ConsumerState<_ScenarioPlayer> {
                   const SizedBox(height: AppSpacing.s),
                   _SituationCard(step: _step),
                   const SizedBox(height: AppSpacing.m),
-                  for (final choice in _step.choices) ...[
+                  for (var i = 0; i < _step.choices.length; i++) ...[
                     _ChoiceTile(
-                      choice: choice,
-                      selected: _selected?.id == choice.id,
+                      choice: _step.choices[i],
+                      displayLabel: i < 26
+                          ? String.fromCharCode(65 + i)
+                          : '${i + 1}',
+                      selected: _selected?.id == _step.choices[i].id,
                       locked: answered,
                       highlightOptimal:
-                          answered && _feedback?.choiceKey == choice.choiceKey,
+                          answered &&
+                          _feedback?.choiceKey == _step.choices[i].choiceKey,
                       onTap: answered
                           ? null
-                          : () => setState(() => _selected = choice),
+                          : () => setState(() => _selected = _step.choices[i]),
                     ),
                     const SizedBox(height: AppSpacing.s),
                   ],
@@ -347,6 +350,7 @@ class _SituationCard extends StatelessWidget {
 class _ChoiceTile extends StatelessWidget {
   const _ChoiceTile({
     required this.choice,
+    required this.displayLabel,
     required this.selected,
     required this.locked,
     required this.highlightOptimal,
@@ -354,6 +358,7 @@ class _ChoiceTile extends StatelessWidget {
   });
 
   final ScenarioChoice choice;
+  final String displayLabel;
   final bool selected;
   final bool locked;
   final bool highlightOptimal;
@@ -405,7 +410,7 @@ class _ChoiceTile extends StatelessWidget {
                       : palette.surfaceMuted,
                 ),
                 child: Text(
-                  choice.choiceKey.toUpperCase(),
+                  displayLabel,
                   style: text.labelMedium?.copyWith(
                     color: selected || highlightOptimal
                         ? palette.canvas
@@ -471,9 +476,7 @@ class _FeedbackCard extends StatelessWidget {
           Row(
             children: [
               Icon(
-                optimal
-                    ? Icons.check_circle_rounded
-                    : Icons.info_rounded,
+                optimal ? Icons.check_circle_rounded : Icons.info_rounded,
                 size: 20,
                 color: accent,
               ),

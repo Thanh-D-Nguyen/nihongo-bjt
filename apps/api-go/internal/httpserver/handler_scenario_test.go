@@ -151,8 +151,15 @@ func TestScenarioLearnerHTTPContract(t *testing.T) {
 			} `json:"steps"`
 		}
 		decode(rr, &detail)
-		if len(detail.Steps) != 2 || detail.Steps[0].StepOrder != 1 || len(detail.Steps[0].Choices) != 2 || detail.Steps[0].Choices[0].ChoiceKey != "A" {
+		if len(detail.Steps) != 2 || detail.Steps[0].StepOrder != 1 || len(detail.Steps[0].Choices) != 2 {
 			t.Errorf("steps are not ordered with their choices: %+v", detail.Steps)
+		}
+		gotKeys := map[string]bool{}
+		for _, ch := range detail.Steps[0].Choices {
+			gotKeys[ch.ChoiceKey] = true
+		}
+		if !gotKeys["A"] || !gotKeys["B"] {
+			t.Errorf("step 1 choices missing canonical keys A/B after shuffle: %+v", detail.Steps[0].Choices)
 		}
 		if rr := do(http.MethodGet, "/api/scenarios/"+newUUID(t), "", "", true); rr.Code != http.StatusNotFound {
 			t.Errorf("unknown scenario = %d, want 404", rr.Code)
