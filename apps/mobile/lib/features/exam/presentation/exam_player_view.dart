@@ -89,11 +89,16 @@ class ExamPlayerView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.m),
-                  for (final option in question.options) ...[
+                  for (var i = 0; i < question.options.length; i++) ...[
                     _OptionTile(
-                      option: option,
-                      selected: selectedKey == option.optionKey,
-                      onTap: locked ? null : () => onSelect(option.optionKey),
+                      option: question.options[i],
+                      displayLabel: i < 26
+                          ? String.fromCharCode(65 + i)
+                          : '${i + 1}',
+                      selected: selectedKey == question.options[i].optionKey,
+                      onTap: locked
+                          ? null
+                          : () => onSelect(question.options[i].optionKey),
                     ),
                     const SizedBox(height: AppSpacing.s),
                   ],
@@ -436,10 +441,12 @@ class _ImagePromptFallback extends StatelessWidget {
 class _OptionTile extends StatelessWidget {
   const _OptionTile({
     required this.option,
+    required this.displayLabel,
     required this.selected,
     required this.onTap,
   });
   final ExamOption option;
+  final String displayLabel;
   final bool selected;
   final VoidCallback? onTap;
 
@@ -480,7 +487,7 @@ class _OptionTile extends StatelessWidget {
                   color: selected ? palette.accent : palette.surfaceMuted,
                 ),
                 child: Text(
-                  option.optionKey.toUpperCase(),
+                  displayLabel,
                   style: text.labelMedium?.copyWith(
                     color: selected ? palette.canvas : palette.inkSecondary,
                     fontWeight: FontWeight.w700,

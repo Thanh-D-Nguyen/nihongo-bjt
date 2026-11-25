@@ -10,6 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/optionshuffle"
 )
 
 // ErrSessionNotFound is returned when no placement session matches the given ID and user.
@@ -136,6 +137,7 @@ func (s *Store) GetOnboardingState(ctx context.Context, userID string) (*Onboard
 		if err != nil {
 			return nil, err
 		}
+		ShuffleQuestionOptions(questions, state.SessionID)
 		state.Questions = questions
 	}
 	return state, nil
@@ -367,4 +369,15 @@ func (s *Store) LoadQuestions(ctx context.Context, questionIDs []string) ([]Ques
 		return nil, fmt.Errorf("placement: question set changed during active session")
 	}
 	return questions, nil
+}
+
+// ShuffleQuestionOptions deterministically shuffles each question's options for
+// a placement session while keeping optionKey bound to its text.
+func ShuffleQuestionOptions(questions []Question, sessionID string) {
+	if sessionID == "" {
+		return
+	}
+	for i := range questions {
+		questions[i].Options = optionshuffle.Deterministic(questions[i].Options, sessionID, questions[i].ID)
+	}
 }

@@ -153,6 +153,7 @@ class ExamBreakdownItem {
     required this.prompt,
     required this.selectedOption,
     required this.isCorrect,
+    this.selectedDisplayOption,
     this.explanationVi,
     this.skillTag,
     this.sectionCode,
@@ -162,8 +163,11 @@ class ExamBreakdownItem {
   final String questionId;
   final String prompt;
 
-  /// The option key the learner chose (e.g. `A`).
+  /// The canonical option key the learner chose (e.g. `B`).
   final String selectedOption;
+
+  /// The positional display letter shown during the session (e.g. `D`).
+  final String? selectedDisplayOption;
   final bool isCorrect;
   final String? explanationVi;
   final String? skillTag;

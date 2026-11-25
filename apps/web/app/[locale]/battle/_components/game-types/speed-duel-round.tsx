@@ -115,7 +115,7 @@ export function SpeedDuelRound({
                       ? "bg-amber/20 text-amber-strong"
                       : "bg-ink/5 text-muted group-hover:bg-amber-soft group-hover:text-amber-strong"
               }`}>
-                {option.optionKey}
+                {idx < 26 ? String.fromCharCode(65 + idx) : idx + 1}
               </span>
               {/* Option text */}
               <span className="flex-1">{option.text}</span>

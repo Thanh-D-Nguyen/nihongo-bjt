@@ -320,7 +320,7 @@ export function ScenarioPlayClient({
 
       {/* Choices */}
       <div className="mt-4 space-y-2">
-        {step.choices.map((c) => {
+        {step.choices.map((c, idx) => {
           let choiceStyle = selectedChoice
             ? "border-border bg-paper cursor-default"
             : "border-border bg-surface hover:border-border-hover hover:bg-ink/5";
@@ -331,6 +331,7 @@ export function ScenarioPlayClient({
           } else if (selectedChoice === c.choiceKey) {
             choiceStyle = "border-accent bg-surface cursor-wait";
           }
+          const displayLabel = idx < 26 ? String.fromCharCode(65 + idx) : String(idx + 1);
 
           return (
             <button
@@ -346,7 +347,7 @@ export function ScenarioPlayClient({
               )}
             >
               <span className="font-bold text-ink/70 mr-2">
-                {c.choiceKey}.
+                {displayLabel}.
               </span>
               <span className="text-ink">{locale === "ja" ? c.textJa || c.textVi : c.textVi}</span>
               {c.textJa && locale !== "ja" && (

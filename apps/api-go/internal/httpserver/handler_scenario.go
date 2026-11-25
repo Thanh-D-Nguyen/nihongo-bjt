@@ -46,6 +46,9 @@ func getScenarioHandler(store *scenario.Store, logger *slog.Logger) http.Handler
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+		if identity, ok := authn.GetLearnerIdentity(r.Context()); ok {
+			scenario.ShuffleStepChoices(sd, identity.UserID)
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(sd)

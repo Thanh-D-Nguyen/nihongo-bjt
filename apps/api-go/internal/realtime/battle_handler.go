@@ -2100,6 +2100,7 @@ func defaultInMemoryBattle(fairnessSeed string, maxRounds int) *CreatedBattle {
 		maxRounds = len(pool)
 	}
 	picked := ShuffleDeterministic(pool, fairnessSeed)[:maxRounds]
+	shuffleBattleQuestionOptions(picked, fairnessSeed)
 	roundIDs := make([]string, len(picked))
 	for i := range picked {
 		roundIDs[i] = randomHex(8)

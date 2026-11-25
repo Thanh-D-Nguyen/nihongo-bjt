@@ -16,6 +16,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kiokoto/nihongo-bjt/api-go/internal/authn"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/optionshuffle"
 	"github.com/kiokoto/nihongo-bjt/api-go/internal/studyplan"
 )
 
@@ -267,6 +268,7 @@ func quizSessionQuestionHandler(db *pgxpool.Pool, plans *studyplan.Store, logger
 				return
 			}
 			rows.Close()
+			options = optionshuffle.Deterministic(options, session.ID, id)
 			question = map[string]any{"id": id, "prompt": prompt, "scenario": scenario, "audioScript": audioScript, "audioUrl": audioURL, "imageUrl": imageURL, "imageAlt": imageAlt, "skillTag": skill, "sectionCode": code, "options": options}
 			response["question"] = question
 		}
@@ -587,6 +589,7 @@ func quizBreakdownHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFun
 		}
 		defer rows.Close()
 		breakdown := []map[string]any{}
+		questionIDs := []string{}
 		for rows.Next() {
 			var qid, prompt, selected, explanation, skill, section string
 			var correct bool
@@ -595,12 +598,54 @@ func quizBreakdownHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFun
 				writeJSONError(w, "internal error", 500)
 				return
 			}
-			breakdown = append(breakdown, map[string]any{"questionId": qid, "prompt": prompt, "selectedOption": selected, "isCorrect": correct, "explanationVi": explanation, "skillTag": skill, "sectionCode": section, "remediationCardId": card})
+			questionIDs = append(questionIDs, qid)
+			breakdown = append(breakdown, map[string]any{"questionId": qid, "prompt": prompt, "selectedOption": selected, "selectedDisplayOption": selected, "isCorrect": correct, "explanationVi": explanation, "skillTag": skill, "sectionCode": section, "remediationCardId": card})
 		}
 		if err := rows.Err(); err != nil {
 			writeJSONError(w, "internal error", 500)
 			return
 		}
+		if len(questionIDs) > 0 {
+			optRows, err := db.Query(r.Context(), `SELECT question_id::text, option_key FROM assessment.bjt_question_option WHERE question_id = ANY($1::uuid[]) ORDER BY question_id, option_key`, questionIDs)
+			if err != nil {
+				writeJSONError(w, "internal error", 500)
+				return
+			}
+			keysByQID := make(map[string][]string, len(questionIDs))
+			for optRows.Next() {
+				var qid, optKey string
+				if err := optRows.Scan(&qid, &optKey); err != nil {
+					optRows.Close()
+					writeJSONError(w, "internal error", 500)
+					return
+				}
+				keysByQID[qid] = append(keysByQID[qid], optKey)
+			}
+			if err := optRows.Err(); err != nil {
+				optRows.Close()
+				writeJSONError(w, "internal error", 500)
+				return
+			}
+			optRows.Close()
+			for _, item := range breakdown {
+				qid, _ := item["questionId"].(string)
+				selected, _ := item["selectedOption"].(string)
+				shuffledKeys := optionshuffle.Deterministic(keysByQID[qid], id, qid)
+				for idx, key := range shuffledKeys {
+					if key == selected {
+						item["selectedDisplayOption"] = positionalOptionLabel(idx)
+						break
+					}
+				}
+			}
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"sessionId": id, "testId": testID, "testTitleVi": titleVi, "testTitleJa": titleJa, "estimatedScore": score, "estimatedBjtBand": band, "breakdown": breakdown})
 	}
+}
+
+func positionalOptionLabel(index int) string {
+	if index >= 0 && index < 26 {
+		return string(rune('A' + index))
+	}
+	return ""
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/kiokoto/nihongo-bjt/api-go/internal/optionshuffle"
 )
 
 // ErrNotFound is returned when a requested template does not exist.
@@ -333,9 +334,7 @@ func (s *Store) GetPrintableTemplate(ctx context.Context, id string) (*Printable
 				}
 			}
 			oRows.Close()
-			if q.Options == nil {
-				q.Options = []PrintableOption{}
-			}
+			q.Options = optionshuffle.Deterministic(q.Options, testID, q.ID)
 			sec.Questions = append(sec.Questions, q)
 			pt.TotalQuestions++
 		}

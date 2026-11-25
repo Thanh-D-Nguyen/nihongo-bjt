@@ -1,0 +1,706 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-450",
+  "title": "Deterministic serve-time option shuffle to fix BJT answer-position bias",
+  "start_head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e",
+  "preexisting_changes": {
+    ".build/.buildSystem_debug": "c337257139e569398ce8bf081a54dbc7d1e0267d",
+    ".build/CACHEDIR.TAG": "b7ab0d883e974d20c05898291a6218954e18e5ef"
+  },
+  "spec": {
+    "problem": "Learner-facing BJT quiz, printable template, placement, battle, and scenario endpoints return answer options in stored ORDER BY option_key order, exposing severe stored-data answer-position bias (57.3% B, 75.3% A+B across 846 published BJT questions; 100% A on seeded business scenario steps).",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "Quiz session question serving deterministically shuffles options by (sessionId, questionId): stable on refetch, 15-35% per slot over >=400 sessions when correct answer is stored only at B, and grading resolves by optionKey."
+      },
+      {
+        "id": "AC2",
+        "text": "Printable quiz template serving deterministically shuffles options by (templateId, questionId): stable on refetch, 15-35% per slot over >=400 questions, keeping key bound to text and correctKey matching the correct option's key."
+      },
+      {
+        "id": "AC3",
+        "text": "Placement/diagnostic serving deterministically shuffles options by (sessionId, questionId) consistently across start, resume, and onboarding status, and grades by optionKey."
+      },
+      {
+        "id": "AC4",
+        "text": "Battle question serving (bot, PvP, and in-memory fallback) deterministically shuffles options by (fairnessSeed, questionId) with identical PvP/resync order and grading by optionKey."
+      },
+      {
+        "id": "AC5",
+        "text": "Scenario step choices are audited and deterministically shuffled per learner+step while preserving choiceKey binding and grading by choiceKey."
+      },
+      {
+        "id": "AC6",
+        "text": "Web quiz, printable exam, placement, battle speed-duel, and scenario views render positional A/B/C/D labels matching keyboard shortcuts and printed answer-sheet bubbles while submitting canonical optionKey/choiceKey."
+      },
+      {
+        "id": "AC7",
+        "text": "Admin question-bank authoring endpoints remain canonical (unshuffled) and stored question data is untouched."
+      }
+    ],
+    "expected_behavior": "Learner-facing serve paths deterministically Fisher-Yates shuffle options using (session/attempt/template/user id + question/step id) while keeping optionKey/choiceKey bound to its text and grading by key; identical (seed, question) always returns identical order; across >=400 seeds correct answers stored only at B distribute ~uniformly (15-35% per position); admin question-bank endpoints remain canonical; web UI renders positional A/B/C/D labels while submitting canonical optionKey/choiceKey.",
+    "observed_behavior": "GET /api/quiz/session/{id}/question, GET /api/quiz/templates/{id}/printable, POST /api/learner/placement/start + GET /api/learner/onboarding, battle question loading (CreateBotBattle/CreatePvpBattle/defaultInMemoryBattle), and GET /api/scenarios/{id} return options/choices in canonical A/B/C/D order without shuffling; web views render raw optionKey/choiceKey badges.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "DOMAIN_LOGIC",
+      "API_CONTRACT",
+      "REALTIME",
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": "Fixes answer-position bias across BJT quiz sessions, printable templates, placement, realtime battles, and scenarios with deterministic serve-time Fisher-Yates option shuffle and positional web display labels."
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestQuizSessionOptionShuffleDistributionStabilityAndGrading",
+      "expect": "quiz session answer-position distribution out of uniform bounds"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestPlacementOptionShuffleDistributionStabilityAndGrading",
+      "expect": "placement answer-position distribution out of uniform bounds"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/httpserver",
+      "test": "TestScenarioChoiceShuffleDistributionStabilityAndGrading",
+      "expect": "scenario choice-position distribution out of uniform bounds"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/quiztemplate",
+      "test": "TestGetPrintableTemplateOptionShuffleDistributionAndStability",
+      "expect": "printable template answer-position distribution out of uniform bounds"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/realtime",
+      "test": "TestBattleOptionShuffleInMemoryDistributionAndStability",
+      "expect": "battle in-memory answer-position distribution out of uniform bounds"
+    },
+    {
+      "runner": "go",
+      "package": "./internal/realtime",
+      "test": "TestPostgresBattleStore_OptionShuffleDistributionAndStability",
+      "expect": "battle store answer-position distribution out of uniform bounds"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/quiz/_components/quiz-client.shuffle.test.tsx",
+      "test": "QuizQuestionPanel shuffled option display and key submission > renders positional A/B/C/D badges while submitting canonical optionKey on click and keyboard shortcut",
+      "expect": "expected [ 'C', 'A', 'D', 'B' ]"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/quiz/print/[id]/_components/print-exam-client.test.tsx",
+      "test": "PrintExamClient > prints positional A/B/C/D option badges and aligns the answer-sheet bubble for shuffled options",
+      "expect": "expected [ 'C', 'A', 'D', 'B' ]"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-24T23:21:39.452Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-24T23:21:39.859Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-24T23:21:40.110Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-24T23:27:26.628Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-24T23:31:32.421Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-24T23:45:30.841Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-25T00:01:07.080Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "at": "2026-11-25T00:15:40.391Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-25T00:25:06.171Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-25T00:25:07.436Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-24T23:25:33.813Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e",
+      "kind": "red",
+      "outcome": "INVALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionOptionShuffleDistributionStabilityAndGrading|TestPlacementOptionShuffleDistributionStabilityAndGrading|TestScenarioChoiceShuffleDistributionStabilityAndGrading)$ ./internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetPrintableTemplateOptionShuffleDistributionAndStability)$ ./internal/quiztemplate",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBattleOptionShuffleInMemoryDistributionAndStability|TestPostgresBattleStore_OptionShuffleDistributionAndStability)$ ./internal/realtime",
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-client.shuffle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/print/[id]/_components/print-exam-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionOptionShuffleDistributionStabilityAndGrading",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizSessionOptionShuffleDistributionStabilityAndGrading handler_quiz_option_shuffle_test.go:155: quiz_session served correct-answer positions (N=400): slot0=0 (0.0%) slot1=400 (100.0%) slot2=0 (0.0%) slot3=0 (0.0%) handler_quiz_option_shuffle_test.go:167: quiz session answer-position dis…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestPlacementOptionShuffleDistributionStabilityAndGrading",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPlacementOptionShuffleDistributionStabilityAndGrading handler_quiz_option_shuffle_test.go:377: placement served correct-answer positions (N=400): slot0=0 (0.0%) slot1=400 (100.0%) slot2=0 (0.0%) slot3=0 (0.0%) handler_quiz_option_shuffle_test.go:389: placement answer-position distributio…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestScenarioChoiceShuffleDistributionStabilityAndGrading",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestScenarioChoiceShuffleDistributionStabilityAndGrading handler_quiz_option_shuffle_test.go:500: scenario served optimal-choice positions (N=300): slot0=300 (100.0%) slot1=0 (0.0%) slot2=0 (0.0%) handler_quiz_option_shuffle_test.go:511: scenario choice-position distribution out of uniform b…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/quiztemplate:TestGetPrintableTemplateOptionShuffleDistributionAndStability",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGetPrintableTemplateOptionShuffleDistributionAndStability store_shuffle_test.go:118: quiztemplate_printable served correct-answer positions (N=400): slot0=0 (0.0%) slot1=400 (100.0%) slot2=0 (0.0%) slot3=0 (0.0%) store_shuffle_test.go:130: printable template answer-position distribution …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/realtime:TestBattleOptionShuffleInMemoryDistributionAndStability",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBattleOptionShuffleInMemoryDistributionAndStability battle_option_shuffle_test.go:63: battle_inmemory served correct-answer positions (N=400): slot0=0 (0.0%) slot1=400 (100.0%) slot2=0 (0.0%) slot3=0 (0.0%) battle_option_shuffle_test.go:75: battle in-memory answer-position distribution o…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/realtime:TestPostgresBattleStore_OptionShuffleDistributionAndStability",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPostgresBattleStore_OptionShuffleDistributionAndStability battle_option_shuffle_test.go:142: seed battle-pg-seed-0000 omitted fixture question 9f7a9b8d-9917-4557-9b61-af74c2033c54 --- FAIL: TestPostgresBattleStore_OptionShuffleDistributionAndStability (0.13s)",
+          "valid": false,
+          "reason": "failure output does not contain the expected text \"battle store answer-position distribution out of uniform bounds\""
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-client.shuffle.test.tsx::QuizQuestionPanel shuffled option display and key submission > renders positional A/B/C/D badges while submitting canonical optionKey on click and keyboard shortcut",
+          "outcome": "FAIL",
+          "excerpt": "expected [ 'C', 'A', 'D', 'B' ] to deeply equal [ 'A', 'B', 'C', 'D' ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/print/[id]/_components/print-exam-client.test.tsx::PrintExamClient > prints positional A/B/C/D option badges and aligns the answer-sheet bubble for shuffled options",
+          "outcome": "FAIL",
+          "excerpt": "expected [ 'C', 'A', 'D', 'B' ] to deeply equal [ 'A', 'B', 'C', 'D' ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestQuizSessionOptionShuffleDistributionStabilityAndGrading": "quiz session answer-position distribution out of uniform bounds",
+        "go:./internal/httpserver:TestPlacementOptionShuffleDistributionStabilityAndGrading": "placement answer-position distribution out of uniform bounds",
+        "go:./internal/httpserver:TestScenarioChoiceShuffleDistributionStabilityAndGrading": "scenario choice-position distribution out of uniform bounds",
+        "go:./internal/quiztemplate:TestGetPrintableTemplateOptionShuffleDistributionAndStability": "printable template answer-position distribution out of uniform bounds",
+        "go:./internal/realtime:TestBattleOptionShuffleInMemoryDistributionAndStability": "battle in-memory answer-position distribution out of uniform bounds",
+        "go:./internal/realtime:TestPostgresBattleStore_OptionShuffleDistributionAndStability": "battle store answer-position distribution out of uniform bounds",
+        "vitest:apps/web/app/[locale]/quiz/_components/quiz-client.shuffle.test.tsx::QuizQuestionPanel shuffled option display and key submission > renders positional A/B/C/D badges while submitting canonical optionKey on click and keyboard shortcut": "expected [ 'C', 'A', 'D', 'B' ]",
+        "vitest:apps/web/app/[locale]/quiz/print/[id]/_components/print-exam-client.test.tsx::PrintExamClient > prints positional A/B/C/D option badges and aligns the answer-sheet bubble for shuffled options": "expected [ 'C', 'A', 'D', 'B' ]"
+      },
+      "fingerprint": "4236a8f2f03d9b2f85d3df4a801c1a65c5e5b538f5e9b304d0edd79cc450eec2"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-24T23:27:26.095Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionOptionShuffleDistributionStabilityAndGrading|TestPlacementOptionShuffleDistributionStabilityAndGrading|TestScenarioChoiceShuffleDistributionStabilityAndGrading)$ ./internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetPrintableTemplateOptionShuffleDistributionAndStability)$ ./internal/quiztemplate",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBattleOptionShuffleInMemoryDistributionAndStability|TestPostgresBattleStore_OptionShuffleDistributionAndStability)$ ./internal/realtime",
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-client.shuffle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/print/[id]/_components/print-exam-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionOptionShuffleDistributionStabilityAndGrading",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestQuizSessionOptionShuffleDistributionStabilityAndGrading handler_quiz_option_shuffle_test.go:155: quiz_session served correct-answer positions (N=400): slot0=0 (0.0%) slot1=400 (100.0%) slot2=0 (0.0%) slot3=0 (0.0%) handler_quiz_option_shuffle_test.go:167: quiz session answer-position dis…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestPlacementOptionShuffleDistributionStabilityAndGrading",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPlacementOptionShuffleDistributionStabilityAndGrading handler_quiz_option_shuffle_test.go:377: placement served correct-answer positions (N=400): slot0=0 (0.0%) slot1=400 (100.0%) slot2=0 (0.0%) slot3=0 (0.0%) handler_quiz_option_shuffle_test.go:389: placement answer-position distributio…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/httpserver:TestScenarioChoiceShuffleDistributionStabilityAndGrading",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestScenarioChoiceShuffleDistributionStabilityAndGrading handler_quiz_option_shuffle_test.go:500: scenario served optimal-choice positions (N=300): slot0=300 (100.0%) slot1=0 (0.0%) slot2=0 (0.0%) handler_quiz_option_shuffle_test.go:511: scenario choice-position distribution out of uniform b…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/quiztemplate:TestGetPrintableTemplateOptionShuffleDistributionAndStability",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestGetPrintableTemplateOptionShuffleDistributionAndStability store_shuffle_test.go:119: quiztemplate_printable served correct-answer positions (N=400): slot0=0 (0.0%) slot1=400 (100.0%) slot2=0 (0.0%) slot3=0 (0.0%) store_shuffle_test.go:131: printable template answer-position distribution …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/realtime:TestBattleOptionShuffleInMemoryDistributionAndStability",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestBattleOptionShuffleInMemoryDistributionAndStability battle_option_shuffle_test.go:63: battle_inmemory served correct-answer positions (N=400): slot0=0 (0.0%) slot1=400 (100.0%) slot2=0 (0.0%) slot3=0 (0.0%) battle_option_shuffle_test.go:75: battle in-memory answer-position distribution o…",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "go:./internal/realtime:TestPostgresBattleStore_OptionShuffleDistributionAndStability",
+          "outcome": "FAIL",
+          "excerpt": "=== RUN TestPostgresBattleStore_OptionShuffleDistributionAndStability battle_option_shuffle_test.go:178: battle_store served correct-answer positions (N=400): slot0=0 (0.0%) slot1=400 (100.0%) slot2=0 (0.0%) slot3=0 (0.0%) battle_option_shuffle_test.go:190: battle store answer-position distribution …",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-client.shuffle.test.tsx::QuizQuestionPanel shuffled option display and key submission > renders positional A/B/C/D badges while submitting canonical optionKey on click and keyboard shortcut",
+          "outcome": "FAIL",
+          "excerpt": "expected [ 'C', 'A', 'D', 'B' ] to deeply equal [ 'A', 'B', 'C', 'D' ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/print/[id]/_components/print-exam-client.test.tsx::PrintExamClient > prints positional A/B/C/D option badges and aligns the answer-sheet bubble for shuffled options",
+          "outcome": "FAIL",
+          "excerpt": "expected [ 'C', 'A', 'D', 'B' ] to deeply equal [ 'A', 'B', 'C', 'D' ]",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "go:./internal/httpserver:TestQuizSessionOptionShuffleDistributionStabilityAndGrading": "quiz session answer-position distribution out of uniform bounds",
+        "go:./internal/httpserver:TestPlacementOptionShuffleDistributionStabilityAndGrading": "placement answer-position distribution out of uniform bounds",
+        "go:./internal/httpserver:TestScenarioChoiceShuffleDistributionStabilityAndGrading": "scenario choice-position distribution out of uniform bounds",
+        "go:./internal/quiztemplate:TestGetPrintableTemplateOptionShuffleDistributionAndStability": "printable template answer-position distribution out of uniform bounds",
+        "go:./internal/realtime:TestBattleOptionShuffleInMemoryDistributionAndStability": "battle in-memory answer-position distribution out of uniform bounds",
+        "go:./internal/realtime:TestPostgresBattleStore_OptionShuffleDistributionAndStability": "battle store answer-position distribution out of uniform bounds",
+        "vitest:apps/web/app/[locale]/quiz/_components/quiz-client.shuffle.test.tsx::QuizQuestionPanel shuffled option display and key submission > renders positional A/B/C/D badges while submitting canonical optionKey on click and keyboard shortcut": "expected [ 'C', 'A', 'D', 'B' ]",
+        "vitest:apps/web/app/[locale]/quiz/print/[id]/_components/print-exam-client.test.tsx::PrintExamClient > prints positional A/B/C/D option badges and aligns the answer-sheet bubble for shuffled options": "expected [ 'C', 'A', 'D', 'B' ]"
+      },
+      "fingerprint": "06a6f8b9fd332f7c13b06af9b21fcbd338911a6f8d37c49c67b1126e69bef14c"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-24T23:31:31.141Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionOptionShuffleDistributionStabilityAndGrading|TestPlacementOptionShuffleDistributionStabilityAndGrading|TestScenarioChoiceShuffleDistributionStabilityAndGrading)$ ./internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetPrintableTemplateOptionShuffleDistributionAndStability)$ ./internal/quiztemplate",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBattleOptionShuffleInMemoryDistributionAndStability|TestPostgresBattleStore_OptionShuffleDistributionAndStability)$ ./internal/realtime",
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-client.shuffle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/print/[id]/_components/print-exam-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionOptionShuffleDistributionStabilityAndGrading",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestPlacementOptionShuffleDistributionStabilityAndGrading",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestScenarioChoiceShuffleDistributionStabilityAndGrading",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/quiztemplate:TestGetPrintableTemplateOptionShuffleDistributionAndStability",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/realtime:TestBattleOptionShuffleInMemoryDistributionAndStability",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/realtime:TestPostgresBattleStore_OptionShuffleDistributionAndStability",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-client.shuffle.test.tsx::QuizQuestionPanel shuffled option display and key submission > renders positional A/B/C/D badges while submitting canonical optionKey on click and keyboard shortcut",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/print/[id]/_components/print-exam-client.test.tsx::PrintExamClient > prints positional A/B/C/D option badges and aligns the answer-sheet bubble for shuffled options",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "baf93ba521f281a34225adb09a417e233f9064dfcb44022a52ecde95e8288e7c"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-24T23:38:34.809Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 1856,
+        "executed": 1856,
+        "passed": 1856,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "a later step of bash scripts/quality/verify-go.sh failed (exit 1)",
+      "fingerprint": "baf93ba521f281a34225adb09a417e233f9064dfcb44022a52ecde95e8288e7c"
+    },
+    {
+      "seq": 5,
+      "at": "2026-11-24T23:39:29.282Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 771,
+        "executed": 771,
+        "passed": 771,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 930,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "baf93ba521f281a34225adb09a417e233f9064dfcb44022a52ecde95e8288e7c"
+    },
+    {
+      "seq": 6,
+      "at": "2026-11-24T23:45:29.713Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/with-test-db.sh bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1856,
+        "executed": 1856,
+        "passed": 1856,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1856 passed, 0 allowed skip(s)",
+      "fingerprint": "baf93ba521f281a34225adb09a417e233f9064dfcb44022a52ecde95e8288e7c"
+    },
+    {
+      "seq": 7,
+      "at": "2026-11-25T00:01:04.906Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestQuizSessionOptionShuffleDistributionStabilityAndGrading|TestPlacementOptionShuffleDistributionStabilityAndGrading|TestScenarioChoiceShuffleDistributionStabilityAndGrading)$ ./internal/httpserver",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestGetPrintableTemplateOptionShuffleDistributionAndStability)$ ./internal/quiztemplate",
+        "cd apps/api-go && go test -json -count=1 -p 1 -run ^(?:TestBattleOptionShuffleInMemoryDistributionAndStability|TestPostgresBattleStore_OptionShuffleDistributionAndStability)$ ./internal/realtime",
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/_components/quiz-client.shuffle.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/quiz/print/[id]/_components/print-exam-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "go:./internal/httpserver:TestQuizSessionOptionShuffleDistributionStabilityAndGrading",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestPlacementOptionShuffleDistributionStabilityAndGrading",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/httpserver:TestScenarioChoiceShuffleDistributionStabilityAndGrading",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/quiztemplate:TestGetPrintableTemplateOptionShuffleDistributionAndStability",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/realtime:TestBattleOptionShuffleInMemoryDistributionAndStability",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "go:./internal/realtime:TestPostgresBattleStore_OptionShuffleDistributionAndStability",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/_components/quiz-client.shuffle.test.tsx::QuizQuestionPanel shuffled option display and key submission > renders positional A/B/C/D badges while submitting canonical optionKey on click and keyboard shortcut",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/quiz/print/[id]/_components/print-exam-client.test.tsx::PrintExamClient > prints positional A/B/C/D option badges and aligns the answer-sheet bubble for shuffled options",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "182fdd8b6118cc6f757be2070c03e7f764d5adcdbd5bd66a256cdeba606ddf4b"
+    },
+    {
+      "seq": 8,
+      "at": "2026-11-25T00:05:47.939Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 1856,
+        "executed": 1856,
+        "passed": 1856,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "a later step of bash scripts/quality/verify-go.sh failed (exit 1)",
+      "fingerprint": "182fdd8b6118cc6f757be2070c03e7f764d5adcdbd5bd66a256cdeba606ddf4b"
+    },
+    {
+      "seq": 9,
+      "at": "2026-11-25T00:10:56.363Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e",
+      "kind": "suite",
+      "gate": "suite_go",
+      "command": "bash scripts/quality/verify-go.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 1856,
+        "executed": 1856,
+        "passed": 1856,
+        "failed": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "min_passed_tests": 1444
+      },
+      "message": "1856 passed, 0 allowed skip(s)",
+      "fingerprint": "182fdd8b6118cc6f757be2070c03e7f764d5adcdbd5bd66a256cdeba606ddf4b"
+    },
+    {
+      "seq": 10,
+      "at": "2026-11-25T00:12:13.307Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 774,
+        "executed": 774,
+        "passed": 774,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 931,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "182fdd8b6118cc6f757be2070c03e7f764d5adcdbd5bd66a256cdeba606ddf4b"
+    },
+    {
+      "seq": 11,
+      "at": "2026-11-25T00:13:31.228Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "accounting": {
+        "discovered": 774,
+        "executed": 774,
+        "passed": 774,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 931,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "a later step of bash scripts/quality/verify-frontend.sh failed (exit 1)",
+      "fingerprint": "182fdd8b6118cc6f757be2070c03e7f764d5adcdbd5bd66a256cdeba606ddf4b"
+    },
+    {
+      "seq": 12,
+      "at": "2026-11-25T00:15:37.921Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 774,
+        "executed": 774,
+        "passed": 774,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 931,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "182fdd8b6118cc6f757be2070c03e7f764d5adcdbd5bd66a256cdeba606ddf4b"
+    },
+    {
+      "seq": 13,
+      "at": "2026-11-25T00:25:05.307Z",
+      "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "fresh-research-subagent-2e4b9f23",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "Independent review APPROVE (0 open). Served-pos dist (stored B; scenario A): quiz_session N=400 [81(20.2%),115(28.8%),107(26.8%),97(24.2%)]; quiztemplate N=400 [101(25.2%),98(24.5%),100(25.0%),101(25.2%)]; placement N=400 [106(26.5%),95(23.8%),85(21.2%),114(28.5%)]; battle_store N=400 [102(25.5%),98(24.5%),99(24.8%),101(25.2%)]; battle_inmem N=400 [104(26.0%),103(25.8%),100(25.0%),93(23.2%)]; scenario N=300 [92(30.7%),98(32.7%),110(36.7%)].",
+      "output_sha256": "6276522cd802f10a8eabf10aab69280c6d6e04eb64a996f05412e4ca5443f833",
+      "attested": true,
+      "fingerprint": "182fdd8b6118cc6f757be2070c03e7f764d5adcdbd5bd66a256cdeba606ddf4b"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-25T00:25:07.427Z",
+    "head": "8b8fd2df3563cbf6acd94feea117ac8730d3411e",
+    "fingerprint": "182fdd8b6118cc6f757be2070c03e7f764d5adcdbd5bd66a256cdeba606ddf4b",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_go": "PASS",
+      "suite_frontend": "PASS",
+      "review": "PASS"
+    },
+    "files": {
+      "apps/api-go/internal/httpserver/handler_placement.go": "4cc74a088848ca3355bb81fe4dff536fcdfe63c4",
+      "apps/api-go/internal/httpserver/handler_quiz_option_shuffle_test.go": "c87f3ababe218a848b749504f8e5ff15c2559e2c",
+      "apps/api-go/internal/httpserver/handler_quiz_session.go": "842bd66f5b343315c8c57e5fd659eb902e449e86",
+      "apps/api-go/internal/httpserver/handler_scenario.go": "bc523d65cb84f46c1aab5e1062d95ab0097c81b9",
+      "apps/api-go/internal/httpserver/handler_scenario_test.go": "64aee2e54ff85abcfbc6165c5e13d64149fd659d",
+      "apps/api-go/internal/optionshuffle/shuffle.go": "c21658f615626b944b0c4a59b4852601bc1ecc59",
+      "apps/api-go/internal/optionshuffle/shuffle_test.go": "954db4a9c4572c8d246b08273b00f3ff499e4d51",
+      "apps/api-go/internal/placement/store.go": "b98291ce7a9c9bb8f7386cd772cb533cb4feadc1",
+      "apps/api-go/internal/quiztemplate/store.go": "7b1fa8a52e6aa980c7c58139e9110042b6dcb4e9",
+      "apps/api-go/internal/quiztemplate/store_shuffle_test.go": "668e4906e9278cca9dbb421fc0519a5ab55ae533",
+      "apps/api-go/internal/realtime/battle_handler.go": "e3606e1e532ab53331c281f12d8f27c7eb1ca28a",
+      "apps/api-go/internal/realtime/battle_option_shuffle_test.go": "3098620ecb1214e1181d9037f4329c2b938fd092",
+      "apps/api-go/internal/realtime/battle_store.go": "0c4f1329c21e2c23281010a710e46bdbb24ae125",
+      "apps/api-go/internal/scenario/store.go": "8f8e7238dc06058dd15fa9a4fd385d523e223f42",
+      "apps/mobile/lib/features/exam/data/exam_dto.dart": "59b8f7752e79002f80bd5b1193cd648ba3fdbb0d",
+      "apps/mobile/lib/features/exam/domain/exam_models.dart": "7aa449dde0f0d5c578cee3e70d00066715aa83e4",
+      "apps/mobile/lib/features/exam/presentation/exam_player_view.dart": "3aa5309f09f6c857f22eaaadfbbb28dba83dfe93",
+      "apps/mobile/lib/features/exam/presentation/exam_review_view.dart": "80f1b7c037245fd065deee9c072522028a99dd14",
+      "apps/mobile/lib/features/scenarios/presentation/scenario_player_page.dart": "466d94bb82f1d620e5e5825c89ffe507637cbe39",
+      "apps/web/app/[locale]/battle/_components/battle-match-client.shuffle.test.ts": "72d6a321e7b0ede1f0a79ab78cc0c746e581b2d0",
+      "apps/web/app/[locale]/battle/_components/battle-match-client.tsx": "6e205e26080cf8fc35dd32b5d69a018ce42be1df",
+      "apps/web/app/[locale]/battle/_components/game-types/speed-duel-round.tsx": "17748591b0a3f2ed445817f50ac71c1010aa395c",
+      "apps/web/app/[locale]/onboarding/_components/onboarding-client.tsx": "a4847e758f1559064c738f5378cd197189f11255",
+      "apps/web/app/[locale]/quiz/_components/quiz-client.shuffle.test.tsx": "51c103ffd56360bf6a87241958bc8dc696223fd9",
+      "apps/web/app/[locale]/quiz/_components/quiz-client.tsx": "c9fba54d0df3fbd881b0c6b0ef95a3fc80900def",
+      "apps/web/app/[locale]/quiz/_components/quiz-results-breakdown.tsx": "fc5f4cd8996263de2af2642e891388a62f6b795c",
+      "apps/web/app/[locale]/quiz/print/[id]/_components/print-exam-client.test.tsx": "9d5b6308c33c30f032e5f5a848f446819913c4bf",
+      "apps/web/app/[locale]/quiz/print/[id]/_components/print-exam-client.tsx": "7a0a79555ad8becbada0364b5ff6bc97f501d167",
+      "apps/web/app/[locale]/scenarios/[scenarioId]/_components/scenario-play-client.tsx": "ae6a2c3956bc90623d3a84a7ac80cc2db2b7d1bf"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

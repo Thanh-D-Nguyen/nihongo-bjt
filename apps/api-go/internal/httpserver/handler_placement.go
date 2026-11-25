@@ -53,6 +53,7 @@ func startPlacementHandler(store *placement.Store, logger *slog.Logger) http.Han
 				writeJSONError(w, "internal error", http.StatusInternalServerError)
 				return
 			}
+			placement.ShuffleQuestionOptions(questions, existing.ID)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			_ = json.NewEncoder(w).Encode(placement.StartResponse{
@@ -97,6 +98,7 @@ func startPlacementHandler(store *placement.Store, logger *slog.Logger) http.Han
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+		placement.ShuffleQuestionOptions(questions, resp.SessionID)
 		resp.Questions = questions
 
 		w.Header().Set("Content-Type", "application/json")
