@@ -796,3 +796,116 @@ describe("WEB-449 Career RPG question card dark-mode contrast", () => {
   }
  });
 });
+
+describe("WEB-451 element-level bg-accent contrast guard across all app/**/*.tsx", () => {
+ // Frozen features (magazine/**) are out of scope per WEB-451.
+ const FROZEN_PREFIXES = ["app/[locale]/magazine/"] as const;
+ // Intentional always-dark/immersive surfaces must each have an explicit per-file justification.
+ const INTENTIONAL_DARK_ALLOWLIST: Record<string, string> = {};
+
+ function extractClassNameAttrs(source: string): Array<{ line: number; expr: string }> {
+  const results: Array<{ line: number; expr: string }> = [];
+  let i = 0;
+  while (i < source.length) {
+   const idx = source.indexOf("className", i);
+   if (idx === -1) break;
+   // Ensure whole attribute identifier `className`
+   const prev = idx > 0 ? source[idx - 1] : " ";
+   const after = source[idx + 9] ?? "";
+   if (/[\w$]/.test(prev) || /[\w$]/.test(after)) {
+    i = idx + 9;
+    continue;
+   }
+   let j = idx + 9;
+   while (j < source.length && /\s/.test(source[j])) j++;
+   if (source[j] !== "=") {
+    i = j;
+    continue;
+   }
+   j++;
+   while (j < source.length && /\s/.test(source[j])) j++;
+   const ch = source[j];
+   if (ch === '"' || ch === "'") {
+    let k = j + 1;
+    while (k < source.length && source[k] !== ch) {
+     if (source[k] === "\\") k++;
+     k++;
+    }
+    const line = source.slice(0, idx).split("\n").length;
+    results.push({ line, expr: source.slice(j, k + 1) });
+    i = k + 1;
+   } else if (ch === "{") {
+    let depth = 0;
+    let k = j;
+    let inStr: string | null = null;
+    while (k < source.length) {
+     const c = source[k];
+     if (inStr) {
+      if (c === "\\") {
+       k += 2;
+       continue;
+      }
+      if (c === inStr) inStr = null;
+     } else {
+      if (c === '"' || c === "'" || c === "`") inStr = c;
+      else if (c === "{") depth++;
+      else if (c === "}") {
+       depth--;
+       if (depth === 0) break;
+      }
+     }
+     k++;
+    }
+    const line = source.slice(0, idx).split("\n").length;
+    results.push({ line, expr: source.slice(j, k + 1) });
+    i = k + 1;
+   } else {
+    i = j + 1;
+   }
+  }
+  return results;
+ }
+
+ it("forbids same-element solid bg-accent with white or light-white surface text across every app/**/*.tsx", () => {
+  const appTsxFiles = tsxSources.filter((file) => file.startsWith("app/"));
+  expect(appTsxFiles.length, "element-level contrast guard must scan all app/**/*.tsx").toBeGreaterThan(250);
+
+  // Verify the failing baseline math (white / light surface #ffffff on --color-accent).
+  expect(contrast("#ffffff", tokenIn(lightBlock, "accent")!), "light white on accent fails AA").toBeLessThan(4.5);
+  expect(contrast("#ffffff", tokenIn(darkBlock, "accent")!), "dark white on accent fails AA").toBeLessThan(4.5);
+  expect(contrast(tokenIn(lightBlock, "surface")!, tokenIn(lightBlock, "accent")!), "light surface on accent fails AA").toBeLessThan(4.5);
+  // Action token passes AA in both light and dark modes.
+  expect(contrast("#ffffff", tokenIn(lightBlock, "action")!), "light white on action passes AA").toBeGreaterThanOrEqual(4.5);
+  expect(contrast("#ffffff", tokenIn(darkBlock, "action") ?? tokenIn(lightBlock, "action")!), "dark white on action passes AA").toBeGreaterThanOrEqual(4.5);
+
+  const solidAccentBg =
+   /(?<![\w:-])(?:(?:hover|focus|active|dark|sm|md|lg|xl|group-hover):)?(?:(?:bg|from|to)-(?:accent|accent-mid|accent-hover)(?:\/(?:[6-9]\d|100))?|bg-\[var\(--color-accent\)\])(?![\w/-])/;
+  const whiteOrLightSurfaceText = /(?<![\w:-])(?:text-white|text-surface)(?![\w/-])/;
+
+  const failures: string[] = [];
+  for (const file of appTsxFiles) {
+   if (FROZEN_PREFIXES.some((prefix) => file.startsWith(prefix))) continue;
+   if (INTENTIONAL_DARK_ALLOWLIST[file]) continue;
+
+   const source = readFileSync(new URL(file, webRoot), "utf8");
+   for (const { line, expr } of extractClassNameAttrs(source)) {
+    if (!solidAccentBg.test(expr) || !whiteOrLightSurfaceText.test(expr)) continue;
+    // Exclude mutually-exclusive ternary branches like `dark ? "bg-white/15 text-white/90" : "bg-accent/10 text-accent"`.
+    const withoutTernaries = expr.replace(/\?[^:]+:/g, " ");
+    const branches = expr.match(/["'`][^"'`]*["'`]/g) ?? [];
+    const sameStringHit = branches.some((str) => solidAccentBg.test(str) && whiteOrLightSurfaceText.test(str));
+    const outerAndInnerHit =
+     (solidAccentBg.test(withoutTernaries) && whiteOrLightSurfaceText.test(expr)) ||
+     (whiteOrLightSurfaceText.test(withoutTernaries) && solidAccentBg.test(expr));
+    if (sameStringHit || outerAndInnerHit) {
+     failures.push(`${file}:${line} (${expr.replace(/\s+/g, " ").slice(0, 140)})`);
+    }
+   }
+  }
+
+  expect(
+   failures,
+   "same-element solid bg-accent + text-white/text-surface fails WCAG AA (3.68 light / 2.54 dark); migrate to bg-action text-white"
+  ).toEqual([]);
+ });
+});

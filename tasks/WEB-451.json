@@ -1,0 +1,351 @@
+{
+  "schema": "nihongo-task/1",
+  "id": "WEB-451",
+  "title": "Post-restructure polish: help, levels, contrast guard, news, search, pricing",
+  "start_head": "431320856e2a8ee65ecdfb6d7a25e96940ca7f2e",
+  "preexisting_changes": {
+    ".build/.buildSystem_debug": "c337257139e569398ce8bf081a54dbc7d1e0267d",
+    ".build/CACHEDIR.TAG": "b7ab0d883e974d20c05898291a6218954e18e5ef"
+  },
+  "spec": {
+    "problem": "",
+    "acceptance": [
+      {
+        "id": "AC1",
+        "text": "1. Help page feedback CTA uses bg-action / hover:bg-action-hover instead of bg-leaf, preserving size/shape (min-h-12)."
+      },
+      {
+        "id": "AC2",
+        "text": "2. Help FAQ details/summary hides native marker (list-none + webkit-details-marker hidden) and displays a themed chevron that rotates on open."
+      },
+      {
+        "id": "AC3",
+        "text": "3. Levels readiness panel renders a truthful neutral empty state with no giant em-dash or fake 0% when no mock-exam sessions exist, keeping the CTA."
+      },
+      {
+        "id": "AC4",
+        "text": "4. theme-contrast.regression.test.ts scans all app/**/*.tsx for element-level solid bg-accent + text-white/text-surface co-occurrence (allowlisting frozen magazine/**), and all true positives (share/[token], search-client, subscription-settings-client) are migrated to bg-action text-white."
+      },
+      {
+        "id": "AC5",
+        "text": "5. /news card component renders source/difficulty/read badges cleanly in the card body (zero overlap with NHK NEWS image graphics or fallback banner in light/dark) and uses non-cropping image framing (object-contain on themed bg-paper) so baked-in NHK corner logos are never half-cut."
+      },
+      {
+        "id": "AC6",
+        "text": "6. /search does not clip N5 beside TÌM KIẾM GẦN ĐÂY: mount-time autofocus does not pop open SearchDropdown over the filter bar, SearchDropdown spans full form width when opened, and chip/filter rows wrap cleanly."
+      },
+      {
+        "id": "AC7",
+        "text": "7. /pricing free card renders a localized guest/learner start-learning CTA (vi/en/ja), and image_search_daily renders non-redundant Tìm ảnh: 5/ngày (Image searches: 5/day, 画像検索: 5/日) keeping numbers identical."
+      },
+      {
+        "id": "AC8",
+        "text": "8. Shell loading investigated and bounded: LearnerAppFrame/AuthShell already render static header/footer immediately on SSR without waiting on session/data; 1-3s skeletons stem from 25+ client-fetched pages requiring full SSR data-flow rework, so item 8 is documented and SKIPPED."
+      }
+    ],
+    "expected_behavior": "1) /help CTA uses bg-action/hover:bg-action-hover; 2) /help FAQ hides native marker with rotating themed chevron; 3) /levels readiness renders clean neutral empty state without giant em-dash or fake 0%; 4) element-level app/**/*.tsx contrast guard passes with all 4 true positives migrated to bg-action text-white (magazine/** allowlisted as frozen); 5) /news badges render in card body with dark-safe tokens and thumbnail uses object-contain on bg-paper so corner logos are never cropped or overlapped; 6) /search suppresses mount-time dropdown auto-open, anchors opened dropdown to full form width, and wraps filter/JLPT chip rows cleanly; 7) /pricing free card has localized vi/en/ja CTA and non-redundant Tìm ảnh: 5/ngày; 8) Shell loading root cause documented in evidence and explicitly SKIPPED without forcing a cross-cutting rewrite.",
+    "observed_behavior": "1) /help feedback CTA uses off-palette bg-leaf; 2) /help FAQ <details>/<summary> renders raw native marker without chevron; 3) /levels readiness empty state shows oversized em-dash above noSessions; 4) theme-contrast regression test misses multi-line/var/text-surface bg-accent pairings leaving 4 WCAG AA failures (share/[token] x2, search-client, subscription-settings-client); 5) /news card overlays translucent blue NHK Easy badge onto NHK NEWS graphics and object-cover crops baked-in corner logos; 6) /search autofocus opens SearchDropdown inside flex-1 leaving N5 clipped at right edge of TÌM KIẾM GẦN ĐÂY; 7) /pricing free card has no CTA and image_search_daily repeats per-day wording (Tìm ảnh mỗi ngày: 5/ngày); 8) Shell loading investigated: LearnerAppFrame/AuthShell already render static header/footer immediately on SSR; 1-3s skeletons stem from 25+ client-fetched pages requiring full SSR data-flow rework, so item 8 is SKIPPED.",
+    "rollback_plan": ""
+  },
+  "classification": {
+    "classes": [
+      "UI_ONLY"
+    ],
+    "change_kind": "bugfix",
+    "rationale": ""
+  },
+  "red_exception": null,
+  "red_targets": [
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/help/page.test.tsx",
+      "test": "learner help page > uses the primary action token on the feedback CTA and replaces the native FAQ marker with a rotating themed chevron",
+      "expect": "bg-action"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/levels/_components/levels-client.test.tsx",
+      "test": "LevelsClient > renders a truthful neutral readiness empty state without an oversized dash or fake 0% when no sessions are completed",
+      "expect": "em-dash"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/theme-contrast.regression.test.ts",
+      "test": "WEB-451 element-level bg-accent contrast guard across all app/**/*.tsx > forbids same-element solid bg-accent with white or light-white surface text across every app/**/*.tsx",
+      "expect": "same-element solid bg-accent"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/news/nhk-news-regression.test.tsx",
+      "test": "NHK regression > renders news card badges in the card body without overlapping thumbnail graphics and avoids cropping corner logos",
+      "expect": "object-contain"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/search/_components/search-client.recent-overflow.test.tsx",
+      "test": "SearchClient recent searches and JLPT chip layout (WEB-451) > does not auto-open SearchDropdown over the N1-N5 filter bar on mount and anchors opened dropdown to full form width",
+      "expect": "auto-open"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx",
+      "test": "PricingClient contracts > avoids redundant per-day wording on image_search_daily while keeping the exact quota numbers",
+      "expect": "Tìm ảnh: 5/ngày"
+    },
+    {
+      "runner": "vitest",
+      "file": "apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx",
+      "test": "PricingClient contracts > renders a localized CTA on the free plan card for guests and non-current learners",
+      "expect": "guest start-learning CTA"
+    }
+  ],
+  "sensitivity": null,
+  "deletion": null,
+  "risk_acknowledgements": [],
+  "state": "CLOSED",
+  "history": [
+    {
+      "state": "CREATED",
+      "at": "2026-11-25T01:12:37.845Z",
+      "head": "431320856e2a8ee65ecdfb6d7a25e96940ca7f2e"
+    },
+    {
+      "state": "SPECIFIED",
+      "at": "2026-11-25T01:13:55.295Z",
+      "head": "431320856e2a8ee65ecdfb6d7a25e96940ca7f2e"
+    },
+    {
+      "state": "RED_REQUIRED",
+      "at": "2026-11-25T01:13:55.531Z",
+      "head": "431320856e2a8ee65ecdfb6d7a25e96940ca7f2e"
+    },
+    {
+      "state": "VALID_RED",
+      "at": "2026-11-25T01:14:39.604Z",
+      "head": "431320856e2a8ee65ecdfb6d7a25e96940ca7f2e"
+    },
+    {
+      "state": "VERIFYING",
+      "at": "2026-11-25T01:17:29.901Z",
+      "head": "431320856e2a8ee65ecdfb6d7a25e96940ca7f2e"
+    },
+    {
+      "state": "READY_TO_CLOSE",
+      "at": "2026-11-25T01:19:31.650Z",
+      "head": "431320856e2a8ee65ecdfb6d7a25e96940ca7f2e"
+    },
+    {
+      "state": "CLOSED",
+      "at": "2026-11-25T01:30:37.710Z",
+      "head": "431320856e2a8ee65ecdfb6d7a25e96940ca7f2e"
+    }
+  ],
+  "evidence": [
+    {
+      "seq": 1,
+      "at": "2026-11-25T01:14:39.346Z",
+      "head": "431320856e2a8ee65ecdfb6d7a25e96940ca7f2e",
+      "kind": "red",
+      "outcome": "VALID_RED",
+      "mode": "in_place",
+      "production_at_base": true,
+      "reverted_files": 0,
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/help/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.recent-overflow.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/help/page.test.tsx::learner help page > uses the primary action token on the feedback CTA and replaces the native FAQ marker with a rotating themed chevron",
+          "outcome": "FAIL",
+          "excerpt": "feedback CTA must use the primary bg-action token: *** '<a class=\"mt-3 inline-flex min-h-12 i…' to contain 'bg-action'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders a truthful neutral readiness empty state without an oversized dash or fake 0% when no sessions are completed",
+          "outcome": "FAIL",
+          "excerpt": "readiness panel must not render a broken em-dash placeholder: expected 'Sẵn sàng thi thửTheo kết quả gần đây—…' not to contain '—'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-451 element-level bg-accent contrast guard across all app/**/*.tsx > forbids same-element solid bg-accent with white or light-white surface text across every app/**/*.tsx",
+          "outcome": "FAIL",
+          "excerpt": "same-element solid bg-accent + text-white/text-surface fails WCAG AA (3.68 light / 2.54 dark); migrate to bg-action text-white: expected [ …(4) ] to deeply equal []",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders news card badges in the card body without overlapping thumbnail graphics and avoids cropping corner logos",
+          "outcome": "FAIL",
+          "excerpt": "thumbnail img must use object-contain so baked-in NHK corner logos are never half-cut: expected 'h-full w-full object-cover transition…' to contain 'object-contain'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.recent-overflow.test.tsx::SearchClient recent searches and JLPT chip layout (WEB-451) > does not auto-open SearchDropdown over the N1-N5 filter bar on mount and anchors opened dropdown to full form width",
+          "outcome": "FAIL",
+          "excerpt": "floating SearchDropdown must not auto-open over the filter bar on initial mount: expected 'Từ khóa tìm kiếmTìm kiếm gần đâyXóa会議…' not to contain 'Tìm kiếm gần đây'",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > avoids redundant per-day wording on image_search_daily while keeping the exact quota numbers",
+          "outcome": "FAIL",
+          "excerpt": "each quota feature line must render as one text run with a space after the colon: expected 'Tìm ảnh mỗi ngày: 5/ngày' to be 'Tìm ảnh: 5/ngày' // Object.is equality",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders a localized CTA on the free plan card for guests and non-current learners",
+          "outcome": "FAIL",
+          "excerpt": "free plan card must render a guest start-learning CTA: expected null not to be null",
+          "valid": true,
+          "reason": "failed for the declared reason"
+        }
+      ],
+      "expects": {
+        "vitest:apps/web/app/[locale]/help/page.test.tsx::learner help page > uses the primary action token on the feedback CTA and replaces the native FAQ marker with a rotating themed chevron": "bg-action",
+        "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders a truthful neutral readiness empty state without an oversized dash or fake 0% when no sessions are completed": "em-dash",
+        "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-451 element-level bg-accent contrast guard across all app/**/*.tsx > forbids same-element solid bg-accent with white or light-white surface text across every app/**/*.tsx": "same-element solid bg-accent",
+        "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders news card badges in the card body without overlapping thumbnail graphics and avoids cropping corner logos": "object-contain",
+        "vitest:apps/web/app/[locale]/search/_components/search-client.recent-overflow.test.tsx::SearchClient recent searches and JLPT chip layout (WEB-451) > does not auto-open SearchDropdown over the N1-N5 filter bar on mount and anchors opened dropdown to full form width": "auto-open",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > avoids redundant per-day wording on image_search_daily while keeping the exact quota numbers": "Tìm ảnh: 5/ngày",
+        "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders a localized CTA on the free plan card for guests and non-current learners": "guest start-learning CTA"
+      },
+      "fingerprint": "227f39732a7a1ce285626edd49acd1ee6e705cb28ed101d3447af989851e4415"
+    },
+    {
+      "seq": 2,
+      "at": "2026-11-25T01:17:28.843Z",
+      "head": "431320856e2a8ee65ecdfb6d7a25e96940ca7f2e",
+      "kind": "green",
+      "outcome": "GREEN",
+      "commands": [
+        "pnpm exec vitest run apps/web/app/[locale]/help/page.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/levels/_components/levels-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/theme-contrast.regression.test.ts --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/news/nhk-news-regression.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/search/_components/search-client.recent-overflow.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs",
+        "pnpm exec vitest run apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx --config vitest.config.ts --reporter=scripts/quality/vitest-debt-reporter.mjs"
+      ],
+      "targets": [
+        {
+          "id": "vitest:apps/web/app/[locale]/help/page.test.tsx::learner help page > uses the primary action token on the feedback CTA and replaces the native FAQ marker with a rotating themed chevron",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/levels/_components/levels-client.test.tsx::LevelsClient > renders a truthful neutral readiness empty state without an oversized dash or fake 0% when no sessions are completed",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/theme-contrast.regression.test.ts::WEB-451 element-level bg-accent contrast guard across all app/**/*.tsx > forbids same-element solid bg-accent with white or light-white surface text across every app/**/*.tsx",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/news/nhk-news-regression.test.tsx::NHK regression > renders news card badges in the card body without overlapping thumbnail graphics and avoids cropping corner logos",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/search/_components/search-client.recent-overflow.test.tsx::SearchClient recent searches and JLPT chip layout (WEB-451) > does not auto-open SearchDropdown over the N1-N5 filter bar on mount and anchors opened dropdown to full form width",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > avoids redundant per-day wording on image_search_daily while keeping the exact quota numbers",
+          "outcome": "PASS",
+          "valid": true
+        },
+        {
+          "id": "vitest:apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx::PricingClient contracts > renders a localized CTA on the free plan card for guests and non-current learners",
+          "outcome": "PASS",
+          "valid": true
+        }
+      ],
+      "fingerprint": "2045c3d6141b6493bd287e8ab9ed05b1434102b89e4f24db19d57a28de74d890"
+    },
+    {
+      "seq": 3,
+      "at": "2026-11-25T01:19:30.737Z",
+      "head": "431320856e2a8ee65ecdfb6d7a25e96940ca7f2e",
+      "kind": "suite",
+      "gate": "suite_frontend",
+      "command": "bash scripts/quality/verify-frontend.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "accounting": {
+        "discovered": 781,
+        "executed": 781,
+        "passed": 781,
+        "failed": 0,
+        "failed_new": 0,
+        "skipped": 0,
+        "expected_skips": 0,
+        "unexpected_skips": 0,
+        "lint_files": 932,
+        "lint_errors": 63,
+        "lint_warnings": 22,
+        "new_debt": 0
+      },
+      "message": "no debt beyond the committed baseline",
+      "fingerprint": "2045c3d6141b6493bd287e8ab9ed05b1434102b89e4f24db19d57a28de74d890"
+    },
+    {
+      "seq": 4,
+      "at": "2026-11-25T01:30:36.513Z",
+      "head": "431320856e2a8ee65ecdfb6d7a25e96940ca7f2e",
+      "kind": "review",
+      "mode": "fresh_session",
+      "reviewer": "fresh-research-subagent-01040968",
+      "verdict": "APPROVE",
+      "open_findings": 0,
+      "notes": "Review APPROVE (0 open). 1-Help CTA:DONE(bg-action); 2-Help FAQ:DONE(chevron+hidden marker); 3-Levels empty:DONE(no dash/0%); 4-Contrast guard:DONE(all app/**/*.tsx + 4 fixes, magazine/** frozen); 5-News badges:DONE(body badges+object-contain, no overlap/crop); 6-Search N5:DONE(no mount auto-open, full-width dropdown, flex-wrap); 7-Pricing free:DONE(vi/en/ja CTA + Tìm ảnh: 5/ngày); 8-Shell loading:SKIPPED(LearnerAppFrame/AuthShell already render header/footer immediately on SSR; 1-3s skeletons come from 25+ client-fetched pages needing SSR rework).",
+      "output_sha256": "9f3ce210547ee5e569ffaf2b84fbbea7b0793589e75610613cd63097279ece2b",
+      "attested": true,
+      "fingerprint": "2045c3d6141b6493bd287e8ab9ed05b1434102b89e4f24db19d57a28de74d890"
+    }
+  ],
+  "closed": {
+    "at": "2026-11-25T01:30:37.702Z",
+    "head": "431320856e2a8ee65ecdfb6d7a25e96940ca7f2e",
+    "fingerprint": "2045c3d6141b6493bd287e8ab9ed05b1434102b89e4f24db19d57a28de74d890",
+    "status": "VERIFIED",
+    "gates": {
+      "acceptance": "PASS",
+      "red": "PASS",
+      "green": "PASS",
+      "suite_frontend": "PASS"
+    },
+    "files": {
+      "apps/web/app/[locale]/help/page.test.tsx": "66cd62f4e7760e5f919765ba5767e05a82a0b4af",
+      "apps/web/app/[locale]/help/page.tsx": "460a7ec5d6be3a18758b3779f710e2472289c527",
+      "apps/web/app/[locale]/levels/_components/levels-client.test.tsx": "971abc1a5fee8162d57a44572a7111e6f10299ec",
+      "apps/web/app/[locale]/levels/_components/levels-client.tsx": "4eb78c087f885abe6eeea403d278328313da0f46",
+      "apps/web/app/[locale]/news/_components/nhk-news-list-client.tsx": "d7fc34f5266a9d85f61052e6223713d1befea581",
+      "apps/web/app/[locale]/news/nhk-news-regression.test.tsx": "362b9bc154e8b86155101cfb235bc86591a01748",
+      "apps/web/app/[locale]/pricing/_components/pricing-client.test.tsx": "aa57f652f43ab5d50c8b49444812fc520bdc2c5f",
+      "apps/web/app/[locale]/pricing/_components/pricing-client.tsx": "890d43b3b90581130c2fc5f5a9de1519aaf6e726",
+      "apps/web/app/[locale]/search/_components/search-client.recent-overflow.test.tsx": "03046ede9636d0f17e43362a7a817053a58a7316",
+      "apps/web/app/[locale]/search/_components/search-client.tsx": "6d51f1535205819bc8cf9768fcb114d55da6ee95",
+      "apps/web/app/[locale]/settings/subscription/_components/subscription-settings-client.tsx": "cf65216ce04c09a384ac17281936c581ea606830",
+      "apps/web/app/[locale]/share/[token]/page.tsx": "9a31ecf00e0815af6090cff1ff58856e9bc73756",
+      "apps/web/app/theme-contrast.regression.test.ts": "1dd53b8666450bfc7be4d3b71184dda7c0d476f3",
+      "apps/web/messages/en.json": "48c9d9739cb1ac2633a61e9c58f6c216715180bd",
+      "apps/web/messages/ja.json": "a869cfde98fdb9eb7d01eeec2a73f06002944770",
+      "apps/web/messages/vi.json": "fe916eba343b44295706aef2831556df2db78321"
+    }
+  },
+  "execution": {
+    "status": "RUNNING",
+    "decisions": []
+  }
+}

@@ -85,7 +85,7 @@ export default async function PublicSharePage({ params }: PageProps) {
 
           <Link
             href={`/${locale}`}
-            className="mt-8 inline-flex h-12 items-center rounded-xl bg-[var(--color-accent)] px-8 text-sm font-semibold text-white transition-transform active:scale-[0.97]"
+            className="mt-8 inline-flex h-12 items-center rounded-xl bg-action px-8 text-sm font-semibold text-white transition-colors hover:bg-action-hover active:scale-[0.97]"
           >
             Về trang chủ →
           </Link>
@@ -128,7 +128,7 @@ export default async function PublicSharePage({ params }: PageProps) {
           </p>
           <Link
             href={`/${locale}`}
-            className="mt-4 inline-flex h-12 items-center rounded-xl bg-[var(--color-accent)] px-8 text-sm font-semibold text-white transition-transform active:scale-[0.97]"
+            className="mt-4 inline-flex h-12 items-center rounded-xl bg-action px-8 text-sm font-semibold text-white transition-colors hover:bg-action-hover active:scale-[0.97]"
           >
             Bắt đầu miễn phí →
           </Link>

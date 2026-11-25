@@ -227,7 +227,7 @@ export function SubscriptionSettingsClient({ labels, locale }: { labels: Labels;
             <>
               <p className="text-sm text-muted">{labels.freePlanNote}</p>
               <Link
-                className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-surface hover:bg-accent/90 transition-colors"
+                className="rounded-xl bg-action px-4 py-2 text-sm font-semibold text-white hover:bg-action-hover transition-colors"
                 href={`/${locale}/pricing`}
               >
                 {labels.upgradeCta}

@@ -2828,7 +2828,8 @@
     "checkoutPending": "Your upgrade request is awaiting confirmation. The plan becomes active only after payment is confirmed.",
     "checkoutPendingShort": "Pending",
     "retry": "Try again",
-    "signInToUpgrade": "Sign in to upgrade"
+    "signInToUpgrade": "Sign in to upgrade",
+    "startFree": "Start learning"
   },
   "magazine": {
     "title": "Daily Magazine",
